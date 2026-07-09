@@ -1,0 +1,10 @@
+# Build output (Kotlin Toolchain / Amper)
+/build/
+
+# Reference repos: full clones of sqlglot, polyglot, trino, doris, etc.
+# Not part of this project — clone them locally as needed (see docs/parsing-research-and-plan.md)
+/reference/
+
+# IDE
+/.idea/
+*.iml

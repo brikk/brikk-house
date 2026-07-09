@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "kotlin-toolchain": {
+      "source": "singleton11/kotlin-toolchain-skills",
+      "sourceType": "github",
+      "skillPath": "skills/kotlin-toolchain/SKILL.md",
+      "computedHash": "91a3dd84257ebebc0184e83b9929b48abb2568297c9479f4aefb4aac39bfd8ca"
+    }
+  }
+}
