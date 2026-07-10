@@ -279,8 +279,9 @@ import dev.brikk.house.sql.ast.args
  * (INSERT/UPDATE/DELETE/MERGE) and auxiliary statements (USE/SET/transactions/CACHE/
  * DESCRIBE/COMMENT/GRANT/REVOKE/ANALYZE/KILL/LOAD/PRAGMA/TRUNCATE/REFRESH).
  * Remaining raise-gates: COPY, simplified PIVOT/UNPIVOT statements, triggers,
- * procedure blocks, macro overloads, locks, MATCH_RECOGNIZE, the JSON path parser
- * (sqlglot/jsonpath.py) and control-flow statements. Gate parity:
+ * procedure blocks, macro overloads, locks, MATCH_RECOGNIZE and control-flow
+ * statements. The JSON path parser (sqlglot/jsonpath.py) is ported in JsonPath.kt.
+ * Gate parity:
  * testResources/parser-corpus/known-failures.json (ParserIdentityCorpusTest).
  *
  * Conventions:

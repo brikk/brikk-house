@@ -4,6 +4,13 @@ import dev.brikk.house.sql.ast.Alias
 import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.Command
 import dev.brikk.house.sql.ast.EQ
+import dev.brikk.house.sql.ast.JSONExtract
+import dev.brikk.house.sql.ast.JSONExtractScalar
+import dev.brikk.house.sql.ast.JSONPath
+import dev.brikk.house.sql.ast.JSONPathKey
+import dev.brikk.house.sql.ast.JSONPathRoot
+import dev.brikk.house.sql.ast.JSONPathSubscript
+import dev.brikk.house.sql.ast.JSONPathWildcard
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.Union
@@ -60,6 +67,44 @@ class ParserTest {
         assertEquals(false, union.args["distinct"])
         assertIs<Select>(union.left)
         assertIs<Select>(union.right)
+    }
+
+    @Test
+    fun jsonExtractParsesDotKeyPath() {
+        val select = assertIs<Select>(parseOne("SELECT JSON_EXTRACT(x, '$.name')"))
+        val extract = assertIs<JSONExtract>(select.selects.single())
+        val path = assertIs<JSONPath>(extract.expressionArg)
+        val parts = path.expressionsArg
+        assertEquals(2, parts.size)
+        assertIs<JSONPathRoot>(parts[0])
+        val key = assertIs<JSONPathKey>(parts[1])
+        assertEquals("name", key.thisArg)
+    }
+
+    @Test
+    fun jsonExtractScalarParsesSubscriptThenKey() {
+        val select = assertIs<Select>(parseOne("SELECT JSON_EXTRACT_SCALAR(x, '$[0].a')"))
+        val extract = assertIs<JSONExtractScalar>(select.selects.single())
+        assertEquals(false, extract.args["scalar_only"])
+        val path = assertIs<JSONPath>(extract.expressionArg)
+        val parts = path.expressionsArg
+        assertEquals(3, parts.size)
+        assertIs<JSONPathRoot>(parts[0])
+        val subscript = assertIs<JSONPathSubscript>(parts[1])
+        assertEquals(0, subscript.thisArg)
+        assertEquals("a", assertIs<JSONPathKey>(parts[2]).thisArg)
+    }
+
+    @Test
+    fun jsonExtractParsesDotWildcardPath() {
+        val select = assertIs<Select>(parseOne("SELECT JSON_EXTRACT(x, '$.*')"))
+        val extract = assertIs<JSONExtract>(select.selects.single())
+        val path = assertIs<JSONPath>(extract.expressionArg)
+        val parts = path.expressionsArg
+        assertEquals(2, parts.size)
+        assertIs<JSONPathRoot>(parts[0])
+        val key = assertIs<JSONPathKey>(parts[1])
+        assertIs<JSONPathWildcard>(key.thisArg)
     }
 
     @Test

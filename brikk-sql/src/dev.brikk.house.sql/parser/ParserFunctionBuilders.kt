@@ -76,6 +76,45 @@ internal fun buildUpper(argsList: List<Expression?>): Expression {
     }
 }
 
+// sqlglot: dialect.Dialect.to_json_path (base dialect: STRICT_JSON_PATH_SYNTAX=true)
+internal fun toJsonPath(path: Expression?): Expression? {
+    if (path is Literal) {
+        var pathText = path.name
+        if (path.isNumber) pathText = "[$pathText]"
+        try {
+            return parseJsonPath(pathText)
+        } catch (e: ParseError) {
+            // base: STRICT_JSON_PATH_SYNTAX=true and paths don't start with
+            // "lax"/"strict" — Python only logs a warning here, then falls
+            // through to return the raw path literal.
+        }
+    }
+    return path
+}
+
+// sqlglot: parser.build_extract_json_with_path
+// (base dialect: JSON_EXTRACT_SCALAR_SCALAR_ONLY=false)
+internal fun buildExtractJsonWithPath(
+    scalar: kotlin.Boolean,
+): (List<Expression?>) -> Expression = { fnArgs ->
+    val initArgs = args(
+        "this" to seqGet(fnArgs, 0),
+        "expression" to toJsonPath(seqGet(fnArgs, 1)),
+    )
+    val expression: Expression = if (scalar) {
+        dev.brikk.house.sql.ast.JSONExtractScalar(initArgs)
+    } else {
+        dev.brikk.house.sql.ast.JSONExtract(initArgs)
+    }
+    if (fnArgs.size > 2 && !scalar) {
+        expression.set("expressions", fnArgs.drop(2))
+    }
+    if (scalar) {
+        expression.set("scalar_only", false)
+    }
+    expression
+}
+
 // sqlglot: parser.build_mod — wraps binary operands in Paren
 internal fun buildMod(argsList: List<Expression?>): Expression {
     var this_ = seqGet(argsList, 0)
@@ -253,6 +292,14 @@ internal fun customFunctionBuilders(): kotlin.collections.Map<kotlin.String, (Li
         )
     }
     m["HEX"] = ::buildHex
+    m["JSON_EXTRACT"] = buildExtractJsonWithPath(scalar = false)
+    m["JSON_EXTRACT_SCALAR"] = buildExtractJsonWithPath(scalar = true)
+    m["JSON_EXTRACT_PATH_TEXT"] = buildExtractJsonWithPath(scalar = true)
+    m["JSON_KEYS"] = { fnArgs ->
+        dev.brikk.house.sql.ast.JSONKeys(
+            args("this" to seqGet(fnArgs, 0), "expression" to toJsonPath(seqGet(fnArgs, 1)))
+        )
+    }
     m["LIKE"] = ::buildLike
     m["LOG"] = ::buildLogarithm
     m["LOG2"] = { fnArgs ->

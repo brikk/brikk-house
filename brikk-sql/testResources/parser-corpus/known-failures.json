@@ -1,13 +1,4 @@
 {
  "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": [
-  {
-   "sql": "SELECT JSON_EXTRACT(x, '$.name')",
-   "reason": "JSON path parser (sqlglot/jsonpath.py parse) not ported \u2014 dialect.to_json_path returns the raw string literal instead of a JSONPath AST"
-  },
-  {
-   "sql": "SELECT JSON_EXTRACT_SCALAR(x, '$.name')",
-   "reason": "JSON path parser (sqlglot/jsonpath.py parse) not ported \u2014 dialect.to_json_path returns the raw string literal instead of a JSONPath AST"
-  }
- ]
+ "cases": []
 }
