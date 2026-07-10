@@ -104,7 +104,7 @@ abstract class Expression(initArgs: Args = emptyMap()) {
         val field = args[key]
         return when {
             field is String -> field
-            field is Identifier || field is Literal -> field.thisArg as? String ?: ""
+            field is Identifier || field is Literal || field is Var -> field.thisArg as? String ?: ""
             field is Star || field is Null -> field.name
             else -> ""
         }

@@ -52,7 +52,13 @@ def main() -> None:
             continue
         try:
             expression = sqlglot.parse_one(sql)
-            cases.append({"sql": sql, "dump": serde.dump(expression)})
+            cases.append(
+                {
+                    "sql": sql,
+                    "generated": expression.sql(),
+                    "dump": serde.dump(expression),
+                }
+            )
         except Exception as e:  # noqa: BLE001 — record and move on
             skipped.append({"sql": sql, "error": f"{type(e).__name__}: {e}"})
 

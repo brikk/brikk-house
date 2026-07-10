@@ -3,6 +3,7 @@
  "cases": [
   {
    "sql": "SELECT 1",
+   "generated": "SELECT 1",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -33,6 +34,7 @@
   },
   {
    "sql": "SELECT 1 + 2 * 3",
+   "generated": "SELECT 1 + 2 * 3",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -115,6 +117,7 @@
   },
   {
    "sql": "SELECT (1 + 2) * 3",
+   "generated": "SELECT (1 + 2) * 3",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -202,6 +205,7 @@
   },
   {
    "sql": "SELECT -x, NOT y",
+   "generated": "SELECT -x, NOT y",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -274,6 +278,7 @@
   },
   {
    "sql": "SELECT * FROM t",
+   "generated": "SELECT * FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -325,6 +330,7 @@
   },
   {
    "sql": "SELECT a, b FROM t",
+   "generated": "SELECT a, b FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -418,6 +424,7 @@
   },
   {
    "sql": "SELECT t.a FROM t",
+   "generated": "SELECT t.a FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -505,6 +512,7 @@
   },
   {
    "sql": "SELECT db.t.a FROM db.t",
+   "generated": "SELECT db.t.a FROM db.t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -634,6 +642,7 @@
   },
   {
    "sql": "SELECT a AS x, b y FROM t AS tt",
+   "generated": "SELECT a AS x, b AS y FROM t AS tt",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -805,6 +814,7 @@
   },
   {
    "sql": "SELECT \"quoted col\" FROM \"quoted table\"",
+   "generated": "SELECT \"quoted col\" FROM \"quoted table\"",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -871,6 +881,7 @@
   },
   {
    "sql": "SELECT 'str', 1, 1.5, TRUE, FALSE, NULL FROM t",
+   "generated": "SELECT 'str', 1, 1.5, TRUE, FALSE, NULL FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -1004,6 +1015,7 @@
   },
   {
    "sql": "SELECT a FROM t WHERE x = 1 AND y < 2 OR NOT z",
+   "generated": "SELECT a FROM t WHERE x = 1 AND y < 2 OR NOT z",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -1220,6 +1232,7 @@
   },
   {
    "sql": "SELECT a FROM t WHERE x <> 1 AND y >= 2 AND z <= 3",
+   "generated": "SELECT a FROM t WHERE x <> 1 AND y >= 2 AND z <= 3",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -1457,6 +1470,7 @@
   },
   {
    "sql": "SELECT a FROM t WHERE x BETWEEN 1 AND 10",
+   "generated": "SELECT a FROM t WHERE x BETWEEN 1 AND 10",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -1601,6 +1615,7 @@
   },
   {
    "sql": "SELECT a FROM t WHERE x IN (1, 2, 3)",
+   "generated": "SELECT a FROM t WHERE x IN (1, 2, 3)",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -1769,6 +1784,7 @@
   },
   {
    "sql": "SELECT a FROM t WHERE x IN (SELECT b FROM u)",
+   "generated": "SELECT a FROM t WHERE x IN (SELECT b FROM u)",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -1939,6 +1955,7 @@
   },
   {
    "sql": "SELECT a FROM t WHERE x LIKE 'a%' AND y IS NULL AND z IS NOT NULL",
+   "generated": "SELECT a FROM t WHERE x LIKE 'a%' AND y IS NULL AND NOT z IS NULL",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -2149,6 +2166,7 @@
   },
   {
    "sql": "SELECT COUNT(*) FROM t",
+   "generated": "SELECT COUNT(*) FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -2216,6 +2234,7 @@
   },
   {
    "sql": "SELECT COUNT(DISTINCT a), SUM(b), MIN(c), MAX(d), AVG(e) FROM t",
+   "generated": "SELECT COUNT(DISTINCT a), SUM(b), MIN(c), MAX(d), AVG(e) FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -2456,6 +2475,7 @@
   },
   {
    "sql": "SELECT my_func(a, b, 1) FROM t",
+   "generated": "SELECT MY_FUNC(a, b, 1) FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -2588,6 +2608,7 @@
   },
   {
    "sql": "SELECT CAST(a AS INT), CAST(b AS VARCHAR(255)), CAST(c AS DECIMAL(10, 2)) FROM t",
+   "generated": "SELECT CAST(a AS INT), CAST(b AS VARCHAR(255)), CAST(c AS DECIMAL(10, 2)) FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -2981,6 +3002,7 @@
   },
   {
    "sql": "SELECT DISTINCT a FROM t",
+   "generated": "SELECT DISTINCT a FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -3052,6 +3074,7 @@
   },
   {
    "sql": "SELECT a FROM t GROUP BY a",
+   "generated": "SELECT a FROM t GROUP BY a",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -3150,6 +3173,7 @@
   },
   {
    "sql": "SELECT a, COUNT(*) FROM t GROUP BY a HAVING COUNT(*) > 1",
+   "generated": "SELECT a, COUNT(*) FROM t GROUP BY a HAVING COUNT(*) > 1",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -3334,6 +3358,7 @@
   },
   {
    "sql": "SELECT a FROM t ORDER BY a",
+   "generated": "SELECT a FROM t ORDER BY a",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -3442,6 +3467,7 @@
   },
   {
    "sql": "SELECT a FROM t ORDER BY a DESC, b ASC",
+   "generated": "SELECT a FROM t ORDER BY a DESC, b ASC",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -3597,6 +3623,7 @@
   },
   {
    "sql": "SELECT a FROM t ORDER BY a NULLS FIRST",
+   "generated": "SELECT a FROM t ORDER BY a",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -3705,6 +3732,7 @@
   },
   {
    "sql": "SELECT a FROM t LIMIT 10",
+   "generated": "SELECT a FROM t LIMIT 10",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -3797,6 +3825,7 @@
   },
   {
    "sql": "SELECT a FROM t LIMIT 10 OFFSET 5",
+   "generated": "SELECT a FROM t LIMIT 10 OFFSET 5",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -3915,6 +3944,7 @@
   },
   {
    "sql": "SELECT a FROM t JOIN u ON t.id = u.id",
+   "generated": "SELECT a FROM t JOIN u ON t.id = u.id",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -4112,6 +4142,7 @@
   },
   {
    "sql": "SELECT a FROM t LEFT JOIN u ON t.id = u.id",
+   "generated": "SELECT a FROM t LEFT JOIN u ON t.id = u.id",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -4314,6 +4345,7 @@
   },
   {
    "sql": "SELECT a FROM t LEFT OUTER JOIN u ON t.id = u.id",
+   "generated": "SELECT a FROM t LEFT OUTER JOIN u ON t.id = u.id",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -4521,6 +4553,7 @@
   },
   {
    "sql": "SELECT a FROM t CROSS JOIN u",
+   "generated": "SELECT a FROM t CROSS JOIN u",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -4624,6 +4657,7 @@
   },
   {
    "sql": "SELECT a FROM t JOIN u USING (id)",
+   "generated": "SELECT a FROM t JOIN u USING (id)",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -4744,6 +4778,7 @@
   },
   {
    "sql": "SELECT a FROM (SELECT b FROM u) AS sub",
+   "generated": "SELECT a FROM (SELECT b FROM u) AS sub",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -4878,6 +4913,7 @@
   },
   {
    "sql": "SELECT a FROM t WHERE EXISTS (SELECT 1 FROM u WHERE u.id = t.id)",
+   "generated": "SELECT a FROM t WHERE EXISTS(SELECT 1 FROM u WHERE u.id = t.id)",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -5116,6 +5152,7 @@
   },
   {
    "sql": "WITH cte AS (SELECT a FROM t) SELECT * FROM cte",
+   "generated": "WITH cte AS (SELECT a FROM t) SELECT * FROM cte",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -5267,6 +5304,7 @@
   },
   {
    "sql": "WITH a AS (SELECT 1), b AS (SELECT 2) SELECT * FROM a JOIN b ON TRUE",
+   "generated": "WITH a AS (SELECT 1), b AS (SELECT 2) SELECT * FROM a JOIN b ON TRUE",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -5483,6 +5521,7 @@
   },
   {
    "sql": "SELECT a FROM t UNION SELECT b FROM u",
+   "generated": "SELECT a FROM t UNION SELECT b FROM u",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Union"
@@ -5622,6 +5661,7 @@
   },
   {
    "sql": "SELECT a FROM t UNION ALL SELECT b FROM u",
+   "generated": "SELECT a FROM t UNION ALL SELECT b FROM u",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Union"
@@ -5761,6 +5801,7 @@
   },
   {
    "sql": "SELECT a FROM t INTERSECT SELECT b FROM u",
+   "generated": "SELECT a FROM t INTERSECT SELECT b FROM u",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Intersect"
@@ -5900,6 +5941,7 @@
   },
   {
    "sql": "SELECT a FROM t EXCEPT SELECT b FROM u",
+   "generated": "SELECT a FROM t EXCEPT SELECT b FROM u",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Except"
@@ -6039,6 +6081,7 @@
   },
   {
    "sql": "SELECT * FROM t WHERE x = ? AND y = :named AND z = @param",
+   "generated": "SELECT * FROM t WHERE x = ? AND y = :named AND z = @param",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -6228,6 +6271,7 @@
   },
   {
    "sql": "SELECT CASE WHEN x = 1 THEN 'a' WHEN x = 2 THEN 'b' ELSE 'c' END FROM t",
+   "generated": "SELECT CASE WHEN x = 1 THEN 'a' WHEN x = 2 THEN 'b' ELSE 'c' END FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -6452,6 +6496,7 @@
   },
   {
    "sql": "SELECT a, ROW_NUMBER() OVER (PARTITION BY b ORDER BY c) FROM t",
+   "generated": "SELECT a, ROW_NUMBER() OVER (PARTITION BY b ORDER BY c) FROM t",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"

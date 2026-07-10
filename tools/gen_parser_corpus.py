@@ -93,7 +93,7 @@ def main() -> None:
     cases = []
     for sql in QUERIES:
         expression = sqlglot.parse_one(sql)  # base dialect; raises on failure
-        cases.append({"sql": sql, "dump": dump(expression)})
+        cases.append({"sql": sql, "generated": expression.sql(), "dump": dump(expression)})
 
     corpus = {"sqlglot_version": sqlglot_version(), "cases": cases}
     out = OUT_DIR / "base.json"
