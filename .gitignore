@@ -5,6 +5,10 @@
 # Not part of this project — clone them locally as needed (see docs/parsing-research-and-plan.md)
 /reference/
 
+# Test-run artifact: actual parser-identity failure set in ledger format
+# (regenerate testResources/parser-corpus/known-failures.json by copying it)
+/brikk-sql/parser-identity-ledger-actual.json
+
 # IDE
 /.idea/
 *.iml
