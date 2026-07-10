@@ -210,6 +210,13 @@ open class Generator(
     open val dialectLogBaseFirst: Boolean? get() = true
     open val dialectTablesampleSizeIsPercent: Boolean get() = false
     open val dialectStringsSupportEscapedSequences: Boolean get() = false
+    // sqlglot: Dialect.BYTE_STRINGS_SUPPORT_ESCAPED_SEQUENCES
+    open val dialectByteStringsSupportEscapedSequences: Boolean get() = false
+    // sqlglot: Dialect.BYTE_START / BYTE_END (from tokenizer BYTE_STRINGS)
+    open val byteStart: String? get() = null
+    open val byteEnd: String? get() = null
+    // sqlglot: Dialect.BYTE_STRING_IS_BYTES_TYPE
+    open val dialectByteStringIsBytesType: Boolean get() = false
     open val dialectArrayAggIncludesNulls: Boolean get() = true
     open val dialectIdentifiersCanStartWithDigit: Boolean get() = false
     open val dialectIdentifiersCanStartWithDollar: Boolean get() = false
@@ -654,9 +661,15 @@ open class Generator(
         escapeBackslash: Boolean = true,
         delimiter: String? = null,
         escapedDelimiter: String? = null,
+        isByteString: Boolean = false,
     ): String {
         var out = text
-        if (dialectStringsSupportEscapedSequences && escapedSequences.isNotEmpty()) {
+        val supportsEscapes = if (isByteString) {
+            dialectByteStringsSupportEscapedSequences
+        } else {
+            dialectStringsSupportEscapedSequences
+        }
+        if (supportsEscapes && escapedSequences.isNotEmpty()) {
             out = buildString {
                 for (ch in out) {
                     val escaped = escapedSequences[ch.toString()]
@@ -2074,8 +2087,39 @@ open class Generator(
     // sqlglot: Generator.sort_sql
     open fun sortSql(expression: Sort): String = opExpressions("SORT BY", expression)
 
-    // sqlglot: Generator.ordered_sql (base: NULL_ORDERING_SUPPORTED=true skips the
-    // NULLS FIRST/LAST simulation branch entirely)
+    // sqlglot: Generator.WINDOW_FUNCS_WITH_NULL_ORDERING (base: empty)
+    open val windowFuncsWithNullOrdering: Set<KClass<out Expression>> get() = emptySet()
+
+    // sqlglot: Generator._resolve_ordered_for_null_ordering_simulation
+    protected open fun resolveOrderedForNullOrderingSimulation(expression: Ordered): Expression? {
+        val this_ = expression.args["this"]
+        if (this_ !is Column || this_.table.isNotEmpty()) return null
+
+        val ancestor = expression.findAncestor(Select::class, Window::class)
+        if (ancestor !is Select) return null
+
+        val columnName = this_.name
+        val matched = ancestor.selects.mapNotNull { p ->
+            val pe = p as? Expression ?: return@mapNotNull null
+            // sqlglot: p.output_name
+            val outputName = when (pe) {
+                is Alias -> pe.alias
+                is Column, is Literal, is Identifier -> pe.name
+                else -> ""
+            }
+            if (outputName == columnName) {
+                if (pe is Alias) pe.thisArg as? Expression else pe
+            } else null
+        }
+        val match = if (matched.size == 1) matched[0] else null
+
+        // Skip the substitution when it would be identical to the existing reference
+        if (match is Column && match.table.isEmpty() && match.name == columnName) return null
+
+        return match
+    }
+
+    // sqlglot: Generator.ordered_sql
     open fun orderedSql(expression: Ordered): String {
         val desc = expression.args["desc"]
         val asc = desc != true
@@ -2086,7 +2130,7 @@ open class Generator(
         val nullsAreSmall = dialectNullOrdering == "nulls_are_small"
         val nullsAreLast = dialectNullOrdering == "nulls_are_last"
 
-        val thisSql = sql(expression, "this")
+        var thisSql = sql(expression, "this")
 
         val sortOrder = when (desc) {
             true -> " DESC"
@@ -2102,9 +2146,71 @@ open class Generator(
             nullsSortChange = " NULLS LAST"
         }
 
+        // If the NULLS FIRST/LAST clause is unsupported, we add another sort key to simulate it
         if (nullsSortChange.isNotEmpty() && nullOrderingSupported != true) {
-            unsupported("'${nullsSortChange.trim()}' translation not supported")
-            nullsSortChange = ""
+            val window = expression.findAncestor(Window::class, Select::class)
+
+            var windowThis: Expression? = null
+            var spec: Expression? = null
+            if (window is Window) {
+                windowThis = window.thisArg as? Expression
+                if (windowThis is IgnoreNulls || windowThis is RespectNulls) {
+                    windowThis = windowThis.thisArg as? Expression
+                }
+                spec = window.args["spec"] as? Expression
+            }
+
+            // Some window functions (e.g. LAST_VALUE, RANK) support NULLS FIRST/LAST
+            // without a spec or with a ROWS spec, but not with RANGE
+            val nullOrderingWindowFunc = windowThis != null &&
+                windowFuncsWithNullOrdering.any { it.isInstance(windowThis) } &&
+                (spec == null || spec.text("kind").uppercase() == "ROWS")
+
+            if (!nullOrderingWindowFunc) {
+                if (windowThis != null && spec != null) {
+                    unsupported(
+                        "'${nullsSortChange.trim()}' translation not supported in window functions"
+                    )
+                    nullsSortChange = ""
+                } else if (nullOrderingSupported == false &&
+                    ((asc && nullsSortChange == " NULLS LAST") ||
+                        (!asc && nullsSortChange == " NULLS FIRST"))
+                ) {
+                    // BigQuery does not allow these ordering/nulls combinations when used
+                    // under an aggregation func or under a window containing one
+                    var ancestor: Expression? = expression.parent
+                    while (ancestor != null && ancestor !is AggFunc &&
+                        ancestor !is Window && ancestor !is Select
+                    ) {
+                        ancestor = ancestor.parent
+                    }
+                    if (ancestor is Window) ancestor = ancestor.thisArg as? Expression
+                    if (ancestor is AggFunc) {
+                        unsupported(
+                            "'${nullsSortChange.trim()}' translation not supported for " +
+                                "aggregate functions with$sortOrder sort order"
+                        )
+                        nullsSortChange = ""
+                    }
+                } else if (nullOrderingSupported == null) {
+                    val orderedThis = expression.args["this"] as? Expression
+                    val isInt = orderedThis is Literal && !orderedThis.isString &&
+                        (orderedThis.thisArg as? String)?.toLongOrNull() != null
+                    if (isInt) {
+                        unsupported(
+                            "'${nullsSortChange.trim()}' translation not supported with " +
+                                "positional ordering"
+                        )
+                    } else if (orderedThis !is Rand) {
+                        val resolved = resolveOrderedForNullOrderingSimulation(expression)
+                        val target = if (resolved != null) sql(resolved) else thisSql
+                        val nullSortOrder = if (nullsSortChange == " NULLS FIRST") " DESC" else ""
+                        thisSql =
+                            "CASE WHEN $target IS NULL THEN 1 ELSE 0 END$nullSortOrder, $target"
+                    }
+                    nullsSortChange = ""
+                }
+            }
         }
 
         var withFill = sql(expression, "with_fill")
@@ -2847,14 +2953,16 @@ open class Generator(
 
         var thisSql = sql(expression, "this")
         if (thisSql.isNotEmpty()) {
-            // sqlglot: UNWRAPPED_INTERVAL_VALUES (Column, Literal, Neg, Paren)
-            val thisArg = expression.args["this"]
-            val unwrapped = thisArg is Column || thisArg is Literal || thisArg is Neg || thisArg is Paren
+            val unwrapped = isUnwrappedIntervalValue(expression.args["this"])
             thisSql = if (unwrapped) " $thisSql" else " ($thisSql)"
         }
 
         return "INTERVAL$thisSql$unit"
     }
+
+    // sqlglot: Generator.UNWRAPPED_INTERVAL_VALUES (base: Column, Literal, Neg, Paren)
+    open fun isUnwrappedIntervalValue(thisArg: kotlin.Any?): Boolean =
+        thisArg is Column || thisArg is Literal || thisArg is Neg || thisArg is Paren
 
     // sqlglot: Generator.return_sql
     open fun returnSql(expression: Return): String = "RETURN ${sql(expression, "this")}"
@@ -3302,6 +3410,435 @@ open class Generator(
         return ""
     }
 
+    // sqlglot: Generator._escaped_byte_quote_end
+    protected open val escapedByteQuoteEnd: String
+        get() = byteEnd?.let { tokenizerConfig.stringEscapes.first() + it } ?: ""
+
+    // sqlglot: Generator.bytestring_sql
+    open fun bytestringSql(expression: ByteString): String {
+        val this_ = when (val t = expression.thisArg) {
+            null -> ""
+            is String -> t
+            else -> t.toString()
+        }
+        val start = byteStart
+        if (start != null) {
+            val escaped = escapeStr(
+                this_,
+                escapeBackslash = false,
+                delimiter = byteEnd,
+                escapedDelimiter = escapedByteQuoteEnd,
+                isByteString = true,
+            )
+            val isBytes = expression.args["is_bytes"] == true
+            val delimited = "$start$escaped${byteEnd ?: ""}"
+            if (isBytes && !dialectByteStringIsBytesType) {
+                return sql(
+                    Cast(
+                        args(
+                            "this" to Literal.string(delimited),
+                            "to" to DataType(args("this" to DType.BINARY)),
+                        )
+                    )
+                )
+            }
+            if (!isBytes && dialectByteStringIsBytesType) {
+                return sql(
+                    Cast(
+                        args(
+                            "this" to Literal.string(delimited),
+                            "to" to DataType(args("this" to DType.VARCHAR)),
+                        )
+                    )
+                )
+            }
+
+            return delimited
+        }
+
+        if ('\\' in tokenizerConfig.stringEscapes) {
+            return sql(Literal.string(this_))
+        }
+
+        unsupported("Byte strings are not supported for this dialect")
+        return ""
+    }
+
+    // sqlglot: Generator.sequenceproperties_sql
+    open fun sequencepropertiesSql(expression: SequenceProperties): String {
+        var start = sql(expression, "start")
+        if (start.isNotEmpty()) start = "START WITH $start"
+        var increment = sql(expression, "increment")
+        if (increment.isNotEmpty()) increment = " INCREMENT BY $increment"
+        var minvalue = sql(expression, "minvalue")
+        if (minvalue.isNotEmpty()) minvalue = " MINVALUE $minvalue"
+        var maxvalue = sql(expression, "maxvalue")
+        if (maxvalue.isNotEmpty()) maxvalue = " MAXVALUE $maxvalue"
+        var owned = sql(expression, "owned")
+        if (owned.isNotEmpty()) owned = " OWNED BY $owned"
+
+        val cache = expression.args["cache"]
+        val cacheStr = when (cache) {
+            null -> ""
+            true -> " CACHE"
+            else -> " CACHE ${sql(cache)}"
+        }
+
+        var options = expressions(expression, key = "options", flat = true, sep = " ")
+        if (options.isNotEmpty()) options = " $options"
+
+        return "$start$increment$minvalue$maxvalue$cacheStr$options$owned".trimStart()
+    }
+
+    // sqlglot: Generator.when_sql
+    open fun whenSql(expression: When): String {
+        val matched = if (expression.args["matched"] == true) "MATCHED" else "NOT MATCHED"
+        val source = if (matchedBySource && expression.args["source"] == true) " BY SOURCE" else ""
+        var condition = sql(expression, "condition")
+        if (condition.isNotEmpty()) condition = " AND $condition"
+
+        val thenExpression = expression.args["then"]
+        var then: String
+        if (thenExpression is Insert) {
+            var this_ = sql(thenExpression, "this")
+            this_ = if (this_.isNotEmpty()) "INSERT $this_" else "INSERT"
+            val thenExpr = sql(thenExpression, "expression")
+            then = if (thenExpr.isNotEmpty()) "$this_ VALUES $thenExpr" else this_
+        } else if (thenExpression is Update) {
+            if (thenExpression.args["expressions"] is Star) {
+                then = "UPDATE ${sql(thenExpression, "expressions")}"
+            } else {
+                val exprsSql = expressions(thenExpression)
+                then = if (exprsSql.isNotEmpty()) "UPDATE SET${sep()}$exprsSql" else "UPDATE"
+            }
+        } else {
+            then = sql(thenExpression)
+        }
+
+        if (thenExpression is Insert || thenExpression is Update) {
+            var where = sql(thenExpression as Expression, "where")
+            if (where.isNotEmpty() && !supportsMergeWhere) {
+                val kind = if (thenExpression is Insert) "INSERT" else "UPDATE"
+                unsupported("WHERE clause in MERGE $kind is not supported")
+                where = ""
+            }
+            then = "$then$where"
+        }
+        return "WHEN $matched$source$condition THEN $then"
+    }
+
+    // sqlglot: Generator.whens_sql
+    open fun whensSql(expression: Whens): String =
+        expressions(expression, sep = " ", indent = false)
+
+    // sqlglot: Generator.merge_sql
+    open fun mergeSql(expression: Merge): String {
+        val table = expression.thisArg as Expression
+        var tableAlias = ""
+
+        val hints = table.args["hints"] as? List<*>
+        val aliasArg = table.args["alias"]
+        if (!hints.isNullOrEmpty() && aliasArg != null && hints[0] is WithTableHint) {
+            // T-SQL syntax is MERGE ... <target_table> [WITH (<merge_hint>)] [[AS] table_alias]
+            val popped = (aliasArg as Expression).also { it.pop() }
+            tableAlias = " AS ${sql(popped)}"
+        }
+
+        val this_ = sql(table)
+        val using = "USING ${sql(expression, "using")}"
+        var whens = sql(expression, "whens")
+
+        var on = sql(expression, "on")
+        if (on.isNotEmpty()) {
+            on = "ON $on"
+        } else {
+            on = expressions(expression, key = "using_cond")
+            if (on.isNotEmpty()) on = "USING ($on)"
+        }
+
+        val returning = sql(expression, "returning")
+        if (returning.isNotEmpty()) {
+            whens = "$whens$returning"
+        }
+
+        val sepStr = sep()
+
+        return prependCtes(
+            expression,
+            "MERGE INTO $this_$tableAlias$sepStr$using$sepStr$on$sepStr$whens",
+        )
+    }
+
+    // sqlglot: Generator.ARRAY_SIZE_NAME
+    open val arraySizeName: String get() = "ARRAY_LENGTH"
+
+    // sqlglot: Generator.ARRAY_SIZE_DIM_REQUIRED
+    open val arraySizeDimRequired: Boolean? get() = null
+
+    // sqlglot: Generator.arraysize_sql
+    open fun arraysizeSql(expression: ArraySize): String {
+        var dim = expression.args["expression"] as? Expression
+
+        // For dialects that don't support the dimension arg, we can safely transpile
+        // its default value (1st dimension)
+        if (dim != null && arraySizeDimRequired == null) {
+            val isIntOne = dim is Literal && !dim.isString && dim.name == "1"
+            if (!isIntOne) {
+                unsupported("Cannot transpile dimension argument for ARRAY_LENGTH")
+            }
+            dim = null
+        }
+
+        // If dimension is required but not specified, default initialize it
+        if (arraySizeDimRequired == true && dim == null) {
+            dim = Literal.number("1")
+        }
+
+        return func(arraySizeName, expression.thisArg, dim)
+    }
+
+    // sqlglot: Generator.fromiso8601date_sql
+    open fun fromiso8601dateSql(expression: FromISO8601Date): String =
+        sql(
+            Cast(
+                args("this" to expression.thisArg, "to" to DataType(args("this" to DType.DATE)))
+            )
+        )
+
+    // sqlglot: Generator.fromiso8601timestamp_sql
+    open fun fromiso8601timestampSql(expression: FromISO8601Timestamp): String =
+        sql(
+            Cast(
+                args(
+                    "this" to expression.thisArg,
+                    "to" to DataType(args("this" to DType.TIMESTAMPTZ)),
+                )
+            )
+        )
+
+    // sqlglot: Generator.fromiso8601timestampnanos_sql
+    open fun fromiso8601timestampnanosSql(expression: FromISO8601TimestampNanos): String =
+        sql(
+            Cast(
+                args(
+                    "this" to expression.thisArg,
+                    "to" to DataType(args("this" to DType.TIMESTAMPTZ)),
+                )
+            )
+        )
+
+    // sqlglot: Generator.jsonarray_sql
+    open fun jsonarraySql(expression: JSONArray): String {
+        var nullHandling = sql(expression, "null_handling")
+        if (nullHandling.isNotEmpty()) nullHandling = " $nullHandling"
+        var returnType = sql(expression, "return_type")
+        if (returnType.isNotEmpty()) returnType = " RETURNING $returnType"
+        val strict = if (expression.args["strict"] == true) " STRICT" else ""
+        return func(
+            "JSON_ARRAY",
+            *expression.expressionsArg.toTypedArray(),
+            suffix = "$nullHandling$returnType$strict)",
+        )
+    }
+
+    // sqlglot: Generator.localtime_sql
+    open fun localtimeSql(expression: Localtime): String {
+        val this_ = expression.thisArg
+        return if (this_ != null) func("LOCALTIME", this_) else "LOCALTIME"
+    }
+
+    // sqlglot: Generator.localtimestamp_sql
+    open fun localtimestampSql(expression: Localtimestamp): String {
+        val this_ = expression.thisArg
+        return if (this_ != null) func("LOCALTIMESTAMP", this_) else "LOCALTIMESTAMP"
+    }
+
+    // sqlglot: Generator.columns_sql
+    open fun columnsSql(expression: Columns): String {
+        var funcSql = functionFallbackSql(expression)
+        if (expression.args["unpack"] == true) funcSql = "*$funcSql"
+        return funcSql
+    }
+
+    // sqlglot: Generator.historicaldata_sql
+    open fun historicaldataSql(expression: HistoricalData): String {
+        val this_ = sql(expression, "this")
+        val kind = sql(expression, "kind")
+        val expr = sql(expression, "expression")
+        return "$this_ ($kind => $expr)"
+    }
+
+    // sqlglot: Generator.install_sql (base: unsupported)
+    open fun installSql(expression: Install): String {
+        unsupported("Unsupported INSTALL statement")
+        return ""
+    }
+
+    // sqlglot: Generator.summarize_sql
+    open fun summarizeSql(expression: Summarize): String {
+        val table = if (expression.args["table"] == true) " TABLE" else ""
+        return "SUMMARIZE$table ${sql(expression.thisArg)}"
+    }
+
+    // sqlglot: Generator.attach_sql
+    open fun attachSql(expression: Attach): String {
+        val this_ = sql(expression, "this")
+        val existsSql = if (expression.args["exists"] == true) " IF NOT EXISTS" else ""
+        var exprs = expressions(expression)
+        if (exprs.isNotEmpty()) exprs = " ($exprs)"
+
+        return "ATTACH$existsSql $this_$exprs"
+    }
+
+    // sqlglot: Generator.detach_sql
+    open fun detachSql(expression: Detach): String {
+        var kind = sql(expression, "kind")
+        if (kind.isNotEmpty()) kind = " $kind"
+        // the DATABASE keyword is required if IF EXISTS is set for DuckDB
+        // ref: https://duckdb.org/docs/stable/sql/statements/attach.html#detach-syntax
+        val exists = if (expression.args["exists"] == true) " IF EXISTS" else ""
+        if (exists.isNotEmpty() && kind.isEmpty()) {
+            kind = " DATABASE"
+        }
+
+        var this_ = sql(expression, "this")
+        if (this_.isNotEmpty()) this_ = " $this_"
+        var cluster = sql(expression, "cluster")
+        if (cluster.isNotEmpty()) cluster = " $cluster"
+        val permanent = if (expression.args["permanent"] == true) " PERMANENTLY" else ""
+        val sync = if (expression.args["sync"] == true) " SYNC" else ""
+        return "DETACH$kind$exists$this_$cluster$permanent$sync"
+    }
+
+    // sqlglot: Generator.attachoption_sql
+    open fun attachoptionSql(expression: AttachOption): String {
+        val this_ = sql(expression, "this")
+        var value = sql(expression, "expression")
+        if (value.isNotEmpty()) value = " $value"
+        return "$this_$value"
+    }
+
+    // sqlglot: Generator.macrooverloads_sql
+    open fun macrooverloadsSql(expression: MacroOverloads): String =
+        expressions(expression, flat = true)
+
+    // sqlglot: Generator.macrooverload_sql
+    open fun macrooverloadSql(expression: MacroOverload): String {
+        val params = noIdentify { expressions(expression, flat = true) }
+        val body = sql(expression, "this")
+        val prefix = if (expression.args["is_table"] == true) "TABLE " else ""
+        return "($params) AS $prefix$body"
+    }
+
+    // sqlglot: Generator.COPY_PARAMS_ARE_WRAPPED
+    open val copyParamsAreWrapped: Boolean get() = true
+
+    // sqlglot: Generator.COPY_PARAMS_EQ_REQUIRED
+    open val copyParamsEqRequired: Boolean get() = false
+
+    // sqlglot: Generator.COPY_HAS_INTO_KEYWORD
+    open val copyHasIntoKeyword: Boolean get() = true
+
+    // sqlglot: Dialect.COPY_PARAMS_ARE_CSV (generator-side read)
+    open val dialectCopyParamsAreCsv: Boolean get() = true
+
+    // sqlglot: Generator.copyparameter_sql
+    open fun copyparameterSql(expression: CopyParameter): String {
+        val option = sql(expression, "this")
+
+        val exprsArg = expression.args["expressions"]
+        if (exprsArg is List<*> && exprsArg.isNotEmpty()) {
+            val upper = option.uppercase()
+
+            // Snowflake FILE_FORMAT options are separated by whitespace
+            val sep = if (upper == "FILE_FORMAT") " " else ", "
+
+            // Databricks copy/format options do not set their list of values with EQ
+            val op = if (upper in setOf("COPY_OPTIONS", "FORMAT_OPTIONS")) " " else " = "
+            val values = expressions(expression, flat = true, sep = sep)
+            return "$option$op($values)"
+        }
+
+        val value = sql(expression, "expression")
+
+        if (value.isEmpty()) return option
+
+        val op = if (copyParamsEqRequired) " = " else " "
+
+        return "$option$op$value"
+    }
+
+    // sqlglot: Generator.credentials_sql
+    open fun credentialsSql(expression: Credentials): String {
+        val credExpr = expression.args["credentials"]
+        var credentials: String
+        if (credExpr is Literal) {
+            // Redshift case: CREDENTIALS <string>
+            credentials = sql(expression, "credentials")
+            if (credentials.isNotEmpty()) credentials = "CREDENTIALS $credentials"
+        } else {
+            // Snowflake case: CREDENTIALS = (...)
+            val creds = expressions(expression, key = "credentials", flat = true, sep = " ")
+            credentials = if (credExpr != null) "CREDENTIALS = ($creds)" else ""
+        }
+
+        var storage = sql(expression, "storage")
+        if (storage.isNotEmpty()) storage = "STORAGE_INTEGRATION = $storage"
+
+        var encryption = expressions(expression, key = "encryption", flat = true, sep = " ")
+        if (encryption.isNotEmpty()) encryption = " ENCRYPTION = ($encryption)"
+
+        var iamRole = sql(expression, "iam_role")
+        if (iamRole.isNotEmpty()) iamRole = "IAM_ROLE $iamRole"
+
+        var region = sql(expression, "region")
+        if (region.isNotEmpty()) region = " REGION $region"
+
+        return "$credentials$storage$encryption$iamRole$region"
+    }
+
+    // sqlglot: Generator.copy_sql
+    open fun copySql(expression: Copy): String {
+        var this_ = sql(expression, "this")
+        this_ = if (copyHasIntoKeyword) " INTO $this_" else " $this_"
+
+        var credentials = sql(expression, "credentials")
+        if (credentials.isNotEmpty()) credentials = seg(credentials)
+        val files = expressions(expression, key = "files", flat = true)
+        val kind = if (files.isNotEmpty()) {
+            seg(if (expression.args["kind"] == true) "FROM" else "TO")
+        } else ""
+
+        val sep = if (dialectCopyParamsAreCsv) ", " else " "
+        var params = expressions(
+            expression,
+            key = "params",
+            sep = sep,
+            newLine = true,
+            skipLast = true,
+            skipFirst = true,
+            indent = copyParamsAreWrapped,
+        )
+
+        if (params.isNotEmpty()) {
+            if (copyParamsAreWrapped) {
+                params = " WITH ($params)"
+            } else if (!pretty && (files.isNotEmpty() || credentials.isNotEmpty())) {
+                params = " $params"
+            }
+        }
+
+        return "COPY$this_$kind $files$credentials$params"
+    }
+
+    // sqlglot: Generator.unpivotcolumns_sql
+    open fun unpivotcolumnsSql(expression: UnpivotColumns): String {
+        val name = sql(expression, "this")
+        val values = expressions(expression, flat = true)
+
+        return "NAME $name VALUE $values"
+    }
+
     // sqlglot: Generator.partitionbyrangeproperty_sql
     open fun partitionbyrangepropertySql(expression: PartitionByRangeProperty): String {
         val partitions = expressions(expression, key = "partition_expressions")
@@ -3338,9 +3875,51 @@ open class Generator(
     open fun respectnullsSql(expression: RespectNulls): String =
         embedIgnoreNulls(expression, "RESPECT NULLS")
 
-    // sqlglot: Generator._embed_ignore_nulls (base: IGNORE_NULLS_IN_FUNC=false)
-    protected open fun embedIgnoreNulls(expression: Expression, text: String): String =
-        "${sql(expression, "this")} $text"
+    // sqlglot: Generator.IGNORE_NULLS_BEFORE_ORDER
+    open val ignoreNullsBeforeOrder: Boolean get() = true
+
+    // sqlglot: Generator.RESPECT_IGNORE_NULLS_UNSUPPORTED_EXPRESSIONS (base: empty)
+    open val respectIgnoreNullsUnsupportedExpressions: Set<KClass<out Expression>>
+        get() = emptySet()
+
+    // sqlglot: Generator._embed_ignore_nulls
+    protected open fun embedIgnoreNulls(expression: Expression, text: String): String {
+        var this_ = expression.args["this"]
+        if (this_ is Expression && this_::class in respectIgnoreNullsUnsupportedExpressions) {
+            unsupported("RESPECT/IGNORE NULLS is not supported for ${this_::class.simpleName}")
+            return sql(this_)
+        }
+
+        if (ignoreNullsInFunc && expression.metaOrNull?.get("inline") != true) {
+            if (ignoreNullsBeforeOrder) {
+                // The first modifier here will be the one closest to the AggFunc's arg
+                val mods = expression.findAll(HavingMax::class, Order::class, Limit::class)
+                    .sortedBy { if (it is HavingMax) 0 else if (it is Order) 1 else 2 }
+                    .toList()
+
+                val mod = mods.firstOrNull()
+                if (mod != null) {
+                    val modThis = mod.args["this"] as Expression
+                    val wrapped = when (expression) {
+                        is IgnoreNulls -> IgnoreNulls(args("this" to modThis.copy()))
+                        else -> RespectNulls(args("this" to modThis.copy()))
+                    }
+                    wrapped.meta["inline"] = true
+                    modThis.replace(wrapped)
+                    return sql(expression.args["this"])
+                }
+            }
+
+            val aggFunc = expression.walk().firstOrNull { it is AggFunc }
+
+            if (aggFunc != null) {
+                val aggFuncSql = sql(aggFunc, comment = false).dropLast(1) + " $text)"
+                return maybeComment(aggFuncSql, comments = aggFunc.comments)
+            }
+        }
+
+        return "${sql(expression, "this")} $text"
+    }
 
     // sqlglot: Generator.havingmax_sql
     open fun havingmaxSql(expression: HavingMax): String {

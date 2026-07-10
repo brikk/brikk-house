@@ -86,7 +86,7 @@ internal val TERADATA_TIME_MAPPING: Map<String, String> = mapOf(
 )
 
 // sqlglot: dialect.binary_from_function
-private fun binaryFromFunction(factory: NodeFactory): (List<Expression?>) -> Expression =
+internal fun binaryFromFunction(factory: NodeFactory): (List<Expression?>) -> Expression =
     { a -> factory(args("this" to seqGet(a, 0), "expression" to seqGet(a, 1))) }
 
 // sqlglot: parsers.presto._build_approx_percentile
@@ -137,7 +137,7 @@ private fun buildToChar(a: List<Expression?>): Expression {
 }
 
 // sqlglot: dialect.date_trunc_to_time
-private fun dateTruncToTime(a: List<Expression?>): Expression {
+internal fun dateTruncToTime(a: List<Expression?>): Expression {
     val unit = seqGet(a, 0)
     val this_ = seqGet(a, 1)
 
@@ -153,7 +153,7 @@ private fun dateTruncToTime(a: List<Expression?>): Expression {
 
 // sqlglot: dialect.build_regexp_extract (presto REGEXP_EXTRACT_DEFAULT_GROUP=0,
 // REGEXP_EXTRACT_POSITION_OVERFLOW_RETURNS_NULL=True; the latter only for RegexpExtract)
-private fun buildRegexpExtract(all: Boolean): (List<Expression?>) -> Expression = { a ->
+internal fun buildRegexpExtract(all: Boolean): (List<Expression?>) -> Expression = { a ->
     val kwargs = args(
         "this" to seqGet(a, 0),
         "expression" to seqGet(a, 1),
@@ -216,70 +216,6 @@ open class PrestoParser(
     override val functionParsers: Map<String, (Parser) -> Expression?>
         get() = PrestoParserTables.FUNCTION_PARSERS
 
-    // sqlglot: Parser._parse_string_agg (base parser method; reached via the base
-    // FUNCTION_PARSERS["STRING_AGG"] entry — hand-ported here because the Kotlin base
-    // parser has not needed it yet; Trino layers LISTAGG on top)
-    open fun parseStringAgg(): Expression {
-        val argsList = mutableListOf<Expression?>()
-        if (match(TokenType.DISTINCT)) {
-            argsList.add(expression(Distinct(args("expressions" to listOf(parseDisjunction())))))
-            if (match(TokenType.COMMA)) {
-                argsList.addAll(parseCsv { parseDisjunction() })
-            }
-        } else {
-            argsList.addAll(parseCsv { parseDisjunction() })
-        }
-
-        var onOverflow: kotlin.Any? = null
-        if (matchTextSeq("ON", "OVERFLOW")) {
-            // trino: LISTAGG(expression [, separator] [ON OVERFLOW overflow_behavior])
-            onOverflow = if (matchTextSeq("ERROR")) {
-                Var(args("this" to "ERROR"))
-            } else {
-                matchTextSeq("TRUNCATE")
-                expression(
-                    OverflowTruncateBehavior(
-                        args(
-                            "this" to parseString(),
-                            "with_count" to (
-                                matchTextSeq("WITH", "COUNT") ||
-                                    !matchTextSeq("WITHOUT", "COUNT")
-                            ),
-                        )
-                    )
-                )
-            }
-        }
-
-        val startIndex = index
-        if (!match(TokenType.R_PAREN) && argsList.isNotEmpty()) {
-            // postgres: STRING_AGG([DISTINCT] expression, separator [ORDER BY ...])
-            argsList[0] = parseLimit(this_ = parseOrder(this_ = argsList[0]))
-            return expression(
-                GroupConcat(args("this" to argsList[0], "separator" to seqGet(argsList, 1)))
-            )
-        }
-
-        if (!matchTextSeq("WITHIN", "GROUP")) {
-            retreat(startIndex)
-            return fromArgList(listOf("this", "separator", "on_overflow"), false) {
-                GroupConcat(it)
-            }(argsList)
-        }
-
-        // The corresponding match_r_paren will be called in parse_function (caller)
-        matchLParen()
-
-        return expression(
-            GroupConcat(
-                args(
-                    "this" to parseOrder(this_ = seqGet(argsList, 0)),
-                    "separator" to seqGet(argsList, 1),
-                    "on_overflow" to onOverflow,
-                )
-            )
-        )
-    }
 }
 
 /**
@@ -466,10 +402,9 @@ object PrestoParserTables {
     }
 
     // sqlglot: PrestoParser.FUNCTION_PARSERS = {k: v for base if k != "TRIM"}
-    // ("STRING_AGG" is a base sqlglot FUNCTION_PARSERS entry hand-ported here — see
-    // PrestoParser.parseStringAgg)
+    // ("STRING_AGG" is a base sqlglot FUNCTION_PARSERS entry — see Parser.parseStringAgg)
     val FUNCTION_PARSERS: Map<String, (Parser) -> Expression?> =
         (BaseParserTables.FUNCTION_PARSERS - "TRIM") + mapOf<String, (Parser) -> Expression?>(
-            "STRING_AGG" to { p -> (p as PrestoParser).parseStringAgg() },
+            "STRING_AGG" to { p -> p.parseStringAgg() },
         )
 }

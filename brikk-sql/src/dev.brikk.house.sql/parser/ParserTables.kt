@@ -543,8 +543,7 @@ object BaseParserTables {
         TokenType.CACHE to { p -> p.parseCache() },
         TokenType.COMMENT to { p -> p.parseCommentStatement() },
         TokenType.COMMIT to { p -> p.parseCommitOrRollback() },
-        // sqlglot: TokenType.COPY -> Parser._parse_copy — not ported (no corpus coverage).
-        TokenType.COPY to { p -> p.parseAsCommandGate("COPY statements are not supported yet") },
+        TokenType.COPY to { p -> p.parseCopy() },
         TokenType.CREATE to { p -> p.parseCreate() },
         TokenType.DELETE to { p -> p.parseDelete() },
         TokenType.DESC to { p -> p.parseDescribe() },
@@ -556,8 +555,7 @@ object BaseParserTables {
         TokenType.KILL to { p -> p.parseKill() },
         TokenType.LOAD to { p -> p.parseLoad() },
         TokenType.MERGE to { p -> p.parseMerge() },
-        // sqlglot: TokenType.PIVOT/UNPIVOT -> _parse_simplified_pivot — not ported.
-        TokenType.PIVOT to { p -> p.parseAsCommandGate("Simplified PIVOT statements are not supported yet") },
+        TokenType.PIVOT to { p -> p.parseSimplifiedPivot() },
         TokenType.PRAGMA to { p ->
             p.expression(dev.brikk.house.sql.ast.Pragma(args("this" to p.parseExpression())))
         },
@@ -566,7 +564,7 @@ object BaseParserTables {
         TokenType.SET to { p -> p.parseSet() },
         TokenType.TRUNCATE to { p -> p.parseTruncateTable() ?: p.parseAsCommandGate("Unparseable TRUNCATE") },
         TokenType.UNCACHE to { p -> p.parseUncache() },
-        TokenType.UNPIVOT to { p -> p.parseAsCommandGate("Simplified UNPIVOT statements are not supported yet") },
+        TokenType.UNPIVOT to { p -> p.parseSimplifiedPivot(isUnpivot = true) },
         TokenType.UPDATE to { p -> p.parseUpdate() },
         TokenType.USE to { p -> p.parseUse() },
         TokenType.SEMICOLON to { _ -> Semicolon() },
@@ -659,11 +657,11 @@ object BaseParserTables {
         },
     )
 
-    // sqlglot: Parser.RANGE_PARSERS (FOR -> _parse_comprehension and OPERATOR ->
-    // _parse_operator omitted: the base tokenizer never emits those in range position
-    // for the ported corpus; they raise via the generic unexpected-token path).
+    // sqlglot: Parser.RANGE_PARSERS (OPERATOR -> _parse_operator omitted: the base
+    // tokenizer never emits it in range position for the ported corpus).
     val RANGE_PARSERS: Map<TokenType, (Parser, Expression?) -> Expression?> = mapOf(
         TokenType.AT_GT to binaryRangeParser { dev.brikk.house.sql.ast.ArrayContainsAll(it) },
+        TokenType.FOR to { parser, this_ -> parser.parseComprehension(this_) },
         TokenType.BETWEEN to { parser, this_ -> parser.parseBetween(this_) },
         TokenType.GLOB to binaryRangeParser { dev.brikk.house.sql.ast.Glob(it) },
         TokenType.ILIKE to binaryRangeParser { ILike(it) },
@@ -704,6 +702,7 @@ object BaseParserTables {
     // ported yet — no base-corpus coverage).
     val FUNCTION_PARSERS: Map<String, (Parser) -> Expression?> = buildMap {
         put("CONVERT") { parser -> parser.parseConvert(parser.strictCast) }
+        put("STRING_AGG") { parser -> parser.parseStringAgg() }
         put("TRY_CONVERT") { parser -> parser.parseConvert(false, safe = true) }
         for (name in listOf("ARG_MAX", "ARGMAX", "MAX_BY")) {
             put(name) { parser -> parser.parseMaxMinBy { a: Args -> dev.brikk.house.sql.ast.ArgMax(a) } }

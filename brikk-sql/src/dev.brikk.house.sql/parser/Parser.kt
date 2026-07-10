@@ -54,7 +54,12 @@ import dev.brikk.house.sql.ast.Collate
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.ColumnConstraint
 import dev.brikk.house.sql.ast.ColumnDef
+import dev.brikk.house.sql.ast.Copy
+import dev.brikk.house.sql.ast.CopyParameter
+import dev.brikk.house.sql.ast.Credentials
 import dev.brikk.house.sql.ast.ColumnPosition
+import dev.brikk.house.sql.ast.Comprehension
+import dev.brikk.house.sql.ast.Columns
 import dev.brikk.house.sql.ast.Command
 import dev.brikk.house.sql.ast.Comment
 import dev.brikk.house.sql.ast.Commit
@@ -108,11 +113,13 @@ import dev.brikk.house.sql.ast.Grant
 import dev.brikk.house.sql.ast.GrantPrincipal
 import dev.brikk.house.sql.ast.GrantPrivilege
 import dev.brikk.house.sql.ast.Group
+import dev.brikk.house.sql.ast.GroupConcat
 import dev.brikk.house.sql.ast.GroupingSets
 import dev.brikk.house.sql.ast.Having
 import dev.brikk.house.sql.ast.HavingMax
 import dev.brikk.house.sql.ast.Heredoc
 import dev.brikk.house.sql.ast.Hint
+import dev.brikk.house.sql.ast.HistoricalData
 import dev.brikk.house.sql.ast.ILike
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.If
@@ -149,6 +156,8 @@ import dev.brikk.house.sql.ast.Lock
 import dev.brikk.house.sql.ast.LoadData
 import dev.brikk.house.sql.ast.LockingProperty
 import dev.brikk.house.sql.ast.LogProperty
+import dev.brikk.house.sql.ast.MacroOverload
+import dev.brikk.house.sql.ast.MacroOverloads
 import dev.brikk.house.sql.ast.MatchAgainst
 import dev.brikk.house.sql.ast.MatchRecognize
 import dev.brikk.house.sql.ast.MatchRecognizeMeasure
@@ -174,6 +183,7 @@ import dev.brikk.house.sql.ast.OnProperty
 import dev.brikk.house.sql.ast.Opclass
 import dev.brikk.house.sql.ast.Order
 import dev.brikk.house.sql.ast.Ordered
+import dev.brikk.house.sql.ast.OverflowTruncateBehavior
 import dev.brikk.house.sql.ast.Parameter
 import dev.brikk.house.sql.ast.ParameterStyleProperty
 import dev.brikk.house.sql.ast.Paren
@@ -243,6 +253,7 @@ import dev.brikk.house.sql.ast.StorageHandlerProperty
 import dev.brikk.house.sql.ast.StrPosition
 import dev.brikk.house.sql.ast.Struct
 import dev.brikk.house.sql.ast.Subquery
+import dev.brikk.house.sql.ast.Summarize
 import dev.brikk.house.sql.ast.Substring
 import dev.brikk.house.sql.ast.SwapTable
 import dev.brikk.house.sql.ast.Table
@@ -258,6 +269,7 @@ import dev.brikk.house.sql.ast.Uncache
 import dev.brikk.house.sql.ast.Union
 import dev.brikk.house.sql.ast.UniqueColumnConstraint
 import dev.brikk.house.sql.ast.Unnest
+import dev.brikk.house.sql.ast.UnpivotColumns
 import dev.brikk.house.sql.ast.Update
 import dev.brikk.house.sql.ast.Use
 import dev.brikk.house.sql.ast.UserDefinedFunction
@@ -364,6 +376,15 @@ open class Parser(
 
     // sqlglot: Parser.ZONE_AWARE_TIMESTAMP_CONSTRUCTOR
     open val zoneAwareTimestampConstructor: kotlin.Boolean get() = false
+
+    // sqlglot: Parser.MAP_KEYS_ARE_ARBITRARY_EXPRESSIONS
+    open val mapKeysAreArbitraryExpressions: kotlin.Boolean get() = false
+
+    // sqlglot: Dialect.SUPPORTS_FIXED_SIZE_ARRAYS
+    open val supportsFixedSizeArrays: kotlin.Boolean get() = false
+
+    // sqlglot: Parser.TYPE_CONVERTERS
+    open val typeConverters: Map<DType, (DataType) -> Expression> get() = emptyMap()
 
     // sqlglot: Dialect.SUPPORTS_ORDER_BY_ALL
     open val supportsOrderByAll: kotlin.Boolean get() = false
@@ -1175,7 +1196,7 @@ open class Parser(
     // -----------------------------------------------------------------------
 
     // sqlglot: Parser._parse_expression
-    fun parseExpression(): Expression? = parseAlias(parseAssignment())
+    open fun parseExpression(): Expression? = parseAlias(parseAssignment())
 
     // sqlglot: Parser._parse_expressions
     fun parseExpressions(): MutableList<Expression> = parseCsv { parseExpression() }
@@ -1764,11 +1785,11 @@ open class Parser(
             )
             this_ = parseQueryModifiers(this_)
         } else if (match(TokenType.SUMMARIZE)) {
-            // sqlglot: exp.Summarize — not ported.
-            this_ = raiseError("SUMMARIZE is not supported yet")
+            val table = match(TokenType.TABLE)
+            val inner = parseSelect() ?: parseString() ?: parseTable()
+            return expression(Summarize(args("this" to inner, "table" to table)))
         } else if (match(TokenType.DESCRIBE)) {
-            // sqlglot: Parser._parse_describe — not ported.
-            this_ = raiseError("DESCRIBE is not supported yet")
+            this_ = parseDescribe()
         } else {
             this_ = null
         }
@@ -1809,8 +1830,9 @@ open class Parser(
     protected fun parseWrappedSelect(table: kotlin.Boolean = false): Expression? {
         var this_: Expression?
         if (matchSet(setOf(TokenType.PIVOT, TokenType.UNPIVOT))) {
-            // sqlglot: Parser._parse_simplified_pivot — exp.Pivot not ported.
-            this_ = raiseError("PIVOT/UNPIVOT is not supported yet")
+            this_ = parseSimplifiedPivot(
+                isUnpivot = prevToken.tokenType == TokenType.UNPIVOT
+            )
         } else if (match(TokenType.FROM)) {
             val from = parseFrom(joins = true, skipFromToken = true, consumePipe = true)
             // Support parentheses for duckdb FROM-first syntax
@@ -2401,7 +2423,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_table
-    fun parseTable(
+    open fun parseTable(
         schema: kotlin.Boolean = false,
         joins: kotlin.Boolean = false,
         aliasTokens: Collection<TokenType>? = null,
@@ -2806,7 +2828,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_table_sample
-    protected fun parseTableSample(asModifier: kotlin.Boolean = false): Expression? {
+    protected open fun parseTableSample(asModifier: kotlin.Boolean = false): Expression? {
         if (!match(TokenType.TABLE_SAMPLE) &&
             !(asModifier && matchTextSeq("USING", "SAMPLE"))
         ) {
@@ -2919,13 +2941,20 @@ open class Parser(
     // sqlglot: Parser._parse_historical_data — exp.HistoricalData not ported (Snowflake
     // AT/BEFORE); the retreat keeps AT/BEFORE usable as identifiers, like Python.
     protected fun parseHistoricalData(): Expression? {
+        // https://docs.snowflake.com/en/sql-reference/constructs/at-before
         val startIndex = index
         if (matchTexts(historicalDataPrefix)) {
-            val kind = match(TokenType.L_PAREN) && matchTexts(historicalDataKind)
-            val expr = if (kind && match(TokenType.FARROW)) parseBitwise() else null
+            val this_ = prevToken.text.uppercase()
+            val kind = if (match(TokenType.L_PAREN) && matchTexts(historicalDataKind)) {
+                prevToken.text.uppercase()
+            } else null
+            val expr = if (kind != null && match(TokenType.FARROW)) parseBitwise() else null
 
             if (expr != null) {
-                return raiseError("AT/BEFORE historical clauses are not supported yet")
+                matchRParen()
+                return expression(
+                    HistoricalData(args("this" to this_, "kind" to kind, "expression" to expr))
+                )
             }
             retreat(startIndex)
         }
@@ -3134,8 +3163,63 @@ open class Parser(
         return pivot
     }
 
+    // sqlglot: Parser._parse_unpivot_columns
+    protected fun parseUnpivotColumns(): Expression? {
+        if (!match(TokenType.INTO)) return null
+
+        return expression(
+            UnpivotColumns(
+                args(
+                    "this" to if (matchTextSeq("NAME")) parseColumn() else null,
+                    "expressions" to
+                        if (matchTextSeq("VALUE")) parseCsv { parseColumn() } else null,
+                )
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_simplified_pivot (https://duckdb.org/docs/sql/statements/pivot)
+    fun parseSimplifiedPivot(isUnpivot: kotlin.Boolean? = null): Expression {
+        fun parseOn(): Expression? {
+            val this_ = parseBitwise()
+
+            if (match(TokenType.IN)) {
+                // PIVOT ... ON col IN (row_val1, row_val2)
+                return parseIn(this_)
+            }
+            if (match(TokenType.ALIAS, advance = false)) {
+                // UNPIVOT ... ON (col1, col2, col3) AS row_val
+                return parseAlias(this_)
+            }
+
+            return this_
+        }
+
+        val this_ = parseTable()
+        // sqlglot: `self._match(...) and self._parse_csv(...)` — False when unmatched
+        val expressions: kotlin.Any = if (match(TokenType.ON)) parseCsv { parseOn() } else false
+        val into = parseUnpivotColumns()
+        val using: kotlin.Any = if (match(TokenType.USING)) {
+            parseCsv { parseAlias(parseColumn()) }
+        } else false
+        val group = parseGroup()
+
+        return expression(
+            Pivot(
+                args(
+                    "this" to this_,
+                    "expressions" to expressions,
+                    "using" to using,
+                    "group" to group,
+                    "unpivot" to isUnpivot,
+                    "into" to into,
+                )
+            )
+        )
+    }
+
     // sqlglot: Parser._pivot_column_names
-    protected fun pivotColumnNames(aggregations: List<Expression>): List<String> =
+    protected open fun pivotColumnNames(aggregations: List<Expression>): List<String> =
         aggregations.map { it.alias }.filter { it.isNotEmpty() }
 
     // itertools.product over a list of string lists (for _parse_pivot's column inference)
@@ -3694,8 +3778,13 @@ open class Parser(
         return expression(Interval(args("this" to this_, "unit" to unit)))
     }
 
-    // sqlglot: Literal.to_py (only used for number literals via _parse_interval_span)
+    // sqlglot: Literal.to_py (only used for number literals via _parse_interval_span;
+    // Neg.to_py negates its operand)
     private fun literalNumberToPy(literal: Expression): String {
+        if (literal is Neg) {
+            val inner = literalNumberToPy(literal.thisArg as Expression)
+            return if (inner.startsWith("-")) inner.drop(1) else "-$inner"
+        }
         val text = literal.name
         return text.toLongOrNull()?.toString() ?: text
     }
@@ -4012,8 +4101,14 @@ open class Parser(
             matchedArray = false
             val arrayValues = parseCsv { parseDisjunction() }.takeIf { it.isNotEmpty() }
             if (arrayValues != null && !schema &&
-                // base dialect: SUPPORTS_FIXED_SIZE_ARRAYS=false — always retreat
-                true
+                // sqlglot: dialect.SUPPORTS_FIXED_SIZE_ARRAYS gate — e.g. in DuckDB
+                // ARRAY[1] should retreat and be parsed into exp.Array, in contrast to
+                // INT[x][y] which denotes a fixed-size array data type
+                (
+                    !supportsFixedSizeArrays ||
+                        datatypeToken == TokenType.ARRAY ||
+                        !match(TokenType.R_BRACKET, advance = false)
+                    )
             ) {
                 retreat(arrayIndex)
                 break
@@ -4030,7 +4125,11 @@ open class Parser(
             match(TokenType.R_BRACKET)
         }
 
-        // sqlglot: TYPE_CONVERTERS — empty in the base parser.
+        // sqlglot: TYPE_CONVERTERS
+        if (typeConverters.isNotEmpty() && this_ is DataType) {
+            val converter = typeConverters[this_.thisArg as? DType]
+            if (converter != null) this_ = converter(this_)
+        }
 
         if (withCollation && this_ is DataType && match(TokenType.COLLATE)) {
             this_.set("collate", parseIdentifier() ?: parseColumn())
@@ -4206,6 +4305,48 @@ open class Parser(
     // sqlglot: Parser._parse_user_defined_function_expression
     protected fun parseUserDefinedFunctionExpression(): Expression? = parseStatement()
 
+    // sqlglot: Parser._parse_macro_overloads
+    protected fun parseMacroOverloads(
+        this_: UserDefinedFunction,
+        firstBody: Expression,
+        firstIsTable: kotlin.Boolean = false,
+    ): Expression {
+        val overloads = mutableListOf<Expression>(
+            expression(
+                MacroOverload(
+                    args(
+                        "this" to firstBody,
+                        "expressions" to (this_.args["expressions"] as? List<*>)?.takeIf { it.isNotEmpty() },
+                        "is_table" to firstIsTable,
+                    )
+                )
+            )
+        )
+        this_.set("expressions", null)
+        this_.set("wrapped", false)
+
+        while (match(TokenType.COMMA)) {
+            if (!match(TokenType.L_PAREN)) break
+
+            val params = parseCsv { parseFunctionParameter() }
+            matchRParen()
+
+            if (!match(TokenType.ALIAS)) break
+
+            val isTable = match(TokenType.TABLE)
+            val body = parseExpression()
+            overloads.add(
+                expression(
+                    MacroOverload(
+                        args("this" to body, "expressions" to params, "is_table" to isTable)
+                    )
+                )
+            )
+        }
+
+        return expression(MacroOverloads(args("expressions" to overloads)))
+    }
+
     // sqlglot: Parser._parse_user_defined_function
     fun parseUserDefinedFunction(kind: TokenType? = null): Expression? {
         val this_ = parseTableParts(schema = true)
@@ -4222,7 +4363,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_function_properties
-    fun parseFunctionProperties(): Expression? {
+    open fun parseFunctionProperties(): Expression? {
         // Skip the generic `key = value` fallback in _parse_property since this
         // runs post-AS where a function body like `name = expr` can be misread
         // as a property.
@@ -4362,25 +4503,25 @@ open class Parser(
 
             expressionArg = if (match(TokenType.ALIAS)) parseHeredoc() else null
 
+            var isTable = false
+            var overloadMode = false
             if (expressionArg == null &&
                 createTokenType == TokenType.FUNCTION &&
                 this_ is UserDefinedFunction &&
                 this_.args["wrapped"] == true
             ) {
                 val preTableIndex = index
-                match(TokenType.TABLE)
+                isTable = match(TokenType.TABLE)
 
                 expressionArg = parseExpression()
-                val overloadMode = expressionArg != null &&
+                overloadMode = expressionArg != null &&
                     currToken.tokenType == TokenType.COMMA &&
                     nextToken.tokenType == TokenType.L_PAREN
-                if (overloadMode) {
-                    // sqlglot: Parser._parse_macro_overloads — exp.MacroOverloads not ported.
-                    raiseError("CREATE FUNCTION macro overloads are not supported yet")
-                return parseAsCommand(start)
+                if (!overloadMode) {
+                    retreat(preTableIndex)
+                    isTable = false
+                    expressionArg = null
                 }
-                retreat(preTableIndex)
-                expressionArg = null
             }
 
             extendProps(parseFunctionProperties())
@@ -4410,6 +4551,12 @@ open class Parser(
                         expressionArg = expression(Return(args("this" to expressionArg)))
                     }
                 }
+            }
+
+            if (overloadMode && expressionArg != null) {
+                expressionArg = parseMacroOverloads(
+                    this_ as UserDefinedFunction, expressionArg!!, isTable
+                )
             }
         } else if (createTokenType == TokenType.INDEX) {
             // Postgres allows anonymous indexes, eg. CREATE INDEX IF NOT EXISTS ON t(c)
@@ -4966,6 +5113,130 @@ open class Parser(
                     "partition" to partition,
                     "format" to format,
                     "as_json" to matchTextSeq("AS", "JSON"),
+                )
+            )
+        )
+    }
+
+    // sqlglot: Parser.COPY_INTO_VARLEN_OPTIONS
+    open val copyIntoVarlenOptions: Set<String>
+        get() = setOf("FILE_FORMAT", "COPY_OPTIONS", "FORMAT_OPTIONS", "CREDENTIAL")
+
+    // sqlglot: Dialect.COPY_PARAMS_ARE_CSV
+    open val copyParamsAreCsv: kotlin.Boolean get() = true
+
+    // sqlglot: Parser._parse_copy_parameters
+    protected fun parseCopyParameters(): List<Expression> {
+        val sep = if (copyParamsAreCsv) TokenType.COMMA else null
+
+        val options = mutableListOf<Expression>()
+        while (currToken.exists && !match(TokenType.R_PAREN, advance = false)) {
+            val option = parseVar(anyToken = true)
+            val prev = prevToken.text.uppercase()
+
+            // Different dialects might separate options and values by white space, "=" and "AS"
+            match(TokenType.EQ)
+            match(TokenType.ALIAS)
+
+            val param = expression(CopyParameter(args("this" to option)))
+
+            if (prev in copyIntoVarlenOptions && match(TokenType.L_PAREN, advance = false)) {
+                // Snowflake FILE_FORMAT case, Databricks COPY & FORMAT options
+                param.set("expressions", parseWrappedOptions())
+            } else if (prev == "FILE_FORMAT") {
+                // T-SQL's external file format case
+                param.set("expression", parseField())
+            } else if (prev == "FORMAT" &&
+                prevToken.tokenType == TokenType.ALIAS &&
+                matchTexts(setOf("AVRO", "JSON"))
+            ) {
+                param.set("this", Var(args("this" to "FORMAT AS ${prevToken.text.uppercase()}")))
+                param.set("expression", parseField())
+            } else {
+                param.set("expression", parseUnquotedField() ?: parseBracket(null))
+            }
+
+            options.add(param)
+
+            if (sep != null) match(sep)
+        }
+
+        return options
+    }
+
+    // sqlglot: Parser._parse_credentials
+    protected fun parseCredentials(): Expression? {
+        val expr = expression(Credentials())
+
+        if (matchTextSeq("STORAGE_INTEGRATION", "=")) {
+            expr.set("storage", parseField())
+        }
+        if (matchTextSeq("CREDENTIALS")) {
+            // Snowflake case: CREDENTIALS = (...), Redshift case: CREDENTIALS <string>
+            val creds: kotlin.Any? = if (match(TokenType.EQ)) parseWrappedOptions() else parseField()
+            expr.set("credentials", creds)
+        }
+        if (matchTextSeq("ENCRYPTION")) {
+            expr.set("encryption", parseWrappedOptions())
+        }
+        if (matchTextSeq("IAM_ROLE")) {
+            expr.set(
+                "iam_role",
+                if (match(TokenType.DEFAULT)) Var(args("this" to prevToken.text)) else parseField(),
+            )
+        }
+        if (matchTextSeq("REGION")) {
+            expr.set("region", parseField())
+        }
+
+        return expr
+    }
+
+    // sqlglot: Parser._parse_file_location
+    protected open fun parseFileLocation(): Expression? = parseField()
+
+    // sqlglot: Parser._parse_copy
+    fun parseCopy(): Expression {
+        val start = prevToken
+
+        match(TokenType.INTO)
+
+        val this_ = if (match(TokenType.L_PAREN, advance = false)) {
+            parseSelect(nested = true, parseSubqueryAlias = false)
+        } else {
+            parseTable(schema = true)
+        }
+
+        val kind = match(TokenType.FROM) || !matchTextSeq("TO")
+
+        var files: List<Expression?> = parseCsv { parseFileLocation() }
+        if (match(TokenType.EQ, advance = false)) {
+            // Backtrack one token since we've consumed the lhs of a parameter assignment here.
+            // This can happen for Snowflake dialect. Instead, we'd like to parse the parameter
+            // list via `_parse_wrapped(..)` below.
+            advance(-1)
+            files = emptyList()
+        }
+
+        val credentials = parseCredentials()
+
+        matchTextSeq("WITH")
+
+        val params = parseWrapped({ parseCopyParameters() }, optional = true)
+
+        // Fallback case
+        if (currToken.exists) {
+            return parseAsCommand(start)
+        }
+
+        return expression(
+            Copy(
+                args(
+                    "this" to this_,
+                    "kind" to kind,
+                    "credentials" to credentials,
+                    "files" to files,
+                    "params" to params,
                 )
             )
         )
@@ -7505,7 +7776,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_struct_types
-    protected fun parseStructTypes(typeRequired: kotlin.Boolean = false): Expression? {
+    protected open fun parseStructTypes(typeRequired: kotlin.Boolean = false): Expression? {
         val startIndex = index
 
         val this_: Expression?
@@ -7737,11 +8008,14 @@ open class Parser(
     protected fun parseBracketKeyValue(isMap: kotlin.Boolean = false): Expression? =
         parseSlice(parseAlias(parseDisjunction(), explicit = true))
 
-    // sqlglot: Parser._parse_bracket (MAP_KEYS_ARE_ARBITRARY_EXPRESSIONS=false and
-    // ODBC_DATETIME_LITERALS={} in the base parser, so those branches are elided;
-    // INDEX_OFFSET=0 in the base dialect, so apply_index_offset is the identity)
-    fun parseBracket(this_: Expression?): Expression? {
+    // sqlglot: Parser._parse_bracket (ODBC_DATETIME_LITERALS={} in the base parser,
+    // so that branch is elided)
+    open fun parseBracket(this_: Expression?): Expression? {
         if (!matchSet(brackets)) return this_
+
+        // sqlglot: MAP_KEYS_ARE_ARBITRARY_EXPRESSIONS peek at _tokens[_index - 2]
+        val parseMap = mapKeysAreArbitraryExpressions &&
+            (tokens.getOrNull(index - 2)?.text?.uppercase() == "MAP")
 
         var current = this_
         val bracketKind = prevToken.tokenType
@@ -7758,7 +8032,12 @@ open class Parser(
 
         if (bracketKind == TokenType.L_BRACE) {
             current = expression(
-                Struct(args("expressions" to kvToPropEq(expressions.toMutableList())))
+                Struct(
+                    args(
+                        "expressions" to
+                            kvToPropEq(expressions.toMutableList(), parseMap = parseMap)
+                    )
+                )
             )
         } else if (current == null) {
             // sqlglot: build_array_constructor (HAS_DISTINCT_ARRAY_CONSTRUCTORS=false)
@@ -7778,6 +8057,31 @@ open class Parser(
 
         addTokenComments(current)
         return parseBracket(current)
+    }
+
+    // sqlglot: Parser._parse_comprehension
+    fun parseComprehension(this_: Expression?): Expression? {
+        val startIndex = index
+        val expr = parseColumn()
+        // sqlglot: `self._match(...) and self._parse_column()` — False when unmatched
+        val position: kotlin.Any? = if (match(TokenType.COMMA)) parseColumn() else false
+        if (!match(TokenType.IN)) {
+            retreat(startIndex - 1)
+            return null
+        }
+        val iterator = parseColumn()
+        val condition = if (matchTextSeq("IF")) parseDisjunction() else null
+        return expression(
+            Comprehension(
+                args(
+                    "this" to this_,
+                    "expression" to expr,
+                    "position" to position,
+                    "iterator" to iterator,
+                    "condition" to condition,
+                )
+            )
+        )
     }
 
     // sqlglot: Parser._parse_slice
@@ -7841,7 +8145,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_primary
-    fun parsePrimary(): Expression? {
+    open fun parsePrimary(): Expression? {
         if (matchSet(primaryParsers.keys)) {
             val tokenType = prevToken.tokenType
             val primary = primaryParsers.getValue(tokenType)(this, prevToken)
@@ -8079,8 +8383,72 @@ open class Parser(
             args("this" to name, "quoted" to (quoted ?: !SAFE_IDENTIFIER_RE.matches(name)))
         )
 
+    // sqlglot: Parser._parse_string_agg (reached via FUNCTION_PARSERS["STRING_AGG"] in
+    // sqlglot's base parser; dispatched from dialect FUNCTION_PARSERS tables here)
+    open fun parseStringAgg(): Expression {
+        val argsList = mutableListOf<Expression?>()
+        if (match(TokenType.DISTINCT)) {
+            argsList.add(expression(Distinct(args("expressions" to listOf(parseDisjunction())))))
+            if (match(TokenType.COMMA)) {
+                argsList.addAll(parseCsv { parseDisjunction() })
+            }
+        } else {
+            argsList.addAll(parseCsv { parseDisjunction() })
+        }
+
+        var onOverflow: kotlin.Any? = null
+        if (matchTextSeq("ON", "OVERFLOW")) {
+            // trino: LISTAGG(expression [, separator] [ON OVERFLOW overflow_behavior])
+            onOverflow = if (matchTextSeq("ERROR")) {
+                Var(args("this" to "ERROR"))
+            } else {
+                matchTextSeq("TRUNCATE")
+                expression(
+                    OverflowTruncateBehavior(
+                        args(
+                            "this" to parseString(),
+                            "with_count" to (
+                                matchTextSeq("WITH", "COUNT") ||
+                                    !matchTextSeq("WITHOUT", "COUNT")
+                                ),
+                        )
+                    )
+                )
+            }
+        }
+
+        val startIndex = index
+        if (!match(TokenType.R_PAREN) && argsList.isNotEmpty()) {
+            // postgres: STRING_AGG([DISTINCT] expression, separator [ORDER BY ...])
+            argsList[0] = parseLimit(this_ = parseOrder(this_ = argsList[0]))
+            return expression(
+                GroupConcat(args("this" to argsList[0], "separator" to argsList.getOrNull(1)))
+            )
+        }
+
+        if (!matchTextSeq("WITHIN", "GROUP")) {
+            retreat(startIndex)
+            return fromArgList(listOf("this", "separator", "on_overflow"), false) {
+                GroupConcat(it)
+            }(argsList)
+        }
+
+        // The corresponding match_r_paren will be called in parse_function (caller)
+        matchLParen()
+
+        return expression(
+            GroupConcat(
+                args(
+                    "this" to parseOrder(this_ = argsList.getOrNull(0)),
+                    "separator" to argsList.getOrNull(1),
+                    "on_overflow" to onOverflow,
+                )
+            )
+        )
+    }
+
     // sqlglot: Parser._parse_lambda
-    fun parseLambda(alias: kotlin.Boolean = false): Expression? {
+    open fun parseLambda(alias: kotlin.Boolean = false): Expression? {
         val nextTokenType = nextToken.tokenType
 
         // Fast path: simple atom (column, literal, null, bool) followed by , or )
@@ -9146,9 +9514,10 @@ open class Parser(
 
     // sqlglot: Parser._parse_star_ops
     fun parseStarOps(): Expression? {
-        // sqlglot: BigQuery `* COLUMNS(...)` unpacking — exp.Columns not ported.
         if (matchTextSeq("COLUMNS", "(", advance = false)) {
-            return raiseError("* COLUMNS(...) is not supported yet")
+            val this_ = parseFunction()
+            if (this_ is Columns) this_.set("unpack", true)
+            return this_
         }
 
         val ilike = if (match(TokenType.ILIKE)) parseString() else null

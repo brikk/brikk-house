@@ -476,6 +476,36 @@ object GeneratorTables {
         reg(JSONValue::class) { e -> jsonvalueSql(e as JSONValue) }
         reg(OnCondition::class) { e -> onconditionSql(e as OnCondition) }
         reg(Show::class) { e -> showSql(e as Show) }
+        reg(HistoricalData::class) { e -> historicaldataSql(e as HistoricalData) }
+        reg(Install::class) { e -> installSql(e as Install) }
+        reg(Summarize::class) { e -> summarizeSql(e as Summarize) }
+        reg(Attach::class) { e -> attachSql(e as Attach) }
+        reg(Detach::class) { e -> detachSql(e as Detach) }
+        reg(AttachOption::class) { e -> attachoptionSql(e as AttachOption) }
+        reg(MacroOverloads::class) { e -> macrooverloadsSql(e as MacroOverloads) }
+        reg(MacroOverload::class) { e -> macrooverloadSql(e as MacroOverload) }
+        reg(Copy::class) { e -> copySql(e as Copy) }
+        reg(CopyParameter::class) { e -> copyparameterSql(e as CopyParameter) }
+        reg(Credentials::class) { e -> credentialsSql(e as Credentials) }
+        reg(UnpivotColumns::class) { e -> unpivotcolumnsSql(e as UnpivotColumns) }
+        reg(Columns::class) { e -> columnsSql(e as Columns) }
+        reg(ByteString::class) { e -> bytestringSql(e as ByteString) }
+        reg(Localtime::class) { e -> localtimeSql(e as Localtime) }
+        reg(JSONArray::class) { e -> jsonarraySql(e as JSONArray) }
+        reg(ArraySize::class) { e -> arraysizeSql(e as ArraySize) }
+        reg(FromISO8601Date::class) { e -> fromiso8601dateSql(e as FromISO8601Date) }
+        reg(FromISO8601Timestamp::class) { e -> fromiso8601timestampSql(e as FromISO8601Timestamp) }
+        reg(FromISO8601TimestampNanos::class) { e ->
+            fromiso8601timestampnanosSql(e as FromISO8601TimestampNanos)
+        }
+        reg(Localtimestamp::class) { e -> localtimestampSql(e as Localtimestamp) }
+        reg(SequenceProperties::class) { e -> sequencepropertiesSql(e as SequenceProperties) }
+        reg(Merge::class) { e -> mergeSql(e as Merge) }
+        reg(Whens::class) { e -> whensSql(e as Whens) }
+        reg(When::class) { e -> whenSql(e as When) }
+        // sqlglot: base TRANSFORMS lambdas
+        reg(PositionalColumn::class) { e -> "#${sql(e, "this")}" }
+        reg(ToMap::class) { e -> "MAP ${sql(e, "this")}" }
         reg(Introducer::class) { e -> introducerSql(e as Introducer) }
         reg(HexString::class) { e -> hexstringSql(e as HexString) }
         reg(UsingData::class) { e -> "USING DATA ${sql(e, "this")}" }

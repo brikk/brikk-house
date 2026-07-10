@@ -1,0 +1,65 @@
+{
+ "sqlglot_version": "v30.12.0-44-g93d16591",
+ "cases": [
+  {
+   "sql": "SELECT ([1,2,3])[:-:-1]",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected Paren (k=this))"
+  },
+  {
+   "sql": "SELECT str[0:1]",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected Column (k=this))"
+  },
+  {
+   "sql": "SELECT (MAP {'x': 1})['x']",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected Paren (k=this))"
+  },
+  {
+   "sql": "SELECT JSON_EXTRACT(c, '$[*].id')[0:2]",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected JSONExtract (k=this))"
+  },
+  {
+   "sql": "SELECT JSON_EXTRACT_STRING(c, '$[*].id')[0:2]",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected JSONExtractScalar (k=this))"
+  },
+  {
+   "sql": "SELECT a['x space'] FROM (SELECT {'x space': 1, 'y': 2, 'z': 3} AS a)",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected Column (k=this))"
+  },
+  {
+   "sql": "SELECT REGEXP_EXTRACT_ALL(s, 'pattern', 0)[2:]",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected RegexpExtractAll (k=this))"
+  },
+  {
+   "sql": "SELECT [1, 2, 3][1 + 1:LENGTH([1, 2, 3]) + -1]",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected Array (k=this))"
+  },
+  {
+   "sql": "WITH _data AS (SELECT [{'a': 1, 'b': 2}, {'a': 2, 'b': 3}] AS col) SELECT t.col['b'] FROM _data, UNNEST(_data.col) AS t(col) WHERE t.col['a'] = 1",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected Column (k=this))"
+  },
+  {
+   "sql": "[x.STRING_SPLIT(' ')[i] FOR x IN ['1', '2', 3] IF x.CONTAINS('1')]",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #3: expected Dot (k=this))"
+  },
+  {
+   "sql": "SELECT LIST_VALUE(1)[i]",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected Array (k=this))"
+  },
+  {
+   "sql": "{'x': LIST_VALUE(1)[i]}",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #6: expected Array (k=this))"
+  },
+  {
+   "sql": "SELECT LIST_APPLY(RANGE(1, 4), i -> {'f1': LIST_VALUE(1, 2, 3)[i], 'f2': LIST_VALUE(1, 2, 3)[i]})",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #18: expected Array (k=this))"
+  },
+  {
+   "sql": "SELECT file[:256] FROM GLOB('*')",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected Column (k=this))"
+  },
+  {
+   "sql": "SELECT file[256] FROM GLOB('*')",
+   "reason": "apply_index_offset runs optimizer.annotate_types on the bracket subtree, dumping type (t) payloads; annotate_types (optimizer/typing metadata) is not ported \u2014 values match, only type annotations differ (ast-mismatch at #2: expected Column (k=this))"
+  }
+ ]
+}
