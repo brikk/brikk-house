@@ -1,5 +1,9 @@
 package dev.brikk.house.sql.ast
 
+import kotlin.String
+import kotlin.collections.List
+import kotlin.collections.Map
+
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -32,7 +36,9 @@ object ExpressionRegistry {
     private const val AGGREGATE = "sqlglot.expressions.aggregate"
     private const val DDL = "sqlglot.expressions.ddl"
 
-    val entries: Map<String, Entry> = mapOf(
+    // Handwritten node registrations; the generated catalog is merged in below
+    // (GeneratedRegistry.kt registers every class not listed here).
+    private val handwritten: Map<String, Entry> = mapOf(
         "Identifier" to Entry(CORE) { Identifier() },
         "Column" to Entry(CORE) { Column() },
         "Dot" to Entry(CORE) { Dot() },
@@ -119,6 +125,11 @@ object ExpressionRegistry {
         "RowNumber" to Entry(AGGREGATE) { RowNumber() },
         "Command" to Entry(DDL) { Command() },
     )
+
+    val entries: Map<String, Entry> = LinkedHashMap<String, Entry>(1100).also { m ->
+        m.putAll(handwritten)
+        registerAllGenerated(m)
+    }
 
     fun newInstance(simpleName: String): Expression =
         (entries[simpleName] ?: error("Unregistered expression class: $simpleName")).factory()

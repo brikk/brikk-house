@@ -1,5 +1,11 @@
 package dev.brikk.house.sql.ast
 
+// Explicit imports shield the kotlin builtins from same-package expression classes of
+// the same name (generated nodes include Array, List, Map, Set, String).
+import kotlin.String
+import kotlin.collections.List
+import kotlin.collections.Map
+
 /**
  * Hand-written port of the node subset from reference/sqlglot/sqlglot/expressions/.
  * Each class mirrors its Python twin's base classes and arg_types EXACTLY (see the
@@ -58,7 +64,7 @@ class Identifier(initArgs: Args = emptyMap()) : Expression(initArgs) {
 }
 
 // sqlglot: core.Column(Expression, Condition)
-class Column(initArgs: Args = emptyMap()) : Expression(initArgs), Condition {
+open class Column(initArgs: Args = emptyMap()) : Expression(initArgs), Condition {
     override val argTypes get() = ARG_TYPES
 
     // sqlglot: Column.table / db / catalog
@@ -173,7 +179,7 @@ class Null(initArgs: Args = emptyMap()) : Expression(initArgs), Condition {
 }
 
 // sqlglot: core.Alias(Expression)
-class Alias(initArgs: Args = emptyMap()) : Expression(initArgs) {
+open class Alias(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = ARG_TYPES
 
     companion object {
@@ -487,7 +493,7 @@ class Group(initArgs: Args = emptyMap()) : Expression(initArgs) {
 }
 
 // sqlglot: query.Order(Expression)
-class Order(initArgs: Args = emptyMap()) : Expression(initArgs) {
+open class Order(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = ARG_TYPES
 
     companion object {
@@ -602,8 +608,8 @@ class With(initArgs: Args = emptyMap()) : Expression(initArgs) {
     }
 }
 
-// sqlglot: query.SetOperation(Expression, Query)
-abstract class SetOperation(initArgs: Args = emptyMap()) : Expression(initArgs) {
+// sqlglot: query.SetOperation(Expression, Query). Open + concrete like Python.
+open class SetOperation(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = SET_OPERATION_ARG_TYPES
 
     // sqlglot: SetOperation.left / right
@@ -664,7 +670,7 @@ class Intersect(initArgs: Args = emptyMap()) : SetOperation(initArgs)
 // ---------------------------------------------------------------------------
 
 // sqlglot: functions.Cast(Expression, Func) — is_cast
-class Cast(initArgs: Args = emptyMap()) : Expression(initArgs), Func {
+open class Cast(initArgs: Args = emptyMap()) : Expression(initArgs), Func {
     override val argTypes get() = ARG_TYPES
     override val isCast get() = true
 

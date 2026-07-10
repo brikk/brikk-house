@@ -1,5 +1,12 @@
 package dev.brikk.house.sql.ast
 
+// Explicit imports shield the kotlin builtins from same-package expression classes of
+// the same name (generated nodes include Array, List, Map, Set, String).
+import kotlin.String
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.MutableList
+import kotlin.collections.MutableMap
 import kotlin.reflect.KClass
 
 /**
@@ -557,6 +564,6 @@ abstract class Binary(initArgs: Args = emptyMap()) : Expression(initArgs), Condi
 // sqlglot: core.Connector(Binary)
 abstract class Connector(initArgs: Args = emptyMap()) : Binary(initArgs)
 
-// sqlglot: core.Unary(Expression, Condition). Deviation: abstract in Kotlin (Python's
-// Unary is technically instantiable but never instantiated directly).
-abstract class Unary(initArgs: Args = emptyMap()) : Expression(initArgs), Condition
+// sqlglot: core.Unary(Expression, Condition). Open + concrete like Python's Unary
+// (instantiable, though never instantiated directly by the parser).
+open class Unary(initArgs: Args = emptyMap()) : Expression(initArgs), Condition

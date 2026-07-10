@@ -1,0 +1,7641 @@
+{
+ "sqlglot_version": "v30.12.0-44-g93d16591",
+ "class_count": 1017,
+ "traits": [
+  "AggFunc",
+  "Binary",
+  "ColumnConstraintKind",
+  "Condition",
+  "Connector",
+  "DDL",
+  "DML",
+  "DerivedTable",
+  "ExplodeOuter",
+  "Func",
+  "IntervalOp",
+  "Predicate",
+  "Query",
+  "Selectable",
+  "SubqueryPredicate",
+  "TimeUnit",
+  "UDTF"
+ ],
+ "classes": {
+  "AIAgg": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "AIClassify": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "categories": true,
+    "config": false
+   }
+  },
+  "AIEmbed": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "AIForecast": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "data_col": false,
+    "timestamp_col": false,
+    "model": false,
+    "id_cols": false,
+    "horizon": false,
+    "forecast_end_timestamp": false,
+    "confidence_level": false,
+    "output_historical_time_series": false,
+    "context_window": false
+   }
+  },
+  "AIGenerate": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "AISimilarity": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "AISummarizeAgg": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Abs": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Acos": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Acosh": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Add": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "AddConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "AddMonths": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "preserve_end_of_month": false
+   }
+  },
+  "AddPartition": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "exists": false,
+    "location": false
+   }
+  },
+  "Adjacent": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "AlgorithmProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Alias": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "alias": false
+   }
+  },
+  "Aliases": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "All": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "AllowedValuesProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "Alter": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": false,
+    "kind": true,
+    "actions": true,
+    "exists": false,
+    "only": false,
+    "options": false,
+    "cluster": false,
+    "not_valid": false,
+    "check": false,
+    "cascade": false,
+    "iceberg": false
+   }
+  },
+  "AlterColumn": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "dtype": false,
+    "collate": false,
+    "using": false,
+    "default": false,
+    "drop": false,
+    "comment": false,
+    "allow_null": false,
+    "visible": false,
+    "rename_to": false
+   }
+  },
+  "AlterDistStyle": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "AlterIndex": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "visible": true
+   }
+  },
+  "AlterModifySqlSecurity": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "AlterRename": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "AlterSession": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "expressions": true,
+    "unset": false
+   }
+  },
+  "AlterSet": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "expressions": false,
+    "option": false,
+    "tablespace": false,
+    "access_method": false,
+    "file_format": false,
+    "copy_options": false,
+    "tag": false,
+    "location": false,
+    "serde": false
+   }
+  },
+  "AlterSortKey": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": false,
+    "expressions": false,
+    "compound": false
+   }
+  },
+  "Analyze": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "kind": false,
+    "this": false,
+    "options": false,
+    "mode": false,
+    "partition": false,
+    "expression": false,
+    "properties": false
+   }
+  },
+  "AnalyzeColumns": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "AnalyzeDelete": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "kind": false
+   }
+  },
+  "AnalyzeHistogram": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expressions": true,
+    "expression": false,
+    "update_options": false
+   }
+  },
+  "AnalyzeListChainedRows": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expression": false
+   }
+  },
+  "AnalyzeSample": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "kind": true,
+    "sample": true
+   }
+  },
+  "AnalyzeStatistics": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "kind": true,
+    "option": false,
+    "this": false,
+    "expressions": false
+   }
+  },
+  "AnalyzeValidate": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "kind": true,
+    "this": false,
+    "expression": false
+   }
+  },
+  "AnalyzeWith": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "And": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Anonymous": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "AnonymousAggFunc": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "Any": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "AnyValue": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ApiProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "ApplicationProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Apply": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ApproxDistinct": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "accuracy": false
+   }
+  },
+  "ApproxPercentileAccumulate": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ApproxPercentileCombine": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ApproxPercentileEstimate": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "percentile": true
+   }
+  },
+  "ApproxQuantile": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "quantile": true,
+    "accuracy": false,
+    "weight": false,
+    "error_tolerance": false
+   }
+  },
+  "ApproxQuantiles": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ApproxTopK": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "counters": false
+   }
+  },
+  "ApproxTopKAccumulate": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ApproxTopKCombine": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ApproxTopKEstimate": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ApproxTopSum": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "count": true
+   }
+  },
+  "ApproximateSimilarity": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ArgMax": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "count": false
+   }
+  },
+  "ArgMin": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "count": false
+   }
+  },
+  "Array": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "expressions": false,
+    "bracket_notation": false,
+    "struct_name_inheritance": false
+   }
+  },
+  "ArrayAgg": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "nulls_excluded": false
+   }
+  },
+  "ArrayAll": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ArrayAny": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ArrayAppend": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "null_propagation": false
+   }
+  },
+  "ArrayCompact": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ArrayConcat": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "null_propagation": false
+   }
+  },
+  "ArrayConcatAgg": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ArrayConstructCompact": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "ArrayContainedBy": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ArrayContains": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "ensure_variant": false,
+    "check_null": false
+   }
+  },
+  "ArrayContainsAll": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ArrayDistinct": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "check_null": false
+   }
+  },
+  "ArrayExcept": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "is_multiset": false
+   }
+  },
+  "ArrayFilter": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ArrayFirst": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ArrayInsert": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "position": true,
+    "expression": true,
+    "offset": false
+   }
+  },
+  "ArrayIntersect": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "expressions": true,
+    "is_multiset": false
+   }
+  },
+  "ArrayLast": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ArrayMax": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ArrayMin": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ArrayOverlaps": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "null_safe": false
+   }
+  },
+  "ArrayPosition": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "zero_based": false
+   }
+  },
+  "ArrayPrepend": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "null_propagation": false
+   }
+  },
+  "ArrayRemove": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "null_propagation": false
+   }
+  },
+  "ArrayRemoveAt": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "position": true
+   }
+  },
+  "ArrayReverse": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ArraySize": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ArraySlice": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "start": true,
+    "end": false,
+    "step": false,
+    "zero_based": false
+   }
+  },
+  "ArraySort": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ArraySum": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ArrayToString": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "null": false,
+    "null_is_empty": false,
+    "null_delim_is_null": false
+   }
+  },
+  "ArrayUnionAgg": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ArrayUniqueAgg": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ArraysZip": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "Ascii": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Asin": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Asinh": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "AssumeColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "AtIndex": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "AtTimeZone": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "zone": true
+   }
+  },
+  "Atan": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "Atan2": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Atanh": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Attach": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "exists": false,
+    "expressions": false
+   }
+  },
+  "AttachOption": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "AutoIncrementColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "AutoIncrementProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "AutoRefreshProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Avg": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BackupProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Base64DecodeBinary": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "alphabet": false
+   }
+  },
+  "Base64DecodeString": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "alphabet": false
+   }
+  },
+  "Base64Encode": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "max_line_length": false,
+    "alphabet": false
+   }
+  },
+  "Between": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "low": true,
+    "high": true,
+    "symmetric": false
+   }
+  },
+  "BitLength": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitString": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitmapBitPosition": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitmapBucketNumber": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitmapConstructAgg": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitmapCount": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitmapOrAgg": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitwiseAnd": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "padside": false
+   }
+  },
+  "BitwiseAndAgg": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitwiseCount": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitwiseLeftShift": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "requires_int128": false
+   }
+  },
+  "BitwiseNot": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitwiseOr": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "padside": false
+   }
+  },
+  "BitwiseOrAgg": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "BitwiseRightShift": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "requires_int128": false
+   }
+  },
+  "BitwiseXor": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "padside": false
+   }
+  },
+  "BitwiseXorAgg": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Block": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "BlockCompressionProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "autotemp": false,
+    "always": false,
+    "default": false,
+    "manual": false,
+    "never": false
+   }
+  },
+  "Booland": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "round_input": false
+   }
+  },
+  "Boolean": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Boolnot": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "round_input": false
+   }
+  },
+  "Boolor": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "round_input": false
+   }
+  },
+  "BoolxorAgg": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Bracket": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": true,
+    "offset": false,
+    "safe": false,
+    "returns_list_for_maps": false,
+    "json_access": false
+   }
+  },
+  "BuildProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ByteLength": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ByteString": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "is_bytes": false
+   }
+  },
+  "CTE": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "alias": true,
+    "scalar": false,
+    "materialized": false,
+    "key_expressions": false
+   }
+  },
+  "Cache": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "lazy": false,
+    "options": false,
+    "expression": false
+   }
+  },
+  "CalledOnNullInputProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Case": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false,
+    "ifs": true,
+    "default": false
+   }
+  },
+  "CaseSpecificColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "not_": true
+   }
+  },
+  "Cast": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "to": true,
+    "format": false,
+    "safe": false,
+    "action": false,
+    "default": false
+   }
+  },
+  "CastToStrType": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "to": true
+   }
+  },
+  "CatalogProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Cbrt": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Ceil": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "decimals": false,
+    "to": false
+   }
+  },
+  "Changes": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "information": true,
+    "at_before": false,
+    "end": false
+   }
+  },
+  "CharacterSet": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "default": false
+   }
+  },
+  "CharacterSetColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "CharacterSetProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "default": true
+   }
+  },
+  "Check": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "CheckColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true,
+    "enforced": false
+   }
+  },
+  "CheckJson": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "CheckXml": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "disable_auto_convert": false
+   }
+  },
+  "ChecksumProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "on": false,
+    "default": false
+   }
+  },
+  "Chr": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "expressions": true,
+    "charset": false
+   }
+  },
+  "CityHash64": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "Clone": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "shallow": false,
+    "copy": false
+   }
+  },
+  "Cluster": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "ClusterProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false,
+    "expressions": false
+   }
+  },
+  "ClusteredByProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true,
+    "sorted_by": false,
+    "buckets": true
+   }
+  },
+  "ClusteredColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Coalesce": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "is_nvl": false,
+    "is_null": false
+   }
+  },
+  "CodePointsToBytes": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "CodePointsToString": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Collate": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "CollateColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "CollateProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "default": false
+   }
+  },
+  "Collation": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Column": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "table": false,
+    "db": false,
+    "catalog": false,
+    "join_mark": false
+   }
+  },
+  "ColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": false,
+    "kind": true
+   }
+  },
+  "ColumnDef": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "kind": false,
+    "constraints": false,
+    "exists": false,
+    "position": false,
+    "default": false,
+    "output": false
+   }
+  },
+  "ColumnPosition": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "position": true
+   }
+  },
+  "ColumnPrefix": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Columns": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "unpack": false
+   }
+  },
+  "CombinedAggFunc": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "CombinedParameterizedAgg": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": true,
+    "params": true
+   }
+  },
+  "Command": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "Comment": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "kind": true,
+    "expression": true,
+    "exists": false,
+    "materialized": false
+   }
+  },
+  "CommentColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Commit": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "chain": false,
+    "this": false,
+    "durability": false
+   }
+  },
+  "Comprehension": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "position": false,
+    "iterator": true,
+    "condition": false
+   }
+  },
+  "Compress": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "method": false
+   }
+  },
+  "CompressColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "ComputeProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "ComputedColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true,
+    "persisted": false,
+    "not_null": false,
+    "data_type": false
+   }
+  },
+  "Concat": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "expressions": true,
+    "safe": false,
+    "coalesce": false
+   }
+  },
+  "ConcatWs": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "expressions": true,
+    "safe": false,
+    "coalesce": false
+   }
+  },
+  "ConditionalInsert": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "else_": false
+   }
+  },
+  "Connect": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "start": false,
+    "connect": true,
+    "nocycle": false
+   }
+  },
+  "ConnectByRoot": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Constraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "Contains": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "json_scope": false
+   }
+  },
+  "Convert": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "style": false,
+    "safe": false
+   }
+  },
+  "ConvertTimezone": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "source_tz": false,
+    "target_tz": true,
+    "timestamp": true,
+    "options": false
+   }
+  },
+  "ConvertToCharset": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "dest": true,
+    "source": false
+   }
+  },
+  "Copy": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "this": true,
+    "kind": true,
+    "files": false,
+    "credentials": false,
+    "format": false,
+    "params": false
+   }
+  },
+  "CopyGrantsProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "CopyParameter": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "expressions": false
+   }
+  },
+  "Corr": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "null_on_zero_variance": false
+   }
+  },
+  "Cos": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Cosh": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "CosineDistance": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Cot": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Coth": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Count": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": false,
+    "expressions": false,
+    "big_int": false
+   }
+  },
+  "CountIf": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "zero_on_all_null": false
+   }
+  },
+  "CovarPop": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "CovarSamp": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Create": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "with_": false,
+    "this": true,
+    "kind": true,
+    "expression": false,
+    "exists": false,
+    "properties": false,
+    "replace": false,
+    "refresh": false,
+    "unique": false,
+    "indexes": false,
+    "no_schema_binding": false,
+    "begin": false,
+    "clone": false,
+    "concurrently": false,
+    "clustered": false
+   }
+  },
+  "Credentials": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "credentials": false,
+    "encryption": false,
+    "storage": false,
+    "iam_role": false,
+    "region": false
+   }
+  },
+  "CredentialsProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "Csc": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Csch": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Cube": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "CumeDist": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "CurrentAccount": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentAccountName": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentAvailableRoles": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentCatalog": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentClient": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentDatabase": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentDate": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "CurrentDatetime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "CurrentIpAddress": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentOrganizationName": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentOrganizationUser": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentRegion": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentRole": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentRoleType": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentSchema": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "CurrentSchemas": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "CurrentSecondaryRoles": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentSession": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentStatement": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentTime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "CurrentTimestamp": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false,
+    "sysdate": false
+   }
+  },
+  "CurrentTimestampLTZ": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {}
+  },
+  "CurrentTimezone": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {}
+  },
+  "CurrentTransaction": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentUser": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "CurrentUserId": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentVersion": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "CurrentWarehouse": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "DPipe": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "safe": false
+   }
+  },
+  "DataBlocksizeProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "size": false,
+    "units": false,
+    "minimum": false,
+    "maximum": false,
+    "default": false
+   }
+  },
+  "DataDeletionProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "on": true,
+    "filter_column": false,
+    "retention_period": false
+   }
+  },
+  "DataType": {
+   "module": "sqlglot.expressions.datatypes",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "nested": false,
+    "values": false,
+    "kind": false,
+    "nullable": false,
+    "collate": false
+   }
+  },
+  "DataTypeParam": {
+   "module": "sqlglot.expressions.datatypes",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "DatabaseProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Date": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false,
+    "zone": false,
+    "expressions": false
+   }
+  },
+  "DateAdd": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "DateBin": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false,
+    "zone": false,
+    "origin": false
+   }
+  },
+  "DateDiff": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false,
+    "zone": false,
+    "big_int": false,
+    "date_part_boundary": false
+   }
+  },
+  "DateFormatColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DateFromParts": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "year": true,
+    "month": false,
+    "day": false,
+    "allow_overflow": false
+   }
+  },
+  "DateFromUnixDate": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DateStrToDate": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DateSub": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "DateToDateStr": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DateToDi": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DateTrunc": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "unit": true,
+    "this": true,
+    "zone": false,
+    "input_type_preserved": false
+   }
+  },
+  "Datetime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "DatetimeAdd": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "DatetimeDiff": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "DatetimeSub": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "DatetimeTrunc": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "unit": true,
+    "zone": false
+   }
+  },
+  "Day": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DayOfMonth": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DayOfWeek": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DayOfWeekIso": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DayOfYear": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Dayname": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "abbreviated": false
+   }
+  },
+  "Declare": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "expressions": true,
+    "replace": false
+   }
+  },
+  "DeclareItem": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "kind": false,
+    "default": false
+   }
+  },
+  "Decode": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "charset": true,
+    "replace": false
+   }
+  },
+  "DecodeCase": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "DecompressBinary": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "method": true
+   }
+  },
+  "DecompressString": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "method": true
+   }
+  },
+  "Decrypt": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "passphrase": true,
+    "aad": false,
+    "encryption_method": false,
+    "safe": false
+   }
+  },
+  "DecryptRaw": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "key": true,
+    "iv": true,
+    "aad": false,
+    "encryption_method": false,
+    "aead": false,
+    "safe": false
+   }
+  },
+  "DefaultColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DefinerProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Degrees": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Delete": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "with_": false,
+    "this": false,
+    "using": false,
+    "where": false,
+    "returning": false,
+    "order": false,
+    "limit": false,
+    "tables": false,
+    "cluster": false,
+    "hint": false
+   }
+  },
+  "DenseRank": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "Describe": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "style": false,
+    "kind": false,
+    "properties": false,
+    "expressions": false,
+    "partition": false,
+    "format": false,
+    "as_json": false
+   }
+  },
+  "Detach": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "kind": false,
+    "exists": false,
+    "cluster": false,
+    "permanent": false,
+    "sync": false
+   }
+  },
+  "DiToDate": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DictProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "kind": true,
+    "settings": false
+   }
+  },
+  "DictRange": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "min": true,
+    "max": true
+   }
+  },
+  "DictSubProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "value": true
+   }
+  },
+  "Directory": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "this": true,
+    "local": false,
+    "row_format": false
+   }
+  },
+  "DirectoryStage": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DistKeyProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "DistStyleProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Distance": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "DistanceNd": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Distinct": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "expressions": false,
+    "on": false
+   }
+  },
+  "Distribute": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "expressions": true,
+    "siblings": false
+   }
+  },
+  "DistributedByProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": false,
+    "kind": true,
+    "buckets": false,
+    "order": false
+   }
+  },
+  "Div": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "typed": false,
+    "safe": false
+   }
+  },
+  "Dot": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "DotProduct": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Drop": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": false,
+    "kind": false,
+    "expressions": false,
+    "exists": false,
+    "temporary": false,
+    "materialized": false,
+    "cascade": false,
+    "restrict": false,
+    "constraints": false,
+    "purge": false,
+    "cluster": false,
+    "concurrently": false,
+    "sync": false,
+    "iceberg": false
+   }
+  },
+  "DropPartition": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true,
+    "exists": false
+   }
+  },
+  "DropPrimaryKey": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {}
+  },
+  "DuplicateKeyProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "DynamicIdentifier": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "DynamicProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "EQ": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Elt": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "EmptyProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Encode": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "charset": true
+   }
+  },
+  "EncodeColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "EncodeProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "properties": false,
+    "key": false
+   }
+  },
+  "Encrypt": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "passphrase": true,
+    "aad": false,
+    "encryption_method": false
+   }
+  },
+  "EncryptRaw": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "key": true,
+    "iv": true,
+    "aad": false,
+    "encryption_method": false
+   }
+  },
+  "EndStatement": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {}
+  },
+  "EndsWith": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "EngineProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "EnviromentProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "EphemeralColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "EqualNull": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Escape": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "EuclideanDistance": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Except": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "with_": false,
+    "this": true,
+    "expression": true,
+    "distinct": false,
+    "by_name": false,
+    "side": false,
+    "kind": false,
+    "on": false,
+    "match": false,
+    "laterals": false,
+    "joins": false,
+    "connect": false,
+    "pivots": false,
+    "prewhere": false,
+    "where": false,
+    "group": false,
+    "having": false,
+    "qualify": false,
+    "windows": false,
+    "distribute": false,
+    "sort": false,
+    "cluster": false,
+    "order": false,
+    "limit": false,
+    "offset": false,
+    "locks": false,
+    "sample": false,
+    "settings": false,
+    "format": false,
+    "options": false,
+    "for_": false
+   }
+  },
+  "ExcludeColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Execute": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "return_status": false
+   }
+  },
+  "ExecuteAsProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ExecuteSql": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "return_status": false
+   }
+  },
+  "Exists": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "Exp": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Explode": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "ExplodingGenerateSeries": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "start": true,
+    "end": true,
+    "step": false,
+    "is_end_exclusive": false
+   }
+  },
+  "Export": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "this": true,
+    "connection": false,
+    "options": true
+   }
+  },
+  "ExtendsLeft": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ExtendsRight": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ExternalProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Extract": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Factorial": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "FallbackProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "no": true,
+    "protection": false
+   }
+  },
+  "FarmFingerprint": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "FeaturesAtTime": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "time": false,
+    "num_rows": false,
+    "ignore_feature_nulls": false
+   }
+  },
+  "Fetch": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "direction": false,
+    "count": false,
+    "limit_options": false
+   }
+  },
+  "FileFormatProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false,
+    "expressions": false,
+    "hive_format": false
+   }
+  },
+  "Filter": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Final": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "First": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "FirstValue": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Flatten": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Float64": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "Floor": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "decimals": false,
+    "to": false
+   }
+  },
+  "ForClause": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "kind": true,
+    "expressions": false
+   }
+  },
+  "ForIn": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ForceProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "ForeignKey": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "expressions": false,
+    "reference": false,
+    "delete": false,
+    "update": false,
+    "options": false
+   }
+  },
+  "Format": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "FormatJson": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "FormatPhrase": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "format": true
+   }
+  },
+  "FreespaceProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "percent": false
+   }
+  },
+  "From": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "FromBase": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "FromBase32": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "FromBase64": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "FromISO8601Date": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "FromISO8601Timestamp": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "FromISO8601TimestampNanos": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "FromTimeZone": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "zone": true
+   }
+  },
+  "GT": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "GTE": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "GapFill": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "ts_column": true,
+    "bucket_width": true,
+    "partitioning_columns": false,
+    "value_columns": false,
+    "origin": false,
+    "ignore_nulls": false
+   }
+  },
+  "GenerateBool": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "params_struct": false
+   }
+  },
+  "GenerateDateArray": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "start": true,
+    "end": true,
+    "step": false
+   }
+  },
+  "GenerateDouble": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "params_struct": false
+   }
+  },
+  "GenerateEmbedding": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "params_struct": false,
+    "is_text": false
+   }
+  },
+  "GenerateInt": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "params_struct": false
+   }
+  },
+  "GenerateSeries": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "start": true,
+    "end": true,
+    "step": false,
+    "is_end_exclusive": false
+   }
+  },
+  "GenerateTable": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "params_struct": false
+   }
+  },
+  "GenerateText": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "params_struct": false
+   }
+  },
+  "GenerateTimestampArray": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "start": true,
+    "end": true,
+    "step": true
+   }
+  },
+  "GeneratedAsIdentityColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": false,
+    "expression": false,
+    "on_null": false,
+    "start": false,
+    "increment": false,
+    "minvalue": false,
+    "maxvalue": false,
+    "cycle": false,
+    "order": false
+   }
+  },
+  "GeneratedAsRowColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "start": false,
+    "hidden": false
+   }
+  },
+  "Generator": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "rowcount": false,
+    "timelimit": false
+   }
+  },
+  "Get": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "target": true,
+    "properties": false
+   }
+  },
+  "GetExtract": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "GetIgnoreCase": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Getbit": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "zero_is_msb": false
+   }
+  },
+  "Glob": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "GlobalProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Grant": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "privileges": true,
+    "kind": false,
+    "securable": true,
+    "principals": true,
+    "grant_option": false
+   }
+  },
+  "GrantPrincipal": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "kind": false
+   }
+  },
+  "GrantPrivilege": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "Greatest": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "ignore_nulls": true
+   }
+  },
+  "Group": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": false,
+    "grouping_sets": false,
+    "cube": false,
+    "rollup": false,
+    "totals": false,
+    "all": false
+   }
+  },
+  "GroupConcat": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "separator": false,
+    "on_overflow": false
+   }
+  },
+  "Grouping": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "GroupingId": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "GroupingSets": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "HandlerProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "HashAgg": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "Having": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "HavingMax": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "max": true
+   }
+  },
+  "HeapProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Heredoc": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "tag": false
+   }
+  },
+  "Hex": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "case": false
+   }
+  },
+  "HexDecodeString": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "HexString": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "is_integer": false
+   }
+  },
+  "Hint": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "HistoricalData": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "kind": true,
+    "expression": true
+   }
+  },
+  "Hll": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "Host": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Hour": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "HybridProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "ILike": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "negate": false
+   }
+  },
+  "IcebergProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Identifier": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "quoted": false,
+    "global_": false,
+    "temporary": false
+   }
+  },
+  "If": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "true": true,
+    "false": false
+   }
+  },
+  "IfBlock": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "true": true,
+    "false": false
+   }
+  },
+  "IgnoreNulls": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "In": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "query": false,
+    "unnest": false,
+    "field": false,
+    "is_global": false
+   }
+  },
+  "InOutColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "input_": false,
+    "output": false,
+    "variadic": false
+   }
+  },
+  "IncludeProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "alias": false,
+    "column_def": false
+   }
+  },
+  "Index": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "table": false,
+    "unique": false,
+    "primary": false,
+    "amp": false,
+    "params": false
+   }
+  },
+  "IndexColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": false,
+    "expressions": false,
+    "kind": false,
+    "index_type": false,
+    "options": false,
+    "expression": false,
+    "granularity": false
+   }
+  },
+  "IndexConstraintOption": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "key_block_size": false,
+    "using": false,
+    "parser": false,
+    "comment": false,
+    "visible": false,
+    "engine_attr": false,
+    "secondary_engine_attr": false
+   }
+  },
+  "IndexParameters": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "using": false,
+    "include": false,
+    "columns": false,
+    "with_storage": false,
+    "partition_by": false,
+    "tablespace": false,
+    "where": false,
+    "on": false
+   }
+  },
+  "IndexTableHint": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "target": false
+   }
+  },
+  "InheritsProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "Initcap": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "Inline": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "InlineLengthColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "InputModelProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "InputOutputFormat": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "input_format": false,
+    "output_format": false
+   }
+  },
+  "Insert": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "hint": false,
+    "with_": false,
+    "is_function": false,
+    "this": false,
+    "expression": false,
+    "conflict": false,
+    "returning": false,
+    "overwrite": false,
+    "exists": false,
+    "alternative": false,
+    "where": false,
+    "ignore": false,
+    "by_name": false,
+    "stored": false,
+    "partition": false,
+    "settings": false,
+    "source": false,
+    "default": false
+   }
+  },
+  "Install": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "from_": false,
+    "force": false
+   }
+  },
+  "Int64": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "IntDiv": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Intersect": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "with_": false,
+    "this": true,
+    "expression": true,
+    "distinct": false,
+    "by_name": false,
+    "side": false,
+    "kind": false,
+    "on": false,
+    "match": false,
+    "laterals": false,
+    "joins": false,
+    "connect": false,
+    "pivots": false,
+    "prewhere": false,
+    "where": false,
+    "group": false,
+    "having": false,
+    "qualify": false,
+    "windows": false,
+    "distribute": false,
+    "sort": false,
+    "cluster": false,
+    "order": false,
+    "limit": false,
+    "offset": false,
+    "locks": false,
+    "sample": false,
+    "settings": false,
+    "format": false,
+    "options": false,
+    "for_": false
+   }
+  },
+  "Interval": {
+   "module": "sqlglot.expressions.datatypes",
+   "arg_types": {
+    "this": false,
+    "unit": false
+   }
+  },
+  "IntervalSpan": {
+   "module": "sqlglot.expressions.datatypes",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Into": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "temporary": false,
+    "unlogged": false,
+    "bulk_collect": false,
+    "expressions": false
+   }
+  },
+  "Introducer": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "InvisibleColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {}
+  },
+  "Is": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "IsArray": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "IsAscii": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "IsInf": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "IsNan": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "IsNullValue": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "IsolatedLoadingProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "no": false,
+    "concurrent": false,
+    "target": false
+   }
+  },
+  "JSON": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "with_": false,
+    "unique": false
+   }
+  },
+  "JSONArray": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "expressions": false,
+    "null_handling": false,
+    "return_type": false,
+    "strict": false
+   }
+  },
+  "JSONArrayAgg": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "order": false,
+    "null_handling": false,
+    "return_type": false,
+    "strict": false
+   }
+  },
+  "JSONArrayAppend": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "JSONArrayContains": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "json_type": false
+   }
+  },
+  "JSONArrayInsert": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "JSONBContains": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "JSONBContainsAllTopKeys": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "JSONBContainsAnyTopKeys": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "JSONBDeleteAtPath": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "JSONBExists": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "path": true
+   }
+  },
+  "JSONBExtract": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "JSONBExtractScalar": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "json_type": false
+   }
+  },
+  "JSONBObjectAgg": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "JSONBPathExists": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "JSONBool": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "JSONCast": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "to": true,
+    "format": false,
+    "safe": false,
+    "action": false,
+    "default": false
+   }
+  },
+  "JSONColumnDef": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "kind": false,
+    "path": false,
+    "nested_schema": false,
+    "ordinality": false,
+    "format_json": false
+   }
+  },
+  "JSONExists": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "path": true,
+    "passing": false,
+    "on_condition": false,
+    "from_dcolonqmark": false
+   }
+  },
+  "JSONExtract": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "only_json_types": false,
+    "expressions": false,
+    "variant_extract": false,
+    "json_query": false,
+    "option": false,
+    "quote": false,
+    "on_condition": false,
+    "requires_json": false,
+    "emits": false
+   }
+  },
+  "JSONExtractArray": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "JSONExtractQuote": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "option": true,
+    "scalar": false
+   }
+  },
+  "JSONExtractScalar": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "only_json_types": false,
+    "expressions": false,
+    "json_type": false,
+    "scalar_only": false
+   }
+  },
+  "JSONFormat": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": false,
+    "options": false,
+    "is_json": false,
+    "to_json": false
+   }
+  },
+  "JSONKeyValue": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "JSONKeys": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "expressions": false
+   }
+  },
+  "JSONKeysAtDepth": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "mode": false
+   }
+  },
+  "JSONObject": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "expressions": false,
+    "null_handling": false,
+    "unique_keys": false,
+    "return_type": false,
+    "encoding": false
+   }
+  },
+  "JSONObjectAgg": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "expressions": false,
+    "null_handling": false,
+    "unique_keys": false,
+    "return_type": false,
+    "encoding": false
+   }
+  },
+  "JSONPath": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "JSONPathFilter": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "JSONPathKey": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "quoted": false
+   }
+  },
+  "JSONPathPart": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {}
+  },
+  "JSONPathRecursive": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "JSONPathRoot": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {}
+  },
+  "JSONPathScript": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "JSONPathSelector": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "JSONPathSlice": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "start": false,
+    "end": false,
+    "step": false
+   }
+  },
+  "JSONPathSubscript": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "JSONPathUnion": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "JSONPathWildcard": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {}
+  },
+  "JSONRemove": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "JSONSchema": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "JSONSet": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "JSONStripNulls": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "include_arrays": false,
+    "remove_empty": false
+   }
+  },
+  "JSONTable": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "schema": true,
+    "path": false,
+    "error_handling": false,
+    "empty_handling": false
+   }
+  },
+  "JSONType": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "JSONValue": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "path": true,
+    "returning": false,
+    "on_condition": false
+   }
+  },
+  "JSONValueArray": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "JarowinklerSimilarity": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "case_insensitive": false,
+    "integer_scale": false
+   }
+  },
+  "Join": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "on": false,
+    "side": false,
+    "kind": false,
+    "using": false,
+    "method": false,
+    "global_": false,
+    "hint": false,
+    "match_condition": false,
+    "directed": false,
+    "expressions": false,
+    "pivots": false
+   }
+  },
+  "JoinHint": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "JournalProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "no": false,
+    "dual": false,
+    "before": false,
+    "local": false,
+    "after": false
+   }
+  },
+  "JustifyDays": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "JustifyHours": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "JustifyInterval": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Kill": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "kind": false
+   }
+  },
+  "Kurtosis": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Kwarg": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "LT": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "LTE": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Lag": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "offset": false,
+    "default": false
+   }
+  },
+  "Lambda": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expressions": true,
+    "colon": false
+   }
+  },
+  "LanguageProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Last": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "LastDay": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "unit": false
+   }
+  },
+  "LastValue": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Lateral": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "view": false,
+    "outer": false,
+    "alias": false,
+    "cross_apply": false,
+    "ordinality": false
+   }
+  },
+  "LaxBool": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "LaxFloat64": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "LaxInt64": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "LaxString": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Lead": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "offset": false,
+    "default": false
+   }
+  },
+  "Least": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "ignore_nulls": true
+   }
+  },
+  "Left": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "negative_length_returns_empty": false
+   }
+  },
+  "Length": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "binary": false,
+    "encoding": false
+   }
+  },
+  "Levenshtein": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "ins_cost": false,
+    "del_cost": false,
+    "sub_cost": false,
+    "max_dist": false
+   }
+  },
+  "Like": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "negate": false
+   }
+  },
+  "LikeProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "Limit": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "expression": true,
+    "offset": false,
+    "limit_options": false,
+    "expressions": false
+   }
+  },
+  "LimitOptions": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "percent": false,
+    "rows": false,
+    "with_ties": false
+   }
+  },
+  "List": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "Literal": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "is_string": true
+   }
+  },
+  "Ln": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "LoadData": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "this": true,
+    "local": false,
+    "overwrite": false,
+    "temp": false,
+    "inpath": false,
+    "files": false,
+    "partition": false,
+    "input_format": false,
+    "serde": false
+   }
+  },
+  "Localtime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Localtimestamp": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "LocationProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Lock": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "update": true,
+    "expressions": false,
+    "wait": false,
+    "key": false
+   }
+  },
+  "LockProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "LockingProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false,
+    "kind": true,
+    "for_or_in": false,
+    "lock_type": true,
+    "override": false
+   }
+  },
+  "LockingStatement": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Log": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "LogProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "no": true
+   }
+  },
+  "LogicalAnd": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "LogicalOr": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Lower": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "LowerHex": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "case": false
+   }
+  },
+  "MD5": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "MD5Digest": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "MD5NumberLower64": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "MD5NumberUpper64": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "MLForecast": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "params_struct": false
+   }
+  },
+  "MLTranslate": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "params_struct": true
+   }
+  },
+  "MacroOverload": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "is_table": false
+   }
+  },
+  "MacroOverloads": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "MakeInterval": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "year": false,
+    "month": false,
+    "week": false,
+    "day": false,
+    "hour": false,
+    "minute": false,
+    "second": false
+   }
+  },
+  "ManhattanDistance": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Map": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "keys": false,
+    "values": false
+   }
+  },
+  "MapCat": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "MapContainsKey": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "key": true
+   }
+  },
+  "MapDelete": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "MapFromEntries": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "MapInsert": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "key": false,
+    "value": true,
+    "update_flag": false
+   }
+  },
+  "MapKeys": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "MapPick": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "MapSize": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "MaskingPolicyColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "MaskingProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Match": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "MatchAgainst": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expressions": true,
+    "modifier": false
+   }
+  },
+  "MatchRecognize": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "partition_by": false,
+    "order": false,
+    "measures": false,
+    "rows": false,
+    "after": false,
+    "pattern": false,
+    "define": false,
+    "alias": false
+   }
+  },
+  "MatchRecognizeMeasure": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "window_frame": false
+   }
+  },
+  "MaterializedProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Max": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "Median": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Merge": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "this": true,
+    "using": true,
+    "on": false,
+    "using_cond": false,
+    "whens": true,
+    "with_": false,
+    "returning": false
+   }
+  },
+  "MergeBlockRatioProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false,
+    "no": false,
+    "default": false,
+    "percent": false
+   }
+  },
+  "MergeTreeTTL": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "expressions": true,
+    "where": false,
+    "group": false,
+    "aggregates": false
+   }
+  },
+  "MergeTreeTTLAction": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "delete": false,
+    "recompress": false,
+    "to_disk": false,
+    "to_volume": false
+   }
+  },
+  "Min": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "Minhash": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "MinhashCombine": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Minute": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Mod": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Mode": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": false,
+    "deterministic": false
+   }
+  },
+  "ModelAttribute": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ModifyColumn": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "rename_from": false
+   }
+  },
+  "ModuleProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "Month": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Monthname": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "abbreviated": false
+   }
+  },
+  "MonthsBetween": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "roundoff": false
+   }
+  },
+  "Mul": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "MultitableInserts": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true,
+    "kind": true,
+    "source": true
+   }
+  },
+  "NEQ": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "National": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Neg": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "NestedJSONSelect": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "NetFunc": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "NetworkProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "NextDay": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "NextValueFor": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "order": false
+   }
+  },
+  "NoPrimaryIndexProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "NonClusteredColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Normal": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "stddev": true,
+    "gen": true
+   }
+  },
+  "Normalize": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "form": false,
+    "is_casefold": false
+   }
+  },
+  "Not": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "NotForReplicationColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {}
+  },
+  "NotNullColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "allow_null": false
+   }
+  },
+  "NthValue": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "offset": true,
+    "from_first": false
+   }
+  },
+  "Ntile": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Null": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {}
+  },
+  "NullSafeEQ": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "NullSafeNEQ": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Nullif": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "NumberToStr": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "format": true,
+    "culture": false
+   }
+  },
+  "Nvl2": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "true": true,
+    "false": false
+   }
+  },
+  "ObjectAgg": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ObjectId": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ObjectIdentifier": {
+   "module": "sqlglot.expressions.datatypes",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ObjectInsert": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "key": true,
+    "value": true,
+    "update_flag": false
+   }
+  },
+  "ObjectTransform": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "keep": false,
+    "set_": false
+   }
+  },
+  "Offset": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "expression": true,
+    "expressions": false
+   }
+  },
+  "OnCluster": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "OnCommitProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "delete": false
+   }
+  },
+  "OnCondition": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "error": false,
+    "empty": false,
+    "null": false
+   }
+  },
+  "OnConflict": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "duplicate": false,
+    "expressions": false,
+    "action": false,
+    "conflict_keys": false,
+    "index_predicate": false,
+    "constraint": false,
+    "where": false
+   }
+  },
+  "OnProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "OnUpdateColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Opclass": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "OpenJSON": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "path": false,
+    "expressions": false
+   }
+  },
+  "OpenJSONColumnDef": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "kind": true,
+    "path": false,
+    "as_json": false
+   }
+  },
+  "Operator": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "operator": true,
+    "expression": true
+   }
+  },
+  "Or": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Order": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "expressions": true,
+    "siblings": false
+   }
+  },
+  "Ordered": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "desc": false,
+    "nulls_first": true,
+    "with_fill": false
+   }
+  },
+  "OutputModelProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "OverflowTruncateBehavior": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "with_count": true
+   }
+  },
+  "Overlaps": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Overlay": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "from_": true,
+    "for_": false
+   }
+  },
+  "Pad": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "fill_pattern": false,
+    "is_left": true
+   }
+  },
+  "Parameter": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "ParameterStyleProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ParameterizedAgg": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expressions": true,
+    "params": true
+   }
+  },
+  "Paren": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ParseBignumeric": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ParseDatetime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "format": false,
+    "zone": false,
+    "default_year": false
+   }
+  },
+  "ParseIp": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "type": true,
+    "permissive": false
+   }
+  },
+  "ParseJSON": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "safe": false
+   }
+  },
+  "ParseNumeric": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ParseTime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "format": true
+   }
+  },
+  "ParseUrl": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "part_to_extract": false,
+    "key": false,
+    "permissive": false
+   }
+  },
+  "Partition": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true,
+    "subpartition": false
+   }
+  },
+  "PartitionBoundSpec": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false,
+    "expression": false,
+    "from_expressions": false,
+    "to_expressions": false
+   }
+  },
+  "PartitionByListProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "partition_expressions": true,
+    "create_expressions": true
+   }
+  },
+  "PartitionByRangeProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "partition_expressions": true,
+    "create_expressions": true
+   }
+  },
+  "PartitionByRangePropertyDynamic": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false,
+    "start": true,
+    "end": true,
+    "every": true
+   }
+  },
+  "PartitionByTruncate": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "PartitionId": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "PartitionList": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "PartitionRange": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "expressions": false
+   }
+  },
+  "PartitionedByBucket": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "PartitionedByProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "PartitionedOfProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "PathColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "PercentRank": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "PercentileCont": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "PercentileDisc": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "PeriodForSystemTimeConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Pi": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {}
+  },
+  "Pivot": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "alias": false,
+    "expressions": false,
+    "fields": false,
+    "unpivot": false,
+    "using": false,
+    "group": false,
+    "columns": false,
+    "include_nulls": false,
+    "default_on_null": false,
+    "into": false,
+    "with_": false,
+    "identify_pivot_strings": false,
+    "prefixed_pivot_columns": false,
+    "pivot_column_naming": false
+   }
+  },
+  "PivotAlias": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "alias": false
+   }
+  },
+  "PivotAny": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Placeholder": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": false,
+    "kind": false,
+    "widget": false,
+    "jdbc": false
+   }
+  },
+  "Posexplode": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "PosexplodeOuter": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "PositionalColumn": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Pow": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Pragma": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "PreWhere": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Predict": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "params_struct": false
+   }
+  },
+  "PreviousDay": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "PrimaryKey": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": false,
+    "expressions": true,
+    "options": false,
+    "include": false
+   }
+  },
+  "PrimaryKeyColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "desc": false,
+    "options": false
+   }
+  },
+  "Prior": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ProjectionDef": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "ProjectionPolicyColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Properties": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "Property": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "value": true
+   }
+  },
+  "PropertyEQ": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "PseudoType": {
+   "module": "sqlglot.expressions.datatypes",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Pseudocolumn": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "table": false,
+    "db": false,
+    "catalog": false,
+    "join_mark": false
+   }
+  },
+  "Put": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "target": true,
+    "properties": false
+   }
+  },
+  "Qualify": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Quantile": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "quantile": true
+   }
+  },
+  "Quarter": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "QueryBand": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "scope": false,
+    "update": false
+   }
+  },
+  "QueryOption": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "QueryTransform": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true,
+    "command_script": true,
+    "schema": false,
+    "row_format_before": false,
+    "record_writer": false,
+    "row_format_after": false,
+    "record_reader": false
+   }
+  },
+  "Radians": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Rand": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false,
+    "lower": false,
+    "upper": false
+   }
+  },
+  "Randn": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Randstr": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "generator": false
+   }
+  },
+  "RangeBucket": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "RangeN": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expressions": true,
+    "each": false
+   }
+  },
+  "Rank": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "RawString": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ReadCSV": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  },
+  "ReadParquet": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "RecursiveWithSearch": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "kind": true,
+    "this": true,
+    "expression": true,
+    "using": false
+   }
+  },
+  "Reduce": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "initial": true,
+    "merge": true,
+    "finish": false
+   }
+  },
+  "Reference": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "options": false
+   }
+  },
+  "Refresh": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "kind": true
+   }
+  },
+  "RefreshTriggerProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "method": false,
+    "kind": false,
+    "every": false,
+    "unit": false,
+    "starts": false
+   }
+  },
+  "RegDomain": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "RegexpCount": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "position": false,
+    "parameters": false
+   }
+  },
+  "RegexpExtract": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "position": false,
+    "occurrence": false,
+    "parameters": false,
+    "group": false,
+    "null_if_pos_overflow": false
+   }
+  },
+  "RegexpExtractAll": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "group": false,
+    "parameters": false,
+    "position": false,
+    "occurrence": false
+   }
+  },
+  "RegexpFullMatch": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "options": false
+   }
+  },
+  "RegexpILike": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "flag": false
+   }
+  },
+  "RegexpInstr": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "position": false,
+    "occurrence": false,
+    "option": false,
+    "parameters": false,
+    "group": false
+   }
+  },
+  "RegexpLike": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "flag": false,
+    "full_match": false
+   }
+  },
+  "RegexpReplace": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "replacement": false,
+    "position": false,
+    "occurrence": false,
+    "modifiers": false,
+    "single_replace": false
+   }
+  },
+  "RegexpSplit": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "limit": false
+   }
+  },
+  "RegexpSubstr": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "position": false,
+    "occurrence": false,
+    "parameters": false,
+    "group": false
+   }
+  },
+  "RegrAvgx": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "RegrAvgy": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "RegrCount": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "RegrIntercept": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "RegrR2": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "RegrSlope": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "RegrSxx": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "RegrSxy": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "RegrSyy": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "RegrValx": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "RegrValy": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "RemoteWithConnectionModelProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "RenameColumn": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "to": true,
+    "exists": false
+   }
+  },
+  "RenameIndex": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "to": true
+   }
+  },
+  "Repeat": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "times": true
+   }
+  },
+  "Replace": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "replacement": false
+   }
+  },
+  "ReplacePartition": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expression": true,
+    "source": true
+   }
+  },
+  "RespectNulls": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Return": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Returning": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "expressions": true,
+    "into": false
+   }
+  },
+  "ReturnsProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false,
+    "is_table": false,
+    "table": false,
+    "null": false
+   }
+  },
+  "Reverse": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Revoke": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "privileges": true,
+    "kind": false,
+    "securable": true,
+    "principals": true,
+    "grant_option": false,
+    "cascade": false
+   }
+  },
+  "Right": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "negative_length_returns_empty": false
+   }
+  },
+  "Rollback": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "savepoint": false,
+    "this": false
+   }
+  },
+  "Rollup": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "RollupIndex": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "expressions": true,
+    "from_index": false,
+    "properties": false
+   }
+  },
+  "RollupProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "Round": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "decimals": false,
+    "truncate": false,
+    "casts_non_integer_decimals": false
+   }
+  },
+  "RowAccessProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false,
+    "expressions": false
+   }
+  },
+  "RowFormatDelimitedProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "fields": false,
+    "escaped": false,
+    "collection_items": false,
+    "map_keys": false,
+    "lines": false,
+    "null": false,
+    "serde": false
+   }
+  },
+  "RowFormatProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "RowFormatSerdeProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "serde_properties": false
+   }
+  },
+  "RowNumber": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "RtrimmedLength": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SHA": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SHA1Digest": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SHA2": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "length": false
+   }
+  },
+  "SHA2Digest": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "length": false
+   }
+  },
+  "SafeAdd": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "SafeConvertBytesToString": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SafeDivide": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "SafeFunc": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SafeMultiply": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "SafeNegate": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SafeSubtract": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "SampleProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Schema": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "expressions": false
+   }
+  },
+  "SchemaCommentProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ScopeResolution": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "expression": true
+   }
+  },
+  "Search": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "json_scope": false,
+    "analyzer": false,
+    "analyzer_options": false,
+    "search_mode": false
+   }
+  },
+  "SearchIp": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Sec": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Sech": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Second": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SecureProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "SecurityIntegrationProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Select": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "with_": false,
+    "kind": false,
+    "expressions": false,
+    "hint": false,
+    "distinct": false,
+    "into": false,
+    "from_": false,
+    "operation_modifiers": false,
+    "exclude": false,
+    "match": false,
+    "laterals": false,
+    "joins": false,
+    "connect": false,
+    "pivots": false,
+    "prewhere": false,
+    "where": false,
+    "group": false,
+    "having": false,
+    "qualify": false,
+    "windows": false,
+    "distribute": false,
+    "sort": false,
+    "cluster": false,
+    "order": false,
+    "limit": false,
+    "offset": false,
+    "locks": false,
+    "sample": false,
+    "settings": false,
+    "format": false,
+    "options": false,
+    "for_": false
+   }
+  },
+  "SemanticView": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "metrics": false,
+    "dimensions": false,
+    "facts": false,
+    "where": false
+   }
+  },
+  "Semicolon": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {}
+  },
+  "Seq1": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Seq2": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Seq4": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Seq8": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "SequenceProperties": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "increment": false,
+    "minvalue": false,
+    "maxvalue": false,
+    "cache": false,
+    "start": false,
+    "owned": false,
+    "options": false
+   }
+  },
+  "SerdeProperties": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true,
+    "with_": false
+   }
+  },
+  "SessionParameter": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "kind": false
+   }
+  },
+  "SessionUser": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {}
+  },
+  "Set": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "expressions": false,
+    "unset": false,
+    "tag": false
+   }
+  },
+  "SetConfigProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SetItem": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": false,
+    "expressions": false,
+    "kind": false,
+    "collate": false,
+    "global_": false
+   }
+  },
+  "SetOperation": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "with_": false,
+    "this": true,
+    "expression": true,
+    "distinct": false,
+    "by_name": false,
+    "side": false,
+    "kind": false,
+    "on": false,
+    "match": false,
+    "laterals": false,
+    "joins": false,
+    "connect": false,
+    "pivots": false,
+    "prewhere": false,
+    "where": false,
+    "group": false,
+    "having": false,
+    "qualify": false,
+    "windows": false,
+    "distribute": false,
+    "sort": false,
+    "cluster": false,
+    "order": false,
+    "limit": false,
+    "offset": false,
+    "locks": false,
+    "sample": false,
+    "settings": false,
+    "format": false,
+    "options": false,
+    "for_": false
+   }
+  },
+  "SetProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "multi": true
+   }
+  },
+  "SettingsProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "SharingProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Show": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "history": false,
+    "terse": false,
+    "target": false,
+    "offset": false,
+    "starts_with": false,
+    "limit": false,
+    "from_": false,
+    "like": false,
+    "where": false,
+    "db": false,
+    "scope": false,
+    "scope_kind": false,
+    "full": false,
+    "mutex": false,
+    "query": false,
+    "channel": false,
+    "global_": false,
+    "log": false,
+    "position": false,
+    "types": false,
+    "privileges": false,
+    "for_table": false,
+    "for_group": false,
+    "for_user": false,
+    "for_role": false,
+    "into_outfile": false,
+    "json": false,
+    "iceberg": false
+   }
+  },
+  "Sign": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SimilarTo": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Sin": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Sinh": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Skewness": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SkipJSONColumn": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "regexp": false,
+    "expression": true
+   }
+  },
+  "Slice": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": false,
+    "expression": false,
+    "step": false
+   }
+  },
+  "Sort": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "expressions": true,
+    "siblings": false
+   }
+  },
+  "SortArray": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "asc": false,
+    "nulls_first": false
+   }
+  },
+  "SortKeyProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "compound": false
+   }
+  },
+  "Soundex": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SoundexP123": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Space": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Split": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "limit": false,
+    "null_returns_null": false,
+    "empty_delimiter_returns_whole": false
+   }
+  },
+  "SplitPart": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "delimiter": false,
+    "part_index": false,
+    "part_index_zero_as_one": false,
+    "empty_delimiter_returns_whole": false
+   }
+  },
+  "SqlReadWriteProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "SqlSecurityProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Sqrt": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "StDistance": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "use_spheroid": false
+   }
+  },
+  "StPoint": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "z": false,
+    "m": false
+   }
+  },
+  "StabilityProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "StandardHash": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "Star": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "except_": false,
+    "replace": false,
+    "rename": false,
+    "ilike": false
+   }
+  },
+  "StarMap": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "StartsWith": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Stddev": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "StddevPop": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "StddevSamp": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "StorageHandlerProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "StoredProcedure": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "wrapped": false
+   }
+  },
+  "StrPosition": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "substr": true,
+    "position": false,
+    "occurrence": false,
+    "clamp_position": false
+   }
+  },
+  "StrToDate": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "format": false,
+    "safe": false,
+    "default_year": false
+   }
+  },
+  "StrToMap": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "pair_delim": false,
+    "key_value_delim": false,
+    "duplicate_resolution_callback": false
+   }
+  },
+  "StrToTime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "format": true,
+    "zone": false,
+    "safe": false,
+    "target_type": false,
+    "default_year": false
+   }
+  },
+  "StrToUnix": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false,
+    "format": false
+   }
+  },
+  "Stream": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "StreamingTableProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "StrictProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "String": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "zone": false
+   }
+  },
+  "StringToArray": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "null": false
+   }
+  },
+  "StripNullValue": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Strtok": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "delimiter": false,
+    "part_index": false
+   }
+  },
+  "StrtokToArray": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "Struct": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "StructExtract": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Stuff": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "start": true,
+    "length": true,
+    "expression": true
+   }
+  },
+  "Sub": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Subquery": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "alias": false,
+    "with_": false,
+    "match": false,
+    "laterals": false,
+    "joins": false,
+    "connect": false,
+    "pivots": false,
+    "prewhere": false,
+    "where": false,
+    "group": false,
+    "having": false,
+    "qualify": false,
+    "windows": false,
+    "distribute": false,
+    "sort": false,
+    "cluster": false,
+    "order": false,
+    "limit": false,
+    "offset": false,
+    "locks": false,
+    "sample": false,
+    "settings": false,
+    "format": false,
+    "options": false,
+    "for_": false
+   }
+  },
+  "Substring": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "start": false,
+    "length": false,
+    "zero_start": false
+   }
+  },
+  "SubstringIndex": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "delimiter": true,
+    "count": true
+   }
+  },
+  "Sum": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Summarize": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "table": false
+   }
+  },
+  "SwapTable": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Systimestamp": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Table": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "alias": false,
+    "db": false,
+    "catalog": false,
+    "laterals": false,
+    "joins": false,
+    "pivots": false,
+    "hints": false,
+    "system_time": false,
+    "version": false,
+    "format": false,
+    "pattern": false,
+    "ordinality": false,
+    "when": false,
+    "only": false,
+    "partition": false,
+    "changes": false,
+    "rows_from": false,
+    "sample": false,
+    "indexed": false
+   }
+  },
+  "TableAlias": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "columns": false
+   }
+  },
+  "TableColumn": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TableFromRows": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "alias": false,
+    "joins": false,
+    "pivots": false,
+    "sample": false
+   }
+  },
+  "TableSample": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": false,
+    "method": false,
+    "bucket_numerator": false,
+    "bucket_denominator": false,
+    "bucket_field": false,
+    "percent": false,
+    "rows": false,
+    "size": false,
+    "seed": false
+   }
+  },
+  "Tag": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "prefix": false,
+    "postfix": false
+   }
+  },
+  "Tags": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "Tan": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Tanh": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TemporaryProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Time": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false,
+    "zone": false
+   }
+  },
+  "TimeAdd": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "TimeDiff": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "TimeFromParts": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "hour": true,
+    "min": true,
+    "sec": true,
+    "nano": false,
+    "fractions": false,
+    "precision": false,
+    "overflow": false
+   }
+  },
+  "TimeSlice": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": true,
+    "kind": false
+   }
+  },
+  "TimeStrToDate": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TimeStrToTime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "zone": false
+   }
+  },
+  "TimeStrToUnix": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TimeSub": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "TimeToStr": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "format": true,
+    "culture": false,
+    "zone": false
+   }
+  },
+  "TimeToTimeStr": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TimeToUnix": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TimeTrunc": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "unit": true,
+    "zone": false
+   }
+  },
+  "Timestamp": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false,
+    "zone": false,
+    "with_tz": false
+   }
+  },
+  "TimestampAdd": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "TimestampDiff": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "TimestampFromParts": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "year": false,
+    "month": false,
+    "day": false,
+    "hour": false,
+    "min": false,
+    "sec": false,
+    "nano": false,
+    "zone": false,
+    "milli": false,
+    "this": false,
+    "expression": false
+   }
+  },
+  "TimestampLtzFromParts": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "year": false,
+    "month": false,
+    "day": false,
+    "hour": false,
+    "min": false,
+    "sec": false,
+    "nano": false
+   }
+  },
+  "TimestampSub": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "TimestampTrunc": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "unit": true,
+    "zone": false,
+    "input_type_preserved": false
+   }
+  },
+  "TimestampTzFromParts": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "year": false,
+    "month": false,
+    "day": false,
+    "hour": false,
+    "min": false,
+    "sec": false,
+    "nano": false,
+    "zone": false
+   }
+  },
+  "TitleColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ToArray": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ToBase32": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ToBase64": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ToBinary": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "format": false,
+    "safe": false
+   }
+  },
+  "ToBoolean": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "safe": false
+   }
+  },
+  "ToChar": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "format": false,
+    "nlsparam": false,
+    "is_numeric": false
+   }
+  },
+  "ToCodePoints": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ToDays": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ToDecfloat": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "format": false
+   }
+  },
+  "ToDouble": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "format": false,
+    "safe": false
+   }
+  },
+  "ToFile": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "path": false,
+    "safe": false
+   }
+  },
+  "ToMap": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ToNumber": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "format": false,
+    "nlsparam": false,
+    "precision": false,
+    "scale": false,
+    "safe": false,
+    "safe_name": false,
+    "default": false
+   }
+  },
+  "ToTableProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ToVariant": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Transaction": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": false,
+    "modes": false,
+    "mark": false
+   }
+  },
+  "Transform": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "TransformModelProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "TransientProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Translate": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "from_": true,
+    "to": true
+   }
+  },
+  "TranslateCharacters": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "with_error": false
+   }
+  },
+  "TriggerEvent": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "columns": false
+   }
+  },
+  "TriggerExecute": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TriggerProperties": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "table": true,
+    "timing": true,
+    "events": true,
+    "execute": true,
+    "constraint": false,
+    "referenced_table": false,
+    "deferrable": false,
+    "initially": false,
+    "referencing": false,
+    "for_each": false,
+    "when": false
+   }
+  },
+  "TriggerReferencing": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "old": false,
+    "new": false
+   }
+  },
+  "Trim": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": false,
+    "position": false,
+    "collation": false
+   }
+  },
+  "Trunc": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "decimals": false,
+    "fractions_supported": false
+   }
+  },
+  "TruncateTable": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "expressions": true,
+    "is_database": false,
+    "exists": false,
+    "only": false,
+    "cluster": false,
+    "identity": false,
+    "option": false,
+    "partition": false
+   }
+  },
+  "Try": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TryBase64DecodeBinary": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "alphabet": false
+   }
+  },
+  "TryBase64DecodeString": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "alphabet": false
+   }
+  },
+  "TryCast": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "to": true,
+    "format": false,
+    "safe": false,
+    "action": false,
+    "default": false,
+    "requires_string": false,
+    "null_on_text_overflow": false,
+    "probe_date_format": false
+   }
+  },
+  "TryHexDecodeBinary": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TryHexDecodeString": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TryToDecfloat": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "format": false
+   }
+  },
+  "TsOrDiToDi": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TsOrDsAdd": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false,
+    "return_type": false
+   }
+  },
+  "TsOrDsDiff": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "unit": false
+   }
+  },
+  "TsOrDsToDate": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "format": false,
+    "safe": false
+   }
+  },
+  "TsOrDsToDateStr": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TsOrDsToDatetime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "TsOrDsToTime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "format": false,
+    "safe": false
+   }
+  },
+  "TsOrDsToTimestamp": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Tuple": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": false
+   }
+  },
+  "Typeof": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Unary": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Uncache": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "exists": false
+   }
+  },
+  "Undrop": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "kind": true,
+    "rename": false
+   }
+  },
+  "Unhex": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "Unicode": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "empty_is_zero": false
+   }
+  },
+  "UnicodeString": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "escape": false
+   }
+  },
+  "Uniform": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "gen": false,
+    "seed": false
+   }
+  },
+  "Union": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "with_": false,
+    "this": true,
+    "expression": true,
+    "distinct": false,
+    "by_name": false,
+    "side": false,
+    "kind": false,
+    "on": false,
+    "match": false,
+    "laterals": false,
+    "joins": false,
+    "connect": false,
+    "pivots": false,
+    "prewhere": false,
+    "where": false,
+    "group": false,
+    "having": false,
+    "qualify": false,
+    "windows": false,
+    "distribute": false,
+    "sort": false,
+    "cluster": false,
+    "order": false,
+    "limit": false,
+    "offset": false,
+    "locks": false,
+    "sample": false,
+    "settings": false,
+    "format": false,
+    "options": false,
+    "for_": false
+   }
+  },
+  "UniqueColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": false,
+    "index_type": false,
+    "on_conflict": false,
+    "nulls": false,
+    "options": false
+   }
+  },
+  "UniqueKeyProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "UnixDate": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "UnixMicros": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "UnixMillis": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "UnixSeconds": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "UnixToStr": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "format": false
+   }
+  },
+  "UnixToTime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "scale": false,
+    "zone": false,
+    "hours": false,
+    "minutes": false,
+    "format": false,
+    "target_type": false
+   }
+  },
+  "UnixToTimeStr": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "UnloggedProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "Unnest": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "expressions": true,
+    "alias": false,
+    "offset": false,
+    "explode_array": false
+   }
+  },
+  "UnpivotColumns": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expressions": true
+   }
+  },
+  "Update": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "with_": false,
+    "this": false,
+    "expressions": false,
+    "from_": false,
+    "where": false,
+    "returning": false,
+    "order": false,
+    "limit": false,
+    "options": false,
+    "hint": false
+   }
+  },
+  "Upper": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "UppercaseColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {}
+  },
+  "Use": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": false,
+    "expressions": false,
+    "kind": false
+   }
+  },
+  "UserDefinedFunction": {
+   "module": "sqlglot.expressions.ddl",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "wrapped": false
+   }
+  },
+  "UsingData": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "UsingProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true,
+    "kind": true
+   }
+  },
+  "UsingTemplateProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "UtcDate": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {}
+  },
+  "UtcTime": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "UtcTimestamp": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "Uuid": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": false,
+    "name": false,
+    "is_string": false
+   }
+  },
+  "UuidProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Values": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true,
+    "alias": false,
+    "order": false,
+    "limit": false,
+    "offset": false
+   }
+  },
+  "Var": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "VarMap": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "keys": true,
+    "values": true
+   }
+  },
+  "Variadic": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Variance": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "VariancePop": {
+   "module": "sqlglot.expressions.aggregate",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "VectorSearch": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "column_to_search": true,
+    "query_table": true,
+    "query_column_to_search": false,
+    "top_k": false,
+    "distance_type": false,
+    "options": false
+   }
+  },
+  "Version": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "kind": true,
+    "expression": false
+   }
+  },
+  "ViewAttributeProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "VirtualProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {}
+  },
+  "VolatileProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": false
+   }
+  },
+  "WatermarkColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "Week": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true,
+    "mode": false
+   }
+  },
+  "WeekOfYear": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "WeekStart": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "When": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "matched": true,
+    "source": false,
+    "condition": false,
+    "then": true
+   }
+  },
+  "Whens": {
+   "module": "sqlglot.expressions.dml",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "Where": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "WhileBlock": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "body": true
+   }
+  },
+  "WidthBucket": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "min_value": false,
+    "max_value": false,
+    "num_buckets": false,
+    "threshold": false
+   }
+  },
+  "Window": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "partition_by": false,
+    "order": false,
+    "spec": false,
+    "alias": false,
+    "over": false,
+    "first": false
+   }
+  },
+  "WindowSpec": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "kind": false,
+    "start": false,
+    "start_side": false,
+    "end": false,
+    "end_side": false,
+    "exclude": false
+   }
+  },
+  "With": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true,
+    "recursive": false,
+    "search": false
+   }
+  },
+  "WithDataProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "no": true,
+    "statistics": false
+   }
+  },
+  "WithFill": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "from_": false,
+    "to": false,
+    "step": false,
+    "interpolate": false
+   }
+  },
+  "WithJournalTableProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "WithOperator": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true,
+    "op": true
+   }
+  },
+  "WithProcedureOptions": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "WithSchemaBindingProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "WithSystemVersioningProperty": {
+   "module": "sqlglot.expressions.properties",
+   "arg_types": {
+    "on": false,
+    "this": false,
+    "data_consistency": false,
+    "retention_period": false,
+    "with_": true
+   }
+  },
+  "WithTableHint": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "expressions": true
+   }
+  },
+  "WithinGroup": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "XMLElement": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expressions": false,
+    "evalname": false
+   }
+  },
+  "XMLGet": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "instance": false
+   }
+  },
+  "XMLKeyValueOption": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "expression": false
+   }
+  },
+  "XMLNamespace": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "XMLTable": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "namespaces": false,
+    "passing": false,
+    "columns": false,
+    "by_ref": false
+   }
+  },
+  "Xor": {
+   "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true,
+    "expression": true,
+    "round_input": false
+   }
+  },
+  "Year": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "YearOfWeek": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "YearOfWeekIso": {
+   "module": "sqlglot.expressions.temporal",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "ZeroFillColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {}
+  },
+  "Zipf": {
+   "module": "sqlglot.expressions.functions",
+   "arg_types": {
+    "this": true,
+    "elementcount": true,
+    "gen": true
+   }
+  },
+  "_ExplodeOuter": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true,
+    "expressions": false
+   }
+  }
+ }
+}
