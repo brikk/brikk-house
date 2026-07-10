@@ -1,0 +1,331 @@
+package dev.brikk.house.sql.dialects
+
+// Explicit kotlin imports shield builtins from same-named ast classes.
+import dev.brikk.house.sql.ast.*
+import dev.brikk.house.sql.ast.Map as MapNode
+import dev.brikk.house.sql.generator.GenMethod
+import dev.brikk.house.sql.generator.Generator
+import dev.brikk.house.sql.generator.GeneratorTables
+import dev.brikk.house.sql.parser.DorisTokenizerTables
+import dev.brikk.house.sql.parser.TokenizerConfig
+import kotlin.Boolean
+import kotlin.String
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.Set
+import kotlin.reflect.KClass
+
+// sqlglot: dialect.unit_to_str
+private fun unitToStr(expression: Expression, default: String = "DAY"): Expression? {
+    val unit = expression.args["unit"] as? Expression
+        ?: return if (default.isNotEmpty()) Literal.string(default) else null
+
+    if (unit is Placeholder || (unit !is Var && unit !is Literal)) return unit
+
+    return Literal.string(unit.name)
+}
+
+/**
+ * Port of sqlglot's DorisGenerator (reference/sqlglot/sqlglot/generators/doris.py).
+ * TRANSFORMS entries live in [TRANSFORMS], passed through MysqlGenerator's dispatch
+ * overlay; flag overrides are open-val overrides; multi-line methods below.
+ */
+// sqlglot: generators.doris.DorisGenerator
+open class DorisGenerator(
+    pretty: Boolean = false,
+    identify: kotlin.Any = false,
+    comments: Boolean = true,
+    tokenizerConfig: TokenizerConfig = DorisTokenizerTables.CONFIG,
+) : MysqlGenerator(
+    pretty = pretty,
+    identify = identify,
+    comments = comments,
+    tokenizerConfig = tokenizerConfig,
+    overrides = TRANSFORMS,
+) {
+
+    // ------------------------------------------------------------------
+    // Flags (sqlglot: DorisGenerator class attributes)
+    // ------------------------------------------------------------------
+
+    // sqlglot: DorisGenerator.VARCHAR_REQUIRES_SIZE = False
+    override val varcharRequiresSize: Boolean get() = false
+
+    // sqlglot: DorisGenerator.WITH_PROPERTIES_PREFIX = "PROPERTIES"
+    override val withPropertiesPrefix: String get() = "PROPERTIES"
+
+    // sqlglot: DorisGenerator.RENAME_TABLE_WITH_DB = False
+    override val renameTableWithDb: Boolean get() = false
+
+    // sqlglot: DorisGenerator.UPDATE_STATEMENT_SUPPORTS_FROM = True
+    override val updateStatementSupportsFrom: Boolean get() = true
+
+    // sqlglot: DorisGenerator.CAST_MAPPING = {}
+    override val castMapping: Map<DType, String> get() = emptyMap()
+
+    // sqlglot: DorisGenerator.TIMESTAMP_FUNC_TYPES = set()
+    override val timestampFuncTypes: Set<DType> get() = emptySet()
+
+    // sqlglot: DorisGenerator.TYPE_MAPPING
+    override val typeMapping: Map<DType, String> get() = TYPE_MAPPING
+
+    // sqlglot: DorisGenerator.RESERVED_KEYWORDS
+    override val reservedKeywords: Set<String> get() = RESERVED_KEYWORDS
+
+    // sqlglot: DorisGenerator.PROPERTIES_LOCATION
+    override val propertiesLocation: Map<KClass<out Expression>, GeneratorTables.PropLocation>
+        get() = PROPERTIES_LOCATION
+
+    // sqlglot: Doris.TIME_FORMAT
+    override val dialectTimeFormat: String get() = "'yyyy-MM-dd HH:mm:ss'"
+
+    // ------------------------------------------------------------------
+    // Transform helpers (sqlglot: module-level functions in generators/doris.py)
+    // ------------------------------------------------------------------
+
+    // sqlglot: generators.doris._lag_lead_sql
+    open fun lagLeadSql(expression: Expression): String =
+        func(
+            if (expression is Lag) "LAG" else "LEAD",
+            expression.thisArg,
+            expression.args["offset"] ?: Literal.number("1"),
+            expression.args["default"] ?: Null(),
+        )
+
+    // sqlglot: dialect.approx_count_distinct_sql (@unsupported_args("accuracy"))
+    open fun approxCountDistinctSql(expression: ApproxDistinct): String {
+        if (isTruthy(expression.args["accuracy"])) {
+            unsupported(
+                "Argument 'accuracy' is not supported for expression 'ApproxDistinct' when targeting Doris."
+            )
+        }
+        return func("APPROX_COUNT_DISTINCT", expression.thisArg)
+    }
+
+    // sqlglot: dialect.time_format("doris") — format unless it's the dialect default
+    open fun dorisTimeFormat(expression: Expression): String? {
+        val timeFormat = formatTime(expression)
+        return if (timeFormat != dialectTimeFormat) timeFormat else null
+    }
+
+    // sqlglot: Generator.lastday_sql with LAST_DAY_SUPPORTS_DATE_PART = False
+    open fun lastdaySql(expression: LastDay): String {
+        val unit = expression.text("unit")
+        if (unit.isNotEmpty() && unit != "MONTH") {
+            unsupported("Date parts are not supported in LAST_DAY.")
+        }
+        return func("LAST_DAY", expression.thisArg)
+    }
+
+    // ------------------------------------------------------------------
+    // Overridden generator methods (sqlglot: generators/doris.py methods)
+    // ------------------------------------------------------------------
+
+    // sqlglot: DorisGenerator.uniquekeyproperty_sql
+    override fun uniquekeypropertySql(expression: UniqueKeyProperty, prefix: String): String {
+        val createStmt = expression.findAncestor(Create::class)
+        val properties = createStmt?.args?.get("properties") as? Expression
+        if (properties?.find(MaterializedProperty::class) != null) {
+            return super.uniquekeypropertySql(expression, prefix = "KEY")
+        }
+
+        return super.uniquekeypropertySql(expression, prefix)
+    }
+
+    // sqlglot: DorisGenerator.partitionrange_sql
+    override fun partitionrangeSql(expression: PartitionRange): String {
+        val name = sql(expression, "this")
+        val values = expression.expressionsArg
+
+        if (values.size != 1) {
+            // Multiple values: use VALUES [ ... )
+            val valuesSql = if (values.isNotEmpty() && values[0] is List<*>) {
+                values.joinToString(", ") { inner ->
+                    "(${(inner as List<*>).joinToString(", ") { sql(it) }})"
+                }
+            } else {
+                values.joinToString(", ") { "(${sql(it)})" }
+            }
+
+            return "PARTITION $name VALUES [$valuesSql)"
+        }
+
+        return "PARTITION $name VALUES LESS THAN (${sql(values[0])})"
+    }
+
+    // sqlglot: DorisGenerator.partitionbyrangepropertydynamic_sql
+    open fun partitionbyrangepropertydynamicSql(expression: PartitionByRangePropertyDynamic): String {
+        // Generates: FROM ("start") TO ("end") INTERVAL N UNIT
+        val start = sql(expression, "start")
+        val end = sql(expression, "end")
+        val every = expression.args["every"] as? Expression
+
+        val interval = if (every != null) {
+            "INTERVAL ${sql(every, "this")} ${sql(every, "unit")}"
+        } else {
+            ""
+        }
+
+        return "FROM ($start) TO ($end) $interval"
+    }
+
+    // sqlglot: DorisGenerator.partitionedbyproperty_sql
+    open fun partitionedbypropertySql(expression: PartitionedByProperty): String {
+        val this_ = expression.thisArg
+        if (this_ is Schema) {
+            return "PARTITION BY (${expressions(this_, flat = true)})"
+        }
+        return "PARTITION BY (${sql(this_)})"
+    }
+
+    // sqlglot: DorisGenerator.table_sql — no AS keyword in UPDATE and DELETE statements
+    override fun tableSql(expression: Table, sep: String): String {
+        val ancestor = expression.findAncestor(Update::class, Delete::class, Select::class)
+        val actualSep = if (ancestor !is Select) " " else sep
+        return super.tableSql(expression, sep = actualSep)
+    }
+
+    companion object {
+
+        // sqlglot: DorisGenerator.TYPE_MAPPING
+        val TYPE_MAPPING: Map<DType, String> = MysqlGenerator.TYPE_MAPPING + mapOf(
+            DType.TEXT to "STRING",
+            DType.TIMESTAMP to "DATETIME",
+            DType.TIMESTAMPTZ to "DATETIME",
+        )
+
+        // sqlglot: DorisGenerator.PROPERTIES_LOCATION
+        val PROPERTIES_LOCATION: Map<KClass<out Expression>, GeneratorTables.PropLocation> =
+            MysqlGenerator.PROPERTIES_LOCATION + mapOf(
+                UniqueKeyProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
+                PartitionedByProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
+                BuildProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
+            )
+
+        // sqlglot: DorisGenerator.TRANSFORMS (dispatch-map overlay over MysqlGenerator's;
+        // multi-line entries are methods on DorisGenerator, one-liners inlined)
+        val TRANSFORMS: Map<KClass<out Expression>, GenMethod> = buildMap {
+            fun reg(cls: KClass<out Expression>, method: GenMethod) { put(cls, method) }
+            fun Generator.dg(): DorisGenerator = this as DorisGenerator
+
+            reg(AddMonths::class) { e -> dg().renameFuncSql("MONTHS_ADD", e) }
+            reg(ApproxDistinct::class) { e -> dg().approxCountDistinctSql(e as ApproxDistinct) }
+            reg(ArgMax::class) { e -> dg().renameFuncSql("MAX_BY", e) }
+            reg(ArgMin::class) { e -> dg().renameFuncSql("MIN_BY", e) }
+            reg(ArrayAgg::class) { e -> dg().renameFuncSql("COLLECT_LIST", e) }
+            reg(ArrayToString::class) { e -> dg().renameFuncSql("ARRAY_JOIN", e) }
+            reg(ArrayUniqueAgg::class) { e -> dg().renameFuncSql("COLLECT_SET", e) }
+            reg(CurrentDate::class) { _ -> func("CURRENT_DATE") }
+            reg(CurrentTimestamp::class) { _ -> func("NOW") }
+            reg(DateTrunc::class) { e -> func("DATE_TRUNC", e.thisArg, unitToStr(e)) }
+            reg(EuclideanDistance::class) { e -> dg().renameFuncSql("L2_DISTANCE", e) }
+            reg(GroupConcat::class) { e ->
+                func("GROUP_CONCAT", e.thisArg, e.args["separator"] ?: Literal.string(","))
+            }
+            reg(JSONExtractScalar::class) { e ->
+                func("JSON_EXTRACT", e.thisArg, e.args["expression"])
+            }
+            reg(Lag::class) { e -> dg().lagLeadSql(e) }
+            reg(Lead::class) { e -> dg().lagLeadSql(e) }
+            reg(MapNode::class) { e -> dg().renameFuncSql("ARRAY_MAP", e) }
+            reg(Property::class) { e ->
+                "${propertyName(e as Property, stringKey = true)}=${sql(e, "value")}"
+            }
+            reg(RegexpLike::class) { e -> dg().renameFuncSql("REGEXP", e) }
+            reg(RegexpSplit::class) { e -> dg().renameFuncSql("SPLIT_BY_STRING", e) }
+            reg(SchemaCommentProperty::class) { e -> nakedProperty(e as Property) }
+            reg(Split::class) { e -> dg().renameFuncSql("SPLIT_BY_STRING", e) }
+            reg(StringToArray::class) { e -> dg().renameFuncSql("SPLIT_BY_STRING", e) }
+            reg(StrToUnix::class) { e -> func("UNIX_TIMESTAMP", e.thisArg, formatTime(e)) }
+            reg(TimeStrToDate::class) { e -> dg().renameFuncSql("TO_DATE", e) }
+            reg(TsOrDsAdd::class) { e -> func("DATE_ADD", e.thisArg, e.args["expression"]) }
+            reg(TsOrDsToDate::class) { e -> func("TO_DATE", e.thisArg) }
+            reg(TimeToUnix::class) { e -> dg().renameFuncSql("UNIX_TIMESTAMP", e) }
+            reg(TimestampTrunc::class) { e -> func("DATE_TRUNC", e.thisArg, unitToStr(e)) }
+            reg(UnixToStr::class) { e ->
+                func("FROM_UNIXTIME", e.thisArg, dg().dorisTimeFormat(e))
+            }
+            reg(UnixToTime::class) { e -> dg().renameFuncSql("FROM_UNIXTIME", e) }
+
+            // sqlglot: LAST_DAY_SUPPORTS_DATE_PART = False (base lastday_sql flag)
+            reg(LastDay::class) { e -> dg().lastdaySql(e as LastDay) }
+
+            // sqlglot: auto-discovered <name>_sql methods with no base dispatch entry
+            reg(PartitionByRangePropertyDynamic::class) { e ->
+                dg().partitionbyrangepropertydynamicSql(e as PartitionByRangePropertyDynamic)
+            }
+            reg(PartitionedByProperty::class) { e ->
+                dg().partitionedbypropertySql(e as PartitionedByProperty)
+            }
+        }
+
+        // sqlglot: DorisGenerator.RESERVED_KEYWORDS
+        // https://github.com/apache/doris/blob/e4f41dbf1ec03f5937fdeba2ee1454a20254015b/fe/fe-core/src/main/antlr4/org/apache/doris/nereids/DorisLexer.g4#L93
+        val RESERVED_KEYWORDS: Set<String> = setOf(
+            "account_lock", "account_unlock", "add", "adddate", "admin", "after", "agg_state",
+            "aggregate", "alias", "all", "alter", "analyze", "analyzed", "and", "anti", "append",
+            "array", "array_range", "as", "asc", "at", "authors", "auto", "auto_increment",
+            "backend", "backends", "backup", "begin", "belong", "between", "bigint", "bin",
+            "binary", "binlog", "bitand", "bitmap", "bitmap_union", "bitor", "bitxor", "blob",
+            "boolean", "brief", "broker", "buckets", "build", "builtin", "bulk", "by", "cached",
+            "call", "cancel", "case", "cast", "catalog", "catalogs", "chain", "char", "character",
+            "charset", "check", "clean", "cluster", "clusters", "collate", "collation", "collect",
+            "column", "columns", "comment", "commit", "committed", "compact", "complete",
+            "config", "connection", "connection_id", "consistent", "constraint", "constraints",
+            "convert", "copy", "count", "create", "creation", "cron", "cross", "cube", "current",
+            "current_catalog", "current_date", "current_time", "current_timestamp",
+            "current_user", "data", "database", "databases", "date", "date_add", "date_ceil",
+            "date_diff", "date_floor", "date_sub", "dateadd", "datediff", "datetime",
+            "datetimev2", "datev2", "datetimev1", "datev1", "day", "days_add", "days_sub",
+            "decimal", "decimalv2", "decimalv3", "decommission", "default", "deferred", "delete",
+            "demand", "desc", "describe", "diagnose", "disk", "distinct", "distinctpc",
+            "distinctpcsa", "distributed", "distribution", "div", "do",
+            "doris_internal_table_id", "double", "drop", "dropp", "dual", "duplicate", "dynamic",
+            "else", "enable", "encryptkey", "encryptkeys", "end", "ends", "engine", "engines",
+            "enter", "errors", "events", "every", "except", "exclude", "execute", "exists",
+            "expired", "explain", "export", "extended", "external", "extract",
+            "failed_login_attempts", "false", "fast", "feature", "fields", "file", "filter",
+            "first", "float", "follower", "following", "for", "foreign", "force", "format",
+            "free", "from", "frontend", "frontends", "full", "function", "functions", "generic",
+            "global", "grant", "grants", "graph", "group", "grouping", "groups", "hash",
+            "having", "hdfs", "help", "histogram", "hll", "hll_union", "hostname", "hour", "hub",
+            "identified", "if", "ignore", "immediate", "in", "incremental", "index", "indexes",
+            "infile", "inner", "insert", "install", "int", "integer", "intermediate",
+            "intersect", "interval", "into", "inverted", "ipv4", "ipv6", "is",
+            "is_not_null_pred", "is_null_pred", "isnull", "isolation", "job", "jobs", "join",
+            "json", "jsonb", "key", "keys", "kill", "label", "largeint", "last", "lateral",
+            "ldap", "ldap_admin_password", "left", "less", "level", "like", "limit", "lines",
+            "link", "list", "load", "local", "localtime", "localtimestamp", "location", "lock",
+            "logical", "low_priority", "manual", "map", "match", "match_all", "match_any",
+            "match_phrase", "match_phrase_edge", "match_phrase_prefix", "match_regexp",
+            "materialized", "max", "maxvalue", "memo", "merge", "migrate", "migrations", "min",
+            "minus", "minute", "modify", "month", "mtmv", "name", "names", "natural", "negative",
+            "never", "next", "ngram_bf", "no", "non_nullable", "not", "null", "nulls",
+            "observer", "of", "offset", "on", "only", "open", "optimized", "or", "order",
+            "outer", "outfile", "over", "overwrite", "parameter", "parsed", "partition",
+            "partitions", "password", "password_expire", "password_history",
+            "password_lock_time", "password_reuse", "path", "pause", "percent", "period",
+            "permissive", "physical", "plan", "process", "plugin", "plugins", "policy",
+            "preceding", "prepare", "primary", "proc", "procedure", "processlist", "profile",
+            "properties", "property", "quantile_state", "quantile_union", "query", "quota",
+            "random", "range", "read", "real", "rebalance", "recover", "recycle", "refresh",
+            "references", "regexp", "release", "rename", "repair", "repeatable", "replace",
+            "replace_if_not_null", "replica", "repositories", "repository", "resource",
+            "resources", "restore", "restrictive", "resume", "returns", "revoke", "rewritten",
+            "right", "rlike", "role", "roles", "rollback", "rollup", "routine", "row", "rows",
+            "s3", "sample", "schedule", "scheduler", "schema", "schemas", "second", "select",
+            "semi", "sequence", "serializable", "session", "set", "sets", "shape", "show",
+            "signed", "skew", "smallint", "snapshot", "soname", "split", "sql_block_rule",
+            "start", "starts", "stats", "status", "stop", "storage", "stream", "streaming",
+            "string", "struct", "subdate", "sum", "superuser", "switch", "sync", "system",
+            "table", "tables", "tablesample", "tablet", "tablets", "task", "tasks", "temporary",
+            "terminated", "text", "than", "then", "time", "timestamp", "timestampadd",
+            "timestampdiff", "tinyint", "to", "transaction", "trash", "tree", "triggers", "trim",
+            "true", "truncate", "type", "type_cast", "types", "unbounded", "uncommitted",
+            "uninstall", "union", "unique", "unlock", "unsigned", "update", "use", "user",
+            "using", "value", "values", "varchar", "variables", "variant", "vault", "verbose",
+            "version", "view", "warnings", "week", "when", "where", "whitelist", "with", "work",
+            "workload", "write", "xor", "year",
+        )
+    }
+}

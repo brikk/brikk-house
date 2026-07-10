@@ -74,13 +74,15 @@ def main() -> None:
     for sql in iter_sqls(dialect):
         try:
             expression = sqlglot.parse_one(sql, read=dialect or None)
-            cases.append(
-                {
-                    "sql": sql,
-                    "generated": expression.sql(dialect=dialect or None),
-                    "dump": serde.dump(expression),
-                }
-            )
+            case = {
+                "sql": sql,
+                "generated": expression.sql(dialect=dialect or None),
+                "dump": serde.dump(expression),
+            }
+            # Some ASTs (e.g. Doris PARTITION ... VALUES [...) nested lists) defeat
+            # sqlglot's own serde; skip them rather than crash the whole corpus.
+            json.dumps(case)
+            cases.append(case)
         except Exception as e:  # noqa: BLE001 — record and move on
             skipped.append({"sql": sql, "error": f"{type(e).__name__}: {e}"})
 

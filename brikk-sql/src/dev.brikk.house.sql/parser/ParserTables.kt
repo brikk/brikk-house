@@ -700,8 +700,8 @@ object BaseParserTables {
     // sqlglot: Parser.FUNCTIONS_WITH_ALIASED_ARGS
     val FUNCTIONS_WITH_ALIASED_ARGS: Set<String> = setOf("STRUCT")
 
-    // sqlglot: Parser.FUNCTION_PARSERS (GAP_FILL, JSON_TABLE, OPENJSON, XMLELEMENT,
-    // XMLTABLE not ported yet — no base-corpus coverage).
+    // sqlglot: Parser.FUNCTION_PARSERS (GAP_FILL, OPENJSON, XMLELEMENT, XMLTABLE not
+    // ported yet — no base-corpus coverage).
     val FUNCTION_PARSERS: Map<String, (Parser) -> Expression?> = buildMap {
         put("CONVERT") { parser -> parser.parseConvert(parser.strictCast) }
         put("TRY_CONVERT") { parser -> parser.parseConvert(false, safe = true) }
@@ -720,6 +720,7 @@ object BaseParserTables {
         put("FLOOR") { parser -> parser.parseCeilFloor { a: Args -> dev.brikk.house.sql.ast.Floor(a) } }
         put("JSON_OBJECT") { parser -> parser.parseJsonObject() }
         put("JSON_OBJECTAGG") { parser -> parser.parseJsonObject(agg = true) }
+        put("JSON_TABLE") { parser -> parser.parseJsonTable() }
         put("MATCH") { parser -> parser.parseMatchAgainst() }
         put("NORMALIZE") { parser -> parser.parseNormalize() }
         put("POSITION") { parser -> parser.parsePosition() }

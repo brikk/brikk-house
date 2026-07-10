@@ -389,6 +389,9 @@ object GeneratorTables {
         reg(VarMap::class) { e -> func("MAP", e.args["keys"], e.args["values"]) }
 
         // --- JSON ---
+        reg(JSONColumnDef::class) { e -> jsoncolumndefSql(e as JSONColumnDef) }
+        reg(JSONSchema::class) { e -> jsonschemaSql(e as JSONSchema) }
+        reg(JSONTable::class) { e -> jsontableSql(e as JSONTable) }
         reg(JSONKeyValue::class) { e -> jsonkeyvalueSql(e as JSONKeyValue) }
         reg(JSONPath::class) { e -> jsonpathSql(e as JSONPath) }
         reg(JSONObject::class) { e -> jsonobjectSql(e) } // sqlglot: TRANSFORMS[JSONObject]
@@ -583,7 +586,12 @@ object GeneratorTables {
         reg(InputModelProperty::class) { e -> "INPUT${sql(e, "this")}" }
         reg(LanguageProperty::class) { e -> nakedProperty(e as Property) }
         reg(LikeProperty::class) { e -> likepropertySql(e as LikeProperty) }
+        reg(BuildProperty::class) { e -> buildpropertySql(e as BuildProperty) }
+        reg(DistributedByProperty::class) { e -> distributedbypropertySql(e as DistributedByProperty) }
+        reg(DuplicateKeyProperty::class) { e -> duplicatekeypropertySql(e as DuplicateKeyProperty) }
         reg(LocationProperty::class) { e -> nakedProperty(e as Property) }
+        reg(RefreshTriggerProperty::class) { e -> refreshtriggerpropertySql(e as RefreshTriggerProperty) }
+        reg(UniqueKeyProperty::class) { e -> uniquekeypropertySql(e as UniqueKeyProperty) }
         reg(LockingProperty::class) { e -> lockingpropertySql(e as LockingProperty) }
         reg(LogProperty::class) { e -> "${if (e.args["no"] == true) "NO " else ""}LOG" }
         reg(MaskingProperty::class) { _ -> "MASKING" }

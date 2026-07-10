@@ -124,6 +124,15 @@ open class MysqlGenerator(
     // sqlglot: MySQLGenerator.TYPE_MAPPING
     override val typeMapping: Map<DType, String> get() = TYPE_MAPPING
 
+    // sqlglot: MySQLGenerator.VARCHAR_REQUIRES_SIZE = True (Doris resets to False)
+    open val varcharRequiresSize: Boolean get() = true
+
+    // sqlglot: MySQLGenerator.CAST_MAPPING (Doris resets to {})
+    open val castMapping: Map<DType, String> get() = CAST_MAPPING
+
+    // sqlglot: MySQLGenerator.TIMESTAMP_FUNC_TYPES (Doris resets to set())
+    open val timestampFuncTypes: Set<DType> get() = TIMESTAMP_FUNC_TYPES
+
     // sqlglot: MySQLGenerator.RESERVED_KEYWORDS
     override val reservedKeywords: Set<String> get() = RESERVED_KEYWORDS
 
@@ -473,7 +482,10 @@ open class MysqlGenerator(
 
     // sqlglot: MySQLGenerator.datatype_sql (VARCHAR_REQUIRES_SIZE=True)
     override fun datatypeSql(expression: DataType): String {
-        if (expression.thisArg == DType.VARCHAR && expression.expressionsArg.isEmpty()) {
+        if (varcharRequiresSize &&
+            expression.thisArg == DType.VARCHAR &&
+            expression.expressionsArg.isEmpty()
+        ) {
             // `VARCHAR` must always have a size - if it doesn't, we always generate `TEXT`
             return "TEXT"
         }
@@ -494,11 +506,11 @@ open class MysqlGenerator(
     // sqlglot: MySQLGenerator.cast_sql
     override fun castSql(expression: Cast, safePrefix: String?): String {
         val to = expression.args["to"] as? DataType
-        if (to?.thisArg in TIMESTAMP_FUNC_TYPES) {
+        if (to?.thisArg in timestampFuncTypes) {
             return func("TIMESTAMP", expression.thisArg)
         }
 
-        val mapped = CAST_MAPPING[to?.thisArg]
+        val mapped = castMapping[to?.thisArg]
         if (mapped != null) to?.set("this", mapped)
 
         return super.castSql(expression, safePrefix)

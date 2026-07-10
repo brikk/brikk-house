@@ -130,9 +130,12 @@ import dev.brikk.house.sql.ast.Interval
 import dev.brikk.house.sql.ast.IntervalSpan
 import dev.brikk.house.sql.ast.Is
 import dev.brikk.house.sql.ast.IsolatedLoadingProperty
+import dev.brikk.house.sql.ast.JSONColumnDef
 import dev.brikk.house.sql.ast.JSONKeyValue
 import dev.brikk.house.sql.ast.JSONObject
 import dev.brikk.house.sql.ast.JSONObjectAgg
+import dev.brikk.house.sql.ast.JSONSchema
+import dev.brikk.house.sql.ast.JSONTable
 import dev.brikk.house.sql.ast.Join
 import dev.brikk.house.sql.ast.JournalProperty
 import dev.brikk.house.sql.ast.Kill
@@ -8456,6 +8459,76 @@ open class Parser(
                     "return_type" to returnType,
                     "encoding" to encoding,
                 )
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_json_column_def
+    // Note: like Python, this only implements the "JSON_value_column" part.
+    protected fun parseJsonColumnDef(): Expression {
+        val this_: Expression?
+        val ordinality: kotlin.Boolean?
+        val kind: Expression?
+        val nested: kotlin.Boolean?
+        if (!matchTextSeq("NESTED")) {
+            this_ = parseIdVar()
+            // sqlglot: self._match_pair(...) — False (kept in args) when absent
+            ordinality = matchPair(TokenType.FOR, TokenType.ORDINALITY)
+            kind = parseTypes(allowIdentifiers = false)
+            nested = null
+        } else {
+            this_ = null
+            ordinality = null
+            kind = null
+            nested = true
+        }
+
+        // sqlglot: `self._match_text_seq(...) and ...` — False (kept in args) when absent
+        val formatJson: kotlin.Boolean = matchTextSeq("FORMAT", "JSON")
+        val path: kotlin.Any? = if (matchTextSeq("PATH")) parseString() else false
+        val nestedSchema: Expression? = if (nested == true) parseJsonSchema() else null
+
+        return expression(
+            JSONColumnDef(
+                args(
+                    "this" to this_,
+                    "kind" to kind,
+                    "path" to path,
+                    "nested_schema" to nestedSchema,
+                    "ordinality" to ordinality,
+                    "format_json" to formatJson,
+                )
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_json_schema
+    protected fun parseJsonSchema(): Expression {
+        matchTextSeq("COLUMNS")
+        return expression(
+            JSONSchema(
+                args("expressions" to parseWrappedCsv({ parseJsonColumnDef() }, optional = true))
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_json_table
+    fun parseJsonTable(): Expression {
+        val this_ = parseFormatJson(parseBitwise())
+        // sqlglot: `self._match(TokenType.COMMA) and ...` — False (kept in args) when absent
+        val path: kotlin.Any? = if (match(TokenType.COMMA)) parseString() else false
+        val errorHandling = parseOnHandling("ERROR", "ERROR", "NULL")
+        val emptyHandling = parseOnHandling("EMPTY", "ERROR", "NULL")
+        val schema = parseJsonSchema()
+
+        // sqlglot returns the node without self.expression() here
+        return JSONTable(
+            args(
+                "this" to this_,
+                "schema" to schema,
+                "path" to path,
+                "error_handling" to errorHandling,
+                "empty_handling" to emptyHandling,
             )
         )
     }

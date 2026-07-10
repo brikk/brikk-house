@@ -80,10 +80,12 @@ open class Dialect {
 object Dialects {
     val BASE: Dialect = Dialect()
     val MYSQL: Dialect = MysqlDialect()
+    val DORIS: Dialect = DorisDialect()
 
     fun forNameOrNull(name: String): Dialect? = when (name.lowercase().trim()) {
         "", "sqlglot" -> BASE
         "mysql" -> MYSQL
+        "doris" -> DORIS
         else -> null
     }
 

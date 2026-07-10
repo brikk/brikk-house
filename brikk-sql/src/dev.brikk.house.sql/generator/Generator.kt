@@ -2692,6 +2692,47 @@ open class Generator(
         )
     }
 
+    // sqlglot: Generator.jsoncolumndef_sql
+    open fun jsoncolumndefSql(expression: JSONColumnDef): String {
+        var path = sql(expression, "path")
+        if (path.isNotEmpty()) path = " PATH $path"
+        val nestedSchema = sql(expression, "nested_schema")
+
+        if (nestedSchema.isNotEmpty()) return "NESTED$path $nestedSchema"
+
+        val thisSql = sql(expression, "this")
+        var kind = sql(expression, "kind")
+        if (kind.isNotEmpty()) kind = " $kind"
+        val formatJson = if (expression.args["format_json"] == true) " FORMAT JSON" else ""
+        val ordinality = if (expression.args["ordinality"] == true) " FOR ORDINALITY" else ""
+        return "$thisSql$kind$formatJson$path$ordinality"
+    }
+
+    // sqlglot: Generator.jsonschema_sql
+    open fun jsonschemaSql(expression: JSONSchema): String =
+        func("COLUMNS", *expression.expressionsArg.toTypedArray())
+
+    // sqlglot: Generator.jsontable_sql
+    open fun jsontableSql(expression: JSONTable): String {
+        val thisSql = sql(expression, "this")
+        var path = sql(expression, "path")
+        if (path.isNotEmpty()) path = ", $path"
+        // sqlglot interpolates the raw arg (str, or Expression for DEFAULT ... ON ERROR)
+        fun handling(key: String): String = when (val raw = expression.args[key]) {
+            is String -> " $raw"
+            is Expression -> " ${sql(raw)}"
+            else -> ""
+        }
+        val errorHandling = handling("error_handling")
+        val emptyHandling = handling("empty_handling")
+        val schema = sql(expression, "schema")
+        return func(
+            "JSON_TABLE",
+            thisSql,
+            suffix = "$path$errorHandling$emptyHandling $schema)",
+        )
+    }
+
     // sqlglot: Generator.in_sql
     open fun inSql(expression: In): String {
         val query = expression.args["query"]
@@ -2914,7 +2955,14 @@ open class Generator(
 
     // sqlglot: Generator.alterrename_sql (base: RENAME_TABLE_WITH_DB=true)
     open fun alterrenameSql(expression: AlterRename, includeTo: Boolean = true): String {
-        val thisSql = sql(expression, "this")
+        var expr = expression
+        if (!renameTableWithDb) {
+            // Remove db from tables (sqlglot: exp.table_(n.this) for Table nodes)
+            expr = expr.transform { n ->
+                if (n is Table) Table(args("this" to n.thisArg)) else n
+            } as AlterRename
+        }
+        val thisSql = sql(expr, "this")
         val toKw = if (includeTo) " TO" else ""
         return "RENAME$toKw $thisSql"
     }
@@ -3612,6 +3660,46 @@ open class Generator(
             unsupported("Unsupported property ${expression.key}")
         }
         return "$propertyName=${sql(expression, "this")}"
+    }
+
+    // sqlglot: Generator.duplicatekeyproperty_sql
+    open fun duplicatekeypropertySql(expression: DuplicateKeyProperty): String =
+        "DUPLICATE KEY (${expressions(expression, flat = true)})"
+
+    // sqlglot: Generator.uniquekeyproperty_sql
+    // https://docs.starrocks.io/docs/sql-reference/sql-statements/table_bucket_part_index/CREATE_TABLE/
+    open fun uniquekeypropertySql(expression: UniqueKeyProperty, prefix: String = "UNIQUE KEY"): String =
+        "$prefix (${expressions(expression, flat = true)})"
+
+    // sqlglot: Generator.distributedbyproperty_sql
+    // https://docs.starrocks.io/docs/sql-reference/sql-statements/data-definition/CREATE_TABLE/#distribution_desc
+    open fun distributedbypropertySql(expression: DistributedByProperty): String {
+        var exprs = expressions(expression, flat = true)
+        if (exprs.isNotEmpty()) exprs = " ${wrap(exprs)}"
+        var buckets = sql(expression, "buckets")
+        val kind = sql(expression, "kind")
+        if (buckets.isNotEmpty()) buckets = " BUCKETS $buckets"
+        val order = sql(expression, "order")
+        return "DISTRIBUTED BY $kind$exprs$buckets$order"
+    }
+
+    // sqlglot: Generator.buildproperty_sql
+    open fun buildpropertySql(expression: BuildProperty): String =
+        "BUILD ${sql(expression, "this")}"
+
+    // sqlglot: Generator.refreshtriggerproperty_sql
+    open fun refreshtriggerpropertySql(expression: RefreshTriggerProperty): String {
+        val method = sql(expression, "method")
+        val kind = expression.args["kind"]
+        if (kind == null || kind == false || kind == "") return "REFRESH $method"
+
+        var every = sql(expression, "every")
+        val unit = sql(expression, "unit")
+        if (every.isNotEmpty()) every = " EVERY $every $unit"
+        var starts = sql(expression, "starts")
+        if (starts.isNotEmpty()) starts = " STARTS $starts"
+
+        return "REFRESH $method ON $kind$every$starts"
     }
 
     // sqlglot: Generator.function_fallback_sql

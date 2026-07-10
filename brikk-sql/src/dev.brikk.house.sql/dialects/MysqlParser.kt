@@ -592,7 +592,7 @@ open class MysqlParser(
     }
 
     // sqlglot: MySQLParser._parse_partition_range_value
-    protected fun parsePartitionRangeValue(): Expression? {
+    protected open fun parsePartitionRangeValue(): Expression? {
         matchTextSeq("PARTITION")
         val name = parseIdVar()
 
