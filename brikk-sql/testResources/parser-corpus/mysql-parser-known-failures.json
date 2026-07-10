@@ -1,0 +1,25 @@
+{
+ "sqlglot_version": "v30.12.0-44-g93d16591",
+ "cases": [
+  {
+   "sql": "CREATE OR REPLACE VIEW my_view AS SELECT column1 AS `boo`, column2 AS `foo` FROM my_table WHERE column3 = 'some_value' UNION SELECT q.* FROM fruits_table, JSON_TABLE(Fruits, '$[*]' COLUMNS(id VARCHAR(255) PATH '$.$id', value VARCHAR(255) PATH '$.value')) AS q",
+   "reason": "JSON_TABLE is not ported (exp.JSONTable/JSONSchema and Parser._parse_json_table missing): ast-mismatch at #0: expected Create"
+  },
+  {
+   "sql": "SELECT * FROM source, JSON_TABLE(source.links, '$.org[*]' COLUMNS(row_id FOR ORDINALITY, link VARCHAR(255) PATH '$.link')) AS links",
+   "reason": "JSON_TABLE is not ported (exp.JSONTable/JSONSchema and Parser._parse_json_table missing): Invalid expression / Unexpected token. Line 1, Col: 32."
+  },
+  {
+   "sql": "CREATE TRIGGER check_age BEFORE INSERT ON users FOR EACH ROW BEGIN SET NEW.created_at = NOW() END",
+   "reason": "CREATE TRIGGER raise-gated in base parser (trigger bodies / control-flow statements not ported); Python falls back to Command: CREATE TRIGGER is not supported yet. Line 1, Col: 24."
+  },
+  {
+   "sql": "CREATE TRIGGER audit_update AFTER UPDATE ON accounts FOR EACH ROW BEGIN INSERT INTO audit_log (user_id, old_balance, new_balance, changed_at) VALUES (OLD.user_id, OLD.balance, NEW.balance, NOW()) END",
+   "reason": "CREATE TRIGGER raise-gated in base parser (trigger bodies / control-flow statements not ported); Python falls back to Command: CREATE TRIGGER is not supported yet. Line 1, Col: 27."
+  },
+  {
+   "sql": "CREATE TRIGGER track_deletes BEFORE DELETE ON orders FOR EACH ROW BEGIN UPDATE statistics SET delete_count = delete_count + 1 WHERE table_name = 'orders' END",
+   "reason": "CREATE TRIGGER raise-gated in base parser (trigger bodies / control-flow statements not ported); Python falls back to Command: CREATE TRIGGER is not supported yet. Line 1, Col: 28."
+  }
+ ]
+}

@@ -1,0 +1,13 @@
+{
+ "sqlglot_version": "v30.12.0-44-g93d16591",
+ "cases": [
+  {
+   "sql": "CREATE OR REPLACE VIEW my_view AS SELECT column1 AS `boo`, column2 AS `foo` FROM my_table WHERE column3 = 'some_value' UNION SELECT q.* FROM fruits_table, JSON_TABLE(Fruits, '$[*]' COLUMNS(id VARCHAR(255) PATH '$.$id', value VARCHAR(255) PATH '$.value')) AS q",
+   "reason": "JSON_TABLE COLUMNS(...) schema not ported (exp.JSONSchema has no generator): UnsupportedError: Unsupported expression type JSONSchema"
+  },
+  {
+   "sql": "SELECT * FROM source, JSON_TABLE(source.links, '$.org[*]' COLUMNS(row_id FOR ORDINALITY, link VARCHAR(255) PATH '$.link')) AS links",
+   "reason": "JSON_TABLE COLUMNS(...) schema not ported (exp.JSONSchema has no generator): UnsupportedError: Unsupported expression type JSONSchema"
+  }
+ ]
+}

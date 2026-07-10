@@ -1,0 +1,8 @@
+{
+ "cases": [
+  {
+   "case": "write|mysql|SELECT * FROM test LIMIT 0 + 1, 0 + 1",
+   "reason": "LIMIT_ONLY_LITERALS requires sqlglot.optimizer.simplify (_simplify_unless_literal) which is not ported: expected `SELECT * FROM test LIMIT 1 OFFSET 1` actual `SELECT * FROM test LIMIT 0 + 1 OFFSET 0 + 1`"
+  }
+ ]
+}

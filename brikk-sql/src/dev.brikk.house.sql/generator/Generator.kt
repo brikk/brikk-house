@@ -7,6 +7,7 @@ import dev.brikk.house.sql.ast.Any as AnyNode
 import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.ast.Set as SetNode
 import dev.brikk.house.sql.parser.TokenizerConfig
+import dev.brikk.house.sql.parser.formatTimeString
 import kotlin.Boolean
 import kotlin.String
 import kotlin.collections.List
@@ -78,7 +79,9 @@ open class Generator(
     protected val identifierEnd: String = tokenizerConfig.identifiers.values.first()
 
     // sqlglot: Generator._escaped_quote_end / _escaped_identifier_end
-    protected val escapedQuoteEnd: String = tokenizerConfig.stringEscapes.first() + quoteEnd
+    // (STRING_ESCAPES[0] + QUOTE_END; open because the Kotlin tokenizer configs keep
+    // escapes as sets, losing Python's list order)
+    protected open val escapedQuoteEnd: String get() = tokenizerConfig.stringEscapes.first() + quoteEnd
     protected val escapedIdentifierEnd: String = identifierEnd + identifierEnd
 
     // sqlglot: Generator._next_name (name_sequence("_t"))
@@ -164,6 +167,24 @@ open class Generator(
     open val supportsMergeWhere: Boolean get() = false
     open val nvl2Supported: Boolean get() = true
     open val reservedKeywords: Set<String> get() = emptySet()
+    // sqlglot: Generator.TYPE_MAPPING (base: empty)
+    open val typeMapping: Map<DType, String> get() = emptyMap()
+    // sqlglot: Dialect.INVERSE_TIME_MAPPING (base TIME_MAPPING is empty)
+    open val inverseTimeMapping: Map<String, String> get() = emptyMap()
+    // sqlglot: Dialect.ESCAPED_SEQUENCES (base: empty; populated when the dialect's
+    // tokenizer supports backslash escape sequences)
+    open val escapedSequences: Map<String, String> get() = emptyMap()
+    // sqlglot: Dialect.HEX_START / HEX_END (base tokenizer has no hex strings)
+    open val hexStart: String? get() = null
+    open val hexEnd: String? get() = null
+    // sqlglot: Dialect.HEX_STRING_IS_INTEGER_TYPE
+    open val hexStringIsIntegerType: Boolean get() = false
+    // sqlglot: Dialect.TIME_FORMAT / DATE_FORMAT
+    open val dialectTimeFormat: String get() = "'%Y-%m-%d %H:%M:%S'"
+    open val dialectDateFormat: String get() = "'%Y-%m-%d'"
+    // sqlglot: Generator.PROPERTIES_LOCATION (open so dialects can relocate properties)
+    open val propertiesLocation: Map<KClass<out Expression>, GeneratorTables.PropLocation>
+        get() = GeneratorTables.PROPERTIES_LOCATION
     open val expressionPrecedesPropertiesCreatables: Set<String> get() = emptySet()
     open val inoutSeparator: String get() = " "
     open val supportsUescape: Boolean get() = true
@@ -468,6 +489,11 @@ open class Generator(
     // sqlglot: Generator.too_wide
     fun tooWide(args: Iterable<String>): Boolean = args.sumOf { it.length } > maxTextWidth
 
+    // sqlglot: Generator.format_time — renders args["format"] and converts python
+    // strftime specifiers back into this dialect's (INVERSE_TIME_MAPPING).
+    open fun formatTime(expression: Expression): String? =
+        formatTimeString(sql(expression, "format"), inverseTimeMapping)
+
     // sqlglot: Generator.binary
     open fun binary(expression: Binary, op: String): String {
         var opText = op
@@ -608,9 +634,19 @@ open class Generator(
         delimiter: String? = null,
         escapedDelimiter: String? = null,
     ): String {
+        var out = text
+        if (dialectStringsSupportEscapedSequences && escapedSequences.isNotEmpty()) {
+            out = buildString {
+                for (ch in out) {
+                    val escaped = escapedSequences[ch.toString()]
+                    if (escaped != null && (escapeBackslash || ch != '\\')) append(escaped)
+                    else append(ch)
+                }
+            }
+        }
         val delim = delimiter ?: quoteEnd
         val escapedDelim = escapedDelimiter ?: escapedQuoteEnd
-        return replaceLineBreaks(text).replace(delim, escapedDelim)
+        return replaceLineBreaks(out).replace(delim, escapedDelim)
     }
 
     // sqlglot: Generator.null_sql
@@ -1036,7 +1072,8 @@ open class Generator(
         } else if (typeValue == DType.CHARACTER_SET) {
             return "CHAR CHARACTER SET ${sql(expression, "kind")}"
         } else {
-            typeSql = if (typeValue is DType) typeValue.value else sql(typeValue)
+            // sqlglot: `self.TYPE_MAPPING.get(type_value, type_value.value)`
+            typeSql = if (typeValue is DType) (typeMapping[typeValue] ?: typeValue.value) else sql(typeValue)
         }
 
         if (interior.isNotEmpty()) {
@@ -1255,7 +1292,7 @@ open class Generator(
 
         for (p in expression.expressionsArg) {
             if (p !is Expression) continue
-            when (GeneratorTables.PROPERTIES_LOCATION[p::class]) {
+            when (propertiesLocation[p::class]) {
                 GeneratorTables.PropLocation.POST_WITH -> withProperties.add(p)
                 GeneratorTables.PropLocation.POST_SCHEMA -> rootProperties.add(p)
                 else -> {}
@@ -1308,7 +1345,7 @@ open class Generator(
         val locations = LinkedHashMap<GeneratorTables.PropLocation, MutableList<Expression>>()
         for (p in properties.expressionsArg) {
             if (p !is Expression) continue
-            val loc = GeneratorTables.PROPERTIES_LOCATION[p::class]
+            val loc = propertiesLocation[p::class]
             if (loc == null) {
                 // Python's PROPERTIES_LOCATION covers every Property; an absent entry here
                 // means an unported property class.
@@ -1521,6 +1558,14 @@ open class Generator(
     }
 
     // sqlglot: Generator.tablesample_sql
+    // sqlglot: Generator.indextablehint_sql
+    open fun indextablehintSql(expression: IndexTableHint): String {
+        val thisSql = "${sql(expression, "this")} INDEX"
+        var target = sql(expression, "target")
+        target = if (target.isNotEmpty()) " FOR $target" else ""
+        return "$thisSql$target (${expressions(expression, flat = true)})"
+    }
+
     open fun tablesampleSql(expression: TableSample, tablesampleKeyword: String? = null): String {
         var method = sql(expression, "method")
         method = if (method.isNotEmpty() && tablesampleWithMethod) "$method " else ""
@@ -2032,6 +2077,22 @@ open class Generator(
         return "$thisSql$sortOrder$nullsSortChange$withFill"
     }
 
+    // sqlglot: Generator.AFTER_HAVING_MODIFIER_TRANSFORMS (base adds cluster/distribute/sort
+    // over the module-level windows/qualify pair; dialects can drop them)
+    protected open fun afterHavingModifierSqls(expression: Expression): List<String> = listOf(
+        sql(expression, "cluster"),
+        sql(expression, "distribute"),
+        sql(expression, "sort"),
+        windowsModifierSql(expression),
+        sql(expression, "qualify"),
+    )
+
+    // sqlglot: AFTER_HAVING_MODIFIER_TRANSFORMS["windows"]
+    protected fun windowsModifierSql(expression: Expression): String =
+        if (isTruthyArg(expression.args["windows"])) {
+            seg("WINDOW ") + expressions(expression, key = "windows", flat = true)
+        } else ""
+
     // sqlglot: Generator.query_modifiers (base: LIMIT_FETCH="ALL" -> no fetch/limit conversion)
     open fun queryModifiers(expression: Expression, vararg sqls: String): String {
         val limit = expression.args["limit"] as? Expression
@@ -2047,15 +2108,7 @@ open class Generator(
         parts.add(sql(expression, "group"))
         parts.add(sql(expression, "having"))
         // sqlglot: AFTER_HAVING_MODIFIER_TRANSFORMS (cluster, distribute, sort, windows, qualify)
-        parts.add(sql(expression, "cluster"))
-        parts.add(sql(expression, "distribute"))
-        parts.add(sql(expression, "sort"))
-        parts.add(
-            if (isTruthyArg(expression.args["windows"])) {
-                seg("WINDOW ") + expressions(expression, key = "windows", flat = true)
-            } else ""
-        )
-        parts.add(sql(expression, "qualify"))
+        parts.addAll(afterHavingModifierSqls(expression))
         parts.add(sql(expression, "order"))
         parts.addAll(offsetLimitModifiers(expression, limit is Fetch, limit))
         parts.addAll(afterLimitModifiers(expression))
@@ -2943,6 +2996,186 @@ open class Generator(
 
     // sqlglot: Generator.dropprimarykey_sql
     open fun dropprimarykeySql(expression: DropPrimaryKey): String = "DROP PRIMARY KEY"
+
+    // sqlglot: Generator.SUPPORTS_MODIFY_COLUMN / SUPPORTS_CHANGE_COLUMN (base: false)
+    open val supportsModifyColumn: Boolean get() = false
+    open val supportsChangeColumn: Boolean get() = false
+
+    // sqlglot: Dialect.ON_CONDITION_EMPTY_BEFORE_ERROR (base: true)
+    open val onConditionEmptyBeforeError: Boolean get() = true
+
+    // sqlglot: Generator.modifycolumn_sql
+    open fun modifycolumnSql(expression: ModifyColumn): String {
+        val thisSql = sql(expression, "this")
+        val renameFrom = sql(expression, "rename_from")
+        if (renameFrom.isNotEmpty()) {
+            if (!supportsChangeColumn) unsupported("CHANGE COLUMN is not supported in this dialect")
+            return "CHANGE COLUMN $renameFrom $thisSql"
+        }
+        if (!supportsModifyColumn) unsupported("MODIFY COLUMN is not supported in this dialect")
+        return "MODIFY COLUMN $thisSql"
+    }
+
+    // sqlglot: Generator.alterindex_sql
+    open fun alterindexSql(expression: AlterIndex): String {
+        val thisSql = sql(expression, "this")
+        val visible = if (expression.args["visible"] == true) "VISIBLE" else "INVISIBLE"
+        return "ALTER INDEX $thisSql $visible"
+    }
+
+    // sqlglot: Generator.renameindex_sql
+    open fun renameindexSql(expression: RenameIndex): String {
+        val thisSql = sql(expression, "this")
+        val to = sql(expression, "to")
+        return "RENAME INDEX $thisSql TO $to"
+    }
+
+    // sqlglot: Generator.indexconstraintoption_sql
+    open fun indexconstraintoptionSql(expression: IndexConstraintOption): String {
+        val keyBlockSize = sql(expression, "key_block_size")
+        if (keyBlockSize.isNotEmpty()) return "KEY_BLOCK_SIZE = $keyBlockSize"
+
+        val using = sql(expression, "using")
+        if (using.isNotEmpty()) return "USING $using"
+
+        val parser = sql(expression, "parser")
+        if (parser.isNotEmpty()) return "WITH PARSER $parser"
+
+        val comment = sql(expression, "comment")
+        if (comment.isNotEmpty()) return "COMMENT $comment"
+
+        val visible = expression.args["visible"]
+        if (visible != null) return if (visible == true) "VISIBLE" else "INVISIBLE"
+
+        val engineAttr = sql(expression, "engine_attr")
+        if (engineAttr.isNotEmpty()) return "ENGINE_ATTRIBUTE = $engineAttr"
+
+        val secondaryEngineAttr = sql(expression, "secondary_engine_attr")
+        if (secondaryEngineAttr.isNotEmpty()) return "SECONDARY_ENGINE_ATTRIBUTE = $secondaryEngineAttr"
+
+        unsupported("Unsupported index constraint option.")
+        return ""
+    }
+
+    // sqlglot: Generator.indexcolumnconstraint_sql
+    open fun indexcolumnconstraintSql(expression: IndexColumnConstraint): String {
+        var kind = sql(expression, "kind")
+        kind = if (kind.isNotEmpty()) "$kind INDEX" else "INDEX"
+        var thisSql = sql(expression, "this")
+        if (thisSql.isNotEmpty()) thisSql = " $thisSql"
+        var indexType = sql(expression, "index_type")
+        if (indexType.isNotEmpty()) indexType = " USING $indexType"
+        var exprs = expressions(expression, flat = true)
+        if (exprs.isNotEmpty()) exprs = " ($exprs)"
+        var options = expressions(expression, key = "options", sep = " ")
+        if (options.isNotEmpty()) options = " $options"
+        return "$kind$thisSql$indexType$exprs$options"
+    }
+
+    // sqlglot: Generator.jsonvalue_sql
+    open fun jsonvalueSql(expression: JSONValue): String {
+        val path = sql(expression, "path")
+        var returning = sql(expression, "returning")
+        if (returning.isNotEmpty()) returning = " RETURNING $returning"
+
+        var onCondition = sql(expression, "on_condition")
+        if (onCondition.isNotEmpty()) onCondition = " $onCondition"
+
+        return func("JSON_VALUE", expression.thisArg, "$path$returning$onCondition")
+    }
+
+    // sqlglot: Generator.oncondition_sql
+    open fun onconditionSql(expression: OnCondition): String {
+        // Static options like "NULL ON ERROR" are stored as strings, in contrast to
+        // "DEFAULT <expr> ON ERROR"
+        val emptyArg = expression.args["empty"]
+        var empty = if (emptyArg is Expression) "DEFAULT ${sql(emptyArg)} ON EMPTY" else sql(expression, "empty")
+
+        val errorArg = expression.args["error"]
+        var error = if (errorArg is Expression) "DEFAULT ${sql(errorArg)} ON ERROR" else sql(expression, "error")
+
+        if (error.isNotEmpty() && empty.isNotEmpty()) {
+            error = if (onConditionEmptyBeforeError) "$empty $error" else "$error $empty"
+            empty = ""
+        }
+
+        val nullSql = sql(expression, "null")
+
+        return "$empty$error$nullSql"
+    }
+
+    // sqlglot: Generator.introducer_sql
+    open fun introducerSql(expression: Introducer): String =
+        "${sql(expression, "this")} ${sql(expression, "expression")}"
+
+    // sqlglot: Generator.hexstring_sql
+    open fun hexstringSql(expression: HexString, binaryFunctionRepr: String? = null): String {
+        val thisSql = sql(expression, "this")
+        val isIntegerType = expression.args["is_integer"] == true
+
+        if ((isIntegerType && !hexStringIsIntegerType) || (hexStart == null && binaryFunctionRepr == null)) {
+            // Integer representation will be returned if:
+            // - The read dialect treats the hex value as integer literal but not the write
+            // - The transpilation is not supported (write dialect has no HEX_START/param flag)
+            return thisSql.toLong(16).toString()
+        }
+
+        if (!isIntegerType) {
+            // Read dialect treats the hex value as BINARY/BLOB
+            if (binaryFunctionRepr != null) {
+                return func(binaryFunctionRepr, Literal.string(thisSql))
+            }
+            if (hexStringIsIntegerType) {
+                unsupported("Unsupported transpilation from BINARY/BLOB hex string")
+            }
+        }
+
+        return "$hexStart$thisSql${hexEnd ?: ""}"
+    }
+
+    // sqlglot: Generator.tsordstodate_sql
+    open fun tsordstodateSql(expression: TsOrDsToDate): String {
+        val this_ = expression.thisArg as? Expression
+        val timeFormat = formatTime(expression)
+        val safe = expression.args["safe"]
+        if (!timeFormat.isNullOrEmpty() && timeFormat != dialectTimeFormat && timeFormat != dialectDateFormat) {
+            return sql(
+                Cast(
+                    args(
+                        "this" to StrToTime(
+                            args(
+                                "this" to this_,
+                                "format" to expression.args["format"],
+                                "safe" to safe,
+                            )
+                        ),
+                        "to" to DataType(args("this" to DType.DATE)),
+                    )
+                )
+            )
+        }
+
+        if (this_ is TsOrDsToDate) return sql(this_)
+
+        if (safe == true) {
+            return sql(TryCast(args("this" to this_, "to" to DataType(args("this" to DType.DATE)))))
+        }
+
+        return sql(Cast(args("this" to this_, "to" to DataType(args("this" to DType.DATE)))))
+    }
+
+    // sqlglot: Generator.show_sql (base: unsupported)
+    open fun showSql(expression: Show): String {
+        unsupported("Unsupported SHOW statement")
+        return ""
+    }
+
+    // sqlglot: Generator.partitionbyrangeproperty_sql
+    open fun partitionbyrangepropertySql(expression: PartitionByRangeProperty): String {
+        val partitions = expressions(expression, key = "partition_expressions")
+        val create = expressions(expression, key = "create_expressions")
+        return "PARTITION BY RANGE ${wrap(partitions)} ${wrap(create)}"
+    }
 
     // sqlglot: Generator.addconstraint_sql
     open fun addconstraintSql(expression: AddConstraint): String =

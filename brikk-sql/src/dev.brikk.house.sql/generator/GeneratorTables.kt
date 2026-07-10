@@ -217,6 +217,7 @@ object GeneratorTables {
         reg(Aliases::class) { e -> aliasesSql(e as Aliases) }
         reg(TableAlias::class) { e -> tablealiasSql(e as TableAlias) }
         reg(Table::class) { e -> tableSql(e as Table) }
+        reg(IndexTableHint::class) { e -> indextablehintSql(e as IndexTableHint) }
         reg(TableSample::class) { e -> tablesampleSql(e as TableSample) }
         reg(Pivot::class) { e -> pivotSql(e as Pivot) }
         reg(Version::class) { e -> versionSql(e as Version) }
@@ -461,6 +462,19 @@ object GeneratorTables {
         reg(AlterSet::class) { e -> altersetSql(e as AlterSet) }
         reg(DropPartition::class) { e -> droppartitionSql(e as DropPartition) }
         reg(DropPrimaryKey::class) { e -> dropprimarykeySql(e as DropPrimaryKey) }
+        reg(ModifyColumn::class) { e -> modifycolumnSql(e as ModifyColumn) }
+        reg(AlterIndex::class) { e -> alterindexSql(e as AlterIndex) }
+        reg(RenameIndex::class) { e -> renameindexSql(e as RenameIndex) }
+        reg(IndexConstraintOption::class) { e -> indexconstraintoptionSql(e as IndexConstraintOption) }
+        reg(IndexColumnConstraint::class) { e -> indexcolumnconstraintSql(e as IndexColumnConstraint) }
+        reg(JSONValue::class) { e -> jsonvalueSql(e as JSONValue) }
+        reg(OnCondition::class) { e -> onconditionSql(e as OnCondition) }
+        reg(Show::class) { e -> showSql(e as Show) }
+        reg(Introducer::class) { e -> introducerSql(e as Introducer) }
+        reg(HexString::class) { e -> hexstringSql(e as HexString) }
+        reg(UsingData::class) { e -> "USING DATA ${sql(e, "this")}" }
+        reg(TsOrDsToDate::class) { e -> tsordstodateSql(e as TsOrDsToDate) }
+        reg(PartitionByRangeProperty::class) { e -> partitionbyrangepropertySql(e as PartitionByRangeProperty) }
         reg(AddConstraint::class) { e -> addconstraintSql(e as AddConstraint) }
         reg(AddPartition::class) { e -> addpartitionSql(e as AddPartition) }
 

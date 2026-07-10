@@ -484,13 +484,50 @@ object BaseParserTables {
     // sqlglot: Parser.LAMBDA_ARG_TERMINATORS
     val LAMBDA_ARG_TERMINATORS: Set<TokenType> = setOf(TokenType.COMMA, TokenType.R_PAREN)
 
-    // sqlglot: Parser.COLUMN_OPERATORS — only DOT (None sentinel) and DCOLON (cast) are
-    // ported; JSON extraction operators land with their nodes.
+    // sqlglot: Parser.COLUMN_OPERATORS (DOTCOLON -> JSONCast not ported)
     val COLUMN_OPERATORS: Map<TokenType, ((Parser, Expression?, Expression?) -> Expression?)?> =
         mapOf(
             TokenType.DOT to null,
             TokenType.DCOLON to { parser, this_, to ->
                 parser.buildCast(strict = parser.strictCast, this_ = this_, to = to)
+            },
+            TokenType.ARROW to { parser, this_, path ->
+                parser.expression(
+                    dev.brikk.house.sql.ast.JSONExtract(
+                        args(
+                            "this" to this_,
+                            "expression" to parser.toJsonPath(path),
+                            "only_json_types" to parser.jsonArrowsRequireJsonType,
+                        )
+                    )
+                )
+            },
+            TokenType.DARROW to { parser, this_, path ->
+                parser.expression(
+                    dev.brikk.house.sql.ast.JSONExtractScalar(
+                        args(
+                            "this" to this_,
+                            "expression" to parser.toJsonPath(path),
+                            "only_json_types" to parser.jsonArrowsRequireJsonType,
+                            "scalar_only" to parser.jsonExtractScalarScalarOnly,
+                        )
+                    )
+                )
+            },
+            TokenType.HASH_ARROW to { parser, this_, path ->
+                parser.expression(
+                    dev.brikk.house.sql.ast.JSONBExtract(args("this" to this_, "expression" to path))
+                )
+            },
+            TokenType.DHASH_ARROW to { parser, this_, path ->
+                parser.expression(
+                    dev.brikk.house.sql.ast.JSONBExtractScalar(args("this" to this_, "expression" to path))
+                )
+            },
+            TokenType.PLACEHOLDER to { parser, this_, key ->
+                parser.expression(
+                    dev.brikk.house.sql.ast.JSONBContains(args("this" to this_, "expression" to key))
+                )
             },
         )
 
@@ -594,9 +631,11 @@ object BaseParserTables {
         },
     )
 
-    // sqlglot: Parser.PRIMARY_PARSERS (INTRODUCER/SESSION_PARAMETER not ported)
+    // sqlglot: Parser.PRIMARY_PARSERS
     val PRIMARY_PARSERS: Map<TokenType, (Parser, Token) -> Expression?> =
         STRING_PARSERS + NUMERIC_PARSERS + mapOf(
+            TokenType.INTRODUCER to { parser, token -> parser.parseIntroducer(token) },
+            TokenType.SESSION_PARAMETER to { parser, _ -> parser.parseSessionParameter() },
             TokenType.NULL to { parser, _ -> parser.expression(Null()) },
             TokenType.TRUE to { parser, _ ->
                 parser.expression(Boolean(args("this" to true)))
@@ -661,9 +700,11 @@ object BaseParserTables {
     // sqlglot: Parser.FUNCTIONS_WITH_ALIASED_ARGS
     val FUNCTIONS_WITH_ALIASED_ARGS: Set<String> = setOf("STRUCT")
 
-    // sqlglot: Parser.FUNCTION_PARSERS (CONVERT/TRY_CONVERT, GAP_FILL, JSON_TABLE,
-    // OPENJSON, XMLELEMENT, XMLTABLE not ported yet — no base-corpus coverage).
+    // sqlglot: Parser.FUNCTION_PARSERS (GAP_FILL, JSON_TABLE, OPENJSON, XMLELEMENT,
+    // XMLTABLE not ported yet — no base-corpus coverage).
     val FUNCTION_PARSERS: Map<String, (Parser) -> Expression?> = buildMap {
+        put("CONVERT") { parser -> parser.parseConvert(parser.strictCast) }
+        put("TRY_CONVERT") { parser -> parser.parseConvert(false, safe = true) }
         for (name in listOf("ARG_MAX", "ARGMAX", "MAX_BY")) {
             put(name) { parser -> parser.parseMaxMinBy { a: Args -> dev.brikk.house.sql.ast.ArgMax(a) } }
         }
@@ -1011,9 +1052,11 @@ object BaseParserTables {
         "DO" to listOf(listOf("NOTHING"), listOf("UPDATE")),
     )
 
-    // sqlglot: Parser.QUERY_MODIFIER_PARSERS (MATCH_RECOGNIZE and FOR/LOCK -> _parse_locks
-    // are not ported yet — no base-corpus coverage).
+    // sqlglot: Parser.QUERY_MODIFIER_PARSERS (MATCH_RECOGNIZE is not ported yet — no
+    // base-corpus coverage).
     val QUERY_MODIFIER_PARSERS: Map<TokenType, (Parser) -> Pair<String, kotlin.Any?>> = mapOf(
+        TokenType.FOR to { parser -> "locks" to parser.parseLocks() },
+        TokenType.LOCK to { parser -> "locks" to parser.parseLocks() },
         TokenType.PREWHERE to { parser -> "prewhere" to parser.parsePrewhere() },
         TokenType.WHERE to { parser -> "where" to parser.parseWhere() },
         TokenType.GROUP_BY to { parser -> "group" to parser.parseGroup() },

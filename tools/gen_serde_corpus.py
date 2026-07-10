@@ -11,10 +11,16 @@ Output: brikk-sql/testResources/ast-corpus/identity-serde.json
         (gzipped as identity-serde.json.gz instead if the raw file exceeds 25MB)
 
 Run from anywhere:  python3 tools/gen_serde_corpus.py
+
+Dialect mode (--dialect mysql): reads the identity SQLs from
+brikk-sql/testResources/dialect-corpus/<dialect>.json, Python-parses each with
+read=<dialect>, and writes brikk-sql/testResources/ast-corpus/<dialect>-serde.json
+with {"sql", "generated" (= .sql(dialect=<dialect>)), "dump"}.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import pathlib
 import subprocess
@@ -43,19 +49,35 @@ def sqlglot_version() -> str:
         return "unknown"
 
 
+def iter_sqls(dialect: str | None):
+    if dialect is None:
+        for line in FIXTURE.read_text().splitlines():
+            sql = line.strip()
+            if not sql or sql.startswith("#") or sql.startswith("--"):
+                continue
+            yield sql
+    else:
+        corpus_file = ROOT / "brikk-sql" / "testResources" / "dialect-corpus" / f"{dialect}.json"
+        corpus = json.loads(corpus_file.read_text())
+        for case in corpus["identity"]:
+            yield case["sql"]
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dialect", default=None, help="dialect-corpus name (e.g. mysql)")
+    opts = parser.parse_args()
+    dialect = opts.dialect
+
     cases = []
     skipped = []
-    for line in FIXTURE.read_text().splitlines():
-        sql = line.strip()
-        if not sql or sql.startswith("#") or sql.startswith("--"):
-            continue
+    for sql in iter_sqls(dialect):
         try:
-            expression = sqlglot.parse_one(sql)
+            expression = sqlglot.parse_one(sql, read=dialect or None)
             cases.append(
                 {
                     "sql": sql,
-                    "generated": expression.sql(),
+                    "generated": expression.sql(dialect=dialect or None),
                     "dump": serde.dump(expression),
                 }
             )
@@ -64,26 +86,28 @@ def main() -> None:
 
     corpus = {
         "sqlglot_version": sqlglot_version(),
-        "fixture": "tests/fixtures/identity.sql",
+        "fixture": f"dialect-corpus/{dialect}.json" if dialect else "tests/fixtures/identity.sql",
+        "dialect": dialect or "",
         "case_count": len(cases),
         "skipped": skipped,
         "cases": cases,
     }
 
+    stem = f"{dialect}-serde" if dialect else "identity-serde"
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     raw = json.dumps(corpus, indent=1) + "\n"
     size = len(raw.encode())
     if size > 25 * 1024 * 1024:
         import gzip
 
-        out = OUT_DIR / "identity-serde.json.gz"
-        (OUT_DIR / "identity-serde.json").unlink(missing_ok=True)
+        out = OUT_DIR / f"{stem}.json.gz"
+        (OUT_DIR / f"{stem}.json").unlink(missing_ok=True)
         out.write_bytes(gzip.compress(raw.encode()))
         print(f"Wrote {out} (raw {size / 1e6:.1f}MB > 25MB, gzipped to {out.stat().st_size / 1e6:.1f}MB)")
         print("NOTE: JVM test must read via java.util.zip.GZIPInputStream")
     else:
-        out = OUT_DIR / "identity-serde.json"
-        (OUT_DIR / "identity-serde.json.gz").unlink(missing_ok=True)
+        out = OUT_DIR / f"{stem}.json"
+        (OUT_DIR / f"{stem}.json.gz").unlink(missing_ok=True)
         out.write_text(raw)
         print(f"Wrote {out} ({size / 1e6:.1f}MB)")
     print(f"cases: {len(cases)}, skipped: {len(skipped)}")
