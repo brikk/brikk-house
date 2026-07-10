@@ -53,3 +53,12 @@ class DataType(initArgs: Args = emptyMap()) : Expression(initArgs) {
         )
     }
 }
+
+// sqlglot: datatypes.DataTypeParam(Expression) — precision/scale/size args of a DataType
+class DataTypeParam(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "expression" to false)
+    }
+}

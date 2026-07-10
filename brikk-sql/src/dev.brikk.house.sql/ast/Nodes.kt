@@ -45,6 +45,7 @@ internal val QUERY_MODIFIERS: Map<String, kotlin.Boolean> = argTypesOf(
 class Identifier(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = ARG_TYPES
     override val hashRawArgs get() = true
+    override val isPrimitive get() = true
 
     // sqlglot: Identifier.quoted
     val quoted: kotlin.Boolean get() = args["quoted"] == true
@@ -64,6 +65,23 @@ class Column(initArgs: Args = emptyMap()) : Expression(initArgs), Condition {
     val table: String get() = text("table")
     val db: String get() = text("db")
     val catalog: String get() = text("catalog")
+
+    // sqlglot: Column.parts ("catalog", "db", "table", "this" in order, non-null only)
+    val parts: List<Expression>
+        get() = listOf("catalog", "db", "table", "this").mapNotNull { args[it] as? Expression }
+
+    // sqlglot: Column.to_dot
+    fun toDot(includeDots: kotlin.Boolean = true): Expression {
+        val parts = parts.toMutableList()
+        var parent = this.parent
+        if (includeDots) {
+            while (parent is Dot) {
+                parts.add(parent.expressionArg as Expression)
+                parent = parent.parent
+            }
+        }
+        return if (parts.size > 1) Dot.build(parts.map { it.copy() }) else parts[0]
+    }
 
     companion object {
         private val ARG_TYPES = argTypesOf(
@@ -101,9 +119,14 @@ class Star(initArgs: Args = emptyMap()) : Expression(initArgs) {
 class Literal(initArgs: Args = emptyMap()) : Expression(initArgs), Condition {
     override val argTypes get() = ARG_TYPES
     override val hashRawArgs get() = true
+    override val isPrimitive get() = true
 
     companion object {
         private val ARG_TYPES = argTypesOf("this" to true, "is_string" to true)
+
+        // sqlglot: Literal.number (string form, e.g. Literal.number(f"0.{...}") in the parser)
+        fun number(number: String): Literal =
+            Literal(args("this" to number, "is_string" to false))
 
         // sqlglot: Literal.number (negative numbers come back wrapped in Neg)
         fun number(number: Number): Expression {
@@ -130,7 +153,14 @@ class Literal(initArgs: Args = emptyMap()) : Expression(initArgs), Condition {
 }
 
 // sqlglot: core.Boolean(Expression, Condition) — is_primitive
-class Boolean(initArgs: Args = emptyMap()) : Expression(initArgs), Condition
+class Boolean(initArgs: Args = emptyMap()) : Expression(initArgs), Condition {
+    override val isPrimitive get() = true
+}
+
+// sqlglot: core.Var(Expression) — is_primitive
+class Var(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val isPrimitive get() = true
+}
 
 // sqlglot: core.Null(Expression, Condition) — arg_types = {}
 class Null(initArgs: Args = emptyMap()) : Expression(initArgs), Condition {
@@ -290,6 +320,68 @@ class Div(initArgs: Args = emptyMap()) : Binary(initArgs) {
 // sqlglot: core.Mod(Expression, Binary)
 class Mod(initArgs: Args = emptyMap()) : Binary(initArgs)
 
+// sqlglot: core.IntDiv(Expression, Binary)
+class IntDiv(initArgs: Args = emptyMap()) : Binary(initArgs)
+
+// sqlglot: core.PropertyEQ(Expression, Binary)
+class PropertyEQ(initArgs: Args = emptyMap()) : Binary(initArgs)
+
+// sqlglot: core.NullSafeNEQ(Expression, Binary, Predicate)
+class NullSafeNEQ(initArgs: Args = emptyMap()) : Binary(initArgs), Predicate
+
+// sqlglot: core.BitwiseAnd(Expression, Binary)
+class BitwiseAnd(initArgs: Args = emptyMap()) : Binary(initArgs) {
+    override val argTypes get() = BITWISE_BINARY_ARG_TYPES
+}
+
+// sqlglot: core.BitwiseOr(Expression, Binary)
+class BitwiseOr(initArgs: Args = emptyMap()) : Binary(initArgs) {
+    override val argTypes get() = BITWISE_BINARY_ARG_TYPES
+}
+
+// sqlglot: core.BitwiseXor(Expression, Binary)
+class BitwiseXor(initArgs: Args = emptyMap()) : Binary(initArgs) {
+    override val argTypes get() = BITWISE_BINARY_ARG_TYPES
+}
+
+// sqlglot: shared arg_types of core.BitwiseAnd/BitwiseOr/BitwiseXor
+internal val BITWISE_BINARY_ARG_TYPES = argTypesOf(
+    "this" to true, "expression" to true, "padside" to false,
+)
+
+// sqlglot: core.BitwiseNot(Unary)
+class BitwiseNot(initArgs: Args = emptyMap()) : Unary(initArgs)
+
+// sqlglot: core.DPipe(Expression, Binary)
+class DPipe(initArgs: Args = emptyMap()) : Binary(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "expression" to true, "safe" to false)
+    }
+}
+
+// sqlglot: core.Escape(Expression, Binary)
+class Escape(initArgs: Args = emptyMap()) : Binary(initArgs)
+
+// sqlglot: core.Aliases(Expression)
+class Aliases(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "expressions" to true)
+    }
+}
+
+// sqlglot: core.SubqueryPredicate(Predicate)
+interface SubqueryPredicate : Predicate
+
+// sqlglot: core.Any(Expression, SubqueryPredicate)
+class Any(initArgs: Args = emptyMap()) : Expression(initArgs), SubqueryPredicate
+
+// sqlglot: core.All(Expression, SubqueryPredicate)
+class All(initArgs: Args = emptyMap()) : Expression(initArgs), SubqueryPredicate
+
 // sqlglot: core.Pow(Expression, Binary, Func) — _sql_names = ["POWER", "POW"]
 class Pow(initArgs: Args = emptyMap()) : Binary(initArgs), Func {
     override val sqlNamesOverride get() = listOf("POWER", "POW")
@@ -305,7 +397,7 @@ class TableAlias(initArgs: Args = emptyMap()) : Expression(initArgs) {
 
     // sqlglot: TableAlias.columns
     @Suppress("UNCHECKED_CAST")
-    val columns: List<Any?> get() = (args["columns"] as? List<Any?>) ?: emptyList()
+    val columns: List<kotlin.Any?> get() = (args["columns"] as? List<kotlin.Any?>) ?: emptyList()
 
     companion object {
         private val ARG_TYPES = argTypesOf("this" to false, "columns" to false)
@@ -319,6 +411,30 @@ class Table(initArgs: Args = emptyMap()) : Expression(initArgs) {
     // sqlglot: Table.db / catalog
     val db: String get() = text("db")
     val catalog: String get() = text("catalog")
+
+    // sqlglot: Table.parts ("catalog", "db", "this" in order, Dots flattened)
+    val parts: List<Expression>
+        get() {
+            val out = mutableListOf<Expression>()
+            for (key in listOf("catalog", "db", "this")) {
+                when (val part = args[key]) {
+                    is Dot -> {
+                        // sqlglot: Binary.flatten over the Dot chain
+                        var node: Expression = part
+                        val stack = ArrayDeque<Expression>()
+                        while (node is Dot) {
+                            stack.addFirst(node.right)
+                            node = node.left
+                        }
+                        out.add(node)
+                        out.addAll(stack)
+                    }
+                    is Expression -> out.add(part)
+                    else -> {}
+                }
+            }
+            return out
+        }
 
     companion object {
         private val ARG_TYPES = argTypesOf(
@@ -336,7 +452,7 @@ class Select(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = ARG_TYPES
 
     // sqlglot: Select.selects
-    val selects: List<Any?> get() = expressionsArg
+    val selects: List<kotlin.Any?> get() = expressionsArg
 
     companion object {
         private val ARG_TYPES: Map<String, kotlin.Boolean> = LinkedHashMap(
@@ -449,6 +565,10 @@ class Subquery(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = ARG_TYPES
     override val isSubquery get() = true
 
+    // sqlglot: Subquery.is_wrapper
+    val isWrapper: kotlin.Boolean
+        get() = args.all { (k, v) -> k == "this" || v == null }
+
     companion object {
         private val ARG_TYPES: Map<String, kotlin.Boolean> = LinkedHashMap(
             argTypesOf("this" to true, "alias" to false, "with_" to false)
@@ -500,6 +620,36 @@ abstract class SetOperation(initArgs: Args = emptyMap()) : Expression(initArgs) 
     }
 }
 
+// sqlglot: query.Tuple(Expression)
+class Tuple(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("expressions" to false)
+    }
+}
+
+// sqlglot: query.Window(Expression, Condition)
+class Window(initArgs: Args = emptyMap()) : Expression(initArgs), Condition {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf(
+            "this" to true, "partition_by" to false, "order" to false, "spec" to false,
+            "alias" to false, "over" to false, "first" to false,
+        )
+    }
+}
+
+// sqlglot: query.Semicolon(Expression) — arg_types = {}
+class Semicolon(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = emptyMap<String, kotlin.Boolean>()
+    }
+}
+
 // sqlglot: query.Union(SetOperation)
 class Union(initArgs: Args = emptyMap()) : SetOperation(initArgs)
 
@@ -528,6 +678,40 @@ class Cast(initArgs: Args = emptyMap()) : Expression(initArgs), Func {
         )
     }
 }
+
+// sqlglot: functions.Case(Expression, Func)
+class Case(initArgs: Args = emptyMap()) : Expression(initArgs), Func {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to false, "ifs" to true, "default" to false)
+    }
+}
+
+// sqlglot: functions.If(Expression, Func) — _sql_names = ["IF", "IIF"]
+class If(initArgs: Args = emptyMap()) : Expression(initArgs), Func {
+    override val argTypes get() = ARG_TYPES
+    override val sqlNamesOverride get() = listOf("IF", "IIF")
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "true" to true, "false" to false)
+    }
+}
+
+// sqlglot: functions.Exists(Expression, SubqueryPredicate)
+class Exists(initArgs: Args = emptyMap()) : Expression(initArgs), SubqueryPredicate {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "expression" to false)
+    }
+}
+
+// sqlglot: functions.Collate(Expression, Binary, Func)
+class Collate(initArgs: Args = emptyMap()) : Binary(initArgs), Func
+
+// sqlglot: functions.ConnectByRoot(Expression, Func)
+class ConnectByRoot(initArgs: Args = emptyMap()) : Expression(initArgs), Func
 
 // sqlglot: core.Anonymous(Expression, Func) — is_var_len_args
 class Anonymous(initArgs: Args = emptyMap()) : Expression(initArgs), Func {
@@ -577,6 +761,15 @@ class Max(initArgs: Args = emptyMap()) : Expression(initArgs), AggFunc {
 
 // sqlglot: aggregate.Avg(Expression, AggFunc)
 class Avg(initArgs: Args = emptyMap()) : Expression(initArgs), AggFunc
+
+// sqlglot: aggregate.RowNumber(Expression, Func)
+class RowNumber(initArgs: Args = emptyMap()) : Expression(initArgs), Func {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to false)
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Misc (sqlglot.expressions.ddl)

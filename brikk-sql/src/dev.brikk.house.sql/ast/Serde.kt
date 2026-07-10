@@ -67,6 +67,19 @@ object ExpressionRegistry {
         "Div" to Entry(CORE) { Div() },
         "Mod" to Entry(CORE) { Mod() },
         "Pow" to Entry(CORE) { Pow() },
+        "IntDiv" to Entry(CORE) { IntDiv() },
+        "PropertyEQ" to Entry(CORE) { PropertyEQ() },
+        "NullSafeNEQ" to Entry(CORE) { NullSafeNEQ() },
+        "BitwiseAnd" to Entry(CORE) { BitwiseAnd() },
+        "BitwiseOr" to Entry(CORE) { BitwiseOr() },
+        "BitwiseXor" to Entry(CORE) { BitwiseXor() },
+        "BitwiseNot" to Entry(CORE) { BitwiseNot() },
+        "DPipe" to Entry(CORE) { DPipe() },
+        "Escape" to Entry(CORE) { Escape() },
+        "Aliases" to Entry(CORE) { Aliases() },
+        "Any" to Entry(CORE) { Any() },
+        "All" to Entry(CORE) { All() },
+        "Var" to Entry(CORE) { Var() },
         "Ordered" to Entry(CORE) { Ordered() },
         "Distinct" to Entry(CORE) { Distinct() },
         "Anonymous" to Entry(CORE) { Anonymous() },
@@ -87,13 +100,23 @@ object ExpressionRegistry {
         "Union" to Entry(QUERY) { Union() },
         "Except" to Entry(QUERY) { Except() },
         "Intersect" to Entry(QUERY) { Intersect() },
+        "Tuple" to Entry(QUERY) { Tuple() },
+        "Window" to Entry(QUERY) { Window() },
+        "Semicolon" to Entry(QUERY) { Semicolon() },
         "DataType" to Entry(DATATYPES) { DataType() },
+        "DataTypeParam" to Entry(DATATYPES) { DataTypeParam() },
         "Cast" to Entry(FUNCTIONS) { Cast() },
+        "Case" to Entry(FUNCTIONS) { Case() },
+        "If" to Entry(FUNCTIONS) { If() },
+        "Exists" to Entry(FUNCTIONS) { Exists() },
+        "Collate" to Entry(FUNCTIONS) { Collate() },
+        "ConnectByRoot" to Entry(FUNCTIONS) { ConnectByRoot() },
         "Count" to Entry(AGGREGATE) { Count() },
         "Sum" to Entry(AGGREGATE) { Sum() },
         "Min" to Entry(AGGREGATE) { Min() },
         "Max" to Entry(AGGREGATE) { Max() },
         "Avg" to Entry(AGGREGATE) { Avg() },
+        "RowNumber" to Entry(AGGREGATE) { RowNumber() },
         "Command" to Entry(DDL) { Command() },
     )
 
@@ -134,7 +157,7 @@ object Serde {
     private const val VALUE = "v"
     private const val DATA_TYPE = "DataType.Type"
 
-    private class StackVal(val node: Any?, val index: Int?, val argKey: String?, val isArray: kotlin.Boolean)
+    private class StackVal(val node: kotlin.Any?, val index: Int?, val argKey: String?, val isArray: kotlin.Boolean)
 
     // sqlglot: serde.dump
     fun dump(expression: Expression): JsonArray {
@@ -186,15 +209,15 @@ object Serde {
     }
 
     // sqlglot: serde.load
-    fun load(payloads: JsonArray?): Any? {
+    fun load(payloads: JsonArray?): kotlin.Any? {
         if (payloads == null || payloads.isEmpty()) return null
 
         val root = loadPayload(payloads[0].jsonObject)
-        val nodes = mutableListOf<Any?>(root)
+        val nodes = mutableListOf<kotlin.Any?>(root)
 
         for (element in payloads.drop(1)) {
             val payload = element.jsonObject
-            val node: Any? = if (CLASS in payload) loadPayload(payload) else jsonToScalar(payload.getValue(VALUE))
+            val node: kotlin.Any? = if (CLASS in payload) loadPayload(payload) else jsonToScalar(payload.getValue(VALUE))
 
             nodes.add(node)
             val parent = nodes[payload.getValue(INDEX).jsonPrimitive.int] as Expression
@@ -214,7 +237,7 @@ object Serde {
     fun loadExpression(payloads: JsonArray): Expression = load(payloads) as Expression
 
     // sqlglot: serde._load
-    private fun loadPayload(payload: JsonObject): Any {
+    private fun loadPayload(payload: JsonObject): kotlin.Any {
         val className = payload.getValue(CLASS).jsonPrimitive.content
 
         if (className == DATA_TYPE) {
@@ -248,7 +271,7 @@ object Serde {
         }
     )
 
-    private fun scalarToJson(v: Any?): JsonElement = when (v) {
+    private fun scalarToJson(v: kotlin.Any?): JsonElement = when (v) {
         null -> JsonNull
         is String -> JsonPrimitive(v)
         is kotlin.Boolean -> JsonPrimitive(v)
@@ -262,7 +285,7 @@ object Serde {
      * JSON scalar -> Kotlin. Integral numbers become Long (canonical integer type in
      * args; Expression equality normalizes Int to Long so round-trips stay equal).
      */
-    private fun jsonToScalar(element: JsonElement): Any? {
+    private fun jsonToScalar(element: JsonElement): kotlin.Any? {
         if (element is JsonNull) return null
         val primitive = element.jsonPrimitive
         if (primitive.isString) return primitive.content

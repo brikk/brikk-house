@@ -7,10 +7,10 @@ import kotlin.reflect.KClass
  * [Expression], MutableList (of Expression or scalars), String, kotlin.Boolean,
  * Int, Long, Double, [DType] (for DataType's "this" arg) and null.
  */
-typealias Args = Map<String, Any?>
+typealias Args = Map<String, kotlin.Any?>
 
 /** Convenience builder preserving insertion order (mirrors Python kwargs order). */
-fun args(vararg pairs: Pair<String, Any?>): Args = linkedMapOf(*pairs)
+fun args(vararg pairs: Pair<String, kotlin.Any?>): Args = linkedMapOf(*pairs)
 
 /** Convenience builder for argTypes tables. */
 internal fun argTypesOf(vararg pairs: Pair<String, kotlin.Boolean>): Map<String, kotlin.Boolean> =
@@ -33,7 +33,7 @@ internal val DEFAULT_ARG_TYPES: Map<String, kotlin.Boolean> = argTypesOf("this" 
 abstract class Expression(initArgs: Args = emptyMap()) {
 
     // sqlglot: Expression.args
-    val args: MutableMap<String, Any?> = LinkedHashMap<String, Any?>(initArgs.size).also { m ->
+    val args: MutableMap<String, kotlin.Any?> = LinkedHashMap<String, kotlin.Any?>(initArgs.size).also { m ->
         // Lists are canonicalized to mutable lists because set/append mutate them in
         // place, exactly like Python lists.
         for ((k, v) in initArgs) m[k] = if (v is List<*>) v.toMutableList() else v
@@ -51,11 +51,11 @@ abstract class Expression(initArgs: Args = emptyMap()) {
     var comments: MutableList<String>? = null
 
     // sqlglot: Expression._meta (lazily created via the `meta` property)
-    internal var metaOrNull: MutableMap<String, Any?>? = null
+    internal var metaOrNull: MutableMap<String, kotlin.Any?>? = null
 
     // sqlglot: Expression.meta
-    val meta: MutableMap<String, Any?>
-        get() = metaOrNull ?: LinkedHashMap<String, Any?>().also { metaOrNull = it }
+    val meta: MutableMap<String, kotlin.Any?>
+        get() = metaOrNull ?: LinkedHashMap<String, kotlin.Any?>().also { metaOrNull = it }
 
     /**
      * Minimal type slot (sqlglot: Expression._type). Full DataType typing (optimizer's
@@ -65,6 +65,9 @@ abstract class Expression(initArgs: Args = emptyMap()) {
 
     // sqlglot: Expression._hash_raw_args
     open val hashRawArgs: kotlin.Boolean get() = false
+
+    // sqlglot: Expression.is_primitive (Literal/Identifier/Boolean/Var and string-literal kin)
+    open val isPrimitive: kotlin.Boolean get() = false
 
     // sqlglot: Expression.is_cast / is_data_type / is_subquery
     open val isCast: kotlin.Boolean get() = false
@@ -80,14 +83,14 @@ abstract class Expression(initArgs: Args = emptyMap()) {
     }
 
     // sqlglot: Expression.this
-    val thisArg: Any? get() = args["this"]
+    val thisArg: kotlin.Any? get() = args["this"]
 
     // sqlglot: Expression.expression
-    val expressionArg: Any? get() = args["expression"]
+    val expressionArg: kotlin.Any? get() = args["expression"]
 
     // sqlglot: Expression.expressions
     @Suppress("UNCHECKED_CAST")
-    val expressionsArg: List<Any?> get() = (args["expressions"] as? List<Any?>) ?: emptyList()
+    val expressionsArg: List<kotlin.Any?> get() = (args["expressions"] as? List<kotlin.Any?>) ?: emptyList()
 
     // sqlglot: Expression.text
     fun text(key: String): String {
@@ -131,24 +134,24 @@ abstract class Expression(initArgs: Args = emptyMap()) {
             (this is Neg && (thisArg as? Expression)?.isNumber == true)
 
     // sqlglot: Expression.append
-    fun append(argKey: String, value: Any?) {
+    fun append(argKey: String, value: kotlin.Any?) {
         if (args[argKey] !is MutableList<*>) {
-            args[argKey] = mutableListOf<Any?>()
+            args[argKey] = mutableListOf<kotlin.Any?>()
         }
         setParent(argKey, value)
         @Suppress("UNCHECKED_CAST")
-        val values = args[argKey] as MutableList<Any?>
+        val values = args[argKey] as MutableList<kotlin.Any?>
         if (value is Expression) value.index = values.size
         values.add(value)
     }
 
     // sqlglot: Expression.set
-    fun set(argKey: String, value: Any?, index: Int? = null, overwrite: kotlin.Boolean = true) {
-        var v: Any? = if (value is List<*> && value !is Expression) value.toMutableList() else value
+    fun set(argKey: String, value: kotlin.Any?, index: Int? = null, overwrite: kotlin.Boolean = true) {
+        var v: kotlin.Any? = if (value is List<*> && value !is Expression) value.toMutableList() else value
 
         if (index != null) {
             @Suppress("UNCHECKED_CAST")
-            val expressions = (args[argKey] as? MutableList<Any?>) ?: mutableListOf()
+            val expressions = (args[argKey] as? MutableList<kotlin.Any?>) ?: mutableListOf()
 
             if (expressions.getOrNull(index) == null) return
 
@@ -180,7 +183,7 @@ abstract class Expression(initArgs: Args = emptyMap()) {
     }
 
     // sqlglot: Expression._set_parent
-    private fun setParent(argKey: String, value: Any?, index: Int? = null) {
+    private fun setParent(argKey: String, value: kotlin.Any?, index: Int? = null) {
         if (value is Expression) {
             value.parent = this
             value.argKey = argKey
@@ -194,6 +197,26 @@ abstract class Expression(initArgs: Args = emptyMap()) {
                 }
             }
         }
+    }
+
+    // sqlglot: Expression.add_comments
+    fun addComments(newComments: List<String>?, prepend: kotlin.Boolean = false) {
+        if (newComments.isNullOrEmpty()) return
+        val existing = comments
+        if (existing == null) {
+            comments = newComments.toMutableList()
+        } else if (prepend) {
+            existing.addAll(0, newComments)
+        } else {
+            existing.addAll(newComments)
+        }
+    }
+
+    // sqlglot: Expression.pop_comments
+    fun popComments(): MutableList<String> {
+        val popped = comments ?: mutableListOf()
+        comments = null
+        return popped
     }
 
     // sqlglot: Expression.depth
@@ -311,7 +334,7 @@ abstract class Expression(initArgs: Args = emptyMap()) {
                     stack.addLast(vs to child)
                     copy.set(k, child)
                 } else if (vs is List<*>) {
-                    copy.args[k] = mutableListOf<Any?>()
+                    copy.args[k] = mutableListOf<kotlin.Any?>()
                     for (v in vs) {
                         if (v is Expression) {
                             val child = v.newInstance()
@@ -356,7 +379,7 @@ abstract class Expression(initArgs: Args = emptyMap()) {
     }
 
     // sqlglot: Expression.replace. `expression` may be an Expression, a List (splice), or null.
-    fun replace(expression: Any?): Any? {
+    fun replace(expression: kotlin.Any?): kotlin.Any? {
         val parent = this.parent
 
         if (parent == null || parent === expression) return expression
@@ -404,7 +427,7 @@ abstract class Expression(initArgs: Args = emptyMap()) {
      * (hash-collision based). We implement true structural equality under the same
      * normalization, which is strictly more accurate.
      */
-    final override fun equals(other: Any?): kotlin.Boolean {
+    final override fun equals(other: kotlin.Any?): kotlin.Boolean {
         if (this === other) return true
         if (other !is Expression || other::class != this::class) return false
         return canonicalArgs() == other.canonicalArgs()
@@ -412,8 +435,8 @@ abstract class Expression(initArgs: Args = emptyMap()) {
 
     final override fun hashCode(): Int = key.hashCode() * 31 + canonicalArgs().hashCode()
 
-    internal fun canonicalArgs(): Map<String, Any?> {
-        val out = HashMap<String, Any?>(args.size)
+    internal fun canonicalArgs(): Map<String, kotlin.Any?> {
+        val out = HashMap<String, kotlin.Any?>(args.size)
         if (hashRawArgs) {
             for ((k, v) in args) {
                 if (isTruthy(v)) out[k] = canonicalNumber(v)
@@ -432,14 +455,14 @@ abstract class Expression(initArgs: Args = emptyMap()) {
         return out
     }
 
-    private fun canonicalValue(v: Any?): Any? = when (v) {
+    private fun canonicalValue(v: kotlin.Any?): kotlin.Any? = when (v) {
         is String -> v.lowercase()
         else -> canonicalNumber(v)
     }
 
-    private fun canonicalNumber(v: Any?): Any? = if (v is Int) v.toLong() else v
+    private fun canonicalNumber(v: kotlin.Any?): kotlin.Any? = if (v is Int) v.toLong() else v
 
-    private fun isTruthy(v: Any?): kotlin.Boolean = when (v) {
+    private fun isTruthy(v: kotlin.Any?): kotlin.Boolean = when (v) {
         null, false, "", 0, 0L, 0.0 -> false
         is List<*> -> v.isNotEmpty()
         else -> true
@@ -450,7 +473,7 @@ abstract class Expression(initArgs: Args = emptyMap()) {
 
     override fun toString(): String = buildString { toS(this@Expression, this) }
 
-    private fun toS(node: Any?, sb: StringBuilder) {
+    private fun toS(node: kotlin.Any?, sb: StringBuilder) {
         when (node) {
             is Expression -> {
                 sb.append(node::class.simpleName).append('(')
