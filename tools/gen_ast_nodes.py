@@ -118,6 +118,8 @@ HANDWRITTEN = (
     scrape_names(AST_DIR / "Nodes.kt")
     | scrape_names(AST_DIR / "DataType.kt")
     | scrape_names(AST_DIR / "Expression.kt")
+    # brikk-native pipe nodes (no Python counterpart) — never generate over them
+    | scrape_names(AST_DIR / "PipeNodes.kt")
 )
 
 # Classes already registered by hand in Serde.kt (`"X" to Entry(...)`)

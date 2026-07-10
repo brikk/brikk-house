@@ -263,6 +263,23 @@ object GeneratorTables {
         reg(QueryOption::class) { e -> queryoptionSql(e as QueryOption) }
         reg(Unnest::class) { e -> unnestSql(e as Unnest) }
 
+        // --- pipe syntax (brikk-native; see Generator section 7) ---
+        reg(PipeQuery::class) { e -> pipequerySql(e as PipeQuery) }
+        reg(PipeSelect::class) { e -> pipeselectSql(e as PipeSelect) }
+        reg(PipeExtend::class) { e -> pipeextendSql(e as PipeExtend) }
+        reg(PipeAs::class) { e -> pipeasSql(e as PipeAs) }
+        reg(PipeWhere::class) { e -> pipewhereSql(e as PipeWhere) }
+        reg(PipeAggregate::class) { e -> pipeaggregateSql(e as PipeAggregate) }
+        reg(PipeDistinct::class) { e -> pipedistinctSql(e as PipeDistinct) }
+        reg(PipeOrderBy::class) { e -> pipeorderbySql(e as PipeOrderBy) }
+        reg(PipeLimit::class) { e -> pipelimitSql(e as PipeLimit) }
+        reg(PipeOffset::class) { e -> pipeoffsetSql(e as PipeOffset) }
+        reg(PipeTableSample::class) { e -> pipetablesampleSql(e as PipeTableSample) }
+        reg(PipePivot::class) { e -> pipepivotSql(e as PipePivot) }
+        reg(PipeUnpivot::class) { e -> pipeunpivotSql(e as PipeUnpivot) }
+        reg(PipeJoin::class) { e -> pipejoinSql(e as PipeJoin) }
+        reg(PipeSetOperation::class) { e -> pipesetoperationSql(e as PipeSetOperation) }
+
         // --- window ---
         reg(Window::class) { e -> windowSql(e as Window) }
         reg(WindowSpec::class) { e -> windowspecSql(e as WindowSpec) }

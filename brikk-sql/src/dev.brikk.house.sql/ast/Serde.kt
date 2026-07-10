@@ -129,6 +129,9 @@ object ExpressionRegistry {
     val entries: Map<String, Entry> = LinkedHashMap<String, Entry>(1100).also { m ->
         m.putAll(handwritten)
         registerAllGenerated(m)
+        // NATIVE section: brikk-original nodes with no Python counterpart (module
+        // "brikk.pipes"); see PipeNodes.kt.
+        registerNativePipeNodes(m)
     }
 
     fun newInstance(simpleName: String): Expression =

@@ -2097,6 +2097,11 @@ open class Generator(
     // sqlglot: Generator.select_sql (base: SUPPORTS_SELECT_INTO=false, LIMIT_IS_TOP=false,
     // STAR_EXCLUDE_REQUIRES_DERIVED_TABLE=true)
     open fun selectSql(expression: Select): String {
+        // brikk pipe: parser-synthesized SELECT * FROM (PipeQuery-with-Subquery-head)
+        // regenerates as FROM-first pipe text (which re-parses to the identical shape).
+        val pipeFromFirst = pipeSyntheticStarSelectSql(expression)
+        if (pipeFromFirst != null) return pipeFromFirst
+
         val into = expression.args["into"] as? Into
         if (!supportsSelectInto && into != null) into.pop()
 
@@ -2237,6 +2242,14 @@ open class Generator(
 
     // sqlglot: Generator.subquery_sql
     open fun subquerySql(expression: Subquery, sep: String = " AS "): String {
+        // brikk pipe: parsing `(<pipe text>)` in table position wraps twice (table-level
+        // subquery + _parse_subquery); collapse the synthesized outer wrapper so pipe
+        // generation re-parses to the identical tree.
+        val inner = expression.thisArg
+        if (expression.isWrapper && inner is Subquery && inner.isWrapper && inner.thisArg is PipeQuery) {
+            return subquerySql(inner, sep)
+        }
+
         var alias = sql(expression, "alias")
         if (alias.isNotEmpty()) alias = "$sep$alias"
         val sample = sql(expression, "sample")
@@ -3380,5 +3393,137 @@ open class Generator(
             }
         }
         return func(expression.sqlName(), *args.toTypedArray())
+    }
+
+    // ------------------------------------------------------------------
+    // 7. Pipe syntax (brikk-native — sqlglot has NO pipe generation: it desugars pipe
+    //    queries at parse time. brikk keeps stages first-class, so PipeQuery trees can
+    //    be re-generated as pipe SQL. Output is deterministic and re-parseable: the head
+    //    followed by ` |> OPERATOR ...` per stage (newline-separated when pretty).
+    // ------------------------------------------------------------------
+
+    open fun pipequerySql(expression: PipeQuery, forceFromFirstHead: Boolean = false): String {
+        val head = expression.thisArg as Expression
+        val headSql = when {
+            // A bare `SELECT * FROM x` head is the shape the parser synthesizes for a
+            // leading `FROM x` — emit it FROM-first so the output re-parses identically.
+            head is Select && isPipeBareStarFrom(head) -> sql(head, "from_").trimStart()
+            forceFromFirstHead -> "FROM ${sql(head)}"
+            else -> sql(head)
+        }
+        val stages = expression.expressionsArg.map { sql(it) }
+        val sep = if (pretty) "\n" else " "
+        return (listOf(headSql) + stages).joinToString(sep)
+    }
+
+    /** True for the parser-synthesized `SELECT * FROM ...` head shape (bare star + from only). */
+    protected fun isPipeBareStarFrom(select: Select): Boolean {
+        val exprs = select.expressionsArg
+        if (exprs.size != 1) return false
+        val star = exprs[0]
+        if (star !is Star) return false
+        if (star.args.values.any { it != null && it != false && !(it is List<*> && it.isEmpty()) }) return false
+        if (select.args["from_"] !is From) return false
+        return select.args.all { (key, value) ->
+            key == "expressions" || key == "from_" ||
+                value == null || value == false || (value is List<*> && value.isEmpty())
+        }
+    }
+
+    /**
+     * brikk pipe: `SELECT * FROM (<PipeQuery with a Subquery head>)` is the shape the
+     * parser synthesizes when a leading `FROM (…) |> …` pipeline is consumed at the
+     * table level — regenerate it as FROM-first pipe text, which re-parses identically.
+     */
+    protected open fun pipeSyntheticStarSelectSql(expression: Select): String? {
+        if (!isPipeBareStarFrom(expression)) return null
+        val from = expression.args["from_"] as? From ?: return null
+        val subquery = from.thisArg as? Subquery ?: return null
+        if (!subquery.isWrapper) return null
+        val pipeQuery = subquery.thisArg as? PipeQuery ?: return null
+        if (pipeQuery.thisArg !is Subquery) return null
+        return pipequerySql(pipeQuery, forceFromFirstHead = true)
+    }
+
+    open fun pipeselectSql(expression: PipeSelect): String =
+        "|> SELECT ${expressions(expression, flat = true)}"
+
+    open fun pipeextendSql(expression: PipeExtend): String =
+        "|> EXTEND ${expressions(expression, flat = true)}"
+
+    open fun pipeasSql(expression: PipeAs): String =
+        "|> AS ${sql(expression, "alias")}"
+
+    open fun pipewhereSql(expression: PipeWhere): String {
+        val where = expression.thisArg as Where
+        return "|> WHERE ${sql(where, "this")}"
+    }
+
+    open fun pipeaggregateSql(expression: PipeAggregate): String {
+        var sqlText = "|> AGGREGATE ${expressions(expression, flat = true)}"
+        val group = expressions(expression, key = "group", flat = true)
+        if (group.isNotEmpty()) {
+            val keyword = if (expression.args["group_and_order"] == true) {
+                "GROUP AND ORDER BY"
+            } else {
+                "GROUP BY"
+            }
+            sqlText += " $keyword $group"
+        }
+        return sqlText
+    }
+
+    open fun pipedistinctSql(expression: PipeDistinct): String = "|> DISTINCT"
+
+    open fun pipeorderbySql(expression: PipeOrderBy): String {
+        val order = expression.thisArg as Order
+        return "|> ORDER BY ${expressions(order, flat = true)}"
+    }
+
+    open fun pipelimitSql(expression: PipeLimit): String {
+        val limit = expression.thisArg as Limit
+        var sqlText = "|> LIMIT ${sql(limit, "expression")}"
+        val offset = expression.args["offset"] as? Offset
+        if (offset != null) sqlText += " OFFSET ${sql(offset, "expression")}"
+        return sqlText
+    }
+
+    open fun pipeoffsetSql(expression: PipeOffset): String {
+        val offset = expression.thisArg as Offset
+        return "|> OFFSET ${sql(offset, "expression")}"
+    }
+
+    open fun pipetablesampleSql(expression: PipeTableSample): String =
+        "|> ${sql(expression, "this").trim()}"
+
+    open fun pipepivotSql(expression: PipePivot): String =
+        "|> ${expression.expressionsArg.joinToString(" ") { sql(it).trim() }}"
+
+    open fun pipeunpivotSql(expression: PipeUnpivot): String =
+        "|> ${expression.expressionsArg.joinToString(" ") { sql(it).trim() }}"
+
+    open fun pipejoinSql(expression: PipeJoin): String =
+        "|> ${sql(expression, "this").trim()}"
+
+    open fun pipesetoperationSql(expression: PipeSetOperation): String {
+        val opName = (expression.thisArg as String).uppercase()
+
+        // Mirrors setOperation(): the dialect-default distinct-ness is left implicit so
+        // the output re-parses to the same flags (base: SET_OP_DISTINCT_BY_DEFAULT=true).
+        val distinct = expression.args["distinct"] as? Boolean ?: true
+        val distinctOrAll = if (distinct) "" else " ALL"
+
+        var sideKind = listOf(expression.text("side").uppercase(), expression.text("kind").uppercase())
+            .filter { it.isNotEmpty() }
+            .joinToString(" ")
+        if (sideKind.isNotEmpty()) sideKind = "$sideKind "
+
+        val byName = if (expression.args["by_name"] == true) " BY NAME" else ""
+        var on = expressions(expression, key = "on", flat = true)
+        if (on.isNotEmpty()) on = " ON ($on)"
+
+        val queries = expression.expressionsArg.joinToString(", ") { "(${sql(it)})" }
+
+        return "|> $sideKind$opName$distinctOrAll$byName$on $queries"
     }
 }

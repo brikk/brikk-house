@@ -1,6 +1,7 @@
 package dev.brikk.house.sql
 
 import dev.brikk.house.sql.ast.ExpressionRegistry
+import dev.brikk.house.sql.ast.NATIVE_EXPRESSION_CLASSES
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonObject
@@ -64,12 +65,24 @@ class ArgTypesManifestTest {
             fail("${failures.size}/${classes.size} argTypes mismatches:\n" + failures.joinToString("\n"))
         }
 
-        // Registry must contain exactly the manifest's classes — no gaps, no strays.
+        // Registry must contain exactly the manifest's classes plus the explicitly
+        // allowlisted NATIVE (brikk-original) classes — no gaps, no strays. The Python
+        // parity check above is untouched: every manifest class is still verified.
+        val native = ExpressionRegistry.entries.filterKeys { it in NATIVE_EXPRESSION_CLASSES }
         assertEquals(
-            classes.size,
+            NATIVE_EXPRESSION_CLASSES,
+            native.keys,
+            "NATIVE_EXPRESSION_CLASSES out of sync with registry NATIVE section",
+        )
+        for ((name, entry) in native) {
+            assertEquals("brikk.pipes", entry.module, "$name: native class must use a brikk module")
+            if (name in classes.keys) fail("$name: native class collides with a Python manifest class")
+        }
+        assertEquals(
+            classes.size + native.size,
             ExpressionRegistry.entries.size,
-            "registry size != manifest class count; strays: " +
-                (ExpressionRegistry.entries.keys - classes.keys),
+            "registry size != manifest class count + native allowlist; strays: " +
+                (ExpressionRegistry.entries.keys - classes.keys - NATIVE_EXPRESSION_CLASSES),
         )
     }
 }

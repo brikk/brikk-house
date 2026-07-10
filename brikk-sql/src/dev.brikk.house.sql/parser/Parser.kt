@@ -49,6 +49,23 @@ import dev.brikk.house.sql.ast.Order
 import dev.brikk.house.sql.ast.Ordered
 import dev.brikk.house.sql.ast.Paren
 import dev.brikk.house.sql.ast.Parameter
+import dev.brikk.house.sql.ast.PipeAggregate
+import dev.brikk.house.sql.ast.PipeAs
+import dev.brikk.house.sql.ast.PipeDistinct
+import dev.brikk.house.sql.ast.PipeExtend
+import dev.brikk.house.sql.ast.PipeJoin
+import dev.brikk.house.sql.ast.PipeLimit
+import dev.brikk.house.sql.ast.PipeOrderBy
+import dev.brikk.house.sql.ast.PipePivot
+import dev.brikk.house.sql.ast.PipeQuery
+import dev.brikk.house.sql.ast.PipeSelect
+import dev.brikk.house.sql.ast.PipeSetOperation
+import dev.brikk.house.sql.ast.PipeTableSample
+import dev.brikk.house.sql.ast.PipeUnpivot
+import dev.brikk.house.sql.ast.PipeWhere
+import dev.brikk.house.sql.ast.Pivot
+import dev.brikk.house.sql.ast.PivotAlias
+import dev.brikk.house.sql.ast.PivotAny
 import dev.brikk.house.sql.ast.PropertyEQ
 import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.SetOperation
@@ -56,6 +73,7 @@ import dev.brikk.house.sql.ast.Star
 import dev.brikk.house.sql.ast.Subquery
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.TableAlias
+import dev.brikk.house.sql.ast.TableSample
 import dev.brikk.house.sql.ast.Tuple
 import dev.brikk.house.sql.ast.Union
 import dev.brikk.house.sql.ast.Var
@@ -77,7 +95,8 @@ import dev.brikk.house.sql.ast.args
  *    class-variable overrides;
  *  - node positions (Expression.update_positions -> meta) are NOT tracked yet: oracle
  *    comparisons strip meta on both sides. Comments ARE attached.
- *  - `// TODO(pipe): Phase 4` marks the spots where parser.py handles PIPE_GT.
+ *  - pipe syntax (PIPE_GT) is parsed into first-class PipeQuery/stage nodes instead of
+ *    sqlglot's parse-time desugaring — see the "Pipe syntax" section and PipeDesugar.kt.
  */
 open class Parser(
     errorLevel: ErrorLevel? = null,
@@ -161,6 +180,24 @@ open class Parser(
 
     // sqlglot: Dialect.ALIAS_POST_VERSION
     open val aliasPostVersion: kotlin.Boolean get() = true
+
+    // sqlglot: Parser.TABLESAMPLE_CSV
+    open val tablesampleCsv: kotlin.Boolean get() = false
+
+    // sqlglot: Parser.DEFAULT_SAMPLING_METHOD
+    open val defaultSamplingMethod: String? get() = null
+
+    // sqlglot: Dialect.TABLESAMPLE_SIZE_IS_PERCENT
+    open val tablesampleSizeIsPercent: kotlin.Boolean get() = false
+
+    // sqlglot: Parser.PREFIXED_PIVOT_COLUMNS
+    open val prefixedPivotColumns: kotlin.Boolean get() = false
+
+    // sqlglot: Parser.IDENTIFY_PIVOT_STRINGS
+    open val identifyPivotStrings: kotlin.Boolean get() = false
+
+    // sqlglot: Parser.PIVOT_COLUMN_NAMING
+    open val pivotColumnNaming: String get() = "agg_name_if_aliased"
 
     // sqlglot: Parser.SUPPORTS_IMPLICIT_UNNEST
     open val supportsImplicitUnnest: kotlin.Boolean get() = false
@@ -1010,8 +1047,10 @@ open class Parser(
         var expr = parseExpression()
         expr = if (expr != null) parseSetOperations(expr) else parseSelect()
 
-        // TODO(pipe): Phase 4 — parser.py feeds a Subquery followed by PIPE_GT into
-        // _parse_pipe_syntax_query here.
+        // sqlglot: Parser._parse_statement (Subquery head followed by PIPE_GT)
+        if (expr is Subquery && match(TokenType.PIPE_GT, advance = false)) {
+            expr = parsePipeSyntaxQuery(expr)
+        }
 
         return parseQueryModifiers(expr)
     }
@@ -1035,9 +1074,44 @@ open class Parser(
         return Command(args("this" to text.take(size), "expression" to text.drop(size)))
     }
 
-    // sqlglot: Parser._parse_select + Parser._parse_select_query (merged: the pipe-syntax
-    // handling that separates them is deferred — TODO(pipe): Phase 4).
+    // sqlglot: Parser._parse_select
     fun parseSelect(
+        nested: kotlin.Boolean = false,
+        table: kotlin.Boolean = false,
+        parseSubqueryAlias: kotlin.Boolean = true,
+        parseSetOperation: kotlin.Boolean = true,
+        consumePipe: kotlin.Boolean = true,
+        from: From? = null,
+    ): Expression? {
+        var query = parseSelectQuery(
+            nested = nested,
+            table = table,
+            parseSubqueryAlias = parseSubqueryAlias,
+            parseSetOperation = parseSetOperation,
+        )
+
+        if (consumePipe && match(TokenType.PIPE_GT, advance = false)) {
+            if (query == null && from != null) {
+                query = expression(
+                    Select(
+                        args(
+                            "expressions" to mutableListOf<Expression>(Star()),
+                            "from_" to from,
+                        )
+                    )
+                )
+            }
+            if (query != null && isQuery(query)) {
+                query = parsePipeSyntaxQuery(query)
+                if (query != null && table) query = subqueryOf(query)
+            }
+        }
+
+        return query
+    }
+
+    // sqlglot: Parser._parse_select_query
+    fun parseSelectQuery(
         nested: kotlin.Boolean = false,
         table: kotlin.Boolean = false,
         parseSubqueryAlias: kotlin.Boolean = true,
@@ -1057,17 +1131,21 @@ open class Parser(
                 this_ = this_.thisArg as Expression
             }
 
-            if ("with_" in this_.argTypes) {
-                val innerCte = this_.args["with_"] as? With
+            // brikk: the WITH clause of a pipe query belongs to the pipeline head (sqlglot
+            // attaches it to the desugared select; desugarPipes pops it back off the head).
+            val cteTarget = if (this_ is PipeQuery) this_.thisArg as Expression else this_
+
+            if ("with_" in cteTarget.argTypes) {
+                val innerCte = cteTarget.args["with_"] as? With
                 if (innerCte != null) {
                     cte.set("expressions", cte.expressionsArg + innerCte.expressionsArg)
                     if (innerCte.args["recursive"] == true) {
                         cte.set("recursive", true)
                     }
                 }
-                this_.set("with_", cte)
+                cteTarget.set("with_", cte)
             } else {
-                raiseError("${this_.key} does not support CTE")
+                raiseError("${cteTarget.key} does not support CTE")
                 this_ = cte
             }
 
@@ -1075,7 +1153,11 @@ open class Parser(
         }
 
         // duckdb supports leading with FROM x
-        var from = if (match(TokenType.FROM, advance = false)) parseFrom(joins = true) else null
+        var from = if (match(TokenType.FROM, advance = false)) {
+            parseFrom(joins = true, consumePipe = true)
+        } else {
+            null
+        }
 
         var this_: Expression?
 
@@ -1203,11 +1285,12 @@ open class Parser(
             // sqlglot: Parser._parse_simplified_pivot — exp.Pivot not ported.
             this_ = raiseError("PIVOT/UNPIVOT is not supported yet")
         } else if (match(TokenType.FROM)) {
-            val from = parseFrom(joins = true, skipFromToken = true)
+            val from = parseFrom(joins = true, skipFromToken = true, consumePipe = true)
             // Support parentheses for duckdb FROM-first syntax
-            val select = parseSelect()
+            val select = parseSelect(from = from)
             if (select != null) {
-                if (select.args["from_"] == null) select.set("from_", from)
+                // brikk: a PipeQuery keeps the leading FROM inside its head, never on itself
+                if (select !is PipeQuery && select.args["from_"] == null) select.set("from_", from)
                 this_ = select
             } else {
                 this_ = expression(
@@ -1222,7 +1305,7 @@ open class Parser(
             }
         } else {
             this_ = if (table) {
-                parseTable()
+                parseTable(consumePipe = true)
             } else {
                 parseSelect(nested = true, parseSetOperation = false)
             }
@@ -1440,12 +1523,16 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_from
-    fun parseFrom(joins: kotlin.Boolean = false, skipFromToken: kotlin.Boolean = false): From? {
+    fun parseFrom(
+        joins: kotlin.Boolean = false,
+        skipFromToken: kotlin.Boolean = false,
+        consumePipe: kotlin.Boolean = false,
+    ): From? {
         if (!skipFromToken && !match(TokenType.FROM)) return null
 
         val comments = prevComments
         return expression(
-            From(args("this" to parseTable(joins = joins))),
+            From(args("this" to parseTable(joins = joins, consumePipe = consumePipe))),
             comments = comments,
         )
     }
@@ -1721,8 +1808,9 @@ open class Parser(
         aliasTokens: Collection<TokenType>? = null,
         parseBracket: kotlin.Boolean = false,
         isDbReference: kotlin.Boolean = false,
+        consumePipe: kotlin.Boolean = false,
     ): Expression? {
-        if (!schema && !isDbReference && !joins) {
+        if (!schema && !isDbReference && !consumePipe && !joins) {
             val startIndex = index
             val table = parseTableParts(fast = true)
 
@@ -1763,7 +1851,7 @@ open class Parser(
         val values = parseDerivedTableValues()
         if (values != null) return values
 
-        val subquery = parseSelect(table = true)
+        val subquery = parseSelect(table = true, consumePipe = consumePipe)
         if (subquery != null) {
             if (subquery.args["pivots"] == null) subquery.set("pivots", parsePivots())
             if (joins) {
@@ -1896,12 +1984,80 @@ open class Parser(
         return null
     }
 
-    // sqlglot: Parser._parse_table_sample — exp.TableSample not ported.
-    protected fun parseTableSample(): Expression? {
-        if (match(TokenType.TABLE_SAMPLE, advance = false)) {
-            return raiseError("TABLESAMPLE is not supported yet")
+    // sqlglot: Parser._parse_table_sample
+    protected fun parseTableSample(asModifier: kotlin.Boolean = false): Expression? {
+        if (!match(TokenType.TABLE_SAMPLE) &&
+            !(asModifier && matchTextSeq("USING", "SAMPLE"))
+        ) {
+            return null
         }
-        return null
+
+        var bucketNumerator: Expression? = null
+        var bucketDenominator: Expression? = null
+        var bucketField: Expression? = null
+        var percent: Expression? = null
+        var size: Expression? = null
+        var seed: kotlin.Any? = null
+
+        var method = parseVar(tokens = setOf(TokenType.ROW), upper = true)
+        val matchedLParen = match(TokenType.L_PAREN)
+
+        val expressions: MutableList<Expression>?
+        val num: Expression?
+        if (tablesampleCsv) {
+            num = null
+            expressions = parseCsv { parsePrimary() }
+        } else {
+            expressions = null
+            num = if (match(TokenType.NUMBER, advance = false)) {
+                parseFactor()
+            } else {
+                parsePrimary() ?: parsePlaceholder()
+            }
+        }
+
+        if (matchTextSeq("BUCKET")) {
+            bucketNumerator = parseNumber()
+            matchTextSeq("OUT", "OF")
+            bucketDenominator = parseNumber()
+            match(TokenType.ON)
+            bucketField = parseField()
+        } else if (matchSet(setOf(TokenType.PERCENT, TokenType.MOD))) {
+            percent = num
+        } else if (match(TokenType.ROWS) || !tablesampleSizeIsPercent) {
+            size = num
+        } else {
+            percent = num
+        }
+
+        if (matchedLParen) matchRParen()
+
+        if (match(TokenType.L_PAREN)) {
+            method = parseVar(upper = true)
+            seed = if (match(TokenType.COMMA)) parseNumber() else false
+            matchRParen()
+        } else if (matchTexts(setOf("SEED", "REPEATABLE"))) {
+            seed = parseWrapped({ parseNumber() })
+        }
+
+        if (method == null && defaultSamplingMethod != null) {
+            method = Var(args("this" to defaultSamplingMethod))
+        }
+
+        return expression(
+            TableSample(
+                args(
+                    "expressions" to expressions,
+                    "method" to method,
+                    "bucket_numerator" to bucketNumerator,
+                    "bucket_denominator" to bucketDenominator,
+                    "bucket_field" to bucketField,
+                    "percent" to percent,
+                    "size" to size,
+                    "seed" to seed,
+                )
+            )
+        )
     }
 
     // sqlglot: Parser._parse_table_hints — exp.WithTableHint / exp.IndexTableHint not ported.
@@ -1938,12 +2094,218 @@ open class Parser(
         return null
     }
 
-    // sqlglot: Parser._parse_pivots — exp.Pivot not ported.
-    protected fun parsePivots(): Expression? {
-        if (currToken.tokenType == TokenType.PIVOT || currToken.tokenType == TokenType.UNPIVOT) {
-            return raiseError("PIVOT/UNPIVOT is not supported yet")
+    // sqlglot: Parser._parse_pivots
+    protected fun parsePivots(): MutableList<Expression>? {
+        if (currToken.tokenType != TokenType.PIVOT && currToken.tokenType != TokenType.UNPIVOT) {
+            return null
         }
-        return null
+        val pivots = mutableListOf<Expression>()
+        while (true) {
+            val pivot = parsePivot() ?: break
+            pivots.add(pivot)
+        }
+        return pivots.ifEmpty { null }
+    }
+
+    // sqlglot: parser._unpivot_target
+    private fun unpivotTarget(expr: Expression): Expression {
+        // UNPIVOT's pre-FOR values and FOR field are new output names, not column references.
+        if (expr is Column && expr.text("table").isEmpty()) return expr.thisArg as Expression
+        if (expr is Tuple) {
+            expr.set("expressions", expr.expressionsArg.map { unpivotTarget(it as Expression) })
+        }
+        return expr
+    }
+
+    // sqlglot: Parser._parse_pivot_in
+    protected fun parsePivotIn(): Expression {
+        // sqlglot: local _parse_aliased_expression
+        fun parseAliasedExpression(): Expression? {
+            val this_ = parseSelectOrExpression()
+
+            match(TokenType.ALIAS)
+            var alias = parseBitwise()
+            if (alias != null) {
+                if (alias is Column && alias.text("db").isEmpty()) {
+                    alias = alias.thisArg as Expression
+                }
+                return expression(PivotAlias(args("this" to this_, "alias" to alias)))
+            }
+
+            return this_
+        }
+
+        val value = parseColumn()
+
+        if (!match(TokenType.IN)) {
+            raiseError("Expecting IN")
+        }
+
+        if (match(TokenType.L_PAREN)) {
+            val exprs: MutableList<Expression> = if (match(TokenType.ANY)) {
+                mutableListOf(expression(PivotAny(args("this" to parseOrder()))))
+            } else {
+                parseCsv { parseAliasedExpression() }
+            }
+            matchRParen()
+            return expression(In(args("this" to value, "expressions" to exprs)))
+        }
+
+        return expression(In(args("this" to value, "field" to parseIdVar())))
+    }
+
+    // sqlglot: Parser._parse_pivot_aggregation
+    protected fun parsePivotAggregation(): Expression? {
+        val func = parseFunction()
+        if (func == null) {
+            if (prevToken.tokenType == TokenType.COMMA) return null
+            raiseError("Expecting an aggregation function in PIVOT")
+        }
+
+        return parseAlias(func)
+    }
+
+    // sqlglot: Parser._parse_pivot
+    protected fun parsePivot(): Expression? {
+        val startIndex = index
+        var includeNulls: kotlin.Boolean? = null
+
+        val unpivot: kotlin.Boolean
+        if (match(TokenType.PIVOT)) {
+            unpivot = false
+        } else if (match(TokenType.UNPIVOT)) {
+            unpivot = true
+
+            // https://docs.databricks.com/en/sql/language-manual/sql-ref-syntax-qry-select-unpivot.html#syntax
+            if (matchTextSeq("INCLUDE", "NULLS")) {
+                includeNulls = true
+            } else if (matchTextSeq("EXCLUDE", "NULLS")) {
+                includeNulls = false
+            }
+        } else {
+            return null
+        }
+
+        if (!match(TokenType.L_PAREN)) {
+            retreat(startIndex)
+            return null
+        }
+
+        val expressions: MutableList<Expression> = if (unpivot) {
+            parseCsv { parseColumn() }
+        } else {
+            parseCsv { parsePivotAggregation() }
+        }
+
+        if (expressions.isEmpty()) {
+            raiseError("Failed to parse PIVOT's aggregation list")
+        }
+
+        if (!match(TokenType.FOR)) {
+            raiseError("Expecting FOR")
+        }
+
+        val fields = mutableListOf<Expression>()
+        while (true) {
+            val field = tryParse({ parsePivotIn() }) ?: break
+            fields.add(field)
+        }
+
+        val defaultOnNull: kotlin.Any? = if (matchTextSeq("DEFAULT", "ON", "NULL")) {
+            parseWrapped({ parseBitwise() })
+        } else {
+            false
+        }
+
+        val group = parseGroup()
+
+        matchRParen()
+
+        val pivot = expression(
+            Pivot(
+                args(
+                    "expressions" to expressions,
+                    "fields" to fields,
+                    "unpivot" to unpivot,
+                    "include_nulls" to includeNulls,
+                    "default_on_null" to defaultOnNull,
+                    "group" to group,
+                )
+            )
+        )
+
+        if (unpivot) {
+            pivot.set("expressions", pivot.expressionsArg.map { unpivotTarget(it as Expression) })
+            for (pivotField in (pivot.args["fields"] as? List<*>).orEmpty()) {
+                if (pivotField is In) {
+                    pivotField.set("this", unpivotTarget(pivotField.thisArg as Expression))
+                }
+            }
+        }
+
+        if (!matchSet(setOf(TokenType.PIVOT, TokenType.UNPIVOT), advance = false)) {
+            pivot.set("alias", parseTableAlias())
+        }
+
+        if (!unpivot) {
+            val names = pivotColumnNames(expressions)
+
+            val columns = mutableListOf<Expression>()
+            val allFields = mutableListOf<List<String>>()
+            for (pivotField in (pivot.args["fields"] as? List<*>).orEmpty()) {
+                val pivotFieldExpressions = (pivotField as Expression).expressionsArg
+
+                // The `PivotAny` expression corresponds to `ANY ORDER BY <column>`; we can't infer in this case.
+                if (pivotFieldExpressions.firstOrNull() is PivotAny) continue
+
+                allFields.add(
+                    pivotFieldExpressions.map { fld ->
+                        fld as Expression
+                        // sqlglot: fld.sql() if IDENTIFY_PIVOT_STRINGS else fld.alias_or_name
+                        // (base: IDENTIFY_PIVOT_STRINGS=false)
+                        fld.aliasOrName
+                    }
+                )
+            }
+
+            if (allFields.isNotEmpty()) {
+                if (names.isNotEmpty()) allFields.add(names)
+
+                // Generate all possible combinations of the pivot columns
+                // e.g PIVOT(sum(...) as total FOR year IN (2000, 2010) FOR country IN ('NL', 'US'))
+                // generates the product between [[2000, 2010], ['NL', 'US'], ['total']]
+                for (fldPartsTuple in cartesianProduct(allFields)) {
+                    val fldParts = fldPartsTuple.toMutableList()
+
+                    if (names.isNotEmpty() && prefixedPivotColumns) {
+                        // Move the "name" to the front of the list
+                        fldParts.add(0, fldParts.removeAt(fldParts.size - 1))
+                    }
+
+                    columns.add(Identifier(args("this" to fldParts.joinToString("_"), "quoted" to false)))
+                }
+            }
+
+            pivot.set("columns", columns)
+            pivot.set("identify_pivot_strings", identifyPivotStrings)
+            pivot.set("prefixed_pivot_columns", prefixedPivotColumns)
+            pivot.set("pivot_column_naming", pivotColumnNaming)
+        }
+
+        return pivot
+    }
+
+    // sqlglot: Parser._pivot_column_names
+    protected fun pivotColumnNames(aggregations: List<Expression>): List<String> =
+        aggregations.map { it.alias }.filter { it.isNotEmpty() }
+
+    // itertools.product over a list of string lists (for _parse_pivot's column inference)
+    private fun cartesianProduct(lists: List<List<String>>): List<List<String>> {
+        var acc = listOf(listOf<String>())
+        for (list in lists) {
+            acc = acc.flatMap { prefix -> list.map { prefix + it } }
+        }
+        return acc
     }
 
     // -----------------------------------------------------------------------
@@ -2223,8 +2585,8 @@ open class Parser(
         return body.tokenType == TokenType.L_PAREN
     }
 
-    // sqlglot: Parser.parse_set_operation — TODO(pipe): Phase 4 (consume_pipe parameter)
-    fun parseSetOperation(this_: Expression?): Expression? {
+    // sqlglot: Parser.parse_set_operation
+    fun parseSetOperation(this_: Expression?, consumePipe: kotlin.Boolean = false): Expression? {
         val start = index
         val (_, sideToken, kindToken) = parseJoinParts()
 
@@ -2279,7 +2641,7 @@ open class Parser(
             onColumnList = parseWrappedCsv({ parseColumn() })
         }
 
-        val expr = parseSelect(nested = true, parseSetOperation = false)
+        val expr = parseSelect(nested = true, parseSetOperation = false, consumePipe = consumePipe)
 
         return expression(
             operation(
@@ -2722,8 +3084,9 @@ open class Parser(
             this_ = expression(Tuple())
         } else if (expressions.size > 1 || prevToken.tokenType == TokenType.COMMA) {
             this_ = expression(Tuple(args("expressions" to expressions)))
-        } else if (this_ is Select || this_ is SetOperation) {
-            // sqlglot: exp.UNWRAPPED_QUERIES
+        } else if (this_ is Select || this_ is SetOperation || this_ is PipeQuery) {
+            // sqlglot: exp.UNWRAPPED_QUERIES (brikk: a PipeQuery stands in for the
+            // desugared Select sqlglot would have produced here)
             this_ = parseSubquery(this_, parseAlias = false)
         } else if (this_ is Subquery) {
             // sqlglot: `isinstance(this, (exp.Subquery, exp.Values))` — exp.Values not ported
@@ -3471,6 +3834,203 @@ open class Parser(
         parseSetOperations(
             if (alias) parseAlias(parseAssignment(), explicit = true) else parseAssignment()
         ) ?: parseSelect()
+
+    // -----------------------------------------------------------------------
+    // Pipe syntax (sqlglot: _parse_pipe_syntax_* — brikk DESIGN DIVERGENCE: instead of
+    // desugaring into WITH __tmpN CTE chains at parse time, we build a first-class
+    // PipeQuery node with one stage node per pipe operator. Desugaring is an explicit
+    // transform: ast/PipeDesugar.kt `desugarPipes`.)
+    // -----------------------------------------------------------------------
+
+    // sqlglot: Parser.PIPE_SYNTAX_TRANSFORM_PARSERS (keys)
+    protected open val pipeSyntaxTransformOperators: Set<String>
+        get() = setOf(
+            "AGGREGATE", "AS", "DISTINCT", "EXTEND", "LIMIT", "ORDER BY",
+            "PIVOT", "SELECT", "TABLESAMPLE", "UNPIVOT", "WHERE",
+        )
+
+    // sqlglot: Parser._parse_pipe_syntax_query (brikk: builds PipeQuery instead of desugaring;
+    // head normalization — Subquery/FROM-less -> SELECT * FROM (...) — happens in desugarPipes)
+    fun parsePipeSyntaxQuery(query: Expression): Expression? {
+        val stages = mutableListOf<Expression>()
+
+        while (match(TokenType.PIPE_GT)) {
+            val startIndex = index
+            val startText = currToken.text.uppercase()
+
+            if (startText in pipeSyntaxTransformOperators) {
+                val stage = parsePipeStage(startText)
+                if (stage != null) stages.add(stage)
+            } else {
+                // The set operators (UNION, etc) and the JOIN operator have a few common
+                // starting keywords, making it tricky to disambiguate them without lookahead.
+                // The approach here is to try and parse a set operation and if that fails,
+                // then try to parse a join operator. If that fails as well, then the operator
+                // is not supported. (sqlglot: parser.py _parse_pipe_syntax_query)
+                val stage = parsePipeSyntaxSetOperator() ?: parsePipeSyntaxJoin()
+                if (stage == null) {
+                    retreat(startIndex)
+                    raiseError("Unsupported pipe syntax operator: '$startText'.")
+                    break
+                }
+                stages.add(stage)
+            }
+        }
+
+        return expression(PipeQuery(args("this" to query, "expressions" to stages)))
+    }
+
+    // sqlglot: Parser.PIPE_SYNTAX_TRANSFORM_PARSERS (brikk: each handler builds a stage node)
+    protected open fun parsePipeStage(startText: String): Expression? = when (startText) {
+        "AGGREGATE" -> parsePipeSyntaxAggregate()
+        "AS" -> expression(PipeAs(args("alias" to parseTableAlias())))
+        "DISTINCT" -> {
+            advance()
+            expression(PipeDistinct())
+        }
+        "EXTEND" -> parsePipeSyntaxExtend()
+        "LIMIT" -> parsePipeSyntaxLimit()
+        "ORDER BY" -> expression(PipeOrderBy(args("this" to parseOrder())))
+        "PIVOT", "UNPIVOT" -> parsePipeSyntaxPivot()
+        "SELECT" -> parsePipeSyntaxSelect()
+        "TABLESAMPLE" -> parsePipeSyntaxTablesample()
+        "WHERE" -> expression(PipeWhere(args("this" to parseWhere())))
+        else -> null
+    }
+
+    // sqlglot: Parser._parse_pipe_syntax_select (brikk: builds PipeSelect)
+    protected fun parsePipeSyntaxSelect(): Expression? {
+        val select = parseSelect(consumePipe = false) ?: return null
+        return expression(
+            PipeSelect(args("expressions" to (select.args["expressions"] ?: mutableListOf<Expression>())))
+        )
+    }
+
+    // sqlglot: Parser._parse_pipe_syntax_extend (brikk: builds PipeExtend)
+    protected fun parsePipeSyntaxExtend(): Expression {
+        matchTextSeq("EXTEND")
+        return expression(PipeExtend(args("expressions" to parseExpressions())))
+    }
+
+    // sqlglot: Parser._parse_pipe_syntax_limit (brikk: builds PipeLimit; the keep-min /
+    // offset-sum merge semantics live in PipeDesugar)
+    protected fun parsePipeSyntaxLimit(): Expression {
+        val limit = parseLimit()
+        val offset = parseOffset()
+        return expression(PipeLimit(args("this" to limit, "offset" to offset)))
+    }
+
+    // sqlglot: Parser._parse_pipe_syntax_aggregate_fields
+    protected fun parsePipeSyntaxAggregateFields(): Expression? {
+        var this_ = parseDisjunction()
+        if (matchTextSeq("GROUP", "AND", advance = false)) return this_
+
+        this_ = parseAlias(this_)
+
+        if (matchSet(setOf(TokenType.ASC, TokenType.DESC), advance = false)) {
+            val ordered = this_
+            return parseOrdered({ ordered })
+        }
+
+        return this_
+    }
+
+    // sqlglot: Parser._parse_pipe_syntax_aggregate (brikk: builds PipeAggregate carrying the
+    // raw parsed elements; the select/group_by/order_by rewrites live in PipeDesugar)
+    protected fun parsePipeSyntaxAggregate(): Expression {
+        matchTextSeq("AGGREGATE")
+        val aggregates = parseCsv { parsePipeSyntaxAggregateFields() }
+
+        var group: MutableList<Expression>? = null
+        var groupAndOrder: kotlin.Boolean? = null
+        if (match(TokenType.GROUP_BY)) {
+            group = parseCsv { parsePipeSyntaxAggregateFields() }
+        } else if (matchTextSeq("GROUP", "AND") && match(TokenType.ORDER_BY)) {
+            groupAndOrder = true
+            group = parseCsv { parsePipeSyntaxAggregateFields() }
+        }
+
+        return expression(
+            PipeAggregate(
+                args(
+                    "expressions" to aggregates,
+                    "group" to group,
+                    "group_and_order" to groupAndOrder,
+                )
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_pipe_syntax_set_operator (brikk: builds PipeSetOperation)
+    protected fun parsePipeSyntaxSetOperator(): Expression? {
+        // sqlglot passes the current query as `this`; brikk keeps the head out of the stage
+        // node, so a placeholder satisfies the SetOperation arg validation.
+        val firstSetop = parseSetOperation(this_ = Select()) ?: return null
+        if (firstSetop !is SetOperation) return null
+
+        // sqlglot: local _parse_and_unwrap_query
+        fun parseAndUnwrapQuery(): Expression? {
+            val expr = parseParen() ?: return null
+            if (expr !is Subquery) {
+                raiseError("Expected Subquery in pipe syntax set operation")
+            }
+            return unwrapSubqueries(expr)
+        }
+
+        val firstRhs = firstSetop.args["expression"] as? Expression
+            ?: return null
+        if (firstRhs !is Subquery) raiseError("Expected Subquery in pipe syntax set operation")
+        firstSetop.set("expression", null)
+
+        val setops = mutableListOf(unwrapSubqueries(firstRhs))
+        setops.addAll(parseCsv { parseAndUnwrapQuery() })
+
+        return expression(
+            PipeSetOperation(
+                args(
+                    "this" to firstSetop::class.simpleName!!.uppercase(),
+                    "expressions" to setops,
+                    "distinct" to firstSetop.args["distinct"],
+                    "by_name" to firstSetop.args["by_name"],
+                    "side" to firstSetop.args["side"],
+                    "kind" to firstSetop.args["kind"],
+                    "on" to firstSetop.args["on"],
+                )
+            )
+        )
+    }
+
+    /** sqlglot: Subquery.unnest — returns the first non-Subquery. */
+    private fun unwrapSubqueries(expression: Expression): Expression {
+        var expr = expression
+        while (expr is Subquery) expr = expr.thisArg as Expression
+        return expr
+    }
+
+    // sqlglot: Parser._parse_pipe_syntax_join (brikk: builds PipeJoin)
+    protected fun parsePipeSyntaxJoin(): Expression? {
+        val join = parseJoin() ?: return null
+        return expression(PipeJoin(args("this" to join)))
+    }
+
+    // sqlglot: Parser._parse_pipe_syntax_pivot (brikk: builds PipePivot/PipeUnpivot)
+    protected fun parsePipeSyntaxPivot(): Expression? {
+        val unpivot = currToken.tokenType == TokenType.UNPIVOT
+        val pivots = parsePivots() ?: return null
+        return expression(
+            if (unpivot) {
+                PipeUnpivot(args("expressions" to pivots))
+            } else {
+                PipePivot(args("expressions" to pivots))
+            }
+        )
+    }
+
+    // sqlglot: Parser._parse_pipe_syntax_tablesample (brikk: builds PipeTableSample; the
+    // attach-to-last-CTE semantics live in PipeDesugar)
+    protected fun parsePipeSyntaxTablesample(): Expression {
+        return expression(PipeTableSample(args("this" to parseTableSample())))
+    }
 
     /** Python `isinstance(x, exp.Query)` for the ported subset (Select / set ops / Subquery). */
     protected fun isQuery(expression: Expression): kotlin.Boolean =

@@ -71,7 +71,8 @@ class PipeSplitResult(
  * this is precisely why this is tokenizer-based rather than text-based.
  *
  * This is Phase-0 machinery: raw text slices plus tokens, no AST. Full pipe-operator
- * parsing into first-class stage nodes lands with the parser (Phase 4 of the plan).
+ * parsing into first-class stage nodes lives in Parser.parsePipeSyntaxQuery (PipeQuery +
+ * Pipe* stage nodes in ast/PipeNodes.kt; desugaring in ast/PipeDesugar.kt).
  */
 object PipeStageSplitter {
 
