@@ -1,0 +1,1148 @@
+{
+  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "dialect": "exasol",
+  "identity": [
+    {
+      "sql": "SELECT 1 AS [x]",
+      "expected": "SELECT 1 AS \"x\"",
+      "pretty": false
+    },
+    {
+      "sql": "SYSTIMESTAMP",
+      "expected": "SYSTIMESTAMP()",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT SYSTIMESTAMP()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT SYSTIMESTAMP(6)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CURDATE()",
+      "expected": "SELECT CURRENT_DATE",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT USER",
+      "expected": "SELECT CURRENT_USER",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT USER()",
+      "expected": "SELECT CURRENT_USER",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CURRENT_USER",
+      "expected": "SELECT CURRENT_USER",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT NOW()",
+      "expected": "SELECT CURRENT_TIMESTAMP()",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT FROM_POSIX_TIME(1234567890)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "select foo, bar from table_1 minus select foo, bar from table_2",
+      "expected": "SELECT foo, bar FROM table_1 EXCEPT SELECT foo, bar FROM table_2",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT t.*, 1 FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT t.* FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH t AS (SELECT 1 AS x) SELECT t.*, 3 FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS BLOB)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS LONGBLOB)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS LONGTEXT)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS MEDIUMBLOB)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS MEDIUMTEXT)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS TINYBLOB)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS TINYTEXT)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS TEXT)",
+      "expected": "CAST(x AS LONG VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CAST((CAST(202305 AS INT) - 100) AS LONG VARCHAR) AS CAL_YEAR_WEEK_ADJUSTED",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS VARBINARY)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS VARCHAR)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS CHAR)",
+      "expected": "CAST(x AS CHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS TINYINT)",
+      "expected": "CAST(x AS SMALLINT)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS SMALLINT)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS INT)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS MEDIUMINT)",
+      "expected": "CAST(x AS INT)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS BIGINT)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS FLOAT)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS DOUBLE)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS DECIMAL32)",
+      "expected": "CAST(x AS DECIMAL)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS DECIMAL64)",
+      "expected": "CAST(x AS DECIMAL)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS DECIMAL128)",
+      "expected": "CAST(x AS DECIMAL)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS DECIMAL256)",
+      "expected": "CAST(x AS DECIMAL)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS DATE)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS DATETIME)",
+      "expected": "CAST(x AS TIMESTAMP)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS TIMESTAMP)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS BOOLEAN)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS TIMESTAMPLTZ)",
+      "expected": "CAST(x AS TIMESTAMP WITH LOCAL TIME ZONE)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS TIMESTAMP(3) WITH LOCAL TIME ZONE)",
+      "expected": "CAST(x AS TIMESTAMP WITH LOCAL TIME ZONE)",
+      "pretty": false
+    },
+    {
+      "sql": "TO_CHAR(CAST(TO_DATE(date, 'YYYYMMDD') AS TIMESTAMP), 'DY') AS day_of_week",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TO_CHAR(12345.67890, '9999999.999999999') AS TO_CHAR",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TO_CHAR(DATE '1999-12-31') AS TO_CHAR",
+      "expected": "SELECT TO_CHAR(CAST('1999-12-31' AS DATE)) AS TO_CHAR",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TO_CHAR(TIMESTAMP '1999-12-31 23:59:00', 'HH24:MI:SS DD-MM-YYYY') AS TO_CHAR",
+      "expected": "SELECT TO_CHAR(CAST('1999-12-31 23:59:00' AS TIMESTAMP), 'HH24:MI:SS DD-MM-YYYY') AS TO_CHAR",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TO_CHAR(12345.6789) AS TO_CHAR",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TO_CHAR(-12345.67890, '000G000G000D000000MI') AS TO_CHAR",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT id, department, hire_date, GROUP_CONCAT(id ORDER BY hire_date SEPARATOR ',') OVER (PARTITION BY department rows between 1 preceding and 1 following) GROUP_CONCAT_RESULT from employee_table ORDER BY department, hire_date",
+      "expected": "SELECT id, department, hire_date, LISTAGG(id, ',') WITHIN GROUP (ORDER BY hire_date) OVER (PARTITION BY department rows BETWEEN 1 preceding AND 1 following) AS GROUP_CONCAT_RESULT FROM employee_table ORDER BY department, hire_date",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT LISTAGG(x, ',') WITHIN GROUP (ORDER BY y) FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "LISTAGG(x, ',' ON OVERFLOW ERROR) WITHIN GROUP (ORDER BY y)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "LISTAGG(x, ',' ON OVERFLOW TRUNCATE '...' WITH COUNT) WITHIN GROUP (ORDER BY y)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "LISTAGG(x, ',' ON OVERFLOW TRUNCATE '...' WITHOUT COUNT) WITHIN GROUP (ORDER BY y)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TO_DATE('31-12-1999', 'dd-mm-yyyy') AS TO_DATE",
+      "expected": "SELECT TO_DATE('31-12-1999', 'DD-MM-YYYY') AS TO_DATE",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TO_DATE('31-12-1999', 'dd-mm-YY') AS TO_DATE",
+      "expected": "SELECT TO_DATE('31-12-1999', 'DD-MM-YY') AS TO_DATE",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TO_DATE('31-DECEMBER-1999', 'DD-MONTH-YYYY') AS TO_DATE",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TO_DATE('31-DEC-1999', 'DD-MON-YYYY') AS TO_DATE",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT WEEKOFYEAR('2024-05-22')",
+      "expected": "SELECT WEEK('2024-05-22')",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CONVERT_TZ(CAST('2012-03-25 02:30:00' AS TIMESTAMP), 'Europe/Berlin', 'UTC', 'INVALID REJECT AMBIGUOUS REJECT') AS CONVERT_TZ",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TIME_TO_STR(b, '%Y-%m-%d %H:%M:%S')",
+      "expected": "TO_CHAR(b, 'YYYY-MM-DD HH:MI:SS')",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TIME_TO_STR(CAST(STR_TO_TIME(date, '%Y%m%d') AS DATE), '%a') AS day_of_week",
+      "expected": "SELECT TO_CHAR(CAST(TO_DATE(date, 'YYYYMMDD') AS DATE), 'DY') AS day_of_week",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CAST(CAST(CURRENT_TIMESTAMP() AS TIMESTAMP) AT TIME ZONE 'CET' AS DATE) - 1",
+      "expected": "SELECT CAST(CONVERT_TZ(CAST(CURRENT_TIMESTAMP() AS TIMESTAMP), 'UTC', 'CET') AS DATE) - 1",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TRUNC(123.456, 2) AS TRUNC",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DIV(1234, 2) AS DIV",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT name, age, IF age < 18 THEN 'underaged' ELSE 'adult' ENDIF AS LEGALITY FROM persons",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT HASHTYPE_MD5(a, b, c, d)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT {d'2024-01-01'}",
+      "expected": "SELECT TO_DATE('2024-01-01')",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT {ts'2024-01-01 12:00:00'}",
+      "expected": "SELECT TO_TIMESTAMP('2024-01-01 12:00:00')",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT ID FROM local WHERE \"LOCAL\".ID IS NULL",
+      "expected": "SELECT ID FROM \"LOCAL\" WHERE \"LOCAL\".ID IS NULL",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT YEAR(a_date) AS \"a_year\" FROM MY_SUMMARY_TABLE GROUP BY LOCAL.\"a_year\"",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT a_year AS a_year FROM \"LOCAL\" GROUP BY \"LOCAL\".a_year",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT YEAR(a_date) AS A_YEAR FROM my_table WHERE a_year > 2020",
+      "expected": "SELECT YEAR(a_date) AS A_YEAR FROM my_table WHERE LOCAL.A_YEAR > 2020",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT SUM(amount) AS Total FROM my_table HAVING TOTAL > 10000",
+      "expected": "SELECT SUM(amount) AS Total FROM my_table HAVING LOCAL.Total > 10000",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT x REGEXP_LIKE '.*pattern.*'",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT JSON_VALUE('{\"d\":\"a\"}', '$.d' NULL ON ERROR) AS x",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT JSON_EXTRACT('{\"firstname\" : \"Ann\", \"surname\" : \"Smith\", \"age\" : 29}', '$.firstname', '$.surname', '$.age') EMITS (firstname VARCHAR(100), surname VARCHAR(100), age INT)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT JSON_EXTRACT(x, '$.a') s FROM t",
+      "expected": "SELECT JSON_EXTRACT(x, '$.a') AS s FROM t",
+      "pretty": false
+    },
+    {
+      "sql": "OPEN SCHEMA test",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CURRENT_SCHEMA",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TRUNC(123.456, 2)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TRUNC(3.14159)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TRUNC(CAST(x AS DATE))",
+      "expected": null,
+      "pretty": false
+    }
+  ],
+  "transpile": [
+    {
+      "sql": "SELECT FROM_POSIX_TIME(col)",
+      "read": {
+        "mysql": "SELECT FROM_UNIXTIME(col)"
+      },
+      "write": {
+        "exasol": "SELECT FROM_POSIX_TIME(col)",
+        "mysql": "SELECT FROM_UNIXTIME(col)"
+      }
+    },
+    {
+      "sql": "SELECT TEST.*, 1 FROM TEST",
+      "read": {
+        "": "SELECT *, 1 FROM TEST"
+      },
+      "write": {}
+    },
+    {
+      "sql": "WITH t1 AS (SELECT 1 AS c1), t2 AS (SELECT 2 AS c2) SELECT t1.*, t2.*, 3 FROM t1, t2",
+      "read": {
+        "": "WITH t1 AS (SELECT 1 AS c1), t2 AS (SELECT 2 AS c2) SELECT *, 3 FROM t1, t2"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT \"A\".*, \"B\".*, 3 FROM \"A\" JOIN \"B\" ON 1 = 1",
+      "read": {
+        "": "SELECT *, 3 FROM \"A\" JOIN \"B\" ON 1=1"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT s.*, q.*, 7 FROM (SELECT 1 AS x) AS s CROSS JOIN (SELECT 2 AS y) AS q",
+      "read": {
+        "": "SELECT *, 7 FROM (SELECT 1 AS x) s CROSS JOIN (SELECT 2 AS y) q"
+      },
+      "write": {}
+    },
+    {
+      "sql": "CAST(x AS TIMESTAMP)",
+      "read": {
+        "tsql": "CAST(x AS DATETIME2)"
+      },
+      "write": {
+        "exasol": "CAST(x AS TIMESTAMP)"
+      }
+    },
+    {
+      "sql": "CAST(x AS TIMESTAMP)",
+      "read": {
+        "tsql": "CAST(x AS SMALLDATETIME)"
+      },
+      "write": {
+        "exasol": "CAST(x AS TIMESTAMP)"
+      }
+    },
+    {
+      "sql": "SELECT MOD(x, 10)",
+      "read": {
+        "exasol": "SELECT MOD(x, 10)"
+      },
+      "write": {
+        "teradata": "SELECT x MOD 10",
+        "mysql": "SELECT x % 10",
+        "exasol": "SELECT MOD(x, 10)"
+      }
+    },
+    {
+      "sql": "SELECT BIT_AND(x, 1)",
+      "read": {
+        "exasol": "SELECT BIT_AND(x, 1)",
+        "duckdb": "SELECT x & 1",
+        "presto": "SELECT BITWISE_AND(x, 1)",
+        "spark": "SELECT x & 1"
+      },
+      "write": {
+        "exasol": "SELECT BIT_AND(x, 1)",
+        "duckdb": "SELECT x & 1",
+        "hive": "SELECT x & 1",
+        "presto": "SELECT BITWISE_AND(x, 1)",
+        "spark": "SELECT x & 1"
+      }
+    },
+    {
+      "sql": "SELECT BIT_OR(x, 1)",
+      "read": {
+        "exasol": "SELECT BIT_OR(x, 1)",
+        "duckdb": "SELECT x | 1",
+        "presto": "SELECT BITWISE_OR(x, 1)",
+        "spark": "SELECT x | 1"
+      },
+      "write": {
+        "exasol": "SELECT BIT_OR(x, 1)",
+        "duckdb": "SELECT x | 1",
+        "hive": "SELECT x | 1",
+        "presto": "SELECT BITWISE_OR(x, 1)",
+        "spark": "SELECT x | 1"
+      }
+    },
+    {
+      "sql": "SELECT BIT_XOR(x, 1)",
+      "read": {
+        "": "SELECT x ^ 1",
+        "exasol": "SELECT BIT_XOR(x, 1)",
+        "bigquery": "SELECT x ^ 1",
+        "presto": "SELECT BITWISE_XOR(x, 1)",
+        "postgres": "SELECT x # 1"
+      },
+      "write": {
+        "": "SELECT x ^ 1",
+        "exasol": "SELECT BIT_XOR(x, 1)",
+        "bigquery": "SELECT x ^ 1",
+        "duckdb": "SELECT XOR(x, 1)",
+        "presto": "SELECT BITWISE_XOR(x, 1)",
+        "postgres": "SELECT x # 1"
+      }
+    },
+    {
+      "sql": "SELECT BIT_NOT(x)",
+      "read": {
+        "exasol": "SELECT BIT_NOT(x)",
+        "duckdb": "SELECT ~x",
+        "presto": "SELECT BITWISE_NOT(x)",
+        "spark": "SELECT ~x"
+      },
+      "write": {
+        "exasol": "SELECT BIT_NOT(x)",
+        "duckdb": "SELECT ~x",
+        "hive": "SELECT ~x",
+        "presto": "SELECT BITWISE_NOT(x)",
+        "spark": "SELECT ~x"
+      }
+    },
+    {
+      "sql": "SELECT BIT_LSHIFT(x, 1)",
+      "read": {
+        "exasol": "SELECT BIT_LSHIFT(x, 1)",
+        "spark": "SELECT SHIFTLEFT(x, 1)",
+        "duckdb": "SELECT x << 1",
+        "hive": "SELECT x << 1"
+      },
+      "write": {
+        "exasol": "SELECT BIT_LSHIFT(x, 1)",
+        "duckdb": "SELECT x << 1",
+        "presto": "SELECT BITWISE_LEFT_SHIFT(x, 1)",
+        "hive": "SELECT x << 1",
+        "spark": "SELECT SHIFTLEFT(x, 1)"
+      }
+    },
+    {
+      "sql": "SELECT BIT_RSHIFT(x, 1)",
+      "read": {
+        "exasol": "SELECT BIT_RSHIFT(x, 1)",
+        "spark": "SELECT SHIFTRIGHT(x, 1)",
+        "duckdb": "SELECT x >> 1",
+        "hive": "SELECT x >> 1"
+      },
+      "write": {
+        "exasol": "SELECT BIT_RSHIFT(x, 1)",
+        "duckdb": "SELECT x >> 1",
+        "presto": "SELECT BITWISE_RIGHT_SHIFT(x, 1)",
+        "hive": "SELECT x >> 1",
+        "spark": "SELECT SHIFTRIGHT(x, 1)"
+      }
+    },
+    {
+      "sql": "SELECT department, EVERY(age >= 30) AS EVERY FROM employee_table GROUP BY department",
+      "read": {
+        "exasol": "SELECT department, EVERY(age >= 30) AS EVERY FROM employee_table GROUP BY department"
+      },
+      "write": {
+        "exasol": "SELECT department, EVERY(age >= 30) AS EVERY FROM employee_table GROUP BY department",
+        "duckdb": "SELECT department, ALL (age >= 30) AS EVERY FROM employee_table GROUP BY department"
+      }
+    },
+    {
+      "sql": "SELECT APPROXIMATE_COUNT_DISTINCT(y)",
+      "read": {
+        "spark": "SELECT APPROX_COUNT_DISTINCT(y)",
+        "exasol": "SELECT APPROXIMATE_COUNT_DISTINCT(y)"
+      },
+      "write": {
+        "redshift": "SELECT APPROXIMATE COUNT(DISTINCT y)",
+        "spark": "SELECT APPROX_COUNT_DISTINCT(y)",
+        "exasol": "SELECT APPROXIMATE_COUNT_DISTINCT(y)"
+      }
+    },
+    {
+      "sql": "SELECT TO_CHAR(CAST('2009-10-04 22:23:00' AS TIMESTAMP), 'DAY MONTH YYYY')",
+      "read": {
+        "mysql": "SELECT DATE_FORMAT('2009-10-04 22:23:00', '%W %M %Y')"
+      },
+      "write": {}
+    },
+    {
+      "sql": "GROUP_CONCAT(DISTINCT x ORDER BY y DESC)",
+      "read": {},
+      "write": {
+        "exasol": "LISTAGG(DISTINCT x, ',') WITHIN GROUP (ORDER BY y DESC)",
+        "mysql": "GROUP_CONCAT(DISTINCT x ORDER BY y DESC SEPARATOR ',')",
+        "tsql": "STRING_AGG(x, ',') WITHIN GROUP (ORDER BY y DESC)",
+        "databricks": "LISTAGG(DISTINCT x, ',') WITHIN GROUP (ORDER BY y DESC)"
+      }
+    },
+    {
+      "sql": "SELECT LISTAGG(x, ',') WITHIN GROUP (ORDER BY y) FROM t",
+      "read": {
+        "exasol": "SELECT LISTAGG(x, ',') WITHIN GROUP (ORDER BY y) FROM t",
+        "oracle": "SELECT LISTAGG(x, ',') WITHIN GROUP (ORDER BY y) FROM t",
+        "snowflake": "SELECT LISTAGG(x, ',') WITHIN GROUP (ORDER BY y) FROM t"
+      },
+      "write": {}
+    },
+    {
+      "sql": "EDIT_DISTANCE(col1, col2)",
+      "read": {
+        "exasol": "EDIT_DISTANCE(col1, col2)",
+        "bigquery": "EDIT_DISTANCE(col1, col2)",
+        "clickhouse": "editDistance(col1, col2)",
+        "drill": "LEVENSHTEIN_DISTANCE(col1, col2)",
+        "duckdb": "LEVENSHTEIN(col1, col2)",
+        "hive": "LEVENSHTEIN(col1, col2)"
+      },
+      "write": {
+        "exasol": "EDIT_DISTANCE(col1, col2)",
+        "bigquery": "EDIT_DISTANCE(col1, col2)",
+        "clickhouse": "editDistance(col1, col2)",
+        "drill": "LEVENSHTEIN_DISTANCE(col1, col2)",
+        "duckdb": "LEVENSHTEIN(col1, col2)",
+        "hive": "LEVENSHTEIN(col1, col2)"
+      }
+    },
+    {
+      "sql": "STRPOS(haystack, needle)",
+      "read": {},
+      "write": {
+        "exasol": "INSTR(haystack, needle)",
+        "bigquery": "INSTR(haystack, needle)",
+        "databricks": "LOCATE(needle, haystack)",
+        "oracle": "INSTR(haystack, needle)",
+        "presto": "STRPOS(haystack, needle)"
+      }
+    },
+    {
+      "sql": "SELECT REGEXP_SUBSTR('My mail address is my_mail@yahoo.com', '(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}') AS EMAIL",
+      "read": {},
+      "write": {
+        "exasol": "SELECT REGEXP_SUBSTR('My mail address is my_mail@yahoo.com', '(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}') AS EMAIL",
+        "bigquery": "SELECT REGEXP_EXTRACT('My mail address is my_mail@yahoo.com', '(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\\\\.[a-z]{2,4}') AS EMAIL",
+        "snowflake": "SELECT REGEXP_SUBSTR('My mail address is my_mail@yahoo.com', '(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\\\\.[a-z]{2,4}') AS EMAIL",
+        "presto": "SELECT REGEXP_EXTRACT('My mail address is my_mail@yahoo.com', '(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}') AS EMAIL"
+      }
+    },
+    {
+      "sql": "SELECT SUBSTR('www.apache.org', 1, NVL(NULLIF(INSTR('www.apache.org', '.', 1, 2), 0) - 1, LENGTH('www.apache.org')))",
+      "read": {
+        "databricks": "SELECT substring_index('www.apache.org', '.', 2)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT SUBSTR('555A66A777', 1, NVL(NULLIF(INSTR('555A66A777', 'a', 1, 2), 0) - 1, LENGTH('555A66A777')))",
+      "read": {
+        "databricks": "SELECT substring_index('555A66A777' COLLATE UTF8_BINARY, 'a', 2)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT SUBSTR('555A66A777', 1, NVL(NULLIF(INSTR(LOWER('555A66A777'), 'a', 1, 2), 0) - 1, LENGTH('555A66A777')))",
+      "read": {
+        "databricks": "SELECT substring_index('555A66A777' COLLATE UTF8_LCASE, 'a', 2)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT SUBSTR('A|a|A', 1, NVL(NULLIF(INSTR(LOWER('A|a|A'), LOWER('A'), 1, 2), 0) - 1, LENGTH('A|a|A')))",
+      "read": {
+        "databricks": "SELECT substring_index('A|a|A' COLLATE UTF8_LCASE, 'A' COLLATE UTF8_LCASE, 2)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT TO_CHAR(CAST('2024-07-08 13:45:00' AS TIMESTAMP), 'DY')",
+      "read": {},
+      "write": {
+        "exasol": "SELECT TO_CHAR(CAST('2024-07-08 13:45:00' AS TIMESTAMP), 'DY')",
+        "oracle": "SELECT TO_CHAR(CAST('2024-07-08 13:45:00' AS TIMESTAMP), 'DY')",
+        "postgres": "SELECT TO_CHAR(CAST('2024-07-08 13:45:00' AS TIMESTAMP), 'TMDy')",
+        "databricks": "SELECT DATE_FORMAT(CAST('2024-07-08 13:45:00' AS TIMESTAMP), 'EEE')"
+      }
+    },
+    {
+      "sql": "TO_DATE(x, 'YYYY-MM-DD')",
+      "read": {},
+      "write": {
+        "exasol": "TO_DATE(x, 'YYYY-MM-DD')",
+        "duckdb": "CAST(x AS DATE)",
+        "hive": "TO_DATE(x)",
+        "presto": "CAST(CAST(x AS TIMESTAMP) AS DATE)",
+        "spark": "TO_DATE(x)",
+        "snowflake": "TO_DATE(x, 'yyyy-mm-DD')",
+        "databricks": "TO_DATE(x)"
+      }
+    },
+    {
+      "sql": "TO_DATE(x, 'YYYY')",
+      "read": {},
+      "write": {
+        "exasol": "TO_DATE(x, 'YYYY')",
+        "duckdb": "CAST(STRPTIME(x, '%Y') AS DATE)",
+        "hive": "TO_DATE(x, 'yyyy')",
+        "presto": "CAST(DATE_PARSE(x, '%Y') AS DATE)",
+        "spark": "TO_DATE(x, 'yyyy')",
+        "snowflake": "TO_DATE(x, 'yyyy')",
+        "databricks": "TO_DATE(x, 'yyyy')"
+      }
+    },
+    {
+      "sql": "SELECT CONVERT_TZ('2012-05-10 12:00:00', 'Europe/Berlin', 'America/New_York')",
+      "read": {
+        "exasol": "SELECT CONVERT_TZ('2012-05-10 12:00:00', 'Europe/Berlin', 'America/New_York')",
+        "mysql": "SELECT CONVERT_TZ('2012-05-10 12:00:00', 'Europe/Berlin', 'America/New_York')",
+        "databricks": "SELECT CONVERT_TIMEZONE('Europe/Berlin', 'America/New_York', '2012-05-10 12:00:00')"
+      },
+      "write": {
+        "exasol": "SELECT CONVERT_TZ('2012-05-10 12:00:00', 'Europe/Berlin', 'America/New_York')",
+        "mysql": "SELECT CONVERT_TZ('2012-05-10 12:00:00', 'Europe/Berlin', 'America/New_York')",
+        "databricks": "SELECT CONVERT_TIMEZONE('Europe/Berlin', 'America/New_York', '2012-05-10 12:00:00')",
+        "snowflake": "SELECT CONVERT_TIMEZONE('Europe/Berlin', 'America/New_York', '2012-05-10 12:00:00')",
+        "spark": "SELECT CONVERT_TIMEZONE('Europe/Berlin', 'America/New_York', '2012-05-10 12:00:00')",
+        "redshift": "SELECT CONVERT_TIMEZONE('Europe/Berlin', 'America/New_York', '2012-05-10 12:00:00')",
+        "duckdb": "SELECT CAST('2012-05-10 12:00:00' AS TIMESTAMP) AT TIME ZONE 'Europe/Berlin' AT TIME ZONE 'America/New_York'"
+      }
+    },
+    {
+      "sql": "SELECT quarter('2016-08-31')",
+      "read": {},
+      "write": {
+        "exasol": "SELECT CEIL(MONTH(TO_DATE('2016-08-31'))/3)",
+        "databricks": "SELECT QUARTER('2016-08-31')"
+      }
+    },
+    {
+      "sql": "TRUNC(price, 2)",
+      "read": {},
+      "write": {
+        "exasol": "TRUNC(price, 2)",
+        "oracle": "TRUNC(price, 2)",
+        "postgres": "TRUNC(price, 2)",
+        "mysql": "TRUNCATE(price, 2)",
+        "tsql": "ROUND(price, 2, 1)"
+      }
+    },
+    {
+      "sql": "TRUNC(CAST(x AS TIMESTAMP), 'Q')",
+      "read": {},
+      "write": {
+        "exasol": "DATE_TRUNC('QUARTER', x)",
+        "oracle": "TRUNC(CAST(x AS TIMESTAMP), 'QUARTER')"
+      }
+    },
+    {
+      "sql": "SELECT CURRENT_USER",
+      "read": {
+        "exasol": "SELECT USER",
+        "spark": "SELECT CURRENT_USER()",
+        "trino": "SELECT CURRENT_USER",
+        "snowflake": "SELECT CURRENT_USER()"
+      },
+      "write": {
+        "exasol": "SELECT CURRENT_USER",
+        "spark": "SELECT CURRENT_USER()",
+        "trino": "SELECT CURRENT_USER",
+        "snowflake": "SELECT CURRENT_USER()"
+      }
+    },
+    {
+      "sql": "CREATE OR REPLACE VIEW \"schema\".\"v\" (\"col\" COMMENT IS 'desc') AS SELECT \"src_col\" AS \"col\"",
+      "read": {},
+      "write": {
+        "databricks": "CREATE OR REPLACE VIEW `schema`.`v` (`col` COMMENT 'desc') AS SELECT `src_col` AS `col`",
+        "exasol": "CREATE OR REPLACE VIEW \"schema\".\"v\" (\"col\" COMMENT IS 'desc') AS SELECT \"src_col\" AS \"col\""
+      }
+    },
+    {
+      "sql": "HASH_SHA(x)",
+      "read": {
+        "clickhouse": "SHA1(x)",
+        "exasol": "HASH_SHA1(x)",
+        "presto": "SHA1(x)",
+        "trino": "SHA1(x)"
+      },
+      "write": {
+        "exasol": "HASH_SHA(x)",
+        "clickhouse": "SHA1(x)",
+        "bigquery": "SHA1(x)",
+        "": "SHA(x)",
+        "presto": "SHA1(x)",
+        "trino": "SHA1(x)"
+      }
+    },
+    {
+      "sql": "HASH_MD5(x)",
+      "read": {},
+      "write": {
+        "exasol": "HASH_MD5(x)",
+        "": "MD5(x)",
+        "bigquery": "TO_HEX(MD5(x))",
+        "clickhouse": "LOWER(HEX(MD5(x)))",
+        "hive": "MD5(x)",
+        "presto": "LOWER(TO_HEX(MD5(x)))",
+        "spark": "MD5(x)",
+        "trino": "LOWER(TO_HEX(MD5(x)))"
+      }
+    },
+    {
+      "sql": "HASHTYPE_MD5(x)",
+      "read": {},
+      "write": {
+        "exasol": "HASHTYPE_MD5(x)",
+        "": "MD5_DIGEST(x)",
+        "bigquery": "MD5(x)",
+        "clickhouse": "MD5(x)",
+        "hive": "UNHEX(MD5(x))",
+        "presto": "MD5(x)",
+        "spark": "UNHEX(MD5(x))",
+        "trino": "MD5(x)"
+      }
+    },
+    {
+      "sql": "HASH_SHA256(x)",
+      "read": {
+        "clickhouse": "SHA256(x)",
+        "postgres": "SHA256(x)",
+        "duckdb": "SHA256(x)"
+      },
+      "write": {
+        "exasol": "HASH_SHA256(x)",
+        "bigquery": "SHA256(x)",
+        "spark2": "SHA2(x, 256)",
+        "clickhouse": "SHA256(x)",
+        "postgres": "SHA256(x)",
+        "presto": "LOWER(TO_HEX(SHA256(x)))",
+        "redshift": "SHA2(x, 256)",
+        "trino": "LOWER(TO_HEX(SHA256(x)))",
+        "duckdb": "SHA256(x)",
+        "snowflake": "SHA2(x, 256)"
+      }
+    },
+    {
+      "sql": "HASH_SHA512(x)",
+      "read": {
+        "clickhouse": "SHA512(x)"
+      },
+      "write": {
+        "exasol": "HASH_SHA512(x)",
+        "clickhouse": "SHA512(x)",
+        "bigquery": "SHA512(x)",
+        "spark2": "SHA2(x, 512)",
+        "presto": "LOWER(TO_HEX(SHA512(x)))",
+        "trino": "LOWER(TO_HEX(SHA512(x)))"
+      }
+    },
+    {
+      "sql": "SELECT NULLIFZERO(1) NIZ1",
+      "read": {},
+      "write": {
+        "exasol": "SELECT IF 1 = 0 THEN NULL ELSE 1 ENDIF AS NIZ1",
+        "snowflake": "SELECT IFF(1 = 0, NULL, 1) AS NIZ1",
+        "sqlite": "SELECT IIF(1 = 0, NULL, 1) AS NIZ1",
+        "presto": "SELECT IF(1 = 0, NULL, 1) AS NIZ1",
+        "spark": "SELECT IF(1 = 0, NULL, 1) AS NIZ1",
+        "hive": "SELECT IF(1 = 0, NULL, 1) AS NIZ1",
+        "duckdb": "SELECT CASE WHEN 1 = 0 THEN NULL ELSE 1 END AS NIZ1"
+      }
+    },
+    {
+      "sql": "SELECT ZEROIFNULL(NULL) NIZ1",
+      "read": {},
+      "write": {
+        "exasol": "SELECT IF NULL IS NULL THEN 0 ELSE NULL ENDIF AS NIZ1",
+        "snowflake": "SELECT IFF(NULL IS NULL, 0, NULL) AS NIZ1",
+        "sqlite": "SELECT IIF(NULL IS NULL, 0, NULL) AS NIZ1",
+        "presto": "SELECT IF(NULL IS NULL, 0, NULL) AS NIZ1",
+        "spark": "SELECT IF(NULL IS NULL, 0, NULL) AS NIZ1",
+        "hive": "SELECT IF(NULL IS NULL, 0, NULL) AS NIZ1",
+        "duckdb": "SELECT CASE WHEN NULL IS NULL THEN 0 ELSE NULL END AS NIZ1"
+      }
+    },
+    {
+      "sql": "SELECT a REGEXP_LIKE '.*x.*'",
+      "read": {
+        "hive": "SELECT a RLIKE 'x'",
+        "presto": "SELECT REGEXP_LIKE(a, 'x')"
+      },
+      "write": {
+        "exasol": "SELECT a REGEXP_LIKE '.*x.*'",
+        "hive": "SELECT a RLIKE '.*x.*'",
+        "presto": "SELECT REGEXP_LIKE(a, '.*x.*')"
+      }
+    },
+    {
+      "sql": "SELECT JSON_VALUE('{\"d\":\"a\"}', '$.d' NULL ON ERROR) AS x",
+      "read": {},
+      "write": {
+        "exasol": "SELECT JSON_VALUE('{\"d\":\"a\"}', '$.d' NULL ON ERROR) AS x",
+        "trino": "SELECT JSON_VALUE('{\"d\":\"a\"}', '$.d' NULL ON ERROR) AS x"
+      }
+    },
+    {
+      "sql": "SELECT id, city, COUNT(*) FROM dealer GROUP BY ALL",
+      "read": {},
+      "write": {
+        "exasol": "SELECT id, city, COUNT(*) FROM dealer GROUP BY 1, 2",
+        "databricks": "SELECT id, city, COUNT(*) FROM dealer GROUP BY ALL"
+      }
+    },
+    {
+      "sql": "SELECT car_model, COUNT(DISTINCT city) FROM dealer GROUP BY ALL",
+      "read": {},
+      "write": {
+        "exasol": "SELECT car_model, COUNT(DISTINCT city) FROM dealer GROUP BY 1",
+        "databricks": "SELECT car_model, COUNT(DISTINCT city) FROM dealer GROUP BY ALL"
+      }
+    },
+    {
+      "sql": "SELECT car_model, city FROM dealer GROUP BY ALL",
+      "read": {},
+      "write": {
+        "exasol": "SELECT car_model, city FROM dealer GROUP BY 1, 2",
+        "databricks": "SELECT car_model, city FROM dealer GROUP BY ALL"
+      }
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM dealer GROUP BY ALL",
+      "read": {},
+      "write": {
+        "exasol": "SELECT COUNT(*) FROM dealer",
+        "databricks": "SELECT COUNT(*) FROM dealer GROUP BY ALL"
+      }
+    },
+    {
+      "sql": "SELECT UPPER(city), COUNT(*) FROM dealer GROUP BY ALL",
+      "read": {},
+      "write": {
+        "exasol": "SELECT UPPER(city), COUNT(*) FROM dealer GROUP BY 1",
+        "databricks": "SELECT UPPER(city), COUNT(*) FROM dealer GROUP BY ALL"
+      }
+    },
+    {
+      "sql": "SELECT city AS c, COUNT(*) + 1 FROM dealer GROUP BY ALL",
+      "read": {},
+      "write": {
+        "exasol": "SELECT city AS c, COUNT(*) + 1 FROM dealer GROUP BY 1",
+        "databricks": "SELECT city AS c, COUNT(*) + 1 FROM dealer GROUP BY ALL"
+      }
+    },
+    {
+      "sql": "SELECT city, COUNT(*) OVER () FROM dealer GROUP BY ALL",
+      "read": {},
+      "write": {
+        "exasol": "SELECT city, COUNT(*) OVER () FROM dealer GROUP BY 1",
+        "databricks": "SELECT city, COUNT(*) OVER () FROM dealer GROUP BY ALL"
+      }
+    },
+    {
+      "sql": "SELECT * FROM t GROUP BY ALL",
+      "read": {},
+      "write": {
+        "exasol": "SELECT DISTINCT * FROM t",
+        "databricks": "SELECT * FROM t GROUP BY ALL"
+      }
+    },
+    {
+      "sql": "OPEN SCHEMA test",
+      "read": {
+        "mysql": "USE test"
+      },
+      "write": {
+        "exasol": "OPEN SCHEMA test"
+      }
+    },
+    {
+      "sql": "OPEN SCHEMA \"my_database\"",
+      "read": {
+        "mysql": "USE `my_database`"
+      },
+      "write": {
+        "exasol": "OPEN SCHEMA \"my_database\""
+      }
+    },
+    {
+      "sql": "SELECT TABLE_NAME FROM SYS.EXA_ALL_TABLES WHERE TABLE_SCHEMA = 'TEST'",
+      "read": {
+        "mysql": "SHOW TABLES FROM test"
+      },
+      "write": {
+        "exasol": "SELECT TABLE_NAME FROM SYS.EXA_ALL_TABLES WHERE TABLE_SCHEMA = 'TEST'"
+      }
+    },
+    {
+      "sql": "SELECT TABLE_NAME FROM SYS.EXA_ALL_TABLES WHERE TABLE_SCHEMA = CURRENT_SCHEMA",
+      "read": {
+        "mysql": "SHOW TABLES"
+      },
+      "write": {
+        "exasol": "SELECT TABLE_NAME FROM SYS.EXA_ALL_TABLES WHERE TABLE_SCHEMA = CURRENT_SCHEMA"
+      }
+    },
+    {
+      "sql": "SELECT SCHEMA_NAME FROM SYS.EXA_SCHEMAS",
+      "read": {
+        "mysql": "SHOW DATABASES"
+      },
+      "write": {
+        "exasol": "SELECT SCHEMA_NAME FROM SYS.EXA_SCHEMAS"
+      }
+    },
+    {
+      "sql": "SELECT SCHEMA_NAME FROM SYS.EXA_SCHEMAS",
+      "read": {
+        "mysql": "SHOW SCHEMAS"
+      },
+      "write": {
+        "exasol": "SELECT SCHEMA_NAME FROM SYS.EXA_SCHEMAS"
+      }
+    },
+    {
+      "sql": "SELECT city, COUNT(*) AS cnt FROM t GROUP BY LOCAL.cnt",
+      "read": {
+        "mysql": "SELECT city, COUNT(*) AS cnt FROM t GROUP BY cnt"
+      },
+      "write": {
+        "exasol": "SELECT city, COUNT(*) AS cnt FROM t GROUP BY LOCAL.cnt"
+      }
+    },
+    {
+      "sql": "SELECT YEAR(TO_DATE(a_date)) AS a_year FROM t GROUP BY LOCAL.a_year",
+      "read": {
+        "mysql": "SELECT YEAR(a_date) AS a_year FROM t GROUP BY a_year"
+      },
+      "write": {
+        "exasol": "SELECT YEAR(TO_DATE(a_date)) AS a_year FROM t GROUP BY LOCAL.a_year"
+      }
+    },
+    {
+      "sql": "SELECT city, COUNT(*) FROM t GROUP BY city",
+      "read": {
+        "mysql": "SELECT city, COUNT(*) FROM t GROUP BY city"
+      },
+      "write": {
+        "exasol": "SELECT city, COUNT(*) FROM t GROUP BY city"
+      }
+    },
+    {
+      "sql": "SELECT COUNT(*) AS cnt FROM t HAVING LOCAL.cnt > 1",
+      "read": {
+        "mysql": "SELECT COUNT(*) AS cnt FROM t HAVING cnt > 1"
+      },
+      "write": {
+        "exasol": "SELECT COUNT(*) AS cnt FROM t HAVING LOCAL.cnt > 1"
+      }
+    },
+    {
+      "sql": "SELECT VAR_POP(current_salary)",
+      "read": {
+        "exasol": "SELECT VAR_POP(current_salary)",
+        "duckdb": "SELECT VAR_POP(current_salary)",
+        "presto": "SELECT VAR_POP(current_salary)"
+      },
+      "write": {
+        "exasol": "SELECT VAR_POP(current_salary)",
+        "duckdb": "SELECT VAR_POP(current_salary)",
+        "presto": "SELECT VAR_POP(current_salary)"
+      }
+    },
+    {
+      "sql": "REGEXP_REPLACE(subject, pattern, replacement, position, occurrence)",
+      "read": {
+        "exasol": "REGEXP_REPLACE(subject, pattern, replacement, position, occurrence)",
+        "snowflake": "REGEXP_REPLACE(subject, pattern, replacement, position, occurrence)",
+        "spark": "REGEXP_REPLACE(subject, pattern, replacement, position, occurrence)"
+      },
+      "write": {
+        "bigquery": "REGEXP_REPLACE(subject, pattern, replacement)",
+        "exasol": "REGEXP_REPLACE(subject, pattern, replacement, position, occurrence)",
+        "duckdb": "REGEXP_REPLACE(subject, pattern, replacement)",
+        "hive": "REGEXP_REPLACE(subject, pattern, replacement)",
+        "snowflake": "REGEXP_REPLACE(subject, pattern, replacement, position, occurrence)",
+        "spark": "REGEXP_REPLACE(subject, pattern, replacement, position)"
+      }
+    },
+    {
+      "sql": "SELECT TO_CHAR(CAST('1999-12-31' AS DATE)) AS TO_CHAR",
+      "read": {
+        "exasol": "SELECT TO_CHAR(DATE '1999-12-31') AS TO_CHAR"
+      },
+      "write": {
+        "exasol": "SELECT TO_CHAR(CAST('1999-12-31' AS DATE)) AS TO_CHAR",
+        "presto": "SELECT DATE_FORMAT(CAST('1999-12-31' AS DATE)) AS TO_CHAR",
+        "oracle": "SELECT TO_CHAR(CAST('1999-12-31' AS DATE)) AS TO_CHAR",
+        "redshift": "SELECT CAST(CAST('1999-12-31' AS DATE) AS VARCHAR(MAX)) AS TO_CHAR",
+        "postgres": "SELECT CAST(CAST('1999-12-31' AS DATE) AS TEXT) AS TO_CHAR"
+      }
+    },
+    {
+      "sql": "SELECT CAST(ADD_DAYS(ADD_MONTHS(DATE_TRUNC('MONTH', DATE '2008-11-25'), 1), -1) AS DATE)",
+      "read": {
+        "snowflake": "SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
+        "databricks": "SELECT LAST_DAY('2008-11-25')",
+        "spark": "SELECT LAST_DAY(CAST('2008-11-25' AS DATE))",
+        "presto": "SELECT LAST_DAY_OF_MONTH(CAST('2008-11-25' AS DATE))"
+      },
+      "write": {}
+    }
+  ],
+  "stats": {
+    "identity_count": 84,
+    "transpile_count": 66,
+    "skipped_dynamic": 11
+  }
+}

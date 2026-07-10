@@ -1,0 +1,41 @@
+{
+  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "dialect": "drill",
+  "identity": [
+    {
+      "sql": "SELECT * FROM table(dfs.`test_data.xlsx`(type => 'excel', sheetName => 'secondSheet'))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM (SELECT * FROM t) PIVOT(avg(c1) AS ac1 FOR c2 IN ('V' AS v))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE TABLE tbl COMPUTE STATISTICS",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE TABLE tbl COMPUTE STATISTICS SAMPLE 5 PERCENT",
+      "expected": null,
+      "pretty": false
+    }
+  ],
+  "transpile": [
+    {
+      "sql": "SELECT '2021-01-01' + INTERVAL 1 MONTH",
+      "read": {},
+      "write": {
+        "drill": "SELECT '2021-01-01' + INTERVAL '1' MONTH",
+        "mysql": "SELECT '2021-01-01' + INTERVAL '1' MONTH"
+      }
+    }
+  ],
+  "stats": {
+    "identity_count": 4,
+    "transpile_count": 1,
+    "skipped_dynamic": 0
+  }
+}

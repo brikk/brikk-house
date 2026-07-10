@@ -1,0 +1,215 @@
+{
+  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "dialect": "prql",
+  "identity": [],
+  "transpile": [
+    {
+      "sql": "from x",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x"
+      }
+    },
+    {
+      "sql": "from x derive a + 1",
+      "read": {},
+      "write": {
+        "": "SELECT *, a + 1 FROM x"
+      }
+    },
+    {
+      "sql": "from x derive x = a + 1",
+      "read": {},
+      "write": {
+        "": "SELECT *, a + 1 AS x FROM x"
+      }
+    },
+    {
+      "sql": "from x derive {a + 1}",
+      "read": {},
+      "write": {
+        "": "SELECT *, a + 1 FROM x"
+      }
+    },
+    {
+      "sql": "from x derive {x = a + 1, b}",
+      "read": {},
+      "write": {
+        "": "SELECT *, a + 1 AS x, b FROM x"
+      }
+    },
+    {
+      "sql": "from x derive {x = a + 1, b} select {y = x, 2}",
+      "read": {},
+      "write": {
+        "": "SELECT a + 1 AS y, 2 FROM x"
+      }
+    },
+    {
+      "sql": "from x take 10",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x LIMIT 10"
+      }
+    },
+    {
+      "sql": "from x take 10 take 5",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x LIMIT 5"
+      }
+    },
+    {
+      "sql": "from x filter age > 25",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x WHERE age > 25"
+      }
+    },
+    {
+      "sql": "from x derive {x = a + 1, b} filter age > 25",
+      "read": {},
+      "write": {
+        "": "SELECT *, a + 1 AS x, b FROM x WHERE age > 25"
+      }
+    },
+    {
+      "sql": "from x filter dept != 'IT'",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x WHERE dept <> 'IT'"
+      }
+    },
+    {
+      "sql": "from x filter p == 'product' select { a, b }",
+      "read": {},
+      "write": {
+        "": "SELECT a, b FROM x WHERE p = 'product'"
+      }
+    },
+    {
+      "sql": "from x filter age > 25 filter age < 27",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x WHERE age > 25 AND age < 27"
+      }
+    },
+    {
+      "sql": "from x filter (age > 25 && age < 27)",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x WHERE (age > 25 AND age < 27)"
+      }
+    },
+    {
+      "sql": "from x filter (age > 25 || age < 27)",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x WHERE (age > 25 OR age < 27)"
+      }
+    },
+    {
+      "sql": "from x filter (age > 25 || age < 22) filter age > 26 filter age < 27",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x WHERE ((age > 25 OR age < 22) AND age > 26) AND age < 27"
+      }
+    },
+    {
+      "sql": "from x sort age",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x ORDER BY age"
+      }
+    },
+    {
+      "sql": "from x sort {-age}",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x ORDER BY age DESC"
+      }
+    },
+    {
+      "sql": "from x sort {age, name}",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x ORDER BY age, name"
+      }
+    },
+    {
+      "sql": "from x sort {-age, +name}",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x ORDER BY age DESC, name"
+      }
+    },
+    {
+      "sql": "from x append y",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x UNION ALL SELECT * FROM y"
+      }
+    },
+    {
+      "sql": "from x remove y",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x EXCEPT ALL SELECT * FROM y"
+      }
+    },
+    {
+      "sql": "from x intersect y",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x INTERSECT ALL SELECT * FROM y"
+      }
+    },
+    {
+      "sql": "from x filter a == null filter null != b",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x WHERE a IS NULL AND NOT b IS NULL"
+      }
+    },
+    {
+      "sql": "from x filter (a > 1 || null != b || c != null)",
+      "read": {},
+      "write": {
+        "": "SELECT * FROM x WHERE (a > 1 OR NOT b IS NULL OR NOT c IS NULL)"
+      }
+    },
+    {
+      "sql": "from a aggregate { average x }",
+      "read": {},
+      "write": {
+        "": "SELECT AVG(x) FROM a"
+      }
+    },
+    {
+      "sql": "from a aggregate { average x, min y, ct = sum z }",
+      "read": {},
+      "write": {
+        "": "SELECT AVG(x), MIN(y), COALESCE(SUM(z), 0) AS ct FROM a"
+      }
+    },
+    {
+      "sql": "from a aggregate { average x, min y, sum z }",
+      "read": {},
+      "write": {
+        "": "SELECT AVG(x), MIN(y), COALESCE(SUM(z), 0) FROM a"
+      }
+    },
+    {
+      "sql": "from a aggregate { min y, b = stddev x, max z }",
+      "read": {},
+      "write": {
+        "": "SELECT MIN(y), STDDEV(x) AS b, MAX(z) FROM a"
+      }
+    }
+  ],
+  "stats": {
+    "identity_count": 0,
+    "transpile_count": 29,
+    "skipped_dynamic": 0
+  }
+}

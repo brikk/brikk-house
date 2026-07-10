@@ -1,0 +1,1657 @@
+{
+  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "dialect": "spark",
+  "identity": [
+    {
+      "sql": "DAYOFWEEK(TO_DATE(x))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DAYOFMONTH(TO_DATE(x))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DAYOFYEAR(TO_DATE(x))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WEEKOFYEAR(TO_DATE(x))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT MODE(category)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT MODE(price, TRUE) AS deterministic_mode FROM products",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT MODE() WITHIN GROUP (ORDER BY status) FROM orders",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DROP NAMESPACE my_catalog.my_namespace",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE NAMESPACE my_catalog.my_namespace",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "INSERT OVERWRITE TABLE db1.tb1 TABLE db2.tb2",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo AS WITH t AS (SELECT 1 AS col) SELECT col FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TEMPORARY VIEW test AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (col VARCHAR(50))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (col STRUCT<struct_col_a: VARCHAR((50))>)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (col STRING) CLUSTERED BY (col) INTO 10 BUCKETS",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (col STRING) CLUSTERED BY (col) SORTED BY (col) INTO 10 BUCKETS",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TRUNCATE TABLE t1 PARTITION(age = 10, name = 'test', address)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER VIEW StudentInfoView AS SELECT * FROM StudentInfo",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER VIEW StudentInfoView AS SELECT LastName FROM StudentInfo",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER VIEW StudentInfoView RENAME TO StudentInfoViewRenamed",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER VIEW StudentInfoView SET TBLPROPERTIES ('key1'='val1', 'key2'='val2')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER VIEW StudentInfoView UNSET TBLPROPERTIES ('key1', 'key2')",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "SELECT CAST('a' AS CHAR(10) COLLATE UTF8_BINARY)",
+      "expected": "SELECT CAST('a' AS STRING COLLATE UTF8_BINARY)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CAST('a' AS VARCHAR(10) COLLATE UTF8_BINARY)",
+      "expected": "SELECT CAST('a' AS STRING COLLATE UTF8_BINARY)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT APPROX_TOP_K_ACCUMULATE(col, 10)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT APPROX_TOP_K_ACCUMULATE(col)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT BITMAP_BIT_POSITION(10)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT BITMAP_CONSTRUCT_AGG(value)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE foo ADD PARTITION(event = 'click')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE foo ADD IF NOT EXISTS PARTITION(event = 'click')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "IF(cond, foo AS bar, bla AS baz)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "any_value(col, true)",
+      "expected": "ANY_VALUE(col) IGNORE NULLS",
+      "pretty": false
+    },
+    {
+      "sql": "first(col, true)",
+      "expected": "FIRST(col) IGNORE NULLS",
+      "pretty": false
+    },
+    {
+      "sql": "first_value(col, true)",
+      "expected": "FIRST_VALUE(col) IGNORE NULLS",
+      "pretty": false
+    },
+    {
+      "sql": "last(col, true)",
+      "expected": "LAST(col) IGNORE NULLS",
+      "pretty": false
+    },
+    {
+      "sql": "last_value(col, true)",
+      "expected": "LAST_VALUE(col) IGNORE NULLS",
+      "pretty": false
+    },
+    {
+      "sql": "DESCRIBE EXTENDED db.tbl",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM test TABLESAMPLE (50 PERCENT)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM test TABLESAMPLE (5 ROWS)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM test TABLESAMPLE (BUCKET 4 OUT OF 10)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REFRESH 'hdfs://path/to/table'",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REFRESH TABLE tempDB.view1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CASE WHEN a = NULL THEN 1 ELSE 2 END",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t1 SEMI JOIN t2 ON t1.x = t2.x",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TRANSFORM(ARRAY(1, 2, 3), x -> x + 1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TRANSFORM(ARRAY(1, 2, 3), (x, i) -> x + i)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REFRESH TABLE a.b.c",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "INTERVAL '-86' DAYS",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TRIM('    SparkSQL   ')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TRIM(BOTH 'SL' FROM 'SSparkSQLS')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TRIM(LEADING 'SL' FROM 'SSparkSQLS')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TRIM(TRAILING 'SL' FROM 'SSparkSQLS')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SPLIT(str, pattern, lim)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t1, t2",
+      "expected": "SELECT * FROM t1 CROSS JOIN t2",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT 1 limit",
+      "expected": "SELECT 1 AS limit",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT 1 offset",
+      "expected": "SELECT 1 AS offset",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT UNIX_TIMESTAMP()",
+      "expected": "SELECT UNIX_TIMESTAMP(CURRENT_TIMESTAMP())",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CAST('2023-01-01' AS TIMESTAMP) + INTERVAL 23 HOUR + 59 MINUTE + 59 SECONDS",
+      "expected": "SELECT CAST('2023-01-01' AS TIMESTAMP) + INTERVAL '23' HOUR + INTERVAL '59' MINUTE + INTERVAL '59' SECONDS",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CAST('2023-01-01' AS TIMESTAMP) + INTERVAL '23' HOUR + '59' MINUTE + '59' SECONDS",
+      "expected": "SELECT CAST('2023-01-01' AS TIMESTAMP) + INTERVAL '23' HOUR + INTERVAL '59' MINUTE + INTERVAL '59' SECONDS",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT INTERVAL '5' HOURS '30' MINUTES '5' SECONDS '6' MILLISECONDS '7' MICROSECONDS",
+      "expected": "SELECT INTERVAL '5' HOURS + INTERVAL '30' MINUTES + INTERVAL '5' SECONDS + INTERVAL '6' MILLISECONDS + INTERVAL '7' MICROSECONDS",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT INTERVAL 5 HOURS 30 MINUTES 5 SECONDS 6 MILLISECONDS 7 MICROSECONDS",
+      "expected": "SELECT INTERVAL '5' HOURS + INTERVAL '30' MINUTES + INTERVAL '5' SECONDS + INTERVAL '6' MILLISECONDS + INTERVAL '7' MICROSECONDS",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT REGEXP_REPLACE('100-200', r'([^0-9])', '')",
+      "expected": "SELECT REGEXP_REPLACE('100-200', '([^0-9])', '')",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT REGEXP_REPLACE('100-200', R'([^0-9])', '')",
+      "expected": "SELECT REGEXP_REPLACE('100-200', '([^0-9])', '')",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT STR_TO_MAP('a:1,b:2,c:3')",
+      "expected": "SELECT STR_TO_MAP('a:1,b:2,c:3', ',', ':')",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT SUBSTR('Spark' FROM 5 FOR 1)",
+      "expected": "SELECT SUBSTRING('Spark', 5, 1)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT SUBSTR('Spark SQL', 5)",
+      "expected": "SELECT SUBSTRING('Spark SQL', 5)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT SUBSTR(ENCODE('Spark SQL', 'utf-8'), 5)",
+      "expected": "SELECT SUBSTRING(ENCODE('Spark SQL', 'utf-8'), 5)",
+      "pretty": false
+    },
+    {
+      "sql": "DESCRIBE schema.test PARTITION(ds = '2024-01-01')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "BIT_GET(11, 0)",
+      "expected": "GETBIT(11, 0)",
+      "pretty": false
+    },
+    {
+      "sql": "BITMAP_OR_AGG(x)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT ELT(2, 'foo', 'bar', 'baz') AS Result",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT MAKE_INTERVAL(100, 11, 12, 13, 14, 14, 15)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT name, GROUPING_ID() FROM customer GROUP BY ROLLUP (name)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT MAKE_TIMESTAMP(2014, 12, 28, 6, 30, 45.887)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CURDATE()",
+      "expected": "SELECT CURRENT_DATE",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TRANSFORM(x) USING 'x' AS (x INT) FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' AS (a, b, c) FROM person WHERE zip_code > 94511",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' AS (a STRING, b STRING, c STRING) FROM person WHERE zip_code > 94511",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TRANSFORM(name, age) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n' NULL DEFINED AS 'NULL' USING 'cat' AS (name_age STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY '@' LINES TERMINATED BY '\\n' NULL DEFINED AS 'NULL' FROM person",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TRANSFORM(zip_code, name, age) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' WITH SERDEPROPERTIES ('field.delim'='\\t') USING 'cat' AS (a STRING, b STRING, c STRING) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' WITH SERDEPROPERTIES ('field.delim'='\\t') FROM person WHERE zip_code > 94511",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' FROM person WHERE zip_code > 94500",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE TABLE tbl COMPUTE STATISTICS NOSCAN",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE TABLE tbl COMPUTE STATISTICS FOR ALL COLUMNS",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE TABLE tbl COMPUTE STATISTICS FOR COLUMNS foo, bar",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE TABLE ctlg.db.tbl COMPUTE STATISTICS NOSCAN",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE TABLES COMPUTE STATISTICS NOSCAN",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE TABLES FROM db COMPUTE STATISTICS",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE TABLES IN db COMPUTE STATISTICS",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE TABLE ctlg.db.tbl PARTITION(foo = 'foo', bar = 'bar') COMPUTE STATISTICS NOSCAN",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "PERCENTILE_APPROX(DISTINCT col, 0.3)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "PERCENTILE_APPROX(DISTINCT col, 0.3, 200)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DECLARE VAR x INT",
+      "expected": "DECLARE x INT",
+      "pretty": false
+    },
+    {
+      "sql": "DECLARE x INT",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
+      "expected": "DECLARE myvar INT = 5",
+      "pretty": false
+    },
+    {
+      "sql": "DECLARE x, y, z INT DEFAULT 1",
+      "expected": "DECLARE x, y, z INT = 1",
+      "pretty": false
+    },
+    {
+      "sql": "DECLARE x INT = 5",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DECLARE five = 5",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DECLARE OR REPLACE five = 55",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DECLARE VARIABLE size DEFAULT 6",
+      "expected": "DECLARE size = 6",
+      "pretty": false
+    },
+    {
+      "sql": "DECLARE some_var STRING",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TRUNC(date_col, 'MM')",
+      "expected": null,
+      "pretty": false
+    }
+  ],
+  "transpile": [
+    {
+      "sql": "CREATE TABLE db.example_table (col_a struct<struct_col_a:int, struct_col_b:string>)",
+      "read": {},
+      "write": {
+        "duckdb": "CREATE TABLE db.example_table (col_a STRUCT(struct_col_a INT, struct_col_b TEXT))",
+        "presto": "CREATE TABLE db.example_table (col_a ROW(struct_col_a INTEGER, struct_col_b VARCHAR))",
+        "hive": "CREATE TABLE db.example_table (col_a STRUCT<struct_col_a: INT, struct_col_b: STRING>)",
+        "spark": "CREATE TABLE db.example_table (col_a STRUCT<struct_col_a: INT, struct_col_b: STRING>)"
+      }
+    },
+    {
+      "sql": "CREATE TABLE db.example_table (col_a struct<struct_col_a:int, struct_col_b:struct<nested_col_a:string, nested_col_b:string>>)",
+      "read": {},
+      "write": {
+        "bigquery": "CREATE TABLE db.example_table (col_a STRUCT<struct_col_a INT64, struct_col_b STRUCT<nested_col_a STRING, nested_col_b STRING>>)",
+        "duckdb": "CREATE TABLE db.example_table (col_a STRUCT(struct_col_a INT, struct_col_b STRUCT(nested_col_a TEXT, nested_col_b TEXT)))",
+        "presto": "CREATE TABLE db.example_table (col_a ROW(struct_col_a INTEGER, struct_col_b ROW(nested_col_a VARCHAR, nested_col_b VARCHAR)))",
+        "hive": "CREATE TABLE db.example_table (col_a STRUCT<struct_col_a: INT, struct_col_b: STRUCT<nested_col_a: STRING, nested_col_b: STRING>>)",
+        "spark": "CREATE TABLE db.example_table (col_a STRUCT<struct_col_a: INT, struct_col_b: STRUCT<nested_col_a: STRING, nested_col_b: STRING>>)"
+      }
+    },
+    {
+      "sql": "CREATE TABLE db.example_table (col_a array<int>, col_b array<array<int>>)",
+      "read": {},
+      "write": {
+        "bigquery": "CREATE TABLE db.example_table (col_a ARRAY<INT64>, col_b ARRAY<ARRAY<INT64>>)",
+        "duckdb": "CREATE TABLE db.example_table (col_a INT[], col_b INT[][])",
+        "presto": "CREATE TABLE db.example_table (col_a ARRAY(INTEGER), col_b ARRAY(ARRAY(INTEGER)))",
+        "hive": "CREATE TABLE db.example_table (col_a ARRAY<INT>, col_b ARRAY<ARRAY<INT>>)",
+        "spark": "CREATE TABLE db.example_table (col_a ARRAY<INT>, col_b ARRAY<ARRAY<INT>>)",
+        "snowflake": "CREATE TABLE db.example_table (col_a ARRAY, col_b ARRAY)"
+      }
+    },
+    {
+      "sql": "CREATE TABLE x USING ICEBERG PARTITIONED BY (MONTHS(y)) LOCATION 's3://z'",
+      "read": {},
+      "write": {
+        "duckdb": "CREATE TABLE x",
+        "presto": "CREATE TABLE x WITH (format='ICEBERG', PARTITIONED_BY=ARRAY['MONTHS(y)'])",
+        "hive": "CREATE TABLE x STORED AS ICEBERG PARTITIONED BY (MONTHS(y)) LOCATION 's3://z'",
+        "spark": "CREATE TABLE x USING ICEBERG PARTITIONED BY (MONTHS(y)) LOCATION 's3://z'"
+      }
+    },
+    {
+      "sql": "CREATE TABLE test STORED AS PARQUET AS SELECT 1",
+      "read": {},
+      "write": {
+        "duckdb": "CREATE TABLE test AS SELECT 1",
+        "presto": "CREATE TABLE test WITH (format='PARQUET') AS SELECT 1",
+        "trino": "CREATE TABLE test WITH (format='PARQUET') AS SELECT 1",
+        "athena": "CREATE TABLE test WITH (format='PARQUET') AS SELECT 1",
+        "hive": "CREATE TABLE test STORED AS PARQUET AS SELECT 1",
+        "spark": "CREATE TABLE test STORED AS PARQUET AS SELECT 1"
+      }
+    },
+    {
+      "sql": "CREATE TABLE blah (col_a INT) COMMENT \"Test comment: blah\" PARTITIONED BY (date STRING) USING ICEBERG TBLPROPERTIES('x' = '1')",
+      "read": {},
+      "write": {
+        "duckdb": "CREATE TABLE blah (\n  col_a INT\n)",
+        "presto": "CREATE TABLE blah (\n  col_a INTEGER,\n  date VARCHAR\n)\nCOMMENT 'Test comment: blah'\nWITH (\n  PARTITIONED_BY=ARRAY['date'],\n  format='ICEBERG',\n  x='1'\n)",
+        "hive": "CREATE TABLE blah (\n  col_a INT\n)\nCOMMENT 'Test comment: blah'\nPARTITIONED BY (\n  date STRING\n)\nSTORED AS ICEBERG\nTBLPROPERTIES (\n  'x'='1'\n)",
+        "spark": "CREATE TABLE blah (\n  col_a INT,\n  date STRING\n)\nCOMMENT 'Test comment: blah'\nPARTITIONED BY (\n  date\n)\nUSING ICEBERG\nTBLPROPERTIES (\n  'x'='1'\n)"
+      },
+      "pretty": true
+    },
+    {
+      "sql": "CACHE TABLE testCache OPTIONS ('storageLevel' 'DISK_ONLY') SELECT * FROM testData",
+      "read": {},
+      "write": {
+        "spark": "CACHE TABLE testCache OPTIONS('storageLevel' = 'DISK_ONLY') AS SELECT * FROM testData"
+      }
+    },
+    {
+      "sql": "ALTER TABLE StudentInfo ADD COLUMNS (LastName STRING, DOB TIMESTAMP)",
+      "read": {},
+      "write": {
+        "spark": "ALTER TABLE StudentInfo ADD COLUMNS (LastName STRING, DOB TIMESTAMP)"
+      }
+    },
+    {
+      "sql": "ALTER TABLE db.example ALTER COLUMN col_a TYPE BIGINT",
+      "read": {},
+      "write": {
+        "spark": "ALTER TABLE db.example ALTER COLUMN col_a TYPE BIGINT",
+        "hive": "ALTER TABLE db.example CHANGE COLUMN col_a col_a BIGINT"
+      }
+    },
+    {
+      "sql": "ALTER TABLE db.example CHANGE COLUMN col_a col_a BIGINT",
+      "read": {},
+      "write": {
+        "spark": "ALTER TABLE db.example ALTER COLUMN col_a TYPE BIGINT",
+        "hive": "ALTER TABLE db.example CHANGE COLUMN col_a col_a BIGINT"
+      }
+    },
+    {
+      "sql": "ALTER TABLE db.example RENAME COLUMN col_a TO col_b",
+      "read": {},
+      "write": {
+        "spark": "ALTER TABLE db.example RENAME COLUMN col_a TO col_b",
+        "hive": {
+          "error": "UnsupportedError"
+        }
+      }
+    },
+    {
+      "sql": "ALTER TABLE StudentInfo DROP COLUMNS (LastName, DOB)",
+      "read": {},
+      "write": {
+        "spark": "ALTER TABLE StudentInfo DROP COLUMNS (LastName, DOB)"
+      }
+    },
+    {
+      "sql": "TO_DATE(x, 'yyyy-MM-dd')",
+      "read": {},
+      "write": {
+        "duckdb": "TRY_CAST(x AS DATE)",
+        "hive": "TO_DATE(x)",
+        "presto": "CAST(CAST(x AS TIMESTAMP) AS DATE)",
+        "spark": "TO_DATE(x)",
+        "snowflake": "TRY_TO_DATE(x, 'yyyy-mm-DD')",
+        "databricks": "TO_DATE(x)"
+      }
+    },
+    {
+      "sql": "TO_DATE(x, 'yyyy')",
+      "read": {},
+      "write": {
+        "duckdb": "CAST(CAST(TRY_STRPTIME(x, '%Y') AS TIMESTAMP) AS DATE)",
+        "hive": "TO_DATE(x, 'yyyy')",
+        "presto": "CAST(DATE_PARSE(x, '%Y') AS DATE)",
+        "spark": "TO_DATE(x, 'yyyy')",
+        "snowflake": "TRY_TO_DATE(x, 'yyyy')",
+        "databricks": "TO_DATE(x, 'yyyy')"
+      }
+    },
+    {
+      "sql": "SELECT /*+ COALESCE(3) */ * FROM x",
+      "read": {},
+      "write": {
+        "spark": "SELECT /*+ COALESCE(3) */ * FROM x",
+        "bigquery": "SELECT * FROM x"
+      }
+    },
+    {
+      "sql": "SELECT /*+ COALESCE(3), REPARTITION(1) */ * FROM x",
+      "read": {},
+      "write": {
+        "spark": "SELECT /*+ COALESCE(3), REPARTITION(1) */ * FROM x",
+        "bigquery": "SELECT * FROM x"
+      }
+    },
+    {
+      "sql": "SELECT /*+ BROADCAST(table) */ cola FROM table",
+      "read": {},
+      "write": {
+        "spark": "SELECT /*+ BROADCAST(table) */ cola FROM table",
+        "bigquery": "SELECT cola FROM table"
+      }
+    },
+    {
+      "sql": "SELECT /*+ BROADCASTJOIN(table) */ cola FROM table",
+      "read": {},
+      "write": {
+        "spark": "SELECT /*+ BROADCASTJOIN(table) */ cola FROM table",
+        "bigquery": "SELECT cola FROM table"
+      }
+    },
+    {
+      "sql": "SELECT /*+ MAPJOIN(table) */ cola FROM table",
+      "read": {},
+      "write": {
+        "spark": "SELECT /*+ MAPJOIN(table) */ cola FROM table",
+        "bigquery": "SELECT cola FROM table"
+      }
+    },
+    {
+      "sql": "SELECT /*+ MERGE(table) */ cola FROM table",
+      "read": {},
+      "write": {
+        "spark": "SELECT /*+ MERGE(table) */ cola FROM table",
+        "bigquery": "SELECT cola FROM table"
+      }
+    },
+    {
+      "sql": "SELECT /*+ SHUFFLEMERGE(table) */ cola FROM table",
+      "read": {},
+      "write": {
+        "spark": "SELECT /*+ SHUFFLEMERGE(table) */ cola FROM table",
+        "bigquery": "SELECT cola FROM table"
+      }
+    },
+    {
+      "sql": "SELECT /*+ MERGEJOIN(table) */ cola FROM table",
+      "read": {},
+      "write": {
+        "spark": "SELECT /*+ MERGEJOIN(table) */ cola FROM table",
+        "bigquery": "SELECT cola FROM table"
+      }
+    },
+    {
+      "sql": "SELECT /*+ SHUFFLE_HASH(table) */ cola FROM table",
+      "read": {},
+      "write": {
+        "spark": "SELECT /*+ SHUFFLE_HASH(table) */ cola FROM table",
+        "bigquery": "SELECT cola FROM table"
+      }
+    },
+    {
+      "sql": "SELECT /*+ SHUFFLE_REPLICATE_NL(table) */ cola FROM table",
+      "read": {},
+      "write": {
+        "spark": "SELECT /*+ SHUFFLE_REPLICATE_NL(table) */ cola FROM table",
+        "bigquery": "SELECT cola FROM table"
+      }
+    },
+    {
+      "sql": "SELECT CAST('a' AS STRING COLLATE foo)",
+      "read": {
+        "postgres": "SELECT CAST('a' AS VARCHAR COLLATE foo)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "CONCAT_WS(' ', NULL, 'Smith')",
+      "read": {},
+      "write": {
+        "duckdb": "CONCAT_WS(' ', NULL, 'Smith')",
+        "spark": "CONCAT_WS(' ', NULL, 'Smith')",
+        "hive": "CONCAT_WS(' ', NULL, 'Smith')"
+      }
+    },
+    {
+      "sql": "CAST(3.14159 AS BIGINT)",
+      "read": {
+        "postgres": "TRUNC(3.14159, 2)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT * FROM parquet.`name.parquet`",
+      "read": {
+        "duckdb": "SELECT * FROM READ_PARQUET('name.parquet')",
+        "spark": "SELECT * FROM parquet.`name.parquet`"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT TO_JSON(STRUCT('blah' AS x)) AS y",
+      "read": {},
+      "write": {
+        "presto": "SELECT JSON_FORMAT(CAST(CAST(ROW('blah') AS ROW(x VARCHAR)) AS JSON)) AS y",
+        "spark": "SELECT TO_JSON(STRUCT('blah' AS x)) AS y",
+        "trino": "SELECT JSON_FORMAT(CAST(CAST(ROW('blah') AS ROW(x VARCHAR)) AS JSON)) AS y"
+      }
+    },
+    {
+      "sql": "SELECT TRY_ELEMENT_AT(ARRAY(1, 2, 3), 2)",
+      "read": {
+        "databricks": "SELECT TRY_ELEMENT_AT(ARRAY(1, 2, 3), 2)",
+        "presto": "SELECT ELEMENT_AT(ARRAY[1, 2, 3], 2)"
+      },
+      "write": {
+        "databricks": "SELECT TRY_ELEMENT_AT(ARRAY(1, 2, 3), 2)",
+        "spark": "SELECT TRY_ELEMENT_AT(ARRAY(1, 2, 3), 2)",
+        "duckdb": "SELECT [1, 2, 3][2]",
+        "duckdb, version=1.1.0": "SELECT ([1, 2, 3])[2]",
+        "presto": "SELECT ELEMENT_AT(ARRAY[1, 2, 3], 2)"
+      }
+    },
+    {
+      "sql": "SELECT ELEMENT_AT(ARRAY(1, 2, 3), 1)",
+      "read": {
+        "spark2": "SELECT ELEMENT_AT(ARRAY(1, 2, 3), 1)",
+        "spark": "SELECT ELEMENT_AT(ARRAY(1, 2, 3), 1)",
+        "databricks": "SELECT ELEMENT_AT(ARRAY(1, 2, 3), 1)"
+      },
+      "write": {
+        "spark2": "SELECT ELEMENT_AT(ARRAY(1, 2, 3), 1)",
+        "databricks": "SELECT ELEMENT_AT(ARRAY(1, 2, 3), 1)"
+      }
+    },
+    {
+      "sql": "SELECT h.id, amount FROM hourlycostagg h LATERAL VIEW inline(h.costs) c",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT h.id, amount FROM hourlycostagg AS h CROSS JOIN LATERAL (SELECT UNNEST(h.costs, max_depth => 2)) AS c"
+      }
+    },
+    {
+      "sql": "SELECT h.id, amount FROM hourlycostagg h LATERAL VIEW inline(h.adjustments) as type, val, curr",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT h.id, amount FROM hourlycostagg AS h CROSS JOIN LATERAL (SELECT UNNEST(h.adjustments, max_depth => 2)) AS _u_0(type, val, curr)"
+      }
+    },
+    {
+      "sql": "\n            WITH hourlycostagg AS (\n                SELECT\n                    101 AS id,\n                    ARRAY(\n                        STRUCT(10.0 AS amount, 'USD' AS currency),\n                        STRUCT(20.0 AS amount, 'EUR' AS currency)\n                    ) AS costs,\n                    ARRAY(\n                        STRUCT('tax' AS type, 0.15 AS val, 'EUR' AS currency),\n                        STRUCT('fee' AS type, 5.00 AS val, 'EUR' AS currency)\n                    ) AS adjustments,\n                    ARRAY(\n                        STRUCT(\n                            12.0 AS length,\n                            STRUCT('A' AS tag, 98.5 AS score) AS details\n                        ),\n                        STRUCT(\n                            23.0 AS length,\n                            STRUCT('B' AS tag, 99.5 AS score) AS details\n                        )\n                    ) AS info\n            )\n            SELECT\n                h.id,\n                amount,\n                currency,\n                type,\n                val,\n                leng\n            FROM hourlycostagg h\n            LATERAL VIEW inline(h.costs) c\n            LATERAL VIEW inline(h.adjustments) as type, val, curr\n            LATERAL VIEW inline(h.info) exploded as leng, det\n            ",
+      "read": {},
+      "write": {
+        "duckdb": "WITH hourlycostagg AS (SELECT 101 AS id, [{'amount': 10.0, 'currency': 'USD'}, {'amount': 20.0, 'currency': 'EUR'}] AS costs, [{'type': 'tax', 'val': 0.15, 'currency': 'EUR'}, {'type': 'fee', 'val': 5.00, 'currency': 'EUR'}] AS adjustments, [{'length': 12.0, 'details': {'tag': 'A', 'score': 98.5}}, {'length': 23.0, 'details': {'tag': 'B', 'score': 99.5}}] AS info) SELECT h.id, amount, currency, type, val, leng FROM hourlycostagg AS h CROSS JOIN LATERAL (SELECT UNNEST(h.costs, max_depth => 2)) AS c CROSS JOIN LATERAL (SELECT UNNEST(h.adjustments, max_depth => 2)) AS _u_1(type, val, curr) CROSS JOIN LATERAL (SELECT UNNEST(h.info, max_depth => 2)) AS exploded(leng, det)"
+      }
+    },
+    {
+      "sql": "SELECT id_column, name, age FROM test_table LATERAL VIEW INLINE(struc_column) explode_view AS name, age",
+      "read": {},
+      "write": {
+        "presto": "SELECT id_column, name, age FROM test_table CROSS JOIN UNNEST(struc_column) AS explode_view(name, age)",
+        "spark": "SELECT id_column, name, age FROM test_table LATERAL VIEW INLINE(struc_column) explode_view AS name, age",
+        "duckdb": "SELECT id_column, name, age FROM test_table CROSS JOIN LATERAL (SELECT UNNEST(struc_column, max_depth => 2)) AS explode_view(name, age)"
+      }
+    },
+    {
+      "sql": "SELECT ARRAY_AGG(x) FILTER (WHERE x = 5) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT ARRAY_AGG(x) FILTER(WHERE x = 5 AND NOT x IS NULL) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)",
+        "spark": "SELECT COLLECT_LIST(x) FILTER(WHERE x = 5) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)"
+      }
+    },
+    {
+      "sql": "SELECT ARRAY_AGG(1)",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT ARRAY_AGG(1)",
+        "spark": "SELECT COLLECT_LIST(1)"
+      }
+    },
+    {
+      "sql": "SELECT ARRAY_AGG(DISTINCT STRUCT('a'))",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT ARRAY_AGG(DISTINCT {'col1': 'a'})",
+        "spark": "SELECT COLLECT_LIST(DISTINCT STRUCT('a' AS col1))"
+      }
+    },
+    {
+      "sql": "SELECT DATE_FORMAT(DATE '2020-01-01', 'EEEE') AS weekday",
+      "read": {},
+      "write": {
+        "presto": "SELECT DATE_FORMAT(CAST(CAST('2020-01-01' AS DATE) AS TIMESTAMP), '%W') AS weekday",
+        "spark": "SELECT DATE_FORMAT(CAST('2020-01-01' AS DATE), 'EEEE') AS weekday"
+      }
+    },
+    {
+      "sql": "SELECT TRY_ELEMENT_AT(MAP(1, 'a', 2, 'b'), 2)",
+      "read": {
+        "databricks": "SELECT TRY_ELEMENT_AT(MAP(1, 'a', 2, 'b'), 2)"
+      },
+      "write": {
+        "databricks": "SELECT TRY_ELEMENT_AT(MAP(1, 'a', 2, 'b'), 2)",
+        "duckdb": "SELECT MAP([1, 2], ['a', 'b'])[2]",
+        "duckdb, version=1.1.0": "SELECT (MAP([1, 2], ['a', 'b'])[2])[1]",
+        "spark": "SELECT TRY_ELEMENT_AT(MAP(1, 'a', 2, 'b'), 2)"
+      }
+    },
+    {
+      "sql": "SELECT SPLIT('123|789', '\\\\|')",
+      "read": {
+        "duckdb": "SELECT STR_SPLIT_REGEX('123|789', '\\|')",
+        "presto": "SELECT REGEXP_SPLIT('123|789', '\\|')"
+      },
+      "write": {
+        "duckdb": "SELECT STR_SPLIT_REGEX('123|789', '\\|')",
+        "presto": "SELECT REGEXP_SPLIT('123|789', '\\|')",
+        "spark": "SELECT SPLIT('123|789', '\\\\|')"
+      }
+    },
+    {
+      "sql": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+      "read": {},
+      "write": {
+        "clickhouse": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+        "databricks": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+        "doris": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS `name` UNION ALL SELECT NULL AS id, 'jake' AS `name`) SELECT COUNT(DISTINCT id, `name`) AS cnt FROM tbl",
+        "duckdb": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NULL WHEN name IS NULL THEN NULL ELSE (id, name) END) AS cnt FROM tbl",
+        "hive": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+        "mysql": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+        "postgres": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NULL WHEN name IS NULL THEN NULL ELSE (id, name) END) AS cnt FROM tbl",
+        "presto": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NULL WHEN name IS NULL THEN NULL ELSE (id, name) END) AS cnt FROM tbl",
+        "snowflake": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+        "spark": "WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl"
+      }
+    },
+    {
+      "sql": "SELECT TO_UTC_TIMESTAMP('2016-08-31', 'Asia/Seoul')",
+      "read": {},
+      "write": {
+        "bigquery": "SELECT DATETIME(TIMESTAMP(CAST('2016-08-31' AS DATETIME), 'Asia/Seoul'), 'UTC')",
+        "duckdb": "SELECT CAST('2016-08-31' AS TIMESTAMP) AT TIME ZONE 'Asia/Seoul' AT TIME ZONE 'UTC'",
+        "postgres": "SELECT CAST('2016-08-31' AS TIMESTAMP) AT TIME ZONE 'Asia/Seoul' AT TIME ZONE 'UTC'",
+        "presto": "SELECT WITH_TIMEZONE(CAST('2016-08-31' AS TIMESTAMP), 'Asia/Seoul') AT TIME ZONE 'UTC'",
+        "redshift": "SELECT CAST('2016-08-31' AS TIMESTAMP) AT TIME ZONE 'Asia/Seoul' AT TIME ZONE 'UTC'",
+        "snowflake": "SELECT CONVERT_TIMEZONE('Asia/Seoul', 'UTC', CAST('2016-08-31' AS TIMESTAMP))",
+        "spark": "SELECT TO_UTC_TIMESTAMP(CAST('2016-08-31' AS TIMESTAMP), 'Asia/Seoul')"
+      }
+    },
+    {
+      "sql": "SELECT FROM_UTC_TIMESTAMP('2016-08-31', 'Asia/Seoul')",
+      "read": {},
+      "write": {
+        "presto": "SELECT AT_TIMEZONE(CAST('2016-08-31' AS TIMESTAMP), 'Asia/Seoul')",
+        "spark": "SELECT FROM_UTC_TIMESTAMP(CAST('2016-08-31' AS TIMESTAMP), 'Asia/Seoul')"
+      }
+    },
+    {
+      "sql": "foo.bar",
+      "read": {
+        "": "STRUCT_EXTRACT(foo, bar)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "MAP(1, 2, 3, 4)",
+      "read": {},
+      "write": {
+        "spark": "MAP(1, 2, 3, 4)",
+        "trino": "MAP(ARRAY[1, 3], ARRAY[2, 4])"
+      }
+    },
+    {
+      "sql": "MAP()",
+      "read": {
+        "spark": "MAP()",
+        "trino": "MAP()"
+      },
+      "write": {
+        "trino": "MAP(ARRAY[], ARRAY[])"
+      }
+    },
+    {
+      "sql": "SELECT STR_TO_MAP('a:1,b:2,c:3', ',', ':')",
+      "read": {
+        "presto": "SELECT SPLIT_TO_MAP('a:1,b:2,c:3', ',', ':')",
+        "spark": "SELECT STR_TO_MAP('a:1,b:2,c:3', ',', ':')"
+      },
+      "write": {
+        "presto": "SELECT SPLIT_TO_MAP('a:1,b:2,c:3', ',', ':')",
+        "spark": "SELECT STR_TO_MAP('a:1,b:2,c:3', ',', ':')"
+      }
+    },
+    {
+      "sql": "SELECT DATEDIFF(MONTH, CAST('1996-10-30' AS TIMESTAMP), CAST('1997-02-28 10:30:00' AS TIMESTAMP))",
+      "read": {
+        "duckdb": "SELECT DATEDIFF('month', CAST('1996-10-30' AS TIMESTAMPTZ), CAST('1997-02-28 10:30:00' AS TIMESTAMPTZ))"
+      },
+      "write": {
+        "spark": "SELECT DATEDIFF(MONTH, CAST('1996-10-30' AS TIMESTAMP), CAST('1997-02-28 10:30:00' AS TIMESTAMP))",
+        "spark2": "SELECT CAST(MONTHS_BETWEEN(CAST('1997-02-28 10:30:00' AS TIMESTAMP), CAST('1996-10-30' AS TIMESTAMP)) AS INT)"
+      }
+    },
+    {
+      "sql": "SELECT DATEDIFF(week, '2020-01-01', '2020-12-31')",
+      "read": {},
+      "write": {
+        "bigquery": "SELECT DATE_DIFF(CAST('2020-12-31' AS DATE), CAST('2020-01-01' AS DATE), WEEK)",
+        "duckdb": "SELECT DATE_DIFF('WEEK', CAST('2020-01-01' AS DATE), CAST('2020-12-31' AS DATE))",
+        "hive": "SELECT CAST(DATEDIFF('2020-12-31', '2020-01-01') / 7 AS INT)",
+        "postgres": "SELECT CAST(EXTRACT(days FROM (CAST(CAST('2020-12-31' AS DATE) AS TIMESTAMP) - CAST(CAST('2020-01-01' AS DATE) AS TIMESTAMP))) / 7 AS BIGINT)",
+        "redshift": "SELECT DATEDIFF(WEEK, CAST('2020-01-01' AS DATE), CAST('2020-12-31' AS DATE))",
+        "snowflake": "SELECT DATEDIFF(WEEK, TO_DATE('2020-01-01'), TO_DATE('2020-12-31'))",
+        "spark": "SELECT DATEDIFF(WEEK, '2020-01-01', '2020-12-31')"
+      }
+    },
+    {
+      "sql": "SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30')",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT DATE_DIFF('MONTH', CAST('1996-10-30' AS DATE), CAST('1997-02-28 10:30:00' AS DATE)) + CASE WHEN DAY(CAST('1997-02-28 10:30:00' AS DATE)) = DAY(LAST_DAY(CAST('1997-02-28 10:30:00' AS DATE))) AND DAY(CAST('1996-10-30' AS DATE)) = DAY(LAST_DAY(CAST('1996-10-30' AS DATE))) THEN 0 ELSE (DAY(CAST('1997-02-28 10:30:00' AS DATE)) - DAY(CAST('1996-10-30' AS DATE))) / 31.0 END",
+        "hive": "SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30')",
+        "spark": "SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30')"
+      }
+    },
+    {
+      "sql": "SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30', FALSE)",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT DATE_DIFF('MONTH', CAST('1996-10-30' AS DATE), CAST('1997-02-28 10:30:00' AS DATE)) + CASE WHEN DAY(CAST('1997-02-28 10:30:00' AS DATE)) = DAY(LAST_DAY(CAST('1997-02-28 10:30:00' AS DATE))) AND DAY(CAST('1996-10-30' AS DATE)) = DAY(LAST_DAY(CAST('1996-10-30' AS DATE))) THEN 0 ELSE (DAY(CAST('1997-02-28 10:30:00' AS DATE)) - DAY(CAST('1996-10-30' AS DATE))) / 31.0 END",
+        "hive": "SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30')",
+        "spark": "SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30', FALSE)"
+      }
+    },
+    {
+      "sql": "SELECT TO_TIMESTAMP('2016-12-31 00:12:00')",
+      "read": {},
+      "write": {
+        "": "SELECT CAST('2016-12-31 00:12:00' AS TIMESTAMP)",
+        "duckdb": "SELECT CAST('2016-12-31 00:12:00' AS TIMESTAMP)",
+        "spark": "SELECT CAST('2016-12-31 00:12:00' AS TIMESTAMP)"
+      }
+    },
+    {
+      "sql": "SELECT TO_TIMESTAMP(x, 'zZ')",
+      "read": {},
+      "write": {
+        "": "SELECT STR_TO_TIME(x, '%Z%z')",
+        "duckdb": "SELECT STRPTIME(x, '%Z%z')"
+      }
+    },
+    {
+      "sql": "SELECT TO_TIMESTAMP('2016-12-31', 'yyyy-MM-dd')",
+      "read": {
+        "duckdb": "SELECT STRPTIME('2016-12-31', '%Y-%m-%d')"
+      },
+      "write": {
+        "": "SELECT STR_TO_TIME('2016-12-31', '%Y-%m-%d')",
+        "duckdb": "SELECT STRPTIME('2016-12-31', '%Y-%m-%d')",
+        "spark": "SELECT TO_TIMESTAMP('2016-12-31', 'yyyy-MM-dd')"
+      }
+    },
+    {
+      "sql": "SELECT RLIKE('John Doe', 'John.*')",
+      "read": {},
+      "write": {
+        "bigquery": "SELECT REGEXP_CONTAINS('John Doe', 'John.*')",
+        "hive": "SELECT 'John Doe' RLIKE 'John.*'",
+        "postgres": "SELECT 'John Doe' ~ 'John.*'",
+        "snowflake": "SELECT REGEXP_LIKE('John Doe', 'John.*')",
+        "spark": "SELECT 'John Doe' RLIKE 'John.*'"
+      }
+    },
+    {
+      "sql": "UNHEX(MD5(x))",
+      "read": {},
+      "write": {
+        "bigquery": "FROM_HEX(TO_HEX(MD5(x)))",
+        "spark": "UNHEX(MD5(x))"
+      }
+    },
+    {
+      "sql": "SELECT * FROM ((VALUES 1))",
+      "read": {},
+      "write": {
+        "spark": "SELECT * FROM (VALUES (1))"
+      }
+    },
+    {
+      "sql": "SELECT CAST(STRUCT('fooo') AS STRUCT<a: VARCHAR(2)>)",
+      "read": {},
+      "write": {
+        "spark": "SELECT CAST(STRUCT('fooo' AS col1) AS STRUCT<a: STRING>)"
+      }
+    },
+    {
+      "sql": "SELECT CAST(123456 AS VARCHAR(3))",
+      "read": {},
+      "write": {
+        "": "SELECT TRY_CAST(123456 AS TEXT)",
+        "databricks": "SELECT TRY_CAST(123456 AS STRING)",
+        "spark": "SELECT CAST(123456 AS STRING)",
+        "spark2": "SELECT CAST(123456 AS STRING)"
+      }
+    },
+    {
+      "sql": "SELECT TRY_CAST('a' AS INT)",
+      "read": {},
+      "write": {
+        "": "SELECT TRY_CAST('a' AS INT)",
+        "databricks": "SELECT TRY_CAST('a' AS INT)",
+        "spark": "SELECT TRY_CAST('a' AS INT)",
+        "spark2": "SELECT CAST('a' AS INT)"
+      }
+    },
+    {
+      "sql": "SELECT piv.Q1 FROM (SELECT * FROM produce PIVOT(SUM(sales) FOR quarter IN ('Q1' AS `'Q1'`, 'Q2' AS `'Q2'`))) AS piv",
+      "read": {
+        "snowflake": "SELECT piv.Q1 FROM produce PIVOT(SUM(sales) FOR quarter IN ('Q1', 'Q2')) piv"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT piv.Q1 FROM (SELECT * FROM (SELECT * FROM produce) PIVOT(SUM(sales) FOR quarter IN ('Q1' AS `'Q1'`, 'Q2' AS `'Q2'`))) AS piv",
+      "read": {
+        "snowflake": "SELECT piv.Q1 FROM (SELECT * FROM produce) PIVOT(SUM(sales) FOR quarter IN ('Q1', 'Q2')) piv"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT * FROM produce PIVOT(SUM(produce.sales) FOR quarter IN ('Q1' AS `'Q1'`, 'Q2' AS `'Q2'`))",
+      "read": {
+        "snowflake": "SELECT * FROM produce PIVOT (SUM(produce.sales) FOR produce.quarter IN ('Q1', 'Q2'))"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))",
+      "read": {
+        "bigquery": "SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR p.quarter IN ('Q1' AS Q1, 'Q2' AS Q1))"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT DATEDIFF(MONTH, '2020-01-01', '2020-03-05')",
+      "read": {},
+      "write": {
+        "databricks": "SELECT DATEDIFF(MONTH, '2020-01-01', '2020-03-05')",
+        "hive": "SELECT CAST(MONTHS_BETWEEN('2020-03-05', '2020-01-01') AS INT)",
+        "presto": "SELECT DATE_DIFF('MONTH', CAST(CAST('2020-01-01' AS TIMESTAMP) AS DATE), CAST(CAST('2020-03-05' AS TIMESTAMP) AS DATE))",
+        "spark": "SELECT DATEDIFF(MONTH, '2020-01-01', '2020-03-05')",
+        "spark2": "SELECT CAST(MONTHS_BETWEEN('2020-03-05', '2020-01-01') AS INT)",
+        "trino": "SELECT DATE_DIFF('MONTH', CAST(CAST('2020-01-01' AS TIMESTAMP) AS DATE), CAST(CAST('2020-03-05' AS TIMESTAMP) AS DATE))"
+      }
+    },
+    {
+      "sql": "SELECT * FROM quarterly_sales PIVOT(SUM(amount) AS amount, 'dummy' AS bar FOR quarter IN ('2023_Q1'))",
+      "read": {
+        "spark": "SELECT * FROM quarterly_sales PIVOT(SUM(amount) amount, 'dummy' bar FOR quarter IN ('2023_Q1'))",
+        "databricks": "SELECT * FROM quarterly_sales PIVOT(SUM(amount) amount, 'dummy' bar FOR quarter IN ('2023_Q1'))"
+      },
+      "write": {
+        "databricks": "SELECT * FROM quarterly_sales PIVOT(SUM(amount) AS amount, 'dummy' AS bar FOR quarter IN ('2023_Q1'))"
+      }
+    },
+    {
+      "sql": "STRING(x)",
+      "read": {},
+      "write": {
+        "": "CAST(x AS TEXT)",
+        "spark": "CAST(x AS STRING)"
+      }
+    },
+    {
+      "sql": "CAST(x AS TIMESTAMP)",
+      "read": {
+        "trino": "CAST(x AS TIMESTAMP(6) WITH TIME ZONE)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT DATE_ADD(my_date_column, 1)",
+      "read": {},
+      "write": {
+        "spark": "SELECT DATE_ADD(my_date_column, 1)",
+        "spark2": "SELECT DATE_ADD(my_date_column, 1)",
+        "bigquery": "SELECT DATE_ADD(CAST(CAST(my_date_column AS DATETIME) AS DATE), INTERVAL 1 DAY)"
+      }
+    },
+    {
+      "sql": "AGGREGATE(my_arr, 0, (acc, x) -> acc + x, s -> s * 2)",
+      "read": {},
+      "write": {
+        "trino": "REDUCE(my_arr, 0, (acc, x) -> acc + x, s -> s * 2)",
+        "hive": "REDUCE(my_arr, 0, (acc, x) -> acc + x, s -> s * 2)",
+        "presto": "REDUCE(my_arr, 0, (acc, x) -> acc + x, s -> s * 2)",
+        "spark": "AGGREGATE(my_arr, 0, (acc, x) -> acc + x, s -> s * 2)"
+      }
+    },
+    {
+      "sql": "TRIM('SL', 'SSparkSQLS')",
+      "read": {},
+      "write": {
+        "spark": "TRIM('SL' FROM 'SSparkSQLS')"
+      }
+    },
+    {
+      "sql": "ARRAY_SORT(x, (left, right) -> -1)",
+      "read": {},
+      "write": {
+        "duckdb": "ARRAY_SORT(x)",
+        "presto": "ARRAY_SORT(x, (\"left\", \"right\") -> -1)",
+        "hive": "SORT_ARRAY(x)",
+        "spark": "ARRAY_SORT(x, (left, right) -> -1)"
+      }
+    },
+    {
+      "sql": "ARRAY(0, 1, 2)",
+      "read": {},
+      "write": {
+        "bigquery": "[0, 1, 2]",
+        "duckdb": "[0, 1, 2]",
+        "presto": "ARRAY[0, 1, 2]",
+        "hive": "ARRAY(0, 1, 2)",
+        "spark": "ARRAY(0, 1, 2)"
+      }
+    },
+    {
+      "sql": "SELECT fname, lname, age FROM person ORDER BY age DESC NULLS FIRST, fname ASC NULLS LAST, lname",
+      "read": {},
+      "write": {
+        "clickhouse": "SELECT fname, lname, age FROM person ORDER BY age DESC NULLS FIRST, fname ASC, lname NULLS FIRST",
+        "duckdb": "SELECT fname, lname, age FROM person ORDER BY age DESC NULLS FIRST, fname ASC, lname NULLS FIRST",
+        "postgres": "SELECT fname, lname, age FROM person ORDER BY age DESC, fname ASC, lname NULLS FIRST",
+        "presto": "SELECT fname, lname, age FROM person ORDER BY age DESC NULLS FIRST, fname ASC, lname NULLS FIRST",
+        "hive": "SELECT fname, lname, age FROM person ORDER BY age DESC NULLS FIRST, fname ASC NULLS LAST, lname",
+        "spark": "SELECT fname, lname, age FROM person ORDER BY age DESC NULLS FIRST, fname ASC NULLS LAST, lname",
+        "snowflake": "SELECT fname, lname, age FROM person ORDER BY age DESC, fname ASC, lname NULLS FIRST"
+      }
+    },
+    {
+      "sql": "SELECT APPROX_COUNT_DISTINCT(a) FROM foo",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT APPROX_COUNT_DISTINCT(a) FROM foo",
+        "presto": "SELECT APPROX_DISTINCT(a) FROM foo",
+        "hive": "SELECT APPROX_COUNT_DISTINCT(a) FROM foo",
+        "spark": "SELECT APPROX_COUNT_DISTINCT(a) FROM foo"
+      }
+    },
+    {
+      "sql": "MONTH('2021-03-01')",
+      "read": {},
+      "write": {
+        "duckdb": "MONTH(CAST('2021-03-01' AS DATE))",
+        "presto": "MONTH(CAST(CAST('2021-03-01' AS TIMESTAMP) AS DATE))",
+        "hive": "MONTH('2021-03-01')",
+        "spark": "MONTH('2021-03-01')"
+      }
+    },
+    {
+      "sql": "YEAR('2021-03-01')",
+      "read": {},
+      "write": {
+        "duckdb": "YEAR(CAST('2021-03-01' AS DATE))",
+        "presto": "YEAR(CAST(CAST('2021-03-01' AS TIMESTAMP) AS DATE))",
+        "hive": "YEAR('2021-03-01')",
+        "spark": "YEAR('2021-03-01')"
+      }
+    },
+    {
+      "sql": "'毛'",
+      "read": {},
+      "write": {
+        "duckdb": "'毛'",
+        "presto": "'毛'",
+        "hive": "'毛'",
+        "spark": "'毛'"
+      }
+    },
+    {
+      "sql": "SELECT LEFT(x, 2), RIGHT(x, 2)",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT LEFT(x, 2), RIGHT(x, 2)",
+        "presto": "SELECT SUBSTR(x, 1, 2), SUBSTR(x, LENGTH(x) - (2 - 1))",
+        "hive": "SELECT SUBSTRING(x, 1, 2), SUBSTRING(x, LENGTH(x) - (2 - 1))",
+        "spark": "SELECT LEFT(x, 2), RIGHT(x, 2)"
+      }
+    },
+    {
+      "sql": "MAP_FROM_ARRAYS(ARRAY(1), c)",
+      "read": {},
+      "write": {
+        "duckdb": "MAP([1], c)",
+        "presto": "MAP(ARRAY[1], c)",
+        "hive": "MAP(ARRAY(1), c)",
+        "spark": "MAP_FROM_ARRAYS(ARRAY(1), c)",
+        "snowflake": "OBJECT_CONSTRUCT([1], c)"
+      }
+    },
+    {
+      "sql": "SELECT ARRAY_SORT(x)",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT ARRAY_SORT(x)",
+        "presto": "SELECT ARRAY_SORT(x)",
+        "hive": "SELECT SORT_ARRAY(x)",
+        "spark": "SELECT ARRAY_SORT(x)"
+      }
+    },
+    {
+      "sql": "SELECT DATE_ADD(MONTH, 20, col)",
+      "read": {
+        "spark": "SELECT TIMESTAMPADD(MONTH, 20, col)"
+      },
+      "write": {
+        "spark": "SELECT DATE_ADD(MONTH, 20, col)",
+        "databricks": "SELECT DATE_ADD(MONTH, 20, col)",
+        "presto": "SELECT DATE_ADD('MONTH', 20, col)",
+        "trino": "SELECT DATE_ADD('MONTH', 20, col)"
+      }
+    },
+    {
+      "sql": "SELECT ANY_VALUE(col, true), FIRST(col, true), FIRST_VALUE(col, true) OVER ()",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT ANY_VALUE(col), ANY_VALUE(col), FIRST_VALUE(col IGNORE NULLS) OVER ()"
+      }
+    },
+    {
+      "sql": "SELECT STRUCT(1, 2)",
+      "read": {},
+      "write": {
+        "spark": "SELECT STRUCT(1 AS col1, 2 AS col2)",
+        "presto": "SELECT CAST(ROW(1, 2) AS ROW(col1 INTEGER, col2 INTEGER))",
+        "duckdb": "SELECT {'col1': 1, 'col2': 2}"
+      }
+    },
+    {
+      "sql": "SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t",
+      "read": {},
+      "write": {
+        "spark": "SELECT STRUCT(x AS x, 1 AS col2, y AS col3, STRUCT(5 AS col1) AS col4) FROM t",
+        "duckdb": "SELECT {'x': x, 'col2': 1, 'col3': y, 'col4': {'col1': 5}} FROM t"
+      }
+    },
+    {
+      "sql": "SELECT TIMESTAMPDIFF(MONTH, foo, bar)",
+      "read": {
+        "databricks": "SELECT TIMESTAMPDIFF(MONTH, foo, bar)"
+      },
+      "write": {
+        "spark": "SELECT TIMESTAMPDIFF(MONTH, foo, bar)",
+        "databricks": "SELECT TIMESTAMPDIFF(MONTH, foo, bar)"
+      }
+    },
+    {
+      "sql": "SELECT CAST(col AS TIMESTAMP)",
+      "read": {},
+      "write": {
+        "spark2": "SELECT CAST(col AS TIMESTAMP)",
+        "spark": "SELECT CAST(col AS TIMESTAMP)",
+        "databricks": "SELECT TRY_CAST(col AS TIMESTAMP)",
+        "duckdb": "SELECT TRY_CAST(col AS TIMESTAMPTZ)"
+      }
+    },
+    {
+      "sql": "SELECT * FROM {df}",
+      "read": {
+        "databricks": "SELECT * FROM {df}"
+      },
+      "write": {
+        "spark": "SELECT * FROM {df}",
+        "databricks": "SELECT * FROM {df}"
+      }
+    },
+    {
+      "sql": "SELECT * FROM {df} WHERE id > :foo",
+      "read": {
+        "databricks": "SELECT * FROM {df} WHERE id > :foo"
+      },
+      "write": {
+        "spark": "SELECT * FROM {df} WHERE id > :foo",
+        "databricks": "SELECT * FROM {df} WHERE id > :foo"
+      }
+    },
+    {
+      "sql": "STRING_AGG(x, ', ')",
+      "read": {},
+      "write": {
+        "spark, version=3.0.0": "ARRAY_JOIN(COLLECT_LIST(x), ', ')",
+        "spark, version=4.0.0": "LISTAGG(x, ', ')",
+        "spark": "LISTAGG(x, ', ')"
+      }
+    },
+    {
+      "sql": "LISTAGG(x, ', ')",
+      "read": {},
+      "write": {
+        "spark, version=3.0.0": "ARRAY_JOIN(COLLECT_LIST(x), ', ')",
+        "spark, version=4.0.0": "LISTAGG(x, ', ')",
+        "spark": "LISTAGG(x, ', ')"
+      }
+    },
+    {
+      "sql": "LIKE(foo, 'pattern')",
+      "read": {},
+      "write": {
+        "spark": "foo LIKE 'pattern'",
+        "databricks": "foo LIKE 'pattern'"
+      }
+    },
+    {
+      "sql": "LIKE(foo, 'pattern', '!')",
+      "read": {},
+      "write": {
+        "spark": "foo LIKE 'pattern' ESCAPE '!'",
+        "databricks": "foo LIKE 'pattern' ESCAPE '!'"
+      }
+    },
+    {
+      "sql": "ILIKE(foo, 'pattern')",
+      "read": {},
+      "write": {
+        "spark": "foo ILIKE 'pattern'",
+        "databricks": "foo ILIKE 'pattern'"
+      }
+    },
+    {
+      "sql": "ILIKE(foo, 'pattern', '!')",
+      "read": {},
+      "write": {
+        "spark": "foo ILIKE 'pattern' ESCAPE '!'",
+        "databricks": "foo ILIKE 'pattern' ESCAPE '!'"
+      }
+    },
+    {
+      "sql": "SELECT BIT_COUNT(0)",
+      "read": {},
+      "write": {
+        "spark": "SELECT BIT_COUNT(0)",
+        "databricks": "SELECT BIT_COUNT(0)",
+        "duckdb": "SELECT BIT_COUNT(0)"
+      }
+    },
+    {
+      "sql": "SELECT * FROM foo TIMESTAMP AS OF '2020-01-01 00:00:00' AS bar",
+      "read": {
+        "spark": "SELECT * FROM foo TIMESTAMP AS OF '2020-01-01 00:00:00' AS bar",
+        "databricks": "SELECT * FROM foo TIMESTAMP AS OF '2020-01-01 00:00:00' AS bar"
+      },
+      "write": {
+        "databricks": "SELECT * FROM foo TIMESTAMP AS OF '2020-01-01 00:00:00' AS bar"
+      }
+    },
+    {
+      "sql": "WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t",
+      "read": {
+        "spark": "WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t",
+        "databricks": "WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t"
+      },
+      "write": {
+        "databricks": "WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t"
+      }
+    },
+    {
+      "sql": "SELECT named_struct('a', 1, 'b', 'x')",
+      "read": {},
+      "write": {
+        "spark": "SELECT STRUCT(1 AS a, 'x' AS b)",
+        "databricks": "SELECT STRUCT(1 AS a, 'x' AS b)"
+      }
+    },
+    {
+      "sql": "SELECT a, LOGICAL_OR(b) FROM table GROUP BY a",
+      "read": {},
+      "write": {
+        "spark": "SELECT a, BOOL_OR(b) FROM table GROUP BY a"
+      }
+    },
+    {
+      "sql": "CURRENT_USER",
+      "read": {},
+      "write": {
+        "spark": "CURRENT_USER()"
+      }
+    },
+    {
+      "sql": "CURRENT_USER()",
+      "read": {},
+      "write": {
+        "spark": "CURRENT_USER()"
+      }
+    },
+    {
+      "sql": "INSERT OVERWRITE TABLE table WITH cte AS (SELECT cola FROM other_table) SELECT cola FROM cte",
+      "read": {},
+      "write": {
+        "databricks": "WITH cte AS (SELECT cola FROM other_table) INSERT OVERWRITE TABLE table SELECT cola FROM cte",
+        "hive": "WITH cte AS (SELECT cola FROM other_table) INSERT OVERWRITE TABLE table SELECT cola FROM cte",
+        "spark": "WITH cte AS (SELECT cola FROM other_table) INSERT OVERWRITE TABLE table SELECT cola FROM cte",
+        "spark2": "WITH cte AS (SELECT cola FROM other_table) INSERT OVERWRITE TABLE table SELECT cola FROM cte"
+      }
+    },
+    {
+      "sql": "SELECT EXPLODE(x) FROM tbl",
+      "read": {},
+      "write": {
+        "bigquery": "SELECT IF(pos = pos_2, col, NULL) AS col FROM tbl CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(x)) - 1)) AS pos CROSS JOIN UNNEST(x) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(x) - 1) AND pos_2 = (ARRAY_LENGTH(x) - 1))",
+        "presto": "SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) AS col FROM tbl CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(x)))) AS _u(pos) CROSS JOIN UNNEST(x) WITH ORDINALITY AS _u_2(col, pos_2) WHERE _u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(x) AND _u_2.pos_2 = CARDINALITY(x))",
+        "spark": "SELECT EXPLODE(x) FROM tbl"
+      }
+    },
+    {
+      "sql": "SELECT EXPLODE(col) FROM _u",
+      "read": {},
+      "write": {
+        "bigquery": "SELECT IF(pos = pos_2, col_2, NULL) AS col_2 FROM _u CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(col)) - 1)) AS pos CROSS JOIN UNNEST(col) AS col_2 WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(col) - 1) AND pos_2 = (ARRAY_LENGTH(col) - 1))",
+        "presto": "SELECT IF(_u_2.pos = _u_3.pos_2, _u_3.col_2) AS col_2 FROM _u CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(col)))) AS _u_2(pos) CROSS JOIN UNNEST(col) WITH ORDINALITY AS _u_3(col_2, pos_2) WHERE _u_2.pos = _u_3.pos_2 OR (_u_2.pos > CARDINALITY(col) AND _u_3.pos_2 = CARDINALITY(col))",
+        "spark": "SELECT EXPLODE(col) FROM _u"
+      }
+    },
+    {
+      "sql": "SELECT EXPLODE(col) AS exploded FROM schema.tbl",
+      "read": {},
+      "write": {
+        "presto": "SELECT IF(_u.pos = _u_2.pos_2, _u_2.exploded) AS exploded FROM schema.tbl CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(col)))) AS _u(pos) CROSS JOIN UNNEST(col) WITH ORDINALITY AS _u_2(exploded, pos_2) WHERE _u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(col) AND _u_2.pos_2 = CARDINALITY(col))"
+      }
+    },
+    {
+      "sql": "SELECT EXPLODE(ARRAY(1, 2))",
+      "read": {},
+      "write": {
+        "bigquery": "SELECT IF(pos = pos_2, col, NULL) AS col FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([1, 2])) - 1)) AS pos CROSS JOIN UNNEST([1, 2]) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH([1, 2]) - 1) AND pos_2 = (ARRAY_LENGTH([1, 2]) - 1))",
+        "presto": "SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) AS col FROM UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[1, 2])))) AS _u(pos) CROSS JOIN UNNEST(ARRAY[1, 2]) WITH ORDINALITY AS _u_2(col, pos_2) WHERE _u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(ARRAY[1, 2]) AND _u_2.pos_2 = CARDINALITY(ARRAY[1, 2]))"
+      }
+    },
+    {
+      "sql": "SELECT POSEXPLODE(ARRAY(2, 3)) AS x",
+      "read": {},
+      "write": {
+        "bigquery": "SELECT IF(pos = pos_2, x, NULL) AS x, IF(pos = pos_2, pos_2, NULL) AS pos_2 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([2, 3])) - 1)) AS pos CROSS JOIN UNNEST([2, 3]) AS x WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH([2, 3]) - 1) AND pos_2 = (ARRAY_LENGTH([2, 3]) - 1))",
+        "presto": "SELECT IF(_u.pos = _u_2.pos_2, _u_2.x) AS x, IF(_u.pos = _u_2.pos_2, _u_2.pos_2) AS pos_2 FROM UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[2, 3])))) AS _u(pos) CROSS JOIN UNNEST(ARRAY[2, 3]) WITH ORDINALITY AS _u_2(x, pos_2) WHERE _u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(ARRAY[2, 3]) AND _u_2.pos_2 = CARDINALITY(ARRAY[2, 3]))"
+      }
+    },
+    {
+      "sql": "SELECT POSEXPLODE(ARRAY('a'))",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT GENERATE_SUBSCRIPTS(['a'], 1) - 1 AS pos, UNNEST(['a']) AS col",
+        "spark": "SELECT POSEXPLODE(ARRAY('a'))"
+      }
+    },
+    {
+      "sql": "SELECT POSEXPLODE(x) AS (a, b)",
+      "read": {},
+      "write": {
+        "presto": "SELECT IF(_u.pos = _u_2.a, _u_2.b) AS b, IF(_u.pos = _u_2.a, _u_2.a) AS a FROM UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(x)))) AS _u(pos) CROSS JOIN UNNEST(x) WITH ORDINALITY AS _u_2(b, a) WHERE _u.pos = _u_2.a OR (_u.pos > CARDINALITY(x) AND _u_2.a = CARDINALITY(x))",
+        "duckdb": "SELECT GENERATE_SUBSCRIPTS(x, 1) - 1 AS a, UNNEST(x) AS b",
+        "spark": "SELECT POSEXPLODE(x) AS (a, b)"
+      }
+    },
+    {
+      "sql": "SELECT * FROM POSEXPLODE(ARRAY('a'))",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT * FROM (SELECT GENERATE_SUBSCRIPTS(['a'], 1) - 1 AS pos, UNNEST(['a']) AS col)",
+        "spark": "SELECT * FROM POSEXPLODE(ARRAY('a'))"
+      }
+    },
+    {
+      "sql": "SELECT * FROM POSEXPLODE(ARRAY('a')) AS (a, b)",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT * FROM (SELECT GENERATE_SUBSCRIPTS(['a'], 1) - 1 AS a, UNNEST(['a']) AS b)",
+        "spark": "SELECT * FROM POSEXPLODE(ARRAY('a')) AS _t0(a, b)"
+      }
+    },
+    {
+      "sql": "SELECT POSEXPLODE(ARRAY(2, 3)), EXPLODE(ARRAY(4, 5, 6)) FROM tbl",
+      "read": {},
+      "write": {
+        "bigquery": "SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2, IF(pos = pos_3, col_2, NULL) AS col_2 FROM tbl CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([2, 3]), ARRAY_LENGTH([4, 5, 6])) - 1)) AS pos CROSS JOIN UNNEST([2, 3]) AS col WITH OFFSET AS pos_2 CROSS JOIN UNNEST([4, 5, 6]) AS col_2 WITH OFFSET AS pos_3 WHERE (pos = pos_2 OR (pos > (ARRAY_LENGTH([2, 3]) - 1) AND pos_2 = (ARRAY_LENGTH([2, 3]) - 1))) AND (pos = pos_3 OR (pos > (ARRAY_LENGTH([4, 5, 6]) - 1) AND pos_3 = (ARRAY_LENGTH([4, 5, 6]) - 1)))",
+        "presto": "SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) AS col, IF(_u.pos = _u_2.pos_2, _u_2.pos_2) AS pos_2, IF(_u.pos = _u_3.pos_3, _u_3.col_2) AS col_2 FROM tbl CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[2, 3]), CARDINALITY(ARRAY[4, 5, 6])))) AS _u(pos) CROSS JOIN UNNEST(ARRAY[2, 3]) WITH ORDINALITY AS _u_2(col, pos_2) CROSS JOIN UNNEST(ARRAY[4, 5, 6]) WITH ORDINALITY AS _u_3(col_2, pos_3) WHERE (_u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(ARRAY[2, 3]) AND _u_2.pos_2 = CARDINALITY(ARRAY[2, 3]))) AND (_u.pos = _u_3.pos_3 OR (_u.pos > CARDINALITY(ARRAY[4, 5, 6]) AND _u_3.pos_3 = CARDINALITY(ARRAY[4, 5, 6])))"
+      }
+    },
+    {
+      "sql": "SELECT col, pos, POSEXPLODE(ARRAY(2, 3)) FROM _u",
+      "read": {},
+      "write": {
+        "presto": "SELECT col, pos, IF(_u_2.pos_2 = _u_3.pos_3, _u_3.col_2) AS col_2, IF(_u_2.pos_2 = _u_3.pos_3, _u_3.pos_3) AS pos_3 FROM _u CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[2, 3])))) AS _u_2(pos_2) CROSS JOIN UNNEST(ARRAY[2, 3]) WITH ORDINALITY AS _u_3(col_2, pos_3) WHERE _u_2.pos_2 = _u_3.pos_3 OR (_u_2.pos_2 > CARDINALITY(ARRAY[2, 3]) AND _u_3.pos_3 = CARDINALITY(ARRAY[2, 3]))"
+      }
+    },
+    {
+      "sql": "SELECT * FROM db.table1 MINUS SELECT * FROM db.table2",
+      "read": {},
+      "write": {
+        "spark": "SELECT * FROM db.table1 EXCEPT SELECT * FROM db.table2",
+        "databricks": "SELECT * FROM db.table1 EXCEPT SELECT * FROM db.table2"
+      }
+    },
+    {
+      "sql": "PERCENTILE_APPROX(DISTINCT col, 0.3)",
+      "read": {
+        "spark": "APPROX_PERCENTILE(DISTINCT col, 0.3)",
+        "databricks": "APPROX_PERCENTILE(DISTINCT col, 0.3)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "PERCENTILE_APPROX(DISTINCT col, 0.3, 200)",
+      "read": {
+        "spark": "APPROX_PERCENTILE(DISTINCT col, 0.3, 200)",
+        "databricks": "APPROX_PERCENTILE(DISTINCT col, 0.3, 200)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT ARRAY_INSERT(ARRAY('a', 'b', 'c'), 1, 'z')",
+      "read": {
+        "databricks": "SELECT ARRAY_INSERT(ARRAY('a', 'b', 'c'), 1, 'z')"
+      },
+      "write": {
+        "databricks": "SELECT ARRAY_INSERT(ARRAY('a', 'b', 'c'), 1, 'z')",
+        "spark": "SELECT ARRAY_INSERT(ARRAY('a', 'b', 'c'), 1, 'z')"
+      }
+    },
+    {
+      "sql": "SET VAR v = 5",
+      "read": {},
+      "write": {
+        "spark": "SET VARIABLE v = 5",
+        "databricks": "SET VARIABLE v = 5"
+      }
+    },
+    {
+      "sql": "SET VARIABLE v = 5",
+      "read": {},
+      "write": {
+        "spark": "SET VARIABLE v = 5",
+        "databricks": "SET VARIABLE v = 5"
+      }
+    },
+    {
+      "sql": "SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))",
+      "read": {},
+      "write": {
+        "spark": "SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))",
+        "databricks": "SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))"
+      }
+    },
+    {
+      "sql": "SET VARIABLE v = DEFAULT",
+      "read": {},
+      "write": {
+        "spark": "SET VARIABLE v = DEFAULT",
+        "databricks": "SET VARIABLE v = DEFAULT"
+      }
+    },
+    {
+      "sql": "SET VARIABLE v1 = 1, v2 = '2'",
+      "read": {},
+      "write": {
+        "spark": "SET VARIABLE v1 = 1, v2 = '2'",
+        "databricks": "SET VARIABLE v1 = 1, v2 = '2'"
+      }
+    },
+    {
+      "sql": "SET VARIABLE (v1, v2) = (SELECT 1, 2)",
+      "read": {},
+      "write": {
+        "spark": "SET VARIABLE (v1, v2) = (SELECT 1, 2)",
+        "databricks": "SET VARIABLE (v1, v2) = (SELECT 1, 2)"
+      }
+    },
+    {
+      "sql": "SELECT TRY_DIVIDE(a, b)",
+      "read": {
+        "spark": "SELECT TRY_DIVIDE(a, b)",
+        "databricks": "SELECT TRY_DIVIDE(a, b)"
+      },
+      "write": {
+        "spark": "SELECT TRY_DIVIDE(a, b)",
+        "databricks": "SELECT TRY_DIVIDE(a, b)",
+        "snowflake": "SELECT IFF(b <> 0, a / b, NULL)",
+        "duckdb": "SELECT CASE WHEN b <> 0 THEN a / b ELSE NULL END"
+      }
+    }
+  ],
+  "stats": {
+    "identity_count": 101,
+    "transpile_count": 126,
+    "skipped_dynamic": 3
+  }
+}

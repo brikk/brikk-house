@@ -1,0 +1,27 @@
+{
+  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "dialect": "solr",
+  "identity": [
+    {
+      "sql": "SELECT `default`.column FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT column FROM t WHERE column = 'val'",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "a || b",
+      "expected": "a OR b",
+      "pretty": false
+    }
+  ],
+  "transpile": [],
+  "stats": {
+    "identity_count": 3,
+    "transpile_count": 0,
+    "skipped_dynamic": 0
+  }
+}

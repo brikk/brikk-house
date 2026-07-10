@@ -1,0 +1,22 @@
+{
+  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "dialect": "dune",
+  "identity": [
+    {
+      "sql": "CAST(x AS INT256)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS UINT256)",
+      "expected": null,
+      "pretty": false
+    }
+  ],
+  "transpile": [],
+  "stats": {
+    "identity_count": 2,
+    "transpile_count": 0,
+    "skipped_dynamic": 1
+  }
+}

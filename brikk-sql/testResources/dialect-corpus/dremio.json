@@ -1,0 +1,253 @@
+{
+  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "dialect": "dremio",
+  "identity": [
+    {
+      "sql": "CAST(x AS SMALLINT)",
+      "expected": "CAST(x AS INT)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS TINYINT)",
+      "expected": "CAST(x AS INT)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS BINARY)",
+      "expected": "CAST(x AS VARBINARY)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS TEXT)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS NCHAR)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS CHAR)",
+      "expected": "CAST(x AS VARCHAR)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS TIMESTAMPNTZ)",
+      "expected": "CAST(x AS TIMESTAMP)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS DATETIME)",
+      "expected": "CAST(x AS TIMESTAMP)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS ARRAY)",
+      "expected": "CAST(x AS LIST)",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS BIT)",
+      "expected": "CAST(x AS BOOLEAN)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY a NULLS LAST",
+      "expected": "SELECT * FROM t ORDER BY a",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY a DESC NULLS LAST",
+      "expected": "SELECT * FROM t ORDER BY a DESC",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY a NULLS FIRST",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY a DESC NULLS FIRST",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "INTERVAL '7' DAYS",
+      "expected": "INTERVAL '7' DAY",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t LIMIT 1 + 1",
+      "expected": "SELECT * FROM t LIMIT 2",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT COUNT(DISTINCT a, b) FROM t",
+      "expected": "SELECT COUNT(DISTINCT CASE WHEN a IS NULL THEN NULL WHEN b IS NULL THEN NULL ELSE (a, b) END) FROM t",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_ADD(col, 1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_ADD(col, CAST(1 AS INTERVAL HOUR))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_ADD(TIMESTAMP '2022-01-01 12:00:00', CAST(-1 AS INTERVAL HOUR))",
+      "expected": "SELECT DATE_ADD(CAST('2022-01-01 12:00:00' AS TIMESTAMP), CAST(-1 AS INTERVAL HOUR))",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_SUB(col, 1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_SUB(col, CAST(1 AS INTERVAL HOUR))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_SUB(TIMESTAMP '2022-01-01 12:00:00', CAST(-1 AS INTERVAL HOUR))",
+      "expected": "SELECT DATE_SUB(CAST('2022-01-01 12:00:00' AS TIMESTAMP), CAST(-1 AS INTERVAL HOUR))",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_FORMAT(CAST('2025-08-18 15:30:00' AS TIMESTAMP), 'yyyy-mm-dd')",
+      "expected": "SELECT TO_CHAR(CAST('2025-08-18 15:30:00' AS TIMESTAMP), 'yyyy-mm-dd')",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CURRENT_DATE_UTC",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT CURRENT_DATE_UTC()",
+      "expected": "SELECT CURRENT_DATE_UTC",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT REPEAT(x, 5)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT REPEATSTR(x, 5)",
+      "expected": "SELECT REPEAT(x, 5)",
+      "pretty": false
+    },
+    {
+      "sql": "REGEXP_MATCHES(x, y)",
+      "expected": "REGEXP_LIKE(x, y)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_PART('YEAR', date '2021-04-01')",
+      "expected": "SELECT EXTRACT('YEAR' FROM CAST('2021-04-01' AS DATE))",
+      "pretty": false
+    },
+    {
+      "sql": "DATETYPE(2024,2,2)",
+      "expected": "DATE('2024-02-02')",
+      "pretty": false
+    },
+    {
+      "sql": "DATETYPE(x,y,z)",
+      "expected": "CAST(CONCAT(x, '-', y, '-', z) AS DATE)",
+      "pretty": false
+    },
+    {
+      "sql": "TO_CHAR(5555, '#')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TO_CHAR(3.14, '#.#')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TO_CHAR(columnname, '#.##')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TO_CHAR(5555)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TO_CHAR(3.14, columnname)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TO_CHAR(123, 'abcd')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "TO_CHAR(3.14, UPPER('abcd'))",
+      "expected": null,
+      "pretty": false
+    }
+  ],
+  "transpile": [
+    {
+      "sql": "SELECT CONCAT('a', NULL)",
+      "read": {},
+      "write": {
+        "dremio": "SELECT CONCAT('a', NULL)",
+        "": "SELECT CONCAT('a', COALESCE(NULL, ''))"
+      }
+    },
+    {
+      "sql": "SELECT CONVERT_TIMEZONE('America/Chicago', DateColumn)",
+      "read": {},
+      "write": {
+        "dremio": "SELECT CONVERT_TIMEZONE('America/Chicago', DateColumn)",
+        "": "SELECT DateColumn AT TIME ZONE 'America/Chicago'"
+      }
+    },
+    {
+      "sql": "ARRAY_GENERATE_RANGE(1, 4)",
+      "read": {
+        "dremio": "ARRAY_GENERATE_RANGE(1, 4)"
+      },
+      "write": {
+        "duckdb": "GENERATE_SERIES(1, 4)"
+      }
+    },
+    {
+      "sql": "REGEXP_MATCHES(x, y)",
+      "read": {},
+      "write": {
+        "dremio": "REGEXP_LIKE(x, y)",
+        "duckdb": "REGEXP_MATCHES(x, y)",
+        "presto": "REGEXP_LIKE(x, y)",
+        "hive": "x RLIKE y",
+        "spark": "x RLIKE y"
+      }
+    },
+    {
+      "sql": "CAST(a AS FLOAT)",
+      "read": {
+        "dremio": "CAST(a AS FLOAT)",
+        "": "TRY_CAST(a AS FLOAT)",
+        "hive": "CAST(a AS FLOAT)"
+      },
+      "write": {}
+    }
+  ],
+  "stats": {
+    "identity_count": 39,
+    "transpile_count": 5,
+    "skipped_dynamic": 2
+  }
+}
