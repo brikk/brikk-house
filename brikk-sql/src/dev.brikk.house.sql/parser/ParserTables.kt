@@ -1053,9 +1053,9 @@ object BaseParserTables {
         "DO" to listOf(listOf("NOTHING"), listOf("UPDATE")),
     )
 
-    // sqlglot: Parser.QUERY_MODIFIER_PARSERS (MATCH_RECOGNIZE is not ported yet — no
-    // base-corpus coverage).
+    // sqlglot: Parser.QUERY_MODIFIER_PARSERS
     val QUERY_MODIFIER_PARSERS: Map<TokenType, (Parser) -> Pair<String, kotlin.Any?>> = mapOf(
+        TokenType.MATCH_RECOGNIZE to { parser -> "match" to parser.parseMatchRecognize() },
         TokenType.FOR to { parser -> "locks" to parser.parseLocks() },
         TokenType.LOCK to { parser -> "locks" to parser.parseLocks() },
         TokenType.PREWHERE to { parser -> "prewhere" to parser.parsePrewhere() },
@@ -1081,9 +1081,13 @@ object BaseParserTables {
         TokenType.START_WITH to { parser -> "connect" to parser.parseConnect() },
     )
 
-    // sqlglot: Parser.TYPE_LITERAL_PARSERS (JSON -> ParseJSON not ported)
+    // sqlglot: Parser.TYPE_LITERAL_PARSERS
     val TYPE_LITERAL_PARSERS: Map<dev.brikk.house.sql.ast.DType, (Parser, Expression?, Expression) -> Expression?> =
-        emptyMap()
+        mapOf(
+            dev.brikk.house.sql.ast.DType.JSON to { parser, this_, _ ->
+                parser.expression(dev.brikk.house.sql.ast.ParseJSON(args("this" to this_)))
+            },
+        )
 
     // sqlglot: Parser.WINDOW_ALIAS_TOKENS
     val WINDOW_ALIAS_TOKENS: Set<TokenType> = ID_VAR_TOKENS - setOf(TokenType.RANGE, TokenType.ROWS)

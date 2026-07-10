@@ -355,8 +355,9 @@ Work items:
 
 ### Phase 5 — Dialects, incrementally
 
-- Priority order (decided): **mysql → doris → trino → duckdb → postgresql**; everything else
-  whenever — explicitly not a priority for now.
+- Priority order (decided): **mysql → doris → trino → duckdb → postgresql → clickhouse**;
+  everything else whenever — explicitly not a priority for now.
+  (Status: mysql, doris, presto+trino landed with gates; duckdb next.)
 - Order works with sqlglot's inheritance chains, mostly in our favor: Doris extends MySQL
   (so mysql-first feeds doris directly); Trino extends Presto (Presto's parser/generator
   come along as an implementation detail even though Presto itself isn't a target).

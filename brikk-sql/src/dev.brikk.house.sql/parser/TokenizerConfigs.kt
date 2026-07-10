@@ -11,6 +11,7 @@ object TokenizerConfigs {
         "", "sqlglot" -> TokenizerConfig.BASE
         "mysql" -> MysqlTokenizerTables.CONFIG
         "doris" -> DorisTokenizerTables.CONFIG
+        "presto" -> PrestoTokenizerTables.CONFIG
         "trino" -> TrinoTokenizerTables.CONFIG
         "duckdb" -> DuckdbTokenizerTables.CONFIG
         "postgres", "postgresql" -> PostgresTokenizerTables.CONFIG

@@ -150,6 +150,8 @@ import dev.brikk.house.sql.ast.LoadData
 import dev.brikk.house.sql.ast.LockingProperty
 import dev.brikk.house.sql.ast.LogProperty
 import dev.brikk.house.sql.ast.MatchAgainst
+import dev.brikk.house.sql.ast.MatchRecognize
+import dev.brikk.house.sql.ast.MatchRecognizeMeasure
 import dev.brikk.house.sql.ast.Merge
 import dev.brikk.house.sql.ast.MergeBlockRatioProperty
 import dev.brikk.house.sql.ast.MergeTreeTTL
@@ -262,6 +264,7 @@ import dev.brikk.house.sql.ast.UserDefinedFunction
 import dev.brikk.house.sql.ast.UsingData
 import dev.brikk.house.sql.ast.Values
 import dev.brikk.house.sql.ast.Var
+import dev.brikk.house.sql.ast.Version
 import dev.brikk.house.sql.ast.ViewAttributeProperty
 import dev.brikk.house.sql.ast.VolatileProperty
 import dev.brikk.house.sql.ast.When
@@ -276,6 +279,7 @@ import dev.brikk.house.sql.ast.WithOperator
 import dev.brikk.house.sql.ast.WithSchemaBindingProperty
 import dev.brikk.house.sql.ast.WithSystemVersioningProperty
 import dev.brikk.house.sql.ast.WithinGroup
+import dev.brikk.house.sql.ast.applyIndexOffset
 import dev.brikk.house.sql.ast.args
 
 /**
@@ -286,8 +290,7 @@ import dev.brikk.house.sql.ast.args
  * (INSERT/UPDATE/DELETE/MERGE) and auxiliary statements (USE/SET/transactions/CACHE/
  * DESCRIBE/COMMENT/GRANT/REVOKE/ANALYZE/KILL/LOAD/PRAGMA/TRUNCATE/REFRESH).
  * Remaining raise-gates: COPY, simplified PIVOT/UNPIVOT statements, triggers,
- * procedure blocks, macro overloads, locks, MATCH_RECOGNIZE and control-flow
- * statements. The JSON path parser (sqlglot/jsonpath.py) is ported in JsonPath.kt.
+ * procedure blocks, macro overloads, locks and control-flow statements. The JSON path parser (sqlglot/jsonpath.py) is ported in JsonPath.kt.
  * Gate parity:
  * testResources/parser-corpus/known-failures.json (ParserIdentityCorpusTest).
  *
@@ -323,6 +326,9 @@ open class Parser(
 
         // sqlglot: expressions.INTERVAL_STRING_RE
         private val INTERVAL_STRING_RE = Regex("\\s*(-?[0-9]+(?:\\.[0-9]+)?)\\s*([a-zA-Z]+)\\s*")
+
+        // sqlglot: parser.TIME_ZONE_RE
+        private val TIME_ZONE_RE = Regex(":.*?[a-zA-Z\\+\\-]")
     }
 
     // -----------------------------------------------------------------------
@@ -341,6 +347,9 @@ open class Parser(
     // sqlglot: Dialect.STRICT_STRING_CONCAT
     open val strictStringConcat: kotlin.Boolean get() = false
 
+    // sqlglot: Dialect.INDEX_OFFSET
+    open val indexOffset: Int get() = 0
+
     // sqlglot: Dialect.TYPED_DIVISION
     open val typedDivision: kotlin.Boolean get() = false
 
@@ -349,6 +358,12 @@ open class Parser(
 
     // sqlglot: Dialect.SUPPORTS_LIMIT_ALL
     open val supportsLimitAll: kotlin.Boolean get() = false
+
+    // sqlglot: Dialect.SUPPORTS_VALUES_DEFAULT
+    open val supportsValuesDefault: kotlin.Boolean get() = true
+
+    // sqlglot: Parser.ZONE_AWARE_TIMESTAMP_CONSTRUCTOR
+    open val zoneAwareTimestampConstructor: kotlin.Boolean get() = false
 
     // sqlglot: Dialect.SUPPORTS_ORDER_BY_ALL
     open val supportsOrderByAll: kotlin.Boolean get() = false
@@ -1767,11 +1782,10 @@ open class Parser(
         return expression(Distinct(args("on" to on)))
     }
 
-    // sqlglot: Parser._parse_value (SUPPORTS_VALUES_DEFAULT=true in the base dialect;
-    // the `values` flag is only consulted by dialect overrides)
+    // sqlglot: Parser._parse_value (the `values` flag is only consulted by dialect overrides)
     fun parseValue(@Suppress("UNUSED_PARAMETER") values: kotlin.Boolean = true): Expression? {
         fun parseValueExpression(): Expression? {
-            if (match(TokenType.DEFAULT)) {
+            if (supportsValuesDefault && match(TokenType.DEFAULT)) {
                 return Var(args("this" to prevToken.text.uppercase()))
             }
             return parseExpression()
@@ -2651,14 +2665,144 @@ open class Parser(
         )
     }
 
-    // sqlglot: Parser._parse_version — exp.Version not ported.
-    protected fun parseVersion(): Expression? {
-        if (match(TokenType.TIMESTAMP_SNAPSHOT, advance = false) ||
-            match(TokenType.VERSION_SNAPSHOT, advance = false)
-        ) {
-            return raiseError("FOR TIMESTAMP/VERSION AS OF is not supported yet")
+    // sqlglot: Parser._parse_match_recognize_measure
+    protected fun parseMatchRecognizeMeasure(): Expression {
+        // sqlglot: `self._match_texts(...) and self._prev.text.upper()` — a failed
+        // match stores the Python falsy False, not None
+        val windowFrame: kotlin.Any =
+            if (matchTexts(setOf("FINAL", "RUNNING"))) prevToken.text.uppercase() else false
+        return expression(
+            MatchRecognizeMeasure(
+                args("window_frame" to windowFrame, "this" to parseExpression())
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_match_recognize
+    fun parseMatchRecognize(): Expression? {
+        if (!match(TokenType.MATCH_RECOGNIZE)) return null
+
+        matchLParen()
+
+        val partition = parsePartitionBy()
+        val order = parseOrder()
+
+        val measures = if (matchTextSeq("MEASURES")) {
+            parseCsv { parseMatchRecognizeMeasure() }
+        } else null
+
+        val rows: Expression? = if (matchTextSeq("ONE", "ROW", "PER", "MATCH")) {
+            Var(args("this" to "ONE ROW PER MATCH"))
+        } else if (matchTextSeq("ALL", "ROWS", "PER", "MATCH")) {
+            var text = "ALL ROWS PER MATCH"
+            if (matchTextSeq("SHOW", "EMPTY", "MATCHES")) {
+                text += " SHOW EMPTY MATCHES"
+            } else if (matchTextSeq("OMIT", "EMPTY", "MATCHES")) {
+                text += " OMIT EMPTY MATCHES"
+            } else if (matchTextSeq("WITH", "UNMATCHED", "ROWS")) {
+                text += " WITH UNMATCHED ROWS"
+            }
+            Var(args("this" to text))
+        } else null
+
+        val after: Expression? = if (matchTextSeq("AFTER", "MATCH", "SKIP")) {
+            var text = "AFTER MATCH SKIP"
+            if (matchTextSeq("PAST", "LAST", "ROW")) {
+                text += " PAST LAST ROW"
+            } else if (matchTextSeq("TO", "NEXT", "ROW")) {
+                text += " TO NEXT ROW"
+            } else if (matchTextSeq("TO", "FIRST")) {
+                text += " TO FIRST ${advanceAny()?.text}"
+            } else if (matchTextSeq("TO", "LAST")) {
+                text += " TO LAST ${advanceAny()?.text}"
+            }
+            Var(args("this" to text))
+        } else null
+
+        val pattern: Expression? = if (matchTextSeq("PATTERN")) {
+            matchLParen()
+
+            if (!currToken.exists) raiseError("Expecting )")
+
+            var paren = 1
+            val start = currToken
+            var end = prevToken
+
+            while (currToken.exists && paren > 0) {
+                if (currToken.tokenType == TokenType.L_PAREN) paren += 1
+                if (currToken.tokenType == TokenType.R_PAREN) paren -= 1
+
+                end = prevToken
+                advance()
+            }
+
+            if (paren > 0) raiseError("Expecting )")
+
+            Var(args("this" to findSql(start, end)))
+        } else null
+
+        val define = if (matchTextSeq("DEFINE")) {
+            parseCsv { parseNameAsExpression() }
+        } else null
+
+        matchRParen()
+
+        return expression(
+            MatchRecognize(
+                args(
+                    "partition_by" to partition,
+                    "order" to order,
+                    "measures" to measures,
+                    "rows" to rows,
+                    "after" to after,
+                    "pattern" to pattern,
+                    "define" to define,
+                    "alias" to parseTableAlias(),
+                )
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_name_as_expression
+    protected fun parseNameAsExpression(): Expression? {
+        var this_ = parseIdVar(anyToken = true)
+        if (match(TokenType.ALIAS)) {
+            this_ = expression(Alias(args("alias" to this_, "this" to parseDisjunction())))
         }
-        return null
+        return this_
+    }
+
+    // sqlglot: Parser._parse_version
+    protected fun parseVersion(): Expression? {
+        val this_ = when {
+            match(TokenType.TIMESTAMP_SNAPSHOT) -> "TIMESTAMP"
+            match(TokenType.VERSION_SNAPSHOT) -> "VERSION"
+            else -> return null
+        }
+
+        val kind: String
+        var expr: Expression?
+        if (matchSet(setOf(TokenType.FROM, TokenType.BETWEEN))) {
+            kind = prevToken.text.uppercase()
+            val start = parseBitwise()
+            matchTexts(setOf("TO", "AND"))
+            val end = parseBitwise()
+            expr = expression(Tuple(args("expressions" to listOf(start, end))))
+        } else if (matchTextSeq("CONTAINED", "IN")) {
+            kind = "CONTAINED IN"
+            expr = expression(
+                Tuple(args("expressions" to parseWrappedCsv({ parseBitwise() })))
+            )
+        } else if (match(TokenType.ALL)) {
+            kind = "ALL"
+            expr = null
+        } else {
+            matchTextSeq("AS", "OF")
+            kind = "AS OF"
+            expr = parseType()
+        }
+
+        return expression(Version(args("this" to this_, "expression" to expr, "kind" to kind)))
     }
 
     // sqlglot: Parser._parse_table_sample
@@ -3448,14 +3592,22 @@ open class Parser(
             val primary = parsePrimary()
 
             if (primary is Literal) {
+                val literal = primary.name
                 val this_ = parseColumnOps(primary)
 
                 val literalParser = typeLiteralParsers[dataType.thisArg as? DType]
                 if (literalParser != null) return literalParser(this, this_, dataType)
 
-                // sqlglot: ZONE_AWARE_TIMESTAMP_CONSTRUCTOR — base: False.
+                // sqlglot: ZONE_AWARE_TIMESTAMP_CONSTRUCTOR (parser.py TIME_ZONE_RE)
+                var toType = dataType
+                if (zoneAwareTimestampConstructor &&
+                    dataType.thisArg == DType.TIMESTAMP &&
+                    TIME_ZONE_RE.containsMatchIn(literal)
+                ) {
+                    toType = expression(DataType(args("this" to DType.TIMESTAMPTZ)))
+                }
 
-                return expression(Cast(args("this" to this_, "to" to dataType)))
+                return expression(Cast(args("this" to this_, "to" to toType)))
             }
 
             // The expressions arg gets set by the parser when we have something like DECIMAL(38, 0)
@@ -7616,8 +7768,10 @@ open class Parser(
             if (constructorType != null) {
                 return expression(constructorType(args("expressions" to expressions)))
             }
+            // sqlglot: apply_index_offset(this, expressions, -self.dialect.INDEX_OFFSET)
+            val adjusted = applyIndexOffset(current, expressions, -indexOffset)
             current = expression(
-                Bracket(args("this" to current, "expressions" to expressions)),
+                Bracket(args("this" to current, "expressions" to adjusted)),
                 comments = current.popComments(),
             )
         }

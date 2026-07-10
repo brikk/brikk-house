@@ -223,6 +223,9 @@ object GeneratorTables {
         reg(Version::class) { e -> versionSql(e as Version) }
 
         // --- query clauses ---
+        reg(MatchRecognize::class) { e -> matchrecognizeSql(e as MatchRecognize) }
+        reg(MatchRecognizeMeasure::class) { e -> matchrecognizemeasureSql(e as MatchRecognizeMeasure) }
+        reg(Refresh::class) { e -> refreshSql(e as Refresh) }
         reg(Select::class) { e -> selectSql(e as Select) }
         reg(Schema::class) { e -> schemaSql(e as Schema) }
         reg(From::class) { e -> fromSql(e as From) }

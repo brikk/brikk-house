@@ -99,6 +99,8 @@ open class Generator(
     open val singleStringInterval: Boolean get() = false
     open val intervalAllowsPluralForm: Boolean get() = true
     open val limitFetch: String get() = "ALL"
+    // sqlglot: Generator.LIMIT_ONLY_LITERALS
+    open val limitOnlyLiterals: Boolean get() = false
     open val renameTableWithDb: Boolean get() = true
     open val groupingsSep: String get() = ","
     open val indexOn: String get() = "ON"
@@ -219,6 +221,25 @@ open class Generator(
 
         // sqlglot: expressions.core.SAFE_IDENTIFIER_RE
         internal val SAFE_IDENTIFIER_RE = Regex("^[_a-zA-Z]\\w*$")
+
+        // sqlglot: expressions.datatypes.DataType.INTEGER_TYPES
+        val INTEGER_TYPES: Set<DType> = setOf(
+            DType.BIGINT, DType.INT, DType.INT128, DType.INT256, DType.MEDIUMINT,
+            DType.SMALLINT, DType.TINYINT, DType.UBIGINT, DType.UINT, DType.UINT128,
+            DType.UINT256, DType.UMEDIUMINT, DType.USMALLINT, DType.UTINYINT, DType.BIT,
+        )
+
+        // sqlglot: expressions.datatypes.DataType.REAL_TYPES
+        val REAL_TYPES: Set<DType> = setOf(
+            DType.DOUBLE, DType.FLOAT, DType.BIGDECIMAL, DType.DECIMAL, DType.DECIMAL32,
+            DType.DECIMAL64, DType.DECIMAL128, DType.DECIMAL256, DType.DECFLOAT,
+            DType.MONEY, DType.SMALLMONEY, DType.UDECIMAL, DType.UDOUBLE,
+        )
+
+        // sqlglot: expressions.datatypes.DataType.TEXT_TYPES
+        val TEXT_TYPES: Set<DType> = setOf(
+            DType.CHAR, DType.NCHAR, DType.NVARCHAR, DType.TEXT, DType.VARCHAR, DType.NAME,
+        )
     }
 
     // ------------------------------------------------------------------
@@ -1894,7 +1915,9 @@ open class Generator(
     open fun limitSql(expression: Limit, top: Boolean = false): String {
         val thisSql = sql(expression, "this")
 
-        val argsList = listOf("offset", "expression").mapNotNull { expression.args[it] as? Expression }
+        val argsList = listOf("offset", "expression")
+            .mapNotNull { expression.args[it] as? Expression }
+            .map { if (limitOnlyLiterals) simplifyUnlessLiteral(it) else it }
 
         var argsSql = argsList.joinToString(", ") { sql(it) }
         if (top && argsList.any { !it.isNumber }) argsSql = "($argsSql)"
@@ -1908,10 +1931,23 @@ open class Generator(
     // sqlglot: Generator.offset_sql
     open fun offsetSql(expression: Offset): String {
         val thisSql = sql(expression, "this")
-        val value = expression.args["expression"]
+        var value = expression.args["expression"]
+        if (limitOnlyLiterals && value is Expression) value = simplifyUnlessLiteral(value)
         var exprs = expressions(expression, flat = true)
         exprs = if (exprs.isNotEmpty()) " BY $exprs" else ""
         return "$thisSql${seg("OFFSET")} ${sql(value)}$exprs"
+    }
+
+    /**
+     * sqlglot: Generator._simplify_unless_literal — Python calls optimizer.simplify;
+     * we port the slice needed by LIMIT_ONLY_LITERALS: constant folding of integer
+     * `+`, `-`, `*` arithmetic (and paren/neg unwrapping). Non-constant expressions
+     * pass through unchanged, matching Python's simplify no-op on them.
+     */
+    protected fun simplifyUnlessLiteral(expression: Expression): Expression {
+        if (expression is Literal) return expression
+        val folded = foldIntLiteral(expression) ?: return expression
+        return intLiteral(folded)
     }
 
     // sqlglot: Generator.setitem_sql
@@ -2075,6 +2111,44 @@ open class Generator(
         if (withFill.isNotEmpty()) withFill = " $withFill"
 
         return "$thisSql$sortOrder$nullsSortChange$withFill"
+    }
+
+    // sqlglot: Generator.matchrecognizemeasure_sql
+    open fun matchrecognizemeasureSql(expression: MatchRecognizeMeasure): String {
+        var windowFrame = sql(expression, "window_frame")
+        if (windowFrame.isNotEmpty()) windowFrame = "$windowFrame "
+
+        return "$windowFrame${sql(expression, "this")}"
+    }
+
+    // sqlglot: Generator.matchrecognize_sql
+    open fun matchrecognizeSql(expression: MatchRecognize): String {
+        val partition = partitionBySql(expression)
+        val order = sql(expression, "order")
+        var measures = expressions(expression, key = "measures")
+        measures = if (measures.isNotEmpty()) seg("MEASURES${seg(measures)}") else ""
+        var rows = sql(expression, "rows")
+        rows = if (rows.isNotEmpty()) seg(rows) else ""
+        var after = sql(expression, "after")
+        after = if (after.isNotEmpty()) seg(after) else ""
+        var pattern = sql(expression, "pattern")
+        pattern = if (pattern.isNotEmpty()) seg("PATTERN ($pattern)") else ""
+        val definitionSqls = (expression.args["define"] as? List<*>).orEmpty().map { definition ->
+            "${sql(definition as? Expression ?: return@map "", "alias")} AS ${sql(definition, "this")}"
+        }
+        val definitions = expressions(sqls = definitionSqls)
+        val define = if (definitions.isNotEmpty()) seg("DEFINE${seg(definitions)}") else ""
+        val body = listOf(partition, order, measures, rows, after, pattern, define).joinToString("")
+        var alias = sql(expression, "alias")
+        if (alias.isNotEmpty()) alias = " $alias"
+        return "${seg("MATCH_RECOGNIZE")} ${wrap(body)}$alias"
+    }
+
+    // sqlglot: Generator.refresh_sql
+    open fun refreshSql(expression: Refresh): String {
+        val thisSql = sql(expression, "this")
+        val kind = if (expression.thisArg is Literal) "" else "${expression.text("kind")} "
+        return "REFRESH $kind$thisSql"
     }
 
     // sqlglot: Generator.AFTER_HAVING_MODIFIER_TRANSFORMS (base adds cluster/distribute/sort
@@ -2453,11 +2527,15 @@ open class Generator(
     // sqlglot: Generator.bracket_offset_expressions (base: INDEX_OFFSET=0 -> identity)
     open fun bracketOffsetExpressions(expression: Bracket, indexOffset: Int? = null): List<kotlin.Any?> {
         if (expression.args["json_access"] == true) return expression.expressionsArg
-        val delta = (indexOffset ?: dialectIndexOffset) -
-            ((expression.args["offset"] as? Number)?.toInt() ?: 0)
-        if (delta != 0) unsupported("Index offset adjustment is not supported")
-        return expression.expressionsArg
+        return applyIndexOffset(
+            expression.thisArg as? Expression,
+            expression.expressionsArg,
+            (indexOffset ?: dialectIndexOffset) -
+                ((expression.args["offset"] as? Number)?.toInt() ?: 0),
+        )
     }
+
+
 
     // sqlglot: Generator.bracket_sql
     open fun bracketSql(expression: Bracket): String {
@@ -2544,12 +2622,18 @@ open class Generator(
         return func(funcName, expression.thisArg, expression.expressionArg)
     }
 
-    // sqlglot: Generator.convert_concat_args (base: STRICT_STRING_CONCAT=false,
-    // CONCAT_COALESCE/CONCAT_WS_COALESCE=false; the coalesce-wrapping branch requires
-    // annotate_types, which we don't port — args pass through unchanged)
+    // sqlglot: Generator.convert_concat_args (base: CONCAT_COALESCE/CONCAT_WS_COALESCE=
+    // false; the coalesce-wrapping branch requires annotate_types, which we don't
+    // port — args pass through unchanged)
     open fun convertConcatArgs(expression: Func): List<kotlin.Any?> {
         var argsList = (expression as Expression).expressionsArg
         if (expression is ConcatWs) argsList = argsList.drop(1) // Skip the delimiter
+
+        if (dialectStrictStringConcat && expression.args["safe"] == true) {
+            argsList = argsList.map { e ->
+                Cast(args("this" to e, "to" to DataType(args("this" to DType.TEXT))))
+            }
+        }
         return argsList
     }
 
@@ -3277,15 +3361,65 @@ open class Generator(
     )
 
     // sqlglot: Generator.dpipe_sql (base: STRICT_STRING_CONCAT=false)
-    open fun dpipeSql(expression: DPipe): String = binary(expression, "||")
+    open fun dpipeSql(expression: DPipe): String {
+        if (dialectStrictStringConcat && expression.args["safe"] == true) {
+            val operands = mutableListOf<Expression>()
+            // sqlglot: expression.flatten() (same-class binary chain, parens unnested)
+            fun collect(node: Expression) {
+                if (node is DPipe) {
+                    collect(node.left)
+                    collect(node.right)
+                } else {
+                    operands.add(node.unnest())
+                }
+            }
+            collect(expression)
+            return func(
+                "CONCAT",
+                *operands.map { e ->
+                    Cast(args("this" to e, "to" to DataType(args("this" to DType.TEXT))))
+                }.toTypedArray(),
+            )
+        }
+        return binary(expression, "||")
+    }
 
     // sqlglot: Generator.div_sql (base: SAFE_DIVISION=false, TYPED_DIVISION=false)
     open fun divSql(expression: Div): String {
+        val l = expression.left
         if (!dialectSafeDivision && expression.args["safe"] == true) {
             val r = expression.right
             r.replace(Nullif(args("this" to r.copy(), "expression" to Literal.number("0"))))
         }
+
+        // sqlglot: div_sql TYPED_DIVISION handling. Untyped ASTs answer is_type()=False
+        // like Python's un-annotated expressions; Cast nodes check their target type.
+        if (dialectTypedDivision && expression.args["typed"] != true) {
+            if (!isCastToType(l, REAL_TYPES) && !isCastToType(expression.right, REAL_TYPES)) {
+                l.replace(
+                    Cast(args("this" to l.copy(), "to" to DataType(args("this" to DType.DOUBLE))))
+                )
+            }
+        } else if (!dialectTypedDivision && expression.args["typed"] == true) {
+            if (isCastToType(l, INTEGER_TYPES) && isCastToType(expression.right, INTEGER_TYPES)) {
+                return sql(
+                    Cast(
+                        args(
+                            "this" to expression.copy(),
+                            "to" to DataType(args("this" to DType.BIGINT)),
+                        )
+                    )
+                )
+            }
+        }
+
         return binary(expression, "/")
+    }
+
+    // sqlglot: Expression.is_type — only Cast carries syntactic type info in untyped ASTs
+    protected fun isCastToType(expression: Expression?, types: kotlin.collections.Set<DType>): Boolean {
+        val cast = expression as? Cast ?: return false
+        return (cast.args["to"] as? Expression)?.thisArg in types
     }
 
     // sqlglot: Generator.overlaps_sql

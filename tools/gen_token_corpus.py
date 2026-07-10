@@ -28,7 +28,7 @@ sys.path.insert(0, str(SQLGLOT))
 
 from sqlglot.dialects.dialect import Dialect  # noqa: E402
 
-DIALECTS = ["", "mysql", "doris", "trino", "duckdb", "postgres"]
+DIALECTS = ["", "mysql", "doris", "presto", "trino", "duckdb", "postgres"]
 
 
 def sqlglot_version() -> str:

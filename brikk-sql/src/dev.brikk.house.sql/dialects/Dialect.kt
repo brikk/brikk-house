@@ -81,11 +81,15 @@ object Dialects {
     val BASE: Dialect = Dialect()
     val MYSQL: Dialect = MysqlDialect()
     val DORIS: Dialect = DorisDialect()
+    val PRESTO: Dialect = PrestoDialect()
+    val TRINO: Dialect = TrinoDialect()
 
     fun forNameOrNull(name: String): Dialect? = when (name.lowercase().trim()) {
         "", "sqlglot" -> BASE
         "mysql" -> MYSQL
         "doris" -> DORIS
+        "presto" -> PRESTO
+        "trino" -> TRINO
         else -> null
     }
 

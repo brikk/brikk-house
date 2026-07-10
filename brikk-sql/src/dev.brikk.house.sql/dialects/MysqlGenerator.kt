@@ -104,6 +104,9 @@ open class MysqlGenerator(
     override val updateStatementSupportsFrom: Boolean get() = false
     override val limitFetch: String get() = "LIMIT"
 
+    // sqlglot: MySQLGenerator.LIMIT_ONLY_LITERALS = True
+    override val limitOnlyLiterals: Boolean get() = true
+
     // sqlglot: MySQL dialect-level flags read by the generator
     override val dialectSafeDivision: Boolean get() = true
     override val dialectStrictStringConcat: Boolean get() = false
