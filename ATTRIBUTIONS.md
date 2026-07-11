@@ -48,10 +48,49 @@ Two Doris-derived artifacts are included, both Apache License 2.0
 - `vendor/lib/doris-fe-sql-parser-*.jar` — a locally-built snapshot of Doris's standalone
   `fe-sql-parser` module (pre-release; see vendor/README.md for provenance and refresh
   procedure). Vendored in coordination with the doris-intellij-plugin project.
-- `brikk-sql/.../dialects/GeneratedDorisFunctionCatalog.kt` — function names/aliases/kinds
+- `brikk-sql-metadata/.../GeneratedDorisFunctionCatalog.kt` — function names/aliases/kinds
   extracted from Doris's runtime function registry
   (`fe/fe-core/.../catalog/Builtin*Functions.java`) by `tools/generate_doris_functions.py`
   (adapted from the doris-intellij-plugin extraction script).
+
+## Trino
+
+`vendor/data/trino-functions-481.tsv` and the generated
+`brikk-sql-metadata/.../GeneratedTrinoFunctionCatalog.kt` contain the built-in function
+registry (names, signatures, kinds) extracted from [Trino](https://github.com/trinodb/trino)
+version 481 via its own `SHOW FUNCTIONS` statement (see vendor/README.md for the generation
+method). Trino is licensed under the Apache License 2.0. No Trino code is included — only
+registry data produced by running the engine.
+
+## DuckDB
+
+The generated `brikk-sql-metadata/.../GeneratedDuckdbFunctionCatalog.kt` contains the
+built-in function registry (names, signatures, kinds) extracted from
+[DuckDB](https://github.com/duckdb/duckdb) v1.5.4 via its own `duckdb_functions()` view
+(see vendor/README.md). No DuckDB code is included — only registry data produced by running
+the engine. DuckDB is licensed under the MIT License:
+
+```
+Copyright 2018-2026 Stichting DuckDB Foundation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ## GoogleSQL pipe syntax
 

@@ -1,6 +1,8 @@
 package dev.brikk.house.sql.dialects
 
 import dev.brikk.house.sql.generator.Generator
+import dev.brikk.house.sql.metadata.DORIS_FUNCTION_CATALOG
+import dev.brikk.house.sql.metadata.FunctionCatalog
 import dev.brikk.house.sql.parser.DorisTokenizerTables
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.Parser

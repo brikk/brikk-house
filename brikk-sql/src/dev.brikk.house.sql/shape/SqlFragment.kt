@@ -118,7 +118,10 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         // functions vs the handful in the translation registries), slot detection becomes
         // engine-exact: any registered function name is a real function, not a slot.
         val catalog = dialectObj.functionCatalog ?: return@lazy fromParser
+        // Catalog names are engine-native case (Doris uppercase, DuckDB/Trino lowercase);
+        // the membership check uppercases, so normalize here.
         fromParser + catalog.functions.flatMap { def -> listOf(def.name) + def.aliases }
+            .map { it.uppercase() }
     }
 
     /**

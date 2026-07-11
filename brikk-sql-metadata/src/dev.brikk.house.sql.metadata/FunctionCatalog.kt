@@ -1,9 +1,24 @@
-package dev.brikk.house.sql.dialects
+package dev.brikk.house.sql.metadata
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+
+/*
+ * STABLE ACCESSOR CONTRACT
+ *
+ * `brikk-sql-metadata` is the featherweight, dependency-light module external consumers
+ * (e.g. the doris-intellij plugin) embed to get per-dialect function catalogs WITHOUT the
+ * transpiler. Its only dependency is kotlinx-serialization-json. Keep the API surface
+ * small and deliberate:
+ *
+ *  - [FunctionKind], [FunctionOverload], [FunctionDef], [FunctionCatalog]
+ *  - the generated per-dialect catalog vals (DORIS_FUNCTION_CATALOG, ...)
+ *
+ * Changes here are API changes for the plugin — additive only, and prefer defaulted
+ * fields (serialization stays backward-compatible for persisted JSON).
+ */
 
 /**
  * A dialect's built-in function catalog: the engine's real registered functions, as opposed
@@ -16,8 +31,9 @@ import kotlinx.serialization.json.Json
  *  - External tooling (e.g. the doris-intellij plugin): completion/validation source via
  *    the Kotlin API or [FunctionCatalog.toJson].
  *
- * [FunctionDef.overloads] is deliberately present-but-empty for now: signatures require a
- * built engine (Doris: per-class static SIGNATURES; see vendor/README.md).
+ * [FunctionDef.overloads] is empty for catalogs whose signatures require a built engine
+ * (Doris: per-class static SIGNATURES; see vendor/README.md) and populated where the
+ * engine exposes them directly (DuckDB's duckdb_functions(), Trino's SHOW FUNCTIONS).
  */
 enum class FunctionKind { SCALAR, AGGREGATE, WINDOW, TABLE_VALUED, TABLE_GENERATING }
 
@@ -28,12 +44,21 @@ data class FunctionOverload(
     val variadic: Boolean = false,
 )
 
+/**
+ * One catalog entry (a function and all its overloads).
+ *
+ * [kind] is normalized to the 5-value [FunctionKind] enum; [nativeKind] preserves the
+ * engine-native type string when it doesn't map 1:1 (e.g. DuckDB "macro"/"table_macro"
+ * normalize to SCALAR/TABLE_VALUED but keep their native kind here). Null when the
+ * engine kind maps directly.
+ */
 @Serializable
 data class FunctionDef(
     val name: String,
     val kind: FunctionKind,
     val aliases: List<String> = emptyList(),
     val overloads: List<FunctionOverload> = emptyList(),
+    @SerialName("native_kind") val nativeKind: String? = null,
 )
 
 class FunctionCatalog(val functions: List<FunctionDef>) {

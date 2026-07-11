@@ -1,2 +1,3 @@
 modules:
   - brikk-sql
+  - brikk-sql-metadata

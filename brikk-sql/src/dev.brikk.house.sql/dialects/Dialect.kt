@@ -9,6 +9,7 @@ import dev.brikk.house.sql.ast.toIdentifier
 import dev.brikk.house.sql.ast.TypingSpec
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.generator.Generator
+import dev.brikk.house.sql.metadata.FunctionCatalog
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.ParseError
 import dev.brikk.house.sql.parser.Parser

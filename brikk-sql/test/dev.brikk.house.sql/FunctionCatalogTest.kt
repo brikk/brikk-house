@@ -1,41 +1,28 @@
 package dev.brikk.house.sql
 
-import dev.brikk.house.sql.dialects.DORIS_FUNCTION_CATALOG
 import dev.brikk.house.sql.dialects.Dialects
-import dev.brikk.house.sql.dialects.FunctionDef
-import dev.brikk.house.sql.dialects.FunctionKind
+import dev.brikk.house.sql.metadata.DORIS_FUNCTION_CATALOG
+import dev.brikk.house.sql.metadata.DUCKDB_FUNCTION_CATALOG
+import dev.brikk.house.sql.metadata.TRINO_FUNCTION_CATALOG
 import dev.brikk.house.sql.shape.SqlFragment
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
+/**
+ * brikk-sql's integration with the brikk-sql-metadata catalogs: dialect wiring and
+ * engine-exact slot detection. The catalogs' own surface (sizes, overloads, kinds,
+ * serde) is covered in brikk-sql-metadata's FunctionCatalogTest.
+ */
 class FunctionCatalogTest {
-
-    @Test
-    fun dorisCatalogLoadsWithExpectedSurface() {
-        // Pinned to the reference/doris checkout the generator ran against.
-        assertEquals(728, DORIS_FUNCTION_CATALOG.size)
-        assertTrue("ABS" in DORIS_FUNCTION_CATALOG)
-        // alias lookup (SUBSTR/SUBSTRING/MID registered on one def)
-        val substr = DORIS_FUNCTION_CATALOG["substr"]
-        assertEquals(DORIS_FUNCTION_CATALOG["substring"], substr)
-        // case-insensitive
-        assertEquals(DORIS_FUNCTION_CATALOG["abs"], DORIS_FUNCTION_CATALOG["ABS"])
-    }
-
-    @Test
-    fun tableFunctionsAreClassified() {
-        assertTrue(DORIS_FUNCTION_CATALOG.isTableFunction("numbers"))
-        assertTrue(DORIS_FUNCTION_CATALOG.isTableFunction("explode"))
-        assertTrue(!DORIS_FUNCTION_CATALOG.isTableFunction("abs"))
-    }
 
     @Test
     fun dialectExposesCatalog() {
         assertEquals(DORIS_FUNCTION_CATALOG, Dialects.forName("doris").functionCatalog)
+        assertEquals(DUCKDB_FUNCTION_CATALOG, Dialects.forName("duckdb").functionCatalog)
+        assertEquals(TRINO_FUNCTION_CATALOG, Dialects.forName("trino").functionCatalog)
         assertEquals(null, Dialects.forName("mysql").functionCatalog)
+        // Presto does NOT inherit Trino's catalog: the surfaces differ per engine.
+        assertEquals(null, Dialects.forName("presto").functionCatalog)
     }
 
     @Test
@@ -49,10 +36,23 @@ class FunctionCatalogTest {
     }
 
     @Test
-    fun jsonRoundTrip() {
-        val json = DORIS_FUNCTION_CATALOG.toJson()
-        val decoded = Json.decodeFromString(ListSerializer(FunctionDef.serializer()), json)
-        assertEquals(DORIS_FUNCTION_CATALOG.functions, decoded)
-        assertEquals(FunctionKind.SCALAR, decoded.first { it.name == "ABS" }.kind)
+    fun slotDetectionUsesDuckdbCatalog() {
+        // glob(...) is a registered DuckDB TVF (lowercase in the catalog; matching is
+        // case-insensitive) -> not a slot; my_source(...) is unknown -> slot.
+        val frag = SqlFragment(
+            "SELECT * FROM glob('*.csv') JOIN my_source(1) AS s ON TRUE",
+            dialect = "duckdb",
+        )
+        assertEquals(listOf("my_source"), frag.tableSlots)
+    }
+
+    @Test
+    fun slotDetectionUsesTrinoCatalog() {
+        // sequence(...) is a registered Trino table function -> not a slot.
+        val frag = SqlFragment(
+            "SELECT * FROM sequence(1, 10, 1) JOIN my_source(1) AS s ON TRUE",
+            dialect = "trino",
+        )
+        assertEquals(listOf("my_source"), frag.tableSlots)
     }
 }

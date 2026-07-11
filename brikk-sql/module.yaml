@@ -2,6 +2,10 @@ product:
   type: kmp/lib
   platforms: [ jvm, linuxArm64, linuxX64, macosArm64, mingwX64 ]
 
+dependencies:
+  # exported: Dialect.functionCatalog exposes metadata types in brikk-sql's public API.
+  - ../brikk-sql-metadata: exported
+
 settings:
   kotlin:
     serialization: json
