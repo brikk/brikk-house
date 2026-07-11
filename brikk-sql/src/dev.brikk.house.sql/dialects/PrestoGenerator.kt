@@ -68,6 +68,9 @@ open class PrestoGenerator(
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
 ) {
 
+    // sqlglot: dialect back-reference for annotate_types-driven paths
+    override val dialect: Dialect get() = Dialects.PRESTO
+
     // ------------------------------------------------------------------
     // Flags (sqlglot: PrestoGenerator class attributes)
     // ------------------------------------------------------------------
@@ -845,26 +848,40 @@ open class PrestoGenerator(
         return super.bracketSql(expression)
     }
 
-    // sqlglot: PrestoGenerator.struct_sql (annotate_types is unavailable: typed
-    // CAST(ROW(...) AS ROW(...)) generation only fires for PropertyEQ-free structs)
+    // sqlglot: PrestoGenerator.struct_sql
     override fun structSql(expression: Struct): String {
-        val values = mutableListOf<kotlin.Any?>()
-        var hasPropertyEq = false
+        if (expression.type == null) {
+            dev.brikk.house.sql.optimizer.annotateTypes(expression, dialect = dialect)
+        }
+
+        val values = mutableListOf<String>()
+        val schema = mutableListOf<String>()
+        var unknownType = false
 
         for (e in expression.expressionsArg) {
             val expr = e as Expression
             if (expr is PropertyEQ) {
-                hasPropertyEq = true
-                values.add(expr.args["expression"])
+                val exprType = expr.type as? DataType
+                if (exprType != null && exprType.isType(DType.UNKNOWN)) {
+                    unknownType = true
+                } else {
+                    schema.add("${sql(expr, "this")} ${sql(expr.type)}")
+                }
+                values.add(sql(expr, "expression"))
             } else {
-                values.add(expr)
+                values.add(sql(expr))
             }
         }
 
-        if (hasPropertyEq) {
-            unsupported("Cannot convert untyped key-value definitions (try annotate_types).")
+        val size = expression.expressionsArg.size
+
+        if (size == 0 || schema.size != size) {
+            if (unknownType) {
+                unsupported("Cannot convert untyped key-value definitions (try annotate_types).")
+            }
+            return func("ROW", *values.toTypedArray())
         }
-        return func("ROW", *values.toTypedArray())
+        return "CAST(ROW(${values.joinToString(", ")}) AS ROW(${schema.joinToString(", ")}))"
     }
 
     // sqlglot: PrestoGenerator.interval_sql

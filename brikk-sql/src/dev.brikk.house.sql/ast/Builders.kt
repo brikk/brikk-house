@@ -56,28 +56,67 @@ internal fun foldIntLiteral(expression: Expression?): Long? {
 }
 
 /**
- * sqlglot: expressions.builders.apply_index_offset — Python runs annotate_types +
- * simplify; approximated here: `this` counts as UNKNOWN/ARRAY unless a Cast (or the
- * expression's own type slot) reveals a known non-array type, and only integer
- * constant indices are adjusted (columns annotate to UNKNOWN in Python and are left
- * alone there too).
+ * sqlglot: expressions.builders.apply_index_offset. Like Python, this runs
+ * annotate_types over `this` and the index expression (leaving `t` payloads on the
+ * subtree), then adjusts INTEGER-typed indices via `simplify(expression + offset)`.
+ * [simplifyAddOffset] is the slice of optimizer.simplify that reaches this call:
+ * literal folding plus trailing-literal association (`X + -1` plus 1 -> `X + 0`).
  */
 internal fun <T> applyIndexOffset(
     this_: Expression?,
     expressions: kotlin.collections.List<T>,
     offset: Int,
+    dialect: dev.brikk.house.sql.dialects.Dialect? = null,
 ): kotlin.collections.List<T> {
     if (offset == 0 || expressions.size != 1) return expressions
 
     val expression = expressions[0] as? Expression ?: return expressions
 
-    val thisType = this_?.type?.thisArg as? DType
-    if (thisType != null && thisType != DType.UNKNOWN && thisType != DType.ARRAY) {
+    if (this_ != null && this_.type == null) {
+        dev.brikk.house.sql.optimizer.annotateTypes(this_, dialect = dialect)
+    }
+
+    val thisType = this_?.type?.thisArg
+    if (thisType != DType.UNKNOWN && thisType != DType.ARRAY) {
         return expressions
     }
 
-    val value = foldIntLiteral(expression) ?: return expressions
+    if (expression.type == null) {
+        dev.brikk.house.sql.optimizer.annotateTypes(expression, dialect = dialect)
+    }
 
-    @Suppress("UNCHECKED_CAST")
-    return listOf(intLiteral(value + offset)) as kotlin.collections.List<T>
+    if ((expression.type as? DataType)?.thisArg in DataType.INTEGER_TYPES) {
+        @Suppress("UNCHECKED_CAST")
+        return listOf(simplifyAddOffset(expression, offset)) as kotlin.collections.List<T>
+    }
+
+    return expressions
+}
+
+/**
+ * sqlglot: simplify(expression + offset) as invoked by apply_index_offset. Fully
+ * foldable trees collapse to a literal; an `Add` whose right side folds combines the
+ * trailing literal with the offset (Python's simplify keeps the resulting `+ 0`);
+ * anything else becomes `Add(expression, offset)` untouched, all matching Python.
+ */
+private fun simplifyAddOffset(expression: Expression, offset: Int): Expression {
+    foldIntLiteral(expression)?.let { return intLiteral(it + offset) }
+
+    if (expression is Add) {
+        val rightValue = foldIntLiteral(expression.right)
+        if (rightValue != null) {
+            return Add(
+                args(
+                    "this" to expression.left,
+                    "expression" to intLiteral(rightValue + offset),
+                )
+            )
+        }
+    }
+
+    // sqlglot: Expression._binop wraps Binary operands in parens (`_wrap(this, Binary)`)
+    val base =
+        if (expression is Binary && expression !is Add) Paren(args("this" to expression))
+        else expression
+    return Add(args("this" to base, "expression" to intLiteral(offset.toLong())))
 }

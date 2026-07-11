@@ -190,6 +190,9 @@ open class MysqlParser(
     tokenizerConfig: TokenizerConfig = dev.brikk.house.sql.parser.MysqlTokenizerTables.CONFIG,
 ) : Parser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig) {
 
+    // sqlglot: dialect back-reference for annotate_types-driven paths
+    override val dialect: Dialect get() = Dialects.MYSQL
+
     // -------------------------------------------------------------------
     // Flags (sqlglot: MySQLParser / MySQL dialect class attributes)
     // -------------------------------------------------------------------

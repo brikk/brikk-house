@@ -192,6 +192,11 @@ open class Generator(
     open val supportsUescape: Boolean get() = true
 
     // --- Dialect-level flags (base dialect values) ---
+    // sqlglot: Generator.dialect (the umbrella Dialect object; used by annotate_types-
+    // driven generation paths like convert_concat_args and Presto's struct_sql)
+    open val dialect: dev.brikk.house.sql.dialects.Dialect
+        get() = dev.brikk.house.sql.dialects.Dialects.BASE
+
     // sqlglot: Dialect.* defaults used by the base generator
     open val dialectSupportsColumnJoinMarks: Boolean get() = false
     open val dialectAliasPostTablesample: Boolean get() = false
@@ -2856,6 +2861,7 @@ open class Generator(
             expression.expressionsArg,
             (indexOffset ?: dialectIndexOffset) -
                 ((expression.args["offset"] as? Number)?.toInt() ?: 0),
+            dialect = dialect,
         )
     }
 
@@ -2946,9 +2952,7 @@ open class Generator(
         return func(funcName, expression.thisArg, expression.expressionArg)
     }
 
-    // sqlglot: Generator.convert_concat_args (base: CONCAT_COALESCE/CONCAT_WS_COALESCE=
-    // false; the coalesce-wrapping branch requires annotate_types, which we don't
-    // port — args pass through unchanged)
+    // sqlglot: Generator.convert_concat_args
     open fun convertConcatArgs(expression: Func): List<kotlin.Any?> {
         var argsList = (expression as Expression).expressionsArg
         if (expression is ConcatWs) argsList = argsList.drop(1) // Skip the delimiter
@@ -2958,22 +2962,96 @@ open class Generator(
                 Cast(args("this" to e, "to" to DataType(args("this" to DType.TEXT))))
             }
         }
+
+        val concatCoalesce =
+            if (expression is ConcatWs) dialectConcatWsCoalesce else dialectConcatCoalesce
+
+        if (!concatCoalesce && expression.args["coalesce"] == true) {
+            argsList = argsList.map { item ->
+                var e = item as Expression
+                if (e.type == null) {
+                    e = dev.brikk.house.sql.optimizer.annotateTypes(e, dialect = dialect)
+                }
+
+                if (e.isString || e.isType(DType.ARRAY)) {
+                    e
+                } else {
+                    Coalesce(
+                        args(
+                            "this" to e,
+                            "expressions" to mutableListOf<kotlin.Any?>(
+                                Literal(args("this" to "", "is_string" to true))
+                            ),
+                        )
+                    )
+                }
+            }
+        }
+
         return argsList
     }
 
-    // sqlglot: Generator.concat_sql (base: CONCAT_COALESCE=false, SUPPORTS_SINGLE_ARG_CONCAT=true)
+    // sqlglot: dialect.concat_to_dpipe_sql (reduce over DPipe)
+    protected fun concatToDpipeSql(expression: Expression): String {
+        val exprs = expression.expressionsArg
+        var reduced = exprs[0]
+        for (e in exprs.drop(1)) {
+            reduced = DPipe(args("this" to reduced, "expression" to e))
+        }
+        return sql(reduced)
+    }
+
+    // sqlglot: Generator.concat_sql (base: SUPPORTS_SINGLE_ARG_CONCAT=true)
     open fun concatSql(expression: Concat): String {
+        if (dialectConcatCoalesce && expression.args["coalesce"] != true) {
+            // Dialect's CONCAT function coalesces NULLs to empty strings, but the
+            // expression does not. Transpile to double pipe operators, which typically
+            // return NULL if any args are NULL instead of coalescing them.
+            return concatToDpipeSql(expression)
+        }
+
         val exprs = convertConcatArgs(expression)
         if (!supportsSingleArgConcat && exprs.size == 1) return sql(exprs[0])
         return func("CONCAT", *exprs.toTypedArray())
     }
 
-    // sqlglot: Generator.concatws_sql (base: CONCAT_WS_COALESCE=false)
-    open fun concatwsSql(expression: ConcatWs): String = func(
-        "CONCAT_WS",
-        expression.expressionsArg.getOrNull(0),
-        *convertConcatArgs(expression).toTypedArray(),
-    )
+    // sqlglot: Generator.concatws_sql
+    open fun concatwsSql(expression: ConcatWs): String {
+        if (dialectConcatWsCoalesce && expression.args["coalesce"] != true) {
+            // Dialect's CONCAT_WS function skips NULL args, but the expression does
+            // not. Wrap the entire call in a CASE expression that returns NULL if any
+            // input IS NULL.
+            val allArgs = expression.expressionsArg.filterIsInstance<Expression>()
+            expression.set("coalesce", true)
+            var condition: Expression = Is(
+                args("this" to allArgs[0].copy(), "expression" to Null())
+            )
+            for (arg in allArgs.drop(1)) {
+                condition = Or(
+                    args(
+                        "this" to condition,
+                        "expression" to Is(args("this" to arg.copy(), "expression" to Null())),
+                    )
+                )
+            }
+            return sql(
+                Case(
+                    args(
+                        "ifs" to mutableListOf<kotlin.Any?>(
+                            If(args("this" to condition, "true" to Null()))
+                        ),
+                        "default" to expression,
+                    )
+                )
+            )
+        }
+
+        return func(
+            "CONCAT_WS",
+            expression.expressionsArg.getOrNull(0),
+            *convertConcatArgs(expression).toTypedArray(),
+        )
+    }
 
     // sqlglot: Generator.check_sql
     open fun checkSql(expression: Check): String = "CHECK (${sql(expression, "this")})"

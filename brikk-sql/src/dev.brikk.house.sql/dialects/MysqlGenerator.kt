@@ -76,6 +76,9 @@ open class MysqlGenerator(
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
 ) {
 
+    // sqlglot: dialect back-reference for annotate_types-driven paths
+    override val dialect: Dialect get() = Dialects.MYSQL
+
     // ------------------------------------------------------------------
     // Flags (sqlglot: MySQLGenerator class attributes)
     // ------------------------------------------------------------------

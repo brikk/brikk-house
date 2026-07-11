@@ -16,6 +16,9 @@ class MysqlDialect : Dialect() {
 
     override val name: String get() = "mysql"
 
+    // sqlglot: MySQL.EXPRESSION_METADATA (sqlglot/typing/mysql.py)
+    override val expressionMetadata get() = dev.brikk.house.sql.ast.GeneratedTypingMetadata.MYSQL
+
     // sqlglot: MySQL.NORMALIZATION_STRATEGY
     override val normalizationStrategy get() = NormalizationStrategy.CASE_SENSITIVE
 

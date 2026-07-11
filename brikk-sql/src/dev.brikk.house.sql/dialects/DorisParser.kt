@@ -89,6 +89,9 @@ open class DorisParser(
     tokenizerConfig: TokenizerConfig = dev.brikk.house.sql.parser.DorisTokenizerTables.CONFIG,
 ) : MysqlParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig) {
 
+    // sqlglot: dialect back-reference for annotate_types-driven paths
+    override val dialect: Dialect get() = Dialects.DORIS
+
     // sqlglot: DorisParser.FUNCTIONS
     override val functions: Map<String, (List<Expression?>) -> Expression>
         get() = DorisParserTables.FUNCTIONS

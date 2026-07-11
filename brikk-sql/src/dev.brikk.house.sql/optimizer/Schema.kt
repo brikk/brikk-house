@@ -223,6 +223,12 @@ class MappingSchema(
     // caches are pure perf and are not ported)
     private val typeMappingCache = HashMap<String, DataType>()
 
+    // sqlglot: MappingSchema._normalized_name_cache. This is not just perf: the cache
+    // hit skips normalize_name's `meta["is_table"]` side effect on the AST node, so
+    // only the FIRST occurrence of a given name gets the meta key — visible in
+    // annotated serde dumps and therefore ported.
+    private val normalizedNameCache = HashMap<List<Any?>, String>()
+
     private var cachedDepth = 0
 
     init {
@@ -475,7 +481,13 @@ class MappingSchema(
     ): String {
         val n = normalize ?: this.normalize
         val d = dialect ?: this.dialect
-        return normalizeName(name, dialect = d, isTable = isTable, normalize = n).name
+        val nameStr = if (name is String) name else (name as Expression).name
+        val cacheKey = listOf<Any?>(nameStr, d, isTable, n)
+        normalizedNameCache[cacheKey]?.let { return it }
+
+        val result = normalizeName(name, dialect = d, isTable = isTable, normalize = n).name
+        normalizedNameCache[cacheKey] = result
+        return result
     }
 
     // sqlglot: MappingSchema.depth
@@ -519,16 +531,18 @@ fun dataTypeFromStr(dtype: String, dialect: Dialect? = null, udt: Boolean = fals
     throw ParseError("Failed to parse '$dtype' into DataType")
 }
 
-// sqlglot: schema.normalize_name
+// sqlglot: schema.normalize_name — the Python signature says str | Identifier, but
+// callers also pass e.g. Star nodes (Column(this=Star) in get_column_type); those
+// flow through unchanged apart from the is_table meta side effect, like in Python.
 fun normalizeName(
     identifier: Any,
     dialect: Dialect? = null,
     isTable: Boolean = false,
     normalize: Boolean? = true,
-): Identifier {
-    val ident = when (identifier) {
+): Expression {
+    val ident: Expression = when (identifier) {
         is String -> parseIdentifier(identifier, dialect)
-        is Identifier -> identifier
+        is Expression -> identifier
         else -> throw IllegalArgumentException("Invalid identifier: $identifier")
     }
 

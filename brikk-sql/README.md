@@ -165,12 +165,19 @@ there is no silent misparsing.
 
 ## Status / known gaps
 
-- Semantic layer (`annotate_types`, scope/qualify, lineage) is not ported yet; a **full**
-  `annotate_types` port is the next milestone (types drive brikk's input-shape → SQL →
-  output-shape pipeline contracts). A handful of transpile cases that depend on type
-  annotation are ledgered per-dialect under `testResources/*/known-failures.json`.
-- Per-dialect gate status lives in those ledgers; they are enforced two-directionally in
-  CI tests (a stale ledger entry fails the build).
+- `annotate_types` is fully ported (`optimizer/AnnotateTypes.kt` + generated
+  `ast/GeneratedTypingMetadata.kt` from `tools/gen_typing_metadata.py`), gated against
+  Python-annotated serde dumps (`testResources/ast-corpus/*-annotated-serde.json`,
+  regenerated via `tools/gen_serde_corpus.py --annotate [--dialect d]`). Type-driven
+  parser/generator paths (`apply_index_offset`, concat coalesce-wrapping,
+  `CONCAT`→`||` under `CONCAT_COALESCE`, Presto struct `CAST(ROW(...) AS ROW(...))`)
+  run the annotator like Python does.
+- `qualify` and lineage are not ported yet; `annotate_types` therefore only resolves
+  table-qualified columns, exactly like the Python function on unqualified input.
+- Per-dialect gate status lives in the `testResources/**/known-failures*.json` ledgers;
+  they are enforced two-directionally in CI tests (a stale ledger entry fails the
+  build). The remaining transpile ledger entries are non-typing gaps (UPDATE ... FROM
+  rewrites, `explode_projection_to_unnest`).
 
 ## Attribution
 

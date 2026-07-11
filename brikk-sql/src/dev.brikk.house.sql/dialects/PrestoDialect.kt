@@ -16,6 +16,9 @@ open class PrestoDialect : Dialect() {
 
     override val name: String get() = "presto"
 
+    // sqlglot: Presto.EXPRESSION_METADATA (sqlglot/typing/presto.py)
+    override val expressionMetadata get() = dev.brikk.house.sql.ast.GeneratedTypingMetadata.PRESTO
+
     // sqlglot: Presto.NORMALIZATION_STRATEGY
     override val normalizationStrategy get() = NormalizationStrategy.CASE_INSENSITIVE
 

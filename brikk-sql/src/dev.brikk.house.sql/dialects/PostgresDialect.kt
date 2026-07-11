@@ -20,6 +20,9 @@ open class PostgresDialect : Dialect() {
 
     override val name: String get() = "postgres"
 
+    // sqlglot: Postgres.EXPRESSION_METADATA (sqlglot/typing/postgres.py)
+    override val expressionMetadata get() = dev.brikk.house.sql.ast.GeneratedTypingMetadata.POSTGRES
+
     override val tokenizerConfig: TokenizerConfig get() = PostgresTokenizerTables.CONFIG
 
     // sqlglot: Postgres.TIME_MAPPING

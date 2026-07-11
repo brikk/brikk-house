@@ -356,6 +356,11 @@ open class Parser(
     // Dialect-level flags (sqlglot: Dialect / Parser class vars; base defaults)
     // -----------------------------------------------------------------------
 
+    // sqlglot: Parser.dialect (the umbrella Dialect object; used by annotate_types-
+    // driven parse paths like apply_index_offset)
+    open val dialect: dev.brikk.house.sql.dialects.Dialect
+        get() = dev.brikk.house.sql.dialects.Dialects.BASE
+
     // sqlglot: Parser.STRICT_CAST
     open val strictCast: kotlin.Boolean get() = true
 
@@ -8323,7 +8328,7 @@ open class Parser(
                 return expression(constructorType(args("expressions" to expressions)))
             }
             // sqlglot: apply_index_offset(this, expressions, -self.dialect.INDEX_OFFSET)
-            val adjusted = applyIndexOffset(current, expressions, -indexOffset)
+            val adjusted = applyIndexOffset(current, expressions, -indexOffset, dialect = dialect)
             current = expression(
                 Bracket(args("this" to current, "expressions" to adjusted)),
                 comments = current.popComments(),

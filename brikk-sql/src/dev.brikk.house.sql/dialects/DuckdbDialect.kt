@@ -16,6 +16,9 @@ open class DuckdbDialect : Dialect() {
 
     override val name: String get() = "duckdb"
 
+    // sqlglot: DuckDB.EXPRESSION_METADATA (sqlglot/typing/duckdb.py)
+    override val expressionMetadata get() = dev.brikk.house.sql.ast.GeneratedTypingMetadata.DUCKDB
+
     // sqlglot: DuckDB.NORMALIZATION_STRATEGY
     override val normalizationStrategy get() = NormalizationStrategy.CASE_INSENSITIVE
 

@@ -26,6 +26,9 @@ open class TrinoParser(
     tokenizerConfig: TokenizerConfig = dev.brikk.house.sql.parser.TrinoTokenizerTables.CONFIG,
 ) : PrestoParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig) {
 
+    // sqlglot: dialect back-reference for annotate_types-driven paths
+    override val dialect: Dialect get() = Dialects.TRINO
+
     // sqlglot: Trino.SUPPORTS_USER_DEFINED_TYPES = False
     override val supportsUserDefinedTypes: Boolean get() = false
 

@@ -174,6 +174,9 @@ open class PrestoParser(
     tokenizerConfig: TokenizerConfig = dev.brikk.house.sql.parser.PrestoTokenizerTables.CONFIG,
 ) : Parser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig) {
 
+    // sqlglot: dialect back-reference for annotate_types-driven paths
+    override val dialect: Dialect get() = Dialects.PRESTO
+
     // sqlglot: PrestoParser.VALUES_FOLLOWED_BY_PAREN = False
     override val valuesFollowedByParen: Boolean get() = false
 

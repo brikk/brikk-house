@@ -44,6 +44,9 @@ open class DorisGenerator(
     overrides = TRANSFORMS,
 ) {
 
+    // sqlglot: dialect back-reference for annotate_types-driven paths
+    override val dialect: Dialect get() = Dialects.DORIS
+
     // ------------------------------------------------------------------
     // Flags (sqlglot: DorisGenerator class attributes)
     // ------------------------------------------------------------------

@@ -98,6 +98,69 @@ val Expression.selects: List<Expression>
         else -> emptyList()
     }
 
+// sqlglot: Pivot.unpivot
+val Pivot.unpivot: kotlin.Boolean
+    get() = args["unpivot"] != null && args["unpivot"] != false
+
+// sqlglot: Pivot.fields
+val Pivot.fields: List<Expression>
+    get() = (args["fields"] as? List<*>)?.filterIsInstance<Expression>() ?: emptyList()
+
+/**
+ * sqlglot: Pivot.output_columns — ordered map of post-rename output column name ->
+ * pre-rename source-side name, in the order the (UN)PIVOT produces them.
+ */
+fun Pivot.outputColumns(prePivotColumns: Iterable<String>): kotlin.collections.Map<String, String> {
+    val excluded = mutableSetOf<String>()
+    val outputs: List<String>
+    if (unpivot) {
+        val nameColumns = mutableListOf<Identifier>()
+        for (field in fields) {
+            if (field !is In) continue
+            (field.thisArg as? Identifier)?.let { nameColumns.add(it) }
+            for (e in field.expressionsArg) {
+                if (e is Expression) {
+                    for (c in e.findAll<Column>()) excluded.add(c.outputName)
+                }
+            }
+        }
+        val valueColumns = mutableListOf<Identifier>()
+        for (e in expressionsArg) {
+            val idents = if (e is Tuple) e.expressionsArg else listOf(e)
+            for (ident in idents) if (ident is Identifier) valueColumns.add(ident)
+        }
+        outputs = (nameColumns + valueColumns).map { it.name }
+    } else {
+        for (c in findAll<Column>()) excluded.add(c.outputName)
+        var out = ((args["columns"] as? List<*>) ?: emptyList<kotlin.Any?>())
+            .filterIsInstance<Expression>()
+            .map { it.outputName }
+        if (out.isEmpty()) {
+            out = expressionsArg.filterIsInstance<Expression>().map { it.aliasOrName }
+        }
+        outputs = out
+    }
+
+    if (excluded.isEmpty() || outputs.isEmpty()) return emptyMap()
+
+    val preRename = prePivotColumns.filter { it !in excluded } + outputs
+
+    val aliasExpr = args["alias"] as? Expression
+    val renames = (aliasExpr?.args?.get("columns") as? List<*>)?.filterIsInstance<Expression>()
+
+    // `PIVOT(...) AS alias(c1, c2, ...)` renames the operator's output columns
+    // positionally from the front; remaining columns keep their auto names.
+    val postRename = if (!renames.isNullOrEmpty()) {
+        renames.map { it.name } + preRename.drop(renames.size)
+    } else {
+        preRename
+    }
+
+    val result = LinkedHashMap<String, String>()
+    for ((post, pre) in postRename.zip(preRename)) result[post] = pre
+    return result
+}
+
 private fun udtfSelects(node: Expression): List<Expression> {
     val alias = node.args["alias"] as? Expression ?: return emptyList()
     return (alias.args["columns"] as? List<*>)?.filterIsInstance<Expression>() ?: emptyList()

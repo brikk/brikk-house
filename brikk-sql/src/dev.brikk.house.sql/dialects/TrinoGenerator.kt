@@ -35,6 +35,9 @@ open class TrinoGenerator(
     overrides = TRANSFORMS,
 ) {
 
+    // sqlglot: dialect back-reference for annotate_types-driven paths
+    override val dialect: Dialect get() = Dialects.TRINO
+
     // sqlglot: TrinoGenerator.EXCEPT_INTERSECT_SUPPORT_ALL_CLAUSE = True
     override val exceptIntersectSupportAllClause: Boolean get() = true
 

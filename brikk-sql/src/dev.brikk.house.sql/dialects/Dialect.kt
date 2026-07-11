@@ -1,8 +1,11 @@
 package dev.brikk.house.sql.dialects
 
+import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.Expression
+import dev.brikk.house.sql.ast.GeneratedTypingMetadata
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.Literal
+import dev.brikk.house.sql.ast.TypingSpec
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.parser.ErrorLevel
@@ -48,6 +51,28 @@ open class Dialect {
 
     // sqlglot: Dialect.NORMALIZATION_STRATEGY
     open val normalizationStrategy: NormalizationStrategy get() = NormalizationStrategy.LOWERCASE
+
+    // sqlglot: Dialect.EXPRESSION_METADATA (type inference & validation rules; see
+    // GeneratedTypingMetadata — doris shares mysql, trino shares presto)
+    open val expressionMetadata: Map<kotlin.reflect.KClass<out Expression>, TypingSpec>
+        get() = GeneratedTypingMetadata.BASE
+
+    // sqlglot: Dialect.COERCES_TO (empty on the base dialect; TypeAnnotator falls
+    // back to the generated lattice when a dialect defines no overrides)
+    open val coercesTo: Map<DType, Set<DType>>? get() = null
+
+    // sqlglot: Dialect.DEFAULT_NULL_TYPE (NULL-typed nodes are rewritten to this at
+    // the end of annotation unless the dialect supports a NULL/VOID type)
+    open val defaultNullType: DType get() = DType.UNKNOWN
+
+    // sqlglot: Dialect.SUPPORTS_NULL_TYPE (Databricks and Spark >=3 support VOID)
+    open val supportsNullType: Boolean get() = false
+
+    // sqlglot: Dialect.PRIORITIZE_NON_LITERAL_TYPES (BigQuery-only)
+    open val prioritizeNonLiteralTypes: Boolean get() = false
+
+    // sqlglot: Dialect.QUERY_RESULTS_ARE_STRUCTS (BigQuery-only)
+    open val queryResultsAreStructs: Boolean get() = false
 
     // sqlglot: Dialect.tokenizer_class (tables only; the scanner is shared)
     open val tokenizerConfig: TokenizerConfig get() = TokenizerConfig.BASE

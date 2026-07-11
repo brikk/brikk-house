@@ -16,6 +16,9 @@ class DorisDialect : Dialect() {
 
     override val name: String get() = "doris"
 
+    // sqlglot: Doris(MySQL) inherits MySQL.EXPRESSION_METADATA
+    override val expressionMetadata get() = dev.brikk.house.sql.ast.GeneratedTypingMetadata.MYSQL
+
     // sqlglot: Doris inherits MySQL.NORMALIZATION_STRATEGY (CASE_SENSITIVE)
     override val normalizationStrategy get() = NormalizationStrategy.CASE_SENSITIVE
 

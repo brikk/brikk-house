@@ -57,6 +57,9 @@ open class DuckdbGenerator(
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
 ) {
 
+    // sqlglot: dialect back-reference for annotate_types-driven paths
+    override val dialect: Dialect get() = Dialects.DUCKDB
+
     // ------------------------------------------------------------------
     // Flags (sqlglot: DuckDBGenerator class attributes)
     // ------------------------------------------------------------------

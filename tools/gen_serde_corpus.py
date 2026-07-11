@@ -16,6 +16,12 @@ Dialect mode (--dialect mysql): reads the identity SQLs from
 brikk-sql/testResources/dialect-corpus/<dialect>.json, Python-parses each with
 read=<dialect>, and writes brikk-sql/testResources/ast-corpus/<dialect>-serde.json
 with {"sql", "generated" (= .sql(dialect=<dialect>)), "dump"}.
+
+Annotate mode (--annotate [--dialect d]): parse_one(sql, read=d) ->
+annotate_types(ast, dialect=d) (schema-less) -> serde dump (types included as `t`
+payloads), written to ast-corpus/identity-annotated-serde.json (base) or
+ast-corpus/<dialect>-annotated-serde.json. Python-side parse/annotate failures are
+recorded under "skipped" with their reason.
 """
 
 from __future__ import annotations
@@ -66,14 +72,24 @@ def iter_sqls(dialect: str | None):
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dialect", default=None, help="dialect-corpus name (e.g. mysql)")
+    parser.add_argument(
+        "--annotate",
+        action="store_true",
+        help="run annotate_types(ast, dialect=<dialect>) before dumping",
+    )
     opts = parser.parse_args()
     dialect = opts.dialect
+
+    if opts.annotate:
+        from sqlglot.optimizer.annotate_types import annotate_types
 
     cases = []
     skipped = []
     for sql in iter_sqls(dialect):
         try:
             expression = sqlglot.parse_one(sql, read=dialect or None)
+            if opts.annotate:
+                expression = annotate_types(expression, dialect=dialect or None)
             case = {
                 "sql": sql,
                 "generated": expression.sql(dialect=dialect or None),
@@ -95,7 +111,10 @@ def main() -> None:
         "cases": cases,
     }
 
-    stem = f"{dialect}-serde" if dialect else "identity-serde"
+    if opts.annotate:
+        stem = f"{dialect}-annotated-serde" if dialect else "identity-annotated-serde"
+    else:
+        stem = f"{dialect}-serde" if dialect else "identity-serde"
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     raw = json.dumps(corpus, indent=1) + "\n"
     size = len(raw.encode())

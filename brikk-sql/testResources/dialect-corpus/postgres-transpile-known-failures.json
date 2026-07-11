@@ -11,14 +11,6 @@
   {
    "case": "write|presto|SELECT UNNEST(ARRAY[1])",
    "reason": "transforms.explode_projection_to_unnest (Presto exp.Select preprocess) not ported"
-  },
-  {
-   "case": "write||CONCAT(a, b)",
-   "reason": "base generator concat_sql coalesce-wrapping for CONCAT_COALESCE dialects is annotate_types-gated; not ported"
-  },
-  {
-   "case": "write|presto|CONCAT(a, b)",
-   "reason": "base generator concat_sql coalesce-wrapping for CONCAT_COALESCE dialects is annotate_types-gated; not ported"
   }
  ]
 }

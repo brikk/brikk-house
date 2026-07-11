@@ -1,14 +1,6 @@
 {
  "cases": [
   {
-   "case": "write|presto|{'a': 1, 'b': '2'}",
-   "reason": "presto Struct transform CASTs ROW to typed ROW via optimizer.annotate_types, which is not ported (PrestoGenerator KDoc)"
-  },
-  {
-   "case": "write|presto|struct_pack(a := 1, b := 2)",
-   "reason": "presto Struct transform CASTs ROW to typed ROW via optimizer.annotate_types, which is not ported (PrestoGenerator KDoc)"
-  },
-  {
    "case": "write|presto|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6])",
    "reason": "presto exp.Select preprocess pipeline (explode_projection_to_unnest) is not ported (PrestoGenerator KDoc)"
   },

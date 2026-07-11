@@ -19,6 +19,9 @@ typealias Args = Map<String, kotlin.Any?>
 /** Convenience builder preserving insertion order (mirrors Python kwargs order). */
 fun args(vararg pairs: Pair<String, kotlin.Any?>): Args = linkedMapOf(*pairs)
 
+// Monotonic counter backing Expression.objectId (single-threaded use, like the tests).
+private var nextObjectId: Long = 0L
+
 /** Convenience builder for argTypes tables. */
 internal fun argTypesOf(vararg pairs: Pair<String, kotlin.Boolean>): Map<String, kotlin.Boolean> =
     linkedMapOf(*pairs)
@@ -65,10 +68,17 @@ abstract class Expression(initArgs: Args = emptyMap()) {
         get() = metaOrNull ?: LinkedHashMap<String, kotlin.Any?>().also { metaOrNull = it }
 
     /**
-     * Minimal type slot (sqlglot: Expression._type). Full DataType typing (optimizer's
-     * annotate_types) is deferred; this exists so serde can round-trip the "t" payload.
+     * Type slot (sqlglot: Expression._type), populated by optimizer/AnnotateTypes.kt
+     * and round-tripped by serde as the "t" payload.
      */
     var typeSlot: Expression? = null
+
+    /**
+     * Stable per-instance identity for id()-keyed optimizer caches (Python's
+     * id(expression) in TypeAnnotator._visited etc). Content-based hashCode/equals
+     * can't serve: annotation mutates nodes in place.
+     */
+    val objectId: Long = ++nextObjectId
 
     // sqlglot: Expression._hash_raw_args
     open val hashRawArgs: kotlin.Boolean get() = false
@@ -130,6 +140,17 @@ abstract class Expression(initArgs: Args = emptyMap()) {
             isCast -> typeSlot ?: args["to"] as? Expression
             else -> typeSlot
         }
+
+    /**
+     * sqlglot: Expression.is_type — checks the annotated type slot (`_type`; NOT the
+     * [type] property, so an unannotated Cast does not fall back to its "to" arg,
+     * matching Python). DataType overrides this with structural self-comparison.
+     * [dtypes] accepts [DType] and [DataType] values.
+     */
+    open fun isType(vararg dtypes: kotlin.Any?, checkNullable: kotlin.Boolean = false): kotlin.Boolean {
+        val t = typeSlot as? DataType ?: return false
+        return t.isType(*dtypes, checkNullable = checkNullable)
+    }
 
     // sqlglot: Expression.is_string
     val isString: kotlin.Boolean

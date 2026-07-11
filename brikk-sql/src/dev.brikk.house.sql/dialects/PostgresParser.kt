@@ -227,6 +227,9 @@ open class PostgresParser(
     tokenizerConfig: TokenizerConfig = dev.brikk.house.sql.parser.PostgresTokenizerTables.CONFIG,
 ) : Parser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig) {
 
+    // sqlglot: dialect back-reference for annotate_types-driven paths
+    override val dialect: Dialect get() = Dialects.POSTGRES
+
     // sqlglot: PostgresParser.SUPPORTS_OMITTED_INTERVAL_SPAN_UNIT = True
     override val supportsOmittedIntervalSpanUnit: Boolean get() = true
 

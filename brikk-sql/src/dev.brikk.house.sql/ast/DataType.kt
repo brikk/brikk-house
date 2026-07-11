@@ -2,6 +2,7 @@ package dev.brikk.house.sql.ast
 
 import kotlin.String
 import kotlin.collections.Map
+import kotlin.collections.Set
 
 /**
  * sqlglot: datatypes.DataType.Type (member order preserved; value strings can
@@ -147,6 +148,13 @@ enum class DType(val value: kotlin.String) {
             BY_VALUE[value]
                 ?: throw IllegalArgumentException("Unknown DataType.Type value: $value")
     }
+
+    // sqlglot: datatypes.DType.into_expr — converts this DType into a DataType instance.
+    fun intoExpr(kwargs: Args = emptyMap()): DataType {
+        val dataType = DataType(args("this" to this))
+        for ((k, v) in kwargs) dataType.set(k, v)
+        return dataType
+    }
 }
 
 // sqlglot: datatypes.DataType(Expression) — is_data_type. The "this" arg holds a DType.
@@ -154,10 +162,119 @@ open class DataType(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = ARG_TYPES
     override val isDataType get() = true
 
+    /**
+     * sqlglot: datatypes.DataType.is_type — checks whether this DataType matches one
+     * of the provided data types. Nested types or precision are compared using
+     * "structural equivalence" semantics, so e.g. array<int> != array<float>.
+     *
+     * [dtypes] accepts [DType] and [DataType] values (Python also allows strings,
+     * which require a dialect parser; string handling lives in optimizer/Schema.kt's
+     * dataTypeFromStr and is not needed by the type annotator).
+     */
+    override fun isType(vararg dtypes: kotlin.Any?, checkNullable: kotlin.Boolean): kotlin.Boolean {
+        val selfIsNullable = args["nullable"] as? kotlin.Boolean
+        for (dtype in dtypes) {
+            val otherType = build(dtype, copy = false, udt = true)
+            val otherIsNullable = otherType.args["nullable"] as? kotlin.Boolean
+            val matches = if (
+                otherType.expressionsArg.isNotEmpty() ||
+                (checkNullable && (selfIsNullable == true || otherIsNullable == true)) ||
+                thisArg == DType.USERDEFINED ||
+                otherType.thisArg == DType.USERDEFINED
+            ) {
+                this == otherType
+            } else {
+                thisArg == otherType.thisArg
+            }
+            if (matches) return true
+        }
+        return false
+    }
+
     companion object {
         private val ARG_TYPES = argTypesOf(
             "this" to true, "expressions" to false, "nested" to false, "values" to false,
             "kind" to false, "nullable" to false, "collate" to false,
+        )
+
+        /**
+         * sqlglot: datatypes.DataType.build — the non-string branches (DType,
+         * Identifier/Dot with udt, DataType). String dtypes need a dialect parser and
+         * are handled by optimizer/Schema.kt's dataTypeFromStr.
+         */
+        fun build(
+            dtype: kotlin.Any?,
+            udt: kotlin.Boolean = false,
+            copy: kotlin.Boolean = true,
+            kwargs: Args = emptyMap(),
+        ): DataType = when {
+            dtype is DType -> {
+                val dataTypeExp = DataType(args("this" to dtype))
+                for ((k, v) in kwargs) dataTypeExp.set(k, v)
+                dataTypeExp
+            }
+            (dtype is Identifier || dtype is Dot) && udt -> {
+                val dataTypeExp = DataType(args("this" to DType.USERDEFINED, "kind" to dtype))
+                for ((k, v) in kwargs) dataTypeExp.set(k, v)
+                dataTypeExp
+            }
+            dtype is DataType -> if (copy) dtype.copy() as DataType else dtype
+            else -> throw IllegalArgumentException(
+                "Invalid data type: ${dtype?.let { it::class.simpleName }}. Expected DType or DataType"
+            )
+        }
+
+        // sqlglot: datatypes.DataType.STRUCT_TYPES
+        val STRUCT_TYPES: Set<DType> = setOf(
+            DType.FILE, DType.NESTED, DType.OBJECT, DType.STRUCT, DType.UNION,
+        )
+
+        // sqlglot: datatypes.DataType.ARRAY_TYPES
+        val ARRAY_TYPES: Set<DType> = setOf(DType.ARRAY, DType.LIST)
+
+        // sqlglot: datatypes.DataType.NESTED_TYPES
+        val NESTED_TYPES: Set<DType> = STRUCT_TYPES + ARRAY_TYPES + setOf(DType.MAP)
+
+        // sqlglot: datatypes.DataType.TEXT_TYPES
+        val TEXT_TYPES: Set<DType> = setOf(
+            DType.CHAR, DType.NCHAR, DType.NVARCHAR, DType.TEXT, DType.VARCHAR, DType.NAME,
+        )
+
+        // sqlglot: datatypes.DataType.SIGNED_INTEGER_TYPES
+        val SIGNED_INTEGER_TYPES: Set<DType> = setOf(
+            DType.BIGINT, DType.INT, DType.INT128, DType.INT256, DType.MEDIUMINT,
+            DType.SMALLINT, DType.TINYINT,
+        )
+
+        // sqlglot: datatypes.DataType.UNSIGNED_INTEGER_TYPES
+        val UNSIGNED_INTEGER_TYPES: Set<DType> = setOf(
+            DType.UBIGINT, DType.UINT, DType.UINT128, DType.UINT256, DType.UMEDIUMINT,
+            DType.USMALLINT, DType.UTINYINT,
+        )
+
+        // sqlglot: datatypes.DataType.INTEGER_TYPES
+        val INTEGER_TYPES: Set<DType> =
+            SIGNED_INTEGER_TYPES + UNSIGNED_INTEGER_TYPES + setOf(DType.BIT)
+
+        // sqlglot: datatypes.DataType.FLOAT_TYPES
+        val FLOAT_TYPES: Set<DType> = setOf(DType.DOUBLE, DType.FLOAT)
+
+        // sqlglot: datatypes.DataType.REAL_TYPES
+        val REAL_TYPES: Set<DType> = FLOAT_TYPES + setOf(
+            DType.BIGDECIMAL, DType.DECIMAL, DType.DECIMAL32, DType.DECIMAL64,
+            DType.DECIMAL128, DType.DECIMAL256, DType.DECFLOAT, DType.MONEY,
+            DType.SMALLMONEY, DType.UDECIMAL, DType.UDOUBLE,
+        )
+
+        // sqlglot: datatypes.DataType.NUMERIC_TYPES
+        val NUMERIC_TYPES: Set<DType> = INTEGER_TYPES + REAL_TYPES
+
+        // sqlglot: datatypes.DataType.TEMPORAL_TYPES
+        val TEMPORAL_TYPES: Set<DType> = setOf(
+            DType.DATE, DType.DATE32, DType.DATETIME, DType.DATETIME2, DType.DATETIME64,
+            DType.SMALLDATETIME, DType.TIME, DType.TIMESTAMP, DType.TIMESTAMPNTZ,
+            DType.TIMESTAMPLTZ, DType.TIMESTAMPTZ, DType.TIMESTAMP_MS, DType.TIMESTAMP_NS,
+            DType.TIMESTAMP_S, DType.TIMETZ,
         )
     }
 }
