@@ -234,6 +234,7 @@ object GeneratorTables {
         reg(TableColumn::class) { e -> sql(e.thisArg) }
         reg(Dot::class) { e -> dotSql(e as Dot) }
         reg(Alias::class) { e -> aliasSql(e as Alias) }
+        reg(PivotAlias::class) { e -> pivotaliasSql(e as PivotAlias) }
         reg(Aliases::class) { e -> aliasesSql(e as Aliases) }
         reg(TableAlias::class) { e -> tablealiasSql(e as TableAlias) }
         reg(Table::class) { e -> tableSql(e as Table) }

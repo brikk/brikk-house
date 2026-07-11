@@ -101,6 +101,8 @@ open class Generator(
     open val limitFetch: String get() = "ALL"
     // sqlglot: Generator.LIMIT_ONLY_LITERALS
     open val limitOnlyLiterals: Boolean get() = false
+    // sqlglot: Generator.UNPIVOT_ALIASES_ARE_IDENTIFIERS
+    open val unpivotAliasesAreIdentifiers: Boolean get() = true
     open val renameTableWithDb: Boolean get() = true
     open val groupingsSep: String get() = ","
     open val indexOn: String get() = "ON"
@@ -3318,6 +3320,27 @@ open class Generator(
         var alias = sql(expression, "alias")
         if (alias.isNotEmpty()) alias = " AS $alias"
         return "${sql(expression, "this")}$alias"
+    }
+
+    // sqlglot: Generator.pivotalias_sql
+    open fun pivotaliasSql(expression: PivotAlias): String {
+        val alias = expression.args["alias"]
+
+        val parent = expression.parent
+        val pivot = parent?.parent
+
+        if (pivot is Pivot && pivot.unpivot) {
+            val identifierAlias = alias is Identifier
+            val literalAlias = alias is Literal
+
+            if (identifierAlias && !unpivotAliasesAreIdentifiers) {
+                (alias as Expression).replace(Literal.string(alias.outputName))
+            } else if (!identifierAlias && literalAlias && unpivotAliasesAreIdentifiers) {
+                (alias as Expression).replace(toIdentifier(alias.outputName))
+            }
+        }
+
+        return aliasSql(expression)
     }
 
     // sqlglot: Generator.aliases_sql
