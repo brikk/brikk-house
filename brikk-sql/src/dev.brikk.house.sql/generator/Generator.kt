@@ -2395,8 +2395,10 @@ open class Generator(
 
             if (!nullOrderingWindowFunc) {
                 if (windowThis != null && spec != null) {
+                    val funcName = (windowThis as? Func)?.sqlName()
+                        ?: windowThis::class.simpleName
                     unsupported(
-                        "'${nullsSortChange.trim()}' translation not supported in window functions"
+                        "'${nullsSortChange.trim()}' translation not supported in window function $funcName"
                     )
                     nullsSortChange = ""
                 } else if (nullOrderingSupported == false &&
@@ -2413,9 +2415,11 @@ open class Generator(
                     }
                     if (ancestor is Window) ancestor = ancestor.thisArg as? Expression
                     if (ancestor is AggFunc) {
+                        val funcName = (ancestor as? Func)?.sqlName()
+                            ?: ancestor::class.simpleName
                         unsupported(
                             "'${nullsSortChange.trim()}' translation not supported for " +
-                                "aggregate functions with$sortOrder sort order"
+                                "aggregate function $funcName with $sortOrder sort order"
                         )
                         nullsSortChange = ""
                     }

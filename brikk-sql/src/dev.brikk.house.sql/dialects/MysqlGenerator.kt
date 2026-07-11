@@ -4,6 +4,7 @@ package dev.brikk.house.sql.dialects
 import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.generator.GenMethod
+import dev.brikk.house.sql.generator.eliminateQualify
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.parser.MysqlTokenizerTables
@@ -849,6 +850,10 @@ open class MysqlGenerator(
             reg(NullSafeNEQ::class) { e -> "NOT ${binary(e as Binary, "<=>")}" }
             reg(NumberToStr::class) { e -> mg().renameFuncSql("FORMAT", e) }
             reg(Pivot::class) { e -> mg().noPivotSql(e as Pivot) }
+            // sqlglot: exp.Select preprocess pipeline. Only eliminate_qualify is ported;
+            // eliminate_distinct_on, eliminate_semi_and_anti_joins, eliminate_full_outer_join
+            // and unnest_generate_date_array_using_recursive_cte remain NOT PORTED (ledgered).
+            reg(Select::class) { e -> selectSql(eliminateQualify(e) as Select) }
             reg(StrPosition::class) { e -> mg().strpositionSql(e as StrPosition) }
             reg(StrToDate::class) { e -> mg().strToDateSql(e) }
             reg(StrToTime::class) { e -> mg().strToDateSql(e) }

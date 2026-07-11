@@ -6,6 +6,7 @@ import dev.brikk.house.sql.ast.Map as MapNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
+import dev.brikk.house.sql.generator.UnsupportedError
 import dev.brikk.house.sql.parser.DorisTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -179,6 +180,61 @@ open class DorisGenerator(
             return "PARTITION BY (${expressions(this_, flat = true)})"
         }
         return "PARTITION BY (${sql(this_)})"
+    }
+
+    // brikk extension (NOT sqlglot parity): Doris has no FILTER clause; sqlglot passes it
+    // through (invalid Doris SQL). We rewrite a conservative allowlist of aggregates into
+    // an equivalent CASE form and raise UnsupportedError for everything else, so we never
+    // emit silently-wrong SQL:
+    //   AGG(expr) FILTER (WHERE cond)          -> AGG(CASE WHEN cond THEN expr END)
+    //   COUNT(*) FILTER (WHERE cond)           -> COUNT(CASE WHEN cond THEN 1 END)
+    //   COUNT(DISTINCT x) FILTER (WHERE cond)  -> COUNT(DISTINCT CASE WHEN cond THEN x END)
+    // Allowlist: COUNT / SUM / MIN / MAX / AVG / ANY_VALUE / ARRAY_AGG (simple argument
+    // only). Rejected: multi-argument aggregates, multi-column DISTINCT, ordered
+    // ARRAY_AGG, and anything else (e.g. GROUP_CONCAT, whose separator handling is not
+    // result-identical under the rewrite).
+    override fun filterSql(expression: Filter): String {
+        fun fail(reason: String): Nothing = throw UnsupportedError(
+            "Doris has no FILTER clause and the aggregate cannot be safely rewritten to CASE: $reason"
+        )
+
+        val cond = ((expression.args["expression"] as? Expression)?.thisArg as? Expression)
+            ?: fail("missing filter condition")
+
+        // duckdb wraps e.g. ANY_VALUE in IgnoreNulls; rewrite the aggregate inside it.
+        val holder = (expression.thisArg as? Expression) ?: fail("missing aggregate")
+        val holderCopy = holder.copy()
+        val agg = if (holderCopy is IgnoreNulls || holderCopy is RespectNulls) {
+            holderCopy.thisArg as? Expression ?: fail("missing aggregate")
+        } else {
+            holderCopy
+        }
+
+        when (agg) {
+            is Count, is Sum, is Min, is Max, is Avg, is AnyValue, is ArrayAgg -> Unit
+            else -> fail("unsupported aggregate ${agg::class.simpleName}")
+        }
+        if ((agg.args["expressions"] as? List<*>).orEmpty().isNotEmpty()) {
+            fail("aggregate has multiple arguments")
+        }
+
+        fun caseWhen(result: Expression): Case =
+            Case(args("ifs" to listOf(If(args("this" to cond.copy(), "true" to result)))))
+
+        when (val arg = agg.thisArg) {
+            is Star -> agg.set("this", caseWhen(Literal.number("1"))) // COUNT(*)
+            is Distinct -> {
+                val distinctExprs = (arg.args["expressions"] as? List<*>).orEmpty()
+                val single = distinctExprs.singleOrNull() as? Expression
+                    ?: fail("DISTINCT over multiple expressions")
+                arg.set("expressions", listOf(caseWhen(single.copy())))
+            }
+            is Order -> fail("aggregate has an ORDER BY clause")
+            is Expression -> agg.set("this", caseWhen(arg.copy()))
+            else -> fail("aggregate has no argument")
+        }
+
+        return sql(holderCopy)
     }
 
     // sqlglot: DorisGenerator.table_sql — no AS keyword in UPDATE and DELETE statements

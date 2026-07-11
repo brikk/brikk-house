@@ -5,6 +5,7 @@ import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.generator.GenMethod
+import dev.brikk.house.sql.generator.eliminateQualify
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.parser.PrestoTokenizerTables
@@ -1127,6 +1128,11 @@ open class PrestoGenerator(
             reg(Right::class) { e -> pg().rightToSubstringSql(e as Right) }
             reg(Schema::class) { e -> pg().prestoSchemaSql(e as Schema) }
             reg(SchemaCommentProperty::class) { e -> nakedProperty(e as Property) }
+            // sqlglot: exp.Select preprocess pipeline. Only eliminate_qualify is ported;
+            // eliminate_window_clause, eliminate_distinct_on, explode_projection_to_unnest,
+            // eliminate_semi_and_anti_joins and amend_exploded_column_table remain
+            // NOT PORTED (ledgered).
+            reg(Select::class) { e -> selectSql(eliminateQualify(e) as Select) }
             reg(SortArray::class) { e -> pg().noSortArraySql(e as SortArray) }
             reg(SqlSecurityProperty::class) { e -> "SECURITY ${sql(e, "this")}" }
             reg(StrPosition::class) { e -> pg().strpositionSql(e as StrPosition) }
