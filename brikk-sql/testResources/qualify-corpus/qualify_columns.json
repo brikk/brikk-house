@@ -1,0 +1,1175 @@
+{
+ "sqlglot_version": "v30.12.0-44-g93d16591",
+ "fixture": "qualify_columns",
+ "schema": {
+  "x": {
+   "a": "INT",
+   "b": "INT"
+  },
+  "y": {
+   "b": "INT",
+   "c": "INT"
+  },
+  "z": {
+   "b": "INT",
+   "c": "INT"
+  },
+  "w": {
+   "d": "TEXT",
+   "e": "TEXT"
+  },
+  "temporal": {
+   "d": "DATE",
+   "t": "DATETIME"
+  },
+  "structs": {
+   "one": "STRUCT<a_1 INT, b_1 VARCHAR>",
+   "nested_0": "STRUCT<a_1 INT, nested_1 STRUCT<a_2 INT, nested_2 STRUCT<a_3 INT>>>",
+   "quoted": "STRUCT<\"foo bar\" INT>"
+  },
+  "t_bool": {
+   "a": "BOOLEAN"
+  }
+ },
+ "cases": [
+  {
+   "sql": "SELECT a FROM x",
+   "expected": "SELECT x.a AS a FROM x AS x"
+  },
+  {
+   "sql": "SELECT \"a\" FROM x",
+   "expected": "SELECT x.\"a\" AS \"a\" FROM x AS x"
+  },
+  {
+   "sql": "SELECT a FROM zz GROUP BY a ORDER BY a",
+   "expected": "SELECT zz.a AS a FROM zz AS zz GROUP BY zz.a ORDER BY a"
+  },
+  {
+   "sql": "SELECT x, p FROM (SELECT x from xx) xx CROSS JOIN yy",
+   "expected": "SELECT xx.x AS x, yy.p AS p FROM (SELECT xx.x AS x FROM xx AS xx) AS xx CROSS JOIN yy AS yy"
+  },
+  {
+   "sql": "SELECT a FROM x AS z",
+   "expected": "SELECT z.a AS a FROM x AS z"
+  },
+  {
+   "sql": "SELECT a AS a FROM x",
+   "expected": "SELECT x.a AS a FROM x AS x"
+  },
+  {
+   "sql": "SELECT x.a FROM x",
+   "expected": "SELECT x.a AS a FROM x AS x"
+  },
+  {
+   "sql": "SELECT x.a AS a FROM x",
+   "expected": "SELECT x.a AS a FROM x AS x"
+  },
+  {
+   "sql": "SELECT a AS b FROM x",
+   "expected": "SELECT x.a AS b FROM x AS x"
+  },
+  {
+   "sql": "SELECT 1, 2 + 3 FROM x",
+   "expected": "SELECT 1 AS \"1\", 2 + 3 AS _col_1 FROM x AS x"
+  },
+  {
+   "sql": "SELECT a + b FROM x",
+   "expected": "SELECT x.a + x.b AS _col_0 FROM x AS x"
+  },
+  {
+   "sql": "SELECT l.a FROM x l WHERE a IN (select a FROM x ORDER by a)",
+   "expected": "SELECT l.a AS a FROM x AS l WHERE l.a IN (SELECT x.a AS a FROM x AS x ORDER BY a)"
+  },
+  {
+   "sql": "SELECT a, SUM(b) FROM x WHERE a > 1 AND b > 1 GROUP BY a",
+   "expected": "SELECT x.a AS a, SUM(x.b) AS _col_1 FROM x AS x WHERE x.a > 1 AND x.b > 1 GROUP BY x.a"
+  },
+  {
+   "sql": "SELECT SUM(a) AS c FROM x HAVING SUM(a) > 3",
+   "expected": "SELECT SUM(x.a) AS c FROM x AS x HAVING SUM(x.a) > 3"
+  },
+  {
+   "sql": "SELECT SUM(a) AS a FROM x HAVING SUM(a) > 3",
+   "expected": "SELECT SUM(x.a) AS a FROM x AS x HAVING SUM(x.a) > 3"
+  },
+  {
+   "sql": "SELECT SUM(a) AS c FROM x HAVING c > 3",
+   "expected": "SELECT SUM(x.a) AS c FROM x AS x HAVING SUM(x.a) > 3"
+  },
+  {
+   "sql": "SELECT SUM(a) AS a FROM x HAVING a > 3",
+   "expected": "SELECT SUM(x.a) AS a FROM x AS x HAVING SUM(x.a) > 3"
+  },
+  {
+   "sql": "SELECT SUM(a) AS c FROM x HAVING SUM(b) > 3",
+   "expected": "SELECT SUM(x.a) AS c FROM x AS x HAVING SUM(x.b) > 3"
+  },
+  {
+   "sql": "SELECT a AS j, b FROM x ORDER BY j",
+   "expected": "SELECT x.a AS j, x.b AS b FROM x AS x ORDER BY j"
+  },
+  {
+   "sql": "SELECT a AS j, b AS a FROM x ORDER BY 1",
+   "expected": "SELECT x.a AS j, x.b AS a FROM x AS x ORDER BY j"
+  },
+  {
+   "sql": "SELECT SUM(a) AS c, SUM(b) AS d FROM x ORDER BY 1, 2",
+   "expected": "SELECT SUM(x.a) AS c, SUM(x.b) AS d FROM x AS x ORDER BY c, d"
+  },
+  {
+   "sql": "SELECT CAST(a AS INT) FROM x ORDER BY a",
+   "expected": "SELECT CAST(x.a AS INT) AS a FROM x AS x ORDER BY a"
+  },
+  {
+   "sql": "SELECT SUM(a), SUM(b) AS c FROM x ORDER BY 1, 2",
+   "expected": "SELECT SUM(x.a) AS _col_0, SUM(x.b) AS c FROM x AS x ORDER BY _col_0, c"
+  },
+  {
+   "sql": "SELECT a AS j, b FROM x GROUP BY j, b",
+   "expected": "SELECT x.a AS j, x.b AS b FROM x AS x GROUP BY x.a, x.b"
+  },
+  {
+   "sql": "SELECT a, b FROM x GROUP BY 1, 2",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x GROUP BY x.a, x.b"
+  },
+  {
+   "sql": "SELECT a, b FROM x ORDER BY 1, 2",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x ORDER BY a, b"
+  },
+  {
+   "sql": "SELECT DISTINCT a AS c, b AS d FROM x ORDER BY 1",
+   "expected": "SELECT DISTINCT x.a AS c, x.b AS d FROM x AS x ORDER BY c"
+  },
+  {
+   "sql": "SELECT 2 FROM x GROUP BY 1",
+   "expected": "SELECT 2 AS \"2\" FROM x AS x GROUP BY 1"
+  },
+  {
+   "sql": "SELECT 'a' AS a FROM x GROUP BY 1",
+   "expected": "SELECT 'a' AS a FROM x AS x GROUP BY 1"
+  },
+  {
+   "sql": "SELECT NULL AS a FROM x GROUP BY 1",
+   "expected": "SELECT NULL AS a FROM x AS x GROUP BY 1"
+  },
+  {
+   "sql": "SELECT TRUE AS a FROM x GROUP BY 1",
+   "expected": "SELECT TRUE AS a FROM x AS x GROUP BY 1"
+  },
+  {
+   "sql": "SELECT t.\"col\" FROM tbl t",
+   "expected": "SELECT T.\"col\" AS \"col\" FROM TBL T",
+   "dialect": "oracle",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH base AS (SELECT x.dummy AS COL_1 FROM dual x) SELECT b.\"COL_1\" FROM base b",
+   "expected": "WITH BASE AS (SELECT X.DUMMY AS COL_1 FROM DUAL X) SELECT B.\"COL_1\" AS \"COL_1\" FROM BASE B",
+   "dialect": "oracle",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT 2 a FROM x GROUP BY 1 HAVING a > 1",
+   "expected": "SELECT 2 AS a FROM x AS x GROUP BY 1 HAVING a > 1"
+  },
+  {
+   "sql": "SELECT 2 d FROM x GROUP BY d HAVING d > 1",
+   "expected": "SELECT 2 AS d FROM x AS x GROUP BY 1 HAVING d > 1"
+  },
+  {
+   "sql": "SELECT 2 d FROM x GROUP BY 1 ORDER BY 1",
+   "expected": "SELECT 2 AS d FROM x AS x GROUP BY 1 ORDER BY d"
+  },
+  {
+   "sql": "SELECT DATE(a), DATE(b) AS c FROM x GROUP BY 1, 2",
+   "expected": "SELECT DATE(x.a) AS _col_0, DATE(x.b) AS c FROM x AS x GROUP BY DATE(x.a), DATE(x.b)"
+  },
+  {
+   "sql": "SELECT (SELECT MIN(a) FROM UNNEST([1, 2])) AS f FROM x GROUP BY 1",
+   "expected": "SELECT (SELECT MIN(_0.a) AS _col_0 FROM UNNEST(ARRAY(1, 2)) AS _0) AS f FROM x AS x GROUP BY 1"
+  },
+  {
+   "sql": "WITH x AS (select 'a' as a, 1 as b) SELECT x.a AS c, y.a as d, SUM(x.b) AS y, FROM x join x as y on x.a = y.a group by 1, 2",
+   "expected": "WITH x AS (SELECT 'a' AS a, 1 AS b) SELECT x.a AS c, y.a AS d, SUM(x.b) AS y FROM x AS x JOIN x AS y ON x.a = y.a GROUP BY x.a, 2",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT SUM(x.a) AS c FROM x JOIN y ON x.b = y.b GROUP BY c",
+   "expected": "SELECT SUM(x.a) AS c FROM x AS x JOIN y AS y ON x.b = y.b GROUP BY y.c"
+  },
+  {
+   "sql": "SELECT COALESCE(x.a) AS d FROM x JOIN y ON x.b = y.b GROUP BY d",
+   "expected": "SELECT COALESCE(x.a) AS d FROM x AS x JOIN y AS y ON x.b = y.b GROUP BY COALESCE(x.a)"
+  },
+  {
+   "sql": "SELECT a + 1 AS d FROM x WHERE d > 1",
+   "expected": "SELECT x.a + 1 AS d FROM x AS x WHERE (x.a + 1) > 1"
+  },
+  {
+   "sql": "SELECT a + 1 AS d, d + 2 FROM x",
+   "expected": "SELECT x.a + 1 AS d, x.a + 1 + 2 AS _col_1 FROM x AS x"
+  },
+  {
+   "sql": "SELECT a AS a, b FROM x ORDER BY a",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x ORDER BY a"
+  },
+  {
+   "sql": "SELECT a, b FROM x ORDER BY a",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x ORDER BY a"
+  },
+  {
+   "sql": "SELECT a FROM x ORDER BY b",
+   "expected": "SELECT x.a AS a FROM x AS x ORDER BY x.b"
+  },
+  {
+   "sql": "SELECT SUM(a) AS a FROM x ORDER BY SUM(a)",
+   "expected": "SELECT SUM(x.a) AS a FROM x AS x ORDER BY SUM(x.a)"
+  },
+  {
+   "sql": "SELECT AGGREGATE(ARRAY(a, x.b), 0, (x, acc) -> x + acc + a) AS sum_agg FROM x",
+   "expected": "SELECT AGGREGATE(ARRAY(x.a, x.b), 0, (x, acc) -> x + acc + x.a) AS sum_agg FROM x AS x"
+  },
+  {
+   "sql": "SELECT DATE_TRUNC('week', a) AS a FROM x",
+   "expected": "SELECT DATE_TRUNC('WEEK', x.a) AS a FROM x AS x",
+   "dialect": "starrocks",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT DATE_TRUNC(a, MONTH) AS a FROM x",
+   "expected": "SELECT DATE_TRUNC(x.a, MONTH) AS a FROM x AS x",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT x FROM READ_PARQUET('path.parquet', hive_partition=1)",
+   "expected": "SELECT _0.x AS x FROM READ_PARQUET('path.parquet', hive_partition = 1) AS _0"
+  },
+  {
+   "sql": "select * from (values (1, 2))",
+   "expected": "SELECT _0._col_0 AS _col_0, _0._col_1 AS _col_1 FROM (VALUES (1, 2)) AS _0(_col_0, _col_1)"
+  },
+  {
+   "sql": "select * from (values (1, 2)) x",
+   "expected": "SELECT x._col_0 AS _col_0, x._col_1 AS _col_1 FROM (VALUES (1, 2)) AS x(_col_0, _col_1)"
+  },
+  {
+   "sql": "SELECT SOME_UDF(data).* FROM t",
+   "expected": "SELECT SOME_UDF(t.data).* FROM t AS t"
+  },
+  {
+   "sql": "SELECT p.* FROM p UNION ALL SELECT p2.* FROM p2",
+   "expected": "SELECT p.* FROM p AS p UNION ALL SELECT p2.* FROM p2 AS p2"
+  },
+  {
+   "sql": "SELECT a + 1 AS i, missing_column FROM x",
+   "expected": "SELECT x.a + 1 AS i, missing_column AS missing_column FROM x AS x",
+   "flags": {
+    "validate_qualify_columns": false
+   }
+  },
+  {
+   "sql": "SELECT s, arr1, arr2 FROM arrays_test LEFT ARRAY JOIN arr1, arrays_test.arr2",
+   "expected": "SELECT arrays_test.s AS s, arrays_test.arr1 AS arr1, arrays_test.arr2 AS arr2 FROM arrays_test AS arrays_test LEFT ARRAY JOIN arrays_test.arr1, arrays_test.arr2",
+   "dialect": "clickhouse"
+  },
+  {
+   "sql": "WITH employees AS (\n    SELECT *\n    FROM (VALUES ('President', 1, NULL),\n                 ('Vice President Engineering', 10, 1),\n                 ('Programmer', 100, 10),\n                 ('QA Engineer', 101, 10),\n                 ('Vice President HR', 20, 1),\n                 ('Health Insurance Analyst', 200, 20)\n    ) AS t(title, employee_ID, manager_ID)\n)\nSELECT\n  employee_ID,\n  manager_ID,\n  title,\n  level\nFROM employees\nSTART WITH title = 'President'\nCONNECT BY manager_ID = PRIOR employee_id\nORDER BY\n  employee_ID NULLS LAST",
+   "expected": "WITH EMPLOYEES AS (SELECT T.TITLE AS TITLE, T.EMPLOYEE_ID AS EMPLOYEE_ID, T.MANAGER_ID AS MANAGER_ID FROM (VALUES ('President', 1, NULL), ('Vice President Engineering', 10, 1), ('Programmer', 100, 10), ('QA Engineer', 101, 10), ('Vice President HR', 20, 1), ('Health Insurance Analyst', 200, 20)) AS T(TITLE, EMPLOYEE_ID, MANAGER_ID)) SELECT EMPLOYEES.EMPLOYEE_ID AS EMPLOYEE_ID, EMPLOYEES.MANAGER_ID AS MANAGER_ID, EMPLOYEES.TITLE AS TITLE, LEVEL AS LEVEL FROM EMPLOYEES AS EMPLOYEES START WITH EMPLOYEES.TITLE = 'President' CONNECT BY EMPLOYEES.MANAGER_ID = PRIOR EMPLOYEES.EMPLOYEE_ID ORDER BY EMPLOYEE_ID",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH\nt1 AS (\n  SELECT\n    1 AS c1,\n    1 AS c2,\n    'Y' AS TOP_PARENT_INDICATOR,\n    1 AS id\n  FROM DUAL\n),\nt2 AS (\n  SELECT\n    1 AS c2,\n    2 AS id\n  FROM DUAL\n)\nSELECT t1.c1\nFROM t1\nLEFT JOIN t2 ON t1.c2 = t2.c2\nWHERE (t1.TOP_PARENT_INDICATOR = 'Y' OR LEVEL = 1)\nSTART WITH (t1.id IS NOT NULL)\nCONNECT BY PRIOR t1.id = t2.id",
+   "expected": "WITH T1 AS (SELECT 1 AS C1, 1 AS C2, 'Y' AS TOP_PARENT_INDICATOR, 1 AS ID FROM DUAL DUAL), T2 AS (SELECT 1 AS C2, 2 AS ID FROM DUAL DUAL) SELECT T1.C1 AS C1 FROM T1 T1 LEFT JOIN T2 T2 ON T1.C2 = T2.C2 WHERE (T1.TOP_PARENT_INDICATOR = 'Y' OR LEVEL = 1) START WITH (NOT T1.ID IS NULL) CONNECT BY PRIOR T1.ID = T2.ID",
+   "dialect": "oracle",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM ROWS FROM (GENERATE_SERIES(1, 3), GENERATE_SERIES(10, 12)) AS t(a, b)",
+   "expected": "SELECT t.a AS a, t.b AS b FROM ROWS FROM (GENERATE_SERIES(1, 3), GENERATE_SERIES(10, 12)) AS t(a, b)",
+   "dialect": "postgres"
+  },
+  {
+   "sql": "SELECT generate_series FROM generate_series(0, 10) AS g",
+   "expected": "SELECT g.generate_series AS generate_series FROM generate_series(0, 10) AS g(generate_series)",
+   "dialect": "clickhouse"
+  },
+  {
+   "sql": "SELECT * FROM quarterly_sales PIVOT(SUM(amount) FOR quarter IN (ANY ORDER BY quarter)) ORDER BY empid",
+   "expected": "SELECT * FROM QUARTERLY_SALES AS QUARTERLY_SALES PIVOT(SUM(QUARTERLY_SALES.AMOUNT) FOR QUARTERLY_SALES.QUARTER IN (ANY ORDER BY QUARTER)) AS _0 ORDER BY _0.EMPID",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY x) AS x FROM t",
+   "expected": "SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY t.x) AS x FROM t AS t"
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS c) SELECT TO_JSON_STRING(t) FROM t",
+   "expected": "WITH t AS (SELECT 1 AS c) SELECT TO_JSON_STRING(t) AS _col_0 FROM t AS t",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT DATE_TRUNC(col1, WEEK(MONDAY)), col2 FROM t",
+   "expected": "SELECT DATE_TRUNC(t.col1, WEEK(MONDAY)) AS _col_0, t.col2 AS col2 FROM t AS t",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT first, second FROM (SELECT 'val' AS col, STACK(2, 1, 2, 3) AS (first, second)) AS tbl",
+   "expected": "SELECT tbl.first AS first, tbl.second AS second FROM (SELECT 'val' AS col, STACK(2, 1, 2, 3) AS (first, second)) AS tbl"
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS c) SELECT t FROM t",
+   "expected": "WITH t AS (SELECT 1 AS c) SELECT t AS t FROM t AS t",
+   "dialect": "postgres"
+  },
+  {
+   "sql": "SELECT y.a AS a FROM (SELECT x.a AS a FROM x AS x) AS y",
+   "expected": "SELECT y.a AS a FROM (SELECT x.a AS a FROM x AS x) AS y"
+  },
+  {
+   "sql": "SELECT y.a AS a FROM (SELECT x.a AS a FROM x AS x) AS y(a)",
+   "expected": "SELECT y.a AS a FROM (SELECT x.a AS a FROM x AS x) AS y"
+  },
+  {
+   "sql": "SELECT y.c AS c FROM (SELECT x.a AS a, x.b AS b FROM x AS x) AS y(c)",
+   "expected": "SELECT y.c AS c FROM (SELECT x.a AS c, x.b AS b FROM x AS x) AS y"
+  },
+  {
+   "sql": "SELECT a FROM (SELECT a FROM x AS x) y",
+   "expected": "SELECT y.a AS a FROM (SELECT x.a AS a FROM x AS x) AS y"
+  },
+  {
+   "sql": "SELECT a FROM (SELECT a AS a FROM x)",
+   "expected": "SELECT _0.a AS a FROM (SELECT x.a AS a FROM x AS x) AS _0"
+  },
+  {
+   "sql": "SELECT a FROM (SELECT a FROM (SELECT a FROM x))",
+   "expected": "SELECT _1.a AS a FROM (SELECT _0.a AS a FROM (SELECT x.a AS a FROM x AS x) AS _0) AS _1"
+  },
+  {
+   "sql": "SELECT x.a FROM x AS x JOIN (SELECT * FROM x) AS y ON x.a = y.a",
+   "expected": "SELECT x.a AS a FROM x AS x JOIN (SELECT x.a AS a, x.b AS b FROM x AS x) AS y ON x.a = y.a"
+  },
+  {
+   "sql": "SELECT a FROM x as t1 /* there is comment */",
+   "expected": "SELECT t1.a AS a FROM x AS t1 /* there is comment */"
+  },
+  {
+   "sql": "SELECT a, c FROM x JOIN y ON x.b = y.b",
+   "expected": "SELECT x.a AS a, y.c AS c FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT a, c FROM x, y",
+   "expected": "SELECT x.a AS a, y.c AS c FROM x AS x, y AS y"
+  },
+  {
+   "sql": "SELECT a FROM x UNION SELECT a FROM x ORDER BY a",
+   "expected": "SELECT x.a AS a FROM x AS x UNION SELECT x.a AS a FROM x AS x ORDER BY a"
+  },
+  {
+   "sql": "SELECT a FROM x UNION SELECT a FROM x UNION SELECT a FROM x ORDER BY a",
+   "expected": "SELECT x.a AS a FROM x AS x UNION SELECT x.a AS a FROM x AS x UNION SELECT x.a AS a FROM x AS x ORDER BY a"
+  },
+  {
+   "sql": "SELECT a FROM (SELECT a FROM x UNION SELECT a FROM x) ORDER BY a",
+   "expected": "SELECT _0.a AS a FROM (SELECT x.a AS a FROM x AS x UNION SELECT x.a AS a FROM x AS x) AS _0 ORDER BY a"
+  },
+  {
+   "sql": "((select a from x where a < 1)) UNION ((select a from x where a > 2))",
+   "expected": "(SELECT x.a AS a FROM x AS x WHERE x.a < 1) UNION (SELECT x.a AS a FROM x AS x WHERE x.a > 2)",
+   "title": "nested subqueries in union"
+  },
+  {
+   "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar INNER UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz)",
+   "expected": "SELECT _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar INNER UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar UNION ALL CORRESPONDING SELECT 3 AS bar, 4 AS baz)",
+   "expected": "SELECT _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar INNER UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz)",
+   "expected": "SELECT _0.foo AS foo, _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz)",
+   "expected": "SELECT _0.foo AS foo, _0.bar AS bar, _0.baz AS baz FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar LEFT UNION ALL CORRESPONDING SELECT 3 AS bar, 4 AS baz)",
+   "expected": "SELECT _0.foo AS foo, _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL CORRESPONDING SELECT 3 AS bar, 4 AS baz)",
+   "expected": "SELECT _0.foo AS foo, _0.bar AS bar, _0.baz AS baz FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL CORRESPONDING BY (foo, bar) SELECT 3 AS bar, 4 AS baz)",
+   "expected": "SELECT _0.foo AS foo, _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME ON (foo, bar) SELECT 3 AS bar, 4 AS baz) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME ON (foo, bar) SELECT 3 AS bar, 4 AS baz)",
+   "expected": "SELECT _0.foo AS foo, _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME ON (foo, bar) SELECT 3 AS bar, 4 AS baz) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM ((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) LEFT UNION ALL BY NAME ON (bar) SELECT 3 AS foo, 4 AS bar)",
+   "expected": "SELECT _0.bar AS bar FROM ((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) LEFT UNION ALL BY NAME ON (bar) SELECT 3 AS foo, 4 AS bar) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM ((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) FULL UNION ALL BY NAME ON (foo, qux) SELECT 3 AS qux, 4 AS bar)",
+   "expected": "SELECT _0.foo AS foo, _0.qux AS qux FROM ((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) FULL UNION ALL BY NAME ON (foo, qux) SELECT 3 AS qux, 4 AS bar) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM (((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) FULL UNION ALL BY NAME ON (foo, qux) SELECT 3 AS qux, 4 AS bar) INNER UNION ALL BY NAME ON (foo) SELECT 6 AS foo)",
+   "expected": "SELECT _0.foo AS foo FROM (((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) FULL UNION ALL BY NAME ON (foo, qux) SELECT 3 AS qux, 4 AS bar) INNER UNION ALL BY NAME ON (foo) SELECT 6 AS foo) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t1 AS (SELECT 1 AS a, 2 AS b), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS e, 3 AS f) SELECT * FROM ((SELECT * FROM t1 FULL OUTER UNION ALL BY NAME (SELECT * FROM t2 FULL OUTER UNION ALL BY NAME (SELECT * FROM t3 FULL OUTER UNION ALL BY NAME SELECT * FROM t4))))",
+   "expected": "WITH t1 AS (SELECT 1 AS a, 2 AS b), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS e, 3 AS f) SELECT _0.a AS a, _0.b AS b, _0.c AS c, _0.d AS d, _0.e AS e, _0.f AS f FROM ((SELECT t1.a AS a, t1.b AS b FROM t1 AS t1 FULL OUTER UNION ALL BY NAME (SELECT t2.b AS b, t2.c AS c FROM t2 AS t2 FULL OUTER UNION ALL BY NAME (SELECT t3.c AS c, t3.d AS d FROM t3 AS t3 FULL OUTER UNION ALL BY NAME SELECT t4.e AS e, t4.f AS f FROM t4 AS t4))) AS _0)",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t1 AS (SELECT 1 AS a, 2 AS b), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS e, 3 AS f) SELECT * FROM ((SELECT * FROM t1 FULL OUTER UNION ALL BY NAME (SELECT * FROM t2 INNER UNION ALL BY NAME (SELECT * FROM t3 FULL OUTER UNION ALL BY NAME SELECT * FROM t4))))",
+   "expected": "WITH t1 AS (SELECT 1 AS a, 2 AS b), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS e, 3 AS f) SELECT _0.a AS a, _0.b AS b, _0.c AS c FROM ((SELECT t1.a AS a, t1.b AS b FROM t1 AS t1 FULL OUTER UNION ALL BY NAME (SELECT t2.b AS b, t2.c AS c FROM t2 AS t2 INNER UNION ALL BY NAME (SELECT t3.c AS c, t3.d AS d FROM t3 AS t3 FULL OUTER UNION ALL BY NAME SELECT t4.e AS e, t4.f AS f FROM t4 AS t4))) AS _0)",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t1 AS (SELECT 1 AS a, 2 AS b, 3 AS c, 4 AS d), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS d, 3 AS e) SELECT * FROM ((SELECT * FROM t1 FULL OUTER UNION ALL BY NAME (SELECT * FROM t2 FULL UNION ALL BY NAME (SELECT * FROM t3 LEFT UNION ALL BY NAME SELECT * FROM t4))))",
+   "expected": "WITH t1 AS (SELECT 1 AS a, 2 AS b, 3 AS c, 4 AS d), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS d, 3 AS e) SELECT _0.a AS a, _0.b AS b, _0.c AS c, _0.d AS d FROM ((SELECT t1.a AS a, t1.b AS b, t1.c AS c, t1.d AS d FROM t1 AS t1 FULL OUTER UNION ALL BY NAME (SELECT t2.b AS b, t2.c AS c FROM t2 AS t2 FULL UNION ALL BY NAME (SELECT t3.c AS c, t3.d AS d FROM t3 AS t3 LEFT UNION ALL BY NAME SELECT t4.d AS d, t4.e AS e FROM t4 AS t4))) AS _0)",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT a FROM x WHERE b IN (SELECT c FROM y)",
+   "expected": "SELECT x.a AS a FROM x AS x WHERE x.b IN (SELECT y.c AS c FROM y AS y)"
+  },
+  {
+   "sql": "SELECT (SELECT c FROM y) FROM x",
+   "expected": "SELECT (SELECT y.c AS c FROM y AS y) AS _col_0 FROM x AS x"
+  },
+  {
+   "sql": "WITH t(c) AS (SELECT 1) SELECT (SELECT c) FROM t",
+   "expected": "WITH t AS (SELECT 1 AS c) SELECT (SELECT t.c AS c) AS _col_0 FROM t AS t"
+  },
+  {
+   "sql": "WITH t1(c1) AS (SELECT 1), t2(c2) AS (SELECT 2) SELECT (SELECT c1 FROM t2) FROM t1",
+   "expected": "WITH t1 AS (SELECT 1 AS c1), t2 AS (SELECT 2 AS c2) SELECT (SELECT t1.c1 AS c1 FROM t2 AS t2) AS _col_0 FROM t1 AS t1"
+  },
+  {
+   "sql": "SELECT a FROM (SELECT a FROM x) WHERE a IN (SELECT b FROM (SELECT b FROM y))",
+   "expected": "SELECT _1.a AS a FROM (SELECT x.a AS a FROM x AS x) AS _1 WHERE _1.a IN (SELECT _0.b AS b FROM (SELECT y.b AS b FROM y AS y) AS _0)"
+  },
+  {
+   "sql": "SELECT * FROM table_a as A WHERE A.col1 IN (SELECT MAX(B.col2) FROM table_b as B UNION ALL SELECT MAX(C.col2) FROM table_b as C)",
+   "expected": "SELECT * FROM table_a AS `A` WHERE `A`.col1 IN (SELECT MAX(`B`.col2) AS _col_0 FROM table_b AS `B` UNION ALL SELECT MAX(`C`.col2) AS _col_0 FROM table_b AS `C`)",
+   "dialect": "mysql"
+  },
+  {
+   "sql": "select * from x where b in ((((select b from y))))",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x WHERE x.b IN (SELECT y.b AS b FROM y AS y)"
+  },
+  {
+   "sql": "SELECT a FROM x WHERE b IN (SELECT c FROM y WHERE y.b = x.a)",
+   "expected": "SELECT x.a AS a FROM x AS x WHERE x.b IN (SELECT y.c AS c FROM y AS y WHERE y.b = x.a)"
+  },
+  {
+   "sql": "SELECT a FROM x WHERE b IN (SELECT c FROM y WHERE y.b = a)",
+   "expected": "SELECT x.a AS a FROM x AS x WHERE x.b IN (SELECT y.c AS c FROM y AS y WHERE y.b = x.a)"
+  },
+  {
+   "sql": "SELECT a FROM x WHERE b IN (SELECT b FROM y AS x)",
+   "expected": "SELECT x.a AS a FROM x AS x WHERE x.b IN (SELECT x.b AS b FROM y AS x)"
+  },
+  {
+   "sql": "SELECT a FROM x AS i WHERE b IN (SELECT b FROM y AS j WHERE j.b IN (SELECT c FROM y AS k WHERE k.b = j.b))",
+   "expected": "SELECT i.a AS a FROM x AS i WHERE i.b IN (SELECT j.b AS b FROM y AS j WHERE j.b IN (SELECT k.c AS c FROM y AS k WHERE k.b = j.b))"
+  },
+  {
+   "sql": "SELECT (SELECT n.a FROM n WHERE n.id = m.id) FROM m AS m",
+   "expected": "SELECT (SELECT n.a AS a FROM n AS n WHERE n.id = m.id) AS _col_0 FROM m AS m"
+  },
+  {
+   "sql": "SELECT * FROM x",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x"
+  },
+  {
+   "sql": "SELECT x.* FROM x",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x"
+  },
+  {
+   "sql": "SELECT * FROM x JOIN y ON x.b = y.b",
+   "expected": "SELECT x.a AS a, x.b AS b, y.b AS b, y.c AS c FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT x.* FROM x JOIN y ON x.b = y.b",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT x.*, y.* FROM x JOIN y ON x.b = y.b",
+   "expected": "SELECT x.a AS a, x.b AS b, y.b AS b, y.c AS c FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT a FROM (SELECT * FROM x)",
+   "expected": "SELECT _0.a AS a FROM (SELECT x.a AS a, x.b AS b FROM x AS x) AS _0"
+  },
+  {
+   "sql": "SELECT * FROM (SELECT a FROM x)",
+   "expected": "SELECT _0.a AS a FROM (SELECT x.a AS a FROM x AS x) AS _0"
+  },
+  {
+   "sql": "SELECT * FROM x GROUP BY 1, 2",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x GROUP BY x.a, x.b"
+  },
+  {
+   "sql": "SELECT * FROM (SELECT * FROM x) AS s(a, b)",
+   "expected": "SELECT s.a AS a, s.b AS b FROM (SELECT x.a AS a, x.b AS b FROM x AS x) AS s"
+  },
+  {
+   "sql": "SELECT * FROM (SELECT * FROM t) AS s(a, b)",
+   "expected": "SELECT s.a AS a, s.b AS b FROM (SELECT t.a AS a, t.b AS b FROM t AS t) AS s"
+  },
+  {
+   "sql": "SELECT * FROM (SELECT * FROM t1 UNION ALL SELECT * FROM t2) AS s(b)",
+   "expected": "SELECT s.b AS b FROM (SELECT t1.b AS b FROM t1 AS t1 UNION ALL SELECT t2.b AS b FROM t2 AS t2) AS s"
+  },
+  {
+   "sql": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct(\"test\" AS col1, Struct(3 AS col2) AS lvl2) AS lvl1) AS col), tbl2 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct(\"test\" AS col1, Struct(3 AS col2) AS lvl2) AS lvl1) AS col) SELECT tbl1.col.*, tbl2.col.* FROM tbl1, tbl2",
+   "expected": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct('test' AS col1, Struct(3 AS col2) AS lvl2) AS lvl1) AS col), tbl2 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct('test' AS col1, Struct(3 AS col2) AS lvl2) AS lvl1) AS col) SELECT tbl1.col.col1 AS col1, tbl1.col.col2 AS col2, tbl1.col.lvl1 AS lvl1, tbl2.col.col1 AS col1, tbl2.col.col2 AS col2, tbl2.col.lvl1 AS lvl1 FROM tbl1 AS tbl1 CROSS JOIN tbl2 AS tbl2",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct(\"test\" AS col1, Struct(3 AS col2) AS lvl2) AS lvl1, 3 AS col3) AS col) SELECT tbl1.col.lvl1.* FROM tbl1",
+   "expected": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct('test' AS col1, Struct(3 AS col2) AS lvl2) AS lvl1, 3 AS col3) AS col) SELECT tbl1.col.lvl1.col1 AS col1, tbl1.col.lvl1.lvl2 AS lvl2 FROM tbl1 AS tbl1",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, Struct(5 AS col1)) AS col) SELECT tbl1.col.* FROM tbl1",
+   "expected": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, Struct(5 AS col1)) AS col) SELECT tbl1.col.* FROM tbl1 AS tbl1",
+   "title": "Cannot expand struct star with unnamed fields",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col1) AS col) SELECT tbl1.col.* FROM tbl1",
+   "expected": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col1) AS col) SELECT tbl1.col.* FROM tbl1 AS tbl1",
+   "title": "Cannot expand struct star with ambiguous fields",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH tbl1 AS (SELECT STRUCT(1 AS f0, 2 as f1) AS col) SELECT tbl1.col.* from tbl1",
+   "expected": "WITH tbl1 AS (SELECT STRUCT(1 AS f0, 2 AS f1) AS col) SELECT tbl1.col.f0 AS f0, tbl1.col.f1 AS f1 FROM tbl1 AS tbl1",
+   "title": "BigQuery - Expand struct literal",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT one.* FROM structs",
+   "expected": "SELECT structs.one.a_1 AS a_1, structs.one.b_1 AS b_1 FROM structs AS structs",
+   "title": "BigQuery - Expand top level nested struct",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH one AS (SELECT 1 AS x) SELECT one.* FROM structs",
+   "expected": "WITH one AS (SELECT 1 AS x) SELECT structs.one.a_1 AS a_1, structs.one.b_1 AS b_1 FROM structs AS structs",
+   "title": "BigQuery - Unreferenced CTE does not shadow struct column in star expansion",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH one AS (SELECT 1 AS x) SELECT one.* FROM structs, one",
+   "expected": "WITH one AS (SELECT 1 AS x) SELECT one.x AS x FROM structs AS structs CROSS JOIN one AS one",
+   "title": "BigQuery - CTE in FROM takes precedence over struct column in star expansion",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT (one).* FROM structs",
+   "expected": "SELECT (structs.one).a_1 AS a_1, (structs.one).b_1 AS b_1 FROM structs AS structs",
+   "title": "RisingWave - Expand top level nested struct",
+   "dialect": "risingwave",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT (quoted).* FROM structs",
+   "expected": "SELECT (structs.quoted).\"foo bar\" AS \"foo bar\" FROM structs AS structs",
+   "title": "RisingWave - Preserve struct field identifier quotes",
+   "dialect": "risingwave",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT nested_0.nested_1.* FROM structs",
+   "expected": "SELECT structs.nested_0.nested_1.a_2 AS a_2, structs.nested_0.nested_1.nested_2 AS nested_2 FROM structs AS structs",
+   "title": "BigQuery - Expand midlevel struct",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT ((nested_0).nested_1).* FROM structs",
+   "expected": "SELECT ((structs.nested_0).nested_1).a_2 AS a_2, ((structs.nested_0).nested_1).nested_2 AS nested_2 FROM structs AS structs",
+   "title": "RisingWave - Expand midlevel struct",
+   "dialect": "risingwave",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM READ_CSV('file.csv')",
+   "expected": "SELECT * FROM READ_CSV('file.csv') AS _0",
+   "title": "CSV files are not scanned by default"
+  },
+  {
+   "sql": "SELECT * FROM VALUES ('person String, place String', ('Noah', 'Paris'))",
+   "expected": "SELECT _0.person AS person, _0.place AS place FROM VALUES ('person String, place String', ('Noah', 'Paris')) AS _0(person, place)",
+   "dialect": "clickhouse"
+  },
+  {
+   "sql": "SELECT * FROM VALUES ((1, 1), (2, 2))",
+   "expected": "SELECT _0.c1 AS c1, _0.c2 AS c2 FROM VALUES ((1, 1), (2, 2)) AS _0(c1, c2)",
+   "dialect": "clickhouse"
+  },
+  {
+   "sql": "SELECT * FROM VALUES (1, 2, 3)",
+   "expected": "SELECT _0.c1 AS c1 FROM VALUES ((1), (2), (3)) AS _0(c1)",
+   "dialect": "clickhouse"
+  },
+  {
+   "sql": "WITH cities AS (SELECT * FROM (VALUES ('nl', 'amsterdam', 2000, 1005)) AS t(country, name, year, population)) SELECT * FROM cities PIVOT(SUM(population) AS total, COUNT(population) AS count FOR country IN ('nl', 'us') year IN (2000, 2010) name IN ('amsterdam', 'seattle'))",
+   "expected": "WITH cities AS (SELECT t.country AS country, t.name AS name, t.year AS year, t.population AS population FROM (VALUES ('nl', 'amsterdam', 2000, 1005)) AS t(country, name, year, population)) SELECT _0.nl_2000_amsterdam_total AS nl_2000_amsterdam_total, _0.nl_2000_amsterdam_count AS nl_2000_amsterdam_count, _0.nl_2000_seattle_total AS nl_2000_seattle_total, _0.nl_2000_seattle_count AS nl_2000_seattle_count, _0.nl_2010_amsterdam_total AS nl_2010_amsterdam_total, _0.nl_2010_amsterdam_count AS nl_2010_amsterdam_count, _0.nl_2010_seattle_total AS nl_2010_seattle_total, _0.nl_2010_seattle_count AS nl_2010_seattle_count, _0.us_2000_amsterdam_total AS us_2000_amsterdam_total, _0.us_2000_amsterdam_count AS us_2000_amsterdam_count, _0.us_2000_seattle_total AS us_2000_seattle_total, _0.us_2000_seattle_count AS us_2000_seattle_count, _0.us_2010_amsterdam_total AS us_2010_amsterdam_total, _0.us_2010_amsterdam_count AS us_2010_amsterdam_count, _0.us_2010_seattle_total AS us_2010_seattle_total, _0.us_2010_seattle_count AS us_2010_seattle_count FROM cities AS cities PIVOT(SUM(population) AS total, COUNT(population) AS count FOR country IN ('nl', 'us') year IN (2000, 2010) name IN ('amsterdam', 'seattle')) AS _0",
+   "title": "Expand PIVOT column combinations",
+   "dialect": "duckdb"
+  },
+  {
+   "sql": "WITH z AS (SELECT x.a AS a FROM x) SELECT z.a AS a FROM z",
+   "expected": "WITH z AS (SELECT x.a AS a FROM x AS x) SELECT z.a AS a FROM z AS z"
+  },
+  {
+   "sql": "WITH z(a) AS (SELECT a FROM x) SELECT * FROM z",
+   "expected": "WITH z AS (SELECT x.a AS a FROM x AS x) SELECT z.a AS a FROM z AS z"
+  },
+  {
+   "sql": "WITH z AS (SELECT a FROM x) SELECT * FROM z as q",
+   "expected": "WITH z AS (SELECT x.a AS a FROM x AS x) SELECT q.a AS a FROM z AS q"
+  },
+  {
+   "sql": "WITH z AS (SELECT a FROM x) SELECT * FROM z",
+   "expected": "WITH z AS (SELECT x.a AS a FROM x AS x) SELECT z.a AS a FROM z AS z"
+  },
+  {
+   "sql": "WITH z AS (SELECT a FROM x), q AS (SELECT * FROM z) SELECT * FROM q",
+   "expected": "WITH z AS (SELECT x.a AS a FROM x AS x), q AS (SELECT z.a AS a FROM z AS z) SELECT q.a AS a FROM q AS q"
+  },
+  {
+   "sql": "WITH z AS (SELECT * FROM x) SELECT * FROM z UNION SELECT * FROM z ORDER BY a, b",
+   "expected": "WITH z AS (SELECT x.a AS a, x.b AS b FROM x AS x) SELECT z.a AS a, z.b AS b FROM z AS z UNION SELECT z.a AS a, z.b AS b FROM z AS z ORDER BY a, b"
+  },
+  {
+   "sql": "WITH z AS (SELECT * FROM x), q AS (SELECT b FROM z) SELECT b FROM q",
+   "expected": "WITH z AS (SELECT x.a AS a, x.b AS b FROM x AS x), q AS (SELECT z.b AS b FROM z AS z) SELECT q.b AS b FROM q AS q"
+  },
+  {
+   "sql": "WITH z AS ((SELECT b FROM x UNION ALL SELECT b FROM y) ORDER BY b) SELECT * FROM z",
+   "expected": "WITH z AS ((SELECT x.b AS b FROM x AS x UNION ALL SELECT y.b AS b FROM y AS y) ORDER BY b) SELECT z.b AS b FROM z AS z"
+  },
+  {
+   "sql": "WITH cte(x) AS (SELECT 1) SELECT * FROM cte AS cte(a)",
+   "expected": "WITH cte AS (SELECT 1 AS x) SELECT cte.a AS a FROM cte AS cte(a)"
+  },
+  {
+   "sql": "WITH cte(x, y) AS (SELECT 1, 2) SELECT cte.* FROM cte AS cte(a)",
+   "expected": "WITH cte AS (SELECT 1 AS x, 2 AS y) SELECT cte.a AS a, cte.y AS y FROM cte AS cte(a)"
+  },
+  {
+   "sql": "WITH RECURSIVE cte(x) AS (SELECT 1), cte2(y) AS (SELECT 2) SELECT * FROM cte, cte2",
+   "expected": "WITH RECURSIVE cte(x) AS (SELECT 1 AS x), cte2(y) AS (SELECT 2 AS y) SELECT cte.x AS x, cte2.y AS y FROM cte AS cte, cte2 AS cte2"
+  },
+  {
+   "sql": "WITH player AS (SELECT player.name, player.asset.info FROM players) SELECT * FROM player",
+   "expected": "WITH player AS (SELECT players.player.name AS name, players.player.asset.info AS info FROM players AS players) SELECT player.name AS name, player.info AS info FROM player AS player"
+  },
+  {
+   "sql": "WITH tesT AS (SELECT c1 FROM t1) SELECT c1 FROM test",
+   "expected": "WITH test AS (SELECT t1.c1 AS c1 FROM t1 AS t1) SELECT test.c1 AS c1 FROM test AS test"
+  },
+  {
+   "sql": "SELECT * RENAME(a AS d) FROM x",
+   "expected": "SELECT x.a AS d, x.b AS b FROM x AS x"
+  },
+  {
+   "sql": "SELECT * EXCEPT(b) RENAME(a AS d) FROM x",
+   "expected": "SELECT x.a AS d FROM x AS x"
+  },
+  {
+   "sql": "SELECT x.* EXCEPT(a), y.* FROM x, y",
+   "expected": "SELECT x.b AS b, y.b AS b, y.c AS c FROM x AS x, y AS y"
+  },
+  {
+   "sql": "SELECT * EXCEPT(a) FROM x",
+   "expected": "SELECT x.b AS b FROM x AS x"
+  },
+  {
+   "sql": "SELECT * EXCEPT(x.a) FROM x AS x",
+   "expected": "SELECT x.b AS b FROM x AS x"
+  },
+  {
+   "sql": "SELECT * EXCEPT (a, b) FROM x",
+   "expected": "SELECT * EXCEPT (a, b) FROM x AS x"
+  },
+  {
+   "sql": "SELECT x.a, * EXCEPT (a) FROM x AS x LEFT JOIN x AS y USING (a)",
+   "expected": "SELECT x.a AS a, x.b AS b, y.b AS b FROM x AS x LEFT JOIN x AS y ON x.a = y.a"
+  },
+  {
+   "sql": "SELECT COALESCE(CAST(t1.a AS VARCHAR), '') AS a, t2.* EXCEPT (a) FROM x AS t1, x AS t2",
+   "expected": "SELECT COALESCE(CAST(t1.a AS VARCHAR), '') AS a, t2.b AS b FROM x AS t1, x AS t2"
+  },
+  {
+   "sql": "SELECT * REPLACE(2 AS a) FROM x",
+   "expected": "SELECT 2 AS a, x.b AS b FROM x AS x"
+  },
+  {
+   "sql": "SELECT * EXCEPT (a, b) REPLACE (a AS a) FROM x",
+   "expected": "SELECT * EXCEPT (a, b) REPLACE (x.a AS a) FROM x AS x"
+  },
+  {
+   "sql": "SELECT * REPLACE(COALESCE(b, a) AS a, a as b) FROM x",
+   "expected": "SELECT COALESCE(x.b, x.a) AS a, x.a AS b FROM x AS x"
+  },
+  {
+   "sql": "SELECT * REPLACE(1 AS a) RENAME(b as alias_b) FROM x",
+   "expected": "SELECT 1 AS a, x.b AS alias_b FROM x AS x"
+  },
+  {
+   "sql": "SELECT * EXCEPT(a) REPLACE(COALESCE(a, b) AS b) RENAME(b AS new_b) FROM x",
+   "expected": "SELECT COALESCE(x.a, x.b) AS new_b FROM x AS x"
+  },
+  {
+   "sql": "SELECT * REPLACE(1 AS a, a AS b) RENAME(b AS new_b) FROM x",
+   "expected": "SELECT 1 AS a, x.a AS new_b FROM x AS x"
+  },
+  {
+   "sql": "SELECT x.b FROM x JOIN y USING (b)",
+   "expected": "SELECT x.b AS b FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "WITH cte AS (SELECT a.b.c.d.f.g FROM tbl1) SELECT g FROM (SELECT g FROM tbl2) tbl2 JOIN cte USING(g)",
+   "expected": "WITH cte AS (SELECT tbl1.a.b.c.d.f.g AS g FROM tbl1 AS tbl1) SELECT COALESCE(tbl2.g, cte.g) AS g FROM (SELECT tbl2.g AS g FROM tbl2 AS tbl2) AS tbl2 JOIN cte AS cte ON tbl2.g = cte.g"
+  },
+  {
+   "sql": "SELECT x.b FROM x JOIN y USING (b) JOIN z USING (b)",
+   "expected": "SELECT x.b AS b FROM x AS x JOIN y AS y ON x.b = y.b JOIN z AS z ON x.b = z.b"
+  },
+  {
+   "sql": "SELECT b FROM x AS x2 JOIN y AS y2 USING (b)",
+   "expected": "SELECT COALESCE(x2.b, y2.b) AS b FROM x AS x2 JOIN y AS y2 ON x2.b = y2.b"
+  },
+  {
+   "sql": "SELECT b FROM x JOIN y USING (b) WHERE b = 1 and y.b = 2",
+   "expected": "SELECT COALESCE(x.b, y.b) AS b FROM x AS x JOIN y AS y ON x.b = y.b WHERE COALESCE(x.b, y.b) = 1 AND y.b = 2"
+  },
+  {
+   "sql": "SELECT b FROM x JOIN y USING (b) JOIN z USING (b)",
+   "expected": "SELECT COALESCE(x.b, y.b, z.b) AS b FROM x AS x JOIN y AS y ON x.b = y.b JOIN z AS z ON x.b = z.b"
+  },
+  {
+   "sql": "SELECT * FROM x JOIN y USING(b)",
+   "expected": "SELECT x.a AS a, COALESCE(x.b, y.b) AS b, y.c AS c FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT x.* FROM x JOIN y USING(b)",
+   "expected": "SELECT x.a AS a, COALESCE(x.b, y.b) AS b FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT * FROM x LEFT JOIN y USING(b)",
+   "expected": "SELECT x.a AS a, COALESCE(x.b, y.b) AS b, y.c AS c FROM x AS x LEFT JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT b FROM x JOIN y USING(b)",
+   "expected": "SELECT COALESCE(x.b, y.b) AS b FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT b, c FROM x JOIN y USING(b)",
+   "expected": "SELECT COALESCE(x.b, y.b) AS b, y.c AS c FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT b, c FROM y JOIN z USING(b, c)",
+   "expected": "SELECT COALESCE(y.b, z.b) AS b, COALESCE(y.c, z.c) AS c FROM y AS y JOIN z AS z ON y.b = z.b AND y.c = z.c"
+  },
+  {
+   "sql": "SELECT * FROM y JOIN z USING(b, c)",
+   "expected": "SELECT COALESCE(y.b, z.b) AS b, COALESCE(y.c, z.c) AS c FROM y AS y JOIN z AS z ON y.b = z.b AND y.c = z.c"
+  },
+  {
+   "sql": "SELECT * FROM y JOIN z USING(b, c) WHERE b = 2 AND c = 3",
+   "expected": "SELECT COALESCE(y.b, z.b) AS b, COALESCE(y.c, z.c) AS c FROM y AS y JOIN z AS z ON y.b = z.b AND y.c = z.c WHERE COALESCE(y.b, z.b) = 2 AND COALESCE(y.c, z.c) = 3"
+  },
+  {
+   "sql": "SELECT b FROM x JOIN t USING(a)",
+   "expected": "SELECT x.b AS b FROM x AS x JOIN t AS t ON x.a = t.a"
+  },
+  {
+   "sql": "SELECT b FROM t JOIN x USING(a)",
+   "expected": "SELECT x.b AS b FROM t AS t JOIN x AS x ON t.a = x.a"
+  },
+  {
+   "sql": "SELECT a FROM t1 JOIN t2 USING(a)",
+   "expected": "SELECT COALESCE(t1.a, t2.a) AS a FROM t1 AS t1 JOIN t2 AS t2 ON t1.a = t2.a"
+  },
+  {
+   "sql": "WITH m(a) AS (SELECT 1), n(b) AS (SELECT 1) SELECT * FROM m JOIN n AS foo(a) USING (a)",
+   "expected": "WITH m AS (SELECT 1 AS a), n AS (SELECT 1 AS b) SELECT COALESCE(m.a, foo.a) AS a FROM m AS m JOIN n AS foo(a) ON m.a = foo.a"
+  },
+  {
+   "sql": "WITH t1 AS (SELECT 'x' AS id, DATE '2024-01-01' AS foo, 000 AS value), t2 AS (SELECT 'x' AS id, DATE '2024-02-02' AS foo, 123 AS value), t3 AS (SELECT 'x' AS id, DATE '2024-02-02' AS foo, 456 AS value) SELECT * FROM t1 FULL OUTER JOIN t2 USING(id, foo) FULL OUTER JOIN t3 USING(id, foo)",
+   "expected": "WITH t1 AS (SELECT 'x' AS id, CAST('2024-01-01' AS DATE) AS foo, 000 AS value), t2 AS (SELECT 'x' AS id, CAST('2024-02-02' AS DATE) AS foo, 123 AS value), t3 AS (SELECT 'x' AS id, CAST('2024-02-02' AS DATE) AS foo, 456 AS value) SELECT COALESCE(t1.id, t2.id, t3.id) AS id, COALESCE(t1.foo, t2.foo, t3.foo) AS foo, t1.value AS value, t2.value AS value, t3.value AS value FROM t1 AS t1 FULL OUTER JOIN t2 AS t2 ON t1.id = t2.id AND t1.foo = t2.foo FULL OUTER JOIN t3 AS t3 ON COALESCE(t1.id, t2.id) = t3.id AND COALESCE(t1.foo, t2.foo) = t3.foo",
+   "title": "coalesce the USING clause's columns (3 joins, 2 join columns)"
+  },
+  {
+   "sql": "WITH t1 AS (SELECT 'x' AS id, CAST('2024-01-01' AS DATE) AS foo, 000 AS value), t2 AS (SELECT 'x' AS id, CAST('2024-02-02' AS DATE) AS foo, 123 AS value), t3 AS (SELECT 'x' AS id, CAST('2024-02-02' AS DATE) AS foo, 456 AS value) SELECT * FROM t1 FULL OUTER JOIN t2 USING (id, foo, value) FULL OUTER JOIN t3 USING (id, foo, value)",
+   "expected": "WITH t1 AS (SELECT 'x' AS id, CAST('2024-01-01' AS DATE) AS foo, 000 AS value), t2 AS (SELECT 'x' AS id, CAST('2024-02-02' AS DATE) AS foo, 123 AS value), t3 AS (SELECT 'x' AS id, CAST('2024-02-02' AS DATE) AS foo, 456 AS value) SELECT COALESCE(t1.id, t2.id, t3.id) AS id, COALESCE(t1.foo, t2.foo, t3.foo) AS foo, COALESCE(t1.value, t2.value, t3.value) AS value FROM t1 AS t1 FULL OUTER JOIN t2 AS t2 ON t1.id = t2.id AND t1.foo = t2.foo AND t1.value = t2.value FULL OUTER JOIN t3 AS t3 ON COALESCE(t1.id, t2.id) = t3.id AND COALESCE(t1.foo, t2.foo) = t3.foo AND COALESCE(t1.value, t2.value) = t3.value",
+   "title": "coalesce the USING clause's columns (3 joins, 3 join columns)"
+  },
+  {
+   "sql": "WITH t1 AS (SELECT 'x' AS id, CAST('2024-01-01' AS DATE) AS foo, 000 AS value), t2 AS (SELECT 'x' AS id, CAST('2024-02-02' AS DATE) AS foo, 123 AS value), t3 AS (SELECT 'x' AS id, CAST('2024-02-02' AS DATE) AS foo, 456 AS value), t4 AS (SELECT 'x' AS id, CAST('2024-03-03' AS DATE) AS foo, 789 AS value) SELECT * FROM t1 FULL OUTER JOIN t2 USING (id, foo) FULL OUTER JOIN t3 USING (id, foo) FULL OUTER JOIN t4 USING (id, foo)",
+   "expected": "WITH t1 AS (SELECT 'x' AS id, CAST('2024-01-01' AS DATE) AS foo, 000 AS value), t2 AS (SELECT 'x' AS id, CAST('2024-02-02' AS DATE) AS foo, 123 AS value), t3 AS (SELECT 'x' AS id, CAST('2024-02-02' AS DATE) AS foo, 456 AS value), t4 AS (SELECT 'x' AS id, CAST('2024-03-03' AS DATE) AS foo, 789 AS value) SELECT COALESCE(t1.id, t2.id, t3.id, t4.id) AS id, COALESCE(t1.foo, t2.foo, t3.foo, t4.foo) AS foo, t1.value AS value, t2.value AS value, t3.value AS value, t4.value AS value FROM t1 AS t1 FULL OUTER JOIN t2 AS t2 ON t1.id = t2.id AND t1.foo = t2.foo FULL OUTER JOIN t3 AS t3 ON COALESCE(t1.id, t2.id) = t3.id AND COALESCE(t1.foo, t2.foo) = t3.foo FULL OUTER JOIN t4 AS t4 ON COALESCE(t1.id, t2.id, t3.id) = t4.id AND COALESCE(t1.foo, t2.foo, t3.foo) = t4.foo",
+   "title": "coalesce the USING clause's columns (4 joins, 2 join columns)"
+  },
+  {
+   "sql": "WITH t1 AS (SELECT 1 AS id), t2 AS (SELECT 2 AS id) SELECT STRUCT(id) AS my_field FROM t1 JOIN t2 USING (id)",
+   "expected": "WITH t1 AS (SELECT 1 AS id), t2 AS (SELECT 2 AS id) SELECT STRUCT(COALESCE(t1.id, t2.id) AS id) AS my_field FROM t1 AS t1 JOIN t2 AS t2 ON t1.id = t2.id",
+   "title": "Name anonymous STRUCT fields if replacing USING columns"
+  },
+  {
+   "sql": "WITH t1 AS (SELECT 1 AS id), t2 AS (SELECT 2 AS id) SELECT STRUCT(id AS col) AS my_field FROM t1 JOIN t2 USING (id)",
+   "expected": "WITH t1 AS (SELECT 1 AS id), t2 AS (SELECT 2 AS id) SELECT STRUCT(COALESCE(t1.id, t2.id) AS col) AS my_field FROM t1 AS t1 JOIN t2 AS t2 ON t1.id = t2.id",
+   "title": "Do not rename aliased STRUCT fields if replacing USING columns"
+  },
+  {
+   "sql": "SELECT /*+ BROADCAST(y) */ x.b FROM x JOIN y ON x.b = y.b",
+   "expected": "SELECT /*+ BROADCAST(y) */ x.b AS b FROM x AS x JOIN y AS y ON x.b = y.b",
+   "dialect": "spark",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT c FROM x LATERAL VIEW EXPLODE (a) AS c",
+   "expected": "SELECT _0.c AS c FROM x AS x LATERAL VIEW EXPLODE(x.a) _0 AS c"
+  },
+  {
+   "sql": "SELECT c FROM xx LATERAL VIEW EXPLODE (a) AS c",
+   "expected": "SELECT _0.c AS c FROM xx AS xx LATERAL VIEW EXPLODE(xx.a) _0 AS c"
+  },
+  {
+   "sql": "SELECT c FROM x LATERAL VIEW EXPLODE (a) t AS c",
+   "expected": "SELECT t.c AS c FROM x AS x LATERAL VIEW EXPLODE(x.a) t AS c"
+  },
+  {
+   "sql": "SELECT aa FROM x, UNNEST(a) AS t(aa)",
+   "expected": "SELECT t.aa AS aa FROM x AS x, UNNEST(x.a) AS t(aa)"
+  },
+  {
+   "sql": "SELECT aa FROM x, UNNEST(a) AS aa",
+   "expected": "SELECT aa AS aa FROM x AS x CROSS JOIN UNNEST(x.a) AS aa",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "select * from unnest ([1, 2]) as x with offset",
+   "expected": "SELECT x AS x, offset AS offset FROM UNNEST([1, 2]) AS x WITH OFFSET AS offset",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "select * from unnest ([1, 2]) as x with offset as y",
+   "expected": "SELECT x AS x, y AS y FROM UNNEST([1, 2]) AS x WITH OFFSET AS y",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "select x, a, x.a from unnest([STRUCT(1 AS a)]) as x CROSS JOIN m",
+   "expected": "SELECT x AS x, a AS a, x.a AS a FROM UNNEST([STRUCT(1 AS a)]) AS x CROSS JOIN m AS m",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH cte AS (SELECT [STRUCT(1 AS a)] AS x) select a, x, m.a from cte, UNNEST(x) AS m CROSS JOIN n",
+   "expected": "WITH cte AS (SELECT [STRUCT(1 AS a)] AS x) SELECT a AS a, cte.x AS x, m.a AS a FROM cte AS cte CROSS JOIN UNNEST(cte.x) AS m CROSS JOIN n AS n",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT x.a, i.b FROM x CROSS JOIN UNNEST(SPLIT(CAST(b AS VARCHAR), ',')) AS i(b)",
+   "expected": "SELECT x.a AS a, i.b AS b FROM x AS x CROSS JOIN UNNEST(SPLIT(CAST(x.b AS VARCHAR), ',')) AS i(b)",
+   "dialect": "presto"
+  },
+  {
+   "sql": "SELECT c FROM (SELECT 1 a) AS x LATERAL VIEW EXPLODE(a) AS c",
+   "expected": "SELECT _0.c AS c FROM (SELECT 1 AS a) AS x LATERAL VIEW EXPLODE(x.a) _0 AS c"
+  },
+  {
+   "sql": "SELECT * FROM foo(bar) AS t(c1, c2, c3)",
+   "expected": "SELECT t.c1 AS c1, t.c2 AS c2, t.c3 AS c3 FROM FOO(bar) AS t(c1, c2, c3)"
+  },
+  {
+   "sql": "SELECT c1, c3 FROM foo(bar) AS t(c1, c2, c3)",
+   "expected": "SELECT t.c1 AS c1, t.c3 AS c3 FROM FOO(bar) AS t(c1, c2, c3)"
+  },
+  {
+   "sql": "SELECT c.f::VARCHAR(MAX) AS f, e AS e FROM a.b AS c, c.d AS e",
+   "expected": "SELECT CAST(c.f AS VARCHAR(MAX)) AS f, e AS e FROM a.b AS c, c.d AS e",
+   "dialect": "redshift",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH cte AS (SELECT 1 AS col) SELECT * FROM cte LEFT JOIN UNNEST((SELECT ARRAY_AGG(DISTINCT x) AS agg FROM UNNEST([1]) AS x WHERE col = 1))",
+   "expected": "WITH cte AS (SELECT 1 AS col) SELECT * FROM cte AS cte LEFT JOIN UNNEST((SELECT ARRAY_AGG(DISTINCT x) AS agg FROM UNNEST([1]) AS x WHERE cte.col = 1))",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM UNNEST(ARRAY<STRUCT<percentile STRING, value INT64, score FLOAT64>>[(\"p10\", 1, 0.0)])",
+   "expected": "SELECT percentile AS percentile, value AS value, score AS score FROM UNNEST(ARRAY<STRUCT<percentile STRING, value INT64, score FLOAT64>>[('p10', 1, 0.0)])",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH scores AS (SELECT * FROM UNNEST((SELECT ARRAY<STRUCT<percentile STRING, value INT64, score FLOAT64>>[(\"p10\", 1, 0.0)]))) SELECT percentile FROM scores",
+   "expected": "WITH scores AS (SELECT percentile AS percentile, value AS value, score AS score FROM UNNEST((SELECT ARRAY<STRUCT<percentile STRING, value INT64, score FLOAT64>>[('p10', 1, 0.0)] AS _col_0))) SELECT scores.percentile AS percentile FROM scores AS scores",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT a + 1 AS a, ROW_NUMBER() OVER (PARTITION BY b ORDER BY a) AS row_num FROM x ORDER BY a, row_num",
+   "expected": "SELECT x.a + 1 AS a, ROW_NUMBER() OVER (PARTITION BY x.b ORDER BY x.a) AS row_num FROM x AS x ORDER BY a, row_num",
+   "title": "ORDER BY in window function"
+  },
+  {
+   "sql": "SELECT ROW_NUMBER() OVER (PARTITION BY a ORDER BY b) AS row_num FROM x QUALIFY row_num = 1",
+   "expected": "SELECT ROW_NUMBER() OVER (PARTITION BY x.a ORDER BY x.b) AS row_num FROM x AS x QUALIFY ROW_NUMBER() OVER (PARTITION BY x.a ORDER BY x.b) = 1",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT x.b, x.a FROM x LEFT JOIN y ON x.b = y.b QUALIFY ROW_NUMBER() OVER(PARTITION BY x.b ORDER BY x.a DESC) = 1 ORDER BY x.b, x.a",
+   "expected": "SELECT x.b AS b, x.a AS a FROM x AS x LEFT JOIN y AS y ON x.b = y.b QUALIFY ROW_NUMBER() OVER (PARTITION BY x.b ORDER BY x.a DESC) = 1 ORDER BY x.b, x.a",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM x QUALIFY COUNT(a) OVER (PARTITION BY b) > 1",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x QUALIFY COUNT(x.a) OVER (PARTITION BY x.b) > 1"
+  },
+  {
+   "sql": "SELECT a, MAX(b) AS x FROM x GROUP BY a QUALIFY ROW_NUMBER() OVER (PARTITION BY x ORDER BY a) = 1",
+   "expected": "SELECT x.a AS a, MAX(x.b) AS x FROM x AS x GROUP BY a QUALIFY ROW_NUMBER() OVER (PARTITION BY x ORDER BY a) = 1",
+   "title": "BigQuery alias expansion in QUALIFY with source shadowing",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT x.a, MAX(x.b) AS x FROM x GROUP BY 1 QUALIFY ROW_NUMBER() OVER (PARTITION BY x ORDER BY a) = 1",
+   "expected": "SELECT x.a AS a, MAX(x.b) AS x FROM x AS x GROUP BY 1 QUALIFY ROW_NUMBER() OVER (PARTITION BY x ORDER BY a) = 1",
+   "title": "BigQuery alias expansion in QUALIFY with source shadowing and GROUP BY positional ref",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT 2 AS d, d + 1 FROM x WHERE d = 2 GROUP BY d",
+   "expected": "SELECT 2 AS d, 2 + 1 AS _col_1 FROM x AS x WHERE 2 = 2 GROUP BY 1"
+  },
+  {
+   "sql": "SELECT\n  x.a + 1 AS i,\n  i + 1 AS j,\n  j + 1 AS k\nFROM x",
+   "expected": "SELECT x.a + 1 AS i, x.a + 1 + 1 AS j, x.a + 1 + 1 + 1 AS k FROM x AS x",
+   "title": "expand alias reference"
+  },
+  {
+   "sql": "SELECT i + 1 AS j, x.a + 1 AS i FROM x",
+   "expected": "SELECT i + 1 AS j, x.a + 1 AS i FROM x AS x",
+   "title": "noop - reference comes before alias",
+   "flags": {
+    "validate_qualify_columns": false
+   }
+  },
+  {
+   "sql": "SELECT\n  *\nFROM (\n  SELECT\n    x.a + 1 AS i,\n    i + 1 AS j\n  FROM x\n)",
+   "expected": "SELECT _0.i AS i, _0.j AS j FROM (SELECT x.a + 1 AS i, x.a + 1 + 1 AS j FROM x AS x) AS _0",
+   "title": "subquery"
+  },
+  {
+   "sql": "SELECT x.a + x.b AS f, f * x.b FROM x",
+   "expected": "SELECT x.a + x.b AS f, (x.a + x.b) * x.b AS _col_1 FROM x AS x",
+   "title": "wrap expanded alias to ensure operator precedence isnt broken"
+  },
+  {
+   "sql": "SELECT x.a + x.b AS f, f, f + 5 FROM x",
+   "expected": "SELECT x.a + x.b AS f, x.a + x.b AS _col_1, x.a + x.b + 5 AS _col_2 FROM x AS x",
+   "title": "no need to wrap expanded alias"
+  },
+  {
+   "sql": "SELECT a, SUM(b) AS c, SUM(c) OVER(PARTITION BY a) AS d from x group by 1 ORDER BY a",
+   "expected": "SELECT x.a AS a, SUM(x.b) AS c, SUM(SUM(x.b)) OVER (PARTITION BY x.a) AS d FROM x AS x GROUP BY x.a ORDER BY a",
+   "title": "expand double agg if window func"
+  },
+  {
+   "sql": "WITH RECURSIVE t(c) AS (SELECT 1 AS c UNION ALL SELECT c + 1 AS c FROM t WHERE c <= 10) SELECT c FROM t",
+   "expected": "WITH RECURSIVE t(c) AS (SELECT 1 AS c UNION ALL SELECT t.c + 1 AS c FROM t AS t WHERE t.c <= 10) SELECT t.c AS c FROM t AS t",
+   "title": "we can't expand aliases corresponding to recursive CTE columns (CTE names output columns)"
+  },
+  {
+   "sql": "WITH RECURSIVE t AS (SELECT 1 AS c UNION ALL SELECT c + 1 AS c FROM t WHERE c <= 10) SELECT c FROM t",
+   "expected": "WITH RECURSIVE t AS (SELECT 1 AS c UNION ALL SELECT t.c + 1 AS c FROM t AS t WHERE t.c <= 10) SELECT t.c AS c FROM t AS t",
+   "title": "we can't expand aliases corresponding to recursive CTE columns (CTE doesn't name output columns)"
+  },
+  {
+   "sql": "SELECT DISTINCT ON (new_col, b + 1, 1) t1.a AS new_col FROM x AS t1 ORDER BY new_col",
+   "expected": "SELECT DISTINCT ON (new_col, t1.b + 1, new_col) t1.a AS new_col FROM x AS t1 ORDER BY new_col",
+   "title": "expand DISTINCT ON ordinals / projection names"
+  },
+  {
+   "sql": "SELECT COALESCE(COUNT(DISTINCT a)) AS a FROM x",
+   "expected": "SELECT COALESCE(COUNT(DISTINCT x.a)) AS a FROM x AS x",
+   "title": "qualify columns for Aggregate Functions and DISTINCT"
+  },
+  {
+   "sql": "SELECT a AS b, b AS a FROM c",
+   "expected": "SELECT C.A AS B, C.B AS A FROM C C",
+   "title": "Oracle does not support lateral alias expansion",
+   "dialect": "oracle",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH RECURSIVE rec AS (SELECT id, parent_id AS parent, 1 AS level FROM (SELECT 1 AS id, 0 AS parent_id) AS t WHERE parent = 0 UNION ALL SELECT rec.id + 10 AS id, rec.id AS parent, rec.level + 1 AS level FROM rec WHERE level < 3) SELECT * FROM rec",
+   "expected": "WITH RECURSIVE rec AS (SELECT t.id AS id, t.parent_id AS parent, 1 AS level FROM (SELECT 1 AS id, 0 AS parent_id) AS t WHERE t.parent_id = 0 UNION ALL SELECT rec.id + 10 AS id, rec.id AS parent, rec.level + 1 AS level FROM rec AS rec WHERE rec.level < 3) SELECT rec.id AS id, rec.parent AS parent, rec.level AS level FROM rec AS rec",
+   "title": "enable aliases expansion for the base case of recursive CTE"
+  },
+  {
+   "sql": "WITH RECURSIVE rec AS (SELECT id, parent_id AS parent, 1 AS level FROM (SELECT 1 AS id, 0 AS parent_id) AS t WHERE parent = 0 UNION ALL SELECT num, val AS x, 2 AS level FROM (SELECT 2 AS num, 1 AS val) AS s WHERE x = 1 UNION ALL SELECT rec.id + 10 AS id, rec.id AS parent, rec.level + 1 AS level FROM rec WHERE rec.level < 3) SELECT * FROM rec ORDER BY rec.id",
+   "expected": "WITH RECURSIVE rec AS (SELECT t.id AS id, t.parent_id AS parent, 1 AS level FROM (SELECT 1 AS id, 0 AS parent_id) AS t WHERE t.parent_id = 0 UNION ALL SELECT s.num AS num, s.val AS x, 2 AS level FROM (SELECT 2 AS num, 1 AS val) AS s WHERE s.val = 1 UNION ALL SELECT rec.id + 10 AS id, rec.id AS parent, rec.level + 1 AS level FROM rec AS rec WHERE rec.level < 3) SELECT rec.id AS id, rec.parent AS parent, rec.level AS level FROM rec AS rec ORDER BY rec.id"
+  },
+  {
+   "sql": "WITH RECURSIVE t(c) AS (SELECT 1 AS c UNION ALL SELECT * FROM (SELECT c + 1 AS c FROM t WHERE c <= 3 UNION ALL SELECT c + 2 AS c FROM t WHERE c <= 3)) SELECT c FROM t ORDER BY c",
+   "expected": "WITH RECURSIVE t(c) AS (SELECT 1 AS c UNION ALL SELECT _0.c AS c FROM (SELECT t.c + 1 AS c FROM t AS t WHERE t.c <= 3 UNION ALL SELECT t.c + 2 AS c FROM t AS t WHERE t.c <= 3) AS _0) SELECT t.c AS c FROM t AS t ORDER BY c"
+  },
+  {
+   "sql": "SELECT * FROM ((tbl))",
+   "expected": "SELECT * FROM ((tbl AS tbl))"
+  },
+  {
+   "sql": "SELECT a, c FROM (x LEFT JOIN y ON a = c)",
+   "expected": "SELECT x.a AS a, y.c AS c FROM (x AS x LEFT JOIN y AS y ON x.a = y.c)"
+  },
+  {
+   "sql": "SELECT * FROM ((a CROSS JOIN ((b CROSS JOIN c) CROSS JOIN (d CROSS JOIN e))))",
+   "expected": "SELECT * FROM ((a AS a CROSS JOIN ((b AS b CROSS JOIN c AS c) CROSS JOIN (d AS d CROSS JOIN e AS e))))"
+  },
+  {
+   "sql": "SELECT * FROM ((SELECT * FROM tbl))",
+   "expected": "SELECT * FROM ((SELECT * FROM tbl AS tbl) AS _0)"
+  },
+  {
+   "sql": "SELECT * FROM ((SELECT c FROM t1) CROSS JOIN t2)",
+   "expected": "SELECT * FROM ((SELECT t1.c AS c FROM t1 AS t1) AS _0 CROSS JOIN t2 AS t2)"
+  },
+  {
+   "sql": "SELECT * FROM ((SELECT * FROM x) INNER JOIN y ON a = c)",
+   "expected": "SELECT y.b AS b, y.c AS c, _0.a AS a, _0.b AS b FROM ((SELECT x.a AS a, x.b AS b FROM x AS x) AS _0 INNER JOIN y AS y ON _0.a = y.c)"
+  },
+  {
+   "sql": "SELECT x.a, y.b, z.c FROM x LEFT JOIN (y INNER JOIN z ON y.c = z.c) ON x.b = y.b",
+   "expected": "SELECT x.a AS a, y.b AS b, z.c AS c FROM x AS x LEFT JOIN (y AS y INNER JOIN z AS z ON y.c = z.c) ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT * FROM ((SELECT * FROM x) INNER JOIN (SELECT * FROM y) ON a = c)",
+   "expected": "SELECT _0.a AS a, _0.b AS b, _1.b AS b, _1.c AS c FROM ((SELECT x.a AS a, x.b AS b FROM x AS x) AS _0 INNER JOIN (SELECT y.b AS b, y.c AS c FROM y AS y) AS _1 ON _0.a = _1.c)"
+  },
+  {
+   "sql": "SELECT b FROM ((SELECT a FROM x) INNER JOIN y ON a = b)",
+   "expected": "SELECT y.b AS b FROM ((SELECT x.a AS a FROM x AS x) AS _0 INNER JOIN y AS y ON _0.a = y.b)"
+  },
+  {
+   "sql": "SELECT a, c FROM x TABLESAMPLE SYSTEM (10 ROWS) CROSS JOIN y TABLESAMPLE SYSTEM (10 ROWS)",
+   "expected": "SELECT x.a AS a, y.c AS c FROM x AS x TABLESAMPLE SYSTEM (10 ROWS) CROSS JOIN y AS y TABLESAMPLE SYSTEM (10 ROWS)"
+  },
+  {
+   "sql": "SELECT x.a FROM x INNER JOIN y ON x.a = c INNER JOIN z ON x.a = z.c",
+   "expected": "SELECT x.a AS a FROM x AS x INNER JOIN y AS y ON x.a = y.c INNER JOIN z AS z ON x.a = z.c"
+  },
+  {
+   "sql": "SELECT x.a AS foo FROM x JOIN y ON foo = y.b",
+   "expected": "SELECT X.A AS FOO FROM X AS X JOIN Y AS Y ON X.A = Y.B",
+   "title": "Snowflake column alias in JOIN",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT x.a AS foo FROM x QUALIFY foo = 1",
+   "expected": "SELECT X.A AS FOO FROM X AS X QUALIFY X.A = 1",
+   "title": "Snowflake column alias in QUALIFY",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT x.a AS foo FROM x GROUP BY foo = 1",
+   "expected": "SELECT X.A AS FOO FROM X AS X GROUP BY X.A = 1",
+   "title": "Snowflake column alias in GROUP BY",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT x.a AS foo FROM x WHERE foo = 1",
+   "expected": "SELECT X.A AS FOO FROM X AS X WHERE X.A = 1",
+   "title": "Snowflake column alias in WHERE",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM x SEMI JOIN y USING (b)",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x SEMI JOIN y AS y ON x.b = y.b",
+   "title": "SEMI JOIN table is excluded from the scope"
+  },
+  {
+   "sql": "SELECT * FROM x ANTI JOIN y USING (b)",
+   "expected": "SELECT x.a AS a, x.b AS b FROM x AS x ANTI JOIN y AS y ON x.b = y.b",
+   "title": "ANTI JOIN table is excluded from the scope"
+  },
+  {
+   "sql": "SELECT * FROM x SEMI JOIN y USING (b) JOIN y USING (b)",
+   "expected": "SELECT x.a AS a, COALESCE(x.b, y_2.b) AS b, y_2.c AS c FROM x AS x SEMI JOIN y AS y ON x.b = y.b JOIN y AS y_2 ON x.b = y_2.b",
+   "title": "SEMI + normal joins reinclude the table on scope"
+  },
+  {
+   "sql": "SELECT * FROM x ANTI JOIN y USING (b) JOIN y USING (b)",
+   "expected": "SELECT x.a AS a, COALESCE(x.b, y_2.b) AS b, y_2.c AS c FROM x AS x ANTI JOIN y AS y ON x.b = y.b JOIN y AS y_2 ON x.b = y_2.b",
+   "title": "ANTI + normal joins reinclude the table on scope"
+  }
+ ]
+}

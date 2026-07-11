@@ -1367,6 +1367,18 @@ open class DuckdbGenerator(
         return super.joinSql(expression)
     }
 
+    // sqlglot: TRANSFORMS[exp.Pivot] = transforms.preprocess([transforms.unqualify_columns])
+    // DuckDB doesn't allow qualified columns inside of PIVOT expressions.
+    override fun pivotSql(expression: Pivot): String {
+        // sqlglot: transforms.unqualify_columns — pop off the table/db/catalog parts
+        for (column in expression.findAll<Column>()) {
+            for (part in column.parts.dropLast(1)) {
+                part.pop()
+            }
+        }
+        return super.pivotSql(expression)
+    }
+
     // sqlglot: DuckDBGenerator.withingroup_sql
     override fun withingroupSql(expression: WithinGroup): String {
         val funcExpr = expression.thisArg as? Expression

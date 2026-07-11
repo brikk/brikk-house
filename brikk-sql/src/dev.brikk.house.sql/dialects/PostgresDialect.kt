@@ -10,15 +10,21 @@ import dev.brikk.house.sql.parser.TokenizerConfig
  * Port of sqlglot's Postgres dialect umbrella (reference/sqlglot/sqlglot/dialects/postgres.py
  * class Postgres). Tokenizer tables are generated (PostgresTokenizerTables); the parser and
  * generator subclasses live in PostgresParser.kt / PostgresGenerator.kt.
- *
- * NOT PORTED: TABLES_REFERENCEABLE_AS_COLUMNS (only read by the optimizer's
- * qualify_columns, which has no Kotlin equivalent) and DEFAULT_FUNCTIONS_COLUMN_NAMES
- * (also optimizer-only).
  */
 // sqlglot: dialects.postgres.Postgres
 open class PostgresDialect : Dialect() {
 
     override val name: String get() = "postgres"
+
+    // sqlglot: Postgres.TABLES_REFERENCEABLE_AS_COLUMNS
+    override val tablesReferenceableAsColumns: Boolean get() = true
+
+    // sqlglot: Postgres.DEFAULT_FUNCTIONS_COLUMN_NAMES
+    override val defaultFunctionsColumnNames:
+        Map<kotlin.reflect.KClass<out dev.brikk.house.sql.ast.Expression>, List<String>>
+        get() = mapOf(
+            dev.brikk.house.sql.ast.ExplodingGenerateSeries::class to listOf("generate_series"),
+        )
 
     // sqlglot: Postgres.EXPRESSION_METADATA (sqlglot/typing/postgres.py)
     override val expressionMetadata get() = dev.brikk.house.sql.ast.GeneratedTypingMetadata.POSTGRES

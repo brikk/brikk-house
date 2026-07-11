@@ -230,6 +230,8 @@ object GeneratorTables {
         // --- columns / tables / aliases ---
         reg(Column::class) { e -> columnSql(e as Column) }
         reg(Pseudocolumn::class) { e -> columnSql(e as Column) } // sqlglot: pseudocolumn_sql
+        // sqlglot: TRANSFORMS[exp.TableColumn] = lambda self, e: self.sql(e.this)
+        reg(TableColumn::class) { e -> sql(e.thisArg) }
         reg(Dot::class) { e -> dotSql(e as Dot) }
         reg(Alias::class) { e -> aliasSql(e as Alias) }
         reg(Aliases::class) { e -> aliasesSql(e as Aliases) }

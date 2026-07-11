@@ -1,0 +1,118 @@
+{
+ "sqlglot_version": "v30.12.0-44-g93d16591",
+ "fixture": "normalize_identifiers",
+ "cases": [
+  {
+   "sql": "foo",
+   "expected": "foo"
+  },
+  {
+   "sql": "foo + \"bar\".baz",
+   "expected": "FOO + \"bar\".BAZ",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT a FROM x",
+   "expected": "SELECT a FROM x"
+  },
+  {
+   "sql": "SELECT A FROM X",
+   "expected": "SELECT A FROM X",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT \"A\" FROM \"X\"",
+   "expected": "SELECT \"A\" FROM \"X\""
+  },
+  {
+   "sql": "SELECT a AS A FROM x",
+   "expected": "SELECT a AS a FROM x"
+  },
+  {
+   "sql": "SELECT A AS a FROM X",
+   "expected": "SELECT A AS A FROM X",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM x",
+   "expected": "SELECT * FROM x"
+  },
+  {
+   "sql": "SELECT A FROM x",
+   "expected": "SELECT a FROM x"
+  },
+  {
+   "sql": "SELECT a FROM X",
+   "expected": "SELECT A FROM X",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT a FROM X",
+   "expected": "SELECT a FROM x"
+  },
+  {
+   "sql": "SELECT A FROM x",
+   "expected": "SELECT A FROM X",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT A AS A FROM (SELECT a AS A FROM x)",
+   "expected": "SELECT a AS a FROM (SELECT a AS a FROM x)"
+  },
+  {
+   "sql": "SELECT a AS B FROM x ORDER BY B",
+   "expected": "SELECT a AS b FROM x ORDER BY b"
+  },
+  {
+   "sql": "SELECT A FROM x ORDER BY A",
+   "expected": "SELECT a FROM x ORDER BY a"
+  },
+  {
+   "sql": "SELECT A AS B FROM X GROUP BY A HAVING SUM(B) > 0",
+   "expected": "SELECT a AS b FROM x GROUP BY a HAVING SUM(b) > 0"
+  },
+  {
+   "sql": "SELECT A AS B, SUM(B) AS C FROM X GROUP BY A HAVING C > 0",
+   "expected": "SELECT a AS b, SUM(b) AS c FROM x GROUP BY a HAVING c > 0"
+  },
+  {
+   "sql": "SELECT A FROM X UNION SELECT A FROM X",
+   "expected": "SELECT a FROM x UNION SELECT a FROM x"
+  },
+  {
+   "sql": "SELECT A AS A FROM X UNION SELECT A AS A FROM X",
+   "expected": "SELECT a AS a FROM x UNION SELECT a AS a FROM x"
+  },
+  {
+   "sql": "(SELECT A AS A FROM X)",
+   "expected": "(SELECT a AS a FROM x)"
+  },
+  {
+   "sql": "SELECT a /* sqlglot.meta case_sensitive */, b FROM table /* sqlglot.meta case_sensitive */",
+   "expected": "SELECT a /* sqlglot.meta case_sensitive */, B FROM table /* sqlglot.meta case_sensitive */",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT COALESCE(json_val.a /* sqlglot.meta case_sensitive */, json_val.A /* sqlglot.meta case_sensitive */) FROM tbl",
+   "expected": "SELECT COALESCE(json_val.a /* sqlglot.meta case_sensitive */, json_val.A /* sqlglot.meta case_sensitive */) FROM tbl",
+   "dialect": "redshift",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT @X",
+   "expected": "SELECT @X"
+  },
+  {
+   "sql": "SELECT `foo`, `BaR` FROM baz CROSS JOIN `bla` CROSS JOIN bloo",
+   "expected": "SELECT `FOO`, `BAR` FROM BAZ CROSS JOIN `BLA` CROSS JOIN BLOO",
+   "dialect": "bigquery,normalization_strategy=case_insensitive_uppercase",
+   "dialect_supported": false
+  }
+ ]
+}

@@ -121,14 +121,6 @@ private fun buildPipeCte(
     return newSelect
 }
 
-/** sqlglot: exp.select("*").from_(query, copy=False) — Subquery/From heads. */
-private fun selectStarFrom(from: Expression): Select = Select(
-    args(
-        "expressions" to mutableListOf<Expression>(Star()),
-        "from_" to From(args("this" to from)),
-    )
-)
-
 private fun applyPipeStage(query: Expression, stage: Expression, counter: PipeCteCounter): Expression =
     when (stage) {
         // sqlglot: Parser._parse_pipe_syntax_select

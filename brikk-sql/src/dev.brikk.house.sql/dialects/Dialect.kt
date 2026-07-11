@@ -5,6 +5,7 @@ import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.GeneratedTypingMetadata
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.Literal
+import dev.brikk.house.sql.ast.toIdentifier
 import dev.brikk.house.sql.ast.TypingSpec
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.generator.Generator
@@ -74,6 +75,54 @@ open class Dialect {
     // sqlglot: Dialect.QUERY_RESULTS_ARE_STRUCTS (BigQuery-only)
     open val queryResultsAreStructs: Boolean get() = false
 
+    // sqlglot: Dialect.PSEUDOCOLUMNS (Oracle/Redshift/BigQuery/Snowflake only)
+    open val pseudocolumns: Set<String> get() = emptySet()
+
+    // sqlglot: Dialect.PREFER_CTE_ALIAS_COLUMN (Snowflake only)
+    open val preferCteAliasColumn: Boolean get() = false
+
+    // sqlglot: Dialect.FORCE_EARLY_ALIAS_REF_EXPANSION (BigQuery, Clickhouse)
+    open val forceEarlyAliasRefExpansion: Boolean get() = false
+
+    // sqlglot: Dialect.EXPAND_ONLY_GROUP_ALIAS_REF (BigQuery only)
+    open val expandOnlyGroupAliasRef: Boolean get() = false
+
+    // sqlglot: Dialect.ANNOTATE_ALL_SCOPES (BigQuery only)
+    open val annotateAllScopes: Boolean get() = false
+
+    // sqlglot: Dialect.DISABLES_ALIAS_REF_EXPANSION (Oracle only)
+    open val disablesAliasRefExpansion: Boolean get() = false
+
+    // sqlglot: Dialect.SUPPORTS_ALIAS_REFS_IN_JOIN_CONDITIONS (Snowflake only)
+    open val supportsAliasRefsInJoinConditions: Boolean get() = false
+
+    // sqlglot: Dialect.PROJECTION_ALIASES_SHADOW_SOURCE_NAMES (BigQuery only)
+    open val projectionAliasesShadowSourceNames: Boolean get() = false
+
+    // sqlglot: Dialect.TABLES_REFERENCEABLE_AS_COLUMNS (BigQuery, Postgres)
+    open val tablesReferenceableAsColumns: Boolean get() = false
+
+    // sqlglot: Dialect.SUPPORTS_STRUCT_STAR_EXPANSION (BigQuery, RisingWave)
+    open val supportsStructStarExpansion: Boolean get() = false
+
+    // sqlglot: Dialect.EXCLUDES_PSEUDOCOLUMNS_FROM_STAR (BigQuery only)
+    open val excludesPseudocolumnsFromStar: Boolean get() = false
+
+    // sqlglot: Dialect.REQUIRES_PARENTHESIZED_STRUCT_ACCESS (RisingWave only)
+    open val requiresParenthesizedStructAccess: Boolean get() = false
+
+    // sqlglot: Dialect.UNNEST_COLUMN_ONLY (BigQuery only)
+    open val unnestColumnOnly: Boolean get() = false
+
+    // sqlglot: Dialect.DEFAULT_FUNCTIONS_COLUMN_NAMES (Postgres overrides)
+    open val defaultFunctionsColumnNames: Map<kotlin.reflect.KClass<out Expression>, List<String>>
+        get() = emptyMap()
+
+    // sqlglot: Dialect.generate_values_aliases (Clickhouse overrides)
+    open fun generateValuesAliases(expression: Expression): List<Identifier> =
+        ((expression.expressionsArg.firstOrNull() as? Expression)?.expressionsArg ?: emptyList())
+            .mapIndexed { i, _ -> toIdentifier("_col_$i")!! }
+
     // sqlglot: Dialect.tokenizer_class (tables only; the scanner is shared)
     open val tokenizerConfig: TokenizerConfig get() = TokenizerConfig.BASE
 
@@ -133,6 +182,37 @@ open class Dialect {
                     name.lowercase()
                 }
             expression.set("this", normalized)
+        }
+        return expression
+    }
+
+    /**
+     * sqlglot: Dialect.can_quote — whether an identifier can be quoted. [identify] is
+     * `true`/`false` or the strings "safe"/"unsafe", matching the Python contract.
+     */
+    fun canQuote(identifier: Identifier, identify: Any = "safe"): Boolean {
+        if (identifier.quoted) return true
+        if (identify == false || identify == "") return false
+        if (identifier.parent is dev.brikk.house.sql.ast.Func) return false
+        if (identify == true) return true
+
+        val text = identifier.thisArg as? String ?: ""
+        val isSafe = !caseSensitive(text) && dev.brikk.house.sql.ast.SAFE_IDENTIFIER_RE.matches(text)
+
+        return when (identify) {
+            "safe" -> isSafe
+            "unsafe" -> !isSafe
+            else -> throw IllegalArgumentException("Unexpected argument for identify: '$identify'")
+        }
+    }
+
+    /**
+     * sqlglot: Dialect.quote_identifier — adds quotes to a given expression if it is
+     * an identifier (mutates in place).
+     */
+    fun <E : Expression> quoteIdentifier(expression: E, identify: Boolean = true): E {
+        if (expression is Identifier) {
+            expression.set("quoted", canQuote(expression, if (identify) true else "unsafe"))
         }
         return expression
     }

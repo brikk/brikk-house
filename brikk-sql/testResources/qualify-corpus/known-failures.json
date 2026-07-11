@@ -1,0 +1,9 @@
+{
+ "sqlglot_version": "v30.12.0-44-g93d16591",
+ "cases": [
+  {
+   "key": "qualify_columns::SELECT * FROM ROWS FROM (GENERATE_SERIES(1, 3), GENERATE_SERIES(10, 12)) AS t(a, b)",
+   "reason": "pre-existing parser gap: ROWS FROM (...) table constructs are not parsed yet (Parser raises 'ROWS FROM is not supported yet'); not a qualify issue"
+  }
+ ]
+}

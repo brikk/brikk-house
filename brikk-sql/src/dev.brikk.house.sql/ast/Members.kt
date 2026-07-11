@@ -98,6 +98,44 @@ val Expression.selects: List<Expression>
         else -> emptyList()
     }
 
+// sqlglot: Dot.parts — the parts of a table/column in order catalog, db, table:
+// the head's Column parts followed by the flattened Dot-chain identifiers.
+val Dot.parts: List<Expression>
+    get() {
+        // sqlglot: Binary.flatten over the Dot chain (this, *parts = self.flatten())
+        val flattened = mutableListOf<Expression>()
+        var node: Expression = this
+        while (node is Dot) {
+            flattened.add(node.expressionArg as Expression)
+            node = node.thisArg as Expression
+        }
+        flattened.reverse()
+
+        val head = mutableListOf<Expression>()
+        for (arg in listOf("this", "table", "db", "catalog")) {
+            (node.args[arg] as? Expression)?.let { head.add(it) }
+        }
+        head.reverse()
+        return head + flattened
+    }
+
+// sqlglot: Subquery.unwrap — walks up through wrapper Subqueries.
+fun Subquery.unwrap(): Subquery {
+    var expression: Subquery = this
+    while (expression.sameParent && expression.isWrapper) {
+        expression = expression.parent as Subquery
+    }
+    return expression
+}
+
+// sqlglot: Expression.is_int (is_number and to_py() is an int)
+val Expression.isInt: kotlin.Boolean
+    get() = isNumber && when (this) {
+        is Literal -> (thisArg as? String)?.toLongOrNull() != null
+        is Neg -> (thisArg as? Expression)?.isInt == true
+        else -> false
+    }
+
 // sqlglot: Pivot.unpivot
 val Pivot.unpivot: kotlin.Boolean
     get() = args["unpivot"] != null && args["unpivot"] != false
