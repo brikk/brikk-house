@@ -1104,6 +1104,25 @@ open class Parser(
     fun parse(rawTokens: List<Token>, sql: String): List<Expression?> =
         parseInternal({ it.parseStatement() }, rawTokens, sql)
 
+    // sqlglot: Parser.parse_into — subset limited to the EXPRESSION_PARSERS entries the
+    // schema layer needs (exp.DataType, exp.Table, exp.Identifier).
+
+    // sqlglot: EXPRESSION_PARSERS[exp.DataType]
+    fun parseIntoDataType(rawTokens: List<Token>, sql: String): Expression? =
+        parseInternal(
+            { it.parseTypes(allowIdentifiers = false, schema = true) },
+            rawTokens,
+            sql,
+        ).firstOrNull()
+
+    // sqlglot: EXPRESSION_PARSERS[exp.Table]
+    fun parseIntoTable(rawTokens: List<Token>, sql: String): Expression? =
+        parseInternal({ it.parseTableParts() }, rawTokens, sql).firstOrNull()
+
+    // sqlglot: EXPRESSION_PARSERS[exp.Identifier]
+    fun parseIntoIdentifier(rawTokens: List<Token>, sql: String): Expression? =
+        parseInternal({ it.parseIdVar() }, rawTokens, sql).firstOrNull()
+
     // sqlglot: Parser._parse
     private fun parseInternal(
         parseMethod: (Parser) -> Expression?,

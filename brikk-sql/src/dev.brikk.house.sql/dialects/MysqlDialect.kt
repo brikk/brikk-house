@@ -16,6 +16,9 @@ class MysqlDialect : Dialect() {
 
     override val name: String get() = "mysql"
 
+    // sqlglot: MySQL.NORMALIZATION_STRATEGY
+    override val normalizationStrategy get() = NormalizationStrategy.CASE_SENSITIVE
+
     override val tokenizerConfig: TokenizerConfig get() = MysqlTokenizerTables.CONFIG
 
     // sqlglot: MySQL.TIME_MAPPING

@@ -1,6 +1,7 @@
 package dev.brikk.house.sql.dialects
 
 import dev.brikk.house.sql.ast.Expression
+import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.generator.Generator
@@ -22,10 +23,31 @@ import dev.brikk.house.sql.parser.formatTimeString
  * and Generator subclasses themselves, matching how the Kotlin port distributes
  * sqlglot's Dialect class attributes.
  */
+// sqlglot: dialect.NormalizationStrategy
+enum class NormalizationStrategy {
+    /** Unquoted identifiers are lowercased. */
+    LOWERCASE,
+
+    /** Unquoted identifiers are uppercased. */
+    UPPERCASE,
+
+    /** Always case-sensitive, regardless of quotes. */
+    CASE_SENSITIVE,
+
+    /** Always case-insensitive (lowercase), regardless of quotes. */
+    CASE_INSENSITIVE,
+
+    /** Always case-insensitive (uppercase), regardless of quotes. */
+    CASE_INSENSITIVE_UPPERCASE,
+}
+
 open class Dialect {
 
     /** Registry name ("" is the base sqlglot dialect). */
     open val name: String get() = ""
+
+    // sqlglot: Dialect.NORMALIZATION_STRATEGY
+    open val normalizationStrategy: NormalizationStrategy get() = NormalizationStrategy.LOWERCASE
 
     // sqlglot: Dialect.tokenizer_class (tables only; the scanner is shared)
     open val tokenizerConfig: TokenizerConfig get() = TokenizerConfig.BASE
@@ -59,6 +81,46 @@ open class Dialect {
     // sqlglot: Dialect.generate
     fun generate(expression: Expression, pretty: Boolean = false, copy: Boolean = true): String =
         generator(pretty = pretty).generate(expression, copy = copy)
+
+    /**
+     * sqlglot: Dialect.normalize_identifier — transforms an identifier in a way that
+     * resembles how it'd be resolved by this dialect. Mutates in place (copy=False
+     * semantics), like the Python original.
+     */
+    fun <E : Expression> normalizeIdentifier(expression: E): E {
+        if (
+            expression is Identifier &&
+            normalizationStrategy != NormalizationStrategy.CASE_SENSITIVE &&
+            (
+                !expression.quoted ||
+                    normalizationStrategy == NormalizationStrategy.CASE_INSENSITIVE ||
+                    normalizationStrategy == NormalizationStrategy.CASE_INSENSITIVE_UPPERCASE
+                )
+        ) {
+            val name = expression.thisArg as String
+            val normalized =
+                if (
+                    normalizationStrategy == NormalizationStrategy.UPPERCASE ||
+                    normalizationStrategy == NormalizationStrategy.CASE_INSENSITIVE_UPPERCASE
+                ) {
+                    name.uppercase()
+                } else {
+                    name.lowercase()
+                }
+            expression.set("this", normalized)
+        }
+        return expression
+    }
+
+    // sqlglot: Dialect.case_sensitive — checks if text contains case sensitive characters.
+    fun caseSensitive(text: String): Boolean {
+        if (normalizationStrategy == NormalizationStrategy.CASE_INSENSITIVE) return false
+        return if (normalizationStrategy == NormalizationStrategy.UPPERCASE) {
+            text.any { it.isLowerCase() }
+        } else {
+            text.any { it.isUpperCase() }
+        }
+    }
 
     /**
      * sqlglot: Dialect.format_time — converts a time-format literal in this dialect

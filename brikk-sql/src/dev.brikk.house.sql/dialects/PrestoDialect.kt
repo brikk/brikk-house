@@ -16,6 +16,9 @@ open class PrestoDialect : Dialect() {
 
     override val name: String get() = "presto"
 
+    // sqlglot: Presto.NORMALIZATION_STRATEGY
+    override val normalizationStrategy get() = NormalizationStrategy.CASE_INSENSITIVE
+
     override val tokenizerConfig: TokenizerConfig get() = PrestoTokenizerTables.CONFIG
 
     // sqlglot: Presto.TIME_MAPPING = MySQL.TIME_MAPPING

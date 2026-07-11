@@ -166,6 +166,9 @@ open class DataType(initArgs: Args = emptyMap()) : Expression(initArgs) {
 class DataTypeParam(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = ARG_TYPES
 
+    // sqlglot: DataTypeParam.name (delegates to `this`)
+    override val name: String get() = (thisArg as Expression).name
+
     companion object {
         private val ARG_TYPES = argTypesOf("this" to true, "expression" to false)
     }

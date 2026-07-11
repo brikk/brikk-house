@@ -16,6 +16,9 @@ open class DuckdbDialect : Dialect() {
 
     override val name: String get() = "duckdb"
 
+    // sqlglot: DuckDB.NORMALIZATION_STRATEGY
+    override val normalizationStrategy get() = NormalizationStrategy.CASE_INSENSITIVE
+
     override val tokenizerConfig: TokenizerConfig get() = DuckdbTokenizerTables.CONFIG
 
     // sqlglot: DuckDB.TIME_MAPPING is the base (empty) mapping; only

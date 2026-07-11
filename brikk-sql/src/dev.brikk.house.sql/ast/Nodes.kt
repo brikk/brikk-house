@@ -411,8 +411,16 @@ class TableAlias(initArgs: Args = emptyMap()) : Expression(initArgs) {
 }
 
 // sqlglot: query.Table(Expression, Selectable)
-class Table(initArgs: Args = emptyMap()) : Expression(initArgs) {
+class Table(initArgs: Args = emptyMap()) : Expression(initArgs), Selectable {
     override val argTypes get() = ARG_TYPES
+
+    // sqlglot: Table.name ("" when unset or when `this` is a Func; Dot-qualified names
+    // delegate to Dot.name)
+    override val name: String
+        get() {
+            val t = thisArg
+            return if (t !is Expression || t is Func) "" else t.name
+        }
 
     // sqlglot: Table.db / catalog
     val db: String get() = text("db")
@@ -454,7 +462,7 @@ class Table(initArgs: Args = emptyMap()) : Expression(initArgs) {
 }
 
 // sqlglot: query.Select(Expression, Query)
-class Select(initArgs: Args = emptyMap()) : Expression(initArgs) {
+class Select(initArgs: Args = emptyMap()) : Expression(initArgs), Query {
     override val argTypes get() = ARG_TYPES
 
     // sqlglot: Select.selects
@@ -472,7 +480,11 @@ class Select(initArgs: Args = emptyMap()) : Expression(initArgs) {
 }
 
 // sqlglot: query.From(Expression)
-class From(initArgs: Args = emptyMap()) : Expression(initArgs)
+class From(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    // sqlglot: From.name / alias_or_name (delegate to `this`)
+    override val name: String get() = (thisArg as Expression).name
+    override val aliasOrName: String get() = (thisArg as Expression).aliasOrName
+}
 
 // sqlglot: query.Where(Expression)
 class Where(initArgs: Args = emptyMap()) : Expression(initArgs)
@@ -506,6 +518,9 @@ open class Order(initArgs: Args = emptyMap()) : Expression(initArgs) {
 // sqlglot: core.Ordered(Expression)
 class Ordered(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = ARG_TYPES
+
+    // sqlglot: Ordered.name (delegates to `this`)
+    override val name: String get() = (thisArg as Expression).name
 
     companion object {
         private val ARG_TYPES = argTypesOf(
@@ -556,6 +571,12 @@ class Join(initArgs: Args = emptyMap()) : Expression(initArgs) {
     val side: String get() = text("side").uppercase()
     val hint: String get() = text("hint").uppercase()
 
+    // sqlglot: Join.alias_or_name (delegates to `this`)
+    override val aliasOrName: String get() = (thisArg as Expression).aliasOrName
+
+    // sqlglot: Join.is_semi_or_anti_join
+    val isSemiOrAntiJoin: kotlin.Boolean get() = kind == "SEMI" || kind == "ANTI"
+
     companion object {
         private val ARG_TYPES = argTypesOf(
             "this" to true, "on" to false, "side" to false, "kind" to false,
@@ -567,9 +588,16 @@ class Join(initArgs: Args = emptyMap()) : Expression(initArgs) {
 }
 
 // sqlglot: query.Subquery(Expression, DerivedTable, Query) — is_subquery
-class Subquery(initArgs: Args = emptyMap()) : Expression(initArgs) {
+class Subquery(initArgs: Args = emptyMap()) : Expression(initArgs), DerivedTable, Query {
     override val argTypes get() = ARG_TYPES
     override val isSubquery get() = true
+
+    // sqlglot: Subquery.unnest ("Returns the first non subquery")
+    override fun unnest(): Expression {
+        var expression: Expression = this
+        while (expression is Subquery) expression = expression.thisArg as Expression
+        return expression
+    }
 
     // sqlglot: Subquery.is_wrapper
     val isWrapper: kotlin.Boolean
@@ -583,7 +611,7 @@ class Subquery(initArgs: Args = emptyMap()) : Expression(initArgs) {
 }
 
 // sqlglot: query.CTE(Expression, DerivedTable)
-class CTE(initArgs: Args = emptyMap()) : Expression(initArgs) {
+class CTE(initArgs: Args = emptyMap()) : Expression(initArgs), DerivedTable {
     override val argTypes get() = ARG_TYPES
 
     companion object {
@@ -609,7 +637,7 @@ class With(initArgs: Args = emptyMap()) : Expression(initArgs) {
 }
 
 // sqlglot: query.SetOperation(Expression, Query). Open + concrete like Python.
-open class SetOperation(initArgs: Args = emptyMap()) : Expression(initArgs) {
+open class SetOperation(initArgs: Args = emptyMap()) : Expression(initArgs), Query {
     override val argTypes get() = SET_OPERATION_ARG_TYPES
 
     // sqlglot: SetOperation.left / right
@@ -673,6 +701,9 @@ class Intersect(initArgs: Args = emptyMap()) : SetOperation(initArgs)
 open class Cast(initArgs: Args = emptyMap()) : Expression(initArgs), Func {
     override val argTypes get() = ARG_TYPES
     override val isCast get() = true
+
+    // sqlglot: Cast.name (delegates to `this`)
+    override val name: String get() = (thisArg as Expression).name
 
     // sqlglot: Cast.to
     val to: DataType get() = args["to"] as DataType

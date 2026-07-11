@@ -120,8 +120,8 @@ abstract class Expression(initArgs: Args = emptyMap()) {
             return if (alias is Expression) alias.name else text("alias")
         }
 
-    // sqlglot: Expression.alias_or_name
-    val aliasOrName: String get() = alias.ifEmpty { name }
+    // sqlglot: Expression.alias_or_name (From/Join override to delegate to `this`)
+    open val aliasOrName: String get() = alias.ifEmpty { name }
 
     // sqlglot: Expression.type (getter). For casts the target type doubles as the node type.
     val type: Expression?
@@ -312,8 +312,8 @@ abstract class Expression(initArgs: Args = emptyMap()) {
         while (true) expression = expression.parent ?: return expression
     }
 
-    // sqlglot: Expression.unnest
-    fun unnest(): Expression {
+    // sqlglot: Expression.unnest (Subquery overrides this to peel Subquery wrappers)
+    open fun unnest(): Expression {
         var expression: Expression = this
         while (expression is Paren) expression = expression.thisArg as Expression
         return expression

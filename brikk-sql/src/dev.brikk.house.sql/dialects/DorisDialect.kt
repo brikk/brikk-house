@@ -16,6 +16,9 @@ class DorisDialect : Dialect() {
 
     override val name: String get() = "doris"
 
+    // sqlglot: Doris inherits MySQL.NORMALIZATION_STRATEGY (CASE_SENSITIVE)
+    override val normalizationStrategy get() = NormalizationStrategy.CASE_SENSITIVE
+
     override val tokenizerConfig: TokenizerConfig get() = DorisTokenizerTables.CONFIG
 
     // sqlglot: Doris.TIME_MAPPING (inherited from MySQL)
