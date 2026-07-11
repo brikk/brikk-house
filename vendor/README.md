@@ -40,7 +40,10 @@ cp fe/fe-sql-parser/target/doris-fe-sql-parser.jar \
    vendor/lib/doris-fe-sql-parser-1.2-SNAPSHOT-g<short-sha>.jar
 ```
 
-> Replace with a Maven coordinate once Doris publishes `fe-sql-parser` publicly.
+> Replace with a Maven coordinate once Doris publishes `fe-sql-parser` publicly —
+> **expected on Maven Central within weeks of 2026-07** (coordinated with the Doris team).
+> When it lands: swap the module dependency to the coordinate, delete `vendor/lib/`, and
+> update ATTRIBUTIONS.md + this file.
 
 ## Doris function registry (extracted data, not a binary)
 
