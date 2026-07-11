@@ -1,5 +1,9 @@
 # Attributions
 
+This repository is licensed under the Apache License 2.0 (see LICENSE). The components
+below are derived from or include third-party work; their notices are retained here as
+required by their licenses.
+
 ## sqlglot
 
 `brikk-sql` is a Kotlin port of [sqlglot](https://github.com/tobymao/sqlglot) by Toby Mao
