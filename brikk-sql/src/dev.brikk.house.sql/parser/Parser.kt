@@ -202,18 +202,24 @@ import dev.brikk.house.sql.ast.PartitionedOfProperty
 import dev.brikk.house.sql.ast.PeriodForSystemTimeConstraint
 import dev.brikk.house.sql.ast.PipeAggregate
 import dev.brikk.house.sql.ast.PipeAs
+import dev.brikk.house.sql.ast.PipeCall
 import dev.brikk.house.sql.ast.PipeDistinct
+import dev.brikk.house.sql.ast.PipeDrop
 import dev.brikk.house.sql.ast.PipeExtend
 import dev.brikk.house.sql.ast.PipeJoin
 import dev.brikk.house.sql.ast.PipeLimit
+import dev.brikk.house.sql.ast.PipeOffset
 import dev.brikk.house.sql.ast.PipeOrderBy
 import dev.brikk.house.sql.ast.PipePivot
 import dev.brikk.house.sql.ast.PipeQuery
+import dev.brikk.house.sql.ast.PipeRename
 import dev.brikk.house.sql.ast.PipeSelect
+import dev.brikk.house.sql.ast.PipeSet
 import dev.brikk.house.sql.ast.PipeSetOperation
 import dev.brikk.house.sql.ast.PipeTableSample
 import dev.brikk.house.sql.ast.PipeUnpivot
 import dev.brikk.house.sql.ast.PipeWhere
+import dev.brikk.house.sql.ast.PipeWindow
 import dev.brikk.house.sql.ast.Pivot
 import dev.brikk.house.sql.ast.PivotAlias
 import dev.brikk.house.sql.ast.PivotAny
@@ -9957,11 +9963,14 @@ open class Parser(
     // transform: ast/PipeDesugar.kt `desugarPipes`.)
     // -----------------------------------------------------------------------
 
-    // sqlglot: Parser.PIPE_SYNTAX_TRANSFORM_PARSERS (keys)
+    // sqlglot: Parser.PIPE_SYNTAX_TRANSFORM_PARSERS (keys) — plus the brikk-only
+    // extended GoogleSQL operators sqlglot does not support: SET, DROP, RENAME, CALL,
+    // WINDOW and standalone OFFSET (reference/googlesql/docs/pipe-syntax.md).
     protected open val pipeSyntaxTransformOperators: Set<String>
         get() = setOf(
-            "AGGREGATE", "AS", "DISTINCT", "EXTEND", "LIMIT", "ORDER BY",
-            "PIVOT", "SELECT", "TABLESAMPLE", "UNPIVOT", "WHERE",
+            "AGGREGATE", "AS", "CALL", "DISTINCT", "DROP", "EXTEND", "LIMIT", "OFFSET",
+            "ORDER BY", "PIVOT", "RENAME", "SELECT", "SET", "TABLESAMPLE", "UNPIVOT",
+            "WHERE", "WINDOW",
         )
 
     // sqlglot: Parser._parse_pipe_syntax_query (brikk: builds PipeQuery instead of desugaring;
@@ -9999,17 +10008,25 @@ open class Parser(
     protected open fun parsePipeStage(startText: String): Expression? = when (startText) {
         "AGGREGATE" -> parsePipeSyntaxAggregate()
         "AS" -> expression(PipeAs(args("alias" to parseTableAlias())))
+        "CALL" -> parsePipeSyntaxCall()
         "DISTINCT" -> {
             advance()
             expression(PipeDistinct())
         }
+        "DROP" -> parsePipeSyntaxDrop()
         "EXTEND" -> parsePipeSyntaxExtend()
         "LIMIT" -> parsePipeSyntaxLimit()
+        // googlesql: standalone `|> OFFSET` (docs/pipe-syntax.md, GoogleSQL extension;
+        // sqlglot has no such operator — kept out of the sqlglot-parity corpus)
+        "OFFSET" -> expression(PipeOffset(args("this" to parseOffset())))
         "ORDER BY" -> expression(PipeOrderBy(args("this" to parseOrder())))
         "PIVOT", "UNPIVOT" -> parsePipeSyntaxPivot()
+        "RENAME" -> parsePipeSyntaxRename()
         "SELECT" -> parsePipeSyntaxSelect()
+        "SET" -> parsePipeSyntaxSet()
         "TABLESAMPLE" -> parsePipeSyntaxTablesample()
         "WHERE" -> expression(PipeWhere(args("this" to parseWhere())))
+        "WINDOW" -> parsePipeSyntaxWindow()
         else -> null
     }
 
@@ -10145,6 +10162,63 @@ open class Parser(
     // attach-to-last-CTE semantics live in PipeDesugar)
     protected fun parsePipeSyntaxTablesample(): Expression {
         return expression(PipeTableSample(args("this" to parseTableSample())))
+    }
+
+    // googlesql: pipe SET (docs/pipe-syntax.md ~664) — `|> SET col = expr [, ...]`.
+    // NO sqlglot counterpart (hand-derived from the spec). Each assignment parses into
+    // an EQ node; replace-the-column semantics live in PipeDesugar (Star.replace).
+    protected fun parsePipeSyntaxSet(): Expression {
+        matchTextSeq("SET")
+        val assignments = parseCsv {
+            val column = parseColumn()
+            if (!match(TokenType.EQ)) {
+                raiseError("Expected '=' after column in pipe SET assignment")
+            }
+            expression(EQ(args("this" to column, "expression" to parseDisjunction())))
+        }
+        return expression(PipeSet(args("expressions" to assignments)))
+    }
+
+    // googlesql: pipe DROP (docs/pipe-syntax.md ~713) — `|> DROP col [, ...]`.
+    // NO sqlglot counterpart (hand-derived from the spec).
+    protected fun parsePipeSyntaxDrop(): Expression {
+        matchTextSeq("DROP")
+        val columns = parseCsv {
+            parseColumn() ?: raiseError("Expected column name in pipe DROP")
+        }
+        return expression(PipeDrop(args("expressions" to columns)))
+    }
+
+    // googlesql: pipe RENAME (docs/pipe-syntax.md ~763) — `|> RENAME old [AS] new [, ...]`.
+    // NO sqlglot counterpart (hand-derived from the spec). AS is optional; each element
+    // becomes an Alias (the shape Star's `rename` arg uses).
+    protected fun parsePipeSyntaxRename(): Expression {
+        matchTextSeq("RENAME")
+        val renames = parseCsv {
+            val column = parseColumn() ?: raiseError("Expected column name in pipe RENAME")
+            parseAlias(column) as? Alias
+                ?: raiseError("Expected new column name in pipe RENAME (old [AS] new)")
+        }
+        return expression(PipeRename(args("expressions" to renames)))
+    }
+
+    // googlesql: pipe CALL (docs/pipe-syntax.md ~1323) — `|> CALL tvf(args) [[AS] alias]`.
+    // NO sqlglot counterpart (hand-derived from the spec). The TVF is parsed as an
+    // Anonymous call (anonymous=true) so its argument list stays positional: on desugar
+    // the pipe input is prepended as the first table argument.
+    protected fun parsePipeSyntaxCall(): Expression? {
+        matchTextSeq("CALL")
+        val call = parseFunction(anonymous = true, optionalParens = false)
+            ?: return raiseError("Expected a table function call after pipe CALL")
+        return expression(PipeCall(args("this" to call, "alias" to parseTableAlias())))
+    }
+
+    // googlesql: pipe WINDOW (docs/pipe-syntax.md ~2361, deprecated alias of EXTEND for
+    // window functions) — `|> WINDOW expr [[AS] alias] [, ...]`.
+    // NO sqlglot counterpart (hand-derived from the spec).
+    protected fun parsePipeSyntaxWindow(): Expression {
+        matchTextSeq("WINDOW")
+        return expression(PipeWindow(args("expressions" to parseExpressions())))
     }
 
     /** Python `isinstance(x, exp.Query)` for the ported subset (Select / set ops / Subquery). */

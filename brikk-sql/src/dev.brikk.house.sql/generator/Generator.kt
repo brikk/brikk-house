@@ -4934,6 +4934,29 @@ open class Generator(
         return "|> OFFSET ${sql(offset, "expression")}"
     }
 
+    // googlesql: pipe SET (docs/pipe-syntax.md ~664) — EQ elements render `col = expr`
+    open fun pipesetSql(expression: PipeSet): String =
+        "|> SET ${expressions(expression, flat = true)}"
+
+    // googlesql: pipe DROP (docs/pipe-syntax.md ~713)
+    open fun pipedropSql(expression: PipeDrop): String =
+        "|> DROP ${expressions(expression, flat = true)}"
+
+    // googlesql: pipe RENAME (docs/pipe-syntax.md ~763) — Alias elements render `old AS new`
+    open fun piperenameSql(expression: PipeRename): String =
+        "|> RENAME ${expressions(expression, flat = true)}"
+
+    // googlesql: pipe CALL (docs/pipe-syntax.md ~1323)
+    open fun pipecallSql(expression: PipeCall): String {
+        val alias = sql(expression, "alias")
+        val aliasSql = if (alias.isNotEmpty()) " AS $alias" else ""
+        return "|> CALL ${sql(expression, "this")}$aliasSql"
+    }
+
+    // googlesql: pipe WINDOW (docs/pipe-syntax.md ~2361, deprecated alias of EXTEND)
+    open fun pipewindowSql(expression: PipeWindow): String =
+        "|> WINDOW ${expressions(expression, flat = true)}"
+
     open fun pipetablesampleSql(expression: PipeTableSample): String =
         "|> ${sql(expression, "this").trim()}"
 

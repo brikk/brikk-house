@@ -19,6 +19,21 @@ import kotlin.collections.MutableList
  *    operations, PIVOT/UNPIVOT;
  *  - head normalization: Subquery / FROM-less heads become `SELECT * FROM (...)`.
  *
+ * The extended GoogleSQL operators (NO sqlglot counterpart; hand-derived from
+ * reference/googlesql/docs/pipe-syntax.md) desugar as:
+ *
+ *  - SET (~664)    -> CTE + `SELECT * REPLACE (expr AS col, ...)`;
+ *  - DROP (~713)   -> CTE + `SELECT * EXCEPT (col, ...)`;
+ *  - RENAME (~763) -> CTE + `SELECT * RENAME (old AS new, ...)`;
+ *  - CALL (~1323)  -> the input query becomes the TVF's first table argument:
+ *                     `SELECT * FROM f((<input>), args...)`;
+ *  - WINDOW (~2361)-> EXTEND-like CTE + `SELECT *, w AS a, ...`.
+ *
+ * The star EXCEPT/REPLACE/RENAME modifiers are BigQuery-isms: for engines without
+ * them, qualify()'s star expansion resolves them to explicit column lists when a
+ * schema is available (shape/SqlFragment.toStandardSql(expandStars=true) and
+ * shape/expandStarModifiers).
+ *
  * The `__tmp{N}` counter is per top-level statement and follows sqlglot's parse-order
  * numbering: a stage's nested subpipelines are desugared before the stage itself builds
  * its CTEs, and the pipeline head before any stage.
@@ -222,6 +237,84 @@ private fun applyPipeStage(query: Expression, stage: Expression, counter: PipeCt
                 q = applyAggregateGroupOrderBy(q, group, groupByExists = true)
             }
             buildPipeCte(q, listOf(Star()), counter)
+        }
+
+        // googlesql: pipe SET (docs/pipe-syntax.md ~664) — NO sqlglot counterpart.
+        // `|> SET col = expr, ...` replaces the column's value keeping its position,
+        // exactly Star.replace semantics: CTE the input and select
+        // `SELECT * REPLACE (expr AS col, ...)` from it.
+        is PipeSet -> {
+            val replaceList = stage.expressionsArg.map { assignment ->
+                assignment as EQ
+                Alias(
+                    args(
+                        "this" to assignment.expressionArg,
+                        "alias" to toIdentifier((assignment.thisArg as Expression).name),
+                    )
+                ) as Expression
+            }
+            buildPipeCte(
+                query,
+                listOf(Star(args("replace" to replaceList.toMutableList()))),
+                counter,
+            )
+        }
+
+        // googlesql: pipe DROP (docs/pipe-syntax.md ~713) — NO sqlglot counterpart.
+        // `|> DROP col, ...` ≡ `SELECT * EXCEPT (col, ...)` from the CTE'd input.
+        is PipeDrop -> buildPipeCte(
+            query,
+            listOf(Star(args("except_" to stage.expressionsArg.toMutableList()))),
+            counter,
+        )
+
+        // googlesql: pipe RENAME (docs/pipe-syntax.md ~763) — NO sqlglot counterpart.
+        // `|> RENAME old AS new, ...` ≡ `SELECT * RENAME (old AS new, ...)` from the
+        // CTE'd input (the stage's Alias elements are exactly Star.rename's shape).
+        is PipeRename -> buildPipeCte(
+            query,
+            listOf(Star(args("rename" to stage.expressionsArg.toMutableList()))),
+            counter,
+        )
+
+        // googlesql: pipe CALL (docs/pipe-syntax.md ~1323) — NO sqlglot counterpart.
+        // The pipe input becomes the TVF's FIRST TABLE ARGUMENT (spec: "The first table
+        // argument comes from the input table and must be omitted in the arguments"):
+        // `x |> CALL f(a, b) AS t` ≡ `SELECT * FROM f((<x>), a, b) AS t`.
+        //
+        // The call lands in table position as an unresolved function (Anonymous) — the
+        // same shape SqlFragment's slot mechanism keys on, so a CALLed function that is
+        // unknown to the dialect becomes a tableSlots candidate. That is desirable:
+        // callers can bind the TVF's output shape like any other table-valued input.
+        is PipeCall -> {
+            // Keep the CTE chain flat, like buildPipeCte: hoist the input's WITH onto
+            // the new enclosing select.
+            val ctes = (query.args["with_"] as? With)?.also { it.pop() }
+
+            val call = stage.thisArg as Expression
+            val callArgs = mutableListOf<Expression>(Subquery(args("this" to query)))
+            for (arg in call.expressionsArg) callArgs.add(arg as Expression)
+            call.set("expressions", callArgs)
+
+            val table = Table(args("this" to call, "alias" to stage.args["alias"]))
+            val newSelect = Select(
+                args(
+                    "expressions" to mutableListOf<Expression>(Star()),
+                    "from_" to From(args("this" to table)),
+                )
+            )
+            if (ctes != null) newSelect.set("with_", ctes)
+            newSelect
+        }
+
+        // googlesql: pipe WINDOW (docs/pipe-syntax.md ~2361, deprecated alias of EXTEND
+        // for window functions) — NO sqlglot counterpart. EXTEND-like: append the window
+        // projections after `*`, then CTE.
+        is PipeWindow -> {
+            val exprs = mutableListOf<Expression>(Star())
+            for (e in stage.expressionsArg) exprs.add(e as Expression)
+            query.set("expressions", exprs)
+            buildPipeCte(query, listOf(Star()), counter)
         }
 
         // sqlglot: Parser._parse_pipe_syntax_set_operator

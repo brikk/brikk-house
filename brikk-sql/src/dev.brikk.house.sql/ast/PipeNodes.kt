@@ -124,6 +124,73 @@ class PipeOffset(initArgs: Args = emptyMap()) : Expression(initArgs) {
     }
 }
 
+/**
+ * `|> SET col = expr [, ...]` — expressions holds one [EQ] node per assignment
+ * (`this` = the column, `expression` = the new value).
+ * googlesql: pipe SET (docs/pipe-syntax.md ~664).
+ */
+class PipeSet(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("expressions" to true)
+    }
+}
+
+/**
+ * `|> DROP col [, ...]` — expressions holds the dropped [Column]s.
+ * googlesql: pipe DROP (docs/pipe-syntax.md ~713).
+ */
+class PipeDrop(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("expressions" to true)
+    }
+}
+
+/**
+ * `|> RENAME old [AS] new [, ...]` — expressions holds one [Alias] per rename
+ * (`this` = the old column, `alias` = the new name), the same element shape
+ * [Star]'s `rename` arg uses.
+ * googlesql: pipe RENAME (docs/pipe-syntax.md ~763).
+ */
+class PipeRename(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("expressions" to true)
+    }
+}
+
+/**
+ * `|> CALL tvf(args) [[AS] alias]` — `this` is the TVF call (parsed [Anonymous], so
+ * the argument list stays positional and the pipe input can be prepended verbatim on
+ * desugar), `alias` an optional [TableAlias] for the output table.
+ * googlesql: pipe CALL (docs/pipe-syntax.md ~1323).
+ */
+class PipeCall(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "alias" to false)
+    }
+}
+
+/**
+ * `|> WINDOW window_expression [[AS] alias] [, ...]` — expressions holds the added
+ * window projections (Alias-wrapped when named). EXTEND-like: existing rows and
+ * columns are unchanged, the window expressions are appended as new columns.
+ * googlesql: pipe WINDOW, deprecated in favor of EXTEND (docs/pipe-syntax.md ~2361).
+ */
+class PipeWindow(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("expressions" to true)
+    }
+}
+
 /** `|> TABLESAMPLE ...` — this is a [TableSample] node. */
 class PipeTableSample(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = ARG_TYPES
@@ -196,6 +263,11 @@ internal fun registerNativePipeNodes(m: kotlin.collections.MutableMap<String, Ex
     m["PipeUnpivot"] = ExpressionRegistry.Entry(module) { PipeUnpivot() }
     m["PipeJoin"] = ExpressionRegistry.Entry(module) { PipeJoin() }
     m["PipeSetOperation"] = ExpressionRegistry.Entry(module) { PipeSetOperation() }
+    m["PipeSet"] = ExpressionRegistry.Entry(module) { PipeSet() }
+    m["PipeDrop"] = ExpressionRegistry.Entry(module) { PipeDrop() }
+    m["PipeRename"] = ExpressionRegistry.Entry(module) { PipeRename() }
+    m["PipeCall"] = ExpressionRegistry.Entry(module) { PipeCall() }
+    m["PipeWindow"] = ExpressionRegistry.Entry(module) { PipeWindow() }
 }
 
 /** Simple names of all NATIVE (brikk-original) expression classes. */
@@ -203,4 +275,5 @@ val NATIVE_EXPRESSION_CLASSES: kotlin.collections.Set<String> = setOf(
     "PipeQuery", "PipeSelect", "PipeExtend", "PipeAs", "PipeWhere", "PipeAggregate",
     "PipeDistinct", "PipeOrderBy", "PipeLimit", "PipeOffset", "PipeTableSample",
     "PipePivot", "PipeUnpivot", "PipeJoin", "PipeSetOperation",
+    "PipeSet", "PipeDrop", "PipeRename", "PipeCall", "PipeWindow",
 )

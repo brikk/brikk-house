@@ -304,6 +304,11 @@ object GeneratorTables {
         reg(PipeUnpivot::class) { e -> pipeunpivotSql(e as PipeUnpivot) }
         reg(PipeJoin::class) { e -> pipejoinSql(e as PipeJoin) }
         reg(PipeSetOperation::class) { e -> pipesetoperationSql(e as PipeSetOperation) }
+        reg(PipeSet::class) { e -> pipesetSql(e as PipeSet) }
+        reg(PipeDrop::class) { e -> pipedropSql(e as PipeDrop) }
+        reg(PipeRename::class) { e -> piperenameSql(e as PipeRename) }
+        reg(PipeCall::class) { e -> pipecallSql(e as PipeCall) }
+        reg(PipeWindow::class) { e -> pipewindowSql(e as PipeWindow) }
 
         // --- window ---
         reg(Window::class) { e -> windowSql(e as Window) }

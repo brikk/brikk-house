@@ -1,15 +1,18 @@
 package dev.brikk.house.sql.shape
 
+import dev.brikk.house.sql.ast.Alias
 import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.Parameter
+import dev.brikk.house.sql.ast.PipeCall
 import dev.brikk.house.sql.ast.PipeQuery
 import dev.brikk.house.sql.ast.Placeholder
 import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.SetOperation
+import dev.brikk.house.sql.ast.Star
 import dev.brikk.house.sql.ast.Subquery
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.args
@@ -118,11 +121,20 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * position (FROM/JOIN/pipe-head sources) whose names are not known functions of
      * the dialect. Names are reported as written; slot binding matches them
      * case-insensitively (SQL function-name semantics).
+     *
+     * `|> CALL tvf(...)` stages count too: on desugar the TVF lands in table position
+     * with the pipe input as its first argument (see ast/PipeDesugar.kt), i.e. exactly
+     * the slot-candidate shape — so an unknown CALLed function is offered as a slot
+     * pre-desugar as well.
      */
     val tableSlots: List<String> by lazy {
         val out = LinkedHashSet<String>()
-        for (table in ast.findAll(Table::class, bfs = false)) {
-            val fn = table.thisArg as? Anonymous ?: continue
+        for (node in ast.walk(bfs = false)) {
+            val fn = when (node) {
+                is Table -> node.thisArg as? Anonymous
+                is PipeCall -> node.thisArg as? Anonymous
+                else -> null
+            } ?: continue
             val name = fn.name
             if (name.isNotEmpty() && name.uppercase() !in knownFunctionNames) out.add(name)
         }
@@ -230,13 +242,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         var tree = desugarPipes(ast, copy = true)
         if (expandStars && inputs != null) {
             tree = bindSlots(tree, inputs)
-            tree = qualify(
-                tree,
-                dialect = dialectObj,
-                schema = buildSchema(inputs),
-                validateQualifyColumns = false,
-                quoteIdentifiers = false,
-            )
+            tree = expandStarModifiers(tree, buildSchema(inputs), dialectObj)
         }
         return Dialects.forName(target).generate(tree)
     }
@@ -403,3 +409,80 @@ data class FragmentContract(
     val output: Shape,
     val dependencies: Map<String, Set<String>>,
 )
+
+/**
+ * Any-engine post-pass for the star EXCEPT/REPLACE/RENAME modifiers (BigQuery-isms) the
+ * pipe SET/DROP/RENAME desugars produce (see ast/PipeDesugar.kt): qualifies [tree]
+ * against [schema] so qualify()'s star expansion resolves every star — modifiers
+ * included — to an explicit column list, valid on engines with no star-modifier
+ * support (e.g. MySQL). [tree] is qualified in place; pass a disposable copy.
+ *
+ * Validation (googlesql spec: "Each referenced column must exist exactly once in the
+ * input table", docs/pipe-syntax.md ~664 SET / ~763 RENAME): once a star with
+ * REPLACE/RENAME modifiers has been expanded, the target column must have resolved —
+ * a RENAME of an unknown column (no `old AS new` projection materialized) or a
+ * SET/REPLACE of an unknown column throws [ShapeError]. Modifiers on stars whose
+ * source has no schema entry survive unexpanded and are not validated (same lenient
+ * posture as `validateQualifyColumns = false`).
+ */
+fun expandStarModifiers(
+    tree: Expression,
+    schema: Any?,
+    dialect: Dialect = Dialects.BASE,
+): Expression {
+    fun renamePairs(root: Expression): Set<Pair<String, String>> =
+        root.findAll(Star::class)
+            .flatMap { star ->
+                ((star.args["rename"] as? List<*>) ?: emptyList<Any?>())
+                    .filterIsInstance<Alias>()
+                    .map { (it.thisArg as Expression).name.lowercase() to it.alias.lowercase() }
+            }
+            .toSet()
+
+    fun replaceTargets(root: Expression): Set<String> =
+        root.findAll(Star::class)
+            .flatMap { star ->
+                ((star.args["replace"] as? List<*>) ?: emptyList<Any?>())
+                    .filterIsInstance<Alias>()
+                    .map { it.alias.lowercase() }
+            }
+            .toSet()
+
+    val requestedRenames = renamePairs(tree)
+    val requestedReplaces = replaceTargets(tree)
+
+    val qualified = qualify(
+        tree,
+        dialect = dialect,
+        schema = schema,
+        validateQualifyColumns = false,
+        quoteIdentifiers = false,
+    )
+
+    // Modifiers still attached to surviving stars could not be resolved (no schema for
+    // their source) — exempt from validation.
+    val unresolvedRenames = renamePairs(qualified)
+    val unresolvedReplaces = replaceTargets(qualified)
+
+    val outputAliases =
+        qualified.findAll(Alias::class).map { it.alias.lowercase() }.toSet()
+
+    for ((old, new) in requestedRenames - unresolvedRenames) {
+        if (new !in outputAliases) {
+            throw ShapeError(
+                "Cannot RENAME unknown column '$old': it does not exist in the " +
+                    "resolved input columns."
+            )
+        }
+    }
+    for (target in requestedReplaces - unresolvedReplaces) {
+        if (target !in outputAliases) {
+            throw ShapeError(
+                "Cannot SET/REPLACE unknown column '$target': it does not exist in " +
+                    "the resolved input columns."
+            )
+        }
+    }
+
+    return qualified
+}
