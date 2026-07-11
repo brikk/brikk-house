@@ -1484,6 +1484,224 @@ open class Generator(
         return "KILL$kind$thisSql"
     }
 
+    // sqlglot: Generator.objectidentifier_sql
+    open fun objectidentifierSql(expression: ObjectIdentifier): String = expression.name
+
+    // sqlglot: Generator.inoutcolumnconstraint_sql
+    open fun inoutcolumnconstraintSql(expression: InOutColumnConstraint): String {
+        val input = expression.args["input_"] == true
+        val output = expression.args["output"] == true
+        val variadic = expression.args["variadic"] == true
+
+        // VARIADIC is mutually exclusive with IN/OUT/INOUT
+        if (variadic) return "VARIADIC"
+
+        if (input && output) return "IN${inoutSeparator}OUT"
+        if (input) return "IN"
+        if (output) return "OUT"
+
+        return ""
+    }
+
+    // sqlglot: Generator.truncatetable_sql
+    open fun truncatetableSql(expression: TruncateTable): String {
+        val target = if (expression.args["is_database"] == true) "DATABASE" else "TABLE"
+        val tables = " ${expressions(expression)}"
+
+        val exists = if (expression.args["exists"] == true) " IF EXISTS" else ""
+
+        var onCluster = sql(expression, "cluster")
+        if (onCluster.isNotEmpty()) onCluster = " $onCluster"
+
+        var identity = sql(expression, "identity")
+        if (identity.isNotEmpty()) identity = " $identity IDENTITY"
+
+        var option = sql(expression, "option")
+        if (option.isNotEmpty()) option = " $option"
+
+        var partition = sql(expression, "partition")
+        if (partition.isNotEmpty()) partition = " $partition"
+
+        return "TRUNCATE $target$exists$tables$onCluster$identity$option$partition"
+    }
+
+    // sqlglot: Generator.triggerproperties_sql
+    open fun triggerpropertiesSql(expression: TriggerProperties): String {
+        val timing = expression.args["timing"] as? String ?: ""
+        val events = (expression.args["events"] as? List<*>).orEmpty()
+            .joinToString(" OR ") { sql(it) }
+        val timingEvents = if (timing.isNotEmpty() || events.isNotEmpty()) {
+            "$timing $events".trim()
+        } else ""
+
+        val parts = mutableListOf(timingEvents, "ON", sql(expression, "table"))
+
+        // Python walrus `if arg := ...` checks truthiness — False/null args are skipped
+        val referencedTable = expression.args["referenced_table"]
+        if (referencedTable != null && referencedTable != false) {
+            parts.add("FROM")
+            parts.add(sql(referencedTable))
+        }
+
+        (expression.args["deferrable"] as? String)?.takeIf { it.isNotEmpty() }?.let { parts.add(it) }
+        (expression.args["initially"] as? String)?.takeIf { it.isNotEmpty() }
+            ?.let { parts.add("INITIALLY $it") }
+        expression.args["referencing"]?.takeIf { it != false }?.let { parts.add(sql(it)) }
+        (expression.args["for_each"] as? String)?.takeIf { it.isNotEmpty() }
+            ?.let { parts.add("FOR EACH $it") }
+        expression.args["when"]?.takeIf { it != false }?.let { parts.add("WHEN (${sql(it)})") }
+
+        parts.add(sql(expression, "execute"))
+
+        return parts.joinToString(sep())
+    }
+
+    // sqlglot: Generator.triggerreferencing_sql
+    open fun triggerreferencingSql(expression: TriggerReferencing): String {
+        val parts = mutableListOf<String>()
+
+        expression.args["old"]?.let { parts.add("OLD TABLE AS ${sql(it)}") }
+        expression.args["new"]?.let { parts.add("NEW TABLE AS ${sql(it)}") }
+
+        return "REFERENCING ${parts.joinToString(" ")}"
+    }
+
+    // sqlglot: Generator.triggerevent_sql
+    open fun triggereventSql(expression: TriggerEvent): String {
+        val columns = expression.args["columns"] as? List<*>
+        if (!columns.isNullOrEmpty()) {
+            return "${expression.name} OF ${expressions(expression, key = "columns", flat = true)}"
+        }
+
+        return sql(expression, "this")
+    }
+
+    // sqlglot: Generator.json_sql
+    open fun jsonSql(expression: JSON): String {
+        var thisSql = sql(expression, "this")
+        if (thisSql.isNotEmpty()) thisSql = " $thisSql"
+
+        val with_ = expression.args["with_"]
+        val withSql = when {
+            !expression.args.containsKey("with_") || with_ == null -> ""
+            with_ == false -> " WITHOUT"
+            else -> " WITH"
+        }
+
+        val uniqueSql = if (expression.args["unique"] == true) " UNIQUE KEYS" else ""
+
+        return "JSON$thisSql$withSql$uniqueSql"
+    }
+
+    // sqlglot: Generator.SUPPORTS_EXPLODING_PROJECTIONS
+    open val supportsExplodingProjections: Boolean get() = true
+
+    // sqlglot: Generator.explodinggenerateseries_sql
+    open fun explodinggenerateseriesSql(expression: ExplodingGenerateSeries): String {
+        val generateSeries = GenerateSeries(
+            expression.args.entries.associate { (k, v) -> k to v }
+        )
+
+        var parent = expression.parent
+        if (parent is Alias || parent is TableAlias) {
+            parent = parent.parent
+        }
+
+        if (supportsExplodingProjections && parent !is Table && parent !is Unnest) {
+            return sql(Unnest(args("expressions" to listOf(generateSeries))))
+        }
+
+        if (parent is Select) {
+            unsupported("GenerateSeries projection unnesting is not supported.")
+        }
+
+        return sql(generateSeries)
+    }
+
+    // sqlglot: Generator.partitionboundspec_sql
+    open fun partitionboundspecSql(expression: PartitionBoundSpec): String {
+        val thisArg = expression.args["this"]
+        if (thisArg is List<*>) {
+            return "IN (${expressions(expression, key = "this", flat = true)})"
+        }
+        if (thisArg != null) {
+            val modulus = sql(expression, "this")
+            val remainder = sql(expression, "expression")
+            return "WITH (MODULUS $modulus, REMAINDER $remainder)"
+        }
+
+        val fromExpressions = expressions(expression, key = "from_expressions", flat = true)
+        val toExpressions = expressions(expression, key = "to_expressions", flat = true)
+        return "FROM ($fromExpressions) TO ($toExpressions)"
+    }
+
+    // sqlglot: Generator.partitionedofproperty_sql
+    open fun partitionedofpropertySql(expression: PartitionedOfProperty): String {
+        val thisSql = sql(expression, "this")
+
+        val forValuesOrDefault = expression.args["expression"]
+        val suffix = if (forValuesOrDefault is PartitionBoundSpec) {
+            " FOR VALUES ${sql(forValuesOrDefault)}"
+        } else {
+            " DEFAULT"
+        }
+
+        return "PARTITION OF $thisSql$suffix"
+    }
+
+    // sqlglot: Generator.pseudotype_sql
+    open fun pseudotypeSql(expression: PseudoType): String = expression.name
+
+    // sqlglot: Generator.overlay_sql
+    open fun overlaySql(expression: Overlay): String {
+        val thisSql = sql(expression, "this")
+        val expr = sql(expression, "expression")
+        val fromSql = sql(expression, "from_")
+        var forSql = sql(expression, "for_")
+        if (forSql.isNotEmpty()) forSql = " FOR $forSql"
+
+        return "OVERLAY($thisSql PLACING $expr FROM $fromSql$forSql)"
+    }
+
+    // sqlglot: Generator.xmlelement_sql
+    open fun xmlelementSql(expression: XMLElement): String {
+        val prefix = if (expression.args["evalname"] == true) "EVALNAME" else "NAME"
+        val name = "$prefix ${sql(expression, "this")}"
+        return func("XMLELEMENT", name, *expression.expressionsArg.toTypedArray())
+    }
+
+    // sqlglot: Generator.xmltable_sql
+    open fun xmltableSql(expression: XMLTable): String {
+        val thisSql = sql(expression, "this")
+        var namespaces = expressions(expression, key = "namespaces")
+        namespaces = if (namespaces.isNotEmpty()) "XMLNAMESPACES($namespaces), " else ""
+        var passing = expressions(expression, key = "passing")
+        passing = if (passing.isNotEmpty()) "${sep()}PASSING${seg(passing)}" else ""
+        var columns = expressions(expression, key = "columns")
+        columns = if (columns.isNotEmpty()) "${sep()}COLUMNS${seg(columns)}" else ""
+        val byRef = if (expression.args["by_ref"] == true) "${sep()}RETURNING SEQUENCE BY REF" else ""
+        return "XMLTABLE(${sep("")}${indent(namespaces + thisSql + passing + byRef + columns)}${seg(")", sep = "")}"
+    }
+
+    // sqlglot: Generator.xmlnamespace_sql
+    open fun xmlnamespaceSql(expression: XMLNamespace): String {
+        val thisSql = sql(expression, "this")
+        return if (expression.args["this"] is Alias) thisSql else "DEFAULT $thisSql"
+    }
+
+    // sqlglot: Generator.recursivewithsearch_sql
+    open fun recursivewithsearchSql(expression: RecursiveWithSearch): String {
+        val kind = sql(expression, "kind")
+        val thisSql = sql(expression, "this")
+        val setSql = sql(expression, "expression")
+        var using = sql(expression, "using")
+        if (using.isNotEmpty()) using = " USING $using"
+
+        val kindSql = if (kind == "CYCLE") kind else "SEARCH $kind FIRST BY"
+
+        return "$kindSql $thisSql SET $setSql$using"
+    }
+
     // sqlglot: Generator.onconflict_sql
     open fun onconflictSql(expression: OnConflict): String {
         val conflict = if (expression.args["duplicate"] == true) "ON DUPLICATE KEY" else "ON CONFLICT"
@@ -2950,6 +3168,15 @@ open class Generator(
         var unit = if (unitExpression != null) sql(unitExpression) else ""
         if (!intervalAllowsPluralForm) unit = GeneratorTables.TIME_PART_SINGULARS[unit] ?: unit
         if (unit.isNotEmpty()) unit = " $unit"
+
+        if (singleStringInterval) {
+            val thisName = (expression.args["this"] as? Expression)?.name ?: ""
+            if (thisName.isNotEmpty()) {
+                if (unitExpression is IntervalSpan) return "INTERVAL '$thisName'$unit"
+                return "INTERVAL '$thisName$unit'"
+            }
+            return "INTERVAL$unit"
+        }
 
         var thisSql = sql(expression, "this")
         if (thisSql.isNotEmpty()) {

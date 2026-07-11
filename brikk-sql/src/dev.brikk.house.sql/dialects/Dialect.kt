@@ -84,6 +84,7 @@ object Dialects {
     val PRESTO: Dialect = PrestoDialect()
     val TRINO: Dialect = TrinoDialect()
     val DUCKDB: Dialect = DuckdbDialect()
+    val POSTGRES: Dialect = PostgresDialect()
 
     fun forNameOrNull(name: String): Dialect? = when (name.lowercase().trim()) {
         "", "sqlglot" -> BASE
@@ -92,6 +93,7 @@ object Dialects {
         "presto" -> PRESTO
         "trino" -> TRINO
         "duckdb" -> DUCKDB
+        "postgres", "postgresql" -> POSTGRES
         else -> null
     }
 

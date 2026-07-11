@@ -19,8 +19,7 @@ import kotlin.reflect.KClass
  * overlay; flag overrides are open-val overrides; multi-line methods below.
  *
  * NOT PORTED (same infrastructure gaps as PrestoGenerator): the exp.Select preprocess
- * pipeline, merge_without_target_sql (exp.Merge) and the SUPPORTED_JSON_PATH_PARTS
- * restriction. Mismatches are ledgered.
+ * pipeline and the SUPPORTED_JSON_PATH_PARTS restriction. Mismatches are ledgered.
  */
 // sqlglot: generators.trino.TrinoGenerator
 open class TrinoGenerator(
@@ -116,6 +115,53 @@ open class TrinoGenerator(
         return listagg
     }
 
+    // sqlglot: dialect.Dialect.normalize_identifier for trino (lowercases unquoted)
+    private fun normalizeIdentifierName(identifier: Expression?): String? {
+        if (identifier == null) return null
+        val quoted = (identifier as? Identifier)?.args?.get("quoted") == true
+        return if (quoted) identifier.name else identifier.name.lowercase()
+    }
+
+    // sqlglot: dialect.merge_without_target_sql (Trino TRANSFORMS[exp.Merge])
+    open fun mergeWithoutTargetSql(expression: Merge): String {
+        val target = expression.thisArg as? Expression
+        val alias = target?.args?.get("alias") as? TableAlias
+
+        val targets = mutableSetOf<String?>()
+        targets.add(normalizeIdentifierName(target?.thisArg as? Expression))
+        if (alias != null) {
+            targets.add(normalizeIdentifierName(alias.thisArg as? Expression))
+        }
+
+        val whens = expression.args["whens"] as? Expression
+        for (whenExpr in whens?.expressionsArg.orEmpty()) {
+            val then = (whenExpr as? Expression)?.args?.get("then") as? Expression ?: continue
+            if (then is Update) {
+                for (equals in then.findAll(EQ::class)) {
+                    val equalLhs = equals.thisArg
+                    if (equalLhs is Column &&
+                        normalizeIdentifierName(equalLhs.args["table"] as? Expression) in targets
+                    ) {
+                        equalLhs.replace(Column(args("this" to equalLhs.thisArg)))
+                    }
+                }
+            }
+            if (then is Insert) {
+                val columnList = then.thisArg
+                if (columnList is Tuple) {
+                    for (column in columnList.expressionsArg) {
+                        val col = column as? Column ?: continue
+                        if (normalizeIdentifierName(col.args["table"] as? Expression) in targets) {
+                            col.replace(Column(args("this" to col.thisArg)))
+                        }
+                    }
+                }
+            }
+        }
+
+        return mergeSql(expression)
+    }
+
     // sqlglot: TrinoGenerator.jsonextract_sql
     override fun jsonextractSql(expression: JSONExtract): String {
         if (!isTruthy(expression.args["json_query"])) {
@@ -164,6 +210,7 @@ open class TrinoGenerator(
             }
             reg(GroupConcat::class) { e -> tg().groupconcatSql(e as GroupConcat) }
             reg(LocationProperty::class) { e -> propertySql(e as Property) }
+            reg(Merge::class) { e -> tg().mergeWithoutTargetSql(e as Merge) }
             reg(TimeStrToTime::class) { e -> tg().timestrtotimeSql(e, includePrecision = true) }
             reg(Trim::class) { e -> tg().trinoTrimSql(e as Trim) }
         }

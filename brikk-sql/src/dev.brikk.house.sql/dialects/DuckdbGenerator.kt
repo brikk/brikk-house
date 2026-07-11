@@ -1790,6 +1790,34 @@ open class DuckdbGenerator(
             reg(JSONBObjectAgg::class) { e -> dg().renameFuncSql("JSON_GROUP_OBJECT", e) }
             reg(DateBin::class) { e -> dg().renameFuncSql("TIME_BUCKET", e) }
             reg(JSONBExists::class) { e -> dg().renameFuncSql("JSON_EXISTS", e) }
+            // sqlglot: DuckDBGenerator.rand_sql
+            reg(Rand::class) { e ->
+                if (e.thisArg != null) {
+                    unsupported("RANDOM with seed is not supported in DuckDB")
+                }
+                val lower = e.args["lower"] as? Expression
+                val upper = e.args["upper"] as? Expression
+                if (lower != null && upper != null) {
+                    // scale DuckDB's [0,1) to the specified range
+                    val rangeSize = Paren(
+                        args("this" to Sub(args("this" to upper.copy(), "expression" to lower.copy())))
+                    )
+                    val scaled = Add(
+                        args(
+                            "this" to lower.copy(),
+                            "expression" to Mul(args("this" to Rand(), "expression" to rangeSize)),
+                        )
+                    )
+                    sql(
+                        Cast(
+                            args("this" to scaled, "to" to DataType(args("this" to DType.BIGINT)))
+                        )
+                    )
+                } else {
+                    // Default DuckDB behavior - just return RANDOM() as float
+                    "RANDOM()"
+                }
+            }
         }
     }
 }

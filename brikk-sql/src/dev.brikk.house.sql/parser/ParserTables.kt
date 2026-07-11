@@ -408,9 +408,11 @@ object BaseParserTables {
         TokenType.COLLATE to { Collate(it) },
     )
 
-    // sqlglot: Parser.FACTOR (LR_ARROW/LLRR_ARROW -> Distance/DistanceNd not ported)
+    // sqlglot: Parser.FACTOR
     val FACTOR: Map<TokenType, NodeFactory> = mapOf(
         TokenType.DIV to { IntDiv(it) },
+        TokenType.LR_ARROW to { dev.brikk.house.sql.ast.Distance(it) },
+        TokenType.LLRR_ARROW to { dev.brikk.house.sql.ast.DistanceNd(it) },
         TokenType.SLASH to { Div(it) },
         TokenType.STAR to { Mul(it) },
     )
@@ -583,6 +585,12 @@ object BaseParserTables {
         TokenType.DASH to { parser ->
             parser.expression(Neg(args("this" to parser.parseUnary())))
         },
+        TokenType.PIPE_SLASH to { parser ->
+            parser.expression(dev.brikk.house.sql.ast.Sqrt(args("this" to parser.parseUnary())))
+        },
+        TokenType.DPIPE_SLASH to { parser ->
+            parser.expression(dev.brikk.house.sql.ast.Cbrt(args("this" to parser.parseUnary())))
+        },
     )
 
     // sqlglot: Parser.STRING_PARSERS (base: BYTE_STRING_IS_BYTES_TYPE=false,
@@ -657,10 +665,10 @@ object BaseParserTables {
         },
     )
 
-    // sqlglot: Parser.RANGE_PARSERS (OPERATOR -> _parse_operator omitted: the base
-    // tokenizer never emits it in range position for the ported corpus).
+    // sqlglot: Parser.RANGE_PARSERS
     val RANGE_PARSERS: Map<TokenType, (Parser, Expression?) -> Expression?> = mapOf(
         TokenType.AT_GT to binaryRangeParser { dev.brikk.house.sql.ast.ArrayContainsAll(it) },
+        TokenType.OPERATOR to { parser, this_ -> parser.parseOperator(this_) },
         TokenType.FOR to { parser, this_ -> parser.parseComprehension(this_) },
         TokenType.BETWEEN to { parser, this_ -> parser.parseBetween(this_) },
         TokenType.GLOB to binaryRangeParser { dev.brikk.house.sql.ast.Glob(it) },
@@ -722,7 +730,10 @@ object BaseParserTables {
         put("JSON_TABLE") { parser -> parser.parseJsonTable() }
         put("MATCH") { parser -> parser.parseMatchAgainst() }
         put("NORMALIZE") { parser -> parser.parseNormalize() }
+        put("OVERLAY") { parser -> parser.parseOverlay() }
         put("POSITION") { parser -> parser.parsePosition() }
+        put("XMLELEMENT") { parser -> parser.parseXmlElement() }
+        put("XMLTABLE") { parser -> parser.parseXmlTable() }
         put("SAFE_CAST") { parser -> parser.parseCast(false, safe = true) }
         put("SUBSTRING") { parser -> parser.parseSubstring() }
         put("TRIM") { parser -> parser.parseTrim() }

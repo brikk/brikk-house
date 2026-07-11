@@ -581,6 +581,37 @@ object GeneratorTables {
             val enforced = if (e.args["enforced"] == true) " ENFORCED" else ""
             "CHECK (${sql(e, "this")})$enforced"
         }
+        reg(InOutColumnConstraint::class) { e ->
+            inoutcolumnconstraintSql(e as InOutColumnConstraint)
+        }
+
+        // --- DDL / misc statements ---
+        reg(ObjectIdentifier::class) { e -> objectidentifierSql(e as ObjectIdentifier) }
+        reg(PartitionBoundSpec::class) { e -> partitionboundspecSql(e as PartitionBoundSpec) }
+        reg(PartitionedOfProperty::class) { e -> partitionedofpropertySql(e as PartitionedOfProperty) }
+        reg(PseudoType::class) { e -> pseudotypeSql(e as PseudoType) }
+        reg(Overlay::class) { e -> overlaySql(e as Overlay) }
+        reg(XMLElement::class) { e -> xmlelementSql(e as XMLElement) }
+        reg(XMLTable::class) { e -> xmltableSql(e as XMLTable) }
+        reg(XMLNamespace::class) { e -> xmlnamespaceSql(e as XMLNamespace) }
+        reg(RecursiveWithSearch::class) { e -> recursivewithsearchSql(e as RecursiveWithSearch) }
+        reg(DistanceNd::class) { e -> binary(e as Binary, "<<->>") }
+        reg(TriggerExecute::class) { e -> "EXECUTE FUNCTION ${sql(e, "this")}" }
+        reg(ExplodingGenerateSeries::class) { e ->
+            explodinggenerateseriesSql(e as ExplodingGenerateSeries)
+        }
+        reg(TruncateTable::class) { e -> truncatetableSql(e as TruncateTable) }
+        reg(TriggerProperties::class) { e -> triggerpropertiesSql(e as TriggerProperties) }
+        reg(TriggerReferencing::class) { e -> triggerreferencingSql(e as TriggerReferencing) }
+        reg(TriggerEvent::class) { e -> triggereventSql(e as TriggerEvent) }
+        reg(JSON::class) { e -> jsonSql(e as JSON) }
+        // sqlglot: TRANSFORMS one-liners
+        reg(Variadic::class) { e -> "VARIADIC ${sql(e, "this")}" }
+        reg(WithOperator::class) { e -> "${sql(e, "this")} WITH ${sql(e, "op")}" }
+        reg(JSONBContainsAnyTopKeys::class) { e -> binary(e as Binary, "?|") }
+        reg(JSONBContainsAllTopKeys::class) { e -> binary(e as Binary, "?&") }
+        reg(JSONBDeleteAtPath::class) { e -> binary(e as Binary, "#-") }
+        reg(JSONBPathExists::class) { e -> binary(e as Binary, "@?") }
 
         // --- properties (sqlglot: TRANSFORMS one-liners + methods) ---
         reg(Properties::class) { e -> propertiesSql(e as Properties) }

@@ -1,0 +1,29 @@
+{
+ "sqlglot_version": "v30.12.0-44-g93d16591",
+ "cases": [
+  {
+   "sql": "'x' 'y' 'z'",
+   "reason": "adjacent string literal concatenation (Parser._parse_string concat loop) not ported"
+  },
+  {
+   "sql": "WITH t(c) AS (SELECT 1) SELECT * INTO UNLOGGED foo FROM (SELECT c AS c FROM t) AS temp",
+   "reason": "SELECT INTO (UNLOGGED) target tables not ported (base parser gate)"
+  },
+  {
+   "sql": "SELECT * FROM ROWS FROM (FUNC1(col1, col2))",
+   "reason": "ROWS FROM (...) table functions (Parser._parse_rows_from) not ported"
+  },
+  {
+   "sql": "SELECT * FROM ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT), FUNC2(col2) AS alias2(\"col2\" INT)) WITH ORDINALITY",
+   "reason": "ROWS FROM (...) table functions (Parser._parse_rows_from) not ported"
+  },
+  {
+   "sql": "SELECT * FROM table1, ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT)) WITH ORDINALITY AS alias3(\"col3\" INT, \"col4\" TEXT)",
+   "reason": "ROWS FROM (...) table functions (Parser._parse_rows_from) not ported"
+  },
+  {
+   "sql": "WITH RECURSIVE search_graph(id, link, data, depth) AS (SELECT g.id, g.link, g.data, 1 FROM graph AS g UNION ALL SELECT g.id, g.link, g.data, sg.depth + 1 FROM graph AS g, search_graph AS sg WHERE g.id = sg.link) CYCLE id SET is_cycle USING path SELECT * FROM search_graph",
+   "reason": "WITH ... SEARCH/CYCLE clause parsing (RecursiveWithSearch) not ported"
+  }
+ ]
+}

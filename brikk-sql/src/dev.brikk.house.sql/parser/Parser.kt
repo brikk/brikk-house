@@ -137,6 +137,7 @@ import dev.brikk.house.sql.ast.Interval
 import dev.brikk.house.sql.ast.IntervalSpan
 import dev.brikk.house.sql.ast.Is
 import dev.brikk.house.sql.ast.IsolatedLoadingProperty
+import dev.brikk.house.sql.ast.JSON
 import dev.brikk.house.sql.ast.JSONColumnDef
 import dev.brikk.house.sql.ast.JSONKeyValue
 import dev.brikk.house.sql.ast.JSONObject
@@ -176,6 +177,10 @@ import dev.brikk.house.sql.ast.Null
 import dev.brikk.house.sql.ast.NullSafeEQ
 import dev.brikk.house.sql.ast.NullSafeNEQ
 import dev.brikk.house.sql.ast.ObjectIdentifier
+import dev.brikk.house.sql.ast.Overlay
+import dev.brikk.house.sql.ast.XMLElement
+import dev.brikk.house.sql.ast.XMLNamespace
+import dev.brikk.house.sql.ast.XMLTable
 import dev.brikk.house.sql.ast.Offset
 import dev.brikk.house.sql.ast.OnCommitProperty
 import dev.brikk.house.sql.ast.OnConflict
@@ -262,6 +267,10 @@ import dev.brikk.house.sql.ast.TableSample
 import dev.brikk.house.sql.ast.ToTableProperty
 import dev.brikk.house.sql.ast.Transaction
 import dev.brikk.house.sql.ast.Trim
+import dev.brikk.house.sql.ast.TriggerEvent
+import dev.brikk.house.sql.ast.TriggerExecute
+import dev.brikk.house.sql.ast.TriggerProperties
+import dev.brikk.house.sql.ast.TriggerReferencing
 import dev.brikk.house.sql.ast.TruncateTable
 import dev.brikk.house.sql.ast.TryCast
 import dev.brikk.house.sql.ast.Tuple
@@ -601,6 +610,25 @@ open class Parser(
             "DATABASE" to emptyList(),
             "SCHEMA" to emptyList(),
             "CATALOG" to emptyList(),
+        )
+
+    // sqlglot: Parser.TRIGGER_EVENTS
+    open val triggerEvents: Set<TokenType>
+        get() = setOf(TokenType.INSERT, TokenType.UPDATE, TokenType.DELETE, TokenType.TRUNCATE)
+
+    // sqlglot: Parser.TRIGGER_TIMING
+    open val triggerTiming: Map<String, List<List<String>>>
+        get() = mapOf(
+            "INSTEAD" to listOf(listOf("OF")),
+            "BEFORE" to emptyList(),
+            "AFTER" to emptyList(),
+        )
+
+    // sqlglot: Parser.TRIGGER_DEFERRABLE
+    open val triggerDeferrable: Map<String, List<List<String>>>
+        get() = mapOf(
+            "NOT" to listOf(listOf("DEFERRABLE")),
+            "DEFERRABLE" to emptyList(),
         )
 
     // sqlglot: Parser.PARTITION_KEYWORDS
@@ -1346,11 +1374,31 @@ open class Parser(
             return expression(factory(args("this" to this_, "expression" to parseBitwise())))
         }
 
-        // sqlglot: IS JSON predicate — exp.JSON not ported.
-        val expr = parseNull() ?: parseBitwise()
-        if (expr == null) {
-            retreat(startIndex)
-            return null
+        val expr: Expression?
+        if (match(TokenType.JSON)) {
+            // sqlglot: IS JSON predicate (IS_JSON_PREDICATE_KIND); Python's
+            // `_match_texts(...) and text` yields False (not None) on no match
+            val kind: kotlin.Any = if (matchTexts(setOf("VALUE", "SCALAR", "ARRAY", "OBJECT"))) {
+                prevToken.text.uppercase()
+            } else false
+
+            val with_: kotlin.Boolean? = when {
+                matchTextSeq("WITH") -> true
+                matchTextSeq("WITHOUT") -> false
+                else -> null
+            }
+
+            val unique = match(TokenType.UNIQUE)
+            matchTextSeq("KEYS")
+            expr = expression(
+                JSON(args("this" to kind, "with_" to with_, "unique" to unique))
+            )
+        } else {
+            expr = parseNull() ?: parseBitwise()
+            if (expr == null) {
+                retreat(startIndex)
+                return null
+            }
         }
 
         var result: Expression = expression(Is(args("this" to this_, "expression" to expr)))
@@ -2013,7 +2061,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_function_parameter
-    protected fun parseFunctionParameter(): Expression? =
+    protected open fun parseFunctionParameter(): Expression? =
         parseColumnDef(parseIdVar(), computedColumn = false)
 
     // sqlglot: Parser._parse_subquery
@@ -3734,17 +3782,50 @@ open class Parser(
         return primaryParser(this, token)
     }
 
-    // sqlglot: Parser._parse_interval_span (SUPPORTS_OMITTED_INTERVAL_SPAN_UNIT=false
-    // in the base parser, so the day-time omitted-unit branch is elided)
+    // sqlglot: Parser.SUPPORTS_OMITTED_INTERVAL_SPAN_UNIT
+    open val supportsOmittedIntervalSpanUnit: kotlin.Boolean get() = false
+
+    // sqlglot: exp.INTERVAL_DAY_TIME_RE
+    private val INTERVAL_DAY_TIME_RE =
+        Regex("^\\s*-?\\s*\\d+(?:\\.\\d+)?\\s+(?:-?(?:\\d+:)?\\d+:\\d+(?:\\.\\d+)?|-?(?:\\d+:){1,2}|:)\\s*")
+
+    // sqlglot: Parser._parse_interval_span
     protected fun parseIntervalSpan(thisIn: Expression?): Expression {
         var this_ = thisIn
 
-        var unit = parseFunction()
-        if (unit == null &&
-            (currToken.tokenType == TokenType.VAR ||
-                currToken.text.uppercase() in validIntervalUnits)
+        // handle day-time format interval span with omitted units:
+        //   INTERVAL '<number days> hh[:][mm[:ss[.ff]]]' <maybe `unit TO unit`>
+        var intervalSpanUnitsOmitted: kotlin.Boolean? = null
+        if (this_ != null &&
+            this_.isString &&
+            supportsOmittedIntervalSpanUnit &&
+            INTERVAL_DAY_TIME_RE.containsMatchIn(this_.name)
         ) {
-            unit = parseVar(anyToken = true, upper = true)
+            val spanIndex = index
+
+            // Var "TO" Var
+            val firstUnit = parseVar(anyToken = true, upper = true)
+            var secondUnit: Expression? = null
+            if (firstUnit != null && matchTextSeq("TO")) {
+                secondUnit = parseVar(anyToken = true, upper = true)
+            }
+
+            intervalSpanUnitsOmitted = !(firstUnit != null && secondUnit != null)
+
+            retreat(spanIndex)
+        }
+
+        var unit: Expression?
+        if (intervalSpanUnitsOmitted == true) {
+            unit = null
+        } else {
+            unit = parseFunction()
+            if (unit == null &&
+                (currToken.tokenType == TokenType.VAR ||
+                    currToken.text.uppercase() in validIntervalUnits)
+            ) {
+                unit = parseVar(anyToken = true, upper = true)
+            }
         }
 
         // Most dialects support, e.g., the form INTERVAL '5' day, thus we try to parse
@@ -3828,6 +3909,15 @@ open class Parser(
         return interval
     }
 
+    // sqlglot: Parser._parse_user_defined_type (base keeps a dotted string name)
+    protected open fun parseUserDefinedType(identifier: Identifier): Expression? {
+        var typeName = identifier.name
+        while (match(TokenType.DOT)) {
+            typeName = "$typeName.${if (advanceAny() != null) prevToken.text else ""}"
+        }
+        return DataType(args("this" to DType.USERDEFINED, "kind" to typeName))
+    }
+
     // sqlglot: Parser._parse_types (TYPE_CONVERTERS={} and
     // SUPPORTS_FIXED_SIZE_ARRAYS=false in the base dialect; the MAP[K=>V] Materialize
     // branch, ClickHouse JSON type args and VECTOR expressions are ported faithfully)
@@ -3865,12 +3955,7 @@ open class Parser(
                         return raiseError("Composite type identifiers are not supported yet")
                     }
                 } else if (supportsUserDefinedTypes) {
-                    // sqlglot: _parse_user_defined_type (SUPPORTS_USER_DEFINED_TYPES=true)
-                    var typeName = identifier.name
-                    while (match(TokenType.DOT)) {
-                        typeName = "$typeName.${if (advanceAny() != null) prevToken.text else ""}"
-                    }
-                    return DataType(args("this" to DType.USERDEFINED, "kind" to typeName))
+                    return parseUserDefinedType(identifier)
                 } else {
                     // sqlglot: `self._retreat(self._index - 1); return None`
                     retreat(index - 1)
@@ -4438,7 +4523,108 @@ open class Parser(
         )
     }
 
-    // sqlglot: Parser._parse_create (TRIGGER and macro-overload branches are gated:
+    // sqlglot: Parser._parse_trigger_events
+    protected fun parseTriggerEvents(): List<Expression> {
+        val events = mutableListOf<Expression>()
+
+        while (true) {
+            val eventType = if (matchSet(triggerEvents)) prevToken.text.uppercase() else null
+            if (eventType == null) {
+                raiseError("Expected trigger event (INSERT, UPDATE, DELETE, TRUNCATE)")
+                break
+            }
+
+            val columns = if (eventType == "UPDATE" && matchTextSeq("OF")) {
+                parseCsv { parseColumn() }
+            } else {
+                null
+            }
+
+            events.add(expression(TriggerEvent(args("this" to eventType, "columns" to columns))))
+
+            if (!match(TokenType.OR)) break
+        }
+
+        return events
+    }
+
+    // sqlglot: Parser._parse_trigger_deferrable
+    protected fun parseTriggerDeferrable(): Pair<String?, String?> {
+        val deferrableVar = parseVarFromOptions(triggerDeferrable, raiseUnmatched = false)
+        val deferrable = deferrableVar?.name
+
+        var initially: String? = null
+        if (deferrable != null && matchTextSeq("INITIALLY")) {
+            initially = if (matchTexts(setOf("IMMEDIATE", "DEFERRED"))) {
+                prevToken.text.uppercase()
+            } else {
+                null
+            }
+        }
+
+        return deferrable to initially
+    }
+
+    // sqlglot: Parser._parse_trigger_referencing_clause
+    protected fun parseTriggerReferencingClause(keyword: String): Expression? {
+        if (!matchTextSeq(keyword)) return null
+        if (!matchTextSeq("TABLE")) {
+            raiseError("Expected TABLE after $keyword in REFERENCING clause")
+        }
+        matchTextSeq("AS")
+        return parseIdVar()
+    }
+
+    // sqlglot: Parser._parse_trigger_referencing
+    protected fun parseTriggerReferencing(): Expression? {
+        if (!matchTextSeq("REFERENCING")) return null
+
+        var oldAlias: Expression? = null
+        var newAlias: Expression? = null
+
+        while (true) {
+            val old = parseTriggerReferencingClause("OLD")
+            if (old != null) {
+                if (oldAlias != null) raiseError("Duplicate OLD clause in REFERENCING")
+                oldAlias = old
+                continue
+            }
+            val new = parseTriggerReferencingClause("NEW")
+            if (new != null) {
+                if (newAlias != null) raiseError("Duplicate NEW clause in REFERENCING")
+                newAlias = new
+                continue
+            }
+            break
+        }
+
+        if (oldAlias == null && newAlias == null) {
+            raiseError("REFERENCING clause requires at least OLD TABLE or NEW TABLE")
+        }
+
+        return expression(TriggerReferencing(args("old" to oldAlias, "new" to newAlias)))
+    }
+
+    // sqlglot: Parser._parse_trigger_for_each
+    protected fun parseTriggerForEach(): String? {
+        if (!matchTextSeq("FOR", "EACH")) return null
+
+        return if (matchTexts(setOf("ROW", "STATEMENT"))) prevToken.text.uppercase() else null
+    }
+
+    // sqlglot: Parser._parse_trigger_execute
+    protected fun parseTriggerExecute(): Expression? {
+        if (!match(TokenType.EXECUTE)) return null
+
+        if (!matchSet(setOf(TokenType.FUNCTION, TokenType.PROCEDURE))) {
+            raiseError("Expected FUNCTION or PROCEDURE after EXECUTE")
+        }
+
+        val funcCall = parseColumn()
+        return expression(TriggerExecute(args("this" to funcCall)))
+    }
+
+    // sqlglot: Parser._parse_create (macro-overload branch gated:
     // no base-corpus coverage; CREATABLE_KIND_MAPPING={} in the base dialect)
     fun parseCreate(): Expression {
         // Note: this can't be None because we've matched a statement parser
@@ -4568,9 +4754,53 @@ open class Parser(
         } else if ((createTokenType == TokenType.CONSTRAINT && match(TokenType.TRIGGER)) ||
             createTokenType == TokenType.TRIGGER
         ) {
-            // sqlglot: trigger machinery — exp.TriggerProperties not ported.
-            raiseError("CREATE TRIGGER is not supported yet")
-                return parseAsCommand(start)
+            val isConstraint = createTokenType == TokenType.CONSTRAINT
+            if (isConstraint) {
+                createToken = prevToken
+            }
+
+            val triggerName = parseIdVar() ?: return parseAsCommand(start)
+
+            val timingVar = parseVarFromOptions(triggerTiming, raiseUnmatched = false)
+            val timing = timingVar?.name ?: return parseAsCommand(start)
+
+            val events = parseTriggerEvents()
+            if (!match(TokenType.ON)) {
+                raiseError("Expected ON in trigger definition")
+            }
+
+            val table = parseTableParts()
+            val referencedTable = if (match(TokenType.FROM)) parseTableParts() else null
+            val (deferrable, initially) = parseTriggerDeferrable()
+            val referencing = parseTriggerReferencing()
+            val forEach = parseTriggerForEach()
+            val when_ = if (matchTextSeq("WHEN")) {
+                parseWrapped({ parseDisjunction() }, optional = true)
+            } else {
+                false
+            }
+            val execute = parseTriggerExecute() ?: return parseAsCommand(start)
+
+            val triggerProps = expression(
+                TriggerProperties(
+                    args(
+                        "table" to table,
+                        "timing" to timing,
+                        "events" to events,
+                        "execute" to execute,
+                        "constraint" to isConstraint,
+                        "referenced_table" to referencedTable,
+                        "deferrable" to deferrable,
+                        "initially" to initially,
+                        "referencing" to referencing,
+                        "for_each" to forEach,
+                        "when" to when_,
+                    )
+                )
+            )
+
+            this_ = triggerName
+            extendProps(expression(Properties(args("expressions" to listOf(triggerProps)))))
         } else if (createTokenType == TokenType.TYPE) {
             this_ = parseTableParts(schema = true)
             if (this_ == null || !match(TokenType.ALIAS)) {
@@ -7468,7 +7698,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_unique_key
-    fun parseUniqueKey(): Expression? {
+    open fun parseUniqueKey(): Expression? {
         if (currToken.exists &&
             currToken.tokenType != TokenType.IDENTIFIER &&
             currToken.text.uppercase() in constraintParsers.keys
@@ -8002,6 +8232,32 @@ open class Parser(
         }
 
         return current
+    }
+
+    // sqlglot: Parser._parse_operator (OPERATOR(schema.op) custom-operator syntax)
+    open fun parseOperator(thisIn: Expression?): Expression? {
+        var this_ = thisIn
+        while (true) {
+            if (!match(TokenType.L_PAREN)) break
+
+            var op = ""
+            while (currToken.exists && !match(TokenType.R_PAREN)) {
+                op += currToken.text
+                advance()
+            }
+
+            val comments = prevComments.toMutableList()
+            this_ = expression(
+                dev.brikk.house.sql.ast.Operator(
+                    args("this" to this_, "operator" to op, "expression" to parseBitwise())
+                ),
+                comments = comments,
+            )
+
+            if (!match(TokenType.OPERATOR)) break
+        }
+
+        return this_
     }
 
     // sqlglot: Parser._parse_bracket_key_value
@@ -8790,6 +9046,104 @@ open class Parser(
                 args("this" to haystack, "substr" to needle, "position" to posArgs.getOrNull(2))
             )
         )
+    }
+
+    // sqlglot: Parser._parse_overlay
+    fun parseOverlay(): Expression {
+        fun parseOverlayArg(text: String): Expression? =
+            if (match(TokenType.COMMA) || matchTextSeq(text)) parseBitwise() else null
+
+        return expression(
+            Overlay(
+                args(
+                    "this" to parseBitwise(),
+                    "expression" to parseOverlayArg("PLACING"),
+                    "from_" to parseOverlayArg("FROM"),
+                    "for_" to parseOverlayArg("FOR"),
+                )
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_xml_element
+    fun parseXmlElement(): Expression {
+        val evalname: kotlin.Boolean?
+        val this_: Expression?
+        if (matchTextSeq("EVALNAME")) {
+            evalname = true
+            this_ = parseBitwise()
+        } else {
+            evalname = null
+            matchTextSeq("NAME")
+            this_ = parseIdVar()
+        }
+
+        // sqlglot: `self._match(COMMA) and self._parse_csv(...)` — False on no comma
+        val exprs: kotlin.Any = if (match(TokenType.COMMA)) parseCsv { parseBitwise() } else false
+        return expression(
+            XMLElement(
+                args(
+                    "this" to this_,
+                    "expressions" to exprs,
+                    "evalname" to evalname,
+                )
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_xml_table
+    fun parseXmlTable(): Expression {
+        var namespaces: List<Expression>? = null
+        var passing: List<Expression>? = null
+        var columns: List<Expression>? = null
+
+        if (matchTextSeq("XMLNAMESPACES", "(")) {
+            namespaces = parseXmlNamespace()
+            matchTextSeq(")", ",")
+        }
+
+        val this_ = parseString()
+
+        if (matchTextSeq("PASSING")) {
+            // The BY VALUE keywords are optional and are provided for semantic clarity
+            matchTextSeq("BY", "VALUE")
+            passing = parseCsv { parseColumn() }
+        }
+
+        val byRef = matchTextSeq("RETURNING", "SEQUENCE", "BY", "REF")
+
+        if (matchTextSeq("COLUMNS")) {
+            columns = parseCsv { parseFieldDef() }
+        }
+
+        return expression(
+            XMLTable(
+                args(
+                    "this" to this_,
+                    "namespaces" to namespaces,
+                    "passing" to passing,
+                    "columns" to columns,
+                    "by_ref" to byRef,
+                )
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_xml_namespace
+    protected fun parseXmlNamespace(): List<Expression> {
+        val namespaces = mutableListOf<Expression>()
+
+        while (true) {
+            val uri = if (match(TokenType.DEFAULT)) {
+                parseString()
+            } else {
+                parseAlias(parseString())
+            }
+            namespaces.add(expression(XMLNamespace(args("this" to uri))))
+            if (!match(TokenType.COMMA)) break
+        }
+
+        return namespaces
     }
 
     // sqlglot: Parser._parse_substring

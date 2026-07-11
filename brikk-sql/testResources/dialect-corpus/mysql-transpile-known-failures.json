@@ -1,3 +1,44 @@
 {
- "cases": []
+ "cases": [
+  {
+   "case": "write|postgres|SELECT CONCAT('11', '22')",
+   "reason": "postgres concat_to_dpipe (Concat->|| when CONCAT_COALESCE args are text) is annotate_types-gated; not ported"
+  },
+  {
+   "case": "read|postgres|SELECT * FROM x LEFT JOIN y ON x.id = y.id UNION ALL SELECT * FROM x RIGHT JOIN y ON x.id = y.id WHERE NOT EXISTS(SELECT 1 FROM x WHERE x.id = y.id) ORDER BY 1 LIMIT 0",
+   "reason": "transforms.eliminate_full_outer_join (MySQL exp.Select preprocess) not ported"
+  },
+  {
+   "case": "read|postgres|SELECT * FROM t1 LEFT OUTER JOIN t2 ON t1.x = t2.x UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 ON t1.x = t2.x WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x)",
+   "reason": "transforms.eliminate_full_outer_join (MySQL exp.Select preprocess) not ported"
+  },
+  {
+   "case": "read|postgres|SELECT * FROM t1 LEFT OUTER JOIN t2 USING (x) UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 USING (x) WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x)",
+   "reason": "transforms.eliminate_full_outer_join (MySQL exp.Select preprocess) not ported"
+  },
+  {
+   "case": "read|postgres|SELECT * FROM t1 LEFT OUTER JOIN t2 USING (x, y) UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 USING (x, y) WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x AND t1.y = t2.y)",
+   "reason": "transforms.eliminate_full_outer_join (MySQL exp.Select preprocess) not ported"
+  },
+  {
+   "case": "write|postgres|GROUP_CONCAT(a, b, c SEPARATOR ',')",
+   "reason": "postgres concat_to_dpipe (Concat->|| when CONCAT_COALESCE args are text) is annotate_types-gated; not ported"
+  },
+  {
+   "case": "write|postgres|GROUP_CONCAT(a, b, c SEPARATOR '')",
+   "reason": "postgres concat_to_dpipe (Concat->|| when CONCAT_COALESCE args are text) is annotate_types-gated; not ported"
+  },
+  {
+   "case": "write|postgres|GROUP_CONCAT(DISTINCT a, b, c SEPARATOR '')",
+   "reason": "postgres concat_to_dpipe (Concat->|| when CONCAT_COALESCE args are text) is annotate_types-gated; not ported"
+  },
+  {
+   "case": "write|postgres|GROUP_CONCAT(a, b, c ORDER BY d SEPARATOR '')",
+   "reason": "postgres concat_to_dpipe (Concat->|| when CONCAT_COALESCE args are text) is annotate_types-gated; not ported"
+  },
+  {
+   "case": "write|postgres|GROUP_CONCAT(DISTINCT a, b, c ORDER BY d SEPARATOR '')",
+   "reason": "postgres concat_to_dpipe (Concat->|| when CONCAT_COALESCE args are text) is annotate_types-gated; not ported"
+  }
+ ]
 }
