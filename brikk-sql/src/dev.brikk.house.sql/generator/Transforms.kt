@@ -56,9 +56,21 @@ fun eliminateQualify(expression: Expression): Expression {
         }
     }
 
-    val outerSelects = Select(
-        args("expressions" to expression.selects.map { selectAliasOrName(it as Expression) })
-    )
+    // brikk extension (NOT sqlglot parity — see docs/brikk-extensions.md #6): when the
+    // original projection contains a star, sqlglot emits the star PLUS an explicit column
+    // per remaining projection (`SELECT *, rn FROM (...)`). The outer star already
+    // re-exports every inner projection, so the explicit columns duplicate output columns
+    // and change the result shape vs the original query (verified against DuckDB/Doris/
+    // Trino by customer agents). We collapse the outer projection to the bare star.
+    // The star-only Case B leak (QUALIFY-only window alias exported through `SELECT *`)
+    // is upstream behavior we deliberately keep for parity — see registry entry.
+    val outerProjection: List<Expression> =
+        if (expression.selects.any { it is Star }) {
+            listOf(Star())
+        } else {
+            expression.selects.map { selectAliasOrName(it as Expression) }
+        }
+    val outerSelects = Select(args("expressions" to outerProjection))
     var qualifyFilters = (expression.args["qualify"] as Expression).pop().thisArg as Expression
     val expressionByAlias: Map<String, Expression> = expression.selects
         .filterIsInstance<Alias>()

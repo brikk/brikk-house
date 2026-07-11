@@ -60,6 +60,29 @@ All divergence sites are marked in code with the greppable phrase **`brikk exten
   no Python counterpart; `ArgTypesManifestTest` allowlists them explicitly.
 - **Conflict risk:** LOW — only if upstream ever introduces same-named classes.
 
+## 6. eliminate_qualify: outer-star duplicate-column fix
+
+- **What:** In sqlglot's `eliminate_qualify` (QUALIFY → subquery rewrite), an original
+  projection containing a star produces `SELECT *, rn FROM (subquery)` — the outer star
+  already re-exports the inner `rn`, so the output gains a duplicate column and the
+  result shape diverges from the original query. brikk collapses the outer projection to
+  the bare star. Verified as result-shape-breaking on DuckDB→Doris/Trino by customer
+  agents. **Upstream bug candidate — worth reporting to sqlglot.**
+- **Where:** `generator/Transforms.kt` `eliminateQualify` (outer projection branch).
+- **Deliberately kept upstream behavior:** the Case-B star leak (`SELECT * FROM t QUALIFY
+  row_number() OVER (...) = 1` exports the synthetic `_w` helper through the outer star)
+  is unchanged — dropping it requires schema-based star expansion; revisit if customers
+  hit it.
+- **Conflict risk:** MEDIUM — if upstream fixes eliminate_qualify, adopt theirs and
+  retire this branch.
+
+## Not-a-bug findings (for the record)
+
+- **Trino `date_trunc` unit casing:** reported as "lowercase-only, case-sensitive";
+  verified FALSE against reference/trino source — `DateTimeFieldProvider.match()` folds
+  case via `| 0x20` (DateTimeFunctions.java:352), so `'MONTH'` matches. sqlglot's
+  uppercase-unit output is valid Trino; no divergence implemented.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

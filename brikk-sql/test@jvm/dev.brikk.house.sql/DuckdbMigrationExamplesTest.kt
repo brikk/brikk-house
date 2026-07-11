@@ -38,8 +38,10 @@ class DuckdbMigrationExamplesTest {
         ),
         Triple(
             "SELECT *, row_number() OVER (PARTITION BY a ORDER BY b) rn FROM t QUALIFY rn = 1",
-            "SELECT *, rn FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY a ORDER BY CASE WHEN b IS NULL THEN 1 ELSE 0 END, b) AS rn FROM t) AS _t WHERE rn = 1",
-            "SELECT *, rn FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY a ORDER BY b) AS rn FROM t) AS _t WHERE rn = 1",
+            // brikk extension: outer projection collapses to bare star (sqlglot emits
+            // "SELECT *, rn FROM (...)" which duplicates the rn output column).
+            "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY a ORDER BY CASE WHEN b IS NULL THEN 1 ELSE 0 END, b) AS rn FROM t) AS _t WHERE rn = 1",
+            "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY a ORDER BY b) AS rn FROM t) AS _t WHERE rn = 1",
         ),
     )
 
