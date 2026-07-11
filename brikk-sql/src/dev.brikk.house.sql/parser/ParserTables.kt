@@ -486,10 +486,15 @@ object BaseParserTables {
     // sqlglot: Parser.LAMBDA_ARG_TERMINATORS
     val LAMBDA_ARG_TERMINATORS: Set<TokenType> = setOf(TokenType.COMMA, TokenType.R_PAREN)
 
-    // sqlglot: Parser.COLUMN_OPERATORS (DOTCOLON -> JSONCast not ported)
+    // sqlglot: Parser.COLUMN_OPERATORS
     val COLUMN_OPERATORS: Map<TokenType, ((Parser, Expression?, Expression?) -> Expression?)?> =
         mapOf(
             TokenType.DOT to null,
+            TokenType.DOTCOLON to { parser, this_, to ->
+                parser.expression(
+                    dev.brikk.house.sql.ast.JSONCast(args("this" to this_, "to" to to))
+                )
+            },
             TokenType.DCOLON to { parser, this_, to ->
                 parser.buildCast(strict = parser.strictCast, this_ = this_, to = to)
             },
@@ -533,8 +538,8 @@ object BaseParserTables {
             },
         )
 
-    // sqlglot: Parser.CAST_COLUMN_OPERATORS (DOTCOLON -> JSONCast not ported)
-    val CAST_COLUMN_OPERATORS: Set<TokenType> = setOf(TokenType.DCOLON)
+    // sqlglot: Parser.CAST_COLUMN_OPERATORS
+    val CAST_COLUMN_OPERATORS: Set<TokenType> = setOf(TokenType.DCOLON, TokenType.DOTCOLON)
 
     // sqlglot: Parser.STATEMENT_PARSERS — only SEMICOLON from the DDL/DML table is in
     // scope for the SELECT-family subset; the other statements arrive with their nodes.

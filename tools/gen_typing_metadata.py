@@ -42,6 +42,7 @@ from sqlglot.typing.mysql import EXPRESSION_METADATA as MYSQL_METADATA  # noqa: 
 from sqlglot.typing.presto import EXPRESSION_METADATA as PRESTO_METADATA  # noqa: E402
 from sqlglot.typing.duckdb import EXPRESSION_METADATA as DUCKDB_METADATA  # noqa: E402
 from sqlglot.typing.postgres import EXPRESSION_METADATA as POSTGRES_METADATA  # noqa: E402
+from sqlglot.typing.clickhouse import EXPRESSION_METADATA as CLICKHOUSE_METADATA  # noqa: E402
 from sqlglot.optimizer.annotate_types import (  # noqa: E402
     _COERCES_TO,
     BIGINT_EXTRACT_DATE_PARTS,
@@ -72,6 +73,15 @@ def classify(src: str) -> str:
     # presto Rand: conditional by_args/DOUBLE
     if "_annotate_by_args(e, \"this\") if e.this else self._set_type(e, exp.DType.DOUBLE)" in src:
         return "AnnotatorRef.RandThisOrDouble"
+    # clickhouse MD5Digest: parametrized non-nullable type via DataType.build
+    m = re.search(
+        r"self\._set_type\(\s*e,\s*exp\.DataType\.build\(\"(\w+)\((\d+)\)\","
+        r" dialect=\"clickhouse\"\)\s*\)",
+        src,
+    )
+    if m:
+        dtype = exp.DType[m.group(1).upper()]
+        return f"AnnotatorRef.SetSizedType(DType.{dtype.name}, {m.group(2)})"
     # exp.Case: by_args over the ifs' true branches + default
     if "_annotate_by_args( e, *[if_expr.args[\"true\"] for if_expr in e.args[\"ifs\"]], \"default\" )" in src:
         return "AnnotatorRef.CaseArgs"
@@ -188,6 +198,7 @@ def main() -> None:
         "PRESTO": build_entries(PRESTO_METADATA),
         "DUCKDB": build_entries(DUCKDB_METADATA),
         "POSTGRES": build_entries(POSTGRES_METADATA),
+        "CLICKHOUSE": build_entries(CLICKHOUSE_METADATA),
     }
 
     annotator_variants = {

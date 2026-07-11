@@ -1,5 +1,6 @@
 package dev.brikk.house.sql
 
+import dev.brikk.house.sql.parser.ClickhouseTokenizerTables
 import dev.brikk.house.sql.parser.DorisTokenizerTables
 import dev.brikk.house.sql.parser.DuckdbTokenizerTables
 import dev.brikk.house.sql.parser.MysqlTokenizerTables
@@ -128,4 +129,8 @@ class TokenCorpusDifferentialTest {
     @Test
     fun postgresCorpusMatchesPythonOracle() =
         runCorpus("postgres.json", PostgresTokenizerTables.CONFIG)
+
+    @Test
+    fun clickhouseCorpusMatchesPythonOracle() =
+        runCorpus("clickhouse.json", ClickhouseTokenizerTables.CONFIG)
 }

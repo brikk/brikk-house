@@ -33,7 +33,7 @@ from sqlglot.dialects.dialect import Dialect  # noqa: E402
 
 # Dialects to generate tables for. "" is the base "sqlglot" dialect and always
 # emits BaseTokenizerTables.kt; every other name emits <Name>TokenizerTables.kt.
-DIALECTS = ["", "mysql", "doris", "presto", "trino", "duckdb", "postgres"]
+DIALECTS = ["", "mysql", "doris", "presto", "trino", "duckdb", "postgres", "clickhouse"]
 
 
 def sqlglot_version() -> str:

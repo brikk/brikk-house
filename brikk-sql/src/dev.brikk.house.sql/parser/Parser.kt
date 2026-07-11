@@ -41,6 +41,7 @@ import dev.brikk.house.sql.ast.CalledOnNullInputProperty
 import dev.brikk.house.sql.ast.Case
 import dev.brikk.house.sql.ast.CaseSpecificColumnConstraint
 import dev.brikk.house.sql.ast.Cast
+import dev.brikk.house.sql.ast.CastToStrType
 import dev.brikk.house.sql.ast.CharacterSetProperty
 import dev.brikk.house.sql.ast.CheckColumnConstraint
 import dev.brikk.house.sql.ast.ChecksumProperty
@@ -291,6 +292,7 @@ import dev.brikk.house.sql.ast.VolatileProperty
 import dev.brikk.house.sql.ast.When
 import dev.brikk.house.sql.ast.Whens
 import dev.brikk.house.sql.ast.Where
+import dev.brikk.house.sql.ast.WithFill
 import dev.brikk.house.sql.ast.Window
 import dev.brikk.house.sql.ast.WindowSpec
 import dev.brikk.house.sql.ast.With
@@ -471,6 +473,10 @@ open class Parser(
 
     // sqlglot: Dialect.SUPPORTS_USER_DEFINED_TYPES
     open val supportsUserDefinedTypes: kotlin.Boolean get() = true
+
+    // sqlglot: Dialect.CREATABLE_KIND_MAPPING (empty on the base dialect; ClickHouse
+    // maps DATABASE -> SCHEMA)
+    open val creatableKindMapping: Map<String, String> get() = emptyMap()
 
     // sqlglot: Parser.JSON_ARROWS_REQUIRE_JSON_TYPE
     open val jsonArrowsRequireJsonType: kotlin.Boolean get() = false
@@ -1240,7 +1246,7 @@ open class Parser(
     ): MutableList<T> = parseWrapped({ parseCsv(sep, parseMethod) }, optional)
 
     // sqlglot: Parser._parse_wrapped_id_vars
-    fun parseWrappedIdVars(optional: kotlin.Boolean = false): MutableList<Expression> =
+    open fun parseWrappedIdVars(optional: kotlin.Boolean = false): MutableList<Expression> =
         parseWrappedCsv({ parseIdVar() }, optional = optional)
 
     // -----------------------------------------------------------------------
@@ -1254,7 +1260,7 @@ open class Parser(
     fun parseExpressions(): MutableList<Expression> = parseCsv { parseExpression() }
 
     // sqlglot: Parser._parse_assignment
-    fun parseAssignment(): Expression? {
+    open fun parseAssignment(): Expression? {
         var this_ = parseDisjunction()
         if (this_ == null && nextToken.tokenType in assignmentTable) {
             // This allows us to parse <non-identifier token> := <expr>
@@ -1876,7 +1882,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_value (the `values` flag is only consulted by dialect overrides)
-    fun parseValue(@Suppress("UNUSED_PARAMETER") values: kotlin.Boolean = true): Expression? {
+    open fun parseValue(@Suppress("UNUSED_PARAMETER") values: kotlin.Boolean = true): Expression? {
         fun parseValueExpression(): Expression? {
             if (supportsValuesDefault && match(TokenType.DEFAULT)) {
                 return Var(args("this" to prevToken.text.uppercase()))
@@ -1995,7 +2001,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_cte
-    fun parseCte(): Expression? {
+    open fun parseCte(): Expression? {
         val startIndex = index
 
         val alias = parseTableAlias(idVarTokens)
@@ -2235,7 +2241,7 @@ open class Parser(
     // -----------------------------------------------------------------------
 
     // sqlglot: Parser._parse_join_parts
-    protected fun parseJoinParts(): Triple<Token?, Token?, Token?> = Triple(
+    protected open fun parseJoinParts(): Triple<Token?, Token?, Token?> = Triple(
         if (matchSet(joinMethods)) prevToken else null,
         if (matchSet(joinSides)) prevToken else null,
         if (matchSet(joinKinds)) prevToken else null,
@@ -2253,7 +2259,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_join
-    fun parseJoin(
+    open fun parseJoin(
         skipJoinToken: kotlin.Boolean = false,
         parseBracket: kotlin.Boolean = false,
         aliasTokens: Collection<TokenType>? = null,
@@ -3472,16 +3478,36 @@ open class Parser(
             nullsFirst = true
         }
 
-        if (matchTextSeq("WITH", "FILL")) {
-            // sqlglot: exp.WithFill — not ported.
-            return raiseError("WITH FILL is not supported yet")
+        // sqlglot: exp.WithFill (Python's `match and parse` chains yield False — which
+        // is serialized — rather than None when a clause is absent)
+        val withFill: Expression? = if (matchTextSeq("WITH", "FILL")) {
+            expression(
+                WithFill(
+                    args(
+                        "from_" to (if (match(TokenType.FROM)) parseBitwise() else false),
+                        "to" to (if (matchTextSeq("TO")) parseBitwise() else false),
+                        "step" to (if (matchTextSeq("STEP")) parseBitwise() else false),
+                        "interpolate" to parseInterpolate(),
+                    )
+                )
+            )
+        } else {
+            null
         }
 
         return expression(
             Ordered(
-                args("this" to this_, "desc" to desc, "nulls_first" to nullsFirst, "with_fill" to null)
+                args("this" to this_, "desc" to desc, "nulls_first" to nullsFirst, "with_fill" to withFill)
             )
         )
+    }
+
+    // sqlglot: Parser._parse_interpolate
+    protected fun parseInterpolate(): List<Expression>? {
+        if (matchTextSeq("INTERPOLATE")) {
+            return parseWrappedCsv({ parseNameAsExpression() })
+        }
+        return null
     }
 
     // sqlglot: Parser._parse_limit_options — exp.LimitOptions not ported.
@@ -3880,7 +3906,9 @@ open class Parser(
             )
         }
 
-        return expression(Interval(args("this" to this_, "unit" to unit)))
+        // sqlglot: exp.TimeUnit.__init__ (Interval extends TimeUnit) — unabbreviates
+        // and uppercases var-like units in the constructor
+        return expression(applyTimeUnitCoercion(Interval(args("this" to this_, "unit" to unit))))
     }
 
     // sqlglot: Literal.to_py (only used for number literals via _parse_interval_span;
@@ -3945,7 +3973,7 @@ open class Parser(
     // sqlglot: Parser._parse_types (TYPE_CONVERTERS={} and
     // SUPPORTS_FIXED_SIZE_ARRAYS=false in the base dialect; the MAP[K=>V] Materialize
     // branch, ClickHouse JSON type args and VECTOR expressions are ported faithfully)
-    fun parseTypes(
+    open fun parseTypes(
         checkFunc: kotlin.Boolean = false,
         schema: kotlin.Boolean = false,
         allowIdentifiers: kotlin.Boolean = true,
@@ -3974,9 +4002,11 @@ open class Parser(
                 if (firstType != null && firstType in typeTokens) {
                     typeToken = firstType
                     if (identTokens.size > 1) {
-                        // sqlglot: exp.DataType.from_str(identifier.name) — multi-token
-                        // type strings inside identifiers are not ported.
-                        return raiseError("Composite type identifiers are not supported yet")
+                        // sqlglot: exp.DataType.from_str(identifier.name, dialect=self.dialect)
+                        // — re-parse the multi-token type string with a fresh parser of
+                        // the same dialect
+                        return dialect.parser()
+                            .parseIntoDataType(identTokens, identifier.name)
                     }
                 } else if (supportsUserDefinedTypes) {
                     return parseUserDefinedType(identifier)
@@ -4412,7 +4442,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_user_defined_function_expression
-    protected fun parseUserDefinedFunctionExpression(): Expression? = parseStatement()
+    protected open fun parseUserDefinedFunctionExpression(): Expression? = parseStatement()
 
     // sqlglot: Parser._parse_macro_overloads
     protected fun parseMacroOverloads(
@@ -4949,7 +4979,8 @@ open class Parser(
             Create(
                 args(
                     "this" to this_,
-                    "kind" to createKindText,
+                    // sqlglot: dialect.CREATABLE_KIND_MAPPING.get(create_kind_text) or create_kind_text
+                    "kind" to (creatableKindMapping[createKindText] ?: createKindText),
                     "replace" to replace,
                     "refresh" to refresh,
                     "unique" to unique,
@@ -5745,7 +5776,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_partition
-    fun parsePartition(): Expression? {
+    open fun parsePartition(): Expression? {
         if (!matchTexts(partitionKeywords)) return null
 
         return expression(
@@ -5860,7 +5891,8 @@ open class Parser(
                     "exists" to ifExists,
                     "this" to this_,
                     "expressions" to expressions,
-                    "kind" to kind,
+                    // sqlglot: dialect.CREATABLE_KIND_MAPPING.get(kind) or kind
+                    "kind" to (creatableKindMapping[kind] ?: kind),
                     "temporary" to temporary,
                     "materialized" to materialized,
                     "cascade" to (cascadeOrRestrict == "CASCADE"),
@@ -6786,7 +6818,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_definer
-    fun parseDefiner(): Expression? {
+    open fun parseDefiner(): Expression? {
         match(TokenType.EQ)
 
         val user = parseIdVar()
@@ -7070,7 +7102,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_partitioned_by
-    fun parsePartitionedBy(): Expression {
+    open fun parsePartitionedBy(): Expression {
         match(TokenType.EQ)
         return expression(
             PartitionedByProperty(
@@ -7118,7 +7150,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_on_property
-    fun parseOnProperty(): Expression? {
+    open fun parseOnProperty(): Expression? {
         if (matchTextSeq("COMMIT", "PRESERVE", "ROWS")) return OnCommitProperty()
         if (matchTextSeq("COMMIT", "DELETE", "ROWS")) {
             return OnCommitProperty(args("delete" to true))
@@ -7453,7 +7485,7 @@ open class Parser(
     fun parseFieldDef(): Expression? = parseColumnDef(parseField(anyToken = true))
 
     // sqlglot: Parser._parse_column_def (WRAPPED_TRANSFORM_COLUMN_CONSTRAINT=true in base)
-    fun parseColumnDef(thisIn: Expression?, computedColumn: kotlin.Boolean = true): Expression? {
+    open fun parseColumnDef(thisIn: Expression?, computedColumn: kotlin.Boolean = true): Expression? {
         // column defs are not really columns, they're identifiers
         var this_ = thisIn
         if (this_ is Column) this_ = this_.args["this"] as? Expression
@@ -7565,7 +7597,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_check_constraint
-    fun parseCheckConstraint(): Expression? {
+    open fun parseCheckConstraint(): Expression? {
         if (!match(TokenType.L_PAREN, advance = false)) return null
 
         return expression(
@@ -7681,7 +7713,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_constraint
-    fun parseConstraint(): Expression? {
+    open fun parseConstraint(): Expression? {
         if (!match(TokenType.CONSTRAINT)) {
             return parseUnnamedConstraint(constraints = schemaUnnamedConstraints)
         }
@@ -8460,7 +8492,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_function
-    fun parseFunction(
+    open fun parseFunction(
         functions: Map<String, (List<Expression?>) -> Expression>? = null,
         anonymous: kotlin.Boolean = false,
         optionalParens: kotlin.Boolean = true,
@@ -8939,8 +8971,8 @@ open class Parser(
 
         if (!match(TokenType.ALIAS)) {
             if (match(TokenType.COMMA)) {
-                // sqlglot: exp.CastToStrType — not ported.
-                return raiseError("CAST(x, 'type') is not supported yet")
+                // sqlglot: exp.CastToStrType — BigQuery/ClickHouse CAST(x, 'type')
+                return expression(CastToStrType(args("this" to this_, "to" to parseString())))
             }
 
             raiseError("Expected AS after CAST")
@@ -9020,7 +9052,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_extract
-    fun parseExtract(): Expression {
+    open fun parseExtract(): Expression {
         val this_ = parseFunction() ?: parseVarOrString(upper = true)
 
         if (match(TokenType.FROM)) {
@@ -9046,7 +9078,7 @@ open class Parser(
         parseVar(tokens = setOf(TokenType.BINARY, TokenType.IDENTIFIER))
 
     // sqlglot: Parser._parse_position
-    fun parsePosition(haystackFirst: kotlin.Boolean = false): Expression {
+    open fun parsePosition(haystackFirst: kotlin.Boolean = false): Expression {
         val posArgs = parseCsv { parseBitwise() }
 
         if (match(TokenType.IN)) {
@@ -9648,7 +9680,7 @@ open class Parser(
     // -----------------------------------------------------------------------
 
     // sqlglot: Parser._parse_alias
-    fun parseAlias(this_: Expression?, explicit: kotlin.Boolean = false): Expression? {
+    open fun parseAlias(this_: Expression?, explicit: kotlin.Boolean = false): Expression? {
         // In some dialects, LIMIT and OFFSET can act as both identifiers and keywords (clauses)
         // so this section tries to parse the clause version and if it fails, it treats the token
         // as an identifier (alias)

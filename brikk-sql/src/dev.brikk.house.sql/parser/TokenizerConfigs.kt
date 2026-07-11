@@ -15,6 +15,7 @@ object TokenizerConfigs {
         "trino" -> TrinoTokenizerTables.CONFIG
         "duckdb" -> DuckdbTokenizerTables.CONFIG
         "postgres", "postgresql" -> PostgresTokenizerTables.CONFIG
+        "clickhouse" -> ClickhouseTokenizerTables.CONFIG
         else -> TokenizerConfig.BASE
     }
 }

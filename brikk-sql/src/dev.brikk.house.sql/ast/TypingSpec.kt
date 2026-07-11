@@ -98,4 +98,15 @@ sealed class AnnotatorRef {
 
     /** presto exp.Rand: self._annotate_by_args(e, "this") if e.this else self._set_type(e, DOUBLE) */
     object RandThisOrDouble : AnnotatorRef()
+
+    /**
+     * clickhouse exp.MD5Digest: self._set_type(e, exp.DataType.build("FixedString(16)",
+     * dialect="clickhouse")) — a parametrized, non-nullable type with a single integer
+     * DataTypeParam.
+     */
+    data class SetSizedType(
+        val dtype: DType,
+        val size: kotlin.Int,
+        val nullable: kotlin.Boolean = false,
+    ) : AnnotatorRef()
 }

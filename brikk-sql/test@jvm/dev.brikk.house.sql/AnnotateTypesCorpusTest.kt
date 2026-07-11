@@ -189,4 +189,5 @@ class AnnotateTypesCorpusTest {
     @Test fun prestoAnnotatedCorpus() = runCorpus("presto-annotated-serde", "presto")
     @Test fun trinoAnnotatedCorpus() = runCorpus("trino-annotated-serde", "trino")
     @Test fun dorisAnnotatedCorpus() = runCorpus("doris-annotated-serde", "doris")
+    @Test fun clickhouseAnnotatedCorpus() = runCorpus("clickhouse-annotated-serde", "clickhouse")
 }

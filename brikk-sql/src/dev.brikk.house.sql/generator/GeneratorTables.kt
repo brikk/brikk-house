@@ -205,6 +205,24 @@ object GeneratorTables {
         reg(BooleanNode::class) { e -> booleanSql(e as BooleanNode) }
         reg(Star::class) { e -> starSql(e as Star) }
         reg(Var::class) { e -> varSql(e as Var) }
+        // --- aggregate-combinator / ClickHouse-shared base entries ---
+        reg(AnonymousAggFunc::class) { e -> anonymousaggfuncSql(e as AnonymousAggFunc) }
+        reg(CombinedAggFunc::class) { e -> anonymousaggfuncSql(e as CombinedAggFunc) }
+        reg(ParameterizedAgg::class) { e -> parameterizedaggSql(e as ParameterizedAgg) }
+        reg(CombinedParameterizedAgg::class) { e -> parameterizedaggSql(e as CombinedParameterizedAgg) }
+        reg(Apply::class) { e -> applySql(e as Apply) }
+        reg(Columns::class) { e -> columnsSql(e as Columns) }
+        reg(UuidProperty::class) { e -> uuidpropertySql(e as UuidProperty) }
+        reg(DateAdd::class) { e -> dateaddSql(e as DateAdd) }
+        reg(MergeTreeTTL::class) { e -> mergetreettlSql(e as MergeTreeTTL) }
+        reg(MergeTreeTTLAction::class) { e -> mergetreettlactionSql(e as MergeTreeTTLAction) }
+        reg(SkipJSONColumn::class) { e -> skipjsoncolumnSql(e as SkipJSONColumn) }
+        // sqlglot: TRANSFORMS[exp.UtcTimestamp] = CURRENT_TIMESTAMP('UTC')
+        reg(UtcTimestamp::class) { _ ->
+            sql(CurrentTimestamp(args("this" to Literal.string("UTC"))))
+        }
+        // sqlglot: TRANSFORMS[exp.AssumeColumnConstraint]
+        reg(AssumeColumnConstraint::class) { e -> "ASSUME (${sql(e, "this")})" }
         reg(Parameter::class) { e -> parameterSql(e as Parameter) }
         reg(SessionParameter::class) { e -> sessionparameterSql(e as SessionParameter) }
         reg(Placeholder::class) { e -> placeholderSql(e as Placeholder) }

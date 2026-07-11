@@ -375,6 +375,11 @@ object GeneratedTypingMetadata {
         Ntile::class to TypingSpec.Returns(DType.INT),
     )
 
+    val CLICKHOUSE: kotlin.collections.Map<KClass<out Expression>, TypingSpec> = BASE + mapOf(
+        CountIf::class to TypingSpec.Returns(DType.UBIGINT),
+        MD5Digest::class to TypingSpec.Annotate(AnnotatorRef.SetSizedType(DType.FIXEDSTRING, 16)),
+    )
+
     // sqlglot: annotate_types._COERCES_TO (built from the Spark ANSI text/numeric/timelike
     // precedence lists by _build_coerces_to)
     val COERCES_TO: kotlin.collections.Map<DType, kotlin.collections.Set<DType>> = mapOf(

@@ -2062,7 +2062,9 @@ open class Generator(
 
         val opSql = listOf(
             expression.method,
-            if (expression.args["global_"] == true) "GLOBAL" else "",
+            // sqlglot: `"GLOBAL" if expression.args.get("global_") else None` — the
+            // ClickHouse parser stores the GLOBAL token's text here, so truthiness matters
+            if (expression.args["global_"] != null && expression.args["global_"] != false) "GLOBAL" else "",
             side,
             expression.kind,
             if (joinHints) expression.hint else "",
@@ -4731,7 +4733,84 @@ open class Generator(
                 else -> args.add(argValue)
             }
         }
-        return func(expression.sqlName(), *args.toTypedArray())
+        // sqlglot: PRESERVE_ORIGINAL_NAMES (ClickHouse) — regenerate with the exact
+        // name the function was parsed with
+        val name = if (dialectPreserveOriginalNames) {
+            (node.metaOrNull?.get("name") as? String) ?: expression.sqlName()
+        } else {
+            expression.sqlName()
+        }
+        return func(name, *args.toTypedArray())
+    }
+
+    // sqlglot: Generator.parameterizedagg_sql
+    open fun parameterizedaggSql(expression: ParameterizedAgg): String {
+        val params = expressions(expression, key = "params", flat = true)
+        return func(expression.name, *expression.expressionsArg.toTypedArray()) + "($params)"
+    }
+
+    // sqlglot: Generator.anonymousaggfunc_sql
+    open fun anonymousaggfuncSql(expression: AnonymousAggFunc): String =
+        func(expression.name, *expression.expressionsArg.toTypedArray())
+
+    // sqlglot: Generator.apply_sql
+    open fun applySql(expression: Apply): String {
+        val thisSql = sql(expression, "this")
+        val expr = sql(expression, "expression")
+
+        return "$thisSql APPLY($expr)"
+    }
+
+    // sqlglot: Generator.uuidproperty_sql
+    open fun uuidpropertySql(expression: UuidProperty): String =
+        "UUID ${sql(expression, "this")}"
+
+    // sqlglot: Generator.mergetreettl_sql
+    open fun mergetreettlSql(expression: MergeTreeTTL): String {
+        val where = sql(expression, "where")
+        val group = sql(expression, "group")
+        var aggregates = expressions(expression, key = "aggregates")
+        aggregates = if (aggregates.isNotEmpty()) seg("SET") + seg(aggregates) else ""
+
+        if (where.isEmpty() && group.isEmpty() && aggregates.isEmpty() &&
+            expression.expressionsArg.size == 1
+        ) {
+            return "TTL ${expressions(expression, flat = true)}"
+        }
+
+        return "TTL${seg(expressions(expression))}$where$group$aggregates"
+    }
+
+    // sqlglot: Generator.dateadd_sql (uses dialect.unit_to_str)
+    open fun dateaddSql(expression: DateAdd): String {
+        // sqlglot: dialect.unit_to_str
+        val unit = expression.args["unit"] as? Expression
+        val unitStr: Expression? = when {
+            unit == null -> Literal.string("DAY")
+            unit is Placeholder || (unit !is Var && unit !is Literal) -> unit
+            else -> Literal.string(unit.name)
+        }
+        return func("DATE_ADD", expression.thisArg, expression.args["expression"], unitStr)
+    }
+
+    // sqlglot: Generator.mergetreettlaction_sql
+    open fun mergetreettlactionSql(expression: MergeTreeTTLAction): String {
+        val thisSql = sql(expression, "this")
+        val delete = if (expression.args["delete"] == true) " DELETE" else ""
+        var recompress = sql(expression, "recompress")
+        if (recompress.isNotEmpty()) recompress = " RECOMPRESS $recompress"
+        var toDisk = sql(expression, "to_disk")
+        if (toDisk.isNotEmpty()) toDisk = " TO DISK $toDisk"
+        var toVolume = sql(expression, "to_volume")
+        if (toVolume.isNotEmpty()) toVolume = " TO VOLUME $toVolume"
+
+        return "$thisSql$delete$recompress$toDisk$toVolume"
+    }
+
+    // sqlglot: Generator.skipjsoncolumn_sql
+    open fun skipjsoncolumnSql(expression: SkipJSONColumn): String {
+        val regexp = if (expression.args["regexp"] == true) " REGEXP" else ""
+        return "SKIP$regexp ${sql(expression.args["expression"])}"
     }
 
     // ------------------------------------------------------------------

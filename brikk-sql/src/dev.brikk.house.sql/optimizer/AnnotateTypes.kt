@@ -9,6 +9,7 @@ import dev.brikk.house.sql.ast.ColumnDef
 import dev.brikk.house.sql.ast.Connector
 import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.DataType
+import dev.brikk.house.sql.ast.DataTypeParam
 import dev.brikk.house.sql.ast.Dot
 import dev.brikk.house.sql.ast.Explode
 import dev.brikk.house.sql.ast.Expression
@@ -677,6 +678,20 @@ class TypeAnnotator(
                 } else {
                     setType(e, DType.DOUBLE)
                 }
+            // sqlglot: exp.DataType.build("FixedString(16)", dialect="clickhouse")
+            is AnnotatorRef.SetSizedType -> setType(
+                e,
+                DataType(
+                    args(
+                        "this" to ref.dtype,
+                        "expressions" to listOf(
+                            DataTypeParam(args("this" to Literal.number(ref.size.toString())))
+                        ),
+                        "nested" to false,
+                        "nullable" to ref.nullable,
+                    )
+                ),
+            )
         }
     }
 
