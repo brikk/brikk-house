@@ -36,6 +36,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## Apache Doris
+
+Two Doris-derived artifacts are included, both Apache License 2.0
+(https://github.com/apache/doris):
+
+- `vendor/lib/doris-fe-sql-parser-*.jar` — a locally-built snapshot of Doris's standalone
+  `fe-sql-parser` module (pre-release; see vendor/README.md for provenance and refresh
+  procedure). Vendored in coordination with the doris-intellij-plugin project.
+- `brikk-sql/.../dialects/GeneratedDorisFunctionCatalog.kt` — function names/aliases/kinds
+  extracted from Doris's runtime function registry
+  (`fe/fe-core/.../catalog/Builtin*Functions.java`) by `tools/generate_doris_functions.py`
+  (adapted from the doris-intellij-plugin extraction script).
+
 ## GoogleSQL pipe syntax
 
 The pipe-syntax (`|>`) operator semantics implemented in `brikk-sql` (first-class

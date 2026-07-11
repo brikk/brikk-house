@@ -113,7 +113,12 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      */
     private val knownFunctionNames: Set<String> by lazy {
         val p = dialectObj.parser()
-        p.functions.keys + p.functionParsers.keys + p.noParenFunctionParsers.keys
+        val fromParser = p.functions.keys + p.functionParsers.keys + p.noParenFunctionParsers.keys
+        // When the dialect ships a full engine catalog (e.g. Doris: 800+ registered
+        // functions vs the handful in the translation registries), slot detection becomes
+        // engine-exact: any registered function name is a real function, not a slot.
+        val catalog = dialectObj.functionCatalog ?: return@lazy fromParser
+        fromParser + catalog.functions.flatMap { def -> listOf(def.name) + def.aliases }
     }
 
     /**

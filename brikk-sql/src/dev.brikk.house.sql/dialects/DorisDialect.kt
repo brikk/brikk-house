@@ -22,6 +22,9 @@ class DorisDialect : Dialect() {
     // sqlglot: Doris inherits MySQL.NORMALIZATION_STRATEGY (CASE_SENSITIVE)
     override val normalizationStrategy get() = NormalizationStrategy.CASE_SENSITIVE
 
+    // Generated from Doris's runtime function registry (tools/generate_doris_functions.py).
+    override val functionCatalog: FunctionCatalog get() = DORIS_FUNCTION_CATALOG
+
     override val tokenizerConfig: TokenizerConfig get() = DorisTokenizerTables.CONFIG
 
     // sqlglot: Doris.TIME_MAPPING (inherited from MySQL)

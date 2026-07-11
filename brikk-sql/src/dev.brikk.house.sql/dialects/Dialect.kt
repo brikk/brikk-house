@@ -50,6 +50,14 @@ open class Dialect {
     /** Registry name ("" is the base sqlglot dialect). */
     open val name: String get() = ""
 
+    /**
+     * The engine's full built-in function catalog (names/aliases/kinds; overloads once
+     * signature extraction lands), when one has been generated for this dialect. Null
+     * means "unknown surface" — consumers fall back to the parser's translation
+     * registries. See FunctionCatalog docs and vendor/README.md.
+     */
+    open val functionCatalog: FunctionCatalog? get() = null
+
     // sqlglot: Dialect.NORMALIZATION_STRATEGY
     open val normalizationStrategy: NormalizationStrategy get() = NormalizationStrategy.LOWERCASE
 
