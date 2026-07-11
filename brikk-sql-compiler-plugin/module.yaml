@@ -1,0 +1,22 @@
+product: jvm/lib
+
+dependencies:
+  # Compile against the embeddable compiler: the Kotlin Toolchain runs JVM
+  # compilation in-process via the Build Tools API (embeddable), so the plugin
+  # jar must be embeddable-compatible.
+  - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0: compile-only
+
+test-dependencies:
+  # kctfork = maintained fork of kotlin-compile-testing (0.13.0 is built for Kotlin 2.4.0).
+  # In-process compilation with in-memory plugin registrar registration.
+  - dev.zacsweers.kctfork:core:0.13.0
+  - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0
+
+settings:
+  kotlin:
+    version: 2.4.0
+    # FIR checker overrides use context parameters (the 2.4 checker API signature).
+    freeCompilerArgs: [ -Xcontext-parameters ]
+    optIns:
+      - org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+      - org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI

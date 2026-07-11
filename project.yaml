@@ -1,2 +1,4 @@
 modules:
   - brikk-sql
+  - brikk-sql-compiler-plugin
+  - brikk-sql-plugin-smoke

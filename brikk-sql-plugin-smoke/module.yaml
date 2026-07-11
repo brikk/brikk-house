@@ -1,0 +1,15 @@
+# Smoke-test consumer for the brikk-sql compiler plugin.
+#
+# Proves that a module in this project can have the locally-built plugin applied to its
+# compilation. Kotlin Toolchain's first-class `settings.kotlin.compilerPlugins` only accepts
+# Maven coordinates (not module deps), so until we publish (or `publish mavenLocal`) we attach
+# the jar via freeCompilerArgs. The path is relative to the project root (the toolchain's
+# working directory) and requires `./kotlin build -m brikk-sql-compiler-plugin` to have run
+# first — acceptable for a smoke module, not for production wiring.
+product: jvm/lib
+
+settings:
+  kotlin:
+    version: 2.4.0
+    freeCompilerArgs:
+      - -Xplugin=build/tasks/_brikk-sql-compiler-plugin_jarJvm/brikk-sql-compiler-plugin-jvm.jar
