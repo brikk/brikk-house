@@ -357,7 +357,12 @@ Work items:
 
 - Priority order (decided): **mysql → doris → trino → duckdb → postgresql → clickhouse**;
   everything else whenever — explicitly not a priority for now.
-  (Status: mysql, doris, presto+trino landed with gates; duckdb next.)
+  (Status: mysql, doris, presto+trino, duckdb, postgres landed with gates. Before
+  clickhouse: **full `annotate_types` port** — decided full-scope, not a slice, because
+  type inference is brikk's shape-contract primitive (input shape → SQL → output shape
+  for pipeline construction), not merely a transpile aid. Includes the per-dialect
+  `typing/*.py` EXPRESSION_METADATA tables (codegen candidate) and the COERCES_TO
+  lattice. Side effect: clears the ~19 annotate_types-gated ledger cases.)
 - Order works with sqlglot's inheritance chains, mostly in our favor: Doris extends MySQL
   (so mysql-first feeds doris directly); Trino extends Presto (Presto's parser/generator
   come along as an implementation detail even though Presto itself isn't a target).
