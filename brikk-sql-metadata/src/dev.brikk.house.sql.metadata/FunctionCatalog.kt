@@ -31,9 +31,12 @@ import kotlinx.serialization.json.Json
  *  - External tooling (e.g. the doris-intellij plugin): completion/validation source via
  *    the Kotlin API or [FunctionCatalog.toJson].
  *
- * [FunctionDef.overloads] is empty for catalogs whose signatures require a built engine
- * (Doris: per-class static SIGNATURES; see vendor/README.md) and populated where the
- * engine exposes them directly (DuckDB's duckdb_functions(), Trino's SHOW FUNCTIONS).
+ * [FunctionDef.overloads] is populated for all three catalogs: DuckDB/Trino from the
+ * engine's own registry dumps (duckdb_functions(), SHOW FUNCTIONS), Doris statically
+ * extracted from each function class's SIGNATURES field
+ * (tools/extract_doris_signatures.py -> vendor/data/doris-signatures.json). Doris
+ * functions whose class computes signatures dynamically (all table-valued functions,
+ * rank-like window functions, ...) keep empty overloads.
  */
 enum class FunctionKind { SCALAR, AGGREGATE, WINDOW, TABLE_VALUED, TABLE_GENERATING }
 
@@ -51,6 +54,14 @@ data class FunctionOverload(
  * engine-native type string when it doesn't map 1:1 (e.g. DuckDB "macro"/"table_macro"
  * normalize to SCALAR/TABLE_VALUED but keep their native kind here). Null when the
  * engine kind maps directly.
+ *
+ * [sinceVersion] is the first engine version that ships the function (for
+ * version-gated completion in external tooling). Currently null for ALL catalogs:
+ * no vendored source carries version metadata yet — Doris's per-function docs (the
+ * only known source of "since" info) live in the separate apache/doris-website
+ * repo, not in the engine repo the generators run against. The field is declared
+ * now so its JSON shape ("since_version", absent-as-null) is stable for consumers
+ * before population. See vendor/README.md ("Doris function signatures").
  */
 @Serializable
 data class FunctionDef(
@@ -59,6 +70,7 @@ data class FunctionDef(
     val aliases: List<String> = emptyList(),
     val overloads: List<FunctionOverload> = emptyList(),
     @SerialName("native_kind") val nativeKind: String? = null,
+    @SerialName("since_version") val sinceVersion: String? = null,
 )
 
 class FunctionCatalog(val functions: List<FunctionDef>) {

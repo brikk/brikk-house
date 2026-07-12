@@ -30,6 +30,65 @@ class FunctionCatalogTest {
         assertTrue(!DORIS_FUNCTION_CATALOG.isTableFunction("abs"))
     }
 
+    @Test
+    fun dorisOverloadsMatchTheSourceSignatures() {
+        // Pinned against scalar/Abs.java's SIGNATURES in the reference/doris checkout:
+        // 9 overloads; widening integer returns (abs(BIGINT) -> LARGEINT, ...).
+        val abs = DORIS_FUNCTION_CATALOG["abs"]!!
+        assertEquals(9, abs.overloads.size)
+        assertTrue(FunctionOverload(listOf("DOUBLE"), "DOUBLE") in abs.overloads)
+        assertTrue(FunctionOverload(listOf("BIGINT"), "LARGEINT") in abs.overloads)
+        assertTrue(FunctionOverload(listOf("TINYINT"), "SMALLINT") in abs.overloads)
+        // agg/Count.java: count() and count(varargs ANY).
+        val count = DORIS_FUNCTION_CATALOG["count"]!!
+        assertEquals(
+            listOf(
+                FunctionOverload(emptyList(), "BIGINT"),
+                FunctionOverload(listOf("ANY"), "BIGINT", variadic = true),
+            ),
+            count.overloads,
+        )
+    }
+
+    @Test
+    fun dorisVariadicsAreFlagged() {
+        // scalar/Concat.java: ret(VARCHAR).varArgs(VARCHAR), ret(STRING).varArgs(STRING).
+        val concat = DORIS_FUNCTION_CATALOG["concat"]!!
+        assertEquals(
+            listOf(
+                FunctionOverload(listOf("VARCHAR"), "VARCHAR", variadic = true),
+                FunctionOverload(listOf("STRING"), "STRING", variadic = true),
+            ),
+            concat.overloads,
+        )
+    }
+
+    @Test
+    fun dorisArrayTypesAndPlaceholdersAreRendered() {
+        // scalar/ArraySort.java: retArgType(0).args(ArrayType.of(AnyDataType...)) and a
+        // lambda overload — rendered with the extractor's ARG_/ANY placeholders.
+        val arraySort = DORIS_FUNCTION_CATALOG["array_sort"]!!
+        assertEquals(
+            listOf(
+                FunctionOverload(listOf("ARRAY<ANY>"), "ARG_0"),
+                FunctionOverload(listOf("LAMBDA"), "ARRAY<ANY>"),
+            ),
+            arraySort.overloads,
+        )
+    }
+
+    @Test
+    fun dorisOverloadTotalsArePinned() {
+        // Static extraction coverage at the pinned checkout: 630 defs carry 1434
+        // overloads; the rest (dynamic getSignatures(): all table-valued functions,
+        // rank-like window functions, ...) stay empty.
+        assertEquals(1434, DORIS_FUNCTION_CATALOG.functions.sumOf { it.overloads.size })
+        assertEquals(630, DORIS_FUNCTION_CATALOG.functions.count { it.overloads.isNotEmpty() })
+        // Dynamic-signature examples remain overload-free (names still resolvable).
+        assertTrue(DORIS_FUNCTION_CATALOG["rank"]!!.overloads.isEmpty())
+        assertTrue(DORIS_FUNCTION_CATALOG["numbers"]!!.overloads.isEmpty())
+    }
+
     // ---------------------------------------------------------------- duckdb
 
     @Test
@@ -116,6 +175,28 @@ class FunctionCatalogTest {
         val decoded = Json.decodeFromString(ListSerializer(FunctionDef.serializer()), json)
         assertEquals(DORIS_FUNCTION_CATALOG.functions, decoded)
         assertEquals(FunctionKind.SCALAR, decoded.first { it.name == "ABS" }.kind)
+        // Doris overloads survive the round trip.
+        assertEquals(9, decoded.first { it.name == "ABS" }.overloads.size)
+        assertTrue(decoded.first { it.name == "CONCAT" }.overloads.all { it.variadic })
+    }
+
+    @Test
+    fun sinceVersionIsNullUntilADocsSourceIsVendored() {
+        // The field is declared for serialization stability (doris-intellij's
+        // version-gated completion) but no vendored source carries version metadata
+        // yet — see vendor/README.md. Absent-as-null must round-trip.
+        assertTrue(DORIS_FUNCTION_CATALOG.functions.all { it.sinceVersion == null })
+        assertNull(DORIS_FUNCTION_CATALOG["abs"]!!.sinceVersion)
+        val decoded = Json.decodeFromString(
+            ListSerializer(FunctionDef.serializer()),
+            DORIS_FUNCTION_CATALOG.toJson(),
+        )
+        assertNull(decoded.first { it.name == "ABS" }.sinceVersion)
+        // And a populated value round-trips through the wire name "since_version".
+        val def = FunctionDef("F", FunctionKind.SCALAR, sinceVersion = "2.1")
+        val json = Json.encodeToString(FunctionDef.serializer(), def)
+        assertTrue("\"since_version\":\"2.1\"" in json)
+        assertEquals(def, Json.decodeFromString(FunctionDef.serializer(), json))
     }
 
     @Test
