@@ -14,3 +14,4 @@
 *.iml
 __pycache__/
 *-ledger-actual.json
+.env

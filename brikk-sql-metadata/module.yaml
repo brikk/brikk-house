@@ -1,6 +1,12 @@
 product:
   type: kmp/lib
-  platforms: [ jvm, linuxArm64, linuxX64, macosArm64, mingwX64 ]
+  # JVM-only for now: KMP publications aren't consumable yet (native/JVM POM coordinates
+  # are mis-suffixed by the toolchain). Restore the full platform list once publishing
+  # supports KMP. See publish.module-template.yaml.
+  platforms: [ jvm ]
+
+apply:
+  - ../publish.module-template.yaml
 
 settings:
   kotlin:

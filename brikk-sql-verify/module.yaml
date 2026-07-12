@@ -2,6 +2,9 @@
 # JVM-only: engine parsers (trino-parser, duckdb_jdbc, vendored Doris FE parser) are JVM artifacts.
 product: jvm/lib
 
+apply:
+  - ../publish.module-template.yaml
+
 dependencies:
   # Trino's own SQL parser. 481 matches the vendored function catalog (vendor/data/trino-functions-481.tsv).
   # NOTE: trino-parser 481 ships class-file 69 => requires a JDK 25 runtime (see settings.jvm.jdk below).
