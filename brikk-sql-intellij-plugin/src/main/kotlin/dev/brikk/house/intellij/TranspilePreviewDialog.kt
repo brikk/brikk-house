@@ -68,6 +68,18 @@ class TranspilePreviewDialog(
         }
     }
 
+    private val sendToConsoleAction = object : DialogWrapperAction("Send to Console...") {
+        override fun doAction(e: java.awt.event.ActionEvent) {
+            SendToConsole.choose(project, outcome, sourceFileName(), e.source as? JComponent) {
+                close(OK_EXIT_CODE)
+            }
+        }
+    }
+
+    private fun sourceFileName(): String =
+        com.intellij.openapi.fileEditor.FileDocumentManager.getInstance()
+            .getFile(editor.document)?.name ?: "editor"
+
     init {
         val arrow = "${BrikkDialects.displayName(outcome.source)} \u2192 ${BrikkDialects.displayName(outcome.target)}"
         title = if (onExecute != null) "Execute via Transpilation: $arrow" else "Transpile: $arrow"
@@ -135,7 +147,7 @@ class TranspilePreviewDialog(
             arrayOf(executeAction, copyAction, cancelAction)
         } else {
             replaceAction.putValue(DEFAULT_ACTION, true)
-            arrayOf(replaceAction, insertAfterAction, copyAction, cancelAction)
+            arrayOf(replaceAction, insertAfterAction, sendToConsoleAction, copyAction, cancelAction)
         }
 
     private fun applyEdit(replace: Boolean) {

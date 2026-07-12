@@ -33,3 +33,13 @@ class TranspileApprovalCache {
             .digest(text.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }
 }
+
+/**
+ * Remembers the last console the user sent transpiled SQL to ("Send to Console..."),
+ * so working through a .bsql file block-by-block keeps targeting the same console.
+ */
+@Service(Service.Level.PROJECT)
+class ConsoleTargetMemory {
+    @Volatile
+    var lastConsoleFileUrl: String? = null
+}
