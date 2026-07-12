@@ -356,7 +356,15 @@ Work items:
 ### Phase 5 — Dialects, incrementally
 
 - Priority order (decided): **mysql → doris → trino → duckdb → postgresql → clickhouse**;
-  everything else whenever — explicitly not a priority for now.
+  all landed with gates.
+- Follow-on dialects (decided order; good "overnight" tasks when the near-term queue is
+  empty — no more beyond these except by demand):
+  1. **datafusion** — top open-source community we care about and can test in our own work.
+  2. **sparksql** — same rationale (sqlglot chain: Spark(Spark2(Hive))).
+  3. **bigquery/googlesql** — mainly because of pipe syntax: it's the origin dialect and
+     can oracle-guide our pipe work; Google open-sources the ZetaSQL parser (the Java
+     wrapper looked outdated — revisit; "king of pipe syntax" as a verifier in
+     brikk-sql-verify would be the prize).
   (Status: mysql, doris, presto+trino, duckdb, postgres landed with gates. Before
   clickhouse: **full `annotate_types` port** — decided full-scope, not a slice, because
   type inference is brikk's shape-contract primitive (input shape → SQL → output shape
