@@ -211,6 +211,88 @@ class SqlVerifierTest {
         )
     }
 
+    // -- function-semantics renderings (brikk-sql FunctionSemanticsTest) -------------------
+
+    @Test
+    fun duckdbAcceptsFunctionSemanticsRenderings() {
+        // Tier-1 fixes (docs/research/function-semantics-trino-duckdb.md contradictions 1+2,
+        // ported sqlglot duckdb _greatest_least_sql / regexpreplace_sql) and the entry-15
+        // TIME(x) rendering. Keep in sync with brikk-sql's FunctionSemanticsTest.
+        val verifier = SqlVerifiers.forEngine("duckdb")!!
+        val renderings = listOf(
+            "SELECT CASE WHEN a IS NULL OR b IS NULL OR c IS NULL THEN NULL ELSE GREATEST(a, b, c) END FROM t",
+            "SELECT CASE WHEN a IS NULL THEN NULL ELSE LEAST(a) END FROM t",
+            "SELECT REGEXP_REPLACE(x, 'a', 'b', 'g') FROM t",
+            "SELECT REGEXP_REPLACE(x, 'a', '', 'g') FROM t",
+            "SELECT REGEXP_REPLACE(x, 'a', 'b', 'ims') FROM t",
+            "SELECT CAST(CAST(x AS TIMESTAMP) AS TIME) FROM t",
+        )
+        for (sql in renderings) {
+            val result = verifier.verify(sql)
+            assertTrue(result.accepted, "DuckDB parser rejected `$sql`: ${result.error}")
+        }
+        // ... and the Python-oracle rendering of a zone-less TIME(x) (empty AT TIME ZONE
+        // operand) is indeed grammar-invalid — the reason entry 15 diverges.
+        assertFalse(
+            verifier.verify("SELECT CAST(CAST(x AS TIMESTAMPTZ) AT TIME ZONE  AS TIME) FROM t").accepted,
+            "DuckDB unexpectedly accepts an empty AT TIME ZONE operand",
+        )
+    }
+
+    @Test
+    fun trinoAcceptsFunctionSemanticsRenderings() {
+        // brikk extensions 12-14: grammar-legal Trino forms for the reverse-direction
+        // REGEXP_REPLACE handling and the absent-name rename fixes. Keep in sync with
+        // brikk-sql's FunctionSemanticsTest.
+        val verifier = SqlVerifiers.forEngine("trino")!!
+        val renderings = listOf(
+            "SELECT REGEXP_REPLACE(x, 'a', 'b') FROM t",
+            "SELECT IS_INFINITE(x) FROM t",
+            "SELECT CURRENT_SCHEMA",
+            "SELECT DATE_ADD('MONTH', 2, d) FROM t",
+            "SELECT SPLIT(x, ',') FROM t",
+            "SELECT GREATEST(a, b) FROM t",
+        )
+        for (sql in renderings) {
+            val result = verifier.verify(sql)
+            assertTrue(result.accepted, "Trino parser rejected `$sql`: ${result.error}")
+        }
+        // ... and the Python-oracle CURRENT_SCHEMA() call form is indeed grammar-illegal
+        // (CURRENT_SCHEMA is a reserved parenthesis-less special form in SqlBase.g4).
+        assertFalse(
+            verifier.verify("SELECT CURRENT_SCHEMA()").accepted,
+            "Trino unexpectedly accepts CURRENT_SCHEMA()",
+        )
+    }
+
+    @Test
+    fun dorisAcceptsFunctionSemanticsRenderings() {
+        // brikk extension 14: catalog-backed absent-name fixes for Doris targets. Keep in
+        // sync with brikk-sql's FunctionSemanticsTest.
+        val verifier = SqlVerifiers.forEngine("doris")!!
+        val renderings = listOf(
+            "SELECT UNHEX(SHA2(x, 256)) FROM t",
+            "SELECT UNHEX(SHA2(x, 512)) FROM t",
+            "SELECT UNHEX(MD5(x)) FROM t",
+            "SELECT GROUP_BIT_AND(x) FROM t",
+            "SELECT GROUP_BIT_OR(x) FROM t",
+            "SELECT GROUP_BIT_XOR(x) FROM t",
+            "SELECT (WEEKDAY(x) + 1) FROM t",
+            "SELECT ARRAY_FILTER(x -> x > 1, arr) FROM t",
+            "SELECT ARRAY_MAP(x -> x + 1, arr) FROM t",
+            "SELECT ARRAY_PUSHFRONT(arr, e) FROM t",
+            "SELECT ARRAY_SORT(arr) FROM t",
+            "SELECT ARRAY_REVERSE_SORT(arr) FROM t",
+            "SELECT PERCENTILE_APPROX(x, 0.5) FROM t",
+            "SELECT ARRAY_RANGE(0, 5)",
+            "SELECT ARRAY_RANGE(1, 5 + 1)",
+        )
+        for (sql in renderings) {
+            val result = verifier.verify(sql)
+            assertTrue(result.accepted, "Doris FE parser rejected `$sql`: ${result.error}")
+        }
+    }
+
     @Test
     fun dorisAcceptsBrikkMaterializedViewColumnRendering() {
         // brikk extension (docs/brikk-extensions.md entry 10): MV column lists render as

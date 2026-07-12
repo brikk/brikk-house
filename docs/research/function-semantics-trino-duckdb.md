@@ -247,20 +247,27 @@ dividend), `pi()`, `truncate/1`→`trunc`, bitwise and/or/xor/not/left-shift (op
   Trino's array `ngrams` — don't conflate)
   (RESEARCH-function-community-extensions-detail.md#inet, #datasketches, #splink-udfs).
 
-## Notes for brikk-sql (checked 2026-07-12)
+## Notes for brikk-sql (checked 2026-07-12; contradictions FIXED same day)
 
 - **Correct already:** Trino `concat` → `||` chain (`dialectConcatCoalesce=true` triggers
   `concatToDpipeSql`, `generator/Generator.kt:3151`); Trino `DAY_OF_WEEK`/`DOW` → `DayOfWeekIso`
   → DuckDB `ISODOW` (`dialects/PrestoParser.kt:289`, `dialects/DuckdbGenerator.kt:1678`).
-- **Contradiction 1 — `GREATEST`/`LEAST`:** Presto parser records `ignore_nulls=false`
-  (`dialects/PrestoParser.kt:396`), but `DuckdbGenerator` has no Greatest/Least override, so the
-  call renders as bare `GREATEST(...)` in DuckDB, which *skips* NULLs — exactly the divergence
-  their research flags as never-translatable-by-name
-  (RESEARCH-function-mapping.md#comparison-and-conditional).
-- **Contradiction 2 — `REGEXP_REPLACE`:** no DuckDB-side handling
-  (no `RegexpReplace` registration in `dialects/DuckdbGenerator.kt`), so Trino's replace-ALL
-  semantics render as DuckDB's replace-FIRST default; their parity macro had to force the `'g'`
-  flag (TODO-pushdown-duckdb.md#round-6a).
+- **Contradiction 1 — `GREATEST`/`LEAST`: FIXED (port-parity restoration).** The pinned
+  Python oracle already had `DuckDBGenerator._greatest_least_sql` (CASE-wrap when
+  `ignore_nulls=false`); the Kotlin port was missing it. Now ported
+  (`DuckdbGenerator.greatestLeastSql`): trino→duckdb renders
+  `CASE WHEN a IS NULL OR ... THEN NULL ELSE GREATEST(...) END`. The missing
+  `MySQL.LEAST_GREATEST_IGNORES_NULLS=False` parser recording (MySQL/Doris) was also a
+  port gap, now fixed (`MysqlParser`). The REVERSE direction (duckdb→trino, NULL-skipping
+  → NULL-propagating) is an *upstream* gap — Python silently renders bare `GREATEST` —
+  and is now flagged via `unsupported()` (brikk extension 11, PrestoGenerator; output
+  unchanged from the oracle).
+- **Contradiction 2 — `REGEXP_REPLACE`: FIXED (port-parity restoration).** Python's
+  `DuckDBGenerator.regexpreplace_sql` (forces `'g'` for replace-all sources; duckdb
+  round-trips keep flags via `single_replace`) was missing from the port; now ported.
+  REVERSE direction: Python re-emits duckdb modifiers as an analyzer-invalid 4th Trino
+  argument; brikk renders the grammar-legal 3-arg form, flags replace-first sources (no
+  Trino replace-first form exists) and non-`'g'` modifiers (brikk extension 12).
 - **Flag-only (untranspilable):** `lower`/`upper`/`trim`/`reverse` pass through by name; correct
   for ASCII, divergent on İ/ß/tab-whitespace/grapheme inputs per the probe audit — no SQL rewrite
   exists (they needed native C++), so these belong in a warn/annotation tier, not a rewrite tier.

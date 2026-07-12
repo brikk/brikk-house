@@ -158,6 +158,92 @@ open class PrestoGenerator(
         return func("SHA$length", this_)
     }
 
+    // brikk extension (docs/brikk-extensions.md entry 11, NOT sqlglot parity):
+    // GREATEST/LEAST NULL algebra. Presto/Trino GREATEST/LEAST return NULL if ANY
+    // argument is NULL, while DuckDB/Postgres-parsed calls carry ignore_nulls=true
+    // (they SKIP NULLs) — trino-duckdb-hazards.json "greatest / least",
+    // verdict=divergent ("never translate by name when args may be NULL"). No
+    // probe-verified Presto/Trino rewrite exists for the NULL-skipping semantics, so
+    // the call is flagged instead of silently emitted; the Python oracle emits the
+    // bare (semantically wrong) name, which we keep as the fallback output.
+    open fun greatestLeastSql(expression: Expression): String {
+        if (expression.args["ignore_nulls"] == true && expression.expressionsArg.isNotEmpty()) {
+            val name = if (expression is Greatest) "GREATEST" else "LEAST"
+            unsupported(
+                "$name was parsed under a NULL-skipping dialect (e.g. DuckDB/Postgres); " +
+                    "Presto/Trino $name returns NULL if any argument is NULL — " +
+                    "no result-identical rewrite is verified"
+            )
+        }
+        return functionFallbackSql(expression as Func)
+    }
+
+    // brikk extension (docs/brikk-extensions.md entry 12, NOT sqlglot parity):
+    // REGEXP_REPLACE replace-first vs replace-all. Presto/Trino REGEXP_REPLACE always
+    // replaces ALL matches and has no modifiers argument; DuckDB's default replaces only
+    // the FIRST match unless the 'g' modifier is present (trino-duckdb-hazards.json
+    // "regexp_replace", verdict=divergent). The Python oracle re-emits DuckDB's
+    // modifiers as a 4th argument, which Trino's own parser/analyzer rejects (the only
+    // 4-ary form takes a lambda). We render the grammar-legal 3-arg form and flag:
+    //  - replace-first sources (single_replace=true without 'g'): no Presto/Trino
+    //    equivalent exists — flagged;
+    //  - the 'g' modifier is dropped silently (replace-all is Presto/Trino's default);
+    //  - any other modifiers (c/i/m/s/...) have no Presto/Trino REGEXP_REPLACE
+    //    equivalent — flagged and dropped;
+    //  - position/occurrence arguments (Snowflake-style) — flagged and dropped.
+    open fun regexpreplaceSql(expression: RegexpReplace): String {
+        val modifiers = expression.args["modifiers"] as? Expression
+        val modifierStr =
+            if (modifiers is Literal && modifiers.isString) modifiers.thisArg as? String ?: ""
+            else null // non-literal modifiers: cannot inspect
+
+        if (modifiers != null && modifierStr == null) {
+            unsupported("REGEXP_REPLACE with non-literal modifiers is not supported in Presto")
+        }
+        val remaining = modifierStr?.filter { it != 'g' } ?: ""
+        if (remaining.isNotEmpty()) {
+            unsupported(
+                "Regexp modifiers '$remaining' have no Presto/Trino REGEXP_REPLACE equivalent"
+            )
+        }
+        val replacesAll = modifierStr?.contains('g') == true
+        if (expression.args["single_replace"] == true && !replacesAll && (modifiers == null || modifierStr != null)) {
+            unsupported(
+                "DuckDB REGEXP_REPLACE without the 'g' modifier replaces only the first " +
+                    "match; Presto/Trino REGEXP_REPLACE always replaces all matches — " +
+                    "there is no replace-first form"
+            )
+        }
+        for (arg in listOf("position", "occurrence")) {
+            if (expression.args[arg] != null) {
+                unsupported(
+                    "Argument '$arg' is not supported for expression 'RegexpReplace' when targeting Presto."
+                )
+            }
+        }
+        return func(
+            "REGEXP_REPLACE",
+            expression.thisArg,
+            expression.args["expression"],
+            expression.args["replacement"],
+        )
+    }
+
+    // brikk extension (docs/brikk-extensions.md entry 13, NOT sqlglot parity): scalar-
+    // position UNNEST/EXPLODE (e.g. duckdb `SELECT UNNEST([1, 2, 3])`) is eliminated in
+    // sqlglot by the exp.Select preprocess `explode_projection_to_unnest`, which is not
+    // ported (see class KDoc; the affected corpus cases are ledgered). Presto/Trino has
+    // no EXPLODE *function*, so an Explode node that reaches the generator would render
+    // as a call Trino cannot resolve — flag it accurately; Lateral-wrapped Explodes are
+    // handled by explodeToUnnestSql and never dispatch here.
+    open fun explodeSql(expression: Explode): String {
+        unsupported(
+            "UNNEST/EXPLODE in scalar position requires the explode_projection_to_unnest " +
+                "transform (not ported); Presto/Trino has no EXPLODE function"
+        )
+        return functionFallbackSql(expression)
+    }
+
     // sqlglot: generators.presto._initcap_sql (INITCAP_DEFAULT_DELIMITER_CHARS check
     // reduces to "delimiters present -> unsupported" for the base delimiter set)
     open fun initcapSql(expression: Initcap): String {
@@ -1104,6 +1190,46 @@ open class PrestoGenerator(
             }
             reg(ILike::class) { e -> pg().noIlikeSql(e as ILike) }
             reg(Initcap::class) { e -> pg().initcapSql(e as Initcap) }
+            // brikk extension (docs/brikk-extensions.md entry 11)
+            reg(Greatest::class) { e -> pg().greatestLeastSql(e) }
+            reg(Least::class) { e -> pg().greatestLeastSql(e) }
+            // brikk extension (docs/brikk-extensions.md entry 12)
+            reg(RegexpReplace::class) { e -> pg().regexpreplaceSql(e as RegexpReplace) }
+            // brikk extension (docs/brikk-extensions.md entry 13)
+            reg(Explode::class) { e -> pg().explodeSql(e as Explode) }
+            // brikk extension (docs/brikk-extensions.md entry 14): catalog-backed rename
+            // fixes for renders the Python oracle emits under names Trino/Presto does not
+            // have (gap-report.json bucket B "absent-name" entries):
+            // duckdb isinf()/doris isinf() -> IS_INFINITE (trino-functions-481.tsv:
+            // is_infinite(double|number) -> boolean; Python emits IS_INF).
+            reg(IsInf::class) { e -> pg().renameFuncSql("IS_INFINITE", e) }
+            // doris database()/mysql schema() -> CURRENT_SCHEMA, a parenthesis-less
+            // special form in Trino's grammar (SqlBase.g4 `name=CURRENT_SCHEMA`); the
+            // Python oracle emits CURRENT_SCHEMA(), which that grammar rejects.
+            reg(CurrentSchema::class) { _ -> "CURRENT_SCHEMA" }
+            // doris months_add(d, n) -> DATE_ADD('MONTH', n, d) (trino-functions-481.tsv:
+            // date_add(varchar(x), bigint, date|timestamp...)); Python emits ADD_MONTHS,
+            // which Trino does not have.
+            reg(AddMonths::class) { e ->
+                if (e.args["preserve_end_of_month"] != null) {
+                    unsupported(
+                        "Argument 'preserve_end_of_month' is not supported for expression 'AddMonths' when targeting Presto."
+                    )
+                }
+                func("DATE_ADD", Literal.string("MONTH"), e.args["expression"], e.thisArg)
+            }
+            // doris split_by_string(s, sep) -> SPLIT(s, sep) (trino-functions-481.tsv:
+            // split(varchar(x), varchar(y)) -> array(varchar(x)); Python emits
+            // STRING_TO_ARRAY, which Trino does not have). The Postgres 3-arg
+            // null-replacement form has no Trino equivalent and is flagged.
+            reg(StringToArray::class) { e ->
+                if (e.args["null"] != null) {
+                    unsupported(
+                        "Argument 'null' is not supported for expression 'StringToArray' when targeting Presto."
+                    )
+                }
+                func("SPLIT", e.thisArg, e.args["expression"])
+            }
             reg(Last::class) { e -> pg().firstLastSql(e) }
             reg(LastDay::class) { e -> func("LAST_DAY_OF_MONTH", e.thisArg) }
             reg(Lateral::class) { e -> pg().explodeToUnnestSql(e as Lateral) }

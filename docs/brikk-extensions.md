@@ -209,6 +209,125 @@ All divergence sites are marked in code with the greppable phrase **`brikk exten
   test input itself is incomplete Doris DDL.
 - **Conflict risk:** MEDIUM — same protocol as #9.
 
+## 11. Presto/Trino: GREATEST/LEAST NULL-algebra flag
+
+- **What:** Presto/Trino `GREATEST`/`LEAST` return NULL if ANY argument is NULL; calls
+  parsed under NULL-skipping dialects (DuckDB, Postgres) carry `ignore_nulls=true`
+  (probe-verified divergent: `trino-duckdb-hazards.json` "greatest / least" — "never
+  translate by name when args may be NULL"). sqlglot renders the bare name silently. No
+  result-identical Presto/Trino rewrite is verified (candidates like
+  `ARRAY_MAX(FILTER(...))` have unprobed NaN/type edges), so brikk keeps the oracle's
+  output but flags it via `unsupported()` when `ignore_nulls=true` and ≥2 arguments.
+  The forward direction (NULL-propagating sources → DuckDB) is *upstream parity*, not an
+  extension: sqlglot's `_greatest_least_sql` CASE wrap is now ported
+  (`DuckdbGenerator.greatestLeastSql`), together with the missing
+  `MySQL.LEAST_GREATEST_IGNORES_NULLS=False` parser recording (MySQL/Doris).
+- **Where:** `dialects/PrestoGenerator.kt` `greatestLeastSql` (+ TRANSFORMS Greatest/
+  Least); parity ports in `dialects/DuckdbGenerator.kt`, `dialects/MysqlParser.kt`.
+  Tests: `FunctionSemanticsTest` (common), `SqlVerifierTest.duckdbAccepts...` /
+  `trinoAcceptsFunctionSemanticsRenderings` (JVM).
+- **Corpus/ledger impact:** none (output unchanged; only a warning is added).
+- **Upstream-PR candidate:** yes — sqlglot fixed only the duckdb-target direction; the
+  presto generator should at least warn for `ignore_nulls=true`.
+- **Conflict risk:** MEDIUM — if upstream adds a Presto-side rewrite, adopt it only if
+  probe-verified result-identical (incl. NaN ordering); FunctionSemanticsTest defines
+  required behavior.
+
+## 12. Presto/Trino: REGEXP_REPLACE modifiers / replace-first handling
+
+- **What:** Presto/Trino `REGEXP_REPLACE` always replaces ALL matches and has no
+  modifiers argument (`trino-duckdb-hazards.json` "regexp_replace", verdict=divergent);
+  the only 4-ary form takes a lambda. sqlglot re-emits DuckDB's modifiers as a 4th
+  string argument (analyzer-invalid). brikk renders the grammar-legal 3-arg form and
+  flags: DuckDB replace-first sources (`single_replace=true` without `'g'`) — Trino has
+  no replace-first form; non-`'g'` modifiers — no equivalent, dropped; Snowflake-style
+  position/occurrence arguments — dropped. A lone `'g'` is dropped silently (it *is*
+  Trino's default). Forward direction (Trino → DuckDB `'g'`-forcing) is upstream parity:
+  sqlglot's `regexpreplace_sql` is now ported (`DuckdbGenerator.regexpreplaceSql`).
+- **Where:** `dialects/PrestoGenerator.kt` `regexpreplaceSql`; parity port in
+  `dialects/DuckdbGenerator.kt`. Tests: `FunctionSemanticsTest`,
+  `SqlVerifierTest.trinoAcceptsFunctionSemanticsRenderings`.
+- **Corpus/ledger impact:** none — no corpus case renders a modifier-carrying
+  RegexpReplace under presto/trino (the presto corpus 3-arg and lambda forms are
+  byte-identical through the new path).
+- **Upstream-PR candidate:** yes — the 4th-argument re-emission is analyzer-invalid
+  Trino; upstream should drop/translate modifiers.
+- **Conflict risk:** MEDIUM — same protocol as 11.
+
+## 13. Presto/Trino: scalar-position UNNEST/EXPLODE flag
+
+- **What:** sqlglot eliminates projection-level `Explode` via the
+  `explode_projection_to_unnest` Select preprocess, which is not ported (existing
+  ledger entries in `duckdb-transpile-known-failures.json` /
+  `postgres-transpile-known-failures.json`). Any `Explode` that reaches the Presto
+  generator renders as `EXPLODE(...)` — not a Trino function. brikk keeps the fallback
+  output (= what the non-ported path already produced) but flags it accurately,
+  mirroring the Doris treatment from entry 7.
+- **Where:** `dialects/PrestoGenerator.kt` `explodeSql`. Tests: `FunctionSemanticsTest.
+  duckdbScalarUnnestToTrinoIsFlaggedNotSilent`.
+- **Corpus/ledger impact:** none (warning only; the ledgered cases stay ledgered until
+  the preprocess is ported).
+- **Upstream-PR candidate:** no (upstream has the transform; this papers over the
+  missing port — retire the flag when `explode_projection_to_unnest` lands).
+- **Conflict risk:** LOW.
+
+## 14. Catalog-backed fixes for absent-name renders (gap-report bucket B)
+
+- **What:** the Python oracle renders several nodes under function names the target
+  engine does not have (`gap-report.json` "renderedNameNotInTargetCatalog"). Where the
+  target catalog + engine sources pin an exact equivalent, brikk renders it instead
+  (each rendering grammar-pinned in `SqlVerifierTest.*FunctionSemanticsRenderings`):
+  - **Presto/Trino targets** (`dialects/PrestoGenerator.kt`): `IsInf` → `IS_INFINITE`
+    (was `IS_INF`); `CurrentSchema` → parenthesis-less `CURRENT_SCHEMA` (SqlBase.g4
+    special form; `CURRENT_SCHEMA()` is grammar-rejected, verifier-pinned);
+    `AddMonths` → `DATE_ADD('MONTH', n, d)` (was `ADD_MONTHS`; `preserve_end_of_month`
+    flagged); `StringToArray` → `SPLIT(s, sep)` (was `STRING_TO_ARRAY`; Postgres 3-arg
+    null-replacement flagged).
+  - **Doris targets** (`dialects/DorisGenerator.kt`): `BitwiseAndAgg/OrAgg/XorAgg` →
+    `GROUP_BIT_AND/OR/XOR` (was MySQL's `BIT_AND/...`); `DayOfWeekIso` →
+    `(WEEKDAY(x) + 1)` (was `DAYOFWEEK_ISO`; Doris `DAYOFWEEK` is Sun=1 so a bare
+    rename would rotate); `ArrayFilter`/`Transform` → `ARRAY_FILTER`/`ARRAY_MAP` with
+    the lambda FIRST (FE `ArrayFilter.java`/`ArrayMap.java` signatures); `ArrayPrepend`
+    → `ARRAY_PUSHFRONT(arr, e)`; `SortArray` → `ARRAY_SORT`/`ARRAY_REVERSE_SORT`
+    (explicit NULL placement flagged); `MD5Digest`/`SHA2Digest` → `UNHEX(MD5(x))` /
+    `UNHEX(SHA2(x, n))` (Doris digests return hex VARCHAR vs Trino's VARBINARY — the
+    same return-shape hazard the trino↔duckdb research pinned; mirrors the upstream
+    duckdb `UNHEX(SHA256(x))` treatment; was `MD5_DIGEST`/`S_H_A2_DIGEST`);
+    `ApproxQuantile` → `PERCENTILE_APPROX(x, p)` (approximate↔approximate;
+    accuracy/weight flagged — Trino's accuracy fraction is not Doris's compression);
+    `GenerateSeries` → `ARRAY_RANGE` (end-exclusive exactly matches duckdb `range`;
+    inclusive sources shift the stop bound one step, only when the step direction is
+    statically known, else flagged fallback).
+- **Where:** as listed. Tests: `FunctionSemanticsTest` (common), the three
+  `*FunctionSemanticsRenderings` verifier tests (JVM, real engine parsers).
+- **Corpus/ledger impact:** none — no dialect-corpus case exercises these paths for the
+  affected targets (checked before landing).
+- **Upstream-PR candidate:** yes, all of them (the emitted names simply do not exist in
+  the target engines; several are broken default `sql_name`s, e.g. `S_H_A2_DIGEST`).
+- **Conflict risk:** MEDIUM — if upstream adds its own mappings, adopt if
+  verifier-accepted and argument order matches the FE sources (watch lambda-first for
+  Doris).
+
+## 15. DuckDB: zone-less TIME(x) renders on the wall-clock tier
+
+- **What:** sqlglot's `no_time_sql` transpiles `TIME(x, zone)` to
+  `CAST(CAST(x AS TIMESTAMPTZ) AT TIME ZONE zone AS TIME)`; with no zone (Doris/MySQL
+  `TIME(x)`, which extracts wall-clock time) it emits an empty `AT TIME ZONE` operand —
+  grammar-invalid DuckDB (verifier-pinned reject). brikk renders the zone-less form as
+  `CAST(CAST(x AS TIMESTAMP) AS TIME)`: valid, and session-zone-invariant per the
+  probe-verified wall-clock tier (hazards doc "Datetime / timezone" — TIMESTAMPTZ reads
+  are reinterpreted through the session zone, plain TIMESTAMP is not). The zone-carrying
+  branch is the faithful `no_time_sql` port (previously missing entirely).
+- **Where:** `dialects/DuckdbGenerator.kt` `noTimeSql` (+ TRANSFORMS Time). Tests:
+  `FunctionSemanticsTest.dorisTimeToDuckdbStaysOnWallClockTier`,
+  `SqlVerifierTest.duckdbAcceptsFunctionSemanticsRenderings` (accept + reject pins).
+- **Corpus/ledger impact:** none (no corpus case hits exp.Time under duckdb).
+- **Upstream-PR candidate:** yes — `no_time_sql` emits invalid SQL for a missing zone
+  in every dialect that uses it.
+- **Conflict risk:** LOW-MEDIUM — if upstream fixes the empty-zone case, adopt theirs
+  if it stays on the wall-clock tier (a TIMESTAMPTZ detour is semantically wrong for
+  zone-less sources).
+
 ## Not-a-bug findings (for the record)
 
 - **Trino `date_trunc` unit casing:** reported as "lowercase-only, case-sensitive";

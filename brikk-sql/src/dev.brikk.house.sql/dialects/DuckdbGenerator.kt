@@ -863,6 +863,156 @@ open class DuckdbGenerator(
         return func("REGEXP_MATCHES", this_, pattern, flag)
     }
 
+    // sqlglot: DuckDBGenerator.regexpreplace_sql
+    // Semantics (trino-duckdb-hazards.json "regexp_replace", verdict=divergent): Trino
+    // replaces ALL matches by default while DuckDB replaces only the FIRST unless the 'g'
+    // modifier is set — so replace-all sources (occurrence absent/0, no single_replace
+    // marker) must have 'g' forced. DuckDB-parsed calls carry single_replace=true
+    // (DuckdbParser) and keep their literal flags for a byte-identical round trip.
+    open fun regexpreplaceSql(expression: RegexpReplace): String {
+        var subject = expression.thisArg as? Expression
+        val pattern = expression.args["expression"]
+        val replacement = expression.args["replacement"] as? Expression ?: Literal.string("")
+        val position = expression.args["position"] as? Expression
+        val occurrence = expression.args["occurrence"] as? Expression
+        val modifiers = expression.args["modifiers"] as? Expression
+
+        var validatedFlags = validateRegexpFlags(modifiers, supportedFlags = "cimsg") ?: ""
+
+        // Handle occurrence (only literals supported)
+        if (occurrence != null && !occurrence.isInt) {
+            unsupported("REGEXP_REPLACE with non-literal occurrence")
+        } else {
+            val occurrenceValue = if (occurrence != null && occurrence.isInt) {
+                occurrence.name.toIntOrNull() ?: 0
+            } else 0
+            if (occurrenceValue > 1) {
+                unsupported("REGEXP_REPLACE occurrence=$occurrenceValue not supported")
+            } else if (
+                occurrenceValue == 0 &&
+                'g' !in validatedFlags &&
+                expression.args["single_replace"] != true
+            ) {
+                // flag duckdb to do either all or none, single_replace check is for
+                // duckdb round trip
+                validatedFlags += "g"
+            }
+        }
+
+        // Handle position (only literals supported)
+        var prefix: Expression? = null
+        if (position != null && !position.isInt) {
+            unsupported("REGEXP_REPLACE with non-literal position")
+        } else if (position != null && position.isInt) {
+            val pos = position.name.toIntOrNull() ?: 0
+            if (pos > 1) {
+                prefix = Substring(
+                    args(
+                        "this" to subject?.copy(),
+                        "start" to Literal.number("1"),
+                        "length" to Literal.number((pos - 1).toString()),
+                    )
+                )
+                subject = Substring(
+                    args("this" to subject, "start" to Literal.number(pos.toString()))
+                )
+            }
+        }
+
+        val result: Expression = Anonymous(
+            args(
+                "this" to "REGEXP_REPLACE",
+                "expressions" to listOf(
+                    subject,
+                    pattern,
+                    replacement,
+                    if (validatedFlags.isNotEmpty()) Literal.string(validatedFlags) else null,
+                ),
+            )
+        )
+
+        if (prefix != null) {
+            return sql(Concat(args("expressions" to listOf(prefix, result))))
+        }
+
+        return sql(result)
+    }
+
+    // sqlglot: DuckDBGenerator._greatest_least_sql (greatest_sql / least_sql)
+    // Semantics (trino-duckdb-hazards.json "greatest / least", verdict=divergent): Trino
+    // returns NULL if ANY argument is NULL, DuckDB SKIPS NULLs. ignore_nulls=false
+    // (Presto/Trino/MySQL/Doris-parsed) therefore needs the NULL-propagating CASE wrap;
+    // ignore_nulls=true (DuckDB/Postgres-parsed) keeps the native call.
+    open fun greatestLeastSql(expression: Expression): String {
+        val allArgs = listOf(expression.thisArg as? Expression) +
+            expression.expressionsArg.map { it as? Expression }
+        val fallbackSql = functionFallbackSql(expression as Func)
+
+        if (expression.args["ignore_nulls"] == true) {
+            // DuckDB/PostgreSQL behavior: use native GREATEST/LEAST (ignores NULLs)
+            return fallbackSql
+        }
+
+        // return NULL if any argument is NULL
+        var condition: Expression? = null
+        for (arg in allArgs) {
+            val isNull = Is(args("this" to arg?.copy(), "expression" to Null()))
+            condition = if (condition == null) isNull
+            else Or(args("this" to condition, "expression" to isNull))
+        }
+        return sql(
+            Case(
+                args(
+                    "ifs" to listOf(If(args("this" to condition, "true" to Null()))),
+                    "default" to fallbackSql,
+                )
+            )
+        )
+    }
+
+    // sqlglot: TRANSFORMS[exp.Time] = no_time_sql (dialects/dialect.py), which transpiles
+    // TIME(x, zone) to CAST(CAST(x AS TIMESTAMPTZ) AT TIME ZONE zone AS TIME).
+    // brikk extension: when `zone` is absent (e.g. Doris/MySQL TIME(x), which extracts the
+    // wall-clock time part), the Python oracle emits `... AT TIME ZONE  AS TIME` — an
+    // empty zone operand the DuckDB parser rejects (grammar-invalid; pinned in
+    // SqlVerifierTest). We instead route through the session-zone-invariant wall-clock
+    // tier (docs/research/function-semantics-trino-duckdb.md "Datetime / timezone":
+    // DATE/TIMESTAMP extracts are probe-verified session-zone invariant, while every
+    // TIMESTAMPTZ read is reinterpreted through the session zone):
+    // CAST(CAST(x AS TIMESTAMP) AS TIME).
+    open fun noTimeSql(expression: Time): String {
+        val zone = expression.args["zone"] as? Expression
+        if (zone == null) {
+            return sql(
+                Cast(
+                    args(
+                        "this" to Cast(
+                            args(
+                                "this" to expression.thisArg,
+                                "to" to DataType(args("this" to DType.TIMESTAMP)),
+                            )
+                        ),
+                        "to" to DataType(args("this" to DType.TIME)),
+                    )
+                )
+            )
+        }
+        val inner = Cast(
+            args(
+                "this" to expression.thisArg,
+                "to" to DataType(args("this" to DType.TIMESTAMPTZ)),
+            )
+        )
+        return sql(
+            Cast(
+                args(
+                    "this" to AtTimeZone(args("this" to inner, "zone" to zone)),
+                    "to" to DataType(args("this" to DType.TIME)),
+                )
+            )
+        )
+    }
+
     // sqlglot: DuckDBGenerator.split_sql
     open fun splitSql(expression: Split): String {
         val this_ = expression.thisArg as? Expression
@@ -1742,6 +1892,68 @@ open class DuckdbGenerator(
             reg(ParseJSON::class) { e -> dg().parsejsonSql(e as ParseJSON) }
             reg(ArrayDistinct::class) { e -> dg().arraydistinctSql(e as ArrayDistinct) }
             reg(RegexpLike::class) { e -> dg().regexplikeSql(e as RegexpLike) }
+            reg(RegexpReplace::class) { e -> dg().regexpreplaceSql(e as RegexpReplace) }
+            // sqlglot: DuckDBGenerator.{getignorecase,compress,encrypt,decrypt,decryptraw,
+            // encryptraw,parseurl,parseip,decompressstring,decompressbinary,soundex}_sql —
+            // explicit "not supported in DuckDB" flags over the fallback rendering.
+            // Semantic evidence for keeping them flagged (not mapped):
+            //  - PARSE_URL: DuckDB core has no URL accessors; the netquack community
+            //    extension was probe-REJECTED (NULL-vs-'' divergence, port type mismatch)
+            //    — trino-duckdb-hazards.json / hazards doc "Extensions" section.
+            //  - COMPRESS/DECOMPRESS_*: no DuckDB equivalent at all.
+            //  - SOUNDEX: only exists via the splink_udfs community extension
+            //    (hazards verdict: conditionally-equivalent, not core).
+            reg(GetIgnoreCase::class) { e ->
+                unsupported("DuckDB does not support the GET_IGNORE_CASE() function")
+                functionFallbackSql(e as Func)
+            }
+            reg(Compress::class) { e ->
+                unsupported("DuckDB does not support the COMPRESS() function")
+                functionFallbackSql(e as Func)
+            }
+            reg(Encrypt::class) { e ->
+                unsupported("ENCRYPT is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(Decrypt::class) { e ->
+                val safe = e.args["safe"] != null && e.args["safe"] != false
+                val funcName = if (safe) "TRY_DECRYPT" else "DECRYPT"
+                unsupported("$funcName is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(DecryptRaw::class) { e ->
+                val safe = e.args["safe"] != null && e.args["safe"] != false
+                val funcName = if (safe) "TRY_DECRYPT_RAW" else "DECRYPT_RAW"
+                unsupported("$funcName is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(EncryptRaw::class) { e ->
+                unsupported("ENCRYPT_RAW is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(ParseUrl::class) { e ->
+                unsupported("PARSE_URL is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(ParseIp::class) { e ->
+                unsupported("PARSE_IP is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(DecompressString::class) { e ->
+                unsupported("DECOMPRESS_STRING is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(DecompressBinary::class) { e ->
+                unsupported("DECOMPRESS_BINARY is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(Soundex::class) { e ->
+                unsupported("SOUNDEX is not supported in DuckDB")
+                func("SOUNDEX", e.thisArg)
+            }
+            reg(Greatest::class) { e -> dg().greatestLeastSql(e) }
+            reg(Least::class) { e -> dg().greatestLeastSql(e) }
+            reg(Time::class) { e -> dg().noTimeSql(e as Time) }
             reg(Split::class) { e -> dg().splitSql(e as Split) }
             reg(BitwiseXor::class) { e -> dg().bitwisexorSql(e as BitwiseXor) }
             reg(BitwiseOrAgg::class) { e -> dg().bitwiseAggSql(e) }

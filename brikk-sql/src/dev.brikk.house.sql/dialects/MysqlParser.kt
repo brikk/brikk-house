@@ -858,6 +858,19 @@ object MysqlParserTables {
                 args("this" to seqGet(a, 0), "format" to mysqlFormatTime(seqGet(a, 1)))
             )
         }
+        // sqlglot: parser FUNCTIONS[LEAST/GREATEST] with MySQL.LEAST_GREATEST_IGNORES_NULLS
+        // = False (MySQL and Doris GREATEST/LEAST return NULL when any argument is NULL,
+        // unlike the base default) — read by e.g. DuckdbGenerator.greatestLeastSql.
+        put("GREATEST") { a ->
+            dev.brikk.house.sql.ast.Greatest(
+                args("this" to seqGet(a, 0), "expressions" to a.drop(1), "ignore_nulls" to false)
+            )
+        }
+        put("LEAST") { a ->
+            dev.brikk.house.sql.ast.Least(
+                args("this" to seqGet(a, 0), "expressions" to a.drop(1), "ignore_nulls" to false)
+            )
+        }
         // sqlglot: dialect.isnull_to_is_null
         put("ISNULL") { a -> Paren(args("this" to Is(args("this" to seqGet(a, 0), "expression" to Null())))) }
         put("LENGTH") { a -> Length(args("this" to seqGet(a, 0), "binary" to true)) }

@@ -3,6 +3,7 @@ package dev.brikk.house.sql.dialects
 // Explicit kotlin imports shield builtins from same-named ast classes.
 import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.ast.Array as ArrayNode
+import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.ast.Map as MapNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
@@ -126,6 +127,74 @@ open class DorisGenerator(
             )
         }
         return functionFallbackSql(expression)
+    }
+
+    // brikk extension (docs/brikk-extensions.md entry 14): SortArray -> ARRAY_SORT /
+    // ARRAY_REVERSE_SORT. Only the plain ascending/descending forms have Doris
+    // equivalents; explicit NULL placement or a non-literal direction is flagged.
+    open fun dorisSortArraySql(expression: SortArray): String {
+        val asc = expression.args["asc"]
+        val nullsFirst = expression.args["nulls_first"]
+        if (nullsFirst != null) {
+            unsupported(
+                "Argument 'nulls_first' is not supported for expression 'SortArray' when targeting Doris."
+            )
+        }
+        return when {
+            asc == null || (asc is BooleanNode && asc.thisArg == true) ->
+                func("ARRAY_SORT", expression.thisArg)
+            asc is BooleanNode && asc.thisArg == false ->
+                func("ARRAY_REVERSE_SORT", expression.thisArg)
+            else -> {
+                unsupported("Non-literal sort direction is not supported for SortArray in Doris")
+                func("ARRAY_SORT", expression.thisArg)
+            }
+        }
+    }
+
+    // brikk extension (docs/brikk-extensions.md entry 14): SHA2Digest -> UNHEX(SHA2(x, n)).
+    // Doris SHA2 supports 224/256/384/512 (MySQL-compatible); see the TRANSFORMS entry
+    // for the return-shape (hex-VARCHAR vs VARBINARY) evidence.
+    open fun dorisSha2DigestSql(expression: SHA2Digest): String {
+        val length = expression.args["length"] as? Expression ?: Literal.number("256")
+        return func("UNHEX", func("SHA2", expression.thisArg, length))
+    }
+
+    // brikk extension (docs/brikk-extensions.md entry 14): GenerateSeries -> ARRAY_RANGE.
+    // Doris ARRAY_RANGE is end-EXCLUSIVE (doris-signatures.json; docs "[start, end)"),
+    // matching duckdb `range` exactly. Inclusive sources (duckdb generate_series, trino
+    // sequence) are mapped by shifting the stop bound one step in the step's direction,
+    // which is only decidable for an absent (defaults to 1) or integer-literal step —
+    // anything else keeps the Python fallback and is flagged.
+    open fun dorisGenerateSeriesSql(expression: GenerateSeries): String {
+        val start = expression.args["start"] as? Expression
+        val end = expression.args["end"] as? Expression
+        val step = expression.args["step"] as? Expression
+
+        if (expression.args["is_end_exclusive"] == true) {
+            return func("ARRAY_RANGE", start, end, step)
+        }
+
+        // Inclusive semantics: determine the step direction.
+        val stepSign: Int? = when {
+            step == null -> 1
+            step is Literal && step.isInt -> if ((step.name.toLongOrNull() ?: 0L) >= 0) 1 else -1
+            step is Neg && step.isInt -> -1
+            else -> null
+        }
+        if (stepSign == null) {
+            unsupported(
+                "Inclusive GENERATE_SERIES/SEQUENCE with a non-integer-literal step has no " +
+                    "Doris equivalent (ARRAY_RANGE is end-exclusive)"
+            )
+            return functionFallbackSql(expression)
+        }
+        val shifted: Expression = if (stepSign >= 0) {
+            Add(args("this" to end?.copy(), "expression" to Literal.number("1")))
+        } else {
+            Sub(args("this" to end?.copy(), "expression" to Literal.number("1")))
+        }
+        return func("ARRAY_RANGE", start, shifted, step)
     }
 
     // ------------------------------------------------------------------
@@ -396,6 +465,78 @@ open class DorisGenerator(
                 func("FROM_UNIXTIME", e.thisArg, dg().dorisTimeFormat(e))
             }
             reg(UnixToTime::class) { e -> dg().renameFuncSql("FROM_UNIXTIME", e) }
+
+            // brikk extension (docs/brikk-extensions.md entry 14, NOT sqlglot parity):
+            // catalog-backed fixes for renders the Python oracle emits under names Doris
+            // does not have (gap-report.json bucket B "absent-name" entries). Evidence per
+            // entry cites vendor/data/doris-signatures.json (FE registry extract) and,
+            // where semantics matter, the FE sources under reference/doris.
+            //
+            // bit_and/bit_or/bit_xor aggregates -> GROUP_BIT_AND/OR/XOR
+            // (doris-signatures.json: GroupBitAnd/GroupBitOr/GroupBitXor over integer
+            // types; MySQL's BIT_AND etc. do not exist in Doris).
+            reg(BitwiseAndAgg::class) { e -> dg().renameFuncSql("GROUP_BIT_AND", e) }
+            reg(BitwiseOrAgg::class) { e -> dg().renameFuncSql("GROUP_BIT_OR", e) }
+            reg(BitwiseXorAgg::class) { e -> dg().renameFuncSql("GROUP_BIT_XOR", e) }
+            // duckdb isodow / trino day_of_week (ISO Monday=1..Sunday=7) -> WEEKDAY(x)+1
+            // (doris-signatures.json: WEEKDAY(DATE|DATETIME) -> TINYINT, MySQL-compatible
+            // Monday=0..Sunday=6; Python emits DAYOFWEEK_ISO, which Doris does not have.
+            // Doris DAYOFWEEK is Sunday=1, so a bare rename would be off by a rotation.)
+            reg(DayOfWeekIso::class) { e -> "(${func("WEEKDAY", e.thisArg)} + 1)" }
+            // duckdb list_filter(arr, lambda) -> ARRAY_FILTER(lambda, arr): the FE lambda
+            // form takes the lambda FIRST (reference/doris ArrayFilter.java:
+            // "array_filter(lambda, a1, ...)"); Python emits FILTER(arr, lambda), which
+            // Doris does not have.
+            reg(ArrayFilter::class) { e ->
+                func("ARRAY_FILTER", e.args["expression"], e.thisArg)
+            }
+            // duckdb list_transform(arr, lambda) -> ARRAY_MAP(lambda, arr) (reference/doris
+            // ArrayMap.java: SIGNATURES args(LambdaType) — lambda-first); Python emits
+            // TRANSFORM, which Doris does not have.
+            reg(Transform::class) { e ->
+                func("ARRAY_MAP", e.args["expression"], e.thisArg)
+            }
+            // duckdb list_prepend -> ARRAY_PUSHFRONT(arr, elem) (reference/doris
+            // ArrayPushFront.java: args(ArrayType, element)); Python emits ARRAY_PREPEND,
+            // which Doris does not have. Node args are (this=arr, expression=elem).
+            reg(ArrayPrepend::class) { e -> dg().renameFuncSql("ARRAY_PUSHFRONT", e) }
+            // duckdb list_sort / list_reverse_sort -> ARRAY_SORT / ARRAY_REVERSE_SORT
+            // (doris-signatures.json: both take ARRAY<ANY>; default NULL placement matches
+            // DuckDB's — ASC keeps NULLs first, DESC keeps NULLs last); Python emits
+            // SORT_ARRAY(arr[, FALSE]) (the Hive name), which Doris does not have.
+            reg(SortArray::class) { e -> dg().dorisSortArraySql(e as SortArray) }
+            // trino sha256/sha512 -> UNHEX(SHA2(x, n)): Doris SHA2 returns the hex-string
+            // digest (doris-signatures.json: SHA2(VARCHAR|STRING|VARBINARY, INT) ->
+            // VARCHAR) while Trino's sha256/sha512 return the raw VARBINARY digest — the
+            // same hex-VARCHAR vs VARBINARY return-shape hazard the trino<->duckdb
+            // research pinned for hashes (trino-duckdb-hazards.json: "unhex wrap is
+            // mandatory"), so the UNHEX(...) wrap mirrors the DuckDB treatment
+            // (UNHEX(SHA256(x))). Python emits S_H_A2_DIGEST(x, n) — a broken default
+            // sql_name Doris does not have.
+            reg(SHA2Digest::class) { e -> dg().dorisSha2DigestSql(e as SHA2Digest) }
+            // trino md5 (VARBINARY digest) -> UNHEX(MD5(x)) — same return-shape reasoning
+            // as SHA2Digest; Python emits MD5_DIGEST, which Doris does not have.
+            reg(MD5Digest::class) { e -> func("UNHEX", func("MD5", e.thisArg)) }
+            // trino approx_percentile(x, p) -> PERCENTILE_APPROX(x, p)
+            // (doris-signatures.json: PERCENTILE_APPROX(DOUBLE, DOUBLE[, DOUBLE]) —
+            // approximate percentile on both sides). Trino's accuracy (0..1 fraction) is
+            // NOT Doris's compression (2048..10000) so it is flagged, as is the weighted
+            // form. Python emits APPROX_QUANTILE, which Doris does not have.
+            reg(ApproxQuantile::class) { e ->
+                for (arg in listOf("accuracy", "weight", "error_tolerance")) {
+                    if (e.args[arg] != null) {
+                        unsupported(
+                            "Argument '$arg' is not supported for expression 'ApproxQuantile' when targeting Doris."
+                        )
+                    }
+                }
+                func("PERCENTILE_APPROX", e.thisArg, e.args["quantile"])
+            }
+            // duckdb range/generate_series and trino sequence -> ARRAY_RANGE
+            // (doris-signatures.json: ARRAY_RANGE(INT[, INT[, INT]]) and
+            // (DATETIME, DATETIME, INTERVAL), end-EXCLUSIVE like duckdb range); Python
+            // emits GENERATE_SERIES, which Doris does not have.
+            reg(GenerateSeries::class) { e -> dg().dorisGenerateSeriesSql(e as GenerateSeries) }
 
             // sqlglot: LAST_DAY_SUPPORTS_DATE_PART = False (base lastday_sql flag)
             reg(LastDay::class) { e -> dg().lastdaySql(e as LastDay) }
