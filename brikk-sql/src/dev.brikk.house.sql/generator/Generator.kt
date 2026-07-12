@@ -72,6 +72,15 @@ open class Generator(
         if (overrides.isEmpty()) GeneratorTables.DISPATCH
         else GeneratorTables.DISPATCH + overrides
 
+    /**
+     * Whether this generator has a dedicated renderer for [kclass] (dispatch entry /
+     * dialect transform), as opposed to the generic function-fallback that emits
+     * `NAME(args)` verbatim. Capability checks use this to separate grammar-shaped
+     * functions (CAST, EXTRACT, ...) from names that pass through to the engine.
+     */
+    fun hasDedicatedRenderer(kclass: KClass<out Expression>): Boolean =
+        dispatch.containsKey(kclass)
+
     // sqlglot: dialect QUOTE_START/QUOTE_END/IDENTIFIER_START/IDENTIFIER_END (from tokenizer tables)
     protected val quoteStart: String = tokenizerConfig.quotes.keys.first()
     protected val quoteEnd: String = tokenizerConfig.quotes.values.first()

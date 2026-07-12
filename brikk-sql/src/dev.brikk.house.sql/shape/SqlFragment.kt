@@ -3,6 +3,8 @@ package dev.brikk.house.sql.shape
 import dev.brikk.house.sql.ast.Alias
 import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.CTE
+import dev.brikk.house.sql.ast.Func
+import dev.brikk.house.sql.ast.sqlNames
 import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.Identifier
@@ -69,6 +71,89 @@ class SqlFragment(val sql: String, val dialect: String = "") {
 
     /** Whether the fragment is written in pipe (`|>`) syntax at the top level. */
     val isPipe: Boolean by lazy { ast is PipeQuery }
+
+    /**
+     * The root statement's node kind (AST class simple name): "Select", "Insert",
+     * "Command", "Pragma", ... Gate harnesses use this to detect statement-shaped
+     * passthrough (see [isRawPassthroughStatement]).
+     */
+    val rootKind: String by lazy { ast::class.simpleName ?: "Unknown" }
+
+    /**
+     * True when the root statement is a raw-passthrough shape: [Command] (unknown
+     * statement kept verbatim) or Pragma (engine-local directive). Such statements
+     * transpile as verbatim text with no cross-dialect semantics — a corpus gate
+     * should engine-skip them rather than trust the output.
+     */
+    val isRawPassthroughStatement: Boolean by lazy {
+        rootKind == "Command" || rootKind == "Pragma"
+    }
+
+    /**
+     * Transpiles this fragment to [target], returning the SQL together with the
+     * generator's collected `unsupported(...)` diagnostics — the "flagged but still
+     * emitted" channel (sqlglot semantics: unsupported_level WARN collects and
+     * continues). A non-empty [TranspileResult.unsupportedMessages] means the output
+     * is best-effort and should be reviewed / gate-skipped.
+     */
+    fun transpileTo(target: String, pretty: Boolean = false): TranspileResult {
+        val generator = Dialects.forName(target).generator(pretty = pretty)
+        val out = generator.generate(ast, copy = true)
+        return TranspileResult(
+            sql = out,
+            unsupportedMessages = generator.unsupportedMessages.toList(),
+            rootKind = rootKind,
+            isRawPassthroughStatement = isRawPassthroughStatement,
+        )
+    }
+
+    /**
+     * Class-3 capability check: function names that would land in [target] SQL even
+     * though the target engine does not register them (silent-passthrough holes like
+     * duckdb's `read_parquet(...)` transpiled to Doris).
+     *
+     * Semantics: transpile to [target], re-parse the OUTPUT under the target dialect,
+     * collect function calls that would reach the engine as plain `NAME(args)` — i.e.
+     * unresolved ([Anonymous]) calls plus typed Func nodes with no dedicated renderer
+     * in the target generator (the generic fallback emits their name verbatim; e.g.
+     * duckdb's READ_PARQUET parses to a typed ReadParquet node everywhere but Doris has
+     * no renderer or registration for it). Names registered by the target engine
+     * (catalog hit, aliases included, case-insensitive) are cleared; grammar-shaped
+     * functions with dedicated renderers (CAST, EXTRACT, ...) are engine syntax and
+     * never reported.
+     *
+     * Requires the target dialect to ship a function catalog (doris/trino/duckdb today);
+     * throws [ShapeError] otherwise. If the emitted SQL cannot be re-parsed under the
+     * target dialect, falls back to scanning this fragment's own AST (conservative).
+     */
+    fun unmappableFunctions(target: String): List<String> {
+        val targetDialect = Dialects.forName(target)
+        val catalog = targetDialect.functionCatalog ?: throw ShapeError(
+            "unmappableFunctions requires a function catalog for '$target' " +
+                "(available: dialects with Dialect.functionCatalog != null)."
+        )
+        val generator = targetDialect.generator()
+        val root = try {
+            targetDialect.parseOne(transpileTo(target).sql)
+        } catch (_: Exception) {
+            ast
+        }
+        val out = LinkedHashSet<String>()
+        for (node in root.walk(bfs = false)) {
+            when {
+                node is Anonymous -> {
+                    val name = node.name
+                    if (name.isNotEmpty() && name !in catalog) out.add(name)
+                }
+                node is Func && !generator.hasDedicatedRenderer(node::class) -> {
+                    val name = node.sqlNames().firstOrNull()?.uppercase() ?: continue
+                    if (name !in catalog) out.add(name)
+                }
+                else -> {}
+            }
+        }
+        return out.toList()
+    }
 
     /** The ordered pipe stage nodes (Pipe* classes); empty when [isPipe] is false. */
     val stages: List<Expression> by lazy {
@@ -397,6 +482,21 @@ data class ScalarParam(
     val style: ParamStyle,
     val count: Int,
     val positions: List<Int>,
+)
+
+/**
+ * Result of [SqlFragment.transpileTo]: the emitted SQL plus the gate-relevant
+ * diagnostics. A corpus harness's "runnable" predicate is typically:
+ * `unsupportedMessages.isEmpty() && !isRawPassthroughStatement &&
+ *  fragment.unmappableFunctions(target).isEmpty()` (plus its own explicit skip-list
+ * for content-divergent sources like information_schema).
+ */
+@Serializable
+data class TranspileResult(
+    val sql: String,
+    val unsupportedMessages: List<String>,
+    val rootKind: String,
+    val isRawPassthroughStatement: Boolean,
 )
 
 /** Serializable, statically-derivable summary of a fragment (compiler-plugin seed). */
