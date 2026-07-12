@@ -45,6 +45,23 @@ cp fe/fe-sql-parser/target/doris-fe-sql-parser.jar \
 > When it lands: swap the module dependency to the coordinate, delete `vendor/lib/`, and
 > update ATTRIBUTIONS.md + this file.
 
+## `data/doris-registry/Builtin*Functions.java`
+
+Pinned copy of Apache Doris's runtime function registry sources (Apache-2.0), so the Doris
+function catalog is regenerable from this repo alone (no Doris clone needed):
+
+| | |
+|---|---|
+| Source | https://github.com/apache/doris — `fe/fe-core/src/main/java/org/apache/doris/catalog/` |
+| Pin | `v0.8.2-31011-gd8fd23f7f38` (matches `VENDORED_VERSION` in tools/generate_doris_functions.py) |
+| Refresh | copy the five files from a newer checkout, update the pin in the script + here, re-run the generator |
+
+## `data/trino-functions-481.tsv`
+
+See the provenance section added with the Trino catalog (SHOW FUNCTIONS dump, Trino 481,
+Apache-2.0) — regenerable via the Method-B harness documented in
+tools/generate_trino_functions.py.
+
 ## Doris function registry (extracted data, not a binary)
 
 The Doris function catalog (`brikk-sql-metadata/.../GeneratedDorisFunctionCatalog.kt`) is

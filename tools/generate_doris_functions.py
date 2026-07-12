@@ -19,7 +19,11 @@ static SIGNATURES field and require building fe-core. The Kotlin model is overlo
 (FunctionDef.overloads defaults to empty) for a future signature-dumper pass.
 
 Usage: python3 tools/generate_doris_functions.py [<doris-repo-root>]
-       (default root: reference/doris)
+       Default source: vendor/data/doris-registry/ (committed, pinned copy of the
+       registry files — reproducible from this repo alone). Pass a Doris checkout
+       root (e.g. reference/doris) to refresh against a newer Doris; then re-copy
+       the Builtin*Functions.java files into vendor/data/doris-registry/ and update
+       its provenance in vendor/README.md so the vendored copy stays in sync.
 """
 
 from __future__ import annotations
@@ -32,7 +36,9 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-DEFAULT_DORIS = ROOT / "reference" / "doris"
+VENDORED_REGISTRY = ROOT / "vendor" / "data" / "doris-registry"
+# Pin of the vendored registry copy (update when refreshing vendor/data/doris-registry/):
+VENDORED_VERSION = "v0.8.2-31011-gd8fd23f7f38"
 OUT = ROOT / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata" / "GeneratedDorisFunctionCatalog.kt"
 
 IDENT = re.compile(r"[A-Za-z][A-Za-z0-9_]*$")
@@ -58,8 +64,8 @@ def doris_version(doris_root: pathlib.Path) -> str:
         return "unknown"
 
 
-def collect(doris_root: pathlib.Path) -> dict[str, list[tuple[str, list[str]]]]:
-    catalog = doris_root / "fe" / "fe-core" / "src" / "main" / "java" / "org" / "apache" / "doris" / "catalog"
+def collect(registry_dir: pathlib.Path) -> dict[str, list[tuple[str, list[str]]]]:
+    catalog = registry_dir
     by_kind: dict[str, list[tuple[str, list[str]]]] = {k: [] for k in KINDS.values()}
     found = 0
     for path in sorted(glob.glob(str(catalog / "Builtin*Functions.java"))):
@@ -83,9 +89,18 @@ def collect(doris_root: pathlib.Path) -> dict[str, list[tuple[str, list[str]]]]:
 
 
 def main() -> None:
-    doris_root = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_DORIS
-    version = doris_version(doris_root)
-    by_kind = collect(doris_root)
+    if len(sys.argv) > 1:
+        # Refresh mode: read from a Doris checkout.
+        doris_root = pathlib.Path(sys.argv[1])
+        registry = doris_root / "fe" / "fe-core" / "src" / "main" / "java" / "org" / "apache" / "doris" / "catalog"
+        version = doris_version(doris_root)
+        print("NOTE: refreshing from a checkout — re-copy the Builtin*Functions.java files "
+              "into vendor/data/doris-registry/ and update VENDORED_VERSION + vendor/README.md.",
+              file=sys.stderr)
+    else:
+        registry = VENDORED_REGISTRY
+        version = VENDORED_VERSION
+    by_kind = collect(registry)
     total_defs = sum(len(v) for v in by_kind.values())
     total_names = sum(1 + len(a) for v in by_kind.values() for (_, a) in v)
 
