@@ -1,0 +1,2512 @@
+{
+  "source_project": "ducklake-integrations/trino-ducklake",
+  "extracted": "2026-07-13",
+  "pairs": [
+    {
+      "trino": "(no Trino equivalent)",
+      "duckdb": "hash(value, ...) variadic",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: DuckDB variadic hash() does NOT propagate NULL — hash(NULL) is a stable UBIGINT sentinel (13787848793156543929) and NULL != '' inside composition; opposite of Trino null-propagation. Never map any Trino hash onto it",
+      "areas": [
+        "hash",
+        "null"
+      ],
+      "provenance": "REPORT-hash-null-handling.md#duckdbs-variadic-hashvalue---null-is-a-sentinel-not-propagated"
+    },
+    {
+      "trino": "= <> < <= > >= (comparison)",
+      "duckdb": "same operators",
+      "verdict": "identical",
+      "hazard": "3VL NULL comparison aligned",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#comparison-and-conditional"
+    },
+    {
+      "trino": "abs",
+      "duckdb": "abs",
+      "verdict": "identical",
+      "hazard": "abs(MIN_INT): both throw",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "all_match / any_match",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "AND / OR / NOT",
+      "duckdb": "AND / OR / NOT",
+      "verdict": "identical",
+      "hazard": "3VL aligned",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#logical--boolean"
+    },
+    {
+      "trino": "approx_distinct",
+      "duckdb": "approx_count_distinct",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Rename; HLL sketch STATES are not interchangeable across engines — only cardinality results comparable, Trino error-bound arg has no DuckDB counterpart",
+      "areas": [
+        "aggregate",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "approx_most_frequent",
+      "duckdb": "datasketch_frequent_items (datasketches ext)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Requires datasketches community extension; sketch states not wire-compatible",
+      "areas": [
+        "aggregate",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "approx_percentile",
+      "duckdb": "quantile_cont / quantile_disc",
+      "verdict": "divergent",
+      "hazard": "Trino is approximate by default, DuckDB quantile_* are exact — different shape and results",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "arbitrary / any_value",
+      "duckdb": "any_value / first / last",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Order-dependence undefined in both unless ORDER BY used",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "array_agg",
+      "duckdb": "array_agg / list",
+      "verdict": "conditionally-equivalent",
+      "hazard": "DuckDB returns LIST vs Trino ARRAY — type-layer difference",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "array_distinct",
+      "duckdb": "list_distinct",
+      "verdict": "identical",
+      "hazard": "Name trap: DuckDB array_unique returns the COUNT, not the distinct list — must map to list_distinct",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "array_except",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "array_first / array_last",
+      "duckdb": "list_first / list_last",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "array_histogram",
+      "duckdb": "list_histogram",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same idea; verify map key/value types",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "array_intersect",
+      "duckdb": "list_intersect",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "array_join",
+      "duckdb": "array_to_string",
+      "verdict": "divergent",
+      "hazard": "NULL elements: Trino's third arg substitutes a replacement; DuckDB silently drops NULLs",
+      "areas": [
+        "null",
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "array_min / array_max",
+      "duckdb": "list_min / list_max",
+      "verdict": "divergent",
+      "hazard": "Trino propagates NULL if ANY element is NULL; DuckDB skips NULLs — do not map without explicit NULL-free guarantee",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "array_position",
+      "duckdb": "list_position",
+      "verdict": "identical",
+      "hazard": "Both 1-based, 0 if not found",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "array_remove",
+      "duckdb": "list_filter workaround",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "array_sort",
+      "duckdb": "list_sort",
+      "verdict": "conditionally-equivalent",
+      "hazard": "NULL ordering: both default NULLS LAST but flagged 'verify if your data has NULLs'; comparator (lambda) form has a different shape and is not mappable",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "array_union",
+      "duckdb": "list_distinct(list_concat(...))",
+      "verdict": "no-equivalent",
+      "hazard": "No direct DuckDB form",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "at_timezone",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "DuckDB TIMESTAMPTZ carries no per-value zone metadata, so 'rezone display' is not expressible",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#not-pushable"
+    },
+    {
+      "trino": "avg",
+      "duckdb": "avg",
+      "verdict": "identical",
+      "hazard": "Skips NULLs in both",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "beta_cdf / inverse_beta_cdf / normal_cdf / inverse_normal_cdf / t_cdf / t_pdf",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "BETWEEN",
+      "duckdb": "BETWEEN",
+      "verdict": "identical",
+      "hazard": "Inclusive in both",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#comparison-and-conditional"
+    },
+    {
+      "trino": "bit_count",
+      "duckdb": "bit_count",
+      "verdict": "divergent",
+      "hazard": "Trino requires explicit bit-width argument; DuckDB infers from type — do not translate without matching width",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#bitwise"
+    },
+    {
+      "trino": "bit_length",
+      "duckdb": "bit_length",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "bitwise_and",
+      "duckdb": "& operator",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#bitwise"
+    },
+    {
+      "trino": "bitwise_and_agg / bitwise_or_agg / bitwise_xor_agg",
+      "duckdb": "bit_and / bit_or / bit_xor",
+      "verdict": "identical",
+      "hazard": "Rename only",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "bitwise_left_shift",
+      "duckdb": "<< operator",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#bitwise"
+    },
+    {
+      "trino": "bitwise_not",
+      "duckdb": "~ operator",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#bitwise"
+    },
+    {
+      "trino": "bitwise_or",
+      "duckdb": "| operator",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#bitwise"
+    },
+    {
+      "trino": "bitwise_right_shift",
+      "duckdb": ">> operator",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Shift of negative values can differ (signed vs unsigned shift); safe for typical positive-integer use",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#3-functions"
+    },
+    {
+      "trino": "bitwise_right_shift_arithmetic",
+      "duckdb": ">> operator",
+      "verdict": "conditionally-equivalent",
+      "hazard": "DuckDB >> is arithmetic for signed types; Trino's logical bitwise_right_shift is the one that diverges on negatives",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#bitwise"
+    },
+    {
+      "trino": "bitwise_xor",
+      "duckdb": "xor(x, y)",
+      "verdict": "identical",
+      "hazard": "DuckDB ^ is EXPONENTIATION, # is xor — use the xor() function, never ^",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#bitwise"
+    },
+    {
+      "trino": "bool_and / every",
+      "duckdb": "bool_and",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "bool_or",
+      "duckdb": "bool_or",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "cardinality (array)",
+      "duckdb": "length / len / array_length",
+      "verdict": "identical",
+      "hazard": "Rename; NULL -> NULL in both",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "cardinality (map)",
+      "duckdb": "cardinality",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#map-functions"
+    },
+    {
+      "trino": "CAST (primitive)",
+      "duckdb": "CAST",
+      "verdict": "identical",
+      "hazard": "Verified for BOOLEAN/TINYINT/SMALLINT/INTEGER/BIGINT/DOUBLE/VARCHAR/DATE; TIMESTAMP precision, DECIMAL scale, nested types NOT verified (they fail those cleanly)",
+      "areas": [
+        "numeric",
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#conversion--cast--try-cast"
+    },
+    {
+      "trino": "cbrt",
+      "duckdb": "cbrt",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "ceil / ceiling",
+      "duckdb": "ceil / ceiling",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "checksum",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "aggregate",
+        "hash"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "chr",
+      "duckdb": "chr",
+      "verdict": "identical",
+      "hazard": "Aligned for valid code points",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "coalesce",
+      "duckdb": "coalesce",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#comparison-and-conditional"
+    },
+    {
+      "trino": "codepoint",
+      "duckdb": "unicode / ascii / ord",
+      "verdict": "divergent",
+      "hazard": "Trino codepoint requires varchar(1); DuckDB unicode takes any varchar and uses first char — 'NOT 1:1'",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "concat",
+      "duckdb": "concat",
+      "verdict": "divergent",
+      "hazard": "Probe-verified on every NULL-bearing case: concat('a',NULL,'c','d')='acd', concat(NULL,'b','c')='bc', concat(NULL,NULL)='' in DuckDB; Trino returns NULL in all three. Use || operator (verified NULL-propagating in both)",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-hash-null-handling.md#related-concat--concat_ws-null-behaviour"
+    },
+    {
+      "trino": "concat",
+      "duckdb": "|| operator",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "null",
+        "string"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#2-operators--transforms"
+    },
+    {
+      "trino": "concat (arrays)",
+      "duckdb": "list_concat / ||",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "concat_ws",
+      "duckdb": "concat_ws",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned on ALL NULL shapes: NULL elements skipped by both, NULL separator -> NULL in both, all-NULL elements -> '' in both; Unicode separator OK",
+      "areas": [
+        "string",
+        "unicode",
+        "null"
+      ],
+      "provenance": "REPORT-hash-null-handling.md#related-concat--concat_ws-null-behaviour"
+    },
+    {
+      "trino": "contains (array)",
+      "duckdb": "list_contains",
+      "verdict": "identical",
+      "hazard": "contains-with-NULL returns NULL in both",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "contains (network, address)",
+      "duckdb": ">>= operator (core inet ext)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Requires inet extension; Trino IPADDRESS/IPPREFIX are two types vs DuckDB single INET type embedding CIDR",
+      "areas": [
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#ip-address"
+    },
+    {
+      "trino": "corr / covar_pop / covar_samp",
+      "duckdb": "corr / covar_pop / covar_samp",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "cosine_distance / cosine_similarity",
+      "duckdb": "array_cosine_distance / list_cosine_distance etc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino has sparse (map) and dense array forms; DuckDB splits array vs list — verify shape before mapping",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "count / count(*) / count(DISTINCT)",
+      "duckdb": "count",
+      "verdict": "identical",
+      "hazard": "Both skip NULLs for count(expr)",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "count_if",
+      "duckdb": "count_if / countif",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "crc32",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "No extension cover either",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#hash--digest"
+    },
+    {
+      "trino": "cume_dist",
+      "duckdb": "cume_dist",
+      "verdict": "identical",
+      "hazard": "Trino 481 docs claim '-> bigint' but it actually returns double like DuckDB — doc bug, trust the type system",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#window-functions"
+    },
+    {
+      "trino": "current_date",
+      "duckdb": "current_date / today()",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both session-local; do not push if behavior must match a specific timezone definition",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "current_timestamp / now",
+      "duckdb": "current_timestamp / now",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both bind once per query, but default precision differs: Trino timestamp(3) vs DuckDB microseconds(6) — cast carefully when comparing",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "date_add",
+      "duckdb": "x + INTERVAL n unit",
+      "verdict": "divergent",
+      "hazard": "Same name, incompatible signatures: DuckDB date_add(date, interval) vs Trino date_add(unit, value, x) — translate to interval arithmetic, never by name",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "date_add('month', 1, DATE '2024-01-31')",
+      "duckdb": "+ INTERVAL 1 MONTH",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Month-end clamp: both engines produce 2024-02-29 (clamps to month end) per their notes, 'but verify — common divergence point in date libraries'",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "PLAN-pushdown-datetime.md#test-corpus--designed-for-divergence-pressure"
+    },
+    {
+      "trino": "date_diff",
+      "duckdb": "date_diff",
+      "verdict": "identical",
+      "hazard": "Both return count of unit-BOUNDARIES crossed (not whole units elapsed); verified empirically: date_diff('month','2024-01-31','2024-02-01') = 1 in both. Beware DuckDB's separate date_sub which returns complete units",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "date_diff('hour', ...) over WTZ across DST",
+      "duckdb": "date_diff / epoch_diff",
+      "verdict": "unclear",
+      "hazard": "'does the lost hour count? Trino: yes (real elapsed time). DuckDB: yes via epoch_diff. Verify; if it doesn't, do not push date_diff on WTZ inputs'",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "PLAN-pushdown-datetime.md#interval--date_diff-semantics"
+    },
+    {
+      "trino": "date_format / format_datetime / parse_datetime / date_parse",
+      "duckdb": "strftime / strptime",
+      "verdict": "divergent",
+      "hazard": "Tier D 'never push': Joda-Time format strings (yyyy-MM-dd) vs C strftime (%Y-%m-%d) are incompatible; safe only if a translation layer owns the format-string language",
+      "areas": [
+        "datetime",
+        "string"
+      ],
+      "provenance": "PLAN-pushdown-datetime.md#date_format--date_parse-trino-vs-strftime--strptime-duckdb"
+    },
+    {
+      "trino": "date_trunc",
+      "duckdb": "date_trunc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Aligned for intersection unit set (second..year) but DuckDB always returns TIMESTAMP even for DATE input while Trino preserves input type; numeric comparisons still align via auto-cast",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "date_trunc('week', x)",
+      "duckdb": "date_trunc('week', x)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Aligned iff both engines use Monday-start ISO weeks; DuckDB unit set is a superset (decade/century/millennium); their corpus pins Sunday '2024-01-07' -> '2024-01-01'",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "PLAN-pushdown-datetime.md#date_truncunit-x-unit-strings"
+    },
+    {
+      "trino": "day_of_month",
+      "duckdb": "date_part('day', x)",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "day_of_week / dow",
+      "duckdb": "isodow",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino day_of_week is 1..7 Monday=1; DuckDB dayofweek/date_part('dow') is 0..6 SUNDAY=0 — must map to isodow, never dayofweek. Pinned: '2024-01-07' -> 7",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "day_of_year / doy",
+      "duckdb": "dayofyear",
+      "verdict": "identical",
+      "hazard": "Rename; pinned by leap-day fixture '2024-02-29' -> 60",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "degrees / radians",
+      "duckdb": "degrees / radians",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "e",
+      "duckdb": "exp(1)",
+      "verdict": "no-equivalent",
+      "hazard": "DuckDB has no e(); use exp(1)",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "element_at (array)",
+      "duckdb": "list_extract",
+      "verdict": "conditionally-equivalent",
+      "hazard": "element_at returns NULL out-of-bounds and DuckDB list[i] also NULL — aligned; but Trino subscript a[i] RAISES out-of-bounds, so subscript-to-subscript translation is not safe; negative index counts from end in both",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "element_at (map)",
+      "duckdb": "element_at / map_extract",
+      "verdict": "divergent",
+      "hazard": "Missing key: Trino returns NULL; DuckDB returns EMPTY LIST (its element_at returns LIST) — do not map without unwrapping",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#map-functions"
+    },
+    {
+      "trino": "euclidean_distance / dot_product",
+      "duckdb": "array_distance / array_dot_product / list_*",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Names differ, semantics aligned for double arrays of equal length; pushable for ARRAY-typed columns, LIST is DuckDB-only shape",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "exp",
+      "duckdb": "exp",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "extract",
+      "duckdb": "extract / date_part",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Field names mostly aligned but dow/day_of_week numbering differs (see day_of_week)",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "filter / transform / reduce (lambda forms)",
+      "duckdb": "list_filter / list_transform / list_reduce",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Lambda translation is expression-tree-level, not name-level; reduce shapes differ (Trino has separate inputFn/outputFn); their conservative default: reject",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "first_value / last_value / nth_value / lead / lag",
+      "duckdb": "same names",
+      "verdict": "identical",
+      "hazard": "DuckDB additionally supports IGNORE NULLS grammar",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#window-functions"
+    },
+    {
+      "trino": "flatten",
+      "duckdb": "flatten",
+      "verdict": "identical",
+      "hazard": "One-level flatten in both",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "floor",
+      "duckdb": "floor",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "format",
+      "duckdb": "format / printf",
+      "verdict": "divergent",
+      "hazard": "Format specifications differ entirely (Trino: Java Formatter; DuckDB: fmt/printf) — do not translate by name",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "from_base",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "from_base64",
+      "duckdb": "from_base64",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "from_big_endian_32/64 / to_big_endian_32/64",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#binary--blob"
+    },
+    {
+      "trino": "from_hex",
+      "duckdb": "unhex",
+      "verdict": "identical",
+      "hazard": "Rename only; returns BLOB",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "from_ieee754_32/64 / to_ieee754_32/64",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#binary--blob"
+    },
+    {
+      "trino": "from_iso8601_timestamp",
+      "duckdb": "CAST(s AS TIMESTAMP)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Map to cast; 'verify offset handling'",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "from_unixtime",
+      "duckdb": "to_timestamp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino from_unixtime(double) returns TIMESTAMP(3) WITH TIME ZONE and uses session TZ — they reclassified it Tier C (session-zone-dependent), not a plain rename",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "PLAN-pushdown-datetime.md#from_unixtime--to_unixtime"
+    },
+    {
+      "trino": "from_unixtime/1",
+      "duckdb": "to_timestamp",
+      "verdict": "identical",
+      "hazard": "Same absolute instant; rendering depends on session zone; negative/subsecond/large-epoch round-trips pinned",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "from_unixtime/2 (zone) / from_unixtime_nanos",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "No DuckDB equivalent / signature mismatch",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "from_utf8",
+      "duckdb": "decode",
+      "verdict": "divergent",
+      "hazard": "Invalid UTF-8 input: Trino has replacement-char form; DuckDB errors",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "geometric_mean",
+      "duckdb": "geometric_mean",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "greatest / least",
+      "duckdb": "greatest / least",
+      "verdict": "divergent",
+      "hazard": "NULL handling differs: Trino returns NULL if ANY arg is NULL; DuckDB SKIPS NULLs — never translate by name when args may be NULL",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#comparison-and-conditional"
+    },
+    {
+      "trino": "hamming_distance",
+      "duckdb": "hamming",
+      "verdict": "identical",
+      "hazard": "Rename only; both raise on unequal-length input",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "histogram",
+      "duckdb": "histogram",
+      "verdict": "identical",
+      "hazard": "Counts by value in both",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "hmac_md5",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "Not ported; only hmac_sha256 implemented natively in parity extension",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#not-pushable"
+    },
+    {
+      "trino": "hmac_sha1",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "Not ported; only hmac_sha256 implemented natively",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#not-pushable"
+    },
+    {
+      "trino": "hmac_sha256",
+      "duckdb": "crypto_hmac('sha2-256', ...) (crypto ext)",
+      "verdict": "divergent",
+      "hazard": "crypto_hmac signature is [VARCHAR,VARCHAR,VARCHAR]; Trino hmac_sha256(data,key) takes VARBINARY. A BLOB->VARCHAR bridge ESCAPES non-printable bytes (from_hex('ff00')::VARCHAR becomes the 8-char string '\\xFF\\x00') and silently hashes the wrong bytes — macro route rejected; only a native raw-bytes impl is correct. Also note Trino arg order: data first, key second",
+      "areas": [
+        "hash",
+        "null",
+        "extension"
+      ],
+      "provenance": "TODO-pushdown-duckdb.md#round-6b-ext--crypto-extension--sha512--hmac_sha256-ported-native"
+    },
+    {
+      "trino": "hmac_sha512",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "Not ported; only hmac_sha256 implemented natively",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#not-pushable"
+    },
+    {
+      "trino": "hour / minute / second",
+      "duckdb": "hour / minute / second",
+      "verdict": "identical",
+      "hazard": "Type-gated to DATE / TIMESTAMP-no-TZ in their pushdown",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "human_readable_seconds",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "if/2",
+      "duckdb": "CASE / if macro",
+      "verdict": "conditionally-equivalent",
+      "hazard": "2-arg form returns NULL on the false branch (macro encodes this)",
+      "areas": [
+        "null"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#3-functions"
+    },
+    {
+      "trino": "IN (value list)",
+      "duckdb": "IN",
+      "verdict": "identical",
+      "hazard": "NULL-in-list yields NULL (not false) in both",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#comparison-and-conditional"
+    },
+    {
+      "trino": "IPADDRESS / IPPREFIX types",
+      "duckdb": "INET (core inet extension)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino splits address vs prefix into two types; DuckDB one INET type with embedded CIDR; original mapping doc's 'DuckDB has no IP type' claim was corrected here",
+      "areas": [
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-community-extensions-detail.md#inet-core-extension--not-community"
+    },
+    {
+      "trino": "IS [NOT] DISTINCT FROM",
+      "duckdb": "IS [NOT] DISTINCT FROM",
+      "verdict": "identical",
+      "hazard": "NULL-safe equality aligned",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#comparison-and-conditional"
+    },
+    {
+      "trino": "is_json_scalar / json_array_contains / json_array_get / json_size",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#json-functions"
+    },
+    {
+      "trino": "is_nan / is_finite / is_infinite",
+      "duckdb": "isnan / isfinite / isinf",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Rename only, behavior aligned; NaN=NaN treated true for grouping/distinct in both but flagged 'verify in pushdown tests'",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "json_array_length",
+      "duckdb": "json_array_length",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both exist; verify path-arg behavior",
+      "areas": [
+        "string",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#json-functions"
+    },
+    {
+      "trino": "json_extract",
+      "duckdb": "json_extract",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Path syntax differs (Trino restricted JSONPath subset vs DuckDB JSONPath-ish with wildcards); safe only for simple $.a.b property paths; DuckDB side lives in json extension",
+      "areas": [
+        "string",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#json-functions"
+    },
+    {
+      "trino": "json_extract_scalar",
+      "duckdb": "json_extract_string",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Rename, same intent; same path-syntax caveat",
+      "areas": [
+        "string",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#json-functions"
+    },
+    {
+      "trino": "json_format / json_parse",
+      "duckdb": "cast to/from JSON",
+      "verdict": "no-equivalent",
+      "hazard": "Different API (DuckDB uses casts / to_json / from_json)",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#json-functions"
+    },
+    {
+      "trino": "kurtosis",
+      "duckdb": "kurtosis / kurtosis_pop",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino kurtosis = sample excess; DuckDB has both sample and pop variants — 'push only with explicit match'",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "last_day_of_month",
+      "duckdb": "last_day",
+      "verdict": "identical",
+      "hazard": "Rename; pinned leap-Feb '2024-02-15' -> '2024-02-29' and '1900-02-15' -> '1900-02-28'",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "length",
+      "duckdb": "length",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned on full Unicode corpus: code points, emoji counted as 1 (4-byte U+1F600 = length 1)",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "length (varbinary)",
+      "duckdb": "octet_length",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same semantics, different name; translator must pick length vs octet_length by Trino argument type",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#binary--blob"
+    },
+    {
+      "trino": "levenshtein_distance",
+      "duckdb": "levenshtein",
+      "verdict": "identical",
+      "hazard": "Rename only; both compute insertions+deletions+substitutions (code-point)",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "LIKE / NOT LIKE",
+      "duckdb": "LIKE / NOT LIKE",
+      "verdict": "identical",
+      "hazard": "Wildcards, ESCAPE, NULL handling all aligned; only constant patterns were pushed",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"
+    },
+    {
+      "trino": "listagg",
+      "duckdb": "string_agg",
+      "verdict": "divergent",
+      "hazard": "Trino uses WITHIN GROUP grammar; DuckDB lacks it — different shapes",
+      "areas": [
+        "aggregate",
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "ln",
+      "duckdb": "ln",
+      "verdict": "identical",
+      "hazard": "NaN on x<=0 in both",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "localtimestamp / localtime",
+      "duckdb": "localtimestamp / localtime",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same idea, different precision defaults",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "log (2-arg, base b)",
+      "duckdb": "ln(x)/ln(b)",
+      "verdict": "no-equivalent",
+      "hazard": "DuckDB has no 2-arg log; rewrite as ln(x)/ln(b)",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "log10",
+      "duckdb": "log10",
+      "verdict": "identical",
+      "hazard": "Name-collision trap: DuckDB single-arg log(x) IS log10 (PostgreSQL convention) while Trino log(b,x) is log-base-b — map log10->log10 explicitly, never to bare log",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "log2",
+      "duckdb": "log2",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "lower",
+      "duckdb": "lower",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: Turkish 'İ' -> DuckDB 'i' vs Trino 'i'+U+0307 (full case folding); ASCII and most non-ASCII aligned. Needed native ICU extension for parity",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "lower/upper case folding via collation",
+      "duckdb": "NOCASE / nfc_normalize",
+      "verdict": "divergent",
+      "hazard": "'Collations / nfc_normalize do NOT fix this (verified by the since-deleted ProbeDuckDbCaseFolding)' — no SQL-level wrapper can reproduce Trino full case folding; native C++ was the only fix",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "TODO-pushdown-duckdb.md#priority-order (step 3)"
+    },
+    {
+      "trino": "lpad",
+      "duckdb": "lpad",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned: pads to code-point count including emoji and CJK (empty-pad edge from mapping doc not covered by this probe)",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "ltrim",
+      "duckdb": "ltrim",
+      "verdict": "divergent",
+      "hazard": "Same whitespace-set divergence as trim (tab/LF/CR/FF/VT not stripped by DuckDB default)",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#trim1-ltrim1-rtrim1--different-whitespace-sets"
+    },
+    {
+      "trino": "luhn_check",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "map / map_from_entries",
+      "duckdb": "map / map_from_entries",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#map-functions"
+    },
+    {
+      "trino": "map_agg / map_union / multimap_agg",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "map_concat",
+      "duckdb": "map_concat",
+      "verdict": "identical",
+      "hazard": "Last-wins on key conflicts in both",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#map-functions"
+    },
+    {
+      "trino": "map_entries",
+      "duckdb": "map_entries",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Element type differs: Trino row(K,V) vs DuckDB struct(key,value); needs type-layer mapping",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#map-functions"
+    },
+    {
+      "trino": "map_filter / transform_keys / transform_values / map_zip_with",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "Trino lambda forms; DuckDB needs manual unrolling",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#map-functions"
+    },
+    {
+      "trino": "map_keys / map_values",
+      "duckdb": "map_keys / map_values",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#map-functions"
+    },
+    {
+      "trino": "md5",
+      "duckdb": "unhex(md5(x))",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified: DuckDB md5 NULL-propagates correctly (md5(NULL)->NULL) and hex digest matches; but returns hex VARCHAR vs Trino VARBINARY — needs unhex() wrap",
+      "areas": [
+        "hash",
+        "null"
+      ],
+      "provenance": "REPORT-hash-null-handling.md#core-duckdb-hash-null-propagation--aligned-with-trino"
+    },
+    {
+      "trino": "millisecond",
+      "duckdb": "extract('millisecond' FROM x)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino millisecond() returns millis-OF-SECOND (0..999), not epoch millis; DuckDB extract('millisecond') matches but needs BIGINT cast; pinned '...12:00:00.123' -> 123",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "min / max",
+      "duckdb": "min / max",
+      "verdict": "identical",
+      "hazard": "Including top/bottom-n variant",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "min_by / max_by",
+      "duckdb": "arg_min / arg_max",
+      "verdict": "divergent",
+      "hazard": "Different names AND NULL semantics: Trino skips NULLs; DuckDB has separate arg_min_null/arg_max_null variants — 'do not push by name'",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "mod (float)",
+      "duckdb": "fmod",
+      "verdict": "divergent",
+      "hazard": "Trino float % uses IEEE remainder-ish semantics; DuckDB has fmod — 'do not push float % until aligned'; translator gates by arg type",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "mod (integer)",
+      "duckdb": "% / mod",
+      "verdict": "identical",
+      "hazard": "Both follow truncated division (sign follows dividend)",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "murmur3",
+      "duckdb": "murmurhash3_x64_128 (hashfuncs ext)",
+      "verdict": "unclear",
+      "hazard": "Trino returns LE(h1)++LE(h2) bytes; DuckDB packs UHUGEINT=(h1<<64)|h2 — each half byte-reversed vs Trino. Reconstruction macro drafted but 'the h1==hi64 half-assignment + airlift seed-0 equivalence is inferred from source, not yet confirmed against a live Trino-481 value' — deferred",
+      "areas": [
+        "hash",
+        "extension"
+      ],
+      "provenance": "TODO-pushdown-duckdb.md#round-6c--hashfuncs-extension--xxhash64-ported-native-murmur3-deferred"
+    },
+    {
+      "trino": "ngrams (array form)",
+      "duckdb": "ngrams (splink_udfs, string form)",
+      "verdict": "divergent",
+      "hazard": "Same name, different operation: Trino ngrams(array, n) returns array slices; splink_udfs ngrams(s, n) returns character n-grams of a string — 'don't conflate'",
+      "areas": [
+        "string",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-community-extensions-detail.md#splink-udfs"
+    },
+    {
+      "trino": "ngrams / combinations / shuffle",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "shuffle also non-deterministic",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "normalize/1",
+      "duckdb": "nfc_normalize (native parity impl)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "NFC form works via icu::Normalizer2 in parity extension; only the 1-arg (NFC) form is safe",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#3-functions"
+    },
+    {
+      "trino": "normalize/2",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "NFD/NFKC/NFKD selector forms not pushable — vendored ICU snapshot ships only NFC data; DuckDB has no built-in equivalent",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#not-pushable"
+    },
+    {
+      "trino": "nullif",
+      "duckdb": "nullif",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#comparison-and-conditional"
+    },
+    {
+      "trino": "parse_duration",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "pi",
+      "duckdb": "pi",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "position (operator form)",
+      "duckdb": "position(s IN t)",
+      "verdict": "unclear",
+      "hazard": "Operator-form 'deferred'; never verified/pushed (README lists it as not pushable)",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "pow / power",
+      "duckdb": "pow / power",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "qdigest_agg",
+      "duckdb": "datasketch_kll* (approximate substitute)",
+      "verdict": "no-equivalent",
+      "hazard": "No exact qdigest port in datasketches ext; KLL/Quantiles/REQ are substitutes — 'cannot push as Trino qdigest semantics'",
+      "areas": [
+        "aggregate",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "quarter",
+      "duckdb": "quarter",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "random / rand",
+      "duckdb": "random",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Non-deterministic (never pushable); Trino bounded forms random(n), random(m,n) have no DuckDB equivalent",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "reduce_agg",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "regexp_count",
+      "duckdb": "len(regexp_extract_all(...))",
+      "verdict": "no-equivalent",
+      "hazard": "No direct DuckDB form",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"
+    },
+    {
+      "trino": "regexp_extract/{2,3}",
+      "duckdb": "regexp_extract",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned: group 0 = whole match in both",
+      "areas": [
+        "regex",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "regexp_extract_all",
+      "duckdb": "regexp_extract_all",
+      "verdict": "divergent",
+      "hazard": "'Empty-match handling differs; verify before pushing'",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"
+    },
+    {
+      "trino": "regexp_like",
+      "duckdb": "regexp_matches",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned: RE2 both sides; Unicode property escapes \\p{Han}, \\p{So}, [\\p{L}]+ identical (deeper property classes untested)",
+      "areas": [
+        "regex",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "regexp_position",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "regex"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"
+    },
+    {
+      "trino": "regexp_replace",
+      "duckdb": "regexp_replace",
+      "verdict": "divergent",
+      "hazard": "Trino replaces ALL matches by default; DuckDB replaces first match unless 'g' flag — parity macro forces 'g'",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#3-functions"
+    },
+    {
+      "trino": "regexp_split",
+      "duckdb": "regexp_split_to_array / string_split_regex",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Rename only per their notes; push as renamed call",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"
+    },
+    {
+      "trino": "regr_intercept / regr_slope",
+      "duckdb": "regr_intercept / regr_slope",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "repeat (element, count)",
+      "duckdb": "repeat (list, count)",
+      "verdict": "divergent",
+      "hazard": "Same name, different shape: Trino repeats a single element into an array; DuckDB repeat(list,n) repeats the whole list — do not translate by name",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "replace",
+      "duckdb": "replace",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned code-point-level; composed vs decomposed inputs treated as distinct on both sides",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "replace/2",
+      "duckdb": "replace(s, x, '')",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino 2-arg remove form has no DuckDB arity; map by passing '' as replacement",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "reverse",
+      "duckdb": "reverse",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: DuckDB reverse is GRAPHEME-cluster-aware, Trino code-point-only — decomposed 'café' reverses keeping e+U+0301 together in DuckDB; ZWJ family emoji returned UNCHANGED by DuckDB but code-point-reversed by Trino. False negatives if pushed",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#reverse1--duckdb-is-grapheme-aware-trino-is-code-point-only"
+    },
+    {
+      "trino": "reverse (array)",
+      "duckdb": "list_reverse",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "reverse (varbinary)",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#binary--blob"
+    },
+    {
+      "trino": "round",
+      "duckdb": "round",
+      "verdict": "unclear",
+      "hazard": "'Trino: round is half-up. DuckDB: round is half-away-from-zero (since 0.10) — verify per version... Do NOT push when d > 0 until verified.' DuckDB also has round_even (banker's)",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "row_number / rank / dense_rank / percent_rank / ntile",
+      "duckdb": "same names",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#window-functions"
+    },
+    {
+      "trino": "rpad",
+      "duckdb": "rpad",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned (same caveat as lpad on empty pad string)",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "rtrim",
+      "duckdb": "rtrim",
+      "verdict": "divergent",
+      "hazard": "Same whitespace-set divergence as trim",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#trim1-ltrim1-rtrim1--different-whitespace-sets"
+    },
+    {
+      "trino": "sequence",
+      "duckdb": "generate_series (NOT range)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino sequence is INCLUSIVE on stop; DuckDB generate_series inclusive but range() is EXCLUSIVE — choose by inclusivity",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "session zone ±HH:MM offsets",
+      "duckdb": "SET TimeZone 'Etc/GMT∓N'",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified: DuckDB rejects bare '±HH:MM' zone literals entirely; integer-hour offsets must be translated to Etc/GMT with POSIX SIGN INVERSION (+05:00 -> Etc/GMT-5); fractional offsets (+05:30, -03:30) are inexpressible except via named IANA zones (Asia/Kolkata etc.)",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-datetime-tz-handling.md#q2--set-timezone-without-icu--etcgmt-translation-table"
+    },
+    {
+      "trino": "sha1",
+      "duckdb": "unhex(sha1(x))",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same pattern as md5: NULL propagation verified aligned; unhex wrap required for VARBINARY return",
+      "areas": [
+        "hash",
+        "null"
+      ],
+      "provenance": "REPORT-hash-null-handling.md#core-duckdb-hash-null-propagation--aligned-with-trino"
+    },
+    {
+      "trino": "sha256",
+      "duckdb": "unhex(sha256(x))",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified: sha256(NULL)->NULL, empty-string digest matches; unhex wrap required for VARBINARY return",
+      "areas": [
+        "hash",
+        "null"
+      ],
+      "provenance": "REPORT-hash-null-handling.md#core-duckdb-hash-null-propagation--aligned-with-trino"
+    },
+    {
+      "trino": "sha512",
+      "duckdb": "(none built-in)",
+      "verdict": "no-equivalent",
+      "hazard": "No DuckDB core builtin; parity extension ships native C++ over WjCryptLib",
+      "areas": [
+        "hash",
+        "extension"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#3-functions"
+    },
+    {
+      "trino": "sha512",
+      "duckdb": "crypto_hash('sha2-512', x) (crypto ext)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Algorithm matches but output is hex VARCHAR vs Trino VARBINARY — cast required; extension availability per (version x platform) was itself a hazard (404s for DuckDB 1.5.3). Superseded by native parity-extension impl",
+      "areas": [
+        "hash",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-community-extensions-detail.md#crypto"
+    },
+    {
+      "trino": "sign",
+      "duckdb": "sign",
+      "verdict": "identical",
+      "hazard": "Float NaN behavior verified to align (both NaN->NaN)",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "SIMILAR TO",
+      "duckdb": "SIMILAR TO",
+      "verdict": "unclear",
+      "hazard": "'Verify subtle differences in */+/? quantifier scoping before pushing'",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"
+    },
+    {
+      "trino": "sin/cos/tan/asin/acos/atan/atan2",
+      "duckdb": "same names",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "sinh/cosh/tanh",
+      "duckdb": "sinh/cosh/tanh",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "skewness",
+      "duckdb": "skewness",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "slice",
+      "duckdb": "list_slice",
+      "verdict": "divergent",
+      "hazard": "DIFFERENT SHAPE: Trino slice(a, start, LENGTH) vs DuckDB list_slice(a, begin, END) (Python-like) — slice(a,2,3) is 3 elements from 2, list_slice(a,2,3) is elements 2..3. Do not translate by name",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "soundex",
+      "duckdb": "soundex (splink_udfs ext)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Only available when splink_udfs community extension is loaded",
+      "areas": [
+        "string",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "split",
+      "duckdb": "string_split",
+      "verdict": "divergent",
+      "hazard": "Empty-string delimiter: Trino splits to character array, DuckDB returns single-element array; Trino limit form has no equivalent",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "split_part",
+      "duckdb": "split_part",
+      "verdict": "divergent",
+      "hazard": "Out-of-bounds index: Trino returns NULL, DuckDB returns empty string — do not translate by name without NULLIF wrap",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "spooky_hash_v2_32 / spooky_hash_v2_64",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "No extension cover",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#hash--digest"
+    },
+    {
+      "trino": "sqrt",
+      "duckdb": "sqrt",
+      "verdict": "identical",
+      "hazard": "NaN on negative input in both",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "starts_with",
+      "duckdb": "starts_with",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned (binary prefix on UTF-8 is codepoint-aligned)",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "string comparison operators (= <> < <= > >=)",
+      "duckdb": "same, BINARY collation",
+      "verdict": "identical",
+      "hazard": "DuckDB UTF-8 byte comparison is monotonic with Trino's code-point comparison — probe-verified same result on all inputs; precomposed vs decomposed unequal in BOTH (same 'wrong' answer). NOCASE collation is NOT full Unicode case folding (fails İ vs i+U+0307, ß vs ss)",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#comparison-operators"
+    },
+    {
+      "trino": "strpos",
+      "duckdb": "strpos",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned: 1-based code-point index, 0 if not found",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "strpos/3",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "N-th occurrence instance arg is Trino-only",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "substr (varbinary)",
+      "duckdb": "(none direct)",
+      "verdict": "no-equivalent",
+      "hazard": "Use cast to bitstring or hex-level work",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#binary--blob"
+    },
+    {
+      "trino": "substring/2",
+      "duckdb": "substring/2",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Verified aligned on code-point unit (both split combining marks/ZWJ/flags at codepoint boundaries); negative start counts from end in both; but start=0 unverified ('Trino: undefined-ish, DuckDB: behaves like 1')",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "substring/{2,3}",
+      "duckdb": "substring",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned: 1-based code-point index; both engines treat combining marks and ZWJ-sequence members as separate code points (substring can split a grapheme identically in both)",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "sum",
+      "duckdb": "sum",
+      "verdict": "identical",
+      "hazard": "Both skip NULLs; all-NULL -> NULL; both throw on overflow",
+      "areas": [
+        "aggregate",
+        "null",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "tdigest_agg / value_at_quantile / quantile_at_value",
+      "duckdb": "datasketch_tdigest* (datasketches ext)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same state-incompatibility caveat as theta",
+      "areas": [
+        "aggregate",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "theta_sketch_union / theta_sketch_cardinality",
+      "duckdb": "datasketch_theta* (datasketches ext)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Serialized sketch states NOT wire-compatible with Trino's — only computed-cardinality/set-op results safe, never sketch values crossing engines",
+      "areas": [
+        "aggregate",
+        "extension",
+        "hash"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "TIMESTAMP (no TZ) extracts",
+      "duckdb": "TIMESTAMP extracts",
+      "verdict": "identical",
+      "hazard": "Probe-verified wall-clock and session-zone-invariant in both engines (year/hour/day stable across reader zones); DATE likewise TZ-invariant",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-datetime-tz-handling.md#q1--timestamptz-storage-shape-duckdb-and-ducklake"
+    },
+    {
+      "trino": "TIMESTAMP precision defaults",
+      "duckdb": "TIMESTAMP precision",
+      "verdict": "divergent",
+      "hazard": "Trino default precision 3 (millis) vs DuckDB 6 (micros) — 'mismatched precision is a common divergence source'; verify date_trunc('millisecond') rounds the same way",
+      "areas": [
+        "datetime",
+        "numeric"
+      ],
+      "provenance": "PLAN-pushdown-datetime.md#precision"
+    },
+    {
+      "trino": "TIMESTAMP WITH TIME ZONE (type semantics)",
+      "duckdb": "TIMESTAMPTZ",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: DuckDB TIMESTAMPTZ stores an instant ONLY — writer's session zone is discarded and reading session's TimeZone reinterprets it; Trino WTZ carries a per-value zone. Any function over WTZ is only equivalent if the DuckDB session TimeZone is forced to Trino's session zone",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-datetime-tz-handling.md#q1--timestamptz-storage-shape-duckdb-and-ducklake"
+    },
+    {
+      "trino": "timezone_hour / timezone_minute",
+      "duckdb": "date_part('timezone_hour', x)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "No direct DuckDB function; emulate via date_part",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "to_base",
+      "duckdb": "to_base",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Semantics match for positive ints; DuckDB adds min_length padding arg",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "to_base32",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "to_base64",
+      "duckdb": "to_base64",
+      "verdict": "identical",
+      "hazard": "Standard alphabet in both",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "to_base64url",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "URL-safe alphabet form is Trino-only",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "to_hex",
+      "duckdb": "hex",
+      "verdict": "identical",
+      "hazard": "Rename only",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "to_hex / from_hex / to_base64 / from_base64 / url_encode / url_decode",
+      "duckdb": "hex / unhex / to_base64 / from_base64 / url_encode / url_decode",
+      "verdict": "identical",
+      "hazard": "Probe sanity check: all NULL-propagate correctly",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-hash-null-handling.md#round-4-encoding-macros--sanity-check"
+    },
+    {
+      "trino": "to_iso8601",
+      "duckdb": "strftime / cast",
+      "verdict": "no-equivalent",
+      "hazard": "No direct function; push as cast or do not push",
+      "areas": [
+        "datetime",
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "to_milliseconds",
+      "duckdb": "to_milliseconds",
+      "verdict": "divergent",
+      "hazard": "Same name, different operand types: Trino takes INTERVAL, DuckDB takes INTEGER (constructs interval) — not 1:1",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "to_unixtime",
+      "duckdb": "epoch(t)::DOUBLE",
+      "verdict": "identical",
+      "hazard": "Requires explicit DOUBLE cast (DuckDB epoch returns bigint seconds, Trino returns double); pinned epoch 0.0 and pre-epoch -1.0",
+      "areas": [
+        "datetime",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "to_unixtime (over TIMESTAMP WITH TIME ZONE)",
+      "duckdb": "epoch(...)::DOUBLE",
+      "verdict": "identical",
+      "hazard": "The lone zone-INVARIANT entry in their catalog: returns absolute UTC epoch in both engines regardless of session zone — safe over WTZ even without zone plumbing",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "TODO-pushdown-duckdb.md#status (step 4 chunk 3)"
+    },
+    {
+      "trino": "to_utf8",
+      "duckdb": "encode",
+      "verdict": "identical",
+      "hazard": "Rename only; semantics match",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "translate",
+      "duckdb": "translate",
+      "verdict": "identical",
+      "hazard": "Probe-verified aligned: code-point-wise substitution; extra from-chars deleted in both",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "trim",
+      "duckdb": "trim",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: DuckDB bare trim strips space + EM SPACE but NOT tab/LF/CR/FF/VT; Trino (Java Character.isWhitespace) strips all of those; both leave NBSP/ZWSP. trim('\\thello\\t')='hello' in Trino but unchanged in DuckDB — real false-negative risk on TSV/log data",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#trim1-ltrim1-rtrim1--different-whitespace-sets"
+    },
+    {
+      "trino": "truncate",
+      "duckdb": "trunc",
+      "verdict": "identical",
+      "hazard": "Rename only; same truncate-toward-zero semantics",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "truncate/2 (x, n)",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "DuckDB trunc is 1-arg only; would need cast(x*pow(10,n))/pow(10,n) shim — deferred",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "TODO-pushdown-duckdb.md#round-6a--core-duckdb-extras-no-new-extensions--shipped"
+    },
+    {
+      "trino": "try",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": "DuckDB has only TRY_CAST, no general try(expr)",
+      "areas": [
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#comparison-and-conditional"
+    },
+    {
+      "trino": "TRY_CAST",
+      "duckdb": "TRY_CAST",
+      "verdict": "identical",
+      "hazard": "Same primitive-type gate as CAST",
+      "areas": [
+        "numeric",
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#conversion--cast--try-cast"
+    },
+    {
+      "trino": "typeof",
+      "duckdb": "typeof",
+      "verdict": "divergent",
+      "hazard": "Returns engine-specific type-name strings — never comparable across engines",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#conversion--cast--try-cast"
+    },
+    {
+      "trino": "tzdb historical offsets (e.g. Europe/Moscow pre-2014)",
+      "duckdb": "ICU tz data",
+      "verdict": "unclear",
+      "hazard": "'the tzdb version they were built against can differ... if DuckDB and java.time disagree on the offset for any historical instant, we have to either pin tzdb versions... or refuse to push for the affected window' — flagged as open follow-up, never probed",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-datetime-tz-handling.md#open-follow-up-probes-not-blockers-for-the-step-4-pr"
+    },
+    {
+      "trino": "upper",
+      "duckdb": "upper",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: German 'ß' -> DuckDB 'ẞ' (U+1E9E) vs Trino 'SS' (Java full folding, length-changing); ASCII aligned. Needed native ICU extension",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-string-unicode-audit.md#summary-table"
+    },
+    {
+      "trino": "url_decode",
+      "duckdb": "url_decode",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "url_encode",
+      "duckdb": "url_encode",
+      "verdict": "identical",
+      "hazard": "RFC 3986 percent-encoding aligned",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "url_extract_parameter",
+      "duckdb": "extract_query_parameters (netquack, table function)",
+      "verdict": "no-equivalent",
+      "hazard": "Trino scalar vs DuckDB TABLE function — shape change (correlated subquery) required; not a scalar mapping",
+      "areas": [
+        "string",
+        "extension"
+      ],
+      "provenance": "RESEARCH-function-community-extensions-detail.md#netquack"
+    },
+    {
+      "trino": "url_extract_protocol/host/port/path/query/fragment",
+      "duckdb": "extract_schema/host/port/path/query_string/fragment (netquack ext)",
+      "verdict": "divergent",
+      "hazard": "Systematic NULL-vs-empty-string: Trino url_extract_* are @SqlNullable, NULL on absent/malformed; netquack returns '' (extract_schema('ex.com/a')=''). url_extract_port: Trino BIGINT/NULL vs DuckDB VARCHAR/''. url_extract_path('http://ex.com'): Trino '' vs DuckDB '/'. Rejected as not lossless",
+      "areas": [
+        "string",
+        "null",
+        "extension"
+      ],
+      "provenance": "TODO-pushdown-duckdb.md#round-6d--netquack-extension--not-pushable-research-2026-06-06"
+    },
+    {
+      "trino": "uuid",
+      "duckdb": "uuid / uuidv4 / gen_random_uuid",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Non-deterministic — same distribution but never pushable/comparable",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#uuid"
+    },
+    {
+      "trino": "variance / var_pop / var_samp / stddev / stddev_pop / stddev_samp",
+      "duckdb": "var_pop / var_samp / stddev_pop / stddev_samp",
+      "verdict": "identical",
+      "hazard": "Trino bare variance/stddev are aliases for the _samp forms",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#aggregate-functions"
+    },
+    {
+      "trino": "week / week_of_year",
+      "duckdb": "week",
+      "verdict": "identical",
+      "hazard": "Both ISO-8601 (Mon-start, week 01 contains Jan 4); probed: week('2023-01-01')=52, week('2024-12-30')=1",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "width_bucket",
+      "duckdb": "equi_width_bins",
+      "verdict": "no-equivalent",
+      "hazard": "Different shape; not 1:1",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#numeric--math-functions"
+    },
+    {
+      "trino": "with_timezone",
+      "duckdb": "timezone(zone, t)",
+      "verdict": "identical",
+      "hazard": "Arg order flipped; result TIMESTAMPTZ in both",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "word_stem",
+      "duckdb": "(none)",
+      "verdict": "no-equivalent",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "xxhash64",
+      "duckdb": "(none built-in)",
+      "verdict": "no-equivalent",
+      "hazard": "Parity extension native C++ over vendored xxHash; result emitted BIG-ENDIAN to match Trino byte order",
+      "areas": [
+        "hash",
+        "extension"
+      ],
+      "provenance": "README-duckdb-format-pushdown-reference.md#3-functions"
+    },
+    {
+      "trino": "xxhash64",
+      "duckdb": "xxh64 (hashfuncs ext)",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Algorithm identical (frozen spec, seed 0) but Trino serializes the u64 BIG-ENDIAN into VARBINARY (Long.reverseBytes + LE write); DuckDB xxh64 returns UBIGINT — naive mapping compares different shapes; their interim macro was unhex(printf('%016x', xxh64(b))), later replaced by native C++ emitting big-endian bytes",
+      "areas": [
+        "hash",
+        "extension"
+      ],
+      "provenance": "TODO-pushdown-duckdb.md#round-6c--hashfuncs-extension--xxhash64-ported-native-murmur3-deferred"
+    },
+    {
+      "trino": "year / month / day",
+      "duckdb": "year / month / day",
+      "verdict": "identical",
+      "hazard": "Aligned on DATE and TIMESTAMP input",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "year/hour/etc over TIMESTAMP WITH TIME ZONE",
+      "duckdb": "year/hour/etc under SET TimeZone",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified equivalent ONLY with SET TimeZone = Trino session zone before evaluation; without it, year(tz_col)=2024 can silently return 2025 rows (Asia/Singapore year-boundary smoking gun: year of '2024-12-31 22:00:00+00' = 2025/hour 6). DuckDB default TimeZone is the host JVM/system zone, not UTC — silent portability bomb",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-datetime-tz-handling.md#q3--embedded-jdbcduckdb-default-timezone"
+    },
+    {
+      "trino": "year_of_week / yow",
+      "duckdb": "extract('isoyear' FROM x)",
+      "verdict": "identical",
+      "hazard": "DuckDB has no bare isoyear() function — reach via extract; cast to BIGINT; pinned '2024-12-30' -> 2025",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"
+    },
+    {
+      "trino": "zip / zip_with",
+      "duckdb": "list_zip",
+      "verdict": "divergent",
+      "hazard": "Trino zip_with takes a lambda; DuckDB list_zip returns list of structs — different shapes",
+      "areas": [
+        "string"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#array--list-functions"
+    },
+    {
+      "trino": "|| (concat operator)",
+      "duckdb": "|| (concat operator)",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "RESEARCH-function-mapping.md#string-functions"
+    }
+  ]
+}
