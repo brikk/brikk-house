@@ -32,6 +32,10 @@
     <actions>
         <group id="BrikkSql.EditorMenu" text="Brikk SQL" popup="true">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <action id="BrikkSql.ExecuteViaTranspile"
+                    class="dev.brikk.house.intellij.ExecuteViaTranspileAction"
+                    text="Execute via Transpilation"
+                    description="Transpiles the scope into the attached console's engine dialect, reviews the result (skipped when unchanged since last approval), and runs it"/>
             <action id="BrikkSql.TranspileTo"
                     class="dev.brikk.house.intellij.TranspileToAction"
                     text="Transpile To..."

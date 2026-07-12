@@ -31,6 +31,27 @@ class TranspileToAction : TranspileActionBase() {
     }
 }
 
+/**
+ * Phase 2 entry point: transpile the scope into the attached console's engine dialect,
+ * review (unless unchanged since the last approval), and run it in the console.
+ * Visible only when a database console/session is attached to the editor's file.
+ */
+class ExecuteViaTranspileAction : TranspileActionBase() {
+
+    override fun update(e: AnActionEvent) {
+        val project = e.project
+        val editor = e.getData(CommonDataKeys.EDITOR)
+        e.presentation.isEnabledAndVisible =
+            project != null && editor != null && ExecuteFlow.consoleFor(project, editor) != null
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+        ExecuteFlow.run(project, editor, e.getData(CommonDataKeys.PSI_FILE))
+    }
+}
+
 class TranspileFromAction : TranspileActionBase() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return

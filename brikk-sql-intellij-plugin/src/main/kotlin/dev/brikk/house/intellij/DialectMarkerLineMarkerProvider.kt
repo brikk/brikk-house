@@ -49,6 +49,12 @@ class DialectMarkerLineMarkerProvider : LineMarkerProvider {
         editor.caretModel.moveToOffset(
             (element.textRange.endOffset + 1).coerceAtMost(editor.document.textLength)
         )
-        TranspileFlow.run(project, editor, psiFile, source = dialect)
+        // With a console attached this is the execute affordance (transpile -> review ->
+        // run on the current engine); otherwise it falls back to transpile-and-preview.
+        if (ExecuteFlow.consoleFor(project, editor) != null) {
+            ExecuteFlow.run(project, editor, psiFile, sourceOverride = dialect)
+        } else {
+            TranspileFlow.run(project, editor, psiFile, source = dialect)
+        }
     }
 }

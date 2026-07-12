@@ -24,14 +24,19 @@ import javax.swing.JTextArea
 /**
  * The transpile review surface: a before/after diff of the scope against the generated
  * SQL, a diagnostics strip (generator `unsupported(...)` messages + functions unknown
- * to the target engine's catalog), and the two apply modes — Replace In Place and
- * Insert After.
+ * to the target engine's catalog), and the apply modes.
+ *
+ * Two shapes:
+ *  - preview mode ([onExecute] == null): Replace In Place / Insert After / Copy;
+ *  - execute-review mode ([onExecute] != null, the Phase 2 gate): Execute / Copy —
+ *    the callback runs after the user approves the generated SQL.
  */
 class TranspilePreviewDialog(
     private val project: Project,
     private val editor: Editor,
     private val scope: TranspileFlow.Scope,
     private val outcome: BrikkTranspiler.TranspileOutcome.Success,
+    private val onExecute: (() -> Unit)? = null,
 ) : DialogWrapper(project) {
 
     private val replaceAction = object : DialogWrapperAction("Replace In Place") {
@@ -56,9 +61,16 @@ class TranspilePreviewDialog(
         }
     }
 
+    private val executeAction = object : DialogWrapperAction("Execute") {
+        override fun doAction(e: java.awt.event.ActionEvent) {
+            close(OK_EXIT_CODE)
+            onExecute?.invoke()
+        }
+    }
+
     init {
-        title = "Transpile: ${BrikkDialects.displayName(outcome.source)} \u2192 ${BrikkDialects.displayName(outcome.target)}"
-        setOKButtonText("Replace In Place")
+        val arrow = "${BrikkDialects.displayName(outcome.source)} \u2192 ${BrikkDialects.displayName(outcome.target)}"
+        title = if (onExecute != null) "Execute via Transpilation: $arrow" else "Transpile: $arrow"
         init()
     }
 
@@ -113,7 +125,13 @@ class TranspilePreviewDialog(
     }
 
     override fun createActions(): Array<Action> =
-        arrayOf(replaceAction, insertAfterAction, copyAction, cancelAction)
+        if (onExecute != null) {
+            executeAction.putValue(DEFAULT_ACTION, true)
+            arrayOf(executeAction, copyAction, cancelAction)
+        } else {
+            replaceAction.putValue(DEFAULT_ACTION, true)
+            arrayOf(replaceAction, insertAfterAction, copyAction, cancelAction)
+        }
 
     private fun applyEdit(replace: Boolean) {
         val document = editor.document
