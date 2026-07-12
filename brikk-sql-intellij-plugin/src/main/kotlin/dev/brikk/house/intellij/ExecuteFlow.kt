@@ -92,14 +92,21 @@ object ExecuteFlow {
         target: String,
         console: JdbcConsole,
     ) {
-        if (source == target) {
-            // Same dialect: no transpilation needed; run the text as-is (still through
-            // the console pipeline so behavior is uniform).
+        if (source == target && "|>" !in scope.text) {
+            // Same dialect, no pipe syntax: nothing to transpile; run the text as-is
+            // (still through the console pipeline so behavior is uniform). The engine —
+            // not brikk-sql — is the authority on its own dialect, so no parse gate here.
             executeInConsole(project, console, scope.text.trim())
             return
         }
         when (val outcome = BrikkTranspiler.transpile(scope.text, source, target)) {
             is BrikkTranspiler.TranspileOutcome.Failure -> {
+                if (source == target) {
+                    // Same-dialect text brikk-sql cannot parse (engine-specific corners,
+                    // or a `|>` inside a string literal): defer to the engine as-is.
+                    executeInConsole(project, console, scope.text.trim())
+                    return
+                }
                 val position = outcome.line?.let { " (line ${outcome.line}, col ${outcome.col ?: "?"})" } ?: ""
                 TranspileFlow.notify(
                     project,
@@ -108,6 +115,12 @@ object ExecuteFlow {
                 )
             }
             is BrikkTranspiler.TranspileOutcome.Success -> {
+                if (source == target && !outcome.pipesDesugared) {
+                    // The `|>` was e.g. inside a string literal — no pipe statements,
+                    // same dialect: run the original text untouched.
+                    executeInConsole(project, console, scope.text.trim())
+                    return
+                }
                 val cache = project.service<TranspileApprovalCache>()
                 val key = cache.key(scope.text, source, target)
                 if (cache.isApproved(key, outcome.sql)) {

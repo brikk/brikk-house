@@ -77,6 +77,43 @@ class BrikkTranspilerTest {
     }
 
     @Test
+    fun `pipe syntax is desugared for the target engine`() {
+        val outcome = BrikkTranspiler.transpile(
+            "FROM produce |> WHERE item <> 'bananas' |> SELECT item, sales",
+            source = "doris",
+            target = "doris",
+            pretty = false,
+        )
+        val success = assertIs<TranspileOutcome.Success>(outcome)
+        assertTrue(success.pipesDesugared, "expected pipesDesugared")
+        assertTrue("|>" !in success.sql, "pipes must not reach the engine: ${success.sql}")
+        assertTrue("SELECT" in success.sql.uppercase() && "WHERE" in success.sql.uppercase(), success.sql)
+    }
+
+    @Test
+    fun `pipe inside a string literal does not trigger desugaring`() {
+        val outcome = BrikkTranspiler.transpile(
+            "SELECT '|>' AS arrow FROM t",
+            source = "mysql",
+            target = "mysql",
+            pretty = false,
+        )
+        val success = assertIs<TranspileOutcome.Success>(outcome)
+        assertTrue(!success.pipesDesugared)
+    }
+
+    @Test
+    fun `non-pipe statements report pipesDesugared false`() {
+        val outcome = BrikkTranspiler.transpile(
+            "SELECT 1",
+            source = "mysql",
+            target = "duckdb",
+            pretty = false,
+        )
+        assertTrue(!assertIs<TranspileOutcome.Success>(outcome).pipesDesugared)
+    }
+
+    @Test
     fun `clean transpile has no diagnostics`() {
         val outcome = BrikkTranspiler.transpile(
             "SELECT a, b FROM t WHERE a > 1",

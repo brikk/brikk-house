@@ -98,6 +98,11 @@ class TranspilePreviewDialog(
     }
 
     private fun createDiagnosticsComponent(): JComponent? {
+        val pipeNote = if (outcome.pipesDesugared) {
+            " Pipe (|>) syntax was desugared to standard ${BrikkDialects.displayName(outcome.target)} SQL."
+        } else {
+            ""
+        }
         val lines = buildList {
             outcome.unsupported.forEach { add("Unsupported: $it") }
             outcome.unmappable.forEach {
@@ -105,12 +110,12 @@ class TranspilePreviewDialog(
             }
         }
         if (lines.isEmpty()) {
-            return JBLabel("Clean transpile \u2014 no diagnostics.", AllIcons.General.InspectionsOK, JBLabel.LEADING)
+            return JBLabel("Clean transpile \u2014 no diagnostics.$pipeNote", AllIcons.General.InspectionsOK, JBLabel.LEADING)
         }
         val panel = JPanel(BorderLayout(0, JBUI.scale(4)))
         panel.add(
             JBLabel(
-                "${lines.size} diagnostic${if (lines.size > 1) "s" else ""} \u2014 output is best-effort, review before use:",
+                "${lines.size} diagnostic${if (lines.size > 1) "s" else ""} \u2014 output is best-effort, review before use:$pipeNote",
                 AllIcons.General.Warning,
                 JBLabel.LEADING,
             ),

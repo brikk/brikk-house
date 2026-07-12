@@ -2,6 +2,8 @@ package dev.brikk.house.intellij
 
 import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.Func
+import dev.brikk.house.sql.ast.PipeQuery
+import dev.brikk.house.sql.ast.desugarPipes
 import dev.brikk.house.sql.ast.sqlNames
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.parser.ParseError
@@ -28,6 +30,13 @@ object BrikkTranspiler {
             /** Functions unknown to the target engine's catalog (when the target ships one). */
             val unmappable: List<String>,
             val statementCount: Int,
+            /**
+             * True when the input used pipe (`|>`) syntax and was desugared to standard
+             * SQL: no current target engine executes pipes natively, so runnable output
+             * requires it. When brikk-sql grows a per-dialect `supportsPipeSyntax` flag,
+             * this decision moves there (pipe-native targets would keep pipes).
+             */
+            val pipesDesugared: Boolean = false,
         ) : TranspileOutcome {
             val isClean: Boolean get() = unsupported.isEmpty() && unmappable.isEmpty()
         }
@@ -69,9 +78,19 @@ object BrikkTranspiler {
         val generator = writeDialect.generator(pretty = pretty)
         val rendered = ArrayList<String>(statements.size)
         val unsupported = LinkedHashSet<String>()
+        var pipesDesugared = false
         for (statement in statements) {
+            // Pipe (`|>`) statements must be desugared to standard SQL: the generator
+            // keeps pipe stages first-class for every dialect, but no target engine we
+            // execute against runs pipes natively. No-op for non-piped statements.
+            val tree = if (statement is PipeQuery || statement.findAll(PipeQuery::class).firstOrNull() != null) {
+                pipesDesugared = true
+                desugarPipes(statement, copy = true)
+            } else {
+                statement
+            }
             val out = try {
-                generator.generate(statement, copy = true)
+                generator.generate(tree, copy = true)
             } catch (e: Exception) {
                 // UnsupportedError and friends: hard-fail features with no best-effort output.
                 return TranspileOutcome.Failure(
@@ -91,6 +110,7 @@ object BrikkTranspiler {
             unsupported = unsupported.toList(),
             unmappable = unmappableFunctions(outSql, target),
             statementCount = statements.size,
+            pipesDesugared = pipesDesugared,
         )
     }
 
