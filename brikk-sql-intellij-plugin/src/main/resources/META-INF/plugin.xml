@@ -1,0 +1,30 @@
+<idea-plugin>
+    <id>dev.brikk.brikk-sql-intellij-plugin</id>
+    <name>Brikk SQL</name>
+    <vendor>Brikk</vendor>
+    <description><![CDATA[
+        Cross-dialect SQL transpilation inside DataGrip/IntelliJ, powered by brikk-sql
+        (a full Kotlin port of sqlglot). Mark any SQL with <code>-- dialect: xyz</code> and
+        execute it against the current engine through transpilation, or transpile any SQL
+        between mysql, doris, trino, presto, duckdb, postgres, and clickhouse — with preview,
+        in-place replacement, exact unsupported-node diagnostics, and native-parser validation.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.database</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="Brikk SQL" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <!-- Phase 0 smoke action: proves the toolchain-built brikk-sql jars load and
+             transpile inside the IDE process. Replaced by the real transpile UX in Phase 1. -->
+        <action id="BrikkSql.TranspileSmoke"
+                class="dev.brikk.house.intellij.TranspileSmokeAction"
+                text="Brikk: Transpile Selection (Smoke)"
+                description="Transpiles the selected SQL from MySQL to DuckDB and shows the result">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
