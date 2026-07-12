@@ -1,4 +1,9 @@
 {
  "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": []
+ "cases": [
+  {
+   "sql": "SELECT $\ud83e\udd86$foo$\ud83e\udd86$",
+   "reason": "position mismatch only (col/end off by 2): Python token positions count Unicode code points, brikk counts UTF-16 units (astral \ud83e\udd86 = 2 units). UTF-16 offsets are kept deliberately - Kotlin substring/source-map correctness depends on them. AST is otherwise identical."
+  }
+ ]
 }

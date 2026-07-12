@@ -29,6 +29,7 @@ import dev.brikk.house.sql.optimizer.lineageAll
 import dev.brikk.house.sql.optimizer.nestedSet
 import dev.brikk.house.sql.optimizer.qualify
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * BRIKK-NATIVE (no sqlglot counterpart): a single SQL statement as a composable value —
@@ -96,14 +97,21 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * continues). A non-empty [TranspileResult.unsupportedMessages] means the output
      * is best-effort and should be reviewed / gate-skipped.
      */
-    fun transpileTo(target: String, pretty: Boolean = false): TranspileResult {
+    fun transpileTo(
+        target: String,
+        pretty: Boolean = false,
+        trackSourceMap: Boolean = false,
+    ): TranspileResult {
         val generator = Dialects.forName(target).generator(pretty = pretty)
+        // brikk-native: emit-span tracking (generator/SourceMap.kt) — off by default
+        generator.trackSpans = trackSourceMap
         val out = generator.generate(ast, copy = true)
         return TranspileResult(
             sql = out,
             unsupportedMessages = generator.unsupportedMessages.toList(),
             rootKind = rootKind,
             isRawPassthroughStatement = isRawPassthroughStatement,
+            sourceMap = generator.lastSourceMap,
         )
     }
 
@@ -497,7 +505,24 @@ data class TranspileResult(
     val unsupportedMessages: List<String>,
     val rootKind: String,
     val isRawPassthroughStatement: Boolean,
-)
+    /**
+     * brikk-native: emit-span map of [sql] back to the parsed AST / original source
+     * (see generator/SourceMap.kt). Populated only by
+     * `transpileTo(trackSourceMap = true)`. Excluded from serialization (@Transient):
+     * it holds live AST nodes; serialize [SourceMap.describeEntries] yourself if a
+     * projection is needed.
+     */
+    @Transient val sourceMap: dev.brikk.house.sql.generator.SourceMap? = null,
+) {
+    /**
+     * brikk-native payoff API: maps a 1-based (line, col) position in the OUTPUT
+     * [sql] (e.g. a verifier error position) back to a position in the ORIGINAL
+     * source the fragment was parsed from. Null when no source map was tracked or
+     * no positioned node covers the location.
+     */
+    fun mapErrorToSource(line: Int, col: Int): dev.brikk.house.sql.generator.SourcePos? =
+        sourceMap?.sourcePosition(line, col)
+}
 
 /** Serializable, statically-derivable summary of a fragment (compiler-plugin seed). */
 @Serializable

@@ -1,5 +1,21 @@
 package dev.brikk.house.sql.parser
 
+import dev.brikk.house.sql.ast.Expression
+
+/**
+ * sqlglot: Expression.update_positions (`other: Token` branch). Stores the token's
+ * line/col/start/end into the node's meta. Lives in the parser package (as an
+ * extension) so the ast package keeps no dependency on tokens.
+ */
+fun <E : Expression> E.updatePositions(token: Token): E {
+    val m = meta
+    m["line"] = token.line
+    m["col"] = token.col
+    m["start"] = token.start
+    m["end"] = token.end
+    return this
+}
+
 /**
  * A single lexical token.
  *

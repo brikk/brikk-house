@@ -271,8 +271,9 @@ object Serde {
 
     /**
      * Comparison mode: strips "o" (comments) and "m" (meta) from every payload,
-     * recursing into nested "t" dumps. Position parity comes with the parser work,
-     * so oracle comparisons run over stripped dumps on both sides.
+     * recursing into nested "t" dumps. Since the parser gained position parity
+     * (Expression.updatePositions), the parser corpus gates compare UNSTRIPPED;
+     * this remains for callers that need structural-only comparison.
      */
     fun stripMetaAndComments(payloads: JsonArray): JsonArray = JsonArray(
         payloads.map { element ->

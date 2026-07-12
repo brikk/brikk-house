@@ -17,9 +17,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
 /**
- * Gate: our parseOne(sql) over the full identity.sql fixture must structurally match
- * Python sqlglot's ASTs (ast-corpus/identity-serde.json), after stripping meta/comments
- * on both sides. Failures must be exactly the cases ledgered in
+ * Gate: our parseOne(sql) over the full identity.sql fixture must match Python
+ * sqlglot's ASTs (ast-corpus/identity-serde.json) UNSTRIPPED — including meta
+ * (position keys line/col/start/end) and comments. Failures must be exactly the cases ledgered in
  * parser-corpus/known-failures.json — no unledgered failure, no stale ledger entry.
  *
  * The test always writes the *actual* current failure set (in ledger format) to
@@ -86,9 +86,10 @@ class ParserIdentityCorpusTest {
         val details = mutableListOf<String>()
 
         for ((sql, expectedDump) in cases) {
-            val expected = Serde.stripMetaAndComments(expectedDump)
+            // Fully unstripped: positions (meta) and comments must match Python's dumps.
+            val expected = expectedDump
             val actual = try {
-                Serde.stripMetaAndComments(Serde.dump(parseOne(sql)))
+                Serde.dump(parseOne(sql))
             } catch (e: ParseError) {
                 failures[sql] = e.message?.lineSequence()?.first()?.take(160) ?: "ParseError"
                 continue

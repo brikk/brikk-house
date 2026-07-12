@@ -227,7 +227,17 @@ fun subquery(query: Expression, alias: kotlin.String? = null): Subquery =
  * anything else becomes `Add(expression, offset)` untouched, all matching Python.
  */
 private fun simplifyAddOffset(expression: Expression, offset: Int): Expression {
-    foldIntLiteral(expression)?.let { return intLiteral(it + offset) }
+    foldIntLiteral(expression)?.let {
+        // sqlglot: simplify()'s @annotate_types_on_change — the freshly folded literal
+        // is re-annotated (annotate_types sets meta "nonnull" on non-null constants)
+        // and then its root type is overwritten with the original Add's type, which is
+        // None here (`expression + offset` is never annotated). Net effect: meta
+        // nonnull=true survives, the root's type slot does not.
+        val folded = intLiteral(it + offset)
+        dev.brikk.house.sql.optimizer.annotateTypes(folded)
+        folded.typeSlot = null
+        return folded
+    }
 
     if (expression is Add) {
         val rightValue = foldIntLiteral(expression.right)

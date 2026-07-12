@@ -330,8 +330,9 @@ import dev.brikk.house.sql.ast.args
  *  - class-level tables are exposed as open provider properties (defaults in
  *    [BaseParserTables]) so dialect subclasses can override them, mirroring Python's
  *    class-variable overrides;
- *  - node positions (Expression.update_positions -> meta) are NOT tracked yet: oracle
- *    comparisons strip meta on both sides. Comments ARE attached.
+ *  - node positions (Expression.update_positions -> meta "line"/"col"/"start"/"end")
+ *    ARE tracked, matching Python's call sites; oracle comparisons run unstripped.
+ *    Comments ARE attached.
  *  - pipe syntax (PIPE_GT) is parsed into first-class PipeQuery/stage nodes instead of
  *    sqlglot's parse-time desugaring — see the "Pipe syntax" section and PipeDesugar.kt.
  */
@@ -894,6 +895,13 @@ open class Parser(
     // -----------------------------------------------------------------------
 
     // sqlglot: Parser._advance
+    /**
+     * sqlglot: exp.select("*") — Python's helper re-parses the string "*" with a fresh
+     * tokenizer, so the resulting Star carries that mini-parse's positions
+     * (line 1, col 1, start 0, end 0). Mirrored here for dump parity.
+     */
+    protected fun selectStar(): Expression = Star().updatePositions(1, 1, 0, 0)
+
     protected fun advance(times: Int = 1) {
         val newIndex = index + times
         index = newIndex
@@ -1094,8 +1102,8 @@ open class Parser(
         token: Token? = null,
         comments: List<String>? = null,
     ): E {
-        // sqlglot: instance.update_positions(token) — positions live in meta, which is
-        // stripped for oracle comparisons; position tracking lands in a later phase.
+        // sqlglot: instance.update_positions(token) — `if token:` (SENTINEL is falsy)
+        if (token != null && token.exists) instance.updatePositions(token)
         // NOTE: Python is `add_comments(comments) if comments else _add_comments(...)`,
         // i.e. an empty comments list falls through to the prev-token comments.
         if (!comments.isNullOrEmpty()) instance.addComments(comments) else addTokenComments(instance)
@@ -1710,7 +1718,7 @@ open class Parser(
                 query = expression(
                     Select(
                         args(
-                            "expressions" to mutableListOf<Expression>(Star()),
+                            "expressions" to mutableListOf<Expression>(selectStar()),
                             "from_" to from,
                         )
                     )
@@ -1862,7 +1870,7 @@ open class Parser(
             this_ = expression(
                 Select(
                     args(
-                        "expressions" to mutableListOf<Expression>(Star()),
+                        "expressions" to mutableListOf<Expression>(selectStar()),
                         "from_" to expression(From(args("this" to from.thisArg))),
                     )
                 )
@@ -1929,7 +1937,7 @@ open class Parser(
                 this_ = expression(
                     Select(
                         args(
-                            "expressions" to mutableListOf<Expression>(Star()),
+                            "expressions" to mutableListOf<Expression>(selectStar()),
                             "from_" to from,
                         )
                     )
@@ -2058,7 +2066,7 @@ open class Parser(
                 "this",
                 Select(
                     args(
-                        "expressions" to mutableListOf<Expression>(Star()),
+                        "expressions" to mutableListOf<Expression>(selectStar()),
                         "from_" to From(args("this" to body)),
                     )
                 ),
@@ -8540,6 +8548,7 @@ open class Parser(
 
         val comments = currToken.comments
         val prev = prevToken
+        val token = currToken // sqlglot: token = self._curr (position anchor)
         val tokenType = currToken.tokenType
         val name: String = currToken.text
         val upper = currToken.text.uppercase()
@@ -8632,12 +8641,16 @@ open class Parser(
                 if (preserveOriginalNames) func.meta["name"] = name
             } else {
                 val fnName: kotlin.Any = if (tokenType == TokenType.IDENTIFIER) {
-                    Identifier(args("this" to name, "quoted" to true))
+                    // sqlglot: exp.Identifier(this=this, quoted=True).update_positions(token)
+                    Identifier(args("this" to name, "quoted" to true)).updatePositions(token)
                 } else {
                     name
                 }
                 result = expression(Anonymous(args("this" to fnName, "expressions" to fnArgs)))
             }
+
+            // sqlglot: result = result.update_positions(token)
+            result?.updatePositions(token)
         }
 
         result?.addComments(comments)
@@ -9762,8 +9775,9 @@ open class Parser(
     // sqlglot: Parser._parse_string_as_identifier
     fun parseStringAsIdentifier(): Identifier? {
         if (!match(TokenType.STRING)) return null
-        // sqlglot: exp.to_identifier(text, quoted=True)
+        // sqlglot: exp.to_identifier(text, quoted=True); output.update_positions(self._prev)
         return Identifier(args("this" to prevToken.text, "quoted" to true))
+            .updatePositions(prevToken)
     }
 
     // sqlglot: Parser._parse_number
@@ -9931,6 +9945,8 @@ open class Parser(
 
     // sqlglot: Parser._parse_star_ops
     fun parseStarOps(): Expression? {
+        val starToken = prevToken // sqlglot: star_token = self._prev
+
         if (matchTextSeq("COLUMNS", "(", advance = false)) {
             val this_ = parseFunction()
             if (this_ is Columns) this_.set("unpack", true)
@@ -9948,7 +9964,7 @@ open class Parser(
                     "rename" to parseStarOp("RENAME"),
                 )
             )
-        )
+        ).updatePositions(starToken) // sqlglot: .update_positions(star_token)
     }
 
     // sqlglot: Parser._parse_select_or_expression
@@ -9978,14 +9994,20 @@ open class Parser(
     // head normalization — Subquery/FROM-less -> SELECT * FROM (...) — happens in desugarPipes)
     fun parsePipeSyntaxQuery(query: Expression): Expression? {
         val stages = mutableListOf<Expression>()
+        // brikk: position anchors (no sqlglot counterpart — Python desugars pipes).
+        // PipeQuery is anchored on the first `|>` token; each stage on the token that
+        // starts its operator (the keyword after `|>`, or `|>` itself for set-op/join
+        // stages whose keyword is consumed downstream).
+        val pipeToken = currToken
 
         while (match(TokenType.PIPE_GT)) {
             val startIndex = index
+            val stageToken = currToken
             val startText = currToken.text.uppercase()
 
             if (startText in pipeSyntaxTransformOperators) {
                 val stage = parsePipeStage(startText)
-                if (stage != null) stages.add(stage)
+                if (stage != null) stages.add(stage.updatePositions(stageToken))
             } else {
                 // The set operators (UNION, etc) and the JOIN operator have a few common
                 // starting keywords, making it tricky to disambiguate them without lookahead.
@@ -9998,11 +10020,12 @@ open class Parser(
                     raiseError("Unsupported pipe syntax operator: '$startText'.")
                     break
                 }
-                stages.add(stage)
+                stages.add(stage.updatePositions(stageToken))
             }
         }
 
         return expression(PipeQuery(args("this" to query, "expressions" to stages)))
+            .updatePositions(pipeToken)
     }
 
     // sqlglot: Parser.PIPE_SYNTAX_TRANSFORM_PARSERS (brikk: each handler builds a stage node)

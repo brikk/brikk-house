@@ -111,6 +111,32 @@ private val UNABBREVIATED_UNIT_NAME: Map<String, String> = mapOf(
  * construction site, which is the only parser path that passes raw unit columns.
  */
 internal fun applyTimeUnitCoercion(expression: Expression): Expression {
+    // sqlglot: exp.DateTrunc.__init__ (unabbreviate defaults True) — VAR_LIKE unit
+    // (single-part Column / Literal / Var) is replaced by a FRESH uppercased,
+    // unabbreviated string Literal. Fresh node matters: Python drops the original
+    // literal's position meta here.
+    if (expression is dev.brikk.house.sql.ast.DateTrunc) {
+        val unit = expression.args["unit"]
+        val isVarLike = unit != null &&
+            (unit::class == dev.brikk.house.sql.ast.Column::class ||
+                unit::class == Literal::class ||
+                unit::class == Var::class)
+        if (isVarLike) {
+            val unitExpr = unit as Expression
+            if (unitExpr is dev.brikk.house.sql.ast.Column) {
+                val parts = listOf("catalog", "db", "table", "this")
+                    .count { unitExpr.args[it] is Expression }
+                if (parts != 1) return expression
+            }
+            val unitName = unitExpr.name.uppercase()
+            expression.set(
+                "unit",
+                Literal(args("this" to (UNABBREVIATED_UNIT_NAME[unitName] ?: unitName), "is_string" to true)),
+            )
+        }
+        return expression
+    }
+
     if (expression !is dev.brikk.house.sql.ast.TimeUnit) return expression
 
     val unit = expression.args["unit"]

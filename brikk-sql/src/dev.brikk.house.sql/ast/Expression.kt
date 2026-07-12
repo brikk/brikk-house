@@ -22,6 +22,9 @@ fun args(vararg pairs: Pair<String, kotlin.Any?>): Args = linkedMapOf(*pairs)
 // Monotonic counter backing Expression.objectId (single-threaded use, like the tests).
 private var nextObjectId: Long = 0L
 
+// sqlglot: expressions/core.py POSITION_META_KEYS
+val POSITION_META_KEYS: kotlin.Array<String> = arrayOf("line", "col", "start", "end")
+
 /** Convenience builder for argTypes tables. */
 internal fun argTypesOf(vararg pairs: Pair<String, kotlin.Boolean>): Map<String, kotlin.Boolean> =
     linkedMapOf(*pairs)
@@ -245,6 +248,36 @@ abstract class Expression(initArgs: Args = emptyMap()) {
         val popped = comments ?: mutableListOf()
         comments = null
         return popped
+    }
+
+    /**
+     * sqlglot: Expression.update_positions (explicit-values form, `other=None` branch).
+     * Stores line/col/start/end into meta unconditionally (Python stores the passed
+     * values even when they are None).
+     */
+    fun updatePositions(line: Int?, col: Int?, start: Int?, end: Int?): Expression {
+        val m = meta
+        m["line"] = line
+        m["col"] = col
+        m["start"] = start
+        m["end"] = end
+        return this
+    }
+
+    /**
+     * sqlglot: Expression.update_positions (`other: Expr` branch). Copies only the
+     * position keys present in [other]'s meta; when other has no materialized (or an
+     * empty) meta, this is a no-op that does not materialize our meta either.
+     */
+    fun updatePositions(other: Expression): Expression {
+        val otherMeta = other.metaOrNull
+        if (!otherMeta.isNullOrEmpty()) {
+            val m = meta
+            for (k in POSITION_META_KEYS) {
+                if (otherMeta.containsKey(k)) m[k] = otherMeta[k]
+            }
+        }
+        return this
     }
 
     // sqlglot: Expression.depth

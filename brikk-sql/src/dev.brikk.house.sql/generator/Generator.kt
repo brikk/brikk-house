@@ -97,6 +97,35 @@ open class Generator(
     private var nextNameCounter = -1
     protected fun nextName(): String { nextNameCounter += 1; return "_t$nextNameCounter" }
 
+    // --- brikk-native: emit-span tracking (see SourceMap.kt) ------------------
+    //
+    // Design: generation is bottom-up string concatenation (each dispatch handler
+    // returns a fragment its parent embeds), so a fragment's absolute offset is
+    // unknown at dispatch time. When [trackSpans] is on, the central [sql] dispatch
+    // records, per rendered node, the exact returned fragment plus the fragments of
+    // its (recursively recorded) children — an offset TREE keyed by fragment
+    // strings. After generation, [buildSourceMap] resolves absolute offsets top-down:
+    // the root fragment is the whole raw output; each child fragment is located
+    // inside its parent's window via a cursor-advancing verbatim search (with a
+    // from-the-start retry for handlers that reorder args). Children whose fragment
+    // was transformed after rendering (pretty-mode re-indentation of multi-line
+    // blocks) get no span, but their descendants are re-resolved against the parent
+    // window, so leaf/inline nodes keep exact spans even in pretty output. Final
+    // offsets are then remapped through generate()'s post-passes (trim + pretty
+    // SENTINEL_LINE_BREAK replacement). Overhead when disabled: one boolean check
+    // per sql() call, no allocations.
+
+    /** brikk-native: enable emit-span recording for subsequent [generate] calls. */
+    var trackSpans: Boolean = false
+
+    /** brikk-native: the [SourceMap] of the last [generate] call (when [trackSpans]). */
+    var lastSourceMap: SourceMap? = null
+        protected set
+
+    private class SpanRecord(val node: Expression, val fragment: String, val children: List<SpanRecord>)
+
+    private val spanStack = ArrayDeque<MutableList<SpanRecord>>()
+
     // --- Generator class-level flags (base dialect values; open for dialect subclasses) ---
     // sqlglot: NULL_ORDERING_SUPPORTED and friends (only flags used by ported methods)
     open val nullOrderingSupported: Boolean? get() = true
@@ -273,9 +302,94 @@ open class Generator(
     open fun generate(expression: Expression, copy: Boolean = true): String {
         val expr = if (copy) expression.copy() else expression
         unsupportedMessages.clear()
-        var sql = sql(preprocess(expr)).trim()
+        // brikk-native: span tracking bookkeeping (no-op unless trackSpans)
+        lastSourceMap = null
+        if (trackSpans) {
+            spanStack.clear()
+            spanStack.addLast(mutableListOf())
+        }
+        val raw = sql(preprocess(expr))
+        var sql = raw.trim()
         if (pretty) sql = sql.replace(SENTINEL_LINE_BREAK, "\n")
+        if (trackSpans) {
+            lastSourceMap = buildSourceMap(raw, sql)
+            spanStack.clear()
+        }
         return sql
+    }
+
+    /**
+     * brikk-native: resolves the recorded span tree into absolute offsets over the
+     * final output. [raw] is the pre-trim generator output; [final] the returned SQL
+     * (raw trimmed, and with SENTINEL_LINE_BREAK replaced by \n in pretty mode).
+     */
+    private fun buildSourceMap(raw: String, final: String): SourceMap {
+        val entries = mutableListOf<SourceMap.Entry>()
+
+        // Offset remap raw -> final: subtract the leading trim cut, then account for
+        // each SENTINEL_LINE_BREAK (len N) collapsing to "\n" (len 1) in pretty mode.
+        val leadCut = raw.length - raw.trimStart().length
+        val trimmed = raw.trim()
+        val sentinelPositions: List<Int> =
+            if (pretty && trimmed.contains(SENTINEL_LINE_BREAK)) {
+                val positions = mutableListOf<Int>()
+                var i = trimmed.indexOf(SENTINEL_LINE_BREAK)
+                while (i >= 0) {
+                    positions.add(i)
+                    i = trimmed.indexOf(SENTINEL_LINE_BREAK, i + SENTINEL_LINE_BREAK.length)
+                }
+                positions
+            } else emptyList()
+        val sentinelLen = SENTINEL_LINE_BREAK.length
+
+        fun remap(rawOffset: Int): Int {
+            var o = rawOffset - leadCut
+            if (o < 0) o = 0
+            if (o > trimmed.length) o = trimmed.length
+            var shift = 0
+            for (p in sentinelPositions) {
+                when {
+                    p + sentinelLen <= o -> shift += sentinelLen - 1
+                    p < o -> return (p - shift + 1).coerceIn(0, final.length) // mid-sentinel: clamp past the "\n"
+                    else -> {}
+                }
+                if (p >= o) break
+            }
+            return (o - shift).coerceIn(0, final.length)
+        }
+
+        fun addEntry(node: Expression, rawStart: Int, rawEnd: Int) {
+            val s = remap(rawStart)
+            val e = remap(rawEnd)
+            if (e > s) entries.add(SourceMap.Entry(s, e, node))
+        }
+
+        // Locates each child fragment inside its parent's window (cursor scan with a
+        // from-the-start retry for arg-reordering handlers); unresolved children are
+        // skipped but their descendants are re-resolved against the same window.
+        fun resolve(children: List<SpanRecord>, windowStart: Int, window: String) {
+            var cursor = 0
+            for (child in children) {
+                val frag = child.fragment
+                if (frag.isEmpty()) {
+                    resolve(child.children, windowStart, window)
+                    continue
+                }
+                var idx = window.indexOf(frag, cursor)
+                if (idx < 0) idx = window.indexOf(frag)
+                if (idx < 0) {
+                    resolve(child.children, windowStart, window)
+                    continue
+                }
+                addEntry(child.node, windowStart + idx, windowStart + idx + frag.length)
+                resolve(child.children, windowStart + idx, frag)
+                cursor = idx + frag.length
+            }
+        }
+
+        val roots = spanStack.firstOrNull() ?: mutableListOf()
+        resolve(roots, 0, raw)
+        return SourceMap(final, entries)
     }
 
     // sqlglot: Generator.preprocess (base dialect: EXPRESSIONS_WITHOUT_NESTED_CTES empty,
@@ -401,17 +515,31 @@ open class Generator(
             return if (isTruthyArg(value)) sql(value) else ""
         }
 
+        // brikk-native: span recording — push a child collector for this node's frame
+        val collecting = trackSpans && spanStack.isNotEmpty()
+        if (collecting) spanStack.addLast(mutableListOf())
+
         val handler = dispatch[expression::class]
-        val sql = when {
-            handler != null -> handler(this, expression)
-            expression is Func -> functionFallbackSql(expression)
-            expression is Property -> propertySql(expression)
-            else -> throw UnsupportedError(
-                "Unsupported expression type ${expression::class.simpleName}"
-            )
+        val sql = try {
+            when {
+                handler != null -> handler(this, expression)
+                expression is Func -> functionFallbackSql(expression)
+                expression is Property -> propertySql(expression)
+                else -> throw UnsupportedError(
+                    "Unsupported expression type ${expression::class.simpleName}"
+                )
+            }
+        } catch (t: Throwable) {
+            if (collecting) spanStack.removeLast()
+            throw t
         }
 
-        return if (comments && comment) maybeComment(sql, expression) else sql
+        val out = if (comments && comment) maybeComment(sql, expression) else sql
+        if (collecting) {
+            val children = spanStack.removeLast()
+            spanStack.last().add(SpanRecord(expression, out, children))
+        }
+        return out
     }
 
     // Python truthiness for arg values in `sql(expression, key)`.
