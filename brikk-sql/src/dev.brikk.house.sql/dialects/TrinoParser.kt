@@ -1,12 +1,17 @@
 package dev.brikk.house.sql.dialects
 
+import dev.brikk.house.sql.ast.AlterSet
+import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.CurrentCatalog
 import dev.brikk.house.sql.ast.CurrentVersion
+import dev.brikk.house.sql.ast.EQ
 import dev.brikk.house.sql.ast.Expression
+import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.JSONExtract
 import dev.brikk.house.sql.ast.JSONExtractQuote
 import dev.brikk.house.sql.ast.JSONValue
 import dev.brikk.house.sql.ast.OnCondition
+import dev.brikk.house.sql.ast.Var
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.Parser
@@ -116,6 +121,47 @@ open class TrinoParser(
                 )
             )
         )
+    }
+
+    // brikk extension (docs/brikk-extensions.md #8, NOT sqlglot parity): sqlglot leaves
+    // `ALTER TABLE ... SET PROPERTIES ...` unparsed (Command passthrough with a warning).
+    // Trino's grammar (reference/trino .../SqlBase.g4 `#setTableProperties`,
+    // `property : identifier EQ propertyValue`) takes a bare CSV of property assignments
+    // whose keys must be identifiers. We parse them into AlterSet so the generator can
+    // render grammar-legal property keys (string-literal keys are normalized to quoted
+    // identifiers, e.g. 'foo bar' -> "foo bar").
+    override fun parseAlterTableSet(): Expression {
+        if (matchTextSeq("PROPERTIES")) {
+            val alterSet = expression(AlterSet())
+            alterSet.set("option", expression(Var(args("this" to "PROPERTIES"))))
+            alterSet.set("expressions", parseCsv { parseSetPropertyAssignment() })
+            return alterSet
+        }
+        return super.parseAlterTableSet()
+    }
+
+    // brikk extension (docs/brikk-extensions.md #8): one `property` from Trino's grammar.
+    // parseAssignment handles both `key = value` and `key = DEFAULT` (DEFAULT parses as a
+    // column identifier); a string-literal key is normalized to a quoted identifier,
+    // preserving the property name while making the rendering grammar-legal.
+    protected open fun parseSetPropertyAssignment(): Expression? {
+        val assignment = parseAssignment() ?: return null
+        val key = (assignment as? EQ)?.thisArg as? Expression
+        if (key != null && key.isString) {
+            assignment.set(
+                "this",
+                expression(
+                    Column(
+                        args(
+                            "this" to expression(
+                                Identifier(args("this" to key.args["this"], "quoted" to true))
+                            )
+                        )
+                    )
+                ),
+            )
+        }
+        return assignment
     }
 
     // sqlglot: Parser.ON_CONDITION_TOKENS

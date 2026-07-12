@@ -1,29 +1,15 @@
 {
     "engine": "doris",
     "notes": [
-        "Root causes: (1) CREATE MATERIALIZED VIEW — Doris MV column lists take bare column names, not column defs with types; our generator emits types. (2) CREATE TABLE ... PARTITION BY (cols) — Doris grammar requires a partition kind (RANGE/LIST/AUTO ...) followed by a partition definition list; the bare PARTITION BY (cols) form we emit is rejected at <EOF> expecting '('.",
+        "Remaining case: CREATE MATERIALIZED VIEW — brikk extension #10 (docs/brikk-extensions.md) now renders the MV column list as the bare names Doris's simpleColumnDef grammar requires (the FE parser advances past the columns), but the corpus input itself (upstream sqlglot test) has no AS <query>, which the createMTMV rule makes mandatory; a query cannot be derived from the AST, so the statement stays inherently unverifiable. Complete MV statements with brikk's rendering are engine-pinned in SqlVerifierTest.dorisAcceptsBrikkMaterializedViewColumnRendering.",
+        "Resolved (brikk extension #9): the bare CREATE TABLE ... PARTITION BY (cols) emissions are completed to grammar-legal forms (`PARTITION BY (cols) ()`, `PARTITION BY RANGE (func) ()`), accepted by the FE parser (SqlVerifierTest.dorisAcceptsBrikkPartitionByRenderings).",
         "Known bug NOT visible to this gate: the Doris dialect inherits MySQL's array rejection although Doris supports arrays, so no array case survives into ast-corpus/doris-serde.json (0 cases contain arrays) and the engine-side acceptance of arrays cannot be exercised here. Queued as a separate dialect fix."
     ],
     "cases": [
         {
             "sql": "CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1)",
-            "generated": "CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1)",
-            "error": "statement: mismatched input 'INT' expecting {')', ',', 'COMMENT'}(line 1, pos 40) (line 1, col 41) | expression: extraneous input 'CREATE' expecting {'(', '[', '{', '}', 'ACTIONS', 'ADD', 'AFTER', 'AGG_STATE', 'AGGREGATE', 'ALIAS', 'ANALYZED', 'ARRAY', 'AT', 'AUTHORS', 'AU… (line 1, col 1)"
-        },
-        {
-            "sql": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)",
-            "generated": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)",
-            "error": "statement: mismatched input '<EOF>' expecting '('(line 1, pos 59) (line 1, col 60) | expression: mismatched input 'CREATE' expecting {'(', '[', '{', '}', 'ACTIONS', 'ADD', 'AFTER', 'AGG_STATE', 'AGGREGATE', 'ALIAS', 'ANALYZED', 'ARRAY', 'AT', 'AUTHORS', 'AU… (line 1, col 1)"
-        },
-        {
-            "sql": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2)",
-            "generated": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2)",
-            "error": "statement: mismatched input '<EOF>' expecting '('(line 1, pos 63) (line 1, col 64) | expression: mismatched input 'CREATE' expecting {'(', '[', '{', '}', 'ACTIONS', 'ADD', 'AFTER', 'AGG_STATE', 'AGGREGATE', 'ALIAS', 'ANALYZED', 'ARRAY', 'AT', 'AUTHORS', 'AU… (line 1, col 1)"
-        },
-        {
-            "sql": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (DATE_TRUNC(c2, 'MONTH'))",
-            "generated": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (DATE_TRUNC(c2, 'MONTH'))",
-            "error": "statement: mismatched input '<EOF>' expecting '('(line 1, pos 80) (line 1, col 81) | expression: mismatched input 'CREATE' expecting {'(', '[', '{', '}', 'ACTIONS', 'ADD', 'AFTER', 'AGG_STATE', 'AGGREGATE', 'ALIAS', 'ANALYZED', 'ARRAY', 'AT', 'AUTHORS', 'AU… (line 1, col 1)"
+            "generated": "CREATE MATERIALIZED VIEW test_table (c1, c2) KEY (c1)",
+            "error": "statement: mismatched input '<EOF>' expecting {'(', 'AS', 'COMMENT', 'DISTRIBUTED', 'PARTITION', 'PROPERTIES', 'SELECT', 'VALUES', 'WITH'}(line 1, pos 53) (line 1, col 54) | expression: extraneous input 'CREATE' expecting {'(', '[', '{', '}', 'ACTIONS', 'ADD', 'AFTER', 'AGG_STATE', 'AGGREGATE', 'ALIAS', 'ANALYZED', 'ARRAY', 'AT', 'AUTHORS', 'AU… (line 1, col 1)"
         }
     ]
 }

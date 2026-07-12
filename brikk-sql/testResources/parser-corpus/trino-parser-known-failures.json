@@ -1,4 +1,17 @@
 {
  "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": []
+ "cases": [
+  {
+   "sql": "ALTER TABLE people SET PROPERTIES x = 'y'",
+   "reason": "brikk extension #8: we parse ALTER TABLE ... SET PROPERTIES into AlterSet (sqlglot leaves it as a Command passthrough with a warning); generated SQL is unchanged for identifier keys"
+  },
+  {
+   "sql": "ALTER TABLE people SET PROPERTIES foo = 123, 'foo bar' = 456",
+   "reason": "brikk extension #8: we parse ALTER TABLE ... SET PROPERTIES into AlterSet (sqlglot leaves it as a Command passthrough); the string-literal key is normalized to the quoted identifier \"foo bar\" that Trino's grammar requires"
+  },
+  {
+   "sql": "ALTER TABLE people SET PROPERTIES x = DEFAULT",
+   "reason": "brikk extension #8: we parse ALTER TABLE ... SET PROPERTIES into AlterSet (sqlglot leaves it as a Command passthrough with a warning); generated SQL is unchanged for identifier keys"
+  }
+ ]
 }

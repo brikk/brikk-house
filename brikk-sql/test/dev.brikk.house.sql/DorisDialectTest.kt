@@ -139,4 +139,57 @@ class DorisDialectTest {
             transpile("SELECT ARRAY_AGG(x ORDER BY y) FILTER(WHERE z) FROM t", read = "duckdb", write = "doris")
         }
     }
+
+    // brikk extension #9 (docs/brikk-extensions.md): Doris CREATE TABLE requires a
+    // partition-definition list after PARTITION BY (cols); sqlglot emits the bare form,
+    // which the FE parser rejects. Engine-side acceptance is pinned in
+    // SqlVerifierTest.dorisAcceptsBrikkPartitionByRenderings (brikk-sql-verify).
+    @Test
+    fun createTablePartitionByColumnsGetsEmptyPartitionDefList() {
+        assertEquals(
+            "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2) ()",
+            roundTrip("CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)"),
+        )
+        assertEquals(
+            "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2) ()",
+            roundTrip("CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2)"),
+        )
+    }
+
+    @Test
+    fun createTablePartitionByFunctionRendersAutoRangeForm() {
+        // A function partition key is only analyzer-valid as (auto) RANGE in Doris's
+        // internal catalog; the FE infers AUTO from the function expression itself.
+        assertEquals(
+            "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY RANGE (DATE_TRUNC(c2, 'MONTH')) ()",
+            roundTrip("CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (DATE_TRUNC(c2, 'MONTH'))"),
+        )
+    }
+
+    @Test
+    fun explicitPartitionKindsAreUntouchedByTheCompletion() {
+        // PartitionByRangeProperty (explicit RANGE/LIST + definitions) is a different
+        // node and must keep sqlglot-parity rendering.
+        val rangeSql = "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY RANGE (`c2`) " +
+            "(PARTITION `p201701` VALUES LESS THAN ('2017-02-01'))"
+        assertEquals(rangeSql, roundTrip(rangeSql))
+    }
+
+    // brikk extension #10 (docs/brikk-extensions.md): Doris MV column lists take bare
+    // column names (types derive from the query); sqlglot re-emits typed column defs.
+    @Test
+    fun materializedViewColumnListDropsColumnTypes() {
+        assertEquals(
+            "CREATE MATERIALIZED VIEW test_table (c1, c2) KEY (c1)",
+            roundTrip("CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1)"),
+        )
+    }
+
+    @Test
+    fun createTableColumnTypesAreKeptOutsideMaterializedViews() {
+        assertEquals(
+            "CREATE TABLE test_table (c1 INT, c2 INT) UNIQUE KEY (c1)",
+            roundTrip("CREATE TABLE test_table (c1 INT, c2 INT) UNIQUE KEY (c1)"),
+        )
+    }
 }

@@ -1,4 +1,9 @@
 {
  "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": []
+ "cases": [
+  {
+   "sql": "JSON_QUERY(content, 'strict $.HY.*' WITHOUT CONDITIONAL WRAPPER)",
+   "reason": "brikk extension #8: Trino's grammar only allows WITHOUT [ARRAY] WRAPPER (CONDITIONAL/UNCONDITIONAL are legal only after WITH); we drop the vacuous modifier and emit WITHOUT WRAPPER, sqlglot re-emits the rejected input verbatim"
+  }
+ ]
 }

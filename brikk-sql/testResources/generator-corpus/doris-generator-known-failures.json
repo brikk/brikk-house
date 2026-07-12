@@ -1,4 +1,21 @@
 {
  "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": []
+ "cases": [
+  {
+   "sql": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)",
+   "reason": "brikk extension #9: Doris CREATE TABLE requires a partition-definition list after PARTITION BY (cols); we emit `PARTITION BY (c2) ()` (kind-less = LIST per the FE, partitions added later), sqlglot re-emits the rejected bare form"
+  },
+  {
+   "sql": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2)",
+   "reason": "brikk extension #9: Doris CREATE TABLE requires a partition-definition list after PARTITION BY (cols); we emit `PARTITION BY (c1, c2) ()`, sqlglot re-emits the rejected bare form"
+  },
+  {
+   "sql": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (DATE_TRUNC(c2, 'MONTH'))",
+   "reason": "brikk extension #9: a function partition key is only analyzer-valid as (auto) RANGE in Doris; we emit `PARTITION BY RANGE (DATE_TRUNC(c2, 'MONTH')) ()`, sqlglot re-emits the rejected bare form"
+  },
+  {
+   "sql": "CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1)",
+   "reason": "brikk extension #10: Doris MV column lists take bare column names (simpleColumnDef); we emit `(c1, c2)`, sqlglot re-emits typed column defs the FE parser rejects"
+  }
+ ]
 }

@@ -165,6 +165,34 @@ open class TrinoGenerator(
         return mergeSql(expression)
     }
 
+    // brikk extension (docs/brikk-extensions.md #8, NOT sqlglot parity): Trino's grammar
+    // (reference/trino .../SqlBase.g4 `jsonQueryWrapperBehavior : WITHOUT ARRAY? | WITH
+    // (CONDITIONAL | UNCONDITIONAL)? ARRAY?`) only allows the CONDITIONAL/UNCONDITIONAL
+    // modifier after WITH; sqlglot's JSON_QUERY_OPTIONS cross-products both keywords with
+    // every modifier and re-emits e.g. `WITHOUT CONDITIONAL WRAPPER`, which Trino rejects.
+    // Under WITHOUT no wrapping happens at all, so the modifier is vacuous and dropping it
+    // preserves semantics. Also repairs sqlglot's "WRAPPED" option-table typo.
+    protected open fun normalizeJsonQueryWrapperOption(option: String): String {
+        val tokens = option.split(" ").toMutableList()
+        if (tokens.lastOrNull() == "WRAPPED") tokens[tokens.size - 1] = "WRAPPER"
+        if (tokens.firstOrNull() == "WITHOUT") {
+            tokens.removeAll(listOf("CONDITIONAL", "UNCONDITIONAL"))
+        }
+        return tokens.joinToString(" ")
+    }
+
+    // brikk extension (docs/brikk-extensions.md #8, NOT sqlglot parity): sqlglot leaves
+    // ALTER TABLE ... SET PROPERTIES as a Command; our TrinoParser parses it into AlterSet
+    // (option=PROPERTIES) so property keys can be rendered as the identifiers Trino's
+    // grammar requires (`property : identifier EQ propertyValue`).
+    override fun altersetSql(expression: AlterSet): String {
+        val option = (expression.args["option"] as? Var)?.args?.get("this")
+        if (option == "PROPERTIES") {
+            return "SET PROPERTIES ${expressions(expression, flat = true)}"
+        }
+        return super.altersetSql(expression)
+    }
+
     // sqlglot: TrinoGenerator.jsonextract_sql
     override fun jsonextractSql(expression: JSONExtract): String {
         if (!isTruthy(expression.args["json_query"])) {
@@ -174,6 +202,8 @@ open class TrinoGenerator(
         val jsonPath = sql(expression, "expression")
 
         var option = sql(expression, "option")
+        // brikk extension (docs/brikk-extensions.md #8): see normalizeJsonQueryWrapperOption.
+        if (option.isNotEmpty()) option = normalizeJsonQueryWrapperOption(option)
         option = if (option.isNotEmpty()) " $option" else ""
 
         var quote = sql(expression, "quote")

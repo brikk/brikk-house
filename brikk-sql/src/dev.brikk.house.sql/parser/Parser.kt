@@ -5233,8 +5233,9 @@ open class Parser(
         return opts
     }
 
-    // sqlglot: Parser._parse_alter_table_set
-    fun parseAlterTableSet(): Expression {
+    // sqlglot: Parser._parse_alter_table_set (open for the TrinoParser SET PROPERTIES
+    // brikk extension, docs/brikk-extensions.md #8)
+    open fun parseAlterTableSet(): Expression {
         val alterSet = expression(AlterSet())
 
         if (match(TokenType.L_PAREN, advance = false) || matchTextSeq("TABLE", "PROPERTIES")) {

@@ -54,6 +54,46 @@ class SqlVerifierTest {
         assertFalse(verifier.verifyExpression("1 +").accepted)
     }
 
+    @Test
+    fun trinoAcceptsBrikkGrammarLegalityRenderings() {
+        // brikk extension (docs/brikk-extensions.md entry 8): every rendering the Trino
+        // generator emits for the grammar-legality fixes (asserted in brikk-sql's
+        // TrinoDialectTest) must be accepted by the real Trino parser. Keep in sync with
+        // TrinoDialectTest.
+        val verifier = SqlVerifiers.forEngine("trino")!!
+
+        // JSON_QUERY wrapper: WITHOUT [CONDITIONAL|UNCONDITIONAL] WRAPPER -> WITHOUT WRAPPER
+        val expressions = listOf(
+            "JSON_QUERY(content, 'strict $.HY.*' WITHOUT WRAPPER)",
+            "JSON_QUERY(content, 'strict $.HY.*' WITHOUT ARRAY WRAPPER)",
+            "JSON_QUERY(content, 'strict $.HY.*' WITH CONDITIONAL ARRAY WRAPPER)",
+        )
+        for (sql in expressions) {
+            val result = verifier.verifyExpression(sql)
+            assertTrue(result.accepted, "Trino parser rejected `$sql`: ${result.error}")
+        }
+        // ... and the sqlglot-inherited form it replaces is indeed grammar-illegal.
+        assertFalse(
+            verifier.verifyExpression("JSON_QUERY(content, 'strict $.HY.*' WITHOUT CONDITIONAL WRAPPER)").accepted,
+            "Trino unexpectedly accepts WITHOUT CONDITIONAL WRAPPER",
+        )
+
+        // SET PROPERTIES: string-literal keys are normalized to quoted identifiers.
+        val statements = listOf(
+            "ALTER TABLE people SET PROPERTIES foo = 123, \"foo bar\" = 456",
+            "ALTER TABLE people SET PROPERTIES x = 'y'",
+            "ALTER TABLE people SET PROPERTIES x = DEFAULT",
+        )
+        for (sql in statements) {
+            val result = verifier.verify(sql)
+            assertTrue(result.accepted, "Trino parser rejected `$sql`: ${result.error}")
+        }
+        assertFalse(
+            verifier.verify("ALTER TABLE people SET PROPERTIES foo = 123, 'foo bar' = 456").accepted,
+            "Trino unexpectedly accepts string-literal property names",
+        )
+    }
+
     // -- duckdb ---------------------------------------------------------------------------
 
     @Test
@@ -146,5 +186,49 @@ class SqlVerifierTest {
             val result = verifier.verify(sql)
             assertTrue(result.accepted, "Doris FE parser rejected `$sql`: ${result.error}")
         }
+    }
+
+    @Test
+    fun dorisAcceptsBrikkPartitionByRenderings() {
+        // brikk extension (docs/brikk-extensions.md entry 9): CREATE TABLE PARTITION BY
+        // clauses are completed to the grammar-legal forms (DorisParser.g4 partitionTable
+        // requires a parenthesized partition-definition list). Keep in sync with
+        // DorisDialectTest.
+        val verifier = SqlVerifiers.forEngine("doris")!!
+        val renderings = listOf(
+            "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2) ()",
+            "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2) ()",
+            "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY RANGE (DATE_TRUNC(c2, 'MONTH')) ()",
+        )
+        for (sql in renderings) {
+            val result = verifier.verify(sql)
+            assertTrue(result.accepted, "Doris FE parser rejected `$sql`: ${result.error}")
+        }
+        // ... and the sqlglot-inherited bare form is indeed grammar-illegal.
+        assertFalse(
+            verifier.verify("CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)").accepted,
+            "Doris FE parser unexpectedly accepts a bare PARTITION BY (cols)",
+        )
+    }
+
+    @Test
+    fun dorisAcceptsBrikkMaterializedViewColumnRendering() {
+        // brikk extension (docs/brikk-extensions.md entry 10): MV column lists render as
+        // bare names (simpleColumnDef). The remaining doris-verify ledger entry for
+        // `CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1)` is inherent to
+        // that corpus input (no AS <query>, which createMTMV requires); a complete
+        // statement with brikk's column-list rendering is accepted.
+        val verifier = SqlVerifiers.forEngine("doris")!!
+        val accepted = verifier.verify(
+            "CREATE MATERIALIZED VIEW test_table (c1, c2) KEY (c1) AS SELECT a, b FROM t"
+        )
+        assertTrue(accepted.accepted, "Doris FE parser rejected MV bare column list: ${accepted.error}")
+        // ... typed MV column defs are indeed grammar-illegal.
+        assertFalse(
+            verifier.verify(
+                "CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1) AS SELECT a, b FROM t"
+            ).accepted,
+            "Doris FE parser unexpectedly accepts typed MV column defs",
+        )
     }
 }

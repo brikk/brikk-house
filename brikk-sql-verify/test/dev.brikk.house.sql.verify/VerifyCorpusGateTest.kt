@@ -1,5 +1,6 @@
 package dev.brikk.house.sql.verify
 
+import dev.brikk.house.sql.dialects.Dialects
 import kotlin.test.Test
 import kotlin.test.fail
 import kotlinx.serialization.Serializable
@@ -10,10 +11,15 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 /**
- * Gate: every `generated` output in brikk-sql/testResources/ast-corpus/<dialect>-serde.json
- * (our oracle-equal generator output for that dialect) is fed to the *target engine's own
- * parser* via [SqlVerifiers]. A reject means the engine's native grammar does not accept SQL
- * we emit for it — a real dialect bug.
+ * Gate: every SQL in brikk-sql/testResources/ast-corpus/<dialect>-serde.json is re-parsed
+ * and re-generated through brikk's own dialect pipeline, and the *actual* output is fed to
+ * the target engine's own parser via [SqlVerifiers]. A reject means the engine's native
+ * grammar does not accept SQL we emit for it — a real dialect bug.
+ *
+ * (The corpora's `generated` strings are the Python oracle's outputs; ours equal them
+ * byte-for-byte except at the registered brikk extensions — docs/brikk-extensions.md —
+ * several of which exist precisely to make the emitted SQL grammar-legal, so the gate must
+ * verify what brikk actually emits, not the oracle's string.)
  *
  * Rejects must exactly match testResources/<dialect>-verify-known-failures.json, in both
  * directions: unledgered rejects fail the gate, and ledger entries that now pass are stale
@@ -46,26 +52,25 @@ class VerifyCorpusGateTest {
     fun dorisGeneratedSqlIsAcceptedByDorisParserModuloLedger() = runGate("doris")
 
     /**
-     * Transpile-direction gate: dialect-corpus/doris.json `transpile[].write.doris` entries
-     * are the oracle's Doris outputs for cross-dialect inputs — exactly what a "transpile
-     * AND verify" editor action would hand to the engine. Same ledger contract as the serde
-     * gate, with its own ledger file.
+     * Transpile-direction gate: for every dialect-corpus/doris.json `transpile[]` case with
+     * a `write.doris` entry, the case's SQL is transpiled doris->doris through brikk —
+     * exactly what a "transpile AND verify" editor action would hand to the engine. Same
+     * ledger contract as the serde gate, with its own ledger file.
      */
     @Test
     fun dorisTranspileOutputsAreAcceptedByDorisParserModuloLedger() {
         val engine = "doris"
-        val verifier = SqlVerifiers.forEngine(engine) ?: fail("no verifier available for $engine")
         val corpus = json.decodeFromString(
             DialectCorpus.serializer(),
             corpusResource("dialect-corpus/doris.json"),
         )
-        val outputs = corpus.transpile.mapNotNull { case -> case.write[engine]?.let { case.sql to it } }
-        check(outputs.isNotEmpty()) { "no doris transpile outputs in dialect corpus" }
+        val sqls = corpus.transpile.mapNotNull { case -> case.sql.takeIf { case.write.containsKey(engine) } }
+        check(sqls.isNotEmpty()) { "no doris transpile outputs in dialect corpus" }
         val ledger = json.decodeFromString(
             Ledger.serializer(),
             ledgerResource("$engine-transpile-verify-known-failures.json"),
         )
-        runGateOver(engine, "doris-transpile", outputs, ledger)
+        runGateOver(engine, "doris-transpile", sqls, ledger)
     }
 
     @Test
@@ -84,26 +89,38 @@ class VerifyCorpusGateTest {
             ledgerResource("$engine-verify-known-failures.json"),
         )
         check(corpus.cases.isNotEmpty()) { "empty $engine corpus" }
-        runGateOver(engine, engine, corpus.cases.map { it.sql to it.generated }, ledger)
+        runGateOver(engine, engine, corpus.cases.map { it.sql }, ledger)
     }
 
-    /** [cases] are (source sql, generated sql) pairs; the ledger is keyed by source sql. */
+    /**
+     * Each of [sqls] is re-generated through brikk's own dialect pipeline
+     * (parse under [engine], generate under [engine]) and the result is verified against
+     * the engine's native parser; the ledger is keyed by source sql.
+     */
     private fun runGateOver(
         engine: String,
         label: String,
-        cases: List<Pair<String, String>>,
+        sqls: List<String>,
         ledger: Ledger,
     ) {
         val verifier = SqlVerifiers.forEngine(engine)
             ?: fail("no verifier available for engine $engine")
         check(ledger.engine == engine) { "ledger engine mismatch: ${ledger.engine} != $engine" }
 
+        val dialect = Dialects.forName(engine)
         val ledgered = ledger.cases.associateBy { it.sql }
         // sql -> (generated, engine error)
         val failures = LinkedHashMap<String, Pair<String, String>>()
         var accepted = 0
 
-        for ((sourceSql, generated) in cases) {
+        for (sourceSql in sqls) {
+            val generated = try {
+                dialect.generate(dialect.parseOne(sourceSql))
+            } catch (e: Exception) {
+                failures[sourceSql] = "" to
+                    "brikk parse/generate failed: ${e::class.simpleName}: ${e.message?.take(140)}"
+                continue
+            }
             // The corpora mix full statements with bare-expression fixtures (e.g.
             // `DAYNAME(x)`), so try the engine's statement grammar first and fall back to its
             // expression grammar. A reject means neither native entry point accepts the SQL.
@@ -145,7 +162,7 @@ class VerifyCorpusGateTest {
         val unledgered = failures.keys - ledgered.keys
         val stale = ledgered.keys - failures.keys
 
-        println("VerifyCorpusGateTest[$label]: $accepted accepted / ${failures.size} ledgered (of ${cases.size})")
+        println("VerifyCorpusGateTest[$label]: $accepted accepted / ${failures.size} ledgered (of ${sqls.size})")
 
         val problems = mutableListOf<String>()
         if (unledgered.isNotEmpty()) {

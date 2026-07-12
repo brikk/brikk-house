@@ -1,18 +1,7 @@
 {
     "engine": "trino",
     "notes": [
-        "Root causes: (1) JSON_QUERY wrapper clause — Trino's grammar only allows WITHOUT [ARRAY] WRAPPER; the CONDITIONAL/UNCONDITIONAL modifier is only valid after WITH, but we preserve/emit WITHOUT CONDITIONAL WRAPPER. (2) ALTER TABLE ... SET PROPERTIES — Trino property names must be identifiers; we emit string-literal property names ('foo bar')."
+        "Empty since brikk extension #8 (docs/brikk-extensions.md): the JSON_QUERY `WITHOUT CONDITIONAL WRAPPER` and ALTER TABLE ... SET PROPERTIES string-literal-key emissions inherited from sqlglot were grammar-illegal per Trino's SqlBase.g4; brikk now emits `WITHOUT WRAPPER` and quoted-identifier property keys (accepted renderings pinned in SqlVerifierTest.trinoAcceptsBrikkGrammarLegalityRenderings)."
     ],
-    "cases": [
-        {
-            "sql": "JSON_QUERY(content, 'strict $.HY.*' WITHOUT CONDITIONAL WRAPPER)",
-            "generated": "JSON_QUERY(content, 'strict $.HY.*' WITHOUT CONDITIONAL WRAPPER)",
-            "error": "statement: mismatched input 'JSON_QUERY'. Expecting: 'ALTER', 'ANALYZE', 'CALL', 'COMMENT', 'COMMIT', 'CREATE', 'DEALLOCATE', 'DELETE', 'DENY', 'DESC', 'DESCRIBE', 'DROP',… (line 1, col 1) | expression: mismatched input 'CONDITIONAL'. Expecting: 'ARRAY', 'WRAPPER' (line 1, col 45)"
-        },
-        {
-            "sql": "ALTER TABLE people SET PROPERTIES foo = 123, 'foo bar' = 456",
-            "generated": "ALTER TABLE people SET PROPERTIES foo = 123, 'foo bar' = 456",
-            "error": "statement: mismatched input ''foo bar''. Expecting: <identifier> (line 1, col 46) | expression: mismatched input 'ALTER'. Expecting: <expression> (line 1, col 1)"
-        }
-    ]
+    "cases": []
 }

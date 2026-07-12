@@ -181,6 +181,27 @@ open class DorisGenerator(
         return super.uniquekeypropertySql(expression, prefix)
     }
 
+    // brikk extension (docs/brikk-extensions.md #10, NOT sqlglot parity): Doris
+    // materialized-view column lists take bare column names, optionally with a COMMENT
+    // (reference/doris .../DorisParser.g4 `simpleColumnDef : colName=identifier (COMMENT
+    // comment=STRING_LITERAL)?`) — column types are derived from the query and cannot be
+    // declared. sqlglot re-emits full typed column defs (`c1 INT`), which the FE parser
+    // rejects, so we strip the type from MV schema columns (dropping only what Doris
+    // cannot express; the engine derives the same column from the query either way).
+    override fun columndefSql(expression: ColumnDef, sep: String): String {
+        if (expression.args["kind"] != null) {
+            val create = expression.findAncestor(Create::class)
+            val isMaterializedView = (create?.args?.get("properties") as? Expression)
+                ?.find(MaterializedProperty::class) != null
+            if (isMaterializedView && expression.parent === create?.thisArg) {
+                val bare = expression.copy() as ColumnDef
+                bare.set("kind", null)
+                return super.columndefSql(bare, sep)
+            }
+        }
+        return super.columndefSql(expression, sep)
+    }
+
     // sqlglot: DorisGenerator.partitionrange_sql
     override fun partitionrangeSql(expression: PartitionRange): String {
         val name = sql(expression, "this")
@@ -219,12 +240,35 @@ open class DorisGenerator(
     }
 
     // sqlglot: DorisGenerator.partitionedbyproperty_sql
+    // brikk extension (docs/brikk-extensions.md #9, NOT sqlglot parity): sqlglot emits a
+    // bare `PARTITION BY (cols)` for CREATE TABLE, but Doris's grammar
+    // (reference/doris .../DorisParser.g4 `partitionTable`) requires a parenthesized
+    // partition-definition list after the column list:
+    //   PARTITION BY (RANGE | LIST)? identityOrFunctionList '(' partitionsDef? ')'
+    // We complete the clause with Doris's own defaults, both FE-analyzer-valid:
+    //   - column partition keys -> `PARTITION BY (cols) ()` — the kind-less form is LIST
+    //     per the FE (LogicalPlanBuilder.visitPartitionTable), with partitions added later;
+    //   - a function partition key (e.g. DATE_TRUNC) -> `PARTITION BY RANGE (expr) ()` —
+    //     the FE auto-infers AUTO partitioning from the function expression, and the
+    //     internal catalog rejects functions in LIST partitions, so RANGE is the only
+    //     analyzer-valid completion (PartitionTableInfo.validatePartitionInfo).
+    // CREATE MATERIALIZED VIEW keeps the bare form: its `PARTITION BY '(' mvPartition ')'`
+    // rule takes no partition-definition list.
     open fun partitionedbypropertySql(expression: PartitionedByProperty): String {
         val this_ = expression.thisArg
-        if (this_ is Schema) {
-            return "PARTITION BY (${expressions(this_, flat = true)})"
+        val cols = if (this_ is Schema) expressions(this_, flat = true) else sql(this_)
+
+        val create = expression.findAncestor(Create::class)
+        val isMaterializedView = (create?.args?.get("properties") as? Expression)
+            ?.find(MaterializedProperty::class) != null
+        if (create == null || isMaterializedView || create.args["kind"] != "TABLE") {
+            return "PARTITION BY ($cols)"
         }
-        return "PARTITION BY (${sql(this_)})"
+
+        val keys: List<kotlin.Any?> = if (this_ is Schema) this_.expressionsArg else listOf(this_)
+        val hasFunctionKey = keys.any { it is Expression && it !is Column && it !is Identifier }
+        val kind = if (hasFunctionKey) "RANGE " else ""
+        return "PARTITION BY $kind($cols) ()"
     }
 
     // brikk extension (NOT sqlglot parity): Doris has no FILTER clause; sqlglot passes it

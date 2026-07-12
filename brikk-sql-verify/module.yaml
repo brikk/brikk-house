@@ -20,6 +20,13 @@ dependencies:
   # ANTLR 4.13.x runtimes are compatible with the 4.13.1-generated Doris parser.
   - org.antlr:antlr4-runtime:4.13.1
 
+test-dependencies:
+  # The verify gate re-generates every corpus SQL through brikk's own parser+generator:
+  # the corpora's "generated" strings are the Python oracle's outputs, and ours diverge
+  # from them exactly at the registered brikk extensions (docs/brikk-extensions.md), so
+  # the gate must feed the engines what WE actually emit.
+  - ../brikk-sql
+
 settings:
   jvm:
     jdk:

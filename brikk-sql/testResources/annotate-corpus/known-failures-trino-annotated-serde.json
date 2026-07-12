@@ -1,0 +1,17 @@
+{
+ "note": "annotate_types gate ledger for trino \u2014 every entry mirrors a deliberate parser divergence (brikk extension #8, same entries in parser-corpus/trino-parser-known-failures.json), not a typing gap",
+ "cases": [
+  {
+   "sql": "ALTER TABLE people SET PROPERTIES x = 'y'",
+   "reason": "brikk extension #8: SET PROPERTIES parses into AlterSet instead of sqlglot's Command passthrough, so the annotated dump differs structurally"
+  },
+  {
+   "sql": "ALTER TABLE people SET PROPERTIES foo = 123, 'foo bar' = 456",
+   "reason": "brikk extension #8: SET PROPERTIES parses into AlterSet instead of sqlglot's Command passthrough, so the annotated dump differs structurally"
+  },
+  {
+   "sql": "ALTER TABLE people SET PROPERTIES x = DEFAULT",
+   "reason": "brikk extension #8: SET PROPERTIES parses into AlterSet instead of sqlglot's Command passthrough, so the annotated dump differs structurally"
+  }
+ ]
+}
