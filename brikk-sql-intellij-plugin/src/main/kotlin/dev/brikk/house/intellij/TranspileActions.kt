@@ -11,14 +11,23 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
  *
  *  - "Transpile To...": source auto-detected (marker -> IDE dialect -> picker), target picked.
  *  - "Transpile From...": source picked (explicit override), target auto-detected/picked.
+ *
+ * Host policy (see [SqlHosts]): in strict vendor-dialect hosts (consoles, mapped files)
+ * the actions require an explicit selection — no-selection scopes (marker segment,
+ * whole file) are only trusted in lenient hosts where statement text isn't fought over.
  */
 abstract class TranspileActionBase : AnAction() {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
+    protected fun scopeAvailable(e: AnActionEvent): Boolean {
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return false
+        return editor.selectionModel.hasSelection() ||
+            SqlHosts.isLenient(e.getData(CommonDataKeys.PSI_FILE))
+    }
+
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible =
-            e.project != null && e.getData(CommonDataKeys.EDITOR) != null
+        e.presentation.isEnabledAndVisible = e.project != null && scopeAvailable(e)
     }
 }
 
@@ -42,7 +51,8 @@ class ExecuteViaTranspileAction : TranspileActionBase() {
         val project = e.project
         val editor = e.getData(CommonDataKeys.EDITOR)
         e.presentation.isEnabledAndVisible =
-            project != null && editor != null && ExecuteFlow.consoleFor(project, editor) != null
+            project != null && editor != null && scopeAvailable(e) &&
+            ExecuteFlow.consoleFor(project, editor) != null
     }
 
     override fun actionPerformed(e: AnActionEvent) {

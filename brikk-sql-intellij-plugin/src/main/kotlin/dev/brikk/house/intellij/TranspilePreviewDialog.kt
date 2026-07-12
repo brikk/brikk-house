@@ -152,5 +152,8 @@ class TranspilePreviewDialog(
                 document.insertString(scope.range.endOffset, insertion)
             }
         })
+        // Insert After may have just introduced a foreign-dialect block into a
+        // vendor-dialect file — refresh so the "go Generic SQL" banner shows right away.
+        com.intellij.ui.EditorNotifications.getInstance(project).updateAllNotifications()
     }
 }

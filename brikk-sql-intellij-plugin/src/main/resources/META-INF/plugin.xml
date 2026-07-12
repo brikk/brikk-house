@@ -22,6 +22,11 @@
                 language="SQL"
                 implementationClass="dev.brikk.house.intellij.DialectMarkerLineMarkerProvider"/>
 
+        <!-- "Go Generic SQL" banner for vendor-dialect files containing foreign
+             dialect-marker blocks (the polyglot scratch-file workflow). -->
+        <editorNotificationProvider
+                implementation="dev.brikk.house.intellij.MixedDialectNotificationProvider"/>
+
         <toolWindow id="Brikk SQL AST"
                     anchor="right"
                     secondary="true"

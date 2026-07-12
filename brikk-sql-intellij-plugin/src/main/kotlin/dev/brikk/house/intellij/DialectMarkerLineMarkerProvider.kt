@@ -20,6 +20,10 @@ class DialectMarkerLineMarkerProvider : LineMarkerProvider {
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
         // Line markers must sit on leaf elements; SQL line comments are comment leaves.
         if (element !is PsiComment || element.firstChild != null) return null
+        // Scratch-file affordance only: in strict vendor-dialect hosts (consoles, mapped
+        // files) the host parser mis-parses foreign segments, so the gutter stays out of
+        // the way there — select the SQL and use the Brikk SQL actions instead.
+        if (!SqlHosts.isLenient(element.containingFile)) return null
         val dialect = DialectMarker.parseLine(element.text) ?: return null
         val supported = BrikkDialects.isSupported(dialect)
         val tooltip = if (supported) {
