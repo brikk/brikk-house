@@ -2,6 +2,7 @@ package dev.brikk.house.sql.dialects
 
 // Explicit kotlin imports shield builtins from same-named ast classes.
 import dev.brikk.house.sql.ast.*
+import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.ast.Map as MapNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
@@ -82,6 +83,50 @@ open class DorisGenerator(
 
     // sqlglot: Doris.TIME_FORMAT
     override val dialectTimeFormat: String get() = "'yyyy-MM-dd HH:mm:ss'"
+
+    // ------------------------------------------------------------------
+    // brikk extension: first-class Doris arrays (registry entry 7; upstream-PR candidate)
+    //
+    // sqlglot's Doris dialect inherits MySQL's array rejection ("Arrays are not supported
+    // by MySQL"), but Doris supports arrays natively — pinned against the real FE parser
+    // in brikk-sql-verify (SqlVerifierTest.dorisParserSupportsArrays and the array
+    // renderings test). Divergences from the Python oracle are listed in
+    // docs/brikk-extensions.md entry 7.
+    // ------------------------------------------------------------------
+
+    // brikk extension: Doris array subscripts are 1-based (ELEMENT_AT / arr[i] start at 1);
+    // sqlglot inherits MySQL's INDEX_OFFSET = 0 and mis-renders e.g. duckdb arr[1] as arr[0].
+    // Mirrored by DorisParser.indexOffset.
+    override val dialectIndexOffset: Int get() = 1
+
+    // brikk extension: canonical Doris array constructor `ARRAY(1, 2, 3)`, accepted by the
+    // FE parser (`[1, 2, 3]` is too; docs use array()). Same rendering sqlglot falls back
+    // to, but without the "Arrays are not supported by MySQL" flag.
+    override fun arraySql(expression: ArrayNode): String = functionFallbackSql(expression)
+
+    // brikk extension: accurate message — MySQL's blames MySQL, but the real reason is that
+    // Doris's ARRAY_CONTAINS_ALL is order-sensitive (subsequence match), so @>/<@ set
+    // containment has no result-identical Doris mapping.
+    override fun arrayOpUnsupportedSql(expression: Expression): String {
+        unsupported(
+            "Array set-containment operations have no direct Doris equivalent (ARRAY_CONTAINS_ALL is order-sensitive)"
+        )
+        return functionFallbackSql(expression as Func)
+    }
+
+    // brikk extension: EXPLODE is a table function in Doris, only valid in LATERAL VIEW.
+    // Scalar-position UNNEST/EXPLODE (e.g. duckdb `SELECT UNNEST([...])`) has no Doris
+    // equivalent, so flag it accurately instead of blaming MySQL's array support; the
+    // EXPLODE(...) fallback is still emitted (table-position UNNEST is fine and is
+    // rendered by the base unnestSql, which the Doris FE parser accepts).
+    open fun explodeSql(expression: Explode): String {
+        if (expression.findAncestor(Lateral::class) == null) {
+            unsupported(
+                "UNNEST/EXPLODE in scalar position has no Doris equivalent (EXPLODE is only valid in LATERAL VIEW)"
+            )
+        }
+        return functionFallbackSql(expression)
+    }
 
     // ------------------------------------------------------------------
     // Transform helpers (sqlglot: module-level functions in generators/doris.py)
@@ -278,6 +323,8 @@ open class DorisGenerator(
             reg(CurrentTimestamp::class) { _ -> func("NOW") }
             reg(DateTrunc::class) { e -> func("DATE_TRUNC", e.thisArg, unitToStr(e)) }
             reg(EuclideanDistance::class) { e -> dg().renameFuncSql("L2_DISTANCE", e) }
+            // brikk extension: scalar-position EXPLODE flagging (see explodeSql)
+            reg(Explode::class) { e -> dg().explodeSql(e as Explode) }
             reg(GroupConcat::class) { e ->
                 func("GROUP_CONCAT", e.thisArg, e.args["separator"] ?: Literal.string(","))
             }

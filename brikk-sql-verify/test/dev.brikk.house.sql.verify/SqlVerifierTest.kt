@@ -109,10 +109,42 @@ class SqlVerifierTest {
 
     @Test
     fun dorisParserSupportsArrays() {
-        // Doris's real grammar accepts arrays; our Doris dialect (MySQL-inherited) still
-        // rejects them — a queued dialect fix. This pins the engine-side truth.
+        // Doris's real grammar accepts arrays; the Doris dialect now emits them first-class
+        // (brikk extension, docs/brikk-extensions.md entry 7). This pins the engine-side truth.
         val verifier = SqlVerifiers.forEngine("doris")!!
         assertTrue(verifier.verify("SELECT ARRAY(1, 2, 3)").accepted)
         assertTrue(verifier.verify("CREATE TABLE t (a ARRAY<INT>)").accepted)
+    }
+
+    @Test
+    fun dorisAcceptsBrikkArrayRenderings() {
+        // brikk extension (docs/brikk-extensions.md entry 7): every array rendering the
+        // Doris generator emits (asserted in brikk-sql's DorisArraysTest) must be accepted
+        // by the real Doris FE parser. Keep in sync with DorisArraysTest.
+        val verifier = SqlVerifiers.forEngine("doris")!!
+        val renderings = listOf(
+            // array literals (canonical constructor form)
+            "SELECT ARRAY(1, 2, 3)",
+            "SELECT ARRAY()",
+            // ARRAY<T> type mapping: casts + DDL, including nesting
+            "SELECT CAST(x AS ARRAY<INT>)",
+            "SELECT CAST(ARRAY(1, 2) AS ARRAY<BIGINT>)",
+            "CREATE TABLE t (a ARRAY<INT>, b ARRAY<ARRAY<STRING>>)",
+            // subscript access (1-based in Doris)
+            "SELECT arr[1] FROM t",
+            "SELECT ARRAY(1, 2, 3)[1]",
+            // table-position UNNEST
+            "SELECT * FROM UNNEST(ARRAY(1, 2, 3))",
+            "SELECT * FROM UNNEST(arr) AS t(c)",
+            // LATERAL VIEW EXPLODE pass-through
+            "SELECT c FROM t LATERAL VIEW EXPLODE(arr) tt AS c",
+            // scalar-position EXPLODE fallback (flagged by the generator, still emitted;
+            // the FE grammar accepts the shape)
+            "SELECT EXPLODE(ARRAY(1, 2, 3))",
+        )
+        for (sql in renderings) {
+            val result = verifier.verify(sql)
+            assertTrue(result.accepted, "Doris FE parser rejected `$sql`: ${result.error}")
+        }
     }
 }

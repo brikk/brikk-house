@@ -76,6 +76,49 @@ All divergence sites are marked in code with the greppable phrase **`brikk exten
 - **Conflict risk:** MEDIUM — if upstream fixes eliminate_qualify, adopt theirs and
   retire this branch.
 
+## 7. Doris: first-class arrays
+
+- **What:** sqlglot's Doris dialect inherits MySQL's array rejection wholesale, but Doris
+  supports arrays natively. Divergences from the Python oracle (v30.12.0-44-g93d16591),
+  each rendering pinned against the real Doris FE parser
+  (`SqlVerifierTest.dorisAcceptsBrikkArrayRenderings`):
+  - **Array literals** render as the canonical constructor `ARRAY(1, 2, 3)` — the same
+    string sqlglot's fallback emits, but *without* the "Arrays are not supported by
+    MySQL" flag. (The FE parser also accepts `[1, 2, 3]`; Doris docs use `array()`.)
+  - **Subscripts are 1-based:** Doris `arr[i]` / `ELEMENT_AT(arr, i)` start at 1, but
+    sqlglot inherits MySQL's `INDEX_OFFSET = 0` and mis-renders duckdb `arr[1]` as
+    doris `arr[0]` (and doris `arr[1]` as duckdb `arr[2]`). We set parser/generator
+    index offset to 1 (`DorisParser.indexOffset` / `DorisGenerator.dialectIndexOffset`).
+  - **`ARRAY<T>` type mapping and casts** (`CAST(x AS ARRAY<INT>)`, nested
+    `ARRAY<ARRAY<STRING>>`, DDL columns) already worked at parity — covered by tests and
+    the verifier pin, no divergence.
+  - **Table-position UNNEST** (`SELECT * FROM UNNEST(ARRAY(1, 2, 3))`) is base-generator
+    behavior the FE parser accepts; it only failed upstream because of the array-literal
+    flag. Now clean.
+  - **Scalar-position UNNEST/EXPLODE** (duckdb `SELECT unnest([1, 2, 3])` parses as
+    `Explode`) still has no Doris equivalent (EXPLODE is only valid in LATERAL VIEW), so
+    it stays flagged — with an accurate message instead of the MySQL one. The
+    `EXPLODE(...)` fallback is still emitted (= Python oracle output). Explode inside
+    `LATERAL VIEW` is not flagged.
+  - **Array set-containment ops** (duckdb `@>` / `<@`) stay flagged with an accurate
+    message: Doris's `ARRAY_CONTAINS_ALL` is order-sensitive (subsequence match), so
+    there is no result-identical mapping.
+- **Where:** `dialects/DorisGenerator.kt` (`dialectIndexOffset`, `arraySql`,
+  `arrayOpUnsupportedSql`, `explodeSql` + `Explode` transform), `dialects/DorisParser.kt`
+  (`indexOffset`). Tests: `DorisArraysTest.kt` (common),
+  `SqlVerifierTest.dorisAcceptsBrikkArrayRenderings` (JVM, real FE parser),
+  `TranspileGateApiTest.unsupportedTranslationsAreFlaggedNotSilent` (updated message).
+- **Corpus/ledger impact:** none — no dialect-corpus/verify case changes outcome (the
+  `doris.json` `ARRAY_SUM(..., ARRAY(2, 3))` output string is unchanged; it just loses
+  the bogus warning), all ledgers stay empty/as-were.
+- **Upstream-PR candidate:** yes — MySQL's `array_sql`/`INDEX_OFFSET` should be
+  overridden in `sqlglot/generators/doris.py` + `Doris.INDEX_OFFSET = 1`; verifier-proven
+  against Doris FE grammar `g7027772afcb`.
+- **Conflict risk:** MEDIUM — if upstream adds its own Doris array handling, adopt it if
+  result-identical (watch the index offset: an upstream fix that keeps offset 0 is
+  *wrong* per Doris semantics and should be reported, not adopted). DorisArraysTest
+  defines the required behavior.
+
 ## Not-a-bug findings (for the record)
 
 - **Trino `date_trunc` unit casing:** reported as "lowercase-only, case-sensitive";

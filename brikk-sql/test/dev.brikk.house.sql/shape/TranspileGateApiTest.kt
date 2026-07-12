@@ -50,9 +50,11 @@ class TranspileGateApiTest {
 
     @Test
     fun unsupportedTranslationsAreFlaggedNotSilent() {
+        // brikk extension (registry entry 7): arrays are first-class for Doris, so the flag
+        // is now the accurate scalar-UNNEST one, not MySQL's blanket array rejection.
         val result = SqlFragment("SELECT unnest([1, 2, 3])", "duckdb").transpileTo("doris")
         assertTrue(result.unsupportedMessages.isNotEmpty(), "expected unsupported flags")
-        assertTrue(result.unsupportedMessages.any { "Arrays are not supported" in it })
+        assertTrue(result.unsupportedMessages.any { "EXPLODE is only valid in LATERAL VIEW" in it })
     }
 
     @Test
