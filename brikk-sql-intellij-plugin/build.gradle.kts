@@ -107,3 +107,11 @@ kotlin {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }
+
+// Dogfooding sandbox with the PSI structure viewer, for inspecting how DataGrip's SQL
+// PSI lines up with brikk-sql's AST (same convention as doris-intellij-plugin).
+val runIdeWithPsiViewer by intellijPlatformTesting.runIde.registering {
+    plugins {
+        plugin("PsiViewer", "252.23892.248")
+    }
+}
