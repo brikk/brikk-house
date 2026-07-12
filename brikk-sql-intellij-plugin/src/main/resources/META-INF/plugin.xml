@@ -15,16 +15,31 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="Brikk SQL" displayType="BALLOON"/>
+
+        <!-- Gutter icon on "dialect: xyz" line-comment markers. Registered on the base SQL
+             language; LanguageExtension resolution covers every SQL dialect language. -->
+        <codeInsight.lineMarkerProvider
+                language="SQL"
+                implementationClass="dev.brikk.house.intellij.DialectMarkerLineMarkerProvider"/>
+
+        <toolWindow id="Brikk SQL AST"
+                    anchor="right"
+                    secondary="true"
+                    icon="AllIcons.Toolwindows.ToolWindowStructure"
+                    factoryClass="dev.brikk.house.intellij.AstViewerToolWindowFactory"/>
     </extensions>
 
     <actions>
-        <!-- Phase 0 smoke action: proves the toolchain-built brikk-sql jars load and
-             transpile inside the IDE process. Replaced by the real transpile UX in Phase 1. -->
-        <action id="BrikkSql.TranspileSmoke"
-                class="dev.brikk.house.intellij.TranspileSmokeAction"
-                text="Brikk: Transpile Selection (Smoke)"
-                description="Transpiles the selected SQL from MySQL to DuckDB and shows the result">
+        <group id="BrikkSql.EditorMenu" text="Brikk SQL" popup="true">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-        </action>
+            <action id="BrikkSql.TranspileTo"
+                    class="dev.brikk.house.intellij.TranspileToAction"
+                    text="Transpile To..."
+                    description="Transpiles the selection (or dialect-marker block, or whole file) to a picked target dialect, with preview and diagnostics"/>
+            <action id="BrikkSql.TranspileFrom"
+                    class="dev.brikk.house.intellij.TranspileFromAction"
+                    text="Transpile From..."
+                    description="Picks the source dialect explicitly (overriding detection), then transpiles into the file's current dialect"/>
+        </group>
     </actions>
 </idea-plugin>
