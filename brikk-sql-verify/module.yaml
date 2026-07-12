@@ -1,0 +1,28 @@
+# Native-grammar verification oracles: "does the target engine's own parser accept this SQL?"
+# JVM-only: engine parsers (trino-parser, duckdb_jdbc, vendored Doris FE parser) are JVM artifacts.
+product: jvm/lib
+
+dependencies:
+  # Trino's own SQL parser. 481 matches the vendored function catalog (vendor/data/trino-functions-481.tsv).
+  # NOTE: trino-parser 481 ships class-file 69 => requires a JDK 25 runtime (see settings.jvm.jdk below).
+  - io.trino:trino-parser:481
+  # Embedded DuckDB (pinned to engine 1.5.4 = jdbc artifact 1.5.4.0, matching the generated
+  # DuckDB function catalog).
+  - org.duckdb:duckdb_jdbc:1.5.4.0
+  # ANTLR runtime for the vendored Doris FE SQL parser. The parser jar itself
+  # (vendor/lib/doris-fe-sql-parser-*.jar) CANNOT be declared here: Amper 0.11 has no
+  # local-jar dependency kind (schema only knows Maven/catalog/BOM/module deps) and
+  # rejects non-https repositories ("Non-https repositories are not supported"), so a
+  # committed file:// Maven layout is out too. DorisVerifier loads the jar reflectively
+  # via a URLClassLoader instead (see its KDoc). Swap to the org.apache.doris:fe-sql-parser
+  # coordinate once Doris publishes it (vendor/README.md says weeks from 2026-07).
+  # NOTE: trino-parser pulls antlr4-runtime 4.13.2, which overrides this declaration;
+  # ANTLR 4.13.x runtimes are compatible with the 4.13.1-generated Doris parser.
+  - org.antlr:antlr4-runtime:4.13.1
+
+settings:
+  jvm:
+    jdk:
+      version: 25
+  kotlin:
+    serialization: json
