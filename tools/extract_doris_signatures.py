@@ -65,6 +65,20 @@ matching the convention of the DuckDB/Trino catalogs in brikk-sql-metadata):
   name (precision/scale wildcards are a resolver concern, not a catalog one).
   Unknown type classes -> class name minus a trailing 'Type', uppercased — never dropped.
 
+Nullable mode — besides signatures, each class's ComputeNullable marker interface is
+captured (fe's static declaration of result-nullability semantics, see ComputeNullable's
+own doc): the class-declaration implements clauses are scanned for marker interfaces
+matching (Propagate|Always)*Nullable* (today: PropagateNullable, AlwaysNullable,
+AlwaysNotNullable; future variants like PropagateNullableOnDateLikeV2Args flow through
+verbatim), walking the extends chain within the functions tree. Resolution mirrors Java:
+a concrete `boolean nullable()` override anywhere in the class chain wins over ALL
+interface defaults ("class wins" rule) and is recorded as "custom" (Coalesce, Lag,
+NullableAggregateFunction subclasses, ...). Multiple distinct markers without an
+override are joined with "+" (none exist at the pin). Emitted as "nullable_mode":
+<marker|"custom"|null>; null = nothing found. TABLE_VALUED / TABLE_GENERATING classes
+always get null: they produce row sets, and TableValuedFunction.nullable() throws —
+scalar nullability is not applicable.
+
 Output: vendor/data/doris-signatures.json (the committed reproducibility artifact, same
 pattern as vendor/data/trino-functions-481.tsv):
 
@@ -72,7 +86,8 @@ pattern as vendor/data/trino-functions-481.tsv):
    "classes": {"Abs": {"kind": "SCALAR", "names": ["ABS"],
                        "signatures": [{"return": "DOUBLE", "args": ["DOUBLE"],
                                        "variadic": false}, ...],
-                       "unparsed": []}, ...}}
+                       "unparsed": [],
+                       "nullable_mode": "PropagateNullable"}, ...}}
 
 deterministically ordered (classes sorted, signatures in source order). Only classes
 present in the registry (Builtin*Functions.java) are emitted — those are the functions
@@ -342,6 +357,48 @@ def parse_entry(entry: str, consts: dict[str, str]) -> dict:
 INT_CONST = re.compile(r"\bstatic\s+final\s+int\s+([A-Z][A-Z0-9_]*)\s*=\s*(\d+)\s*;")
 EXTENDS = re.compile(r"\bclass\s+\w+(?:<[^>]*>)?\s+extends\s+([A-Za-z_][A-Za-z0-9_]*)")
 
+# ComputeNullable marker interfaces (see module docstring, "Nullable mode"). The pattern
+# is deliberately loose so future markers (PropagateNullableOnDateLikeV2Args, ...) are
+# captured verbatim instead of dropped; non-markers like PropagateNullLiteral (no
+# "Nullable") don't match.
+NULLABLE_MARKER = re.compile(r"(?:Propagate|Always)\w*Nullable\w*")
+NULLABLE_OVERRIDE = re.compile(r"\bboolean\s+nullable\s*\(\s*\)")
+# Row-set producers: scalar nullability not applicable (TableValuedFunction.nullable() throws).
+NULLABLE_KINDS = {"SCALAR", "AGGREGATE", "WINDOW"}
+
+
+def extract_nullable_mode(path: pathlib.Path, sources: dict[str, pathlib.Path]) -> str | None:
+    """The class's ComputeNullable marker ("PropagateNullable" | "AlwaysNullable" |
+    "AlwaysNotNullable" | future variants), "custom" for a concrete nullable() override,
+    or None when neither is found up the extends chain."""
+    markers: list[str] = []
+    cur: pathlib.Path | None = path
+    for _ in range(8):  # bounded extends-chain walk (deepest real chain is ~4)
+        text = strip_comments(cur.read_text(encoding="utf-8"))
+        if NULLABLE_OVERRIDE.search(text):
+            # Java's "class wins" rule: a concrete nullable() anywhere in the class chain
+            # overrides every marker-interface default, even markers on subclasses.
+            return "custom"
+        header = re.search(
+            r"\bclass\s+" + re.escape(cur.stem) + r"\b(.*?)\{", text, flags=re.S
+        )
+        if header:
+            impl = re.search(r"\bimplements\b(.*)", header.group(1), flags=re.S)
+            if impl:
+                for ident in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", impl.group(1)):
+                    if NULLABLE_MARKER.fullmatch(ident) and ident not in markers:
+                        markers.append(ident)
+        m = re.search(
+            r"\bclass\s+" + re.escape(cur.stem) + r"(?:<[^>]*>)?\s+extends\s+([A-Za-z_][A-Za-z0-9_]*)",
+            text,
+        )
+        cur = sources.get(m.group(1)) if m else None
+        if cur is None:
+            break
+    if not markers:
+        return None
+    return markers[0] if len(markers) == 1 else "+".join(markers)
+
 
 def extract_class(
     path: pathlib.Path, sources: dict[str, pathlib.Path], depth: int = 0
@@ -390,6 +447,7 @@ def main() -> None:
     classes: dict[str, dict] = {}
     n_full = n_partial = n_empty = n_missing = 0
     total_sigs = total_unparsed = 0
+    nullable_counts: dict[str, int] = {}
     for cls in sorted(registry):
         entry = registry[cls]
         path = sources.get(cls)
@@ -406,11 +464,16 @@ def main() -> None:
             n_partial += 1
         else:
             n_empty += 1
+        nullable_mode = (
+            extract_nullable_mode(path, sources) if entry["kind"] in NULLABLE_KINDS else None
+        )
+        nullable_counts[nullable_mode or "(none)"] = nullable_counts.get(nullable_mode or "(none)", 0) + 1
         classes[cls] = {
             "kind": entry["kind"],
             "names": entry["names"],
             "signatures": signatures,
             "unparsed": unparsed,
+            "nullable_mode": nullable_mode,
         }
 
     out = {"doris_version": doris_version(doris_root), "classes": classes}
@@ -423,6 +486,7 @@ def main() -> None:
     print(f"  fully parsed: {n_full}  partial: {n_partial}  no static SIGNATURES: {n_empty}")
     print(f"signatures: {total_sigs} parsed, {total_unparsed} unparsed "
           f"({parsed_pct:.1f}% signature parse coverage)")
+    print("nullable modes: " + ", ".join(f"{k}={v}" for k, v in sorted(nullable_counts.items())))
 
 
 if __name__ == "__main__":
