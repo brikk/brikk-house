@@ -64,6 +64,23 @@ dependencies {
         // JSON plugin; without it com.intellij.database won't load in unit tests.
         bundledPlugin("com.intellij.modules.json")
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
+
+        // Dogfooding companion: the sibling doris-intellij-plugin
+        // (dev.sort.doris-intellij-plugin) in the runIde sandbox, so Doris data
+        // sources get their real dialect instead of platform fallbacks. Loaded from
+        // its stable-named local build (run `./gradlew buildPlugin` in that repo to
+        // refresh); silently skipped when absent, so clones/CI without the sibling
+        // repo still build. Tests are unaffected either way — the test framework
+        // only loads what idea.load.plugins.id lists.
+        val dorisPluginZip = providers.gradleProperty("dorisPluginZip")
+            .orElse("/home/jayson/DEV/sortdev/doris-intellij-plugin/build/distributions/doris-intellij-plugin.zip")
+            .map(::File)
+            .get()
+        if (dorisPluginZip.exists()) {
+            localPlugin(dorisPluginZip)
+        } else {
+            logger.lifecycle("doris-intellij-plugin zip not found at $dorisPluginZip — runIde sandbox will not include it (set -PdorisPluginZip=... or build it)")
+        }
     }
 }
 
