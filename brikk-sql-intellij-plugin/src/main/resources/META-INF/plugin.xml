@@ -16,6 +16,21 @@
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="Brikk SQL" displayType="BALLOON"/>
 
+        <!-- BrikkSQL: the plugin-owned polyglot SQL dialect (.bsql files). Generic SQL
+             parsing (lenient, ;-bounded statements) under our own language id, so
+             per-segment enhancements can layer in over time. -->
+        <fileType name="Brikk SQL"
+                  implementationClass="dev.brikk.house.intellij.lang.BrikkSqlFileType"
+                  fieldName="INSTANCE"
+                  language="BrikkSQL"
+                  extensions="bsql"/>
+        <lang.parserDefinition language="BrikkSQL"
+                               implementationClass="dev.brikk.house.intellij.lang.BrikkSqlParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="BrikkSQL"
+                                       implementationClass="dev.brikk.house.intellij.lang.BrikkSqlSyntaxHighlighterFactory"/>
+        <lang.commenter language="BrikkSQL"
+                        implementationClass="dev.brikk.house.intellij.lang.BrikkSqlCommenter"/>
+
         <!-- Gutter icon on "dialect: xyz" line-comment markers. Registered on the base SQL
              language; LanguageExtension resolution covers every SQL dialect language. -->
         <codeInsight.lineMarkerProvider
@@ -35,6 +50,13 @@
     </extensions>
 
     <actions>
+        <action id="BrikkSql.NewScratch"
+                class="dev.brikk.house.intellij.lang.NewBrikkSqlScratchAction"
+                text="New Brikk SQL Scratch"
+                description="Creates a .bsql scratch file - the polyglot playground for dialect-marker blocks"
+                icon="AllIcons.Nodes.DataTables">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
         <group id="BrikkSql.EditorMenu" text="Brikk SQL" popup="true">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
             <action id="BrikkSql.ExecuteViaTranspile"

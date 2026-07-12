@@ -15,7 +15,7 @@ import com.intellij.sql.dialects.SqlLanguageDialect
  */
 object SqlHosts {
 
-    private val LENIENT_LANGUAGE_IDS = setOf("SQL", "GenericSQL")
+    private val LENIENT_LANGUAGE_IDS = setOf("SQL", "GenericSQL", "BrikkSQL")
 
     fun isLenient(psiFile: PsiFile?): Boolean {
         val language = psiFile?.language ?: return true
