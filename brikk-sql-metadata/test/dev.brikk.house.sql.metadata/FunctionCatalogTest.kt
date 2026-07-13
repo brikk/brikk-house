@@ -266,6 +266,53 @@ class FunctionCatalogTest {
         assertTrue(TRINO_FUNCTION_CATALOG["concat"]!!.overloads.all { !it.variadic })
     }
 
+    // ------------------------------------------------------- grammar builtins
+
+    @Test
+    fun grammarBuiltinsAreKnownButNotRegistered() {
+        // Trino COALESCE: absent from SHOW FUNCTIONS (parser special form,
+        // AstBuilder.visitFunctionCall), so contains() is honest-false while
+        // isKnown() clears it. Registered names satisfy both.
+        assertTrue("coalesce" !in TRINO_FUNCTION_CATALOG)
+        assertTrue(TRINO_FUNCTION_CATALOG.isKnown("coalesce"))
+        assertTrue(TRINO_FUNCTION_CATALOG.isKnown("Coalesce")) // case-insensitive
+        assertTrue(TRINO_FUNCTION_CATALOG.isKnown("abs")) // registry hit
+        assertTrue(!TRINO_FUNCTION_CATALOG.isKnown("read_parquet")) // real hole stays
+
+        // Grammar rules whose names ARE registered at 481 stay out of the grammar set
+        // (TRIM, SUBSTRING, NORMALIZE, LISTAGG, CURRENT_DATE) — registry clears them.
+        assertTrue("trim" in TRINO_FUNCTION_CATALOG)
+        assertTrue("TRIM" !in TRINO_FUNCTION_CATALOG.grammarBuiltins)
+
+        // DuckDB: engine-verified minimal set (see DuckdbGrammarBuiltins.kt).
+        assertTrue("coalesce" !in DUCKDB_FUNCTION_CATALOG)
+        assertTrue(DUCKDB_FUNCTION_CATALOG.isKnown("coalesce"))
+        assertTrue(DUCKDB_FUNCTION_CATALOG.isKnown("grouping"))
+
+        // Doris registers COALESCE/IF/GROUPING/... directly — no grammar set needed.
+        assertEquals(emptySet<String>(), DORIS_FUNCTION_CATALOG.grammarBuiltins)
+        assertTrue("coalesce" in DORIS_FUNCTION_CATALOG)
+        assertTrue(DORIS_FUNCTION_CATALOG.isKnown("coalesce"))
+    }
+
+    @Test
+    fun grammarBuiltinsAreUppercaseAndDisjointFromTheRegistry() {
+        for (catalog in listOf(TRINO_FUNCTION_CATALOG, DUCKDB_FUNCTION_CATALOG, DORIS_FUNCTION_CATALOG)) {
+            for (name in catalog.grammarBuiltins) {
+                assertEquals(name.uppercase(), name, "grammarBuiltins must be uppercase: $name")
+                assertTrue(name !in catalog, "grammar builtin '$name' is also registered — drop it")
+            }
+        }
+    }
+
+    @Test
+    fun grammarBuiltinsAreNotSerialized() {
+        // grammarBuiltins is engine-grammar knowledge, not registry data: toJson stays
+        // a pure registry dump (persisted catalogs are unchanged by the field).
+        assertTrue("COALESCE" in TRINO_FUNCTION_CATALOG.grammarBuiltins)
+        assertTrue("COALESCE" !in TRINO_FUNCTION_CATALOG.toJson())
+    }
+
     // ---------------------------------------------------------------- serde
 
     @Test

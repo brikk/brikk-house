@@ -154,7 +154,20 @@ data class FunctionDef(
     val profile: SemanticProfile? = null,
 )
 
-class FunctionCatalog(val functions: List<FunctionDef>) {
+/**
+ * [grammarBuiltins] are function-shaped names the engine parses at the GRAMMAR (or
+ * parser-special-form) level rather than registering in its function registry — e.g.
+ * Trino's COALESCE/CAST/EXTRACT (absent from `SHOW FUNCTIONS`; dedicated SqlBase.g4
+ * alternatives or AstBuilder special forms). They are engine-grammar knowledge, not
+ * registry entries: uppercase names, NOT part of [functions] and NOT serialized by
+ * [toJson] (persisted catalogs stay pure registry dumps). Use [isKnown] when asking
+ * "would this name reach the engine unrecognized?" — [contains]/[get] stay
+ * registry-only.
+ */
+class FunctionCatalog(
+    val functions: List<FunctionDef>,
+    val grammarBuiltins: Set<String> = emptySet(),
+) {
 
     private val byName: Map<String, FunctionDef> = buildMap {
         for (def in functions) {
@@ -169,6 +182,14 @@ class FunctionCatalog(val functions: List<FunctionDef>) {
     operator fun get(name: String): FunctionDef? = byName[name.uppercase()]
 
     operator fun contains(name: String): Boolean = byName.containsKey(name.uppercase())
+
+    /**
+     * True when the engine recognizes [name] at all: registered in the function
+     * registry ([contains], aliases included) OR parsed at the grammar level
+     * ([grammarBuiltins]). Case-insensitive.
+     */
+    fun isKnown(name: String): Boolean =
+        contains(name) || name.uppercase() in grammarBuiltins
 
     /** True when [name] is a registered table-valued / table-generating function. */
     fun isTableFunction(name: String): Boolean =

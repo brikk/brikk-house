@@ -90,12 +90,12 @@ class CertifyTest {
         assertEquals(emptyList(), fwd.findings)
         assertTrue(fwd.ok)
 
-        // Reverse direction: the hazard channel is equally silent (dedicated renderer).
-        // NOTE the report is still not ok — the COALESCE the renderer emits trips the
-        // pre-existing unmappableFunctions signal (COALESCE is grammar-level in Trino,
-        // absent from SHOW FUNCTIONS) — a capability-channel artifact, not a hazard.
+        // Reverse direction: equally clean. The COALESCE the renderer emits is a Trino
+        // grammar-level builtin (absent from SHOW FUNCTIONS, parsed by SqlBase.g4 /
+        // AstBuilder) — cleared by the catalog's grammarBuiltins set.
         val rev = report("SELECT concat(a, b) FROM t", "duckdb", "trino")
-        assertTrue(rev.findings.none { it.kind == FindingKind.SEMANTIC_HAZARD }, "${rev.findings}")
+        assertEquals(emptyList(), rev.findings)
+        assertTrue(rev.ok)
     }
 
     @Test
@@ -137,6 +137,33 @@ class CertifyTest {
         assertEquals(Severity.WARNING, f.severity)
         assertEquals("HOUR", f.subject)
         assertTrue("TimeZone" in f.detail, f.detail)
+    }
+
+    @Test
+    fun grammarBuiltinIsNotACapabilityHole() {
+        // COALESCE is absent from Trino's SHOW FUNCTIONS (parser special form) — the
+        // catalog's grammarBuiltins set clears it, so a direct call certifies clean
+        // (its hazard verdict is probe-verified IDENTICAL).
+        val r = report("SELECT COALESCE(1, 2)", "duckdb", "trino")
+        assertEquals("SELECT COALESCE(1, 2)", r.result.sql)
+        assertEquals(emptyList(), r.findings)
+        assertTrue(r.ok)
+    }
+
+    // ------------------------------------------------------------ pipe desugaring
+
+    @Test
+    fun certifyDesugarsPipesForRealEngines() {
+        // Doris doesn't speak |>; desugarPipes=true certifies the standard-syntax
+        // rendering (WITH __tmp form) — clean end to end for a plain pipe fragment.
+        val fragment = SqlFragment("FROM sales |> WHERE qty > 0 |> SELECT item, qty")
+        val r = fragment.certify("doris", desugarPipes = true)
+        assertTrue(r.ok, "${r.findings}")
+        assertEquals(emptyList(), r.findings)
+        assertTrue("|>" !in r.result.sql, r.result.sql)
+        assertTrue("__tmp" in r.result.sql, r.result.sql)
+        // Default keeps pipe rendering — same fragment, pipe operator preserved.
+        assertTrue("|>" in fragment.certify("doris").result.sql)
     }
 
     // ------------------------------------------------------------ clean + strict mode

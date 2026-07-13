@@ -127,6 +127,8 @@ def main() -> None:
         "//    in FunctionDef.nativeKind (normalized to SCALAR/TABLE_VALUED).",
         "//  - function_type='pragma' rows are skipped (PRAGMA surface, not query-callable).",
         "//  - operator rows (%, ||, ~~, ...) are skipped (grammar-level, not identifiers).",
+        "//    Function-SHAPED grammar-level names (COALESCE, GROUPING, ...) are carried by",
+        "//    the handwritten DuckdbGrammarBuiltins.kt and wired in via grammarBuiltins below.",
         "//  - a name registered under two engine kinds (range, generate_series, ...) yields",
         "//    one def per kind.",
         "//  - NULL parameter/return types (macros, table functions) are emitted as \"ANY\".",
@@ -175,6 +177,9 @@ def main() -> None:
 
     lines.append("val DUCKDB_FUNCTION_CATALOG: FunctionCatalog = FunctionCatalog(")
     lines.append("    " + " + ".join(f"chunk{i}()" for i in range(len(chunks))) + ",")
+    # Grammar-level function-shaped names (parser special forms absent from
+    # duckdb_functions()) live in the handwritten, engine-verified DuckdbGrammarBuiltins.kt.
+    lines.append("    grammarBuiltins = DUCKDB_GRAMMAR_BUILTINS,")
     lines.append(")")
     for i, chunk in enumerate(chunks):
         lines.append("")

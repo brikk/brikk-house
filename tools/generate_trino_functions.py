@@ -112,8 +112,10 @@ def main() -> None:
         "//    max arity from this catalog.",
         "//  - parametric types (varchar(x), decimal(p,s)) and type variables (E, T, K, V,",
         "//    unknown) are kept as literal strings — treat as \"any\" when mapping.",
-        "//  - operators (::, ||, %, CAST, TRY_CAST, subscript, ...) are grammar-level,",
-        "//    not functions, and are intentionally absent.",
+        "//  - operators (::, ||, %, subscript, ...) are grammar-level, not functions,",
+        "//    and are intentionally absent. Function-SHAPED grammar-level names",
+        "//    (COALESCE, CAST, EXTRACT, ...) are carried by the handwritten",
+        "//    TrinoGrammarBuiltins.kt and wired in via grammarBuiltins below.",
         "//  - argNames=null and profile=null everywhere: SHOW FUNCTIONS exposes neither",
         "//    parameter names nor null-handling metadata (see the generator's header).",
         "package dev.brikk.house.sql.metadata",
@@ -153,6 +155,10 @@ def main() -> None:
 
     lines.append("val TRINO_FUNCTION_CATALOG: FunctionCatalog = FunctionCatalog(")
     lines.append("    " + " + ".join(f"trinoChunk{i}()" for i in range(len(chunks))) + ",")
+    # Grammar-level builtins (COALESCE, CAST, EXTRACT, ...) are absent from SHOW
+    # FUNCTIONS by design; the handwritten, grammar-curated TrinoGrammarBuiltins.kt
+    # carries them (see its header for the SqlBase.g4 / AstBuilder citations).
+    lines.append("    grammarBuiltins = TRINO_GRAMMAR_BUILTINS,")
     lines.append(")")
     for i, chunk in enumerate(chunks):
         lines.append("")

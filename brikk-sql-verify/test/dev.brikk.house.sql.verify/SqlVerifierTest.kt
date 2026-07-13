@@ -1,5 +1,7 @@
 package dev.brikk.house.sql.verify
 
+import dev.brikk.house.sql.shape.SqlFragment
+import dev.brikk.house.sql.shape.certify
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -44,6 +46,19 @@ class SqlVerifierTest {
         assertNotNull(result.error)
         assertEquals(1, result.line)
         assertEquals(8, result.col)
+    }
+
+    @Test
+    fun trinoAcceptsGrammarBuiltinsThatCertifyClean() {
+        // Belt-and-braces composition from Certify.kt's header: COALESCE is absent
+        // from Trino's SHOW FUNCTIONS (parser special form) but grammar-accepted —
+        // the catalog's grammarBuiltins clears certify(), and the real Trino parser
+        // confirms the emitted SQL end to end.
+        val report = SqlFragment("SELECT COALESCE(1, 2)", "duckdb").certify("trino")
+        assertTrue(report.ok, "${report.findings}")
+        assertEquals(emptyList(), report.findings)
+        val result = SqlVerifiers.forEngine("trino")!!.verify(report.result.sql)
+        assertTrue(result.accepted, "Trino parser rejected `${report.result.sql}`: ${result.error}")
     }
 
     @Test

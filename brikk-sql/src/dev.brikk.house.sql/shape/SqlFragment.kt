@@ -96,16 +96,27 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * emitted" channel (sqlglot semantics: unsupported_level WARN collects and
      * continues). A non-empty [TranspileResult.unsupportedMessages] means the output
      * is best-effort and should be reviewed / gate-skipped.
+     *
+     * [desugarPipes]: when true and the fragment is pipe syntax ([isPipe]), the AST is
+     * desugared to standard syntax (ast/PipeDesugar.kt, on a copy) before generating.
+     * Real engines don't speak `|>` — when targeting one with a pipe-syntax fragment,
+     * pass true (or pre-desugar manually via [toStandardSql]). The default false keeps
+     * the historical behavior of rendering the pipe stages verbatim.
      */
     fun transpileTo(
         target: String,
         pretty: Boolean = false,
         trackSourceMap: Boolean = false,
+        desugarPipes: Boolean = false,
     ): TranspileResult {
         val generator = Dialects.forName(target).generator(pretty = pretty)
         // brikk-native: emit-span tracking (generator/SourceMap.kt) — off by default
         generator.trackSpans = trackSourceMap
-        val out = generator.generate(ast, copy = true)
+        // Qualified call: the boolean param shadows the imported desugarPipes function.
+        val tree =
+            if (desugarPipes && isPipe) dev.brikk.house.sql.ast.desugarPipes(ast, copy = true)
+            else ast
+        val out = generator.generate(tree, copy = true)
         return TranspileResult(
             sql = out,
             unsupportedMessages = generator.unsupportedMessages.toList(),
@@ -125,16 +136,21 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * unresolved ([Anonymous]) calls plus typed Func nodes with no dedicated renderer
      * in the target generator (the generic fallback emits their name verbatim; e.g.
      * duckdb's READ_PARQUET parses to a typed ReadParquet node everywhere but Doris has
-     * no renderer or registration for it). Names registered by the target engine
-     * (catalog hit, aliases included, case-insensitive) are cleared; grammar-shaped
+     * no renderer or registration for it). Names the target engine recognizes are
+     * cleared via [dev.brikk.house.sql.metadata.FunctionCatalog.isKnown]: registry hit
+     * (aliases included, case-insensitive) OR grammar-level builtin (e.g. Trino
+     * COALESCE — absent from SHOW FUNCTIONS but a parser special form); grammar-shaped
      * functions with dedicated renderers (CAST, EXTRACT, ...) are engine syntax and
      * never reported.
      *
      * Requires the target dialect to ship a function catalog (doris/trino/duckdb today);
      * throws [ShapeError] otherwise. If the emitted SQL cannot be re-parsed under the
      * target dialect, falls back to scanning this fragment's own AST (conservative).
+     *
+     * [desugarPipes] mirrors [transpileTo]'s flag so the checked output is the one a
+     * caller would actually ship to the engine.
      */
-    fun unmappableFunctions(target: String): List<String> {
+    fun unmappableFunctions(target: String, desugarPipes: Boolean = false): List<String> {
         val targetDialect = Dialects.forName(target)
         val catalog = targetDialect.functionCatalog ?: throw ShapeError(
             "unmappableFunctions requires a function catalog for '$target' " +
@@ -142,7 +158,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         )
         val generator = targetDialect.generator()
         val root = try {
-            targetDialect.parseOne(transpileTo(target).sql)
+            targetDialect.parseOne(transpileTo(target, desugarPipes = desugarPipes).sql)
         } catch (_: Exception) {
             ast
         }
@@ -151,11 +167,11 @@ class SqlFragment(val sql: String, val dialect: String = "") {
             when {
                 node is Anonymous -> {
                     val name = node.name
-                    if (name.isNotEmpty() && name !in catalog) out.add(name)
+                    if (name.isNotEmpty() && !catalog.isKnown(name)) out.add(name)
                 }
                 node is Func && !generator.hasDedicatedRenderer(node::class) -> {
                     val name = node.sqlNames().firstOrNull()?.uppercase() ?: continue
-                    if (name !in catalog) out.add(name)
+                    if (!catalog.isKnown(name)) out.add(name)
                 }
                 else -> {}
             }

@@ -128,13 +128,23 @@ data class TranspileReport(
  *     'g' forcing), and the ones that can't fix a case flag it through
  *     unsupportedMessages (channel 2). Unresolved ([Anonymous]) calls are always
  *     checked: their "renderer" is the verbatim passthrough, never a mitigation.
+ *
+ * [desugarPipes] is threaded to [SqlFragment.transpileTo] (and the capability check):
+ * real engines don't speak `|>`, so when certifying a pipe-syntax fragment for a real
+ * engine pass true (or pre-desugar manually via [SqlFragment.toStandardSql]).
  */
 fun SqlFragment.certify(
     target: String,
     pretty: Boolean = false,
     trackSourceMap: Boolean = false,
+    desugarPipes: Boolean = false,
 ): TranspileReport {
-    val result = transpileTo(target, pretty = pretty, trackSourceMap = trackSourceMap)
+    val result = transpileTo(
+        target,
+        pretty = pretty,
+        trackSourceMap = trackSourceMap,
+        desugarPipes = desugarPipes,
+    )
     val findings = LinkedHashSet<Finding>()
 
     // 1. Capability: unmappable functions, or no catalog to check against.
@@ -146,7 +156,7 @@ fun SqlFragment.certify(
             )
         )
     } else {
-        for (name in unmappableFunctions(target)) {
+        for (name in unmappableFunctions(target, desugarPipes = desugarPipes)) {
             findings.add(
                 Finding(
                     Severity.REFUSAL, FindingKind.UNMAPPABLE_FUNCTION, name,
@@ -206,9 +216,11 @@ fun SqlFragment.certify(
 
 /**
  * Machine-mode convenience ([TranspileMode.STRICT]): certified transpile that throws
- * [TranspileCertificationError] on any REFUSAL finding.
+ * [TranspileCertificationError] on any REFUSAL finding. [desugarPipes] as in [certify]
+ * — pass true when the fragment is pipe syntax and [target] is a real engine.
  */
-fun SqlFragment.transpileStrict(target: String): TranspileResult = certify(target).orThrow()
+fun SqlFragment.transpileStrict(target: String, desugarPipes: Boolean = false): TranspileResult =
+    certify(target, desugarPipes = desugarPipes).orThrow()
 
 private fun hazardDetail(hazard: FunctionHazard): String {
     val verdict = hazard.verdict.name.lowercase().replace('_', '-')

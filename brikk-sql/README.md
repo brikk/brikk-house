@@ -177,9 +177,12 @@ The full sqlglot semantic pipeline is ported and oracle-gated:
 - **Function catalogs + semantics** — the `brikk-sql-metadata` module (featherweight,
   ~100KB) ships each engine's registered functions with signatures where extractable,
   per-function `SemanticProfile`s (null propagation from Doris's own source; DuckDB
-  parameter names on 96% of overloads), and the probe-verified `HazardRegistry`
-  (trino↔duckdb semantic verdicts with provenance). Powers engine-exact
-  `unmappableFunctions(target)` capability checks and certification below.
+  parameter names on 96% of overloads), grammar-builtin allowlists for names the
+  engine parses at the grammar level instead of registering (Trino `COALESCE`/`CAST`/
+  `EXTRACT`, DuckDB `COALESCE`/`GROUPING` — `FunctionCatalog.isKnown`), and the
+  probe-verified `HazardRegistry` (trino↔duckdb semantic verdicts with provenance).
+  Powers engine-exact `unmappableFunctions(target)` capability checks and
+  certification below.
 
 ### Certified transpilation
 
@@ -191,6 +194,8 @@ today). Hazards mitigated by a gate-verified dedicated renderer are skipped; div
 unclear verdicts are refusals, conditionally-equivalent ones warnings. Machine mode
 ("must work or error"): `transpileStrict(target)` / `report.orThrow()`. Human mode
 ("warn me, I'll hand-edit"): read `report.findings`, ship `report.result.sql` anyway.
+Pipe-syntax fragments targeting a real engine should pass `desugarPipes = true`
+(engines don't speak `|>`; available on `transpileTo`/`certify`/`transpileStrict`).
 For full belt-and-braces, follow with a brikk-sql-verify grammar check of the output.
 
 ## Errors
@@ -210,9 +215,6 @@ there is no silent misparsing.
 - UDF typing is stubbed (`Schema.getUdfType` → UNKNOWN); function `sinceVersion`
   metadata awaits a doris-website docs source; Trino semantic profiles (null handling)
   are not exposed by `SHOW FUNCTIONS`.
-- `unmappableFunctions` has a known false positive class: grammar-level builtins
-  (e.g. Trino `COALESCE`) are absent from engine function registries — a per-engine
-  grammar-builtins allowlist is queued.
 - Hazard coverage is trino↔duckdb only today; other pairs gain entries as they get
   probe-verified evidence.
 - Platforms are temporarily narrowed to JVM while Amper KMP publishing matures (the
