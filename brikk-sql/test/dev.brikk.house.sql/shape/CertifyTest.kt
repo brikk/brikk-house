@@ -77,7 +77,7 @@ class CertifyTest {
         assertEquals("LOWER", f.subject)
         assertTrue("İ" in f.detail, f.detail)
         assertNotNull(f.provenance)
-        assertTrue("REPORT-string-unicode-audit" in f.provenance!!)
+        assertTrue("REPORT-string-unicode-audit" in f.provenance)
     }
 
     @Test
@@ -234,7 +234,7 @@ class CertifyTest {
         assertTrue("promotion" in f.detail, f.detail)
         assertTrue("datetime" in f.areas, f.areas.toString())
         assertNotNull(f.provenance)
-        assertTrue("add_files_hive_partition_cast.test:51" in f.provenance!!, f.provenance!!)
+        assertTrue("add_files_hive_partition_cast.test:51" in f.provenance, f.provenance)
     }
 
     @Test

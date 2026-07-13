@@ -711,7 +711,9 @@ open class ClickhouseGenerator(
         return when {
             base is Literal && !base.isString && base.name == "10" -> func("log10", value)
             base is Literal && !base.isString && base.name == "2" -> func("log2", value)
-            else -> "${func("log", value)} / ${func("log", base)}"
+            // Change-of-base via natural log = log_b(value); parenthesized so it stays
+            // atomic inside a larger expression.
+            else -> "(${func("log", value)} / ${func("log", base)})"
         }
     }
 
@@ -900,6 +902,19 @@ open class ClickhouseGenerator(
             // BUGS-clickhouse-generator-mappings row 11 (P2): the leaked internal node name
             // TIME_TO_UNIX does not exist in ClickHouse. toUnixTimestamp is the real name.
             reg(TimeToUnix::class) { e -> func("toUnixTimestamp", e.thisArg) }
+            // TODO(clickhouse-bugs): DEFERRED rows from BUGS-clickhouse-generator-mappings,
+            // to be done WITH the live ClickHouse verifier (they need live-edge evidence a
+            // static port can't safely synthesize) — each is still gated by a divergent
+            // hazard:
+            //   row 2  round  : banker's vs half-away; needs a shim that also threads the
+            //                    `decimals` arg (float-precision-sensitive) — verify live.
+            //   row 6  millisecond : Anonymous; rewrite to (toSecond*1000 + toMillisecond)
+            //                    (BUGS-verified formula) — confirm edges, then reconcile.
+            //   row 7  bin    : Anonymous; strip ClickHouse's byte zero-padding.
+            //   row 8  to_days: the ToDays node is source-ambiguous (DuckDB interval-builder
+            //                    vs MySQL day-number) — fix belongs in the DuckDB PARSER,
+            //                    not here, so a target rewrite isn't safe for all sources.
+            //   row 14 age    : Anonymous; reconstruct ClickHouse age('unit', start, end).
             reg(ArrayDistinct::class) { e -> ch().renameFuncSql("arrayDistinct", e) }
             reg(ArrayConcat::class) { e -> ch().renameFuncSql("arrayConcat", e) }
             reg(ArrayContains::class) { e -> ch().renameFuncSql("has", e) }
