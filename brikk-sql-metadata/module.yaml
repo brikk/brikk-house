@@ -5,9 +5,16 @@ product:
   # supports KMP. See publish.module-template.yaml.
   platforms: [ jvm ]
 
+# TODO(review): used verbatim as the published POM <description> (required by Maven Central).
+description: SQL dialect metadata for brikk-sql — per-engine function and type catalogs.
+
 apply:
   - ../publish.module-template.yaml
 
 settings:
+  publishing:
+    # Explicit artifactId is required by Maven Central publishing (toolchain 0.11); equals the
+    # default (module name). Published JVM coordinate: dev.brikk.house:brikk-sql-metadata-jvm.
+    artifactId: brikk-sql-metadata
   kotlin:
     serialization: json

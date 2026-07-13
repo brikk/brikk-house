@@ -1,0 +1,70 @@
+name: Release to Maven Central
+
+# Push a branch named release/<version> (e.g. release/0.1.0) to publish that exact release
+# version of all modules to Maven Central. The version is the branch-name suffix after
+# "release/". Central defaults to "manual" mode, so this uploads + validates the deployment
+# bundles, then waits for you to release them at https://central.sonatype.com/publishing/deployments
+#
+# A manual run (workflow_dispatch) with an explicit version input is also supported.
+
+on:
+  push:
+    branches: [ 'release/**' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 0.1.0)'
+        required: true
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: ver
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#release/}"
+          fi
+          if [ -z "$VERSION" ] || [ "$VERSION" = "$GITHUB_REF_NAME" ]; then
+            echo "::error::Could not derive a version from ref '$GITHUB_REF_NAME'. Use a branch named release/<version> or the workflow_dispatch input."
+            exit 1
+          fi
+          case "$VERSION" in
+            *-SNAPSHOT) echo "::error::Release version must not be a SNAPSHOT ($VERSION)."; exit 1 ;;
+          esac
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION"
+
+      # The build config references .env as the credentials file for the brikkPublic and
+      # centralSnapshots repos, so the model won't load unless it exists with those keys.
+      # (The mavenCentral release path itself authenticates via the KOTLIN_TOOLCHAIN_* env vars.)
+      - name: Write .env credentials
+        run: |
+          umask 077
+          cat > .env <<EOF
+          brikk.gpr.user=${{ github.actor }}
+          brikk.gpr.key=${{ secrets.GITHUB_TOKEN }}
+          brikk.mavencentral.user=${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
+          brikk.mavencentral.pass=${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
+          EOF
+
+      - name: Publish release to Maven Central
+        env:
+          KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME: ${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
+          KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD: ${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
+          KOTLIN_TOOLCHAIN_SIGNING_KEY: ${{ secrets.KOTLIN_TOOLCHAIN_SIGNING_KEY }}
+          # Org secret is KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE; the toolchain reads *_SIGNING_KEY_PASSPHRASE.
+          KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE: ${{ secrets.KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE }}
+        run: ./publish-release.sh "${{ steps.ver.outputs.version }}"

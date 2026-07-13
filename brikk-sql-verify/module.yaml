@@ -2,6 +2,9 @@
 # JVM-only: engine parsers (trino-parser, duckdb_jdbc, vendored Doris FE parser) are JVM artifacts.
 product: jvm/lib
 
+# TODO(review): used verbatim as the published POM <description> (required by Maven Central).
+description: Native-grammar SQL verification oracles (Trino, DuckDB, Doris) for brikk-sql.
+
 apply:
   - ../publish.module-template.yaml
 
@@ -31,6 +34,10 @@ test-dependencies:
   - ../brikk-sql
 
 settings:
+  publishing:
+    # Explicit artifactId is required by Maven Central publishing (toolchain 0.11); equals the
+    # default (module name). Published coordinate: dev.brikk.house:brikk-sql-verify.
+    artifactId: brikk-sql-verify
   jvm:
     jdk:
       version: 25

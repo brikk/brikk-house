@@ -1,0 +1,46 @@
+name: Publish Snapshot
+
+# Every push to main publishes the current -SNAPSHOT of all modules to the Central Portal
+# snapshots repo. Publishing builds the modules first, so a broken build blocks the publish.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: snapshot
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify template version is a -SNAPSHOT
+        run: |
+          V=$(grep -E '^[[:space:]]*version:' publish.module-template.yaml | head -1 | sed 's/.*version:[[:space:]]*//')
+          echo "Template version: $V"
+          case "$V" in
+            *-SNAPSHOT) : ;;
+            *) echo "::error::Template version '$V' is not a -SNAPSHOT; refusing to publish to the snapshots repo."; exit 1 ;;
+          esac
+
+      # The build config references .env as the credentials file for the brikkPublic and
+      # centralSnapshots repos, so the model won't load unless it exists with those keys.
+      - name: Write .env credentials
+        run: |
+          umask 077
+          cat > .env <<EOF
+          brikk.gpr.user=${{ github.actor }}
+          brikk.gpr.key=${{ secrets.GITHUB_TOKEN }}
+          brikk.mavencentral.user=${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
+          brikk.mavencentral.pass=${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
+          EOF
+
+      - name: Publish snapshot to Central snapshots
+        run: ./kotlin publish centralSnapshots
