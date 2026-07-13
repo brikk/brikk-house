@@ -151,11 +151,11 @@ data class TranspileReport(
  *  4. Semantic hazards: every function call in the SOURCE ast is looked up in
  *     [HazardRegistry] under a MULTI-KEY key set (see [functionHazardKeys]) so a
  *     translated (cross-name) function matches its verdict regardless of which surface
- *     name the entry is filed under. DIVERGENT and UNCLEAR verdicts are REFUSALs,
- *     CONDITIONALLY_EQUIVALENT is a WARNING (result-identical under common conditions —
- *     permissive consumers proceed, strict consumers read the findings); IDENTICAL /
- *     NO_EQUIVALENT produce nothing here (NO_EQUIVALENT surfaces through 1/2 when it
- *     matters). When several keys hit, the WORST verdict wins (conservative).
+ *     name the entry is filed under. CONDITIONALLY_EQUIVALENT is a WARNING (result-
+ *     identical under common conditions — permissive consumers proceed, strict consumers
+ *     read the findings); DIVERGENT/UNCLEAR split on the target renderer (see B below);
+ *     IDENTICAL / NO_EQUIVALENT produce nothing here (NO_EQUIVALENT surfaces through 1/2
+ *     when it matters). When several keys hit, the WORST verdict wins (conservative).
  *
  *     KEY SET (A — multi-key lookup): a function node is known by more than the name it
  *     PARSED under, so all of these are tried against the (source→target) map:
@@ -166,17 +166,23 @@ data class TranspileReport(
  *     Any hit counts. This is a strict improvement: it can only ADD true matches (a name
  *     the node genuinely carries for this pair), never introduce a false one.
  *
- *     VERDICT DRIVES THE DECISION (B): the old rule SKIPPED the hazard whenever the
- *     target generator had a dedicated renderer for the node — but for a TRANSLATED
- *     function that renderer is exactly what can be wrong (the doris P1 bugs shipped
- *     wrong SQL with ok=true for precisely this reason). The renderer no longer
- *     blanket-clears a hazard. Trust lives in the DATA instead: a probe-verified
- *     IDENTICAL entry is safe (produces nothing); a DIVERGENT/UNCLEAR entry is unsafe
- *     and REFUSES whether or not a dedicated renderer exists. The gate-verified fixes
- *     that formerly relied on the renderer-skip (trino->duckdb concat->||, etc.) are now
- *     recorded as IDENTICAL entries for the mapping the generator actually emits, so
- *     they clear through the data, not through blanket renderer trust. Callers that
- *     can't fix a case still flag it through unsupportedMessages (channel 2).
+ *     VERDICT + RENDERER DRIVE THE DECISION (B — policy #2, middle-ground, 2026-07-13):
+ *     the ORIGINAL rule SKIPPED the hazard whenever the target generator had a dedicated
+ *     renderer — but for a TRANSLATED function that renderer is exactly what can be wrong
+ *     (the doris P1 bugs shipped wrong SQL with ok=true for precisely this reason). The
+ *     A+B rewrite made the renderer irrelevant (DIVERGENT/UNCLEAR always REFUSED), which
+ *     over-refused ~104 translated functions. Policy #2 softens that:
+ *       - DIVERGENT/UNCLEAR + the target generator HAS a dedicated renderer for the node
+ *         (a real translation) -> WARNING: the translated function is surfaced but non-
+ *         blocking. A false ok=true is no longer SILENT — the finding is visible and the
+ *         consumer owns the residual risk (okAccepting/hand-edit).
+ *       - DIVERGENT/UNCLEAR + NO dedicated renderer (same-name passthrough, or an
+ *         unresolved Anonymous call) -> REFUSAL: genuinely unsafe, no translation exists.
+ *     Trust still lives in the DATA for the safe verdicts: a probe-verified IDENTICAL
+ *     entry produces nothing. The gate-verified fixes recorded as IDENTICAL entries
+ *     (trino->duckdb concat->||, etc.) clear through the data. Callers that can't fix a
+ *     WARNING case still escalate via unsupportedMessages (channel 2, a REFUSAL).
+ *     See the TODO(certify-policy) at the decision site for the parked alternatives.
  *
  * [desugarPipes] is threaded to [SqlFragment.transpileTo] (and the capability check):
  * real engines don't speak `|>`, so when certifying a pipe-syntax fragment for a real
@@ -233,6 +239,7 @@ fun SqlFragment.certify(
     }
 
     // 4. Probe-verified semantic hazards (multi-key, verdict-driven — see file header).
+    val targetGenerator = Dialects.forName(target).generator()
     for (node in ast.walk(bfs = false)) {
         if (node !is Func) continue
         val keys = functionHazardKeys(node, target)
@@ -249,10 +256,27 @@ fun SqlFragment.certify(
             }
         }
         if (hazard == null) continue
-        // Verdict drives the decision (B): a dedicated renderer no longer clears the
-        // hazard — trust lives in the DATA (IDENTICAL = probe-verified safe).
+        // Policy #2 (dedicated-renderer refinement of the verdict-driven rule B):
+        // whether the TARGET generator has a dedicated renderer for this node (a real
+        // translation) vs. a same-name passthrough decides the SEVERITY of a
+        // DIVERGENT/UNCLEAR verdict — see the severity `when` below. Unresolved
+        // Anonymous/AnonymousAggFunc calls have no dedicated renderer by construction:
+        // their "renderer" is the verbatim passthrough, so they can never be mitigated.
+        val hasDedicatedRenderer = node !is Anonymous && node !is AnonymousAggFunc &&
+            targetGenerator.hasDedicatedRenderer(node::class)
+        // TODO(certify-policy): revisit — options #1 (conservative: DIVERGENT always
+        // REFUSAL) vs #3 (target-name refinement; needs clean src->tgt fn-name pairs in
+        // the probe deliverables, not prose). Owner parked on #2 middle-ground 2026-07-13.
+        // Verdict + renderer drive the decision (policy #2): a DIVERGENT/UNCLEAR verdict
+        // with a dedicated target renderer is a TRANSLATED function — surfaced as a
+        // non-blocking WARNING (the false ok=true is no longer silent; the consumer owns
+        // the risk via okAccepting/hand-edit). A DIVERGENT/UNCLEAR verdict with NO
+        // dedicated renderer is a same-name passthrough with no translation — genuinely
+        // unsafe, so REFUSAL. CONDITIONALLY_EQUIVALENT is a WARNING; IDENTICAL/
+        // NO_EQUIVALENT produce nothing (trust lives in the DATA).
         val severity = when (hazard.verdict) {
-            HazardVerdict.DIVERGENT, HazardVerdict.UNCLEAR -> Severity.REFUSAL
+            HazardVerdict.DIVERGENT, HazardVerdict.UNCLEAR ->
+                if (hasDedicatedRenderer) Severity.WARNING else Severity.REFUSAL
             HazardVerdict.CONDITIONALLY_EQUIVALENT -> Severity.WARNING
             HazardVerdict.IDENTICAL, HazardVerdict.NO_EQUIVALENT -> continue
         }

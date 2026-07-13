@@ -1,13 +1,23 @@
-# REPORT-AND-HOLD: certify SEMANTIC_HAZARD hole closed (2026-07-13)
+# REPORT: certify SEMANTIC_HAZARD hole closed (A+B) + policy #2 refinement (2026-07-13)
 
 Worktree `sql-focus`. This report accompanies the mechanism fix in
 `brikk-sql/src/dev.brikk.house.sql/shape/Certify.kt` that closed the structural hole in
 the certification `SEMANTIC_HAZARD` channel (the same hole proven by the doris P1 bug
-fixes — see `BUGS-doris-generator-mappings-2026-07-13.md`). It exists because the
-reconciliation set is **LARGE** (104 distinct newly-refusing entries) and largely
-requires live-FE probe evidence to adjudicate per-entry; per the task's honesty
-discipline the mechanism is shipped, the tree is GREEN and HONEST, and the full
-enumeration is handed to the owner rather than force per-entry verdict flips.
+fixes — see `BUGS-doris-generator-mappings-2026-07-13.md`).
+
+**UPDATE (policy #2, 2026-07-13, owner decision).** The original A+B rewrite refused
+**every** DIVERGENT/UNCLEAR hazard (104 distinct newly-refusing entries) regardless of
+whether the target had a real translation — deliberately over-conservative, held for
+owner review. The owner has since parked on the **middle-ground policy #2**: a
+DIVERGENT/UNCLEAR verdict whose target generator has a **dedicated renderer** (i.e. a
+genuine translation of the node, not a same-name passthrough) is downgraded from REFUSAL
+to a **non-blocking WARNING** — the divergence is still surfaced (no silent `ok=true`),
+but the consumer owns the residual risk via `okAccepting`/hand-edit. A DIVERGENT/UNCLEAR
+verdict with NO dedicated renderer (same-name passthrough or an unresolved `Anonymous`
+call) stays a REFUSAL — genuinely unsafe, no translation exists. §2 below is re-scored
+against this policy: of the 104, **91 are now WARNINGs and 13 remain REFUSALs**. See the
+`TODO(certify-policy)` at the decision site for the parked alternatives (#1 conservative
+/ #3 target-name refinement).
 
 ## 1. What changed (mechanism)
 
@@ -30,20 +40,30 @@ that could match a same-name entry. This is a strict improvement: it only ADDS t
 matches, never a false one. Implemented as `functionHazardKeys` + `leadingCallName` in
 `Certify.kt`.
 
-**B — verdict drives the decision; the dedicated renderer no longer blanket-skips.** The
-old rule SKIPPED a hazard whenever the target generator had a dedicated renderer for the
+**B — verdict + renderer drive the decision (policy #2, middle-ground).** The ORIGINAL
+rule SKIPPED a hazard whenever the target generator had a dedicated renderer for the
 node's class. For a TRANSLATED function that renderer is exactly what can be wrong (the 6
-doris P1 bugs shipped wrong SQL with `ok=true` for precisely this reason). The new logic:
+doris P1 bugs shipped wrong SQL with `ok=true` for precisely this reason). The A+B
+rewrite made the renderer irrelevant (DIVERGENT/UNCLEAR always REFUSED). Policy #2 keeps
+the renderer's blanket-clear removed but reintroduces it as a WARNING-vs-REFUSAL
+discriminator:
 
-- **DIVERGENT / UNCLEAR → REFUSAL, even if a dedicated renderer exists.**
+- **DIVERGENT / UNCLEAR + target HAS a dedicated renderer for the node → WARNING.** The
+  node is a genuine translation (a dispatch entry / dialect transform); the divergence is
+  surfaced non-blockingly, `ok` stays true, and the consumer owns the risk
+  (`okAccepting`/hand-edit). A false `ok=true` is no longer SILENT.
+- **DIVERGENT / UNCLEAR + NO dedicated renderer (same-name passthrough, or an unresolved
+  `Anonymous`/`AnonymousAggFunc` call) → REFUSAL.** Genuinely unsafe: no translation
+  exists, the source name reaches the target verbatim.
 - **CONDITIONALLY_EQUIVALENT → WARNING** (unchanged).
 - **IDENTICAL / NO_EQUIVALENT / absent → no SEMANTIC_HAZARD finding** (NO_EQUIVALENT
   still surfaces via the unmappable/unsupported channels; absent = no evidence = no
   finding, same as before).
 
-Trust now lives in the DATA: an `identical` entry is probe-verified safe; a `divergent`
-one is unsafe regardless of whether we have a renderer. Renderers that can't fix a case
-still refuse through `unsupportedMessages` (channel 2), which composes on top.
+Trust for the SAFE verdicts still lives in the DATA: an `identical` entry is probe-
+verified safe (produces nothing). Renderers that can't fix a WARNING case still escalate
+through `unsupportedMessages` (channel 2, a REFUSAL), which composes on top — e.g.
+`greatest`/`least` CASE-wrap emits a NULL-skipping flag that refuses independently.
 
 **Target-name refinement: NOT implemented — not data-supported.** The task offered a
 refinement (definitively safe when a dedicated renderer's emitted target name matches an
@@ -58,13 +78,32 @@ else verdict-only is fine") the shipped logic is **verdict-only**. Enabling the
 refinement later would auto-reconcile a large fraction of the HELD set below (every
 cross-name mapping that has a matching `identical` sibling entry, e.g. `concat -> ||`).
 
-## 2. Newly-refused enumeration
+## 2. Enumeration + policy-#2 severity re-scoring
 
-**104 distinct (pair, source-name) entries** newly refuse under A+B (probed across the
+**104 distinct (pair, source-name) entries** were flagged by A+B (probed across the
 three wired corpora — trino↔duckdb, trino↔doris, duckdb↔doris — by rendering each
 DIVERGENT/UNCLEAR entry's bare-identifier source-surface name at arities 1–3 through the
-real generator and diffing certify's SEMANTIC_HAZARD refusal against the old
-parsed-name-only + renderer-skip logic). Category split:
+real generator and diffing certify's SEMANTIC_HAZARD finding against the old
+parsed-name-only + renderer-skip logic).
+
+**Policy-#2 re-scoring of the 104 (measured, `certify` over `SELECT name(c0..)`):**
+
+- **91 → WARNING** (target has a dedicated renderer — a genuine translation). This is the
+  bulk: every `rewrite` row (`concat -> ||`, `greatest`/`least` CASE-wrap, `ltrim`/`rtrim
+  -> TRIM(... FROM ...)`, `date_add -> + INTERVAL`), every `same-name` row that routes
+  through a dedicated renderer, and the cross-name rows that map onto a node WITH a
+  dedicated target renderer (`length -> CHAR_LENGTH`, `strftime -> DATE_FORMAT`, `log10 ->
+  LOG(10,x)`, `from_iso8601_timestamp_nanos -> CAST(... DATETIME(6))`, ...).
+- **13 → REFUSAL** (no dedicated renderer — the canonical node falls back to a same-name
+  passthrough whose name merely differs from the source surface name). These stay
+  genuinely unsafe:
+  `doris->trino bit_count`, `duckdb->trino list_max`, `duckdb->trino list_min`,
+  `duckdb->trino quantile_cont`, `duckdb->trino quantile_disc`, `trino->doris contains`,
+  `trino->doris from_hex`, `trino->doris to_hex`, `trino->duckdb approx_percentile`,
+  `trino->duckdb array_join`, `trino->duckdb max_by`, `trino->duckdb min_by`,
+  `trino->duckdb slice`.
+
+Category split (unchanged — the A+B detection categories):
 
 - **same-name (39):** the source name reaches the target unchanged (or wrapped) and the
   entry is a same-name divergent verdict the old renderer-skip masked. Mostly GENUINE
@@ -77,22 +116,30 @@ parsed-name-only + renderer-skip logic). Category split:
   `list_min -> ARRAY_MIN`, `array_join -> ARRAY_TO_STRING`, `strftime -> DATE_FORMAT`, ...).
   Recovered by the multi-key lookup; adjudication needs per-mapping probe evidence.
 
-### Split by verdict-adjudication status
+### Split by adjudication status (under policy #2)
 
-- **Real divergence — correctly refused, leave refused (hole closed):** the vast majority.
-  These are what the old channel silently shipped. Two are pinned as regression tests now
-  (see §4): `greatest` (duckdb→trino, NULL algebra) and `from_iso8601_timestamp_nanos`
-  (trino→doris, LOSSY nanosecond drop). Catalogued in
-  `BUGS-certify-newly-caught-2026-07-13.md`.
-- **Stale false-refusal — reconciled this task:** 0 (see §3; none reconciled — held instead).
-- **Held for owner review:** all 104, pending per-entry live-FE probe adjudication and/or
-  the target-name refinement. NO verdicts were flipped. The likely false-refusals are the
-  `rewrite`/`cross-name` rows that have a matching `identical` sibling entry in the JSON
-  (canonically `concat -> || operator`, which the task itself calls out); these should
-  clear either by the target-name refinement or by a per-direction probe confirming the
-  emitted form is result-identical.
+- **WARNING, surfaced-not-blocking (91):** translated functions whose divergence is real
+  but whose target renderer means the consumer sees the finding and decides. This is the
+  policy-#2 middle ground — no silent `ok=true`, no blanket refusal. Two are pinned as
+  regression tests now (see §4): `greatest` (duckdb→trino, NULL algebra — WARNING hazard
+  PLUS an independent UNSUPPORTED_TRANSLATION refusal) and `from_iso8601_timestamp_nanos`
+  (trino→doris, LOSSY nanosecond drop — now a WARNING, consumer owns the precision risk).
+  Catalogued in `BUGS-certify-newly-caught-2026-07-13.md`.
+- **REFUSAL, genuinely unsafe (13):** same-name passthrough (no translation) — listed
+  above. `list_min`/`list_max` (duckdb→trino) is pinned as a regression test.
+- **Stale false-refusal — reconciled this task:** 0. NO verdicts were flipped and no
+  registry data was edited (registry counts unchanged, §3). The likely still-too-strict
+  cases are the `rewrite`/`cross-name` WARNINGs that have a matching `identical` sibling
+  entry in the JSON (canonically `concat -> || operator`); under policy #2 they are now
+  non-blocking WARNINGs rather than refusals, so the coverage cost is gone — a later
+  target-name refinement (option #3) or a per-direction live probe could clear the WARNING
+  entirely by confirming the emitted form is result-identical.
 
 ### Full list (pair | source name | verdict | category | representative emitted SQL)
+
+> Policy-#2 severity: every row below is a non-blocking **WARNING** EXCEPT the 13
+> same-name-passthrough entries listed in the re-scoring above, which remain **REFUSAL**.
+> The `verdict`/`category` columns are the faithful A+B detection data (unchanged).
 
 | pair | source | verdict | category | emitted (arity 3 sample) |
 |------|--------|---------|----------|--------------------------|
@@ -222,21 +269,29 @@ The generator itself was NOT touched (no mapping fixes in this task — catalogi
 
 ## 4. Tree state
 
-GREEN and HONEST. Certify-consuming tests were updated to assert the TRUE new behavior
-(not to suppress it):
+GREEN and HONEST. Certify-consuming tests assert the TRUE policy-#2 behavior (not to
+suppress it):
 
-- `CertifyTest.dedicatedRendererNoLongerBlanketTrusted` (was
-  `dedicatedRendererMitigatesTheHazard`): `concat` trino→duckdb now REFUSES; annotated
-  HELD-FOR-REVIEW (likely stale false-refusal — a probe-verified `concat -> || operator`
-  IDENTICAL sibling entry exists).
-- `CertifyTest.divergentHazardRefusesEvenWithDedicatedRendererAndGeneratorFlag` (was
-  `mitigatedHazardStillRefusedWhenGeneratorFlagsIt`): `greatest` duckdb→trino now fires
-  BOTH the SEMANTIC_HAZARD refusal and the UNSUPPORTED_TRANSLATION flag — a genuine NULL
-  divergence, correctly surfaced.
+- `CertifyTest.dedicatedRendererDivergentIsWarningNotRefusal` (was
+  `dedicatedRendererNoLongerBlanketTrusted`): `concat` trino→duckdb renders to `a || b`
+  via the dedicated Concat renderer, so its DIVERGENT verdict is now a non-blocking
+  WARNING (`ok` stays true). A visible finding, not a refusal — likely still-too-strict
+  for this direction (an IDENTICAL `concat -> || operator` sibling exists), left as a
+  WARNING pending owner review.
+- `CertifyTest.divergentTranslatedHazardWarnsButGeneratorFlagStillRefuses` (was
+  `divergentHazardRefusesEvenWithDedicatedRendererAndGeneratorFlag`): `greatest`
+  duckdb→trino — the SEMANTIC_HAZARD is now a WARNING (dedicated CASE-wrap renderer), but
+  the report is still not-ok because the renderer independently emits an
+  UNSUPPORTED_TRANSLATION REFUSAL for the NULL-skipping case (channel 2 composes on top).
+- `CertifyTest.multiKeyLookupHitsSourceSurfaceName`: `list_min` duckdb→trino stays a
+  REFUSAL — `ARRAY_MIN` is a same-name passthrough (no dedicated trino renderer), one of
+  the 13 genuinely-unsafe cross-name entries.
 - `DorisGeneratorMappingBugsTest.p3_fromIso8601TimestampNanos_datetime6`: the lossy
-  nanosecond cast now correctly REFUSES (a KNOWN-lossy mapping must not certify clean).
+  nanosecond cast is now a non-blocking WARNING (translated via a dedicated Cast
+  renderer; `ok` true) — the lossy mapping is surfaced, the consumer owns the precision
+  risk. (Under the conservative option #1 this would remain a REFUSAL.)
 
-New pinning unit tests: `multiKeyLookupHitsSourceSurfaceName`, `identicalMappingStaysOk`,
+Other pinning unit tests unchanged: `identicalMappingStaysOk`,
 `conditionallyEquivalentStaysWarningUnderMultiKey`, `okAcceptingStillWorksOverNewFindings`.
 
-Counts: 458 brikk-sql JVM, 36 brikk-sql-metadata, 37 brikk-sql-verify — all green.
+Counts: 459 brikk-sql JVM, 37 brikk-sql-metadata, 37 brikk-sql-verify — all green.

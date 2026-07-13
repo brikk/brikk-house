@@ -81,38 +81,44 @@ class CertifyTest {
     }
 
     @Test
-    fun dedicatedRendererNoLongerBlanketTrusted() {
-        // BEHAVIOR CHANGE (verdict-driven certify): a dedicated renderer no longer
-        // blanket-clears a hazard. 'concat' is probe-verified DIVERGENT (NULL algebra)
-        // and — even though trino->duckdb rewrites to `a || b` via the dedicated Concat
-        // renderer — the divergent verdict now REFUSES. The multi-key lookup hits the
-        // source-surface name CONCAT. (The || mapping has a SEPARATE probe-verified
-        // IDENTICAL entry `concat -> || operator`, so this is very likely a stale
-        // false-refusal for this direction; it is HELD FOR OWNER REVIEW, not flipped —
+    fun dedicatedRendererDivergentIsWarningNotRefusal() {
+        // BEHAVIOR CHANGE (certify policy #2, 2026-07-13): a dedicated renderer no longer
+        // blanket-CLEARS a hazard, but it does downgrade a DIVERGENT/UNCLEAR verdict from
+        // REFUSAL to a non-blocking WARNING. 'concat' is probe-verified DIVERGENT (NULL
+        // algebra); trino->duckdb rewrites to `a || b` via the dedicated Concat renderer,
+        // so it is a TRANSLATED function -> WARNING, ok stays true (the divergence is
+        // surfaced, not silent; the consumer owns the risk). The multi-key lookup still
+        // hits the source-surface name CONCAT. (The || mapping also has a SEPARATE probe-
+        // verified IDENTICAL entry `concat -> || operator`, so this is very likely a stale
+        // finding for this direction; it stays a visible WARNING pending owner review —
         // see docs/research/REPORT-certify-hazard-hole-closed-2026-07-13.md.)
         val fwd = report("SELECT concat(a, b) FROM t", "trino", "duckdb")
         assertEquals("SELECT a || b FROM t", fwd.result.sql)
-        assertTrue(!fwd.ok)
+        assertTrue(fwd.ok)
         val f = fwd.findings.single()
         assertEquals(FindingKind.SEMANTIC_HAZARD, f.kind)
+        assertEquals(Severity.WARNING, f.severity)
         assertEquals("CONCAT", f.subject)
         assertTrue(f.detail.startsWith("divergent:"), f.detail)
     }
 
     @Test
-    fun divergentHazardRefusesEvenWithDedicatedRendererAndGeneratorFlag() {
+    fun divergentTranslatedHazardWarnsButGeneratorFlagStillRefuses() {
         // duckdb->trino GREATEST: probe-verified DIVERGENT (Trino returns NULL if any
-        // arg is NULL; DuckDB skips NULLs). Previously the dedicated renderer skipped the
-        // SEMANTIC_HAZARD channel and only the renderer's own UNSUPPORTED_TRANSLATION
-        // flag refused. Under verdict-driven certify BOTH now fire — the hazard is a
-        // GENUINE divergence (NULL algebra), so surfacing it is correct, not a false
-        // refusal. Report stays not-ok either way.
+        // arg is NULL; DuckDB skips NULLs). Trino HAS a dedicated renderer for the node
+        // (the CASE-wrap translation), so under certify policy #2 the SEMANTIC_HAZARD is
+        // a non-blocking WARNING (translated function, consumer owns the residual risk).
+        // The report is still NOT ok, but for an INDEPENDENT reason: the renderer itself
+        // emits an UNSUPPORTED_TRANSLATION flag (channel 2, always a REFUSAL) for the
+        // NULL-skipping case it cannot fully translate. Two findings, one WARNING + one
+        // REFUSAL; ok is false because of the latter.
         val r = report("SELECT greatest(a, b) FROM t", "duckdb", "trino")
         assertTrue(!r.ok)
         val hazard = r.findings.single { it.kind == FindingKind.SEMANTIC_HAZARD }
-        assertEquals(Severity.REFUSAL, hazard.severity)
+        assertEquals(Severity.WARNING, hazard.severity)
         assertTrue("NULL" in hazard.detail, hazard.detail)
         val flagged = r.findings.single { it.kind == FindingKind.UNSUPPORTED_TRANSLATION }
+        assertEquals(Severity.REFUSAL, flagged.severity)
         assertTrue("NULL-skipping" in flagged.detail, flagged.detail)
     }
 
