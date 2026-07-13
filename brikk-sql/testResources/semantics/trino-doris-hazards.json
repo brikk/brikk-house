@@ -1539,6 +1539,36 @@
         "map"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "json_extract",
+      "doris": "json_extract",
+      "verdict": "identical",
+      "hazard": "Doris live == DuckDB live (json_extract('{\"a\":\"x\"}','$.a')='\"x\"' with QUOTES retained; $.b='[10,20]'; $.b[0]='10'; nested $.c.d='\"x\"'; missing path NULL). Prior corpus (trino-duckdb-hazards.json) records Trino json_extract == DuckDB json_extract (conditionally-equivalent, both return a JSON value with quotes retained). Chaining: Trino==DuckDB==Doris live -> identical. Trino json_extract_scalar (unquoted) maps to Doris json_extract_string. Doris live; Trino from prior evidence.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "trino": "json_parse",
+      "doris": "json_parse",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Doris json_parse probe-verified live: json_parse('[1,2,3]')='[1,2,3]' and json_parse('{\"a\":1}')='{\"a\":1}' (VARCHAR text -> JSON value), matching Trino json_parse's happy-path role. DIVERGENCE in error handling: Trino json_parse THROWS on malformed input; Doris json_parse('not json')='null' (returns JSON null silently, does NOT error). Value-equivalent on valid JSON, differs on invalid input (Doris swallows the error). Doris live; Trino from prior evidence.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+  {
+    "trino": "json_format",
+    "doris": "json_format",
+      "verdict": "no-equivalent",
+      "hazard": "Trino json_format(JSON)->VARCHAR (serialize a JSON value to its text form). No Doris function by that name (DuckDB also lacks it — prior corpus marks Trino json_format as no-equivalent). Doris achieves the same via CAST(json AS string) / to-string rendering, but there is no named json_format built-in. Prior corpus: no-equivalent. Doris live inventory checked; Trino from prior evidence.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
     }
   ]
 }

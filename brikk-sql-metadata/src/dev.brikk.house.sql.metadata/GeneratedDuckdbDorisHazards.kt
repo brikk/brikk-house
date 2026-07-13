@@ -9,11 +9,12 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 152 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
+/** The 162 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
 internal val DUCKDB_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
-    hazardsChunk3()
+    hazardsChunk3() +
+    hazardsChunk4()
 
 private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     // [0] duckdb: 'lower' | doris: 'lower'
@@ -758,9 +759,62 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         hazard = "Probe-verified live: this is the 3-D VECTOR cross product, NOT a cartesian product — array_cross_product([1,2,3],[4,5,6]) = [-3,6,-3] element-wise SAME on both (e1=-3,e2=6,e3=-3, size=3). Same fn name works on both engines.",
         areas = listOf("array", "numeric"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [152] duckdb: 'json_extract' | doris: 'json_extract'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Probe-verified live element-by-element: json_extract('{...}', '\$.a')='1', \$.b='[10,20]', \$.b[0]='10', \$.c.d='\"x\"' (nested), missing path \$.z=NULL — Doris matches DuckDB exactly on every node. BOTH return a JSON value with QUOTES RETAINED on strings (json_extract('{\"a\":\"x\"}','\$.a')='\"x\"' on both). JSONPath dialect (\$.a, \$.b[0], \$.c.d) parses identically. Use json_extract_string to strip quotes.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [153] duckdb: 'json_extract_string' | doris: 'json_extract_string'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Probe-verified live: json_extract_string('{\"a\":\"x\"}','\$.a')='x' (UNQUOTED) both; numeric scalar \$.a='1' both; nested \$.c.d='x' both; missing path \$.z=NULL both. DuckDB json_extract_string maps 1:1 to Doris json_extract_string (the unquoting counterpart of json_extract). Doris get_json_string is a live synonym.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [154] duckdb: 'json_array' | doris: 'json_array'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "json_array(1,2,3)='[1,2,3]' rendered identically on both (compact, no spaces).",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [155] duckdb: 'json_object' | doris: 'json_object'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "json_object('k',1,'m',2)='{\"k\":1,\"m\":2}' rendered identically on both (key-insertion order preserved, compact).",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [156] duckdb: 'json_quote' | doris: 'json_quote'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "json_quote('x')='\"x\"' and json_quote('hello')='\"hello\"' both — wraps a string as a JSON string literal (adds double quotes) identically.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [157] duckdb: 'json_contains' | doris: 'json_contains'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Probe-verified live: SAME boolean truth on both — json_contains('[1,2,3]','2')=true(DuckDB)/1(Doris); json_contains('{\"a\":1}','5')=false/0. Value-equivalent membership test; the only divergence is BOOLEAN RENDERING: DuckDB emits true/false, Doris emits 1/0 (type mapping). Note arg-2 candidate is a JSON-text scalar on both.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [158] duckdb: 'json_valid' | doris: 'json_valid'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "REAL SEMANTIC DIVERGENCE probe-verified live: json_valid('not json') — DuckDB=false; Doris=1 (TRUE!). Doris json_valid('not json')=1 does NOT validate as strict JSON the way DuckDB does — it returns true for the invalid input. Well-formed input json_valid('{...}') is true(DuckDB)/1(Doris) as expected, but the whole point of json_valid (detecting invalid JSON) DIVERGES: Doris fails to flag 'not json' as invalid. Divergent — do not rely on Doris json_valid to reject malformed input.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [159] duckdb: 'json_keys' | doris: 'json_keys'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Probe-verified live: same key SET/order on both for json_keys('{\"a\":1,\"b\":[..],\"c\":{..}}') = a,b,c. Divergence is RENDERING of the returned array: DuckDB getString -> '[a, b, c]' (unquoted elements); Doris -> '[\"a\", \"b\", \"c\"]' (JSON-quoted elements). Same logical keys, different string form — element-wise equivalent, cast/parse required.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
 )
 
-/** duckdb->doris lookup: 152 keys (DuckDB-side names) over 152 entries. */
+private fun hazardsChunk4(): List<FunctionHazard> = listOf(
+    // [160] duckdb: 'json_type' | doris: 'json_type'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "TWO independent divergences probe-verified live. (1) VOCABULARY: DuckDB json_type returns storage-typed tokens — OBJECT, ARRAY, VARCHAR (for a JSON string), UBIGINT (for a positive int), BOOLEAN, NULL — whereas the JSON-standard vocabulary Doris would use is object/array/string/int/.../null. DuckDB '1'->UBIGINT and '\"x\"'->VARCHAR are DuckDB-storage names, not JSON-type names. (2) AVAILABILITY: on this live Doris FE build json_type (and jsonb_type) do NOT resolve at all — FE errors 'Can not found function json_type' for VARCHAR, cast-as-json, and cast-as-jsonb inputs. Divergent on both counts.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [161] duckdb: 'json_each' | doris: 'json_each'
+    FunctionHazard(HazardVerdict.UNCLEAR,
+        hazard = "json_each is a TABLE function in DuckDB (Binder Error: 'json_each is a table function but was used as a scalar function; must be in a FROM clause'), so it is not probeable through the scalar shared-expr harness. Doris exposes json_each / json_each_text as table functions too, but a row-set/ordering comparison was not performed. Marked unclear — needs a table-function harness, not a scalar probe.",
+        areas = listOf("json", "table-function"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+)
+
+/** duckdb->doris lookup: 162 keys (DuckDB-side names) over 162 entries. */
 internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -824,6 +878,16 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("HISTOGRAM", DUCKDB_DORIS_HAZARD_ENTRIES[105])
     put("HOUR", DUCKDB_DORIS_HAZARD_ENTRIES[133])
     put("INSTR", DUCKDB_DORIS_HAZARD_ENTRIES[71])
+    put("JSON_ARRAY", DUCKDB_DORIS_HAZARD_ENTRIES[154])
+    put("JSON_CONTAINS", DUCKDB_DORIS_HAZARD_ENTRIES[157])
+    put("JSON_EACH", DUCKDB_DORIS_HAZARD_ENTRIES[161])
+    put("JSON_EXTRACT", DUCKDB_DORIS_HAZARD_ENTRIES[152])
+    put("JSON_EXTRACT_STRING", DUCKDB_DORIS_HAZARD_ENTRIES[153])
+    put("JSON_KEYS", DUCKDB_DORIS_HAZARD_ENTRIES[159])
+    put("JSON_OBJECT", DUCKDB_DORIS_HAZARD_ENTRIES[155])
+    put("JSON_QUOTE", DUCKDB_DORIS_HAZARD_ENTRIES[156])
+    put("JSON_TYPE", DUCKDB_DORIS_HAZARD_ENTRIES[160])
+    put("JSON_VALID", DUCKDB_DORIS_HAZARD_ENTRIES[158])
     put("KURTOSIS", DUCKDB_DORIS_HAZARD_ENTRIES[94])
     put("LAG", DUCKDB_DORIS_HAZARD_ENTRIES[111])
     put("LAST_DAY", DUCKDB_DORIS_HAZARD_ENTRIES[138])
@@ -916,7 +980,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("YEARWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[132])
 }
 
-/** doris->duckdb lookup: 152 keys (Doris-side names) over 152 entries. */
+/** doris->duckdb lookup: 162 keys (Doris-side names) over 162 entries. */
 internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -980,6 +1044,16 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("HISTOGRAM", DUCKDB_DORIS_HAZARD_ENTRIES[105])
     put("HOUR", DUCKDB_DORIS_HAZARD_ENTRIES[133])
     put("INSTR", DUCKDB_DORIS_HAZARD_ENTRIES[71])
+    put("JSON_ARRAY", DUCKDB_DORIS_HAZARD_ENTRIES[154])
+    put("JSON_CONTAINS", DUCKDB_DORIS_HAZARD_ENTRIES[157])
+    put("JSON_EACH", DUCKDB_DORIS_HAZARD_ENTRIES[161])
+    put("JSON_EXTRACT", DUCKDB_DORIS_HAZARD_ENTRIES[152])
+    put("JSON_EXTRACT_STRING", DUCKDB_DORIS_HAZARD_ENTRIES[153])
+    put("JSON_KEYS", DUCKDB_DORIS_HAZARD_ENTRIES[159])
+    put("JSON_OBJECT", DUCKDB_DORIS_HAZARD_ENTRIES[155])
+    put("JSON_QUOTE", DUCKDB_DORIS_HAZARD_ENTRIES[156])
+    put("JSON_TYPE", DUCKDB_DORIS_HAZARD_ENTRIES[160])
+    put("JSON_VALID", DUCKDB_DORIS_HAZARD_ENTRIES[158])
     put("KURTOSIS", DUCKDB_DORIS_HAZARD_ENTRIES[94])
     put("LAG", DUCKDB_DORIS_HAZARD_ENTRIES[111])
     put("LAST_DAY", DUCKDB_DORIS_HAZARD_ENTRIES[138])

@@ -326,6 +326,64 @@ batch 5). Registry additions: duckdb→doris +2 (`array_append`, `array_cross_pr
 `cardinality` already present from a prior batch, verdict consistent);
 trino→doris +22.
 
+## Batch 8 (2026-07-13) — JSON family {#batch8-json}
+
+Live DuckDB↔Doris via the shared-expr harness on a single portable JSON literal
+`'{"a":1,"b":[10,20],"c":{"d":"x"}}'` plus path expressions (`$.a`, `$.b[0]`,
+`$.c.d`, missing `$.z`). Trino side bridged through the prior
+`trino-duckdb-hazards.json` corpus (provenance notes "Doris live; Trino from
+prior evidence"). Boolean-returning fns render Doris `1/0` vs DuckDB `true/false`
+(type mapping). Divergence pressure: quote retention, JSON-type vocabulary,
+NULL/missing path, invalid-JSON handling, array-render form.
+
+- **`json_extract` — `identical`:** every node matched live — `$.a`='1',
+  `$.b`='[10,20]', `$.b[0]`='10', nested `$.c.d`='"x"', missing `$.z`=NULL. BOTH
+  return a JSON value with **quotes RETAINED** on strings
+  (`json_extract('{"a":"x"}','$.a')`='"x"'). JSONPath dialect parses identically.
+  Prior corpus confirms Trino `json_extract` == DuckDB, so Trino→Doris identical too.
+- **`json_extract_string` — `identical`:** the UNQUOTING counterpart —
+  `json_extract_string('{"a":"x"}','$.a')`='x' (no quotes) both; numeric/nested
+  match; missing path NULL both. Maps 1:1 to DuckDB; Doris `get_json_string` is a
+  live synonym (DuckDB lacks `get_json_string`/`get_json_int`, Doris-native names).
+  Trino counterpart is `json_extract_scalar`.
+- **`json_array` / `json_object` / `json_quote` — `identical`:**
+  `json_array(1,2,3)`='[1,2,3]', `json_object('k',1,'m',2)`='{"k":1,"m":2}',
+  `json_quote('x')`='"x"' — rendered identically (compact, key order preserved).
+- **`json_contains` — `conditionally-equivalent`:** same truth on both
+  (`'[1,2,3]','2'`→true/1; `'{"a":1}','5'`→false/0); only divergence is boolean
+  render (DuckDB true/false vs Doris 1/0).
+- **`json_valid` — `divergent` (REAL SEMANTIC):** `json_valid('not json')` —
+  DuckDB=**false**, Doris=**1 (true!)**. Doris fails to flag malformed input as
+  invalid, defeating the function's purpose. Well-formed input is true/1 on both.
+  Do NOT rely on Doris `json_valid` to reject bad JSON.
+- **`json_keys` — `conditionally-equivalent`:** same key set/order (a,b,c); render
+  differs — DuckDB `getString`→'[a, b, c]' (unquoted) vs Doris '["a", "b", "c"]'
+  (JSON-quoted elements). Element-wise equivalent, parse required.
+- **`json_type` — `divergent` (two counts):** (1) VOCABULARY — DuckDB returns
+  storage tokens OBJECT/ARRAY/VARCHAR/UBIGINT/BOOLEAN/NULL (`'1'`→UBIGINT,
+  `'"x"'`→VARCHAR), not JSON-standard type names. (2) AVAILABILITY — on this live
+  Doris FE build `json_type` AND `jsonb_type` do NOT resolve for any input form
+  (VARCHAR, cast-as-json, cast-as-jsonb): FE errors `Can not found function
+  'json_type'`. Root-caused to the FE build's registered function set, not the
+  harness. Divergent on both counts.
+- **`json_each` — `unclear`:** DuckDB `json_each` is a TABLE function (`Binder
+  Error: ... used as a scalar function`), not probeable through the scalar
+  shared-expr harness. Doris exposes `json_each`/`json_each_text` as table
+  functions too but a row-set/ordering comparison was not run. Needs a
+  table-function harness.
+- **`json_parse` (Trino) — `conditionally-equivalent`:** Doris `json_parse` works
+  live (`'[1,2,3]'`→[1,2,3], `'{"a":1}'`→{"a":1}), matching Trino's VARCHAR→JSON
+  role. Error handling DIVERGES: Trino throws on malformed; Doris
+  `json_parse('not json')`='null' (silently returns JSON null).
+- **`json_format` (Trino) — `no-equivalent`:** serialize JSON→VARCHAR; no Doris
+  function by that name (DuckDB lacks it too; prior corpus = no-equivalent). Doris
+  uses `cast(json AS string)` instead.
+
+Confirmed live on Doris (Doris-native names, not DuckDB/Trino sources, so not
+added as pairs): `get_json_string`='x', `get_json_int`=1, `json_length('[1,2,3]')`
+=3, `json_exists_path('{"a":1}','$.a')`=1 / `'$.z'`=0. Registry additions:
+duckdb→doris +10, trino→doris +3. One `unclear` (`json_each`, table fn).
+
 ## Worklist status / continuation
 
 Done (batches 1-2): the prior-DIVERGENT scalar tier + the new `length` find + cheap

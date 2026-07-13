@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 147 probe-verified (trino, doris) pair verdicts, in JSON order. */
+/** The 150 probe-verified (trino, doris) pair verdicts, in JSON order. */
 internal val TRINO_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -733,9 +733,24 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         hazard = "Map cardinality maps by name: Doris cardinality(map) and Trino cardinality(map) both return the entry count (matches DuckDB cardinality(MAP)=2). Only the ARRAY overload of cardinality needs the array_size rename (see the cardinality/array_size pair). Doris live; Trino from prior evidence.",
         areas = listOf("map"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [147] trino: 'json_extract' | doris: 'json_extract'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Doris live == DuckDB live (json_extract('{\"a\":\"x\"}','\$.a')='\"x\"' with QUOTES retained; \$.b='[10,20]'; \$.b[0]='10'; nested \$.c.d='\"x\"'; missing path NULL). Prior corpus (trino-duckdb-hazards.json) records Trino json_extract == DuckDB json_extract (conditionally-equivalent, both return a JSON value with quotes retained). Chaining: Trino==DuckDB==Doris live -> identical. Trino json_extract_scalar (unquoted) maps to Doris json_extract_string. Doris live; Trino from prior evidence.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [148] trino: 'json_parse' | doris: 'json_parse'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Doris json_parse probe-verified live: json_parse('[1,2,3]')='[1,2,3]' and json_parse('{\"a\":1}')='{\"a\":1}' (VARCHAR text -> JSON value), matching Trino json_parse's happy-path role. DIVERGENCE in error handling: Trino json_parse THROWS on malformed input; Doris json_parse('not json')='null' (returns JSON null silently, does NOT error). Value-equivalent on valid JSON, differs on invalid input (Doris swallows the error). Doris live; Trino from prior evidence.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [149] trino: 'json_format' | doris: 'json_format'
+    FunctionHazard(HazardVerdict.NO_EQUIVALENT,
+        hazard = "Trino json_format(JSON)->VARCHAR (serialize a JSON value to its text form). No Doris function by that name (DuckDB also lacks it — prior corpus marks Trino json_format as no-equivalent). Doris achieves the same via CAST(json AS string) / to-string rendering, but there is no named json_format built-in. Prior corpus: no-equivalent. Doris live inventory checked; Trino from prior evidence.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
 )
 
-/** trino->doris lookup: 147 keys (Trino-side names) over 147 entries. */
+/** trino->doris lookup: 150 keys (Trino-side names) over 150 entries. */
 internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
@@ -804,6 +819,9 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("HAMMING_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[55])
     put("HISTOGRAM", TRINO_DORIS_HAZARD_ENTRIES[91])
     put("HOUR", TRINO_DORIS_HAZARD_ENTRIES[114])
+    put("JSON_EXTRACT", TRINO_DORIS_HAZARD_ENTRIES[147])
+    put("JSON_FORMAT", TRINO_DORIS_HAZARD_ENTRIES[149])
+    put("JSON_PARSE", TRINO_DORIS_HAZARD_ENTRIES[148])
     put("KURTOSIS", TRINO_DORIS_HAZARD_ENTRIES[86])
     put("LAG", TRINO_DORIS_HAZARD_ENTRIES[96])
     put("LAST_DAY_OF_MONTH", TRINO_DORIS_HAZARD_ENTRIES[124])
@@ -886,7 +904,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("YOW", TRINO_DORIS_HAZARD_ENTRIES[117])
 }
 
-/** doris->trino lookup: 147 keys (Doris-side names) over 147 entries. */
+/** doris->trino lookup: 150 keys (Doris-side names) over 150 entries. */
 internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
@@ -955,6 +973,9 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("HEX", TRINO_DORIS_HAZARD_ENTRIES[47])
     put("HISTOGRAM", TRINO_DORIS_HAZARD_ENTRIES[91])
     put("HOUR", TRINO_DORIS_HAZARD_ENTRIES[114])
+    put("JSON_EXTRACT", TRINO_DORIS_HAZARD_ENTRIES[147])
+    put("JSON_FORMAT", TRINO_DORIS_HAZARD_ENTRIES[149])
+    put("JSON_PARSE", TRINO_DORIS_HAZARD_ENTRIES[148])
     put("KURTOSIS", TRINO_DORIS_HAZARD_ENTRIES[86])
     put("LAG", TRINO_DORIS_HAZARD_ENTRIES[96])
     put("LAST_DAY", TRINO_DORIS_HAZARD_ENTRIES[124])
