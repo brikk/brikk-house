@@ -15,3 +15,6 @@
 __pycache__/
 *-ledger-actual.json
 .env
+
+# reference symlink/dir (worktrees symlink to the main tree clone)
+/reference
