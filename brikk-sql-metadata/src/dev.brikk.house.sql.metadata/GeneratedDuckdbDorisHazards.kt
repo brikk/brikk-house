@@ -9,10 +9,11 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 118 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
+/** The 150 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
 internal val DUCKDB_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
-    hazardsChunk2()
+    hazardsChunk2() +
+    hazardsChunk3()
 
 private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     // [0] duckdb: 'lower' | doris: 'lower'
@@ -584,9 +585,172 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         hazard = "Values identical (0.333..,0.666..,1) but Doris renders the trailing 1.0 as '1' vs DuckDB '1.0' — numeric string rendering only.",
         areas = listOf("window", "numeric"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [118] duckdb: 'date_add' | doris: 'date_add'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Probe-verified live: date_add(DATE '2024-01-01', INTERVAL 1 DAY) computes the same instant on both (2024-01-02), and both accept the bare-integer form date_add(date,1). But return TYPE/rendering differs: DuckDB returns TIMESTAMP '2024-01-02 00:00:00.0'; Doris returns DATE '2024-01-02'. Value-equivalent, type/format cast required.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [119] duckdb: 'date_sub' | doris: 'date_sub'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "INCOMPATIBLE SIGNATURE: DuckDB has NO date_sub(date, INTERVAL) — its date_sub is date_sub(VARCHAR unit, DATE, DATE)->BIGINT (a date-DIFF, e.g. date_sub('day', '2024-02-01','2024-03-01')=29). Doris date_sub(DATE '2024-03-01', INTERVAL 1 DAY)='2024-02-29' SUBTRACTS an interval. Same name, opposite meaning — divergent, never push by name.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
 )
 
-/** duckdb->doris lookup: 118 keys (DuckDB-side names) over 118 entries. */
+private fun hazardsChunk3(): List<FunctionHazard> = listOf(
+    // [120] duckdb: 'datediff' | doris: 'datediff'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: DuckDB has NO datediff(DATE,DATE) 2-arg form — signature is datediff(VARCHAR unit, DATE start, DATE end)->end-start (datediff('day','2024-02-01','2024-03-01')=29; arg reversed gives -29). Doris datediff(DATE '2024-03-01', DATE '2024-02-01')=29 is 2-arg (first-second, days only). Arg order AND arity differ — divergent.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [121] duckdb: 'dayname' | doris: 'dayname'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "dayname(DATE '2024-01-07')='Sunday' both (full English weekday name).",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [122] duckdb: 'dayofmonth' | doris: 'dayofmonth'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "dayofmonth(DATE '2024-02-29')=29 both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [123] duckdb: 'dayofweek' | doris: 'dayofweek'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "NUMBERING BASE DIFFERS: pinned on Sunday '2024-01-07' — DuckDB dayofweek=0 (Sunday=0..Saturday=6); Doris dayofweek=1 (Sunday=1..Saturday=7, MySQL ODBC style). Monday '2024-01-08': DuckDB=1, Doris=2. Off-by-one — divergent.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [124] duckdb: 'dayofyear' | doris: 'dayofyear'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "dayofyear(DATE '2024-02-29')=60 both (leap-day pinned).",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [125] duckdb: 'day' | doris: 'day'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "day(DATE '2024-02-29')=29 both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [126] duckdb: 'month' | doris: 'month'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "month(DATE '2024-02-29')=2 both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [127] duckdb: 'year' | doris: 'year'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "year(DATE '2024-02-29')=2024 both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [128] duckdb: 'quarter' | doris: 'quarter'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "quarter(DATE '2024-02-29')=1 both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [129] duckdb: 'week' | doris: 'week'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "WEEK-NUMBERING MODE DIFFERS: pinned ISO-edge '2023-01-01' (a Sunday) — DuckDB week=52 (ISO-8601, week belongs to prior year); Doris week=1 (default mode 0, Sunday-start, week 1 = first week containing a Sunday). Also '2024-01-01' DuckDB=1 vs Doris=0. Divergent unless Doris week mode is fixed to ISO (week(date,3)).",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [130] duckdb: 'weekday' | doris: 'weekday'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "NUMBERING DIFFERS: DuckDB weekday alias returns dow (Sunday=0); Doris weekday is ISO Monday=0..Sunday=6. Sunday '2024-01-07': DuckDB=0, Doris=6. Monday '2024-01-08': DuckDB=1, Doris=0. Divergent.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [131] duckdb: 'weekofyear' | doris: 'weekofyear'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "weekofyear(DATE '2023-01-01')=52 both (ISO-8601 week-of-year; the ISO parity target that the mode-0 'week' fn diverges from).",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [132] duckdb: 'yearweek' | doris: 'yearweek'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "WEEK-MODE DIFFERS: '2023-01-01' — DuckDB yearweek=202252 (ISO: year 2022, week 52); Doris yearweek=202301 (default mode 0: year 2023, week 01). Divergent; pin the week mode to reconcile.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [133] duckdb: 'hour' | doris: 'hour'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "hour(TIMESTAMP '2024-01-02 03:04:05')=3 both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [134] duckdb: 'minute' | doris: 'minute'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "minute(...)=4 both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [135] duckdb: 'second' | doris: 'second'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "second(...)=5 both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [136] duckdb: 'microsecond' | doris: 'microsecond'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "SEMANTIC DIFFERS: microsecond(TIMESTAMP '2024-01-02 03:04:05.123456') — DuckDB=5123456 (INCLUDES the seconds field: seconds*1e6 + micros); Doris=123456 (fractional sub-second only). Divergent by ~seconds*1e6.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [137] duckdb: 'monthname' | doris: 'monthname'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "monthname(DATE '2024-02-29')='February' both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [138] duckdb: 'last_day' | doris: 'last_day'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "last_day(DATE '2024-02-15')='2024-02-29' both (leap-Feb month-end).",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [139] duckdb: 'to_days' | doris: 'to_days'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DIFFERENT DOMAIN/DIRECTION: DuckDB to_days is an INTERVAL constructor — to_days(INTEGER)->INTERVAL (to_days(DATE) is a Binder Error, no such overload). Doris to_days(DATE '2024-01-01')=739251 returns day-count since year 0. Not the same function — divergent.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [140] duckdb: 'to_seconds' | doris: 'to_seconds'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DIFFERENT DOMAIN/DIRECTION: DuckDB to_seconds is an INTERVAL constructor — to_seconds(DOUBLE)->INTERVAL (to_seconds(DATE) is a Binder Error). Doris to_seconds(DATE '2024-01-01')=63871286400 returns seconds since year 0. Divergent, never push by name.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [141] duckdb: 'century' | doris: 'century'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "century(DATE '2024-02-29')=21 both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [142] duckdb: 'date_trunc' | doris: 'date_trunc'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Values align for month/year/day/quarter (date_trunc('month','2024-02-29 03:04:05')='2024-02-01 00:00:00' both; quarter->'2024-01-01' both) but rendering differs: DuckDB emits fractional '...00:00:00.0', Doris '...00:00:00'. Also 'week' unit uses Monday-start on both but Doris unit set differs; conditionally-equivalent for the intersection unit set (day..year).",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [143] duckdb: 'current_date' | doris: 'current_date'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "current_date() rendered identically live (both '2026-07-13') but is SESSION-ZONE dependent — the harness cannot pre-SET the zone, so equivalence holds only when both engines resolve to the same session time zone.",
+        areas = listOf("datetime", "session"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [144] duckdb: 'current_database' | doris: 'current_database'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both exist and return the active database/schema name, but the value is connection-context dependent (in-memory DuckDB 'memory' vs the Doris FE default db) — not a value hazard, environment-dependent.",
+        areas = listOf("metadata", "session"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [145] duckdb: 'current_catalog' | doris: 'current_catalog'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Catalog-name accessor exists on both; returned value is connection/context dependent (DuckDB 'memory' vs Doris 'internal'). Semantic role equivalent, value environment-dependent.",
+        areas = listOf("metadata", "session"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [146] duckdb: 'current_user' | doris: 'current_user'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both return the authenticated user; value is connection/auth-context dependent (Doris renders 'user'@'host'), not a portable literal. Semantic role equivalent.",
+        areas = listOf("metadata", "session"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [147] duckdb: 'session_user' | doris: 'session_user'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Session-user accessor exists on both; value is auth-context dependent. Semantic role equivalent, value environment-dependent.",
+        areas = listOf("metadata", "session"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [148] duckdb: 'user' | doris: 'user'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "'user' user-accessor exists on both (Doris 'user()' returns 'user'@'host'); auth-context dependent value.",
+        areas = listOf("metadata", "session"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [149] duckdb: 'now' | doris: 'now'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both return the current instant but RENDERING and zone differ: DuckDB now() -> ISO '2026-07-13T07:38:31.612504Z' (TZ-aware, 'Z' suffix, microseconds); Doris now() -> '2026-07-13 07:38:31' (space sep, second precision, session-zone). Session-zone dependent; value-equivalent instant, format/precision differs.",
+        areas = listOf("datetime", "session"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+)
+
+/** duckdb->doris lookup: 150 keys (DuckDB-side names) over 150 entries. */
 internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -608,6 +772,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("CARDINALITY", DUCKDB_DORIS_HAZARD_ENTRIES[106])
     put("CBRT", DUCKDB_DORIS_HAZARD_ENTRIES[34])
     put("CEIL", DUCKDB_DORIS_HAZARD_ENTRIES[46])
+    put("CENTURY", DUCKDB_DORIS_HAZARD_ENTRIES[141])
     put("CHAR_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[74])
     put("COALESCE", DUCKDB_DORIS_HAZARD_ENTRIES[18])
     put("CONCAT", DUCKDB_DORIS_HAZARD_ENTRIES[2])
@@ -620,6 +785,19 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("COVAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[87])
     put("COVAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[88])
     put("CUME_DIST", DUCKDB_DORIS_HAZARD_ENTRIES[117])
+    put("CURRENT_CATALOG", DUCKDB_DORIS_HAZARD_ENTRIES[145])
+    put("CURRENT_DATABASE", DUCKDB_DORIS_HAZARD_ENTRIES[144])
+    put("CURRENT_DATE", DUCKDB_DORIS_HAZARD_ENTRIES[143])
+    put("CURRENT_USER", DUCKDB_DORIS_HAZARD_ENTRIES[146])
+    put("DATEDIFF", DUCKDB_DORIS_HAZARD_ENTRIES[120])
+    put("DATE_ADD", DUCKDB_DORIS_HAZARD_ENTRIES[118])
+    put("DATE_SUB", DUCKDB_DORIS_HAZARD_ENTRIES[119])
+    put("DATE_TRUNC", DUCKDB_DORIS_HAZARD_ENTRIES[142])
+    put("DAY", DUCKDB_DORIS_HAZARD_ENTRIES[125])
+    put("DAYNAME", DUCKDB_DORIS_HAZARD_ENTRIES[121])
+    put("DAYOFMONTH", DUCKDB_DORIS_HAZARD_ENTRIES[122])
+    put("DAYOFWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[123])
+    put("DAYOFYEAR", DUCKDB_DORIS_HAZARD_ENTRIES[124])
     put("DEGREES", DUCKDB_DORIS_HAZARD_ENTRIES[44])
     put("DENSE_RANK", DUCKDB_DORIS_HAZARD_ENTRIES[109])
     put("EVEN", DUCKDB_DORIS_HAZARD_ENTRIES[50])
@@ -632,9 +810,11 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("GREATEST", DUCKDB_DORIS_HAZARD_ENTRIES[3])
     put("HEX", DUCKDB_DORIS_HAZARD_ENTRIES[59])
     put("HISTOGRAM", DUCKDB_DORIS_HAZARD_ENTRIES[105])
+    put("HOUR", DUCKDB_DORIS_HAZARD_ENTRIES[133])
     put("INSTR", DUCKDB_DORIS_HAZARD_ENTRIES[71])
     put("KURTOSIS", DUCKDB_DORIS_HAZARD_ENTRIES[94])
     put("LAG", DUCKDB_DORIS_HAZARD_ENTRIES[111])
+    put("LAST_DAY", DUCKDB_DORIS_HAZARD_ENTRIES[138])
     put("LAST_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[114])
     put("LEAD", DUCKDB_DORIS_HAZARD_ENTRIES[112])
     put("LEAST", DUCKDB_DORIS_HAZARD_ENTRIES[4])
@@ -652,8 +832,13 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("MAX_BY", DUCKDB_DORIS_HAZARD_ENTRIES[84])
     put("MD5", DUCKDB_DORIS_HAZARD_ENTRIES[20])
     put("MEDIAN", DUCKDB_DORIS_HAZARD_ENTRIES[80])
+    put("MICROSECOND", DUCKDB_DORIS_HAZARD_ENTRIES[136])
     put("MIN", DUCKDB_DORIS_HAZARD_ENTRIES[79])
+    put("MINUTE", DUCKDB_DORIS_HAZARD_ENTRIES[134])
     put("MOD", DUCKDB_DORIS_HAZARD_ENTRIES[17])
+    put("MONTH", DUCKDB_DORIS_HAZARD_ENTRIES[126])
+    put("MONTHNAME", DUCKDB_DORIS_HAZARD_ENTRIES[137])
+    put("NOW", DUCKDB_DORIS_HAZARD_ENTRIES[149])
     put("NTH_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[115])
     put("NTILE", DUCKDB_DORIS_HAZARD_ENTRIES[110])
     put("NULLIF", DUCKDB_DORIS_HAZARD_ENTRIES[19])
@@ -662,6 +847,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("PI", DUCKDB_DORIS_HAZARD_ENTRIES[49])
     put("POW", DUCKDB_DORIS_HAZARD_ENTRIES[52])
     put("POWER", DUCKDB_DORIS_HAZARD_ENTRIES[53])
+    put("QUARTER", DUCKDB_DORIS_HAZARD_ENTRIES[128])
     put("RADIANS", DUCKDB_DORIS_HAZARD_ENTRIES[45])
     put("RANK", DUCKDB_DORIS_HAZARD_ENTRIES[108])
     put("REGEXP_EXTRACT_ALL", DUCKDB_DORIS_HAZARD_ENTRIES[14])
@@ -682,7 +868,9 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ROW_NUMBER", DUCKDB_DORIS_HAZARD_ENTRIES[107])
     put("RPAD", DUCKDB_DORIS_HAZARD_ENTRIES[65])
     put("RTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[11])
+    put("SECOND", DUCKDB_DORIS_HAZARD_ENTRIES[135])
     put("SEM", DUCKDB_DORIS_HAZARD_ENTRIES[104])
+    put("SESSION_USER", DUCKDB_DORIS_HAZARD_ENTRIES[147])
     put("SHA1", DUCKDB_DORIS_HAZARD_ENTRIES[73])
     put("SIGN", DUCKDB_DORIS_HAZARD_ENTRIES[48])
     put("SIGNBIT", DUCKDB_DORIS_HAZARD_ENTRIES[32])
@@ -698,17 +886,25 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("TAN", DUCKDB_DORIS_HAZARD_ENTRIES[38])
     put("TANH", DUCKDB_DORIS_HAZARD_ENTRIES[41])
     put("TO_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[62])
+    put("TO_DAYS", DUCKDB_DORIS_HAZARD_ENTRIES[139])
+    put("TO_SECONDS", DUCKDB_DORIS_HAZARD_ENTRIES[140])
     put("TRANSLATE", DUCKDB_DORIS_HAZARD_ENTRIES[68])
     put("TRIM", DUCKDB_DORIS_HAZARD_ENTRIES[9])
     put("UNHEX", DUCKDB_DORIS_HAZARD_ENTRIES[60])
     put("UPPER", DUCKDB_DORIS_HAZARD_ENTRIES[1])
     put("URL_DECODE", DUCKDB_DORIS_HAZARD_ENTRIES[69])
     put("URL_ENCODE", DUCKDB_DORIS_HAZARD_ENTRIES[55])
+    put("USER", DUCKDB_DORIS_HAZARD_ENTRIES[148])
     put("VAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[91])
     put("VAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[92])
+    put("WEEK", DUCKDB_DORIS_HAZARD_ENTRIES[129])
+    put("WEEKDAY", DUCKDB_DORIS_HAZARD_ENTRIES[130])
+    put("WEEKOFYEAR", DUCKDB_DORIS_HAZARD_ENTRIES[131])
+    put("YEAR", DUCKDB_DORIS_HAZARD_ENTRIES[127])
+    put("YEARWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[132])
 }
 
-/** doris->duckdb lookup: 118 keys (Doris-side names) over 118 entries. */
+/** doris->duckdb lookup: 150 keys (Doris-side names) over 150 entries. */
 internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -730,6 +926,7 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("CARDINALITY", DUCKDB_DORIS_HAZARD_ENTRIES[106])
     put("CBRT", DUCKDB_DORIS_HAZARD_ENTRIES[34])
     put("CEIL", DUCKDB_DORIS_HAZARD_ENTRIES[46])
+    put("CENTURY", DUCKDB_DORIS_HAZARD_ENTRIES[141])
     put("CHAR_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[74])
     put("COALESCE", DUCKDB_DORIS_HAZARD_ENTRIES[18])
     put("CONCAT", DUCKDB_DORIS_HAZARD_ENTRIES[2])
@@ -742,6 +939,19 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("COVAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[87])
     put("COVAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[88])
     put("CUME_DIST", DUCKDB_DORIS_HAZARD_ENTRIES[117])
+    put("CURRENT_CATALOG", DUCKDB_DORIS_HAZARD_ENTRIES[145])
+    put("CURRENT_DATABASE", DUCKDB_DORIS_HAZARD_ENTRIES[144])
+    put("CURRENT_DATE", DUCKDB_DORIS_HAZARD_ENTRIES[143])
+    put("CURRENT_USER", DUCKDB_DORIS_HAZARD_ENTRIES[146])
+    put("DATEDIFF", DUCKDB_DORIS_HAZARD_ENTRIES[120])
+    put("DATE_ADD", DUCKDB_DORIS_HAZARD_ENTRIES[118])
+    put("DATE_SUB", DUCKDB_DORIS_HAZARD_ENTRIES[119])
+    put("DATE_TRUNC", DUCKDB_DORIS_HAZARD_ENTRIES[142])
+    put("DAY", DUCKDB_DORIS_HAZARD_ENTRIES[125])
+    put("DAYNAME", DUCKDB_DORIS_HAZARD_ENTRIES[121])
+    put("DAYOFMONTH", DUCKDB_DORIS_HAZARD_ENTRIES[122])
+    put("DAYOFWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[123])
+    put("DAYOFYEAR", DUCKDB_DORIS_HAZARD_ENTRIES[124])
     put("DEGREES", DUCKDB_DORIS_HAZARD_ENTRIES[44])
     put("DENSE_RANK", DUCKDB_DORIS_HAZARD_ENTRIES[109])
     put("EVEN", DUCKDB_DORIS_HAZARD_ENTRIES[50])
@@ -754,9 +964,11 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("GREATEST", DUCKDB_DORIS_HAZARD_ENTRIES[3])
     put("HEX", DUCKDB_DORIS_HAZARD_ENTRIES[59])
     put("HISTOGRAM", DUCKDB_DORIS_HAZARD_ENTRIES[105])
+    put("HOUR", DUCKDB_DORIS_HAZARD_ENTRIES[133])
     put("INSTR", DUCKDB_DORIS_HAZARD_ENTRIES[71])
     put("KURTOSIS", DUCKDB_DORIS_HAZARD_ENTRIES[94])
     put("LAG", DUCKDB_DORIS_HAZARD_ENTRIES[111])
+    put("LAST_DAY", DUCKDB_DORIS_HAZARD_ENTRIES[138])
     put("LAST_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[114])
     put("LEAD", DUCKDB_DORIS_HAZARD_ENTRIES[112])
     put("LEAST", DUCKDB_DORIS_HAZARD_ENTRIES[4])
@@ -774,8 +986,13 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("MAX_BY", DUCKDB_DORIS_HAZARD_ENTRIES[84])
     put("MD5", DUCKDB_DORIS_HAZARD_ENTRIES[20])
     put("MEDIAN", DUCKDB_DORIS_HAZARD_ENTRIES[80])
+    put("MICROSECOND", DUCKDB_DORIS_HAZARD_ENTRIES[136])
     put("MIN", DUCKDB_DORIS_HAZARD_ENTRIES[79])
+    put("MINUTE", DUCKDB_DORIS_HAZARD_ENTRIES[134])
     put("MOD", DUCKDB_DORIS_HAZARD_ENTRIES[17])
+    put("MONTH", DUCKDB_DORIS_HAZARD_ENTRIES[126])
+    put("MONTHNAME", DUCKDB_DORIS_HAZARD_ENTRIES[137])
+    put("NOW", DUCKDB_DORIS_HAZARD_ENTRIES[149])
     put("NTH_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[115])
     put("NTILE", DUCKDB_DORIS_HAZARD_ENTRIES[110])
     put("NULLIF", DUCKDB_DORIS_HAZARD_ENTRIES[19])
@@ -784,6 +1001,7 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("PI", DUCKDB_DORIS_HAZARD_ENTRIES[49])
     put("POW", DUCKDB_DORIS_HAZARD_ENTRIES[52])
     put("POWER", DUCKDB_DORIS_HAZARD_ENTRIES[53])
+    put("QUARTER", DUCKDB_DORIS_HAZARD_ENTRIES[128])
     put("RADIANS", DUCKDB_DORIS_HAZARD_ENTRIES[45])
     put("RANK", DUCKDB_DORIS_HAZARD_ENTRIES[108])
     put("REGEXP_EXTRACT_ALL", DUCKDB_DORIS_HAZARD_ENTRIES[14])
@@ -804,7 +1022,9 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ROW_NUMBER", DUCKDB_DORIS_HAZARD_ENTRIES[107])
     put("RPAD", DUCKDB_DORIS_HAZARD_ENTRIES[65])
     put("RTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[11])
+    put("SECOND", DUCKDB_DORIS_HAZARD_ENTRIES[135])
     put("SEM", DUCKDB_DORIS_HAZARD_ENTRIES[104])
+    put("SESSION_USER", DUCKDB_DORIS_HAZARD_ENTRIES[147])
     put("SHA1", DUCKDB_DORIS_HAZARD_ENTRIES[73])
     put("SIGN", DUCKDB_DORIS_HAZARD_ENTRIES[48])
     put("SIGNBIT", DUCKDB_DORIS_HAZARD_ENTRIES[32])
@@ -820,12 +1040,20 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("TAN", DUCKDB_DORIS_HAZARD_ENTRIES[38])
     put("TANH", DUCKDB_DORIS_HAZARD_ENTRIES[41])
     put("TO_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[62])
+    put("TO_DAYS", DUCKDB_DORIS_HAZARD_ENTRIES[139])
+    put("TO_SECONDS", DUCKDB_DORIS_HAZARD_ENTRIES[140])
     put("TRANSLATE", DUCKDB_DORIS_HAZARD_ENTRIES[68])
     put("TRIM", DUCKDB_DORIS_HAZARD_ENTRIES[9])
     put("UNHEX", DUCKDB_DORIS_HAZARD_ENTRIES[60])
     put("UPPER", DUCKDB_DORIS_HAZARD_ENTRIES[1])
     put("URL_DECODE", DUCKDB_DORIS_HAZARD_ENTRIES[69])
     put("URL_ENCODE", DUCKDB_DORIS_HAZARD_ENTRIES[55])
+    put("USER", DUCKDB_DORIS_HAZARD_ENTRIES[148])
     put("VAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[91])
     put("VAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[92])
+    put("WEEK", DUCKDB_DORIS_HAZARD_ENTRIES[129])
+    put("WEEKDAY", DUCKDB_DORIS_HAZARD_ENTRIES[130])
+    put("WEEKOFYEAR", DUCKDB_DORIS_HAZARD_ENTRIES[131])
+    put("YEAR", DUCKDB_DORIS_HAZARD_ENTRIES[127])
+    put("YEARWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[132])
 }

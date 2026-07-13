@@ -9,10 +9,11 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 103 probe-verified (trino, doris) pair verdicts, in JSON order. */
+/** The 125 probe-verified (trino, doris) pair verdicts, in JSON order. */
 internal val TRINO_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
-    hazardsChunk2()
+    hazardsChunk2() +
+    hazardsChunk3()
 
 private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     // [0] trino: 'lower' | doris: 'lower'
@@ -509,9 +510,122 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         hazard = "Values identical (0.333..,0.666..,1) but Doris renders trailing 1.0 as '1' — numeric rendering only. Doris live; Trino from prior evidence.",
         areas = listOf("window", "numeric"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [103] trino: 'date_add' | doris: 'date_add'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "SIGNATURE MISMATCH: Trino date_add(VARCHAR unit, BIGINT n, timestamp) (e.g. date_add('day',1,ts)); Doris date_add(date, INTERVAL n unit) / date_add(date, n). Different arg order and arity — must remap unit-string form to INTERVAL, never push by name. (Prior trino-duckdb corpus also flags date_add same-name/incompatible-signature.) Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [104] trino: 'date_format' | doris: 'date_format'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "BOTH use MySQL-style '%'-specifiers (NOT Joda): Trino date_format(ts,'%Y-%m-%d')='2024-01-02' and Doris date_format(TIMESTAMP '2024-01-02 03:04:05','%Y-%m-%d')='2024-01-02' (probe-verified live on Doris; Trino from prior evidence). %H:%i:%s and %M(month name) align. NOTE the family trap: Trino format_datetime/parse_datetime use Joda 'yyyy' — those do NOT map to Doris date_format. Doris also partially tolerates 'yyyy-MM-dd' but bare 'yyyy' is a literal, so map ONLY via '%' specs. Conditionally-equivalent on the '%'-spec dialect.",
+        areas = listOf("datetime", "format"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [105] trino: 'date_trunc' | doris: 'date_trunc'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Values align for the intersection unit set (day..year): date_trunc('month',ts)='2024-02-01 00:00:00', 'quarter'->'2024-01-01' both. Trino returns TIMESTAMP; Doris DATETIME (Doris renders no fractional part, Trino/DuckDB '.0'). Week unit Monday-start on both. Conditionally-equivalent, verify unit set. Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [106] trino: 'date' | doris: 'date'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "date('2024-02-29')='2024-02-29' — DuckDB bridge SAME as Doris; Trino date(x) cast-to-date equivalent. Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [107] trino: 'day' | doris: 'day'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "day(DATE '2024-02-29')=29 (DuckDB bridge==Doris). Doris live; Trino from prior evidence (prior corpus: year/month/day aligned).",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [108] trino: 'month' | doris: 'month'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "month(DATE '2024-02-29')=2 (bridge==Doris). Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [109] trino: 'year' | doris: 'year'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "year(DATE '2024-02-29')=2024 (bridge==Doris). Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [110] trino: 'quarter' | doris: 'quarter'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "quarter(DATE '2024-02-29')=1 (bridge==Doris). Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [111] trino: 'week' | doris: 'week'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "WEEK-MODE MISMATCH: Trino week/week_of_year is ISO-8601 (Mon-start, week 01 contains Jan 4) so week('2023-01-01')=52; Doris default week() is mode 0 (Sunday-start) -> week('2023-01-01')=1, week('2024-01-01')=0. Prior trino-duckdb corpus confirms Trino week is ISO==DuckDB(52). Divergent unless Doris week mode pinned to ISO (weekofyear or week(d,3)). Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [112] trino: 'minute' | doris: 'minute'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "minute(TIMESTAMP '2024-01-02 03:04:05')=4 (bridge==Doris). Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [113] trino: 'second' | doris: 'second'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "second(...)=5 (bridge==Doris). Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [114] trino: 'hour' | doris: 'hour'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "hour(...)=3 (bridge==Doris). Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [115] trino: 'dow' | doris: 'dayofweek'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "NUMBERING MISMATCH: Trino day_of_week/dow is ISO 1..7 Monday=1..Sunday=7; Doris dayofweek is 1..7 Sunday=1..Saturday=7 (MySQL). Sunday '2024-01-07': Trino dow=7, Doris dayofweek=1. Monday '2024-01-08': Trino=1, Doris=2. Off by rotation — divergent. (Prior corpus: Trino dow 1..7 Mon=1 vs DuckDB 0..6 Sun=0.) Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [116] trino: 'doy' | doris: 'dayofyear'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "day_of_year/doy: leap-day '2024-02-29'=60 (bridge==Doris; prior corpus Trino doy==DuckDB). Rename only. Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [117] trino: 'yow' | doris: 'yearweek'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "WEEK-YEAR MODE MISMATCH: Trino year_of_week/yow is ISO week-year: yow('2023-01-01')=2022; Doris yearweek('2023-01-01')=202301 (default mode 0, embeds week too and picks year 2023). Different value AND encoding (Doris packs YYYYWW). To get the ISO year-of-week from Doris use a mode-3 yearweek/2 and strip week. Divergent. Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [118] trino: 'year_of_week' | doris: 'year_of_week'
+    FunctionHazard(HazardVerdict.NO_EQUIVALENT,
+        hazard = "Trino year_of_week returns the ISO week-year (2022 for '2023-01-01'). Doris has NO year_of_week function; its yearweek packs YYYYWW under a different (mode-0) week definition. No direct name equivalent — express via Doris yearweek(d,3) DIV 100. Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [119] trino: 'from_unixtime' | doris: 'from_unixtime'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "from_unixtime(0)='1970-01-01 00:00:00' on Doris (probe-verified live); Trino from_unixtime(double) returns TIMESTAMP(3) WITH TIME ZONE in the session zone (prior corpus: same absolute instant, rendering session-zone dependent). SESSION-ZONE dependent — the harness cannot pre-SET zone, so equivalence holds only for the same session zone. Doris also has a 2-arg from_unixtime(sec,fmt) (from_unixtime(0,'yyyy-MM-dd')='1970-01-01'). Conditionally-equivalent. Doris live; Trino from prior evidence.",
+        areas = listOf("datetime", "session"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
 )
 
-/** trino->doris lookup: 103 keys (Trino-side names) over 103 entries. */
+private fun hazardsChunk3(): List<FunctionHazard> = listOf(
+    // [120] trino: 'from_iso8601_date' | doris: 'from_iso8601_date'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "from_iso8601_date('2024-02-29')='2024-02-29' on Doris (probe-verified live); Trino from_iso8601_date parses an ISO date to DATE identically. Both leap-day safe. Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [121] trino: 'to_iso8601' | doris: 'to_iso8601'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "to_iso8601(DATE '2024-02-29')='2024-02-29' both (aligned). For TIMESTAMP: Doris to_iso8601(TIMESTAMP '2024-02-29 03:04:05')='2024-02-29T03:04:05.000000' (6 fractional digits, no zone); Trino to_iso8601(timestamp) yields '...T03:04:05.000' (3 digits) and for tz-aware types appends the offset. Fractional-precision/zone rendering differs — conditionally-equivalent. Doris live; Trino from prior evidence.",
+        areas = listOf("datetime", "format"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [122] trino: 'now' | doris: 'now'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both return current instant; Trino now() is TIMESTAMP WITH TIME ZONE (session zone, ISO render); Doris now()='2026-07-13 07:38:31' (space sep, second precision, session-zone). SESSION-ZONE dependent — cannot pre-SET in harness. Value-equivalent instant, format/precision/zone differ. Doris live; Trino from prior evidence.",
+        areas = listOf("datetime", "session"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [123] trino: 'current_date' | doris: 'current_date'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "current_date rendered identically live ('2026-07-13'); Trino current_date is date in session zone. SESSION-ZONE dependent — equivalence only for matching session zone. Doris live; Trino from prior evidence.",
+        areas = listOf("datetime", "session"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [124] trino: 'last_day_of_month' | doris: 'last_day'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Rename: Trino last_day_of_month(DATE '2024-02-15')='2024-02-29'; Doris last_day(DATE '2024-02-15')='2024-02-29' (probe-verified live, leap-Feb). Doris live; Trino from prior evidence.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+)
+
+/** trino->doris lookup: 125 keys (Trino-side names) over 125 entries. */
 internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
@@ -538,8 +652,16 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("COVAR_POP", TRINO_DORIS_HAZARD_ENTRIES[77])
     put("COVAR_SAMP", TRINO_DORIS_HAZARD_ENTRIES[78])
     put("CUME_DIST", TRINO_DORIS_HAZARD_ENTRIES[102])
+    put("CURRENT_DATE", TRINO_DORIS_HAZARD_ENTRIES[123])
+    put("DATE", TRINO_DORIS_HAZARD_ENTRIES[106])
+    put("DATE_ADD", TRINO_DORIS_HAZARD_ENTRIES[103])
+    put("DATE_FORMAT", TRINO_DORIS_HAZARD_ENTRIES[104])
+    put("DATE_TRUNC", TRINO_DORIS_HAZARD_ENTRIES[105])
+    put("DAY", TRINO_DORIS_HAZARD_ENTRIES[107])
     put("DEGREES", TRINO_DORIS_HAZARD_ENTRIES[41])
     put("DENSE_RANK", TRINO_DORIS_HAZARD_ENTRIES[94])
+    put("DOW", TRINO_DORIS_HAZARD_ENTRIES[115])
+    put("DOY", TRINO_DORIS_HAZARD_ENTRIES[116])
     put("EXP", TRINO_DORIS_HAZARD_ENTRIES[28])
     put("FIRST_VALUE", TRINO_DORIS_HAZARD_ENTRIES[98])
     put("FLOOR", TRINO_DORIS_HAZARD_ENTRIES[40])
@@ -547,11 +669,15 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("FORMAT_NUMBER", TRINO_DORIS_HAZARD_ENTRIES[49])
     put("FROM_BASE64", TRINO_DORIS_HAZARD_ENTRIES[57])
     put("FROM_HEX", TRINO_DORIS_HAZARD_ENTRIES[48])
+    put("FROM_ISO8601_DATE", TRINO_DORIS_HAZARD_ENTRIES[120])
+    put("FROM_UNIXTIME", TRINO_DORIS_HAZARD_ENTRIES[119])
     put("GREATEST", TRINO_DORIS_HAZARD_ENTRIES[3])
     put("HAMMING_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[55])
     put("HISTOGRAM", TRINO_DORIS_HAZARD_ENTRIES[91])
+    put("HOUR", TRINO_DORIS_HAZARD_ENTRIES[114])
     put("KURTOSIS", TRINO_DORIS_HAZARD_ENTRIES[86])
     put("LAG", TRINO_DORIS_HAZARD_ENTRIES[96])
+    put("LAST_DAY_OF_MONTH", TRINO_DORIS_HAZARD_ENTRIES[124])
     put("LAST_VALUE", TRINO_DORIS_HAZARD_ENTRIES[99])
     put("LEAD", TRINO_DORIS_HAZARD_ENTRIES[97])
     put("LEAST", TRINO_DORIS_HAZARD_ENTRIES[4])
@@ -569,8 +695,11 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("MAX_BY", TRINO_DORIS_HAZARD_ENTRIES[74])
     put("MD5", TRINO_DORIS_HAZARD_ENTRIES[20])
     put("MIN", TRINO_DORIS_HAZARD_ENTRIES[70])
+    put("MINUTE", TRINO_DORIS_HAZARD_ENTRIES[112])
     put("MIN_BY", TRINO_DORIS_HAZARD_ENTRIES[75])
     put("MOD", TRINO_DORIS_HAZARD_ENTRIES[17])
+    put("MONTH", TRINO_DORIS_HAZARD_ENTRIES[108])
+    put("NOW", TRINO_DORIS_HAZARD_ENTRIES[122])
     put("NTH_VALUE", TRINO_DORIS_HAZARD_ENTRIES[100])
     put("NTILE", TRINO_DORIS_HAZARD_ENTRIES[95])
     put("NULLIF", TRINO_DORIS_HAZARD_ENTRIES[19])
@@ -578,6 +707,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("PI", TRINO_DORIS_HAZARD_ENTRIES[43])
     put("POW", TRINO_DORIS_HAZARD_ENTRIES[45])
     put("POWER", TRINO_DORIS_HAZARD_ENTRIES[46])
+    put("QUARTER", TRINO_DORIS_HAZARD_ENTRIES[110])
     put("RADIANS", TRINO_DORIS_HAZARD_ENTRIES[42])
     put("RANK", TRINO_DORIS_HAZARD_ENTRIES[93])
     put("REGEXP_EXTRACT_ALL", TRINO_DORIS_HAZARD_ENTRIES[14])
@@ -590,6 +720,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ROW_NUMBER", TRINO_DORIS_HAZARD_ENTRIES[92])
     put("RPAD", TRINO_DORIS_HAZARD_ENTRIES[60])
     put("RTRIM", TRINO_DORIS_HAZARD_ENTRIES[11])
+    put("SECOND", TRINO_DORIS_HAZARD_ENTRIES[113])
     put("SHA1", TRINO_DORIS_HAZARD_ENTRIES[52])
     put("SIGN", TRINO_DORIS_HAZARD_ENTRIES[44])
     put("SIN", TRINO_DORIS_HAZARD_ENTRIES[34])
@@ -608,6 +739,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("TANH", TRINO_DORIS_HAZARD_ENTRIES[37])
     put("TO_BASE64", TRINO_DORIS_HAZARD_ENTRIES[58])
     put("TO_HEX", TRINO_DORIS_HAZARD_ENTRIES[47])
+    put("TO_ISO8601", TRINO_DORIS_HAZARD_ENTRIES[121])
     put("TRANSLATE", TRINO_DORIS_HAZARD_ENTRIES[62])
     put("TRIM", TRINO_DORIS_HAZARD_ENTRIES[9])
     put("UPPER", TRINO_DORIS_HAZARD_ENTRIES[1])
@@ -616,9 +748,13 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("VARIANCE", TRINO_DORIS_HAZARD_ENTRIES[84])
     put("VAR_POP", TRINO_DORIS_HAZARD_ENTRIES[81])
     put("VAR_SAMP", TRINO_DORIS_HAZARD_ENTRIES[82])
+    put("WEEK", TRINO_DORIS_HAZARD_ENTRIES[111])
+    put("YEAR", TRINO_DORIS_HAZARD_ENTRIES[109])
+    put("YEAR_OF_WEEK", TRINO_DORIS_HAZARD_ENTRIES[118])
+    put("YOW", TRINO_DORIS_HAZARD_ENTRIES[117])
 }
 
-/** doris->trino lookup: 103 keys (Doris-side names) over 103 entries. */
+/** doris->trino lookup: 125 keys (Doris-side names) over 125 entries. */
 internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
@@ -645,6 +781,14 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("COVAR_POP", TRINO_DORIS_HAZARD_ENTRIES[77])
     put("COVAR_SAMP", TRINO_DORIS_HAZARD_ENTRIES[78])
     put("CUME_DIST", TRINO_DORIS_HAZARD_ENTRIES[102])
+    put("CURRENT_DATE", TRINO_DORIS_HAZARD_ENTRIES[123])
+    put("DATE", TRINO_DORIS_HAZARD_ENTRIES[106])
+    put("DATE_ADD", TRINO_DORIS_HAZARD_ENTRIES[103])
+    put("DATE_FORMAT", TRINO_DORIS_HAZARD_ENTRIES[104])
+    put("DATE_TRUNC", TRINO_DORIS_HAZARD_ENTRIES[105])
+    put("DAY", TRINO_DORIS_HAZARD_ENTRIES[107])
+    put("DAYOFWEEK", TRINO_DORIS_HAZARD_ENTRIES[115])
+    put("DAYOFYEAR", TRINO_DORIS_HAZARD_ENTRIES[116])
     put("DEGREES", TRINO_DORIS_HAZARD_ENTRIES[41])
     put("DENSE_RANK", TRINO_DORIS_HAZARD_ENTRIES[94])
     put("EXP", TRINO_DORIS_HAZARD_ENTRIES[28])
@@ -653,12 +797,16 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("FMOD", TRINO_DORIS_HAZARD_ENTRIES[13])
     put("FORMAT_NUMBER", TRINO_DORIS_HAZARD_ENTRIES[49])
     put("FROM_BASE64", TRINO_DORIS_HAZARD_ENTRIES[57])
+    put("FROM_ISO8601_DATE", TRINO_DORIS_HAZARD_ENTRIES[120])
+    put("FROM_UNIXTIME", TRINO_DORIS_HAZARD_ENTRIES[119])
     put("GREATEST", TRINO_DORIS_HAZARD_ENTRIES[3])
     put("HAMMING_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[55])
     put("HEX", TRINO_DORIS_HAZARD_ENTRIES[47])
     put("HISTOGRAM", TRINO_DORIS_HAZARD_ENTRIES[91])
+    put("HOUR", TRINO_DORIS_HAZARD_ENTRIES[114])
     put("KURTOSIS", TRINO_DORIS_HAZARD_ENTRIES[86])
     put("LAG", TRINO_DORIS_HAZARD_ENTRIES[96])
+    put("LAST_DAY", TRINO_DORIS_HAZARD_ENTRIES[124])
     put("LAST_VALUE", TRINO_DORIS_HAZARD_ENTRIES[99])
     put("LEAD", TRINO_DORIS_HAZARD_ENTRIES[97])
     put("LEAST", TRINO_DORIS_HAZARD_ENTRIES[4])
@@ -676,8 +824,11 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("MAX_BY", TRINO_DORIS_HAZARD_ENTRIES[74])
     put("MD5", TRINO_DORIS_HAZARD_ENTRIES[20])
     put("MIN", TRINO_DORIS_HAZARD_ENTRIES[70])
+    put("MINUTE", TRINO_DORIS_HAZARD_ENTRIES[112])
     put("MIN_BY", TRINO_DORIS_HAZARD_ENTRIES[75])
     put("MOD", TRINO_DORIS_HAZARD_ENTRIES[17])
+    put("MONTH", TRINO_DORIS_HAZARD_ENTRIES[108])
+    put("NOW", TRINO_DORIS_HAZARD_ENTRIES[122])
     put("NTH_VALUE", TRINO_DORIS_HAZARD_ENTRIES[100])
     put("NTILE", TRINO_DORIS_HAZARD_ENTRIES[95])
     put("NULLIF", TRINO_DORIS_HAZARD_ENTRIES[19])
@@ -685,6 +836,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("PI", TRINO_DORIS_HAZARD_ENTRIES[43])
     put("POW", TRINO_DORIS_HAZARD_ENTRIES[45])
     put("POWER", TRINO_DORIS_HAZARD_ENTRIES[46])
+    put("QUARTER", TRINO_DORIS_HAZARD_ENTRIES[110])
     put("RADIANS", TRINO_DORIS_HAZARD_ENTRIES[42])
     put("RANK", TRINO_DORIS_HAZARD_ENTRIES[93])
     put("REGEXP_EXTRACT_ALL", TRINO_DORIS_HAZARD_ENTRIES[14])
@@ -697,6 +849,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ROW_NUMBER", TRINO_DORIS_HAZARD_ENTRIES[92])
     put("RPAD", TRINO_DORIS_HAZARD_ENTRIES[60])
     put("RTRIM", TRINO_DORIS_HAZARD_ENTRIES[11])
+    put("SECOND", TRINO_DORIS_HAZARD_ENTRIES[113])
     put("SHA1", TRINO_DORIS_HAZARD_ENTRIES[52])
     put("SIGN", TRINO_DORIS_HAZARD_ENTRIES[44])
     put("SIN", TRINO_DORIS_HAZARD_ENTRIES[34])
@@ -714,6 +867,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("TAN", TRINO_DORIS_HAZARD_ENTRIES[36])
     put("TANH", TRINO_DORIS_HAZARD_ENTRIES[37])
     put("TO_BASE64", TRINO_DORIS_HAZARD_ENTRIES[58])
+    put("TO_ISO8601", TRINO_DORIS_HAZARD_ENTRIES[121])
     put("TRANSLATE", TRINO_DORIS_HAZARD_ENTRIES[62])
     put("TRIM", TRINO_DORIS_HAZARD_ENTRIES[9])
     put("UNHEX", TRINO_DORIS_HAZARD_ENTRIES[48])
@@ -723,4 +877,8 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("VARIANCE", TRINO_DORIS_HAZARD_ENTRIES[84])
     put("VAR_POP", TRINO_DORIS_HAZARD_ENTRIES[81])
     put("VAR_SAMP", TRINO_DORIS_HAZARD_ENTRIES[82])
+    put("WEEK", TRINO_DORIS_HAZARD_ENTRIES[111])
+    put("YEAR", TRINO_DORIS_HAZARD_ENTRIES[109])
+    put("YEARWEEK", TRINO_DORIS_HAZARD_ENTRIES[117])
+    put("YEAR_OF_WEEK", TRINO_DORIS_HAZARD_ENTRIES[118])
 }

@@ -1083,6 +1083,231 @@
         "numeric"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "date_add",
+      "doris": "date_add",
+      "verdict": "divergent",
+      "hazard": "SIGNATURE MISMATCH: Trino date_add(VARCHAR unit, BIGINT n, timestamp) (e.g. date_add('day',1,ts)); Doris date_add(date, INTERVAL n unit) / date_add(date, n). Different arg order and arity — must remap unit-string form to INTERVAL, never push by name. (Prior trino-duckdb corpus also flags date_add same-name/incompatible-signature.) Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "date_format",
+      "doris": "date_format",
+      "verdict": "conditionally-equivalent",
+      "hazard": "BOTH use MySQL-style '%'-specifiers (NOT Joda): Trino date_format(ts,'%Y-%m-%d')='2024-01-02' and Doris date_format(TIMESTAMP '2024-01-02 03:04:05','%Y-%m-%d')='2024-01-02' (probe-verified live on Doris; Trino from prior evidence). %H:%i:%s and %M(month name) align. NOTE the family trap: Trino format_datetime/parse_datetime use Joda 'yyyy' — those do NOT map to Doris date_format. Doris also partially tolerates 'yyyy-MM-dd' but bare 'yyyy' is a literal, so map ONLY via '%' specs. Conditionally-equivalent on the '%'-spec dialect.",
+      "areas": [
+        "datetime",
+        "format"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "date_trunc",
+      "doris": "date_trunc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Values align for the intersection unit set (day..year): date_trunc('month',ts)='2024-02-01 00:00:00', 'quarter'->'2024-01-01' both. Trino returns TIMESTAMP; Doris DATETIME (Doris renders no fractional part, Trino/DuckDB '.0'). Week unit Monday-start on both. Conditionally-equivalent, verify unit set. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "date",
+      "doris": "date",
+      "verdict": "identical",
+      "hazard": "date('2024-02-29')='2024-02-29' — DuckDB bridge SAME as Doris; Trino date(x) cast-to-date equivalent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "day",
+      "doris": "day",
+      "verdict": "identical",
+      "hazard": "day(DATE '2024-02-29')=29 (DuckDB bridge==Doris). Doris live; Trino from prior evidence (prior corpus: year/month/day aligned).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "month",
+      "doris": "month",
+      "verdict": "identical",
+      "hazard": "month(DATE '2024-02-29')=2 (bridge==Doris). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "year",
+      "doris": "year",
+      "verdict": "identical",
+      "hazard": "year(DATE '2024-02-29')=2024 (bridge==Doris). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "quarter",
+      "doris": "quarter",
+      "verdict": "identical",
+      "hazard": "quarter(DATE '2024-02-29')=1 (bridge==Doris). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "week",
+      "doris": "week",
+      "verdict": "divergent",
+      "hazard": "WEEK-MODE MISMATCH: Trino week/week_of_year is ISO-8601 (Mon-start, week 01 contains Jan 4) so week('2023-01-01')=52; Doris default week() is mode 0 (Sunday-start) -> week('2023-01-01')=1, week('2024-01-01')=0. Prior trino-duckdb corpus confirms Trino week is ISO==DuckDB(52). Divergent unless Doris week mode pinned to ISO (weekofyear or week(d,3)). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "minute",
+      "doris": "minute",
+      "verdict": "identical",
+      "hazard": "minute(TIMESTAMP '2024-01-02 03:04:05')=4 (bridge==Doris). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "second",
+      "doris": "second",
+      "verdict": "identical",
+      "hazard": "second(...)=5 (bridge==Doris). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "hour",
+      "doris": "hour",
+      "verdict": "identical",
+      "hazard": "hour(...)=3 (bridge==Doris). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "dow",
+      "doris": "dayofweek",
+      "verdict": "divergent",
+      "hazard": "NUMBERING MISMATCH: Trino day_of_week/dow is ISO 1..7 Monday=1..Sunday=7; Doris dayofweek is 1..7 Sunday=1..Saturday=7 (MySQL). Sunday '2024-01-07': Trino dow=7, Doris dayofweek=1. Monday '2024-01-08': Trino=1, Doris=2. Off by rotation — divergent. (Prior corpus: Trino dow 1..7 Mon=1 vs DuckDB 0..6 Sun=0.) Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "doy",
+      "doris": "dayofyear",
+      "verdict": "identical",
+      "hazard": "day_of_year/doy: leap-day '2024-02-29'=60 (bridge==Doris; prior corpus Trino doy==DuckDB). Rename only. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "yow",
+      "doris": "yearweek",
+      "verdict": "divergent",
+      "hazard": "WEEK-YEAR MODE MISMATCH: Trino year_of_week/yow is ISO week-year: yow('2023-01-01')=2022; Doris yearweek('2023-01-01')=202301 (default mode 0, embeds week too and picks year 2023). Different value AND encoding (Doris packs YYYYWW). To get the ISO year-of-week from Doris use a mode-3 yearweek/2 and strip week. Divergent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "year_of_week",
+      "doris": "year_of_week",
+      "verdict": "no-equivalent",
+      "hazard": "Trino year_of_week returns the ISO week-year (2022 for '2023-01-01'). Doris has NO year_of_week function; its yearweek packs YYYYWW under a different (mode-0) week definition. No direct name equivalent — express via Doris yearweek(d,3) DIV 100. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "from_unixtime",
+      "doris": "from_unixtime",
+      "verdict": "conditionally-equivalent",
+      "hazard": "from_unixtime(0)='1970-01-01 00:00:00' on Doris (probe-verified live); Trino from_unixtime(double) returns TIMESTAMP(3) WITH TIME ZONE in the session zone (prior corpus: same absolute instant, rendering session-zone dependent). SESSION-ZONE dependent — the harness cannot pre-SET zone, so equivalence holds only for the same session zone. Doris also has a 2-arg from_unixtime(sec,fmt) (from_unixtime(0,'yyyy-MM-dd')='1970-01-01'). Conditionally-equivalent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "from_iso8601_date",
+      "doris": "from_iso8601_date",
+      "verdict": "identical",
+      "hazard": "from_iso8601_date('2024-02-29')='2024-02-29' on Doris (probe-verified live); Trino from_iso8601_date parses an ISO date to DATE identically. Both leap-day safe. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "to_iso8601",
+      "doris": "to_iso8601",
+      "verdict": "conditionally-equivalent",
+      "hazard": "to_iso8601(DATE '2024-02-29')='2024-02-29' both (aligned). For TIMESTAMP: Doris to_iso8601(TIMESTAMP '2024-02-29 03:04:05')='2024-02-29T03:04:05.000000' (6 fractional digits, no zone); Trino to_iso8601(timestamp) yields '...T03:04:05.000' (3 digits) and for tz-aware types appends the offset. Fractional-precision/zone rendering differs — conditionally-equivalent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime",
+        "format"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "now",
+      "doris": "now",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both return current instant; Trino now() is TIMESTAMP WITH TIME ZONE (session zone, ISO render); Doris now()='2026-07-13 07:38:31' (space sep, second precision, session-zone). SESSION-ZONE dependent — cannot pre-SET in harness. Value-equivalent instant, format/precision/zone differ. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "current_date",
+      "doris": "current_date",
+      "verdict": "conditionally-equivalent",
+      "hazard": "current_date rendered identically live ('2026-07-13'); Trino current_date is date in session zone. SESSION-ZONE dependent — equivalence only for matching session zone. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "last_day_of_month",
+      "doris": "last_day",
+      "verdict": "identical",
+      "hazard": "Rename: Trino last_day_of_month(DATE '2024-02-15')='2024-02-29'; Doris last_day(DATE '2024-02-15')='2024-02-29' (probe-verified live, leap-Feb). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
     }
   ]
 }

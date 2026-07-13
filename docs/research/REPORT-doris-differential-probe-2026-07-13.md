@@ -198,6 +198,61 @@ bridge. Divergence pressure: NULL elements, empty input, ties, ordering.
 
 Registry additions: duckdb→doris +43; trino→doris +37.
 
+## Batch 6 (2026-07-13) — datetime / timezone {#batch6-datetime}
+
+Live DuckDB↔Doris via the shared-expr harness (fresh connections, so the session
+zone could not be pre-`SET` — session/format-sensitive fns are marked
+`conditionally-equivalent`). Trino side bridged through live DuckDB + the prior
+`trino-duckdb-hazards.json` corpus (provenance notes "Doris live; Trino from prior
+evidence"). Divergence pressure: leap day `2024-02-29`, ISO-week edge `2023-01-01`
+(a Sunday), Sunday/Monday pins `2024-01-07`/`2024-01-08`, fractional seconds
+`.123456`, epoch `0`, and both format-spec dialects.
+
+- **`date_format` — CORRECTED (the brief's guess was wrong):** Doris `date_format`
+  uses **MySQL `%`-specifiers**, NOT Java `yyyy`. Probe-verified live:
+  `date_format(ts,'%Y-%m-%d')='2024-01-02'`, `%M`→`January`; bare `'yyyy'`→literal
+  `yyyy` (unformatted). Trino `date_format`/`date_parse` are ALSO MySQL `%`-style
+  (only Trino `format_datetime`/`parse_datetime` are Joda). So **trino→doris
+  `date_format` is `conditionally-equivalent`** on the `%`-spec dialect (NOT
+  divergent). DuckDB has no `date_format` at all (uses `strftime` with `%`-specs) —
+  `strftime('%Y-%m-%d')` matches Doris `date_format('%Y-%m-%d')`.
+- **`date_add` / `date_sub` / `datediff` — signature/direction traps:** DuckDB has NO
+  `date_sub(date,INTERVAL)`; its `date_sub`/`datediff` are 3-arg `(VARCHAR unit, DATE,
+  DATE)` date-DIFFs (`datediff('day','2024-02-01','2024-03-01')=29`, reversed→`-29`).
+  Doris `date_sub(date,INTERVAL)` subtracts, `datediff(a,b)=a-b` (2-arg). Same names,
+  incompatible arity/order → **`divergent`**. Trino `date_add('day',n,ts)` also arg-order
+  divergent from Doris `date_add(date,INTERVAL n unit)`. `date_add` value/instant does
+  match (2024-01-02) but DuckDB returns TIMESTAMP vs Doris DATE →
+  `conditionally-equivalent` on the duckdb side.
+- **Week family — mode mismatch (`divergent`):** Doris default `week`/`yearweek` is
+  mode 0 (Sunday-start); DuckDB/Trino are ISO-8601. `week('2023-01-01')`: DuckDB/Trino
+  `52` vs Doris `1`; `yearweek('2023-01-01')`: DuckDB `202252` vs Doris `202301`.
+  `weekofyear` IS ISO on both (`52`) — the parity target. Trino `year_of_week`/`yow`
+  (ISO year `2022`) has no direct Doris name (`no-equivalent`); Doris `yearweek` packs
+  YYYYWW under mode 0.
+- **Weekday numbering — `divergent`:** pinned Sunday `2024-01-07` / Monday
+  `2024-01-08`. `dayofweek`: DuckDB Sun=0..Sat=6; Doris Sun=1..Sat=7; Trino `dow` ISO
+  Mon=1..Sun=7 — three different bases. `weekday`: DuckDB=dow(Sun=0), Doris=ISO Mon=0.
+- **`microsecond` — `divergent`:** `microsecond(ts '…05.123456')` DuckDB `5123456`
+  (includes seconds×1e6) vs Doris `123456` (sub-second only).
+- **`to_days` / `to_seconds` — `divergent` (different function):** in DuckDB these are
+  INTERVAL constructors (`to_days(INTEGER)->INTERVAL`; `to_days(DATE)` is a Binder
+  Error) whereas Doris returns a day/second count since year 0 (`739251`/`63871286400`).
+- **`date_trunc` — `conditionally-equivalent`:** values align for day..year/quarter;
+  only fractional-second rendering differs (DuckDB `.0`, Doris none).
+- **Identical (rename/value):** `dayname`, `dayofmonth`, `dayofyear`, `day`, `month`,
+  `year`, `quarter`, `hour`, `minute`, `second`, `monthname`, `last_day`, `century`,
+  `weekofyear`, `date`, `from_iso8601_date` (leap-day safe both).
+- **Session/context-dependent (`conditionally-equivalent`):** `now`, `current_date`,
+  `from_unixtime` (epoch `0`→`1970-01-01 00:00:00`), `to_iso8601` (date aligns; TS
+  fractional precision differs 6 vs 3 digits), and the metadata accessors
+  `current_database` (empty on Doris = no db selected), `current_catalog`
+  (DuckDB `memory` vs Doris `internal`), `current_user`/`session_user`/`user`
+  (Doris renders `'root'@'host'`, and Doris `current_user` `'root'@'%'` differs from
+  `session_user` `'root'@'172.30.80.1'`).
+
+Registry additions: duckdb→doris +32; trino→doris +22.
+
 ## Worklist status / continuation
 
 Done (batches 1-2): the prior-DIVERGENT scalar tier + the new `length` find + cheap

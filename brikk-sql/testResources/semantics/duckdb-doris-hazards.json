@@ -1243,6 +1243,333 @@
         "numeric"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "date_add",
+      "doris": "date_add",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: date_add(DATE '2024-01-01', INTERVAL 1 DAY) computes the same instant on both (2024-01-02), and both accept the bare-integer form date_add(date,1). But return TYPE/rendering differs: DuckDB returns TIMESTAMP '2024-01-02 00:00:00.0'; Doris returns DATE '2024-01-02'. Value-equivalent, type/format cast required.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "date_sub",
+      "doris": "date_sub",
+      "verdict": "divergent",
+      "hazard": "INCOMPATIBLE SIGNATURE: DuckDB has NO date_sub(date, INTERVAL) — its date_sub is date_sub(VARCHAR unit, DATE, DATE)->BIGINT (a date-DIFF, e.g. date_sub('day', '2024-02-01','2024-03-01')=29). Doris date_sub(DATE '2024-03-01', INTERVAL 1 DAY)='2024-02-29' SUBTRACTS an interval. Same name, opposite meaning — divergent, never push by name.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "datediff",
+      "doris": "datediff",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: DuckDB has NO datediff(DATE,DATE) 2-arg form — signature is datediff(VARCHAR unit, DATE start, DATE end)->end-start (datediff('day','2024-02-01','2024-03-01')=29; arg reversed gives -29). Doris datediff(DATE '2024-03-01', DATE '2024-02-01')=29 is 2-arg (first-second, days only). Arg order AND arity differ — divergent.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "dayname",
+      "doris": "dayname",
+      "verdict": "identical",
+      "hazard": "dayname(DATE '2024-01-07')='Sunday' both (full English weekday name).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "dayofmonth",
+      "doris": "dayofmonth",
+      "verdict": "identical",
+      "hazard": "dayofmonth(DATE '2024-02-29')=29 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "dayofweek",
+      "doris": "dayofweek",
+      "verdict": "divergent",
+      "hazard": "NUMBERING BASE DIFFERS: pinned on Sunday '2024-01-07' — DuckDB dayofweek=0 (Sunday=0..Saturday=6); Doris dayofweek=1 (Sunday=1..Saturday=7, MySQL ODBC style). Monday '2024-01-08': DuckDB=1, Doris=2. Off-by-one — divergent.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "dayofyear",
+      "doris": "dayofyear",
+      "verdict": "identical",
+      "hazard": "dayofyear(DATE '2024-02-29')=60 both (leap-day pinned).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "day",
+      "doris": "day",
+      "verdict": "identical",
+      "hazard": "day(DATE '2024-02-29')=29 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "month",
+      "doris": "month",
+      "verdict": "identical",
+      "hazard": "month(DATE '2024-02-29')=2 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "year",
+      "doris": "year",
+      "verdict": "identical",
+      "hazard": "year(DATE '2024-02-29')=2024 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "quarter",
+      "doris": "quarter",
+      "verdict": "identical",
+      "hazard": "quarter(DATE '2024-02-29')=1 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "week",
+      "doris": "week",
+      "verdict": "divergent",
+      "hazard": "WEEK-NUMBERING MODE DIFFERS: pinned ISO-edge '2023-01-01' (a Sunday) — DuckDB week=52 (ISO-8601, week belongs to prior year); Doris week=1 (default mode 0, Sunday-start, week 1 = first week containing a Sunday). Also '2024-01-01' DuckDB=1 vs Doris=0. Divergent unless Doris week mode is fixed to ISO (week(date,3)).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "weekday",
+      "doris": "weekday",
+      "verdict": "divergent",
+      "hazard": "NUMBERING DIFFERS: DuckDB weekday alias returns dow (Sunday=0); Doris weekday is ISO Monday=0..Sunday=6. Sunday '2024-01-07': DuckDB=0, Doris=6. Monday '2024-01-08': DuckDB=1, Doris=0. Divergent.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "weekofyear",
+      "doris": "weekofyear",
+      "verdict": "identical",
+      "hazard": "weekofyear(DATE '2023-01-01')=52 both (ISO-8601 week-of-year; the ISO parity target that the mode-0 'week' fn diverges from).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "yearweek",
+      "doris": "yearweek",
+      "verdict": "divergent",
+      "hazard": "WEEK-MODE DIFFERS: '2023-01-01' — DuckDB yearweek=202252 (ISO: year 2022, week 52); Doris yearweek=202301 (default mode 0: year 2023, week 01). Divergent; pin the week mode to reconcile.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "hour",
+      "doris": "hour",
+      "verdict": "identical",
+      "hazard": "hour(TIMESTAMP '2024-01-02 03:04:05')=3 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "minute",
+      "doris": "minute",
+      "verdict": "identical",
+      "hazard": "minute(...)=4 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "second",
+      "doris": "second",
+      "verdict": "identical",
+      "hazard": "second(...)=5 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "microsecond",
+      "doris": "microsecond",
+      "verdict": "divergent",
+      "hazard": "SEMANTIC DIFFERS: microsecond(TIMESTAMP '2024-01-02 03:04:05.123456') — DuckDB=5123456 (INCLUDES the seconds field: seconds*1e6 + micros); Doris=123456 (fractional sub-second only). Divergent by ~seconds*1e6.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "monthname",
+      "doris": "monthname",
+      "verdict": "identical",
+      "hazard": "monthname(DATE '2024-02-29')='February' both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "last_day",
+      "doris": "last_day",
+      "verdict": "identical",
+      "hazard": "last_day(DATE '2024-02-15')='2024-02-29' both (leap-Feb month-end).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "to_days",
+      "doris": "to_days",
+      "verdict": "divergent",
+      "hazard": "DIFFERENT DOMAIN/DIRECTION: DuckDB to_days is an INTERVAL constructor — to_days(INTEGER)->INTERVAL (to_days(DATE) is a Binder Error, no such overload). Doris to_days(DATE '2024-01-01')=739251 returns day-count since year 0. Not the same function — divergent.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "to_seconds",
+      "doris": "to_seconds",
+      "verdict": "divergent",
+      "hazard": "DIFFERENT DOMAIN/DIRECTION: DuckDB to_seconds is an INTERVAL constructor — to_seconds(DOUBLE)->INTERVAL (to_seconds(DATE) is a Binder Error). Doris to_seconds(DATE '2024-01-01')=63871286400 returns seconds since year 0. Divergent, never push by name.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "century",
+      "doris": "century",
+      "verdict": "identical",
+      "hazard": "century(DATE '2024-02-29')=21 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "date_trunc",
+      "doris": "date_trunc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Values align for month/year/day/quarter (date_trunc('month','2024-02-29 03:04:05')='2024-02-01 00:00:00' both; quarter->'2024-01-01' both) but rendering differs: DuckDB emits fractional '...00:00:00.0', Doris '...00:00:00'. Also 'week' unit uses Monday-start on both but Doris unit set differs; conditionally-equivalent for the intersection unit set (day..year).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "current_date",
+      "doris": "current_date",
+      "verdict": "conditionally-equivalent",
+      "hazard": "current_date() rendered identically live (both '2026-07-13') but is SESSION-ZONE dependent — the harness cannot pre-SET the zone, so equivalence holds only when both engines resolve to the same session time zone.",
+      "areas": [
+        "datetime",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "current_database",
+      "doris": "current_database",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both exist and return the active database/schema name, but the value is connection-context dependent (in-memory DuckDB 'memory' vs the Doris FE default db) — not a value hazard, environment-dependent.",
+      "areas": [
+        "metadata",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "current_catalog",
+      "doris": "current_catalog",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Catalog-name accessor exists on both; returned value is connection/context dependent (DuckDB 'memory' vs Doris 'internal'). Semantic role equivalent, value environment-dependent.",
+      "areas": [
+        "metadata",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "current_user",
+      "doris": "current_user",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both return the authenticated user; value is connection/auth-context dependent (Doris renders 'user'@'host'), not a portable literal. Semantic role equivalent.",
+      "areas": [
+        "metadata",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "session_user",
+      "doris": "session_user",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Session-user accessor exists on both; value is auth-context dependent. Semantic role equivalent, value environment-dependent.",
+      "areas": [
+        "metadata",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "user",
+      "doris": "user",
+      "verdict": "conditionally-equivalent",
+      "hazard": "'user' user-accessor exists on both (Doris 'user()' returns 'user'@'host'); auth-context dependent value.",
+      "areas": [
+        "metadata",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "now",
+      "doris": "now",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both return the current instant but RENDERING and zone differ: DuckDB now() -> ISO '2026-07-13T07:38:31.612504Z' (TZ-aware, 'Z' suffix, microseconds); Doris now() -> '2026-07-13 07:38:31' (space sep, second precision, session-zone). Session-zone dependent; value-equivalent instant, format/precision differs.",
+      "areas": [
+        "datetime",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
     }
   ]
 }
