@@ -221,6 +221,272 @@
         "hash"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "acos",
+      "doris": "acos",
+      "verdict": "divergent",
+      "hazard": "Out-of-domain acos(2): Doris returns NULL; Trino (JVM Math) returns NaN. In-domain agrees. Doris live; Trino from prior evidence + JVM domain semantics.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "asin",
+      "doris": "asin",
+      "verdict": "divergent",
+      "hazard": "Out-of-domain asin(2): Doris returns NULL; Trino returns NaN. Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "ln",
+      "doris": "ln",
+      "verdict": "divergent",
+      "hazard": "ln(0)/ln(-1): Doris returns NULL; Trino returns NaN (prior evidence 'NaN on x<=0'). In-domain agrees to last-ULP. Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "sqrt",
+      "doris": "sqrt",
+      "verdict": "divergent",
+      "hazard": "sqrt(-1): Doris returns NULL; Trino returns NaN (prior evidence 'NaN on negative'). Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "log2",
+      "doris": "log2",
+      "verdict": "divergent",
+      "hazard": "log2(0): Doris returns NULL; Trino returns NaN/domain (prior). In-domain agrees. Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "log10",
+      "doris": "log10",
+      "verdict": "divergent",
+      "hazard": "log10(-1): Doris returns NULL; Trino returns NaN (prior). In-domain also differs by last-ULP (log10(3)). Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "log",
+      "doris": "log",
+      "verdict": "unclear",
+      "hazard": "Doris single-arg log(x) = natural log (log(10)=2.302585), not log10; two-arg log(b,x) agrees to last-ULP. Trino single-arg log semantics not re-probed this session — verify before mapping. Doris live.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "exp",
+      "doris": "exp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "In-domain agrees to ~15 sig digits but last-ULP differs (exp(0.5): DuckDB/Trino 1.6487212707001282 vs Doris 1.648721270700128). Safe under float-tolerant comparison. Doris live; Trino via live-DuckDB bridge (prior identical).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "cbrt",
+      "doris": "cbrt",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP differs (cbrt(27): DuckDB/Trino 3.0000000000000004 vs Doris 3.0). Safe under float-tolerant comparison. Doris live; Trino via live-DuckDB bridge (prior identical).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "atan",
+      "doris": "atan",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "atan2",
+      "doris": "atan2",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "cos",
+      "doris": "cos",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "cosh",
+      "doris": "cosh",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "sin",
+      "doris": "sin",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "sinh",
+      "doris": "sinh",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "tan",
+      "doris": "tan",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "tanh",
+      "doris": "tanh",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "ceil",
+      "doris": "ceil",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "ceiling",
+      "doris": "ceiling",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "floor",
+      "doris": "floor",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "degrees",
+      "doris": "degrees",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "radians",
+      "doris": "radians",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "pi",
+      "doris": "pi",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "sign",
+      "doris": "sign",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "pow",
+      "doris": "pow",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "power",
+      "doris": "power",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
     }
   ]
 }

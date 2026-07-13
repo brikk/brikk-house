@@ -9,8 +9,9 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 21 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
-internal val DUCKDB_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0()
+/** The 54 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
+internal val DUCKDB_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
+    hazardsChunk1()
 
 private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     // [0] duckdb: 'lower' | doris: 'lower'
@@ -113,54 +114,271 @@ private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("hash"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch2"),
+    // [21] duckdb: 'acos' | doris: 'acos'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: out-of-domain acos(2) -> DuckDB THROWS 'ACOS is undefined outside [-1,1]'; Doris returns NULL. In-domain agrees to ~15 sig digits (acos(0.5) last-ULP float-formatting differs). Never push without matching the error-vs-NULL contract.",
+        areas = listOf("numeric", "domain"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [22] duckdb: 'asin' | doris: 'asin'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: asin(2) (outside [-1,1]) -> DuckDB THROWS; Doris returns NULL.",
+        areas = listOf("numeric", "domain"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [23] duckdb: 'atanh' | doris: 'atanh'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: atanh(2) (outside [-1,1]) -> DuckDB THROWS; Doris returns NULL. In-domain agrees.",
+        areas = listOf("numeric", "domain"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [24] duckdb: 'acosh' | doris: 'acosh'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: acosh(0.5) (<1) -> DuckDB returns NaN; Doris returns NULL. In-domain agrees to ~15 sig digits (last-ULP).",
+        areas = listOf("numeric", "domain"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [25] duckdb: 'ln' | doris: 'ln'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: ln(0) and ln(-1) -> DuckDB THROWS 'Out of Range'; Doris returns NULL. In-domain agrees to last-ULP (ln(3) final digit differs). (Prior Trino evidence had NaN for x<=0.)",
+        areas = listOf("numeric", "domain"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [26] duckdb: 'log2' | doris: 'log2'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: log2(0) -> DuckDB THROWS; Doris returns NULL. In-domain agrees (log2(3) matched).",
+        areas = listOf("numeric", "domain"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [27] duckdb: 'log10' | doris: 'log10'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: log10(-1) -> DuckDB THROWS; Doris returns NULL. In-domain agrees to last-ULP. Related name trap: single-arg log() differs (see log).",
+        areas = listOf("numeric", "domain"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [28] duckdb: 'sqrt' | doris: 'sqrt'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: sqrt(-1) -> DuckDB THROWS 'Out of Range: cannot take square root of a negative number'; Doris returns NULL. (Prior Trino evidence had NaN on negative.)",
+        areas = listOf("numeric", "domain"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [29] duckdb: 'factorial' | doris: 'factorial'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: factorial(-1) -> DuckDB THROWS 'Out of Range'; Doris returns NULL. In-range agrees (factorial(0)=1, factorial(20) matched).",
+        areas = listOf("numeric", "domain"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [30] duckdb: 'cot' | doris: 'cot'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: cot(0) -> DuckDB THROWS 'Out of Range'; Doris returns Infinity.",
+        areas = listOf("numeric", "domain"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [31] duckdb: 'log' | doris: 'log'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: single-arg semantics DIFFER — DuckDB log(x)=log10 (log(10)=1.0, PostgreSQL convention); Doris log(x)=natural log (log(10)=2.302585). Two-arg log(b,x) agrees (to last-ULP). Never map single-arg log by name.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [32] duckdb: 'signbit' | doris: 'signbit'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: return TYPE differs — DuckDB returns BOOLEAN (true/false); Doris returns TINYINT (0/1). DuckDB also reports signbit(-0.0)=false. Needs cast on translate.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [33] duckdb: 'asinh' | doris: 'asinh'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Probe-verified live: agrees to ~15 sig digits; last-ULP float-representation differs (asinh(1)=0.881373587019543 DuckDB vs 0.8813735870195429 Doris). Safe only under float-tolerant comparison.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [34] duckdb: 'cbrt' | doris: 'cbrt'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Probe-verified live: cbrt(-8)=-2.0 matched but cbrt(27)=3.0000000000000004 (DuckDB) vs 3.0 (Doris) — last-ULP float-representation differs. Safe only under float-tolerant comparison.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [35] duckdb: 'exp' | doris: 'exp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Probe-verified live: exp(1) matched but exp(0.5)=1.6487212707001282 (DuckDB) vs 1.648721270700128 (Doris) — last-ULP float-representation differs. Safe only under float-tolerant comparison.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [36] duckdb: 'sin' | doris: 'sin'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [37] duckdb: 'cos' | doris: 'cos'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [38] duckdb: 'tan' | doris: 'tan'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [39] duckdb: 'cosh' | doris: 'cosh'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
 )
 
-/** duckdb->doris lookup: 21 keys (DuckDB-side names) over 21 entries. */
+private fun hazardsChunk1(): List<FunctionHazard> = listOf(
+    // [40] duckdb: 'sinh' | doris: 'sinh'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [41] duckdb: 'tanh' | doris: 'tanh'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [42] duckdb: 'atan' | doris: 'atan'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [43] duckdb: 'atan2' | doris: 'atan2'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [44] duckdb: 'degrees' | doris: 'degrees'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [45] duckdb: 'radians' | doris: 'radians'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [46] duckdb: 'ceil' | doris: 'ceil'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [47] duckdb: 'floor' | doris: 'floor'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [48] duckdb: 'sign' | doris: 'sign'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [49] duckdb: 'pi' | doris: 'pi'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [50] duckdb: 'even' | doris: 'even'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [51] duckdb: 'bin' | doris: 'bin'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [52] duckdb: 'pow' | doris: 'pow'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Probe-verified live: pow(0,0)=1.0 and pow(-2,0.5)=NaN both aligned (neither throws).",
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+    // [53] duckdb: 'power' | doris: 'power'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+)
+
+/** duckdb->doris lookup: 54 keys (DuckDB-side names) over 54 entries. */
 internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
+    put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
+    put("ACOSH", DUCKDB_DORIS_HAZARD_ENTRIES[24])
     put("ASCII", DUCKDB_DORIS_HAZARD_ENTRIES[7])
+    put("ASIN", DUCKDB_DORIS_HAZARD_ENTRIES[22])
+    put("ASINH", DUCKDB_DORIS_HAZARD_ENTRIES[33])
+    put("ATAN", DUCKDB_DORIS_HAZARD_ENTRIES[42])
+    put("ATAN2", DUCKDB_DORIS_HAZARD_ENTRIES[43])
+    put("ATANH", DUCKDB_DORIS_HAZARD_ENTRIES[23])
+    put("BIN", DUCKDB_DORIS_HAZARD_ENTRIES[51])
     put("BIT_COUNT", DUCKDB_DORIS_HAZARD_ENTRIES[12])
+    put("CBRT", DUCKDB_DORIS_HAZARD_ENTRIES[34])
+    put("CEIL", DUCKDB_DORIS_HAZARD_ENTRIES[46])
     put("COALESCE", DUCKDB_DORIS_HAZARD_ENTRIES[18])
     put("CONCAT", DUCKDB_DORIS_HAZARD_ENTRIES[2])
+    put("COS", DUCKDB_DORIS_HAZARD_ENTRIES[37])
+    put("COSH", DUCKDB_DORIS_HAZARD_ENTRIES[39])
+    put("COT", DUCKDB_DORIS_HAZARD_ENTRIES[30])
+    put("DEGREES", DUCKDB_DORIS_HAZARD_ENTRIES[44])
+    put("EVEN", DUCKDB_DORIS_HAZARD_ENTRIES[50])
+    put("EXP", DUCKDB_DORIS_HAZARD_ENTRIES[35])
+    put("FACTORIAL", DUCKDB_DORIS_HAZARD_ENTRIES[29])
+    put("FLOOR", DUCKDB_DORIS_HAZARD_ENTRIES[47])
     put("FMOD", DUCKDB_DORIS_HAZARD_ENTRIES[13])
     put("GREATEST", DUCKDB_DORIS_HAZARD_ENTRIES[3])
     put("LEAST", DUCKDB_DORIS_HAZARD_ENTRIES[4])
     put("LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[15])
+    put("LN", DUCKDB_DORIS_HAZARD_ENTRIES[25])
+    put("LOG", DUCKDB_DORIS_HAZARD_ENTRIES[31])
+    put("LOG10", DUCKDB_DORIS_HAZARD_ENTRIES[27])
+    put("LOG2", DUCKDB_DORIS_HAZARD_ENTRIES[26])
     put("LOWER", DUCKDB_DORIS_HAZARD_ENTRIES[0])
     put("LTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[10])
     put("MD5", DUCKDB_DORIS_HAZARD_ENTRIES[20])
     put("MOD", DUCKDB_DORIS_HAZARD_ENTRIES[17])
     put("NULLIF", DUCKDB_DORIS_HAZARD_ENTRIES[19])
+    put("PI", DUCKDB_DORIS_HAZARD_ENTRIES[49])
+    put("POW", DUCKDB_DORIS_HAZARD_ENTRIES[52])
+    put("POWER", DUCKDB_DORIS_HAZARD_ENTRIES[53])
+    put("RADIANS", DUCKDB_DORIS_HAZARD_ENTRIES[45])
     put("REGEXP_EXTRACT_ALL", DUCKDB_DORIS_HAZARD_ENTRIES[14])
     put("REGEXP_REPLACE", DUCKDB_DORIS_HAZARD_ENTRIES[8])
     put("REVERSE", DUCKDB_DORIS_HAZARD_ENTRIES[6])
     put("RTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[11])
+    put("SIGN", DUCKDB_DORIS_HAZARD_ENTRIES[48])
+    put("SIGNBIT", DUCKDB_DORIS_HAZARD_ENTRIES[32])
+    put("SIN", DUCKDB_DORIS_HAZARD_ENTRIES[36])
+    put("SINH", DUCKDB_DORIS_HAZARD_ENTRIES[40])
     put("SPLIT_PART", DUCKDB_DORIS_HAZARD_ENTRIES[5])
+    put("SQRT", DUCKDB_DORIS_HAZARD_ENTRIES[28])
+    put("TAN", DUCKDB_DORIS_HAZARD_ENTRIES[38])
+    put("TANH", DUCKDB_DORIS_HAZARD_ENTRIES[41])
     put("TRIM", DUCKDB_DORIS_HAZARD_ENTRIES[9])
     put("UPPER", DUCKDB_DORIS_HAZARD_ENTRIES[1])
 }
 
-/** doris->duckdb lookup: 21 keys (Doris-side names) over 21 entries. */
+/** doris->duckdb lookup: 54 keys (Doris-side names) over 54 entries. */
 internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
+    put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
+    put("ACOSH", DUCKDB_DORIS_HAZARD_ENTRIES[24])
     put("ASCII", DUCKDB_DORIS_HAZARD_ENTRIES[7])
+    put("ASIN", DUCKDB_DORIS_HAZARD_ENTRIES[22])
+    put("ASINH", DUCKDB_DORIS_HAZARD_ENTRIES[33])
+    put("ATAN", DUCKDB_DORIS_HAZARD_ENTRIES[42])
+    put("ATAN2", DUCKDB_DORIS_HAZARD_ENTRIES[43])
+    put("ATANH", DUCKDB_DORIS_HAZARD_ENTRIES[23])
+    put("BIN", DUCKDB_DORIS_HAZARD_ENTRIES[51])
     put("BIT_COUNT", DUCKDB_DORIS_HAZARD_ENTRIES[12])
+    put("CBRT", DUCKDB_DORIS_HAZARD_ENTRIES[34])
+    put("CEIL", DUCKDB_DORIS_HAZARD_ENTRIES[46])
     put("COALESCE", DUCKDB_DORIS_HAZARD_ENTRIES[18])
     put("CONCAT", DUCKDB_DORIS_HAZARD_ENTRIES[2])
+    put("COS", DUCKDB_DORIS_HAZARD_ENTRIES[37])
+    put("COSH", DUCKDB_DORIS_HAZARD_ENTRIES[39])
+    put("COT", DUCKDB_DORIS_HAZARD_ENTRIES[30])
+    put("DEGREES", DUCKDB_DORIS_HAZARD_ENTRIES[44])
+    put("EVEN", DUCKDB_DORIS_HAZARD_ENTRIES[50])
+    put("EXP", DUCKDB_DORIS_HAZARD_ENTRIES[35])
+    put("FACTORIAL", DUCKDB_DORIS_HAZARD_ENTRIES[29])
+    put("FLOOR", DUCKDB_DORIS_HAZARD_ENTRIES[47])
     put("FMOD", DUCKDB_DORIS_HAZARD_ENTRIES[13])
     put("GREATEST", DUCKDB_DORIS_HAZARD_ENTRIES[3])
     put("LEAST", DUCKDB_DORIS_HAZARD_ENTRIES[4])
     put("LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[15])
+    put("LN", DUCKDB_DORIS_HAZARD_ENTRIES[25])
+    put("LOG", DUCKDB_DORIS_HAZARD_ENTRIES[31])
+    put("LOG10", DUCKDB_DORIS_HAZARD_ENTRIES[27])
+    put("LOG2", DUCKDB_DORIS_HAZARD_ENTRIES[26])
     put("LOWER", DUCKDB_DORIS_HAZARD_ENTRIES[0])
     put("LTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[10])
     put("MD5", DUCKDB_DORIS_HAZARD_ENTRIES[20])
     put("MOD", DUCKDB_DORIS_HAZARD_ENTRIES[17])
     put("NULLIF", DUCKDB_DORIS_HAZARD_ENTRIES[19])
+    put("PI", DUCKDB_DORIS_HAZARD_ENTRIES[49])
+    put("POW", DUCKDB_DORIS_HAZARD_ENTRIES[52])
+    put("POWER", DUCKDB_DORIS_HAZARD_ENTRIES[53])
+    put("RADIANS", DUCKDB_DORIS_HAZARD_ENTRIES[45])
     put("REGEXP_EXTRACT_ALL", DUCKDB_DORIS_HAZARD_ENTRIES[14])
     put("REGEXP_REPLACE", DUCKDB_DORIS_HAZARD_ENTRIES[8])
     put("REVERSE", DUCKDB_DORIS_HAZARD_ENTRIES[6])
     put("RTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[11])
+    put("SIGN", DUCKDB_DORIS_HAZARD_ENTRIES[48])
+    put("SIGNBIT", DUCKDB_DORIS_HAZARD_ENTRIES[32])
+    put("SIN", DUCKDB_DORIS_HAZARD_ENTRIES[36])
+    put("SINH", DUCKDB_DORIS_HAZARD_ENTRIES[40])
     put("SPLIT_PART", DUCKDB_DORIS_HAZARD_ENTRIES[5])
+    put("SQRT", DUCKDB_DORIS_HAZARD_ENTRIES[28])
+    put("TAN", DUCKDB_DORIS_HAZARD_ENTRIES[38])
+    put("TANH", DUCKDB_DORIS_HAZARD_ENTRIES[41])
     put("TRIM", DUCKDB_DORIS_HAZARD_ENTRIES[9])
     put("UPPER", DUCKDB_DORIS_HAZARD_ENTRIES[1])
 }

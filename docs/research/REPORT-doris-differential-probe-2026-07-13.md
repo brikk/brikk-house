@@ -88,6 +88,37 @@ Live DuckDB↔Doris differential (Trino side from prior evidence):
 - Identical (aligned live): `abs`, `mod` (incl. negatives), `coalesce`, `nullif`, `md5`.
 - `round`, `format`, `substring`: tested SAME on the probed inputs but not exhaustively — left for a targeted follow-up (round half-rounding per prior UNCLEAR; format spec dialects).
 
+## Batch 3 (2026-07-13) — numeric / math tail {#batch3-numeric}
+
+Live DuckDB (1.5.4) ↔ Doris differential; Trino side via prior evidence, bridged
+through live DuckDB (prior corpus verdict was Trino==DuckDB for these). Two
+systematic findings dominate this family:
+
+1. **Domain-error contract diverges three ways.** For out-of-domain input, the
+   live **DuckDB THROWS** (`acos(2)`, `asin(2)`, `atanh(2)`, `ln(0)`, `ln(-1)`,
+   `log2(0)`, `log10(-1)`, `sqrt(-1)`, `factorial(-1)`, `cot(0)`), **Doris returns
+   NULL** (`cot(0)`→`Infinity`), and **prior Trino evidence returns NaN**. Note:
+   this live DuckDB throwing contradicts the older prior-corpus note "NaN on x<=0
+   in both" — a DuckDB version drift, not a Doris issue. `acosh(0.5)` (<1) is the
+   one case DuckDB returns NaN rather than throwing; Doris still returns NULL.
+2. **Transcendental last-ULP.** Irrational-returning functions agree to ~15 sig
+   digits but the final digit of the `getString` rendering routinely differs
+   (`exp(0.5)`, `cbrt(27)`, `asinh(1)`, `ln(3)`, `log10(3)`, `log(2,10)`). Marked
+   `conditionally-equivalent` where a probed point differed; `identical` where all
+   probed points matched exactly (`sin cos tan cosh sinh tanh atan atan2`).
+
+**Standout name trap — `log`:** single-arg `log(x)` means **log10 in DuckDB**
+(`log(10)`=1.0, PostgreSQL convention) but **natural log in Doris** (`log(10)`=
+2.302585). Two-arg `log(b,x)` agrees (to ULP). Never map single-arg `log` by name.
+
+**`signbit`:** return TYPE differs — DuckDB BOOLEAN (`false`) vs Doris TINYINT
+(`0`). Exact-arithmetic functions (`ceil floor sign pi degrees radians even bin
+pow power`) are identical.
+
+Registry additions: duckdb→doris +33 (12 divergent, 3 conditionally-equivalent,
+18 identical); trino→doris +26 (6 divergent, 2 conditionally-equivalent, 1
+unclear, 17 identical).
+
 ## Worklist status / continuation
 
 Done (batches 1-2): the prior-DIVERGENT scalar tier + the new `length` find + cheap

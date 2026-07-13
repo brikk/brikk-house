@@ -221,6 +221,346 @@
         "hash"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "acos",
+      "doris": "acos",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: out-of-domain acos(2) -> DuckDB THROWS 'ACOS is undefined outside [-1,1]'; Doris returns NULL. In-domain agrees to ~15 sig digits (acos(0.5) last-ULP float-formatting differs). Never push without matching the error-vs-NULL contract.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "asin",
+      "doris": "asin",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: asin(2) (outside [-1,1]) -> DuckDB THROWS; Doris returns NULL.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "atanh",
+      "doris": "atanh",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: atanh(2) (outside [-1,1]) -> DuckDB THROWS; Doris returns NULL. In-domain agrees.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "acosh",
+      "doris": "acosh",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: acosh(0.5) (<1) -> DuckDB returns NaN; Doris returns NULL. In-domain agrees to ~15 sig digits (last-ULP).",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "ln",
+      "doris": "ln",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: ln(0) and ln(-1) -> DuckDB THROWS 'Out of Range'; Doris returns NULL. In-domain agrees to last-ULP (ln(3) final digit differs). (Prior Trino evidence had NaN for x<=0.)",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "log2",
+      "doris": "log2",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: log2(0) -> DuckDB THROWS; Doris returns NULL. In-domain agrees (log2(3) matched).",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "log10",
+      "doris": "log10",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: log10(-1) -> DuckDB THROWS; Doris returns NULL. In-domain agrees to last-ULP. Related name trap: single-arg log() differs (see log).",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "sqrt",
+      "doris": "sqrt",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: sqrt(-1) -> DuckDB THROWS 'Out of Range: cannot take square root of a negative number'; Doris returns NULL. (Prior Trino evidence had NaN on negative.)",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "factorial",
+      "doris": "factorial",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: factorial(-1) -> DuckDB THROWS 'Out of Range'; Doris returns NULL. In-range agrees (factorial(0)=1, factorial(20) matched).",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "cot",
+      "doris": "cot",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: cot(0) -> DuckDB THROWS 'Out of Range'; Doris returns Infinity.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "log",
+      "doris": "log",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: single-arg semantics DIFFER — DuckDB log(x)=log10 (log(10)=1.0, PostgreSQL convention); Doris log(x)=natural log (log(10)=2.302585). Two-arg log(b,x) agrees (to last-ULP). Never map single-arg log by name.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "signbit",
+      "doris": "signbit",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: return TYPE differs — DuckDB returns BOOLEAN (true/false); Doris returns TINYINT (0/1). DuckDB also reports signbit(-0.0)=false. Needs cast on translate.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "asinh",
+      "doris": "asinh",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: agrees to ~15 sig digits; last-ULP float-representation differs (asinh(1)=0.881373587019543 DuckDB vs 0.8813735870195429 Doris). Safe only under float-tolerant comparison.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "cbrt",
+      "doris": "cbrt",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: cbrt(-8)=-2.0 matched but cbrt(27)=3.0000000000000004 (DuckDB) vs 3.0 (Doris) — last-ULP float-representation differs. Safe only under float-tolerant comparison.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "exp",
+      "doris": "exp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: exp(1) matched but exp(0.5)=1.6487212707001282 (DuckDB) vs 1.648721270700128 (Doris) — last-ULP float-representation differs. Safe only under float-tolerant comparison.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "sin",
+      "doris": "sin",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "cos",
+      "doris": "cos",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "tan",
+      "doris": "tan",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "cosh",
+      "doris": "cosh",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "sinh",
+      "doris": "sinh",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "tanh",
+      "doris": "tanh",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "atan",
+      "doris": "atan",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "atan2",
+      "doris": "atan2",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "degrees",
+      "doris": "degrees",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "radians",
+      "doris": "radians",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "ceil",
+      "doris": "ceil",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "floor",
+      "doris": "floor",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "sign",
+      "doris": "sign",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "pi",
+      "doris": "pi",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "even",
+      "doris": "even",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "bin",
+      "doris": "bin",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "pow",
+      "doris": "pow",
+      "verdict": "identical",
+      "hazard": "Probe-verified live: pow(0,0)=1.0 and pow(-2,0.5)=NaN both aligned (neither throws).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "power",
+      "doris": "power",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
     }
   ]
 }
