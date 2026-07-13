@@ -63,6 +63,18 @@
     {
       "case": "write|spark|ALTER TABLE x CHANGE COLUMN a a VARCHAR(10) CASCADE",
       "reason": "Spark ALTER COLUMN ... TYPE vs Hive CHANGE COLUMN CASCADE (altercolumn preprocess) not ported"
+    },
+    {
+      "case": "write|bigquery|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
+      "reason": "write<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
+    },
+    {
+      "case": "write|bigquery|DATE_ADD('2020-01-01', 1)",
+      "reason": "write<->bigquery date/interval delta rewrite differs (date_delta preprocess not ported)"
+    },
+    {
+      "case": "write|bigquery|DATE_SUB('2020-01-01', 1)",
+      "reason": "write<->bigquery date/interval delta rewrite differs (date_delta preprocess not ported)"
     }
   ]
 }

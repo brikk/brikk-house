@@ -46,6 +46,7 @@ from sqlglot.typing.clickhouse import EXPRESSION_METADATA as CLICKHOUSE_METADATA
 from sqlglot.typing.hive import EXPRESSION_METADATA as HIVE_METADATA  # noqa: E402
 from sqlglot.typing.spark2 import EXPRESSION_METADATA as SPARK2_METADATA  # noqa: E402
 from sqlglot.typing.spark import EXPRESSION_METADATA as SPARK_METADATA  # noqa: E402
+from sqlglot.typing.bigquery import EXPRESSION_METADATA as BIGQUERY_METADATA  # noqa: E402
 from sqlglot.optimizer.annotate_types import (  # noqa: E402
     _COERCES_TO,
     BIGINT_EXTRACT_DATE_PARTS,
@@ -85,6 +86,27 @@ def classify(src: str) -> str:
     if m:
         dtype = exp.DType[m.group(1).upper()]
         return f"AnnotatorRef.SetSizedType(DType.{dtype.name}, {m.group(2)})"
+    # bigquery _annotate_math_functions (CEIL/FLOOR/... family)
+    if "_annotate_math_functions(self, e)" in src:
+        return "AnnotatorRef.MathFunctionsBq"
+    # bigquery _annotate_safe_divide (must precede _annotate_by_args_with_coerce)
+    if "_annotate_safe_divide(self, e)" in src:
+        return "AnnotatorRef.SafeDivideBq"
+    # bigquery _annotate_by_args_with_coerce (SafeAdd/SafeSubtract/... family)
+    if "_annotate_by_args_with_coerce(self, e)" in src:
+        return "AnnotatorRef.ByArgsWithCoerceBq"
+    # bigquery _annotate_by_args_approx_top (APPROX_TOP_K/APPROX_TOP_SUM)
+    if "_annotate_by_args_approx_top(self, e)" in src:
+        return "AnnotatorRef.ApproxTopKBq"
+    # bigquery _annotate_concat (source of the whole def block is inlined)
+    if "def _annotate_concat(" in src:
+        return "AnnotatorRef.ConcatBq"
+    # bigquery _annotate_array
+    if "def _annotate_array(" in src:
+        return "AnnotatorRef.ArrayBq"
+    # bigquery _annotate_date_func (DATE_ADD/DATE_SUB/*_TRUNC)
+    if "_annotate_date_func(self, e)" in src:
+        return "__DATE_FUNC_BQ__"
     # exp.Case: by_args over the ifs' true branches + default
     if "_annotate_by_args( e, *[if_expr.args[\"true\"] for if_expr in e.args[\"ifs\"]], \"default\" )" in src:
         return "AnnotatorRef.CaseArgs"
@@ -147,7 +169,7 @@ def classify(src: str) -> str:
         )
     if re.search(r"\{\"annotator\": lambda _, e: e\}", src):
         return "AnnotatorRef.Identity"
-    m = re.search(r"exp\.DataType\.from_str\(\"ARRAY<(\w+)>\"\)", src)
+    m = re.search(r"exp\.DataType\.from_str\(\"ARRAY<(\w+)>\"(?:,\s*dialect=\"\w+\")?\)", src)
     if m:
         return f"AnnotatorRef.ArrayOfType(DType.{m.group(1)})"
     for helper in (
@@ -184,7 +206,15 @@ def classify_spec(cls, spec) -> str:
             return f"TypingSpec.ReturnsDataType({emit_datatype(dtype)})"
         raise SystemExit(f"non-DType returns for {cls.__name__}: {dtype!r}")
     if keys == {"annotator"}:
-        return f"TypingSpec.Annotate({classify(lambda_source(spec['annotator']))})"
+        ref = classify(lambda_source(spec["annotator"]))
+        if ref == "__DATE_FUNC_BQ__":
+            # bigquery _annotate_date_func: the string-literal temporal type is keyed
+            # by the expression class (_DATE_FUNC_LITERAL_TYPE in typing/bigquery.py).
+            from sqlglot.typing.bigquery import _DATE_FUNC_LITERAL_TYPE
+
+            lit = _DATE_FUNC_LITERAL_TYPE[cls]
+            ref = f"AnnotatorRef.DateFuncBq(DType.{lit.name})"
+        return f"TypingSpec.Annotate({ref})"
     raise SystemExit(f"unexpected metadata keys for {cls.__name__}: {keys}")
 
 
@@ -234,6 +264,7 @@ def main() -> None:
         "HIVE": build_entries(HIVE_METADATA),
         "SPARK2": build_entries(SPARK2_METADATA),
         "SPARK": build_entries(SPARK_METADATA),
+        "BIGQUERY": build_entries(BIGQUERY_METADATA),
     }
 
     annotator_variants = {

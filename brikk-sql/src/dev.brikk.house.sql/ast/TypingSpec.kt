@@ -130,4 +130,45 @@ sealed class AnnotatorRef {
         val size: kotlin.Int,
         val nullable: kotlin.Boolean = false,
     ) : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_math_functions (CEIL/FLOOR/AVG/... family, sqlglot/typing/
+     * bigquery.py): INT64 input -> FLOAT64, otherwise the first arg's own type.
+     */
+    object MathFunctionsBq : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_by_args_with_coerce (SafeAdd/SafeSubtract/SafeMultiply/
+     * PercentileCont): _maybe_coerce(this.type, expression.type).
+     */
+    object ByArgsWithCoerceBq : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_safe_divide: INT64/INT64 -> FLOAT64, else by-args-with-coerce.
+     */
+    object SafeDivideBq : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_concat: by_args over "expressions"; unless BINARY/UNKNOWN,
+     * coerce the result to VARCHAR.
+     */
+    object ConcatBq : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_date_func (DATE_ADD/DATE_SUB/TRUNC family): a string-literal first
+     * arg takes the function's own temporal type ([literalType]); otherwise by_args("this").
+     */
+    data class DateFuncBq(val literalType: DType) : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_array: ARRAY(SELECT ...) / ARRAY(SELECT AS STRUCT ...) /
+     * ARRAY(set-op) projection typing; falls back to by_args("expressions", array=true).
+     */
+    object ArrayBq : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_by_args_approx_top (APPROX_TOP_K/APPROX_TOP_SUM): result is
+     * ARRAY<STRUCT<this.type, INT64>>.
+     */
+    object ApproxTopKBq : AnnotatorRef()
 }

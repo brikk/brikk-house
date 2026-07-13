@@ -43,6 +43,78 @@
     {
       "case": "read|spark|SELECT LIST(DISTINCT sample_col) FILTER(WHERE NOT sample_col IS NULL) FROM sample_table",
       "reason": "ArrayUniqueAgg/LIST FILTER lowering not ported (Spark direction)"
+    },
+    {
+      "case": "write|bigquery|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6])",
+      "reason": "write<->bigquery UNNEST semantics differ (unnest preprocess not ported)"
+    },
+    {
+      "case": "write|bigquery|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6]) FROM x",
+      "reason": "write<->bigquery UNNEST semantics differ (unnest preprocess not ported)"
+    },
+    {
+      "case": "write|bigquery|SELECT UNNEST(x) + 1",
+      "reason": "write<->bigquery UNNEST semantics differ (unnest preprocess not ported)"
+    },
+    {
+      "case": "write|bigquery|SELECT UNNEST(x) + 1 AS y",
+      "reason": "write<->bigquery UNNEST semantics differ (unnest preprocess not ported)"
+    },
+    {
+      "case": "write|bigquery|SELECT e'Hello\nworld'",
+      "reason": "write<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT CAST(b'Hello\\nworld' AS STRING)` actua"
+    },
+    {
+      "case": "read|bigquery|SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)",
+      "reason": "read<->bigquery AT TIME ZONE rewrite differs (attimezone_sql TIMESTAMP(DATETIME(..)) not ported)"
+    },
+    {
+      "case": "read|bigquery|SELECT CAST(CAST('2016-12-25 23:59:59' AS TIMESTAMP) AS DATE)",
+      "reason": "read<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT CAST(CAST('2016-12-25 23:59:59' AS TIM"
+    },
+    {
+      "case": "read|bigquery|SELECT CAST(CAST(CAST('2016-12-25' AS TIMESTAMPTZ) AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' AS DATE)",
+      "reason": "read<->bigquery AT TIME ZONE rewrite differs (attimezone_sql TIMESTAMP(DATETIME(..)) not ported)"
+    },
+    {
+      "case": "read|bigquery|SELECT CAST(CAST('2024-01-15 23:30:00' AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Berlin' AS DATE)",
+      "reason": "read<->bigquery AT TIME ZONE rewrite differs (attimezone_sql TIMESTAMP(DATETIME(..)) not ported)"
+    },
+    {
+      "case": "read|bigquery|SELECT CAST(CAST(STRPTIME('1970 ' || '05/06/2020', '%Y ' || '%m/%d/%Y') AS DATE) AS DATE)",
+      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
+    },
+    {
+      "case": "read|bigquery|SELECT CAST(STRPTIME('14:30', '%H:%M') AS TIME)",
+      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
+    },
+    {
+      "case": "read|bigquery|SELECT CAST(STRPTIME('15:30:00.123456', '%H:%M:%S.%f') AS TIME)",
+      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
+    },
+    {
+      "case": "read|bigquery|SELECT STRPTIME('1970 ' || '2023-01-15 14:30:00', '%Y ' || '%Y-%m-%d %H:%M:%S')",
+      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
+    },
+    {
+      "case": "read|bigquery|SELECT STRPTIME('1970 ' || 'Thu Dec 25 07:30:00 2008', '%Y ' || '%a %b %-d %I:%M:%S %Y')",
+      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
+    },
+    {
+      "case": "read|bigquery|SELECT STRPTIME('1970 ' || '15:30:00.123456', '%Y ' || '%H:%M:%S.%f')",
+      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
+    },
+    {
+      "case": "write|bigquery|STRFTIME(x, '%Y-%m-%d %H:%M:%S')",
+      "reason": "write<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
+    },
+    {
+      "case": "write|bigquery|STRPTIME(x, '%-m/%-d/%y %-I:%M %p')",
+      "reason": "write<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
+    },
+    {
+      "case": "write|bigquery|CAST(start AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York'",
+      "reason": "write<->bigquery AT TIME ZONE rewrite differs (attimezone_sql TIMESTAMP(DATETIME(..)) not ported)"
     }
   ]
 }

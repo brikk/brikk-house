@@ -195,4 +195,6 @@ class AnnotateTypesCorpusTest {
     // spark2 has no dialect-corpus fixture in sqlglot; the Spark2 annotator is gated
     // transitively through the hive and spark annotated corpora (Hive -> Spark2 -> Spark).
     @Test fun sparkAnnotatedCorpus() = runCorpus("spark-annotated-serde", "spark")
+
+    @Test fun bigqueryAnnotatedCorpus() = runCorpus("bigquery-annotated-serde", "bigquery")
 }

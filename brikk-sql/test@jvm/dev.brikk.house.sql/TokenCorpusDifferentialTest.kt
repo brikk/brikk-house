@@ -1,5 +1,6 @@
 package dev.brikk.house.sql
 
+import dev.brikk.house.sql.parser.BigqueryTokenizerTables
 import dev.brikk.house.sql.parser.ClickhouseTokenizerTables
 import dev.brikk.house.sql.parser.DorisTokenizerTables
 import dev.brikk.house.sql.parser.DuckdbTokenizerTables
@@ -145,4 +146,7 @@ class TokenCorpusDifferentialTest {
 
     @Test
     fun sparkCorpusMatchesPythonOracle() = runCorpus("spark.json", SparkTokenizerTables.CONFIG)
+
+    @Test
+    fun bigqueryCorpusMatchesPythonOracle() = runCorpus("bigquery.json", BigqueryTokenizerTables.CONFIG)
 }

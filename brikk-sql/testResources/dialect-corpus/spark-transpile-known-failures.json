@@ -183,6 +183,38 @@
     {
       "case": "write|duckdb|SELECT TRY_DIVIDE(a, b)",
       "reason": "SafeDivide/NULLIF guard lowering differs for target dialect"
+    },
+    {
+      "case": "write|bigquery|SELECT TO_UTC_TIMESTAMP('2016-08-31', 'Asia/Seoul')",
+      "reason": "write<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT DATETIME(TIMESTAMP(CAST('2016-08-31' A"
+    },
+    {
+      "case": "read|bigquery|SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))",
+      "reason": "read<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT * FROM produce AS p PIVOT(SUM(p.sales)"
+    },
+    {
+      "case": "write|bigquery|SELECT DATE_ADD(my_date_column, 1)",
+      "reason": "write<->bigquery date/interval delta rewrite differs (date_delta preprocess not ported)"
+    },
+    {
+      "case": "write|bigquery|SELECT EXPLODE(x) FROM tbl",
+      "reason": "write<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT IF(pos = pos_2, col, NULL) AS col FROM"
+    },
+    {
+      "case": "write|bigquery|SELECT EXPLODE(col) FROM _u",
+      "reason": "write<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT IF(pos = pos_2, col_2, NULL) AS col_2 "
+    },
+    {
+      "case": "write|bigquery|SELECT EXPLODE(ARRAY(1, 2))",
+      "reason": "write<->bigquery STRUCT/ARRAY rewrite differs"
+    },
+    {
+      "case": "write|bigquery|SELECT POSEXPLODE(ARRAY(2, 3)) AS x",
+      "reason": "write<->bigquery STRUCT/ARRAY rewrite differs"
+    },
+    {
+      "case": "write|bigquery|SELECT POSEXPLODE(ARRAY(2, 3)), EXPLODE(ARRAY(4, 5, 6)) FROM tbl",
+      "reason": "write<->bigquery STRUCT/ARRAY rewrite differs"
     }
   ]
 }

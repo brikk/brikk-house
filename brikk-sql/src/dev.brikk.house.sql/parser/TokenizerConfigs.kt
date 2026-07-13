@@ -19,6 +19,7 @@ object TokenizerConfigs {
         "hive" -> HiveTokenizerTables.CONFIG
         "spark2" -> Spark2TokenizerTables.CONFIG
         "spark", "sparksql" -> SparkTokenizerTables.CONFIG
+        "bigquery" -> BigqueryTokenizerTables.CONFIG
         else -> TokenizerConfig.BASE
     }
 }

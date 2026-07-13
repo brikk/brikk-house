@@ -2397,7 +2397,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_table_part
-    protected fun parseTablePart(schema: kotlin.Boolean = false): Expression? =
+    protected open fun parseTablePart(schema: kotlin.Boolean = false): Expression? =
         (if (!schema) parseFunction(optionalParens = false) else null)
             ?: parseIdVar(anyToken = false)
             ?: parseStringAsIdentifier()
@@ -8249,7 +8249,7 @@ open class Parser(
     protected fun parseDcolon(): Expression? = parseTypes()
 
     // sqlglot: Parser._parse_column_ops
-    fun parseColumnOps(this_: Expression?): Expression? {
+    open fun parseColumnOps(this_: Expression?): Expression? {
         var current = this_
         while (currToken.tokenType in brackets) {
             current = parseBracket(current)
@@ -9406,7 +9406,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_json_object
-    fun parseJsonObject(agg: kotlin.Boolean = false): Expression {
+    open fun parseJsonObject(agg: kotlin.Boolean = false): Expression {
         val star = parseStar()
         val expressions: List<Expression?> = if (star != null) {
             listOf(star)

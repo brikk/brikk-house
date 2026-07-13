@@ -265,6 +265,7 @@ object Dialects {
     val HIVE: Dialect = HiveDialect()
     val SPARK2: Dialect = Spark2Dialect()
     val SPARK: Dialect = SparkDialect()
+    val BIGQUERY: Dialect = BigqueryDialect()
 
     // brikk-native: no sqlglot oracle — see DatafusionDialect.kt.
     val DATAFUSION: Dialect = DatafusionDialect()
@@ -281,6 +282,7 @@ object Dialects {
         "hive" -> HIVE
         "spark2" -> SPARK2
         "spark", "sparksql" -> SPARK
+        "bigquery" -> BIGQUERY
         "datafusion", "arrow-datafusion" -> DATAFUSION
         else -> null
     }

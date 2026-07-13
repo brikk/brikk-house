@@ -1,0 +1,257 @@
+{
+  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "cases": [
+    {
+      "sql": "PARSE_TIMESTAMP('%FT%H:%M:%E*S%z', x)",
+      "reason": "time-format inverse-mapping edge cases (INVERSE_TIME_MAPPING %E*S/%c/%a specifiers, CAST ... FORMAT) not fully ported"
+    },
+    {
+      "sql": "SELECT '\\n\\r\\a\\v\\f\\t'",
+      "reason": "string escape-sequence rendering differs (control-char escaping)"
+    },
+    {
+      "sql": "SELECT PARSE_TIMESTAMP('%c', 'Thu Dec 25 07:30:00 2008', 'UTC')",
+      "reason": "time-format inverse-mapping edge cases (INVERSE_TIME_MAPPING %E*S/%c/%a specifiers, CAST ... FORMAT) not fully ported"
+    },
+    {
+      "sql": "SELECT FORMAT_TIMESTAMP('%F %T', CURRENT_TIMESTAMP(), 'Europe/Berlin') AS ts",
+      "reason": "time-format inverse-mapping edge cases (INVERSE_TIME_MAPPING %E*S/%c/%a specifiers, CAST ... FORMAT) not fully ported"
+    },
+    {
+      "sql": "SELECT * FROM test QUALIFY a IS DISTINCT FROM b WINDOW c AS (PARTITION BY d)",
+      "reason": "AFTER_HAVING_MODIFIER ordering (QUALIFY before WINDOW) not ported"
+    },
+    {
+      "sql": "FOR record IN (SELECT word, word_count FROM bigquery-public-data.samples.shakespeare LIMIT 5) DO SELECT record.word, record.word_count",
+      "reason": "FOR..IN generation not ported (no ForIn dispatch)"
+    },
+    {
+      "sql": "CREATE TABLE IF NOT EXISTS foo AS SELECT * FROM bla EXCEPT DISTINCT (SELECT * FROM bar) LIMIT 0",
+      "reason": "set-op DISTINCT/parenthesization preprocess differs (EXCEPT/INTERSECT ALL-clause handling)"
+    },
+    {
+      "sql": "SELECT * FROM foo AS t0 FOR SYSTEM_TIME AS OF '2026-02-12T23:22:21.743416+00:00'",
+      "reason": "FOR SYSTEM_TIME version rendering differs (version_sql edge case)"
+    },
+    {
+      "sql": "SELECT r\"\\t\"",
+      "reason": "raw-string backslash escaping differs (rawstring_sql escape_backslash handling)"
+    },
+    {
+      "sql": "select array_contains([1, 2, 3], 1)",
+      "reason": "ArrayContains -> EXISTS(SELECT 1 FROM UNNEST) rewrite not ported (_array_contains_sql)"
+    },
+    {
+      "sql": "SELECT y + 1 z FROM x GROUP BY y + 1 ORDER BY z",
+      "reason": "_alias_ordered_group preprocess (GROUP/ORDER alias rewrite) not ported"
+    },
+    {
+      "sql": "EXPORT DATA OPTIONS (URI='gs://bucket/folder/*.csv') AS (SELECT 1)",
+      "reason": "EXPORT DATA generation not ported (no Export dispatch)"
+    },
+    {
+      "sql": "EXPORT DATA OPTIONS (URI='gs://path*.csv.gz', FORMAT='CSV') AS SELECT * FROM all_rows",
+      "reason": "EXPORT DATA generation not ported (no Export dispatch)"
+    },
+    {
+      "sql": "EXPORT DATA WITH CONNECTION myproject.us.myconnection OPTIONS (URI='gs://path*.csv.gz', FORMAT='CSV') AS SELECT * FROM all_rows",
+      "reason": "EXPORT DATA generation not ported (no Export dispatch)"
+    },
+    {
+      "sql": "SELECT PARSE_DATETIME('%a %b %e %I:%M:%S %Y', 'Thu Dec 25 07:30:00 2008')",
+      "reason": "time-format inverse-mapping edge cases (INVERSE_TIME_MAPPING %E*S/%c/%a specifiers, CAST ... FORMAT) not fully ported"
+    },
+    {
+      "sql": "JSON_KEYS(PARSE_JSON('{\"a\": {\"b\":1}}'), 1, mode => 'lax')",
+      "reason": "time-format inverse-mapping edge cases (INVERSE_TIME_MAPPING %E*S/%c/%a specifiers, CAST ... FORMAT) not fully ported"
+    },
+    {
+      "sql": "CREATE TABLE FUNCTION a(x INT64) RETURNS TABLE <q STRING, r INT64> AS SELECT s, t",
+      "reason": "CREATE TABLE FUNCTION / RETURNS TABLE generation not ported (_create_sql / _returnsproperty_sql)"
+    },
+    {
+      "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'locf')]) ORDER BY time",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT a, b, c, d, e FROM GAP_FILL(TABLE foo, ts_column => 'b', partitioning_columns => ['a'], value_columns => [('c', 'bar'), ('d', 'baz'), ('e', 'bla')], bucket_width => INTERVAL '1' DAY)",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'linear')], ignore_null_values => FALSE) ORDER BY time",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE) ORDER BY time",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'null')], origin => CAST('2023-11-01 09:30:01' AS DATETIME)) ORDER BY time",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "CREATE OR REPLACE MODEL m\nTRANSFORM(\n  ML.FEATURE_CROSS(STRUCT(f1, f2)) AS cross_f,\n  ML.QUANTILE_BUCKETIZE(f3) OVER () AS buckets,\n  label_col\n)\nOPTIONS (\n  model_type='linear_reg',\n  input_label_cols=['label_col']\n) AS\nSELECT\n  *\nFROM t",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "CREATE MODEL project_id.mydataset.mymodel\nINPUT(\n  f1 INT64,\n  f2 FLOAT64,\n  f3 STRING,\n  f4 ARRAY<INT64>\n)\nOUTPUT(\n  out1 INT64,\n  out2 INT64\n)\nREMOTE WITH CONNECTION myproject.us.test_connection\nOPTIONS (\n  ENDPOINT='https://us-central1-aiplatform.googleapis.com/v1/projects/myproject/locations/us-central1/endpoints/1234'\n)",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.PREDICT(MODEL mydataset.mymodel, (SELECT label, column1, column2 FROM mydataset.mytable))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT label, predicted_label1, predicted_label AS predicted_label2 FROM ML.PREDICT(MODEL mydataset.mymodel2, (SELECT * EXCEPT (predicted_label), predicted_label AS predicted_label1 FROM ML.PREDICT(MODEL mydataset.mymodel1, TABLE mydataset.mytable)))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.PREDICT(MODEL mydataset.mymodel, (SELECT custom_label, column1, column2 FROM mydataset.mytable), STRUCT(0.55 AS threshold))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.PREDICT(MODEL `my_project`.my_dataset.my_model, (SELECT * FROM input_data))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.PREDICT(MODEL my_dataset.vision_model, (SELECT uri, ML.RESIZE_IMAGE(ML.DECODE_IMAGE(data), 480, 480, FALSE) AS input FROM my_dataset.object_table))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.PREDICT(MODEL my_dataset.vision_model, (SELECT uri, ML.CONVERT_COLOR_SPACE(ML.RESIZE_IMAGE(ML.DECODE_IMAGE(data), 224, 280, TRUE), 'YIQ') AS input FROM my_dataset.object_table WHERE content_type = 'image/jpeg'))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.FEATURES_AT_TIME(TABLE mydataset.feature_table, time => '2022-06-11 10:00:00+00', num_rows => 1, ignore_feature_nulls => TRUE)",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM VECTOR_SEARCH(TABLE mydataset.base_table, 'column_to_search', TABLE mydataset.query_table, 'query_column_to_search', top_k => 2, distance_type => 'cosine', options => '{\"fraction_lists_to_search\":0.15}')",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM VECTOR_SEARCH(TABLE mydataset.base_table, 'column_to_search', TABLE mydataset.query_table, query_column_to_search => 'query_column_to_search', top_k => 2, distance_type => 'cosine', options => '{\"fraction_lists_to_search\":0.15}')",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM VECTOR_SEARCH(TABLE mydataset.base_table, 'column_to_search', TABLE mydataset.query_table)",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.TRANSLATE(MODEL `mydataset.mytranslatemodel`, TABLE `mydataset.mybqtable`, STRUCT('translate_text' AS translate_mode, 'zh-CN' AS target_language_code))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.FORECAST(MODEL `mydataset.mymodel`, STRUCT(2 AS horizon))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.FORECAST(MODEL `mydataset.mymodel`, TABLE `mydataset.mybqtable`, STRUCT(2 AS horizon, 4 AS confidence_level))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.FORECAST(MODEL `mydataset.mymodel`, (SELECT * FROM mydataset.query_table), STRUCT())",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM AI.FORECAST(TABLE citibike_trips, data_col => 'num_trips', timestamp_col => 'date', horizon => 30)",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM AI.FORECAST((SELECT * FROM citibike_trips), data_col => 'num_trips', timestamp_col => 'date', horizon => 30)",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM ML.GENERATE_TEXT(MODEL `mydataset.gemini_model`, TABLE `mydataset.prompt_table`, STRUCT(0.15 AS temperature))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM AI.GENERATE_TEXT(MODEL `mydataset.gemini_model`, TABLE `mydataset.prompt_table`, STRUCT(0.15 AS temperature))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT * FROM AI.GENERATE_TABLE(MODEL `mydataset.gemini_model`, (SELECT 'Q' AS prompt), STRUCT('name STRING' AS output_schema))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SELECT AI.GENERATE_BOOL(MODEL `mydataset.gemini_model`, 'Is sky blue?')",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "REGEXP_EXTRACT(svc_plugin_output, r'\\\\\\((.*)')",
+      "reason": "raw-string backslash escaping differs (rawstring_sql escape_backslash handling)"
+    },
+    {
+      "sql": "SELECT CAST(date AS TIMESTAMP FORMAT ('YYYY-MM-DD HH24:MI:SS'))",
+      "reason": "time-format inverse-mapping edge cases (INVERSE_TIME_MAPPING %E*S/%c/%a specifiers, CAST ... FORMAT) not fully ported"
+    },
+    {
+      "sql": "SELECT * FROM UNNEST(x) WITH OFFSET EXCEPT DISTINCT SELECT * FROM UNNEST(y) WITH OFFSET",
+      "reason": "set-op DISTINCT/parenthesization preprocess differs (EXCEPT/INTERSECT ALL-clause handling)"
+    },
+    {
+      "sql": "DECLARE X INT64",
+      "reason": "DECLARE statement generation not ported (no Declare dispatch; parser gap upstream)"
+    },
+    {
+      "sql": "DECLARE X INT64 DEFAULT 1",
+      "reason": "DECLARE statement generation not ported (no Declare dispatch; parser gap upstream)"
+    },
+    {
+      "sql": "DECLARE X FLOAT64 DEFAULT 0.9",
+      "reason": "DECLARE statement generation not ported (no Declare dispatch; parser gap upstream)"
+    },
+    {
+      "sql": "DECLARE X INT64 DEFAULT (SELECT MAX(col) FROM foo)",
+      "reason": "DECLARE statement generation not ported (no Declare dispatch; parser gap upstream)"
+    },
+    {
+      "sql": "DECLARE X, Y, Z INT64",
+      "reason": "DECLARE statement generation not ported (no Declare dispatch; parser gap upstream)"
+    },
+    {
+      "sql": "DECLARE X, Y, Z INT64 DEFAULT 42",
+      "reason": "DECLARE statement generation not ported (no Declare dispatch; parser gap upstream)"
+    },
+    {
+      "sql": "DECLARE X, Y, Z INT64 DEFAULT (SELECT 42)",
+      "reason": "DECLARE statement generation not ported (no Declare dispatch; parser gap upstream)"
+    },
+    {
+      "sql": "DECLARE START_DATE DATE DEFAULT CURRENT_DATE - 1",
+      "reason": "DECLARE statement generation not ported (no Declare dispatch; parser gap upstream)"
+    },
+    {
+      "sql": "DECLARE TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP() - INTERVAL '1' HOUR",
+      "reason": "DECLARE statement generation not ported (no Declare dispatch; parser gap upstream)"
+    },
+    {
+      "sql": "LAST_DAY(DATETIME '2008-11-10 15:30:00', WEEK(SUNDAY))",
+      "reason": "LAST_DAY temporal-literal CAST rewrite differs"
+    },
+    {
+      "sql": "SELECT * FROM ML.TRANSLATE(MODEL `mydataset.mymodel`, (SELECT comment AS text_content FROM mydataset.mytable), STRUCT('translate_text' AS translate_mode, 'en' AS target_language_code))",
+      "reason": "ML.*/AI.* TVF & MODEL generation not ported (custom BigQuery ML/AI surface)"
+    },
+    {
+      "sql": "SAFE.SUBSTR('foo', 0, -2)",
+      "reason": "SAFE.SUBSTR renders inner canonical SUBSTRING (Substring sql_name) \u2014 cosmetic"
+    },
+    {
+      "sql": "SAFE.PARSE_DATE('%Y-%m-%d', '2024-01-15')",
+      "reason": "time-format inverse-mapping edge cases (INVERSE_TIME_MAPPING %E*S/%c/%a specifiers, CAST ... FORMAT) not fully ported"
+    },
+    {
+      "sql": "SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', '2024-01-15 10:30:00')",
+      "reason": "time-format inverse-mapping edge cases (INVERSE_TIME_MAPPING %E*S/%c/%a specifiers, CAST ... FORMAT) not fully ported"
+    },
+    {
+      "sql": "SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S', '2024-01-15 10:30:00')",
+      "reason": "time-format inverse-mapping edge cases (INVERSE_TIME_MAPPING %E*S/%c/%a specifiers, CAST ... FORMAT) not fully ported"
+    },
+    {
+      "sql": "WITH t AS (SELECT '{\"x-y\": \"z\"}' AS c) SELECT JSON_EXTRACT(c, '$.x-y') FROM t",
+      "reason": "JSON path quoting/escaping differs (_json_extract_sql dquote-escaping / jsonpath)"
+    }
+  ]
+}
