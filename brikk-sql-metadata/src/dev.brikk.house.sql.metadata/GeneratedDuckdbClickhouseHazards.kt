@@ -112,8 +112,8 @@ private fun hazardsChunk0(): List<FunctionHazard> = listOf(
         areas = listOf("string"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"),
     // [19] duckdb: 'regexp_replace' | clickhouse: 'replaceRegexpOne'
-    FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "DuckDB regexp_replace(s,p,r) replaces only the FIRST match (no 'g' flag); the generator now emits replaceRegexpOne (first-only), result-identical. The 'g'-flag form and Trino's all-form map to replaceRegexpAll. Empty-pattern behavior still worth a live re-check.",
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "DuckDB regexp_replace(s,p,r) replaces only the FIRST match (no 'g' flag); the generator now emits replaceRegexpOne (first-only), result-identical for the common case. RESIDUAL divergence: empty-pattern behavior differs (ClickHouse no-op vs DuckDB inserts at every position) and RE2-vs-RE2 flag handling — hence conditionally-equivalent, not identical. The 'g'/Trino all-form maps to replaceRegexpAll.",
         areas = listOf("regex", "string"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"),
     // [20] duckdb: 'regexp_extract' | clickhouse: 'regexpExtract'

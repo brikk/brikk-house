@@ -48,8 +48,13 @@ class ClickhouseGeneratorMappingBugsTest {
         assertEquals("SELECT replaceRegexpOne(s, p, r)", ch("SELECT regexp_replace(s, p, r)", "duckdb"))
         // Trino regexp_replace replaces ALL -> replaceRegexpAll (matches ClickHouse alias).
         assertEquals("SELECT replaceRegexpAll(s, p, r)", ch("SELECT regexp_replace(s, p, r)", "trino"))
-        // Reconciled: duckdb regexp_replace -> replaceRegexpOne is now identical.
-        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "regexp_replace")?.verdict)
+        // Reconciled to CONDITIONALLY_EQUIVALENT (not identical): the common first-match case
+        // is now correct, but a residual empty-pattern divergence (CH no-op vs DuckDB inserts
+        // at every position) must stay surfaced (policy #2 -> WARNING), not silently cleared.
+        assertEquals(
+            HazardVerdict.CONDITIONALLY_EQUIVALENT,
+            HazardRegistry.lookup("duckdb", "clickhouse", "regexp_replace")?.verdict,
+        )
     }
 
     @Test
