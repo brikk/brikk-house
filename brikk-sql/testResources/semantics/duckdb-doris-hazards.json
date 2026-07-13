@@ -1929,6 +1929,27 @@
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
       "duckdb": "unnest"
+    },
+    {
+      "duckdb": "round",
+      "doris": "round",
+      "verdict": "identical",
+      "hazard": "Probe-verified live across .5 boundaries: both half-away-from-zero and decimal-aware (round(2.5)=3, round(3.5)=4, round(1.25,1)=1.3, round(1.35,1)=1.4, round(0.15,1)=0.2, round(-1.25,1)=-1.3, round(1.005,2)=1.01, round(12345,-2)=12300). Resolves the prior UNCLEAR for DuckDB<->Doris.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"
+    },
+    {
+      "duckdb": "substring",
+      "doris": "substring",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: aligned for start>=1, negative start (counts from end: substring('héllo',-2)='lo'), 2-arg form, and over-length. DIVERGES at start=0: DuckDB substring('héllo',0,2)='h' (includes leading), Doris returns '' (MySQL pos=0 rule). Normalize start=0 before pushing.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"
     }
   ]
 }

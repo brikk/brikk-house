@@ -462,6 +462,21 @@ Registry additions: duckdb→doris +22 (2 identical, 2 divergent, 12 conditional
 1 no-equivalent, 5 unclear table-fns), trino→doris +16 (7 identical, 1 divergent,
 7 conditionally-equiv, 1 unclear table-fn `unnest`).
 
+## Batch 10 (2026-07-13) — round + substring (deferred from batch 2) {#batch10-round-substring}
+
+- **`round` identical (DuckDB↔Doris):** resolves the prior UNCLEAR. Both are
+  half-away-from-zero and decimal-aware across every probed `.5` boundary
+  (`round(2.5)`=3, `round(3.5)`=4, `round(1.25,1)`=1.3, `round(1.35,1)`=1.4,
+  `round(0.15,1)`=0.2, `round(-1.25,1)`=-1.3, `round(1.005,2)`=1.01,
+  `round(12345,-2)`=12300). Trino side left `conditionally-equivalent` (Java HALF_UP
+  is also away-from-zero, likely aligned, but not re-probed live).
+- **`substring` conditionally-equivalent:** aligned for start>=1, negative start
+  (counts from end), 2-arg form, and over-length — but **diverges at start=0**:
+  `substring('héllo',0,2)` = `'h'` (DuckDB, includes leading) vs `''` (Doris, MySQL
+  pos=0 rule). Normalize start=0 before pushing.
+
+This completes the bucket-A worklist (duckdb→doris and trino→doris both fully probed).
+
 ## Worklist status / continuation
 
 Done (batches 1-2): the prior-DIVERGENT scalar tier + the new `length` find + cheap

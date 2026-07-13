@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 184 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
+/** The 186 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
 internal val DUCKDB_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -922,9 +922,19 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         hazard = "table function (row-generating), not scalar-probeable through the shared-expr harness; needs a table-function harness for a row-set/ordering comparison.",
         areas = listOf("table-function"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [184] duckdb: 'round' | doris: 'round'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Probe-verified live across .5 boundaries: both half-away-from-zero and decimal-aware (round(2.5)=3, round(3.5)=4, round(1.25,1)=1.3, round(1.35,1)=1.4, round(0.15,1)=0.2, round(-1.25,1)=-1.3, round(1.005,2)=1.01, round(12345,-2)=12300). Resolves the prior UNCLEAR for DuckDB<->Doris.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"),
+    // [185] duckdb: 'substring' | doris: 'substring'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Probe-verified live: aligned for start>=1, negative start (counts from end: substring('héllo',-2)='lo'), 2-arg form, and over-length. DIVERGES at start=0: DuckDB substring('héllo',0,2)='h' (includes leading), Doris returns '' (MySQL pos=0 rule). Normalize start=0 before pushing.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"),
 )
 
-/** duckdb->doris lookup: 184 keys (DuckDB-side names) over 184 entries. */
+/** duckdb->doris lookup: 186 keys (DuckDB-side names) over 186 entries. */
 internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -1066,6 +1076,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("REPLACE", DUCKDB_DORIS_HAZARD_ENTRIES[67])
     put("REVERSE", DUCKDB_DORIS_HAZARD_ENTRIES[6])
     put("RIGHT", DUCKDB_DORIS_HAZARD_ENTRIES[70])
+    put("ROUND", DUCKDB_DORIS_HAZARD_ENTRIES[184])
     put("ROW_NUMBER", DUCKDB_DORIS_HAZARD_ENTRIES[107])
     put("RPAD", DUCKDB_DORIS_HAZARD_ENTRIES[65])
     put("RTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[11])
@@ -1085,6 +1096,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("STDDEV_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[90])
     put("ST_ASTEXT", DUCKDB_DORIS_HAZARD_ENTRIES[177])
     put("ST_GEOMFROMWKB", DUCKDB_DORIS_HAZARD_ENTRIES[178])
+    put("SUBSTRING", DUCKDB_DORIS_HAZARD_ENTRIES[185])
     put("SUM", DUCKDB_DORIS_HAZARD_ENTRIES[76])
     put("TAN", DUCKDB_DORIS_HAZARD_ENTRIES[38])
     put("TANH", DUCKDB_DORIS_HAZARD_ENTRIES[41])
@@ -1112,7 +1124,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("YEARWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[132])
 }
 
-/** doris->duckdb lookup: 184 keys (Doris-side names) over 184 entries. */
+/** doris->duckdb lookup: 186 keys (Doris-side names) over 186 entries. */
 internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -1254,6 +1266,7 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("REPLACE", DUCKDB_DORIS_HAZARD_ENTRIES[67])
     put("REVERSE", DUCKDB_DORIS_HAZARD_ENTRIES[6])
     put("RIGHT", DUCKDB_DORIS_HAZARD_ENTRIES[70])
+    put("ROUND", DUCKDB_DORIS_HAZARD_ENTRIES[184])
     put("ROW_NUMBER", DUCKDB_DORIS_HAZARD_ENTRIES[107])
     put("RPAD", DUCKDB_DORIS_HAZARD_ENTRIES[65])
     put("RTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[11])
@@ -1273,6 +1286,7 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("STDDEV_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[90])
     put("ST_ASTEXT", DUCKDB_DORIS_HAZARD_ENTRIES[177])
     put("ST_GEOMFROMWKB", DUCKDB_DORIS_HAZARD_ENTRIES[178])
+    put("SUBSTRING", DUCKDB_DORIS_HAZARD_ENTRIES[185])
     put("SUM", DUCKDB_DORIS_HAZARD_ENTRIES[76])
     put("TAN", DUCKDB_DORIS_HAZARD_ENTRIES[38])
     put("TANH", DUCKDB_DORIS_HAZARD_ENTRIES[41])

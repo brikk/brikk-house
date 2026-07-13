@@ -1741,6 +1741,27 @@
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
       "trino": "unnest"
+    },
+    {
+      "trino": "round",
+      "doris": "round",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Doris round is half-away-from-zero and decimal-aware, verified matching live DuckDB across .5 boundaries incl negatives and d>0/d<0. Trino round (Java HALF_UP = away-from-zero) is likely aligned, but the prior corpus verdict was UNCLEAR and Trino was not re-probed live this session — verify negative .5 boundaries before pushing. Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"
+    },
+    {
+      "trino": "substring",
+      "doris": "substring",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Aligned for start>=1, negative start (from end), 2-arg, and over-length (code-point unit). Doris returns '' at start=0 (MySQL pos=0 rule); Trino start=0 not re-probed this session — verify the start=0 edge before pushing. Doris live; Trino from prior evidence.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"
     }
   ]
 }

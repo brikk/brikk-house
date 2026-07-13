@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 166 probe-verified (trino, doris) pair verdicts, in JSON order. */
+/** The 168 probe-verified (trino, doris) pair verdicts, in JSON order. */
 internal val TRINO_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -832,9 +832,19 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         hazard = "table function (row-generating), not scalar-probeable through the shared-expr harness; needs a table-function harness for a row-set/ordering comparison.",
         areas = listOf("table-function"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [166] trino: 'round' | doris: 'round'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Doris round is half-away-from-zero and decimal-aware, verified matching live DuckDB across .5 boundaries incl negatives and d>0/d<0. Trino round (Java HALF_UP = away-from-zero) is likely aligned, but the prior corpus verdict was UNCLEAR and Trino was not re-probed live this session — verify negative .5 boundaries before pushing. Doris live; Trino from prior evidence.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"),
+    // [167] trino: 'substring' | doris: 'substring'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Aligned for start>=1, negative start (from end), 2-arg, and over-length (code-point unit). Doris returns '' at start=0 (MySQL pos=0 rule); Trino start=0 not re-probed this session — verify the start=0 edge before pushing. Doris live; Trino from prior evidence.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"),
 )
 
-/** trino->doris lookup: 166 keys (Trino-side names) over 166 entries. */
+/** trino->doris lookup: 168 keys (Trino-side names) over 168 entries. */
 internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
@@ -960,6 +970,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("REPEAT", TRINO_DORIS_HAZARD_ENTRIES[61])
     put("REPLACE", TRINO_DORIS_HAZARD_ENTRIES[53])
     put("REVERSE", TRINO_DORIS_HAZARD_ENTRIES[6])
+    put("ROUND", TRINO_DORIS_HAZARD_ENTRIES[166])
     put("ROW_NUMBER", TRINO_DORIS_HAZARD_ENTRIES[92])
     put("RPAD", TRINO_DORIS_HAZARD_ENTRIES[60])
     put("RTRIM", TRINO_DORIS_HAZARD_ENTRIES[11])
@@ -980,6 +991,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("STDDEV_POP", TRINO_DORIS_HAZARD_ENTRIES[79])
     put("STDDEV_SAMP", TRINO_DORIS_HAZARD_ENTRIES[80])
     put("SUBSTR", TRINO_DORIS_HAZARD_ENTRIES[65])
+    put("SUBSTRING", TRINO_DORIS_HAZARD_ENTRIES[167])
     put("SUM", TRINO_DORIS_HAZARD_ENTRIES[67])
     put("TAN", TRINO_DORIS_HAZARD_ENTRIES[36])
     put("TANH", TRINO_DORIS_HAZARD_ENTRIES[37])
@@ -1004,7 +1016,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("YOW", TRINO_DORIS_HAZARD_ENTRIES[117])
 }
 
-/** doris->trino lookup: 166 keys (Doris-side names) over 166 entries. */
+/** doris->trino lookup: 168 keys (Doris-side names) over 168 entries. */
 internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
@@ -1130,6 +1142,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("REPEAT", TRINO_DORIS_HAZARD_ENTRIES[61])
     put("REPLACE", TRINO_DORIS_HAZARD_ENTRIES[53])
     put("REVERSE", TRINO_DORIS_HAZARD_ENTRIES[6])
+    put("ROUND", TRINO_DORIS_HAZARD_ENTRIES[166])
     put("ROW_NUMBER", TRINO_DORIS_HAZARD_ENTRIES[92])
     put("RPAD", TRINO_DORIS_HAZARD_ENTRIES[60])
     put("RTRIM", TRINO_DORIS_HAZARD_ENTRIES[11])
@@ -1150,6 +1163,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("STDDEV_POP", TRINO_DORIS_HAZARD_ENTRIES[79])
     put("STDDEV_SAMP", TRINO_DORIS_HAZARD_ENTRIES[80])
     put("SUBSTR", TRINO_DORIS_HAZARD_ENTRIES[65])
+    put("SUBSTRING", TRINO_DORIS_HAZARD_ENTRIES[167])
     put("SUM", TRINO_DORIS_HAZARD_ENTRIES[67])
     put("TAN", TRINO_DORIS_HAZARD_ENTRIES[36])
     put("TANH", TRINO_DORIS_HAZARD_ENTRIES[37])
