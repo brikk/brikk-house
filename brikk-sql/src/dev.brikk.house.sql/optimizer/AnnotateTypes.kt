@@ -553,6 +553,7 @@ class TypeAnnotator(
             when {
                 spec is TypingSpec.Annotate -> runAnnotator(spec.ref, expr)
                 spec is TypingSpec.Returns -> setType(expr, spec.dtype)
+                spec is TypingSpec.ReturnsDataType -> setType(expr, spec.dtype)
                 else -> setType(expr, DType.UNKNOWN)
             }
         }
@@ -678,6 +679,14 @@ class TypeAnnotator(
                 } else {
                     setType(e, DType.DOUBLE)
                 }
+            // sqlglot: spark2 exp.ApproxQuantile — by_args over "this", array-ness
+            // driven by whether the "quantile" arg resolves to an ARRAY type.
+            is AnnotatorRef.ApproxQuantileByArgs -> {
+                val quantile = e.args["quantile"] as? Expression
+                annotateByArgs(e, listOf("this"), array = quantile?.isType(DType.ARRAY) == true)
+            }
+            // sqlglot: spark2 _annotate_by_similar_args (CONCAT/LPAD/RPAD family).
+            is AnnotatorRef.BySimilarArgs -> annotateBySimilarArgs(e, ref.keys)
             // sqlglot: exp.DataType.build("FixedString(16)", dialect="clickhouse")
             is AnnotatorRef.SetSizedType -> setType(
                 e,
@@ -1067,6 +1076,35 @@ class TypeAnnotator(
             )
         }
 
+        return expression
+    }
+
+    // sqlglot: spark2 _annotate_by_similar_args (sqlglot/typing/spark2.py) — CONCAT-family
+    // type inference. All-BINARY -> BINARY; else any known, non-ARRAY, non-BINARY arg
+    // -> TEXT; else UNKNOWN. Ported bug-for-bug (binary+unknown stays UNKNOWN).
+    private fun annotateBySimilarArgs(expression: Expression, keys: List<String>): Expression {
+        val argExprs = mutableListOf<Expression>()
+        for (key in keys) {
+            when (val v = expression.args[key]) {
+                null -> {}
+                is List<*> -> v.forEach { if (it is Expression) argExprs.add(it) }
+                is Expression -> argExprs.add(v)
+            }
+        }
+
+        val result: Any = if (argExprs.isNotEmpty() && argExprs.all { it.isType(DType.BINARY) }) {
+            DType.BINARY
+        } else if (
+            argExprs.any {
+                it.type != null && !it.isType(DType.UNKNOWN, DType.ARRAY, DType.BINARY)
+            }
+        ) {
+            DType.TEXT
+        } else {
+            DType.UNKNOWN
+        }
+
+        setType(expression, result)
         return expression
     }
 

@@ -43,6 +43,9 @@ from sqlglot.typing.presto import EXPRESSION_METADATA as PRESTO_METADATA  # noqa
 from sqlglot.typing.duckdb import EXPRESSION_METADATA as DUCKDB_METADATA  # noqa: E402
 from sqlglot.typing.postgres import EXPRESSION_METADATA as POSTGRES_METADATA  # noqa: E402
 from sqlglot.typing.clickhouse import EXPRESSION_METADATA as CLICKHOUSE_METADATA  # noqa: E402
+from sqlglot.typing.hive import EXPRESSION_METADATA as HIVE_METADATA  # noqa: E402
+from sqlglot.typing.spark2 import EXPRESSION_METADATA as SPARK2_METADATA  # noqa: E402
+from sqlglot.typing.spark import EXPRESSION_METADATA as SPARK_METADATA  # noqa: E402
 from sqlglot.optimizer.annotate_types import (  # noqa: E402
     _COERCES_TO,
     BIGINT_EXTRACT_DATE_PARTS,
@@ -85,6 +88,20 @@ def classify(src: str) -> str:
     # exp.Case: by_args over the ifs' true branches + default
     if "_annotate_by_args( e, *[if_expr.args[\"true\"] for if_expr in e.args[\"ifs\"]], \"default\" )" in src:
         return "AnnotatorRef.CaseArgs"
+    # spark2 exp.ApproxQuantile: by_args over "this", array-ness driven by the
+    # "quantile" arg's runtime type (array when quantile is an ARRAY literal).
+    if '_annotate_by_args( e, "this", array=e.args["quantile"].is_type(exp.DType.ARRAY) )' in src:
+        return "AnnotatorRef.ApproxQuantileByArgs"
+    # spark2 _annotate_by_similar_args helper (CONCAT/LPAD/RPAD family): all-BINARY
+    # -> BINARY; else any known non-array/non-binary -> TEXT; else UNKNOWN.
+    m = re.search(
+        r"_annotate_by_similar_args\(\s*self,\s*e,\s*((?:\"[a-z_]+\",?\s*)+)\)",
+        src,
+    )
+    if m:
+        keys = re.findall(r"\"([a-z_]+)\"", m.group(1))
+        keys_kt = ", ".join(f'"{k}"' for k in keys)
+        return f"AnnotatorRef.BySimilarArgs(listOf({keys_kt}))"
     m = re.search(
         r"self\._annotate_by_args\(\s*e,\s*((?:\"[a-z_]+\",?\s*)+)"
         r"((?:promote=True)?,?\s*(?:array=True)?)\s*\)",
@@ -144,13 +161,28 @@ def classify(src: str) -> str:
     raise SystemExit(f"gen_typing_metadata.py: UNCLASSIFIED annotator lambda:\n  {src}")
 
 
+def emit_datatype(dt) -> str:
+    """Kotlin source reconstructing an exp.DataType node (nested/parametrized returns)."""
+    if not isinstance(dt, exp.DataType):
+        raise SystemExit(f"emit_datatype: expected DataType, got {dt!r}")
+    parts = [f'"this" to DType.{dt.this.name}']
+    exprs = dt.args.get("expressions")
+    if exprs:
+        inner = ", ".join(emit_datatype(e) for e in exprs)
+        parts.append(f'"expressions" to listOf({inner})')
+    parts.append(f'"nested" to {"true" if dt.args.get("nested") else "false"}')
+    return f"DataType(args({', '.join(parts)}))"
+
+
 def classify_spec(cls, spec) -> str:
     keys = set(spec)
     if keys == {"returns"}:
         dtype = spec["returns"]
-        if not isinstance(dtype, exp.DType):
-            raise SystemExit(f"non-DType returns for {cls.__name__}: {dtype!r}")
-        return f"TypingSpec.Returns(DType.{dtype.name})"
+        if isinstance(dtype, exp.DType):
+            return f"TypingSpec.Returns(DType.{dtype.name})"
+        if isinstance(dtype, exp.DataType):
+            return f"TypingSpec.ReturnsDataType({emit_datatype(dtype)})"
+        raise SystemExit(f"non-DType returns for {cls.__name__}: {dtype!r}")
     if keys == {"annotator"}:
         return f"TypingSpec.Annotate({classify(lambda_source(spec['annotator']))})"
     raise SystemExit(f"unexpected metadata keys for {cls.__name__}: {keys}")
@@ -199,6 +231,9 @@ def main() -> None:
         "DUCKDB": build_entries(DUCKDB_METADATA),
         "POSTGRES": build_entries(POSTGRES_METADATA),
         "CLICKHOUSE": build_entries(CLICKHOUSE_METADATA),
+        "HIVE": build_entries(HIVE_METADATA),
+        "SPARK2": build_entries(SPARK2_METADATA),
+        "SPARK": build_entries(SPARK_METADATA),
     }
 
     annotator_variants = {

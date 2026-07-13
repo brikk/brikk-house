@@ -2643,7 +2643,17 @@ open class Generator(
 
     // sqlglot: Generator.query_modifiers (base: LIMIT_FETCH="ALL" -> no fetch/limit conversion)
     open fun queryModifiers(expression: Expression, vararg sqls: String): String {
-        val limit = expression.args["limit"] as? Expression
+        var limit = expression.args["limit"] as? Expression
+
+        // sqlglot: LIMIT_FETCH conversion between Fetch and Limit
+        if (limitFetch == "LIMIT" && limit is Fetch) {
+            val count = limit.args["count"] as? Expression
+            limit = Limit(args("expression" to (count?.copy() ?: Literal.number("1"))))
+        } else if (limitFetch == "FETCH" && limit is Limit) {
+            limit = Fetch(
+                args("direction" to "FIRST", "count" to (limit.args["expression"] as? Expression)?.copy())
+            )
+        }
 
         val parts = mutableListOf<String>()
         parts.addAll(sqls)

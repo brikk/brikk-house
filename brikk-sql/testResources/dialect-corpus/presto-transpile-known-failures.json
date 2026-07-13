@@ -1,3 +1,24 @@
 {
- "cases": []
+ "cases": [
+  {
+   "case": "write|hive|CREATE TABLE x (w VARCHAR, y INTEGER, z INTEGER) WITH (PARTITIONED_BY=ARRAY['y', 'z'])",
+   "reason": "hive target: move_schema_columns_to_partitioned_by Create preprocess not ported"
+  },
+  {
+   "case": "write|hive|SELECT a FROM x CROSS JOIN UNNEST(ARRAY(y)) AS t (a)",
+   "reason": "hive target: unnest_to_explode Select preprocess not ported (UNNEST -> LATERAL VIEW EXPLODE)"
+  },
+  {
+   "case": "write|hive|SELECT a FROM x CROSS JOIN UNNEST(ARRAY(y)) AS t (a) CROSS JOIN b",
+   "reason": "hive target: unnest_to_explode Select preprocess not ported (UNNEST -> LATERAL VIEW EXPLODE)"
+  },
+  {
+   "case": "write|hive|SELECT * FROM UNNEST(ARRAY['7', '14']) AS x",
+   "reason": "hive target: unnest_to_explode / Table UNNEST -> EXPLODE preprocess not ported"
+  },
+  {
+   "case": "write|hive|SELECT * FROM UNNEST(ARRAY['7', '14']) AS x(y)",
+   "reason": "hive target: unnest_to_explode / Table UNNEST -> EXPLODE preprocess not ported"
+  }
+ ]
 }

@@ -424,6 +424,17 @@ open class Parser(
     // sqlglot: Parser.ADD_JOIN_ON_TRUE
     open val addJoinOnTrue: kotlin.Boolean get() = false
 
+    // sqlglot: Parser.LOG_DEFAULTS_TO_LN (base: false — build_logarithm returns Log)
+    open val logDefaultsToLn: kotlin.Boolean get() = false
+
+    // sqlglot: Parser.ALTER_TABLE_PARTITIONS (base: false — ALTER ... PARTITION(...) is
+    // parsed as a table partition when true)
+    open val alterTablePartitions: kotlin.Boolean get() = false
+
+    // sqlglot: Dialect.ALTER_TABLE_SUPPORTS_CASCADE (base: false — trailing CASCADE on
+    // ALTER TABLE ... is consumed into Alter.cascade when true)
+    open val alterTableSupportsCascade: kotlin.Boolean get() = false
+
     // sqlglot: Parser.MODIFIERS_ATTACHED_TO_SET_OP
     open val modifiersAttachedToSetOp: kotlin.Boolean get() = true
 
@@ -5299,7 +5310,7 @@ open class Parser(
         val exists = parseExists()
         val only = matchTextSeq("ONLY")
 
-        val this_ = parseTable(schema = true)
+        val this_ = parseTable(schema = true, parsePartition = alterTablePartitions)
         val check = matchTextSeq("WITH", "CHECK")
         val cluster = if (match(TokenType.ON)) parseOnProperty() else null
 
@@ -5324,6 +5335,9 @@ open class Parser(
                 if (!match(TokenType.COMMA)) break
             }
 
+            // sqlglot: cascade = ALTER_TABLE_SUPPORTS_CASCADE and self._match_text_seq("CASCADE")
+            val cascade = alterTableSupportsCascade && matchTextSeq("CASCADE")
+
             if (!currToken.exists && actions.isNotEmpty()) {
                 return expression(
                     Alter(
@@ -5337,7 +5351,7 @@ open class Parser(
                             "cluster" to cluster,
                             "not_valid" to notValid,
                             "check" to check,
-                            "cascade" to false,
+                            "cascade" to cascade,
                             "iceberg" to iceberg,
                         )
                     )
@@ -9673,7 +9687,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_partition_and_order
-    protected fun parsePartitionAndOrder(): Pair<List<Expression>, Expression?> =
+    protected open fun parsePartitionAndOrder(): Pair<List<Expression>, Expression?> =
         parsePartitionBy() to parseOrder()
 
     // sqlglot: Parser._parse_window_spec
@@ -9840,7 +9854,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_parameter
-    fun parseParameter(): Expression {
+    open fun parseParameter(): Expression {
         val this_ = parseIdentifier() ?: parsePrimaryOrVar()
         return expression(Parameter(args("this" to this_)))
     }

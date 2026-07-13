@@ -18,6 +18,13 @@ sealed class TypingSpec {
     /** {"returns": exp.DType.X} */
     data class Returns(val dtype: DType) : TypingSpec()
 
+    /**
+     * {"returns": exp.DataType(...)} — a nested/parametrized return type such as
+     * hive's RegexpSplit -> ARRAY<TEXT> or StrToMap -> MAP<TEXT, TEXT>. The codegen
+     * (tools/gen_typing_metadata.py) reconstructs the full DataType node.
+     */
+    data class ReturnsDataType(val dtype: DataType) : TypingSpec()
+
     /** {"annotator": lambda self, e: ...} */
     data class Annotate(val ref: AnnotatorRef) : TypingSpec()
 }
@@ -98,6 +105,20 @@ sealed class AnnotatorRef {
 
     /** presto exp.Rand: self._annotate_by_args(e, "this") if e.this else self._set_type(e, DOUBLE) */
     object RandThisOrDouble : AnnotatorRef()
+
+    /**
+     * spark2 exp.ApproxQuantile: self._annotate_by_args(e, "this",
+     * array=e.args["quantile"].is_type(exp.DType.ARRAY)) — annotate by "this" with the
+     * array flag driven by whether the "quantile" arg resolves to an ARRAY type.
+     */
+    object ApproxQuantileByArgs : AnnotatorRef()
+
+    /**
+     * spark2 _annotate_by_similar_args (CONCAT/LPAD/RPAD family, sqlglot/typing/spark2.py):
+     * gather the args under [keys]; all-BINARY -> BINARY; else if any arg has a known,
+     * non-ARRAY, non-BINARY type -> TEXT; else UNKNOWN.
+     */
+    data class BySimilarArgs(val keys: List<String>) : AnnotatorRef()
 
     /**
      * clickhouse exp.MD5Digest: self._set_type(e, exp.DataType.build("FixedString(16)",

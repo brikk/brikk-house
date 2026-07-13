@@ -11,6 +11,18 @@
   {
    "case": "write|presto|SELECT UNNEST(ARRAY[1])",
    "reason": "transforms.explode_projection_to_unnest (Presto exp.Select preprocess) not ported"
+  },
+  {
+   "case": "write|hive|GENERATE_SERIES('2019-01-01'::TIMESTAMP, NOW(), '1day')",
+   "reason": "hive target: unnest_generate_series / GenerateSeries->EXPLODE(SEQUENCE(..)) preprocess not ported"
+  },
+  {
+   "case": "write|hive|SELECT * FROM GENERATE_SERIES(a, b)",
+   "reason": "hive target: unnest_generate_series (Table GenerateSeries -> EXPLODE(SEQUENCE)) preprocess not ported"
+  },
+  {
+   "case": "write|hive|WITH t AS (SELECT ARRAY[1, 2, 3] AS col) SELECT * FROM t WHERE 1 <= ANY(col) AND 2 = ANY(col)",
+   "reason": "hive target: any_to_exists Select preprocess not ported (ANY -> EXISTS lambda)"
   }
  ]
 }
