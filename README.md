@@ -109,15 +109,17 @@ A release is cut from a branch named **`release/<version>`** (non-`-SNAPSHOT`):
    <https://central.sonatype.com/publishing/deployments>.
 3. Bump `main` to the next snapshot version (see above).
 
-Requires these org secrets (also usable locally as env vars): `KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME`,
-`KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD`, `KOTLIN_TOOLCHAIN_SIGNING_KEY`,
-`KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE`.
+Requires these org secrets: `KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME`,
+`KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD`, `KOTLIN_TOOLCHAIN_SIGNING_KEY`,
+`KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE`. (Toolchain **0.11** reads the Central creds under the
+**no-underscore** `MAVENCENTRAL` spelling; newer versions use `MAVEN_CENTRAL`. The workflow and
+`publish-release.sh` set both spellings, so either secret name works.)
 
 Release locally instead of via CI:
 
 ```bash
-export KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME=...   # Central Portal token user
-export KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD=...   # Central Portal token password
+export KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME=...   # Central Portal token user (0.11 spelling)
+export KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD=...   # Central Portal token password
 export KOTLIN_TOOLCHAIN_SIGNING_KEY="$(cat signing-key.asc)"   # ASCII-armored private key
 export KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE=...   # if the key is encrypted
 ./publish-release.sh 0.2.0

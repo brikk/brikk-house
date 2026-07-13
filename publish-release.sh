@@ -4,11 +4,12 @@
 #
 #   ./publish-release.sh <version>          e.g.  ./publish-release.sh 0.1.0
 #
-# Required environment variables (Central Portal user token + PGP signing key):
-#   KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME
-#   KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD
-#   KOTLIN_TOOLCHAIN_SIGNING_KEY              full ASCII-armored PGP private key
-#   KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE   (or KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE) if encrypted
+# Required environment variables (Central Portal user token + PGP signing key). The Central
+# credential name differs by toolchain version — set EITHER spelling, this script exports both:
+#   KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME   (0.11)  / KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME (newer)
+#   KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD   (0.11)  / KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD (newer)
+#   KOTLIN_TOOLCHAIN_SIGNING_KEY             full ASCII-armored PGP private key
+#   KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE  (or KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE) if encrypted
 #
 # This temporarily enables the release settings in publish.module-template.yaml
 # (version + mavenCentral + signArtifacts) and restores the file on exit, so the committed
@@ -30,16 +31,27 @@ case "$VERSION" in
   *-SNAPSHOT) echo "ERROR: Maven Central rejects SNAPSHOT versions ('$VERSION')." >&2; exit 2 ;;
 esac
 
-# The toolchain reads KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE (note the KEY_). Accept the
-# shorter name too (matches the org secret KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE).
-if [ -z "${KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE:-}" ] && [ -n "${KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE:-}" ]; then
-  export KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE="$KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE"
-fi
+# Env-var name compatibility. The name the toolchain reads changed between versions:
+#   - 0.11 reads KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME/PASSWORD   (NO underscore)
+#   - newer reads KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME/PASSWORD (WITH underscore)
+# Accept either and export BOTH so it works regardless of toolchain version.
+: "${KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME:=${KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME:-}}"
+: "${KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME:=${KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME:-}}"
+: "${KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD:=${KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD:-}}"
+: "${KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD:=${KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD:-}}"
+export KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME
+export KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD
+
+# Signing passphrase: toolchain reads *_SIGNING_KEY_PASSPHRASE; accept the shorter
+# *_SIGNING_PASSPHRASE too (both directions).
+: "${KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE:=${KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE:-}}"
+: "${KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE:=${KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE:-}}"
+export KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE
 
 missing=""
-for v in KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD KOTLIN_TOOLCHAIN_SIGNING_KEY; do
-  [ -n "${!v:-}" ] || missing="$missing $v"
-done
+[ -n "${KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME:-}" ] || missing="$missing MAVEN_CENTRAL_USERNAME"
+[ -n "${KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD:-}" ] || missing="$missing MAVEN_CENTRAL_PASSWORD"
+[ -n "${KOTLIN_TOOLCHAIN_SIGNING_KEY:-}" ]           || missing="$missing SIGNING_KEY"
 if [ -n "$missing" ]; then
   echo "ERROR: missing required environment variables:$missing" >&2
   exit 2

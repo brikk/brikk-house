@@ -36,8 +36,8 @@ jobs:
         run: |
           umask 077
           cat > .env <<EOF
-          brikk.mavencentral.user=${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
-          brikk.mavencentral.pass=${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
+          brikk.mavencentral.user=${{ secrets.KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME || secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
+          brikk.mavencentral.pass=${{ secrets.KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD || secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
           EOF
 
       - name: Publish snapshot to Central snapshots

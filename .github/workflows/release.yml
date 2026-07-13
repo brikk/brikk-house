@@ -54,15 +54,20 @@ jobs:
         run: |
           umask 077
           cat > .env <<EOF
-          brikk.mavencentral.user=${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
-          brikk.mavencentral.pass=${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
+          brikk.mavencentral.user=${{ secrets.KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME || secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
+          brikk.mavencentral.pass=${{ secrets.KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD || secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
           EOF
 
       - name: Publish release to Maven Central
+        # The toolchain env-var name for Central creds differs by version: 0.11 reads the
+        # NO-underscore names (KOTLIN_TOOLCHAIN_MAVENCENTRAL_*), newer reads the underscore
+        # names. Export BOTH, each sourced from whichever secret exists, so it works regardless.
         env:
-          KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME: ${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
-          KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD: ${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
+          KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME: ${{ secrets.KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME || secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
+          KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD: ${{ secrets.KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD || secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
+          KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME: ${{ secrets.KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME || secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
+          KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD: ${{ secrets.KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD || secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
           KOTLIN_TOOLCHAIN_SIGNING_KEY: ${{ secrets.KOTLIN_TOOLCHAIN_SIGNING_KEY }}
-          # Org secret is KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE; the toolchain reads *_SIGNING_KEY_PASSPHRASE.
           KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE: ${{ secrets.KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE }}
+          KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE: ${{ secrets.KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE }}
         run: ./publish-release.sh "${{ steps.ver.outputs.version }}"
