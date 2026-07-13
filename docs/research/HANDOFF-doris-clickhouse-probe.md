@@ -90,3 +90,28 @@ Per the "nothing thrown away" rule: the batch + both engines' raw output TSVs st
 committed under `docs/research/probe-runs/` as the permanent, reusable evidence for
 this pair (and extendable for future functions / other pairs). Do not delete your
 harness output; copy it into the write-back path above.
+
+---
+
+## Round 2 (deepening — common functions not in round 1)
+
+Same contract as above. New batch of 44 common cross-engine functions (string
+rtrim/rpad/left/right/chr/starts_with/ends_with/instr/initcap/space, regex,
+numeric sqrt/exp/cbrt/bitand/bitor/bitxor/gcd/power/abs/floor/ceil, datetime
+minute/second/dayofyear/quarter/last_day/to_date/date_add/date_sub/date_format/
+extract, array size/contains/element_at/join/max/distinct, json extract/length,
+nvl, hex/unhex/sha1).
+
+- **Read:** `docs/research/probe-runs/doris-clickhouse-round2.doris-input.tsv`
+  (`id⇥doris_expr`, 44 rows). Full paired batch with the ClickHouse expressions +
+  category is `doris-clickhouse-round2.batch`; ClickHouse outputs already captured
+  in `doris-clickhouse-round2.clickhouse.tsv`.
+- **Write back:** `docs/research/probe-runs/doris-clickhouse-round2.doris.tsv`
+  (`id⇥rendered_output`, same rules as round 1: raw UTF-8, NULL→`NULL`,
+  errors→`<ERR:…>`, don't drop rows — a missing/error function is a real result).
+
+Absolute write-back path:
+`/home/jayson/DEV/brikk/brikk-house-wip/docs/research/probe-runs/doris-clickhouse-round2.doris.tsv`
+
+When done, ping the brikk-sql agent to diff + fold the new verdicts into
+`doris-clickhouse-hazards.json` (extends the 47 from round 1).
