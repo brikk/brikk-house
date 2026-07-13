@@ -477,6 +477,72 @@ Registry additions: duckdb→doris +22 (2 identical, 2 divergent, 12 conditional
 
 This completes the bucket-A worklist (duckdb→doris and trino→doris both fully probed).
 
+## Batch 11 (2026-07-13) — Bucket B cross-name mappings, duckdb→doris (56) {#batch11-bucketb-duckdb}
+
+Enumerated from `gap-report.json` bucket-B entries (the functions `certify` actively
+*renames* to a different Doris name), then re-confirmed each rename against the LIVE
+doris generator (`DifferentialProbe.transpile`, `SqlFragment.certify`) — several
+gap-report `renderedSql` templates were stale (e.g. `bit_and`→`BIT_AND` was really
+`GROUP_BIT_AND`; `list_prepend`→`ARRAY_PREPEND` was really `ARRAY_PUSHFRONT`). Each
+confident (`certify ok`) rename was differential-probed DuckDB `f(...)` vs the exact
+generator-emitted Doris `g(...)`.
+
+Split: **24 identical, 21 conditionally-equivalent, 4 divergent (generator bugs),
+7 no-equivalent (certify refuses — unmappable)**.
+
+- **Confident-but-wrong = brikk-sql generator BUGS (certify `ok=true`, ships wrong SQL):**
+  - `list_has_any(a,b)` → `a && b` — Doris `&&` is logical-AND, cannot cast arrays to
+    boolean (runtime error). Correct: `ARRAYS_OVERLAP(a,b)` (live = 1).
+  - `epoch_ms(ms)` → `FROM_UNIXTIME(ms, 3)` — Doris `from_unixtime` wants SECONDS (ms
+    overflows → INVALID_ARGUMENT) AND its 2nd arg is a FORMAT STRING not a precision
+    (the literal `3` renders as `'3'`).
+  - `string_split_regex(s,pat)` → `SPLIT_BY_STRING(s,pat)` — literal split, not regex
+    (`'a1b2c','[0-9]'` → `['a1b2c']` vs DuckDB `['a','b','c']`).
+  - `struct_pack(a:=1,...)` → `STRUCT(1 AS a, ...)` — Doris STRUCT rejects `AS name`
+    alias syntax (error); bare `STRUCT` loses field names. Correct: `NAMED_STRUCT`.
+- **Generator bug that fail-louds** (certify already refuses): `strftime` → leaks an
+  internal `TS_OR_DS_TO_TIMESTAMP` node (UNMAPPABLE); the correct `DATE_FORMAT(ts,fmt)`
+  works and matched live — so it is only a plumbing bug, marked `conditionally-equivalent`.
+- **no-equivalent (Doris genuinely lacks; certify correctly REFUSES):** `get_bit`
+  (GETBIT), `jaro_winkler_similarity`, `unicode` (ORD; ascii is byte-oriented),
+  `make_date` (DATE_FROM_PARTS; MAKEDATE has different semantics), `make_timestamp`
+  (TIMESTAMP_FROM_PARTS), `time_bucket` (DATE_BIN), `quantile_disc` (PERCENTILE_DISC).
+- **conditionally-equivalent highlights:** boolean-as-0/1 (`list_contains`,
+  `regexp_matches`), float32-precision vector distances (`list_cosine_distance`,
+  `list_distance`), nondeterministic aggregate ORDER (`list`/collect_list, `arg_max`,
+  `arg_min`, `string_agg`), date-vs-timestamp result type (`strptime`), double-vs-int
+  (`epoch`), session/tz (`to_timestamp`, `get_current_time`).
+- **`date_diff` caveat:** only the `'day'` unit maps (→`DATEDIFF(end,start)`); other
+  units silently drop the unit arg — probe per-unit before trusting non-day.
+
+## Batch 12 (2026-07-13) — Bucket B cross-name mappings, trino→doris (36) {#batch12-bucketb-trino}
+
+Same enumeration/method; trino side adjudicated Doris-live against documented Trino
+semantics + prior trino≈duckdb evidence (provenance "Doris live; Trino from prior
+evidence"). Split: **17 identical, 13 conditionally-equivalent, 4 divergent,
+2 no-equivalent**.
+
+- **Generator bugs (confident-but-wrong):**
+  - `json_array_contains(json,v)` → `json MEMBER OF(v)` — errors at runtime (both
+    operand orders). Correct: `JSON_CONTAINS(json, v)` (live = 1).
+  - `regexp_split(s,pat)` → `SPLIT_BY_STRING` — literal, not regex (same class as duckdb
+    `string_split_regex`).
+- **Semantic divergences:**
+  - `json_extract_scalar` → `JSON_EXTRACT` keeps JSON quotes on string scalars
+    (`'{"a":"hi"}'` → `'"hi"'` vs Trino `'hi'`); numeric scalars match. Correct needs
+    `JSON_UNQUOTE(JSON_EXTRACT(...))`.
+  - `from_iso8601_timestamp_nanos` → `CAST(x AS DATETIME)` drops ALL fractional seconds
+    (Trino keeps nanoseconds).
+- **no-equivalent:** `from_utf8` (DECODE), `to_utf8` (ENCODE) — both UNMAPPABLE, certify
+  refuses; no working Doris byte↔utf8 equivalent found.
+- **identical:** bitwise operators/aggs (`bitwise_and/or/xor(_agg)`), `chr`, `date_diff`
+  (day), `day_of_month/week/year`, `last_day_of_month`, `slice`, `strpos`(arg-reorder),
+  `week_of_year` (ISO, incl. year boundary 2021-01-01→53). **conditionally-equivalent:**
+  approximate aggs (`approx_distinct`, `approx_percentile`), nondeterministic
+  (`arbitrary`), boolean-render (`regexp_like`), binary-render (`sha256`, `sha512`),
+  map/type render (`split_to_map`, `to_unixtime`, `date_parse`, `from_iso8601_timestamp`),
+  float precision (`euclidean_distance`).
+
 ## Worklist status / continuation — COMPLETE
 
 The bucket-A worklist is **fully probed** (batches 1–10). Final registry:

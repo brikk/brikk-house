@@ -1762,6 +1762,358 @@
         "unicode"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"
+    },
+    {
+      "trino": "bitwise_and",
+      "doris": "&",
+      "verdict": "identical",
+      "hazard": "bitwise_and(6,3) -> 6 & 3 = 2. Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "bitwise_not",
+      "doris": "~",
+      "verdict": "identical",
+      "hazard": "bitwise_not(6) -> ~6 = -7. Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "bitwise_or",
+      "doris": "|",
+      "verdict": "identical",
+      "hazard": "bitwise_or(6,3) -> 6 | 3 = 7. Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "bitwise_xor",
+      "doris": "^",
+      "verdict": "identical",
+      "hazard": "bitwise_xor(6,3) -> 6 ^ 3 = 5. Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "bitwise_and_agg",
+      "doris": "group_bit_and",
+      "verdict": "identical",
+      "hazard": "Aggregate bitwise-AND; matches Doris GROUP_BIT_AND (verified live via the duckdb bit_and probe, same Doris function). Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric",
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "bitwise_or_agg",
+      "doris": "group_bit_or",
+      "verdict": "identical",
+      "hazard": "Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric",
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "bitwise_xor_agg",
+      "doris": "group_bit_xor",
+      "verdict": "identical",
+      "hazard": "Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric",
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "chr",
+      "doris": "char",
+      "verdict": "identical",
+      "hazard": "chr(65)='A'. Doris live; Trino from prior evidence.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "date_diff",
+      "doris": "datediff",
+      "verdict": "identical",
+      "hazard": "date_diff('day',s,e) -> DATEDIFF(e,s)=60 (arg reorder). Day-count matched; NOTE only the 'day' unit maps — other units silently drop the unit arg. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "day_of_month",
+      "doris": "dayofmonth",
+      "verdict": "identical",
+      "hazard": "15. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "day_of_week",
+      "doris": "weekday",
+      "verdict": "identical",
+      "hazard": "day_of_week(d) -> (WEEKDAY(d)+1); Trino ISO Mon=1..Sun=7, Doris WEEKDAY Mon=0..Sun=6 so +1 aligns (2024-03-15 Fri -> 5). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "day_of_year",
+      "doris": "dayofyear",
+      "verdict": "identical",
+      "hazard": "75. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "slice",
+      "doris": "array_slice",
+      "verdict": "identical",
+      "hazard": "slice(arr,2,3) -> ARRAY_SLICE(arr,2,3) = [2,3,4] (1-based start, length). Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "strpos",
+      "doris": "locate",
+      "verdict": "identical",
+      "hazard": "strpos(s,sub) -> LOCATE(sub,s) (arg reorder) = 3. Doris live; Trino from prior evidence.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "week_of_year",
+      "doris": "weekofyear",
+      "verdict": "identical",
+      "hazard": "Both ISO-8601 week: 2024-03-15 -> 11, and the year-boundary 2021-01-01 -> 53 (ISO week 53 of 2020) matched. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "approx_distinct",
+      "doris": "approx_count_distinct",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both HyperLogLog approximate distinct-count — approximate by nature, exact value not guaranteed equal. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "approximate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "approx_percentile",
+      "doris": "percentile_approx",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Approximate percentile (different sketch algorithms) — not guaranteed exact-equal. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "approximate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "arbitrary",
+      "doris": "any_value",
+      "verdict": "conditionally-equivalent",
+      "hazard": "arbitrary -> ANY_VALUE; both pick an unspecified value — nondeterministic, engines may pick differently. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "order"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "date_parse",
+      "doris": "str_to_date",
+      "verdict": "conditionally-equivalent",
+      "hazard": "date_parse(s,fmt) returns TIMESTAMP in Trino; Doris STR_TO_DATE with a date-only format returns DATE (2024-03-15). Same instant, result TYPE differs (TIMESTAMP vs DATE). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "euclidean_distance",
+      "doris": "l2_distance",
+      "verdict": "conditionally-equivalent",
+      "hazard": "L2 distance; Doris float32 precision vs Trino float64 — precision only. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "numeric",
+        "float"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "from_iso8601_timestamp",
+      "doris": "cast",
+      "verdict": "conditionally-equivalent",
+      "hazard": "from_iso8601_timestamp -> CAST(x AS DATETIME); wall clock matched ('2024-03-15T12:34:56' -> 2024-03-15 12:34:56). Trino returns TIMESTAMP WITH TIME ZONE; Doris DATETIME has no tz, so a tz-offset-bearing ISO input diverges (tz-type). Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "listagg",
+      "doris": "group_concat",
+      "verdict": "conditionally-equivalent",
+      "hazard": "listagg -> GROUP_CONCAT; concatenation ORDER not guaranteed without WITHIN GROUP / ORDER BY. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "string",
+        "order"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "regexp_like",
+      "doris": "regexp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "regexp_like(s,p) partial-match -> s REGEXP p; Trino BOOLEAN vs Doris TINYINT 1/0 — boolean type mapping only, same partial-match semantics. Doris live; Trino from prior evidence.",
+      "areas": [
+        "string",
+        "regex"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "sha256",
+      "doris": "sha2",
+      "verdict": "conditionally-equivalent",
+      "hazard": "sha256(varbinary) -> UNHEX(SHA2(x,256)); digest bytes identical (hex ba7816bf...), differs only in binary getString rendering over the wire. Doris live; Trino from prior evidence.",
+      "areas": [
+        "hash",
+        "binary"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "sha512",
+      "doris": "sha2",
+      "verdict": "conditionally-equivalent",
+      "hazard": "sha512(varbinary) -> UNHEX(SHA2(x,512)); digest bytes identical, binary rendering only. Doris live; Trino from prior evidence.",
+      "areas": [
+        "hash",
+        "binary"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "split_to_map",
+      "doris": "str_to_map",
+      "verdict": "conditionally-equivalent",
+      "hazard": "split_to_map(s,ed,kd) -> STR_TO_MAP; both yield {a=1,b=2} as string->string map — differs only in map getString rendering ({\"a\":\"1\",...}). Trino errors on duplicate keys whereas Doris keeps last — probe duplicate-key inputs before trusting. Doris live; Trino from prior evidence.",
+      "areas": [
+        "map",
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "to_unixtime",
+      "doris": "unix_timestamp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "to_unixtime(ts) -> UNIX_TIMESTAMP(ts)=1710506096; Trino returns DOUBLE (with sub-second fraction), Doris integral — type/precision, and session-zone-dependent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime",
+        "numeric",
+        "timezone"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "from_iso8601_timestamp_nanos",
+      "doris": "cast",
+      "verdict": "divergent",
+      "hazard": "from_iso8601_timestamp_nanos -> CAST(x AS DATETIME); Trino returns timestamp(9) preserving nanoseconds, but Doris CAST drops ALL fractional seconds ('2024-03-15T12:34:56.123456789' -> 2024-03-15 12:34:56). Sub-second precision lost entirely. Doris live; Trino from prior evidence.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "json_array_contains",
+      "doris": "member_of",
+      "verdict": "divergent",
+      "hazard": "GENERATOR BUG (confident, certify ok=true): json_array_contains(json,val) emitted as `json MEMBER OF(val)` which errors at runtime on Doris (both operand orders). Correct Doris equivalent is JSON_CONTAINS(json, val) (verified live = 1). Filed as generator bug.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "json_extract_scalar",
+      "doris": "json_extract",
+      "verdict": "divergent",
+      "hazard": "json_extract_scalar unwraps to a raw scalar in Trino, but the generator maps it to Doris JSON_EXTRACT which keeps JSON quoting on string scalars: json_extract_scalar('{\"a\":\"hi\"}','$.a')='hi' (Trino) vs '\"hi\"' (Doris). Numeric scalars match. Correct mapping needs JSON_UNQUOTE(JSON_EXTRACT(...)) (verified live = 'hi'). Doris live; Trino from prior evidence.",
+      "areas": [
+        "json",
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "regexp_split",
+      "doris": "split_by_string",
+      "verdict": "divergent",
+      "hazard": "GENERATOR BUG (confident, certify ok=true): regexp_split(s,pat) (REGEX split) mapped to SPLIT_BY_STRING(s,pat) which splits on pat as a LITERAL. regexp_split('a1b2c','[0-9]') splits on digits (Trino) vs Doris returns ['a1b2c'] (no split). Needs a regex-splitting Doris function. Filed as generator bug (same class as duckdb string_split_regex).",
+      "areas": [
+        "string",
+        "regex",
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "from_utf8",
+      "doris": "decode",
+      "verdict": "no-equivalent",
+      "hazard": "Generator emits DECODE(bytes,'utf-8') which Doris does not register (UNMAPPABLE_FUNCTION); certify REFUSES. No working Doris bytes->utf8-string equivalent found (convert(... using utf8) errors RUNTIME_ERROR). Doris live; Trino from prior evidence.",
+      "areas": [
+        "string",
+        "binary"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "to_utf8",
+      "doris": "encode",
+      "verdict": "no-equivalent",
+      "hazard": "Generator emits ENCODE(s,'utf-8') which Doris does not register (UNMAPPABLE_FUNCTION); certify REFUSES. No matching Doris string->utf8-varbinary equivalent (hex() returns a hex string, not raw bytes). Doris live; Trino from prior evidence.",
+      "areas": [
+        "string",
+        "binary"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
     }
   ]
 }
