@@ -9,9 +9,10 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 47 probe-verified (doris, clickhouse) pair verdicts, in JSON order. */
+/** The 87 probe-verified (doris, clickhouse) pair verdicts, in JSON order. */
 internal val DORIS_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
-    hazardsChunk1()
+    hazardsChunk1() +
+    hazardsChunk2()
 
 private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     // [0] doris: 'lower' | clickhouse: 'lower'
@@ -239,28 +240,242 @@ private fun hazardsChunk1(): List<FunctionHazard> = listOf(
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("hash"),
         provenance = "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"),
+    // [47] doris: 'date_format' | clickhouse: 'formatDateTime'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Format-specifier vocabularies differ: ClickHouse formatDateTime %M = full month name, minutes = %i is NOT ClickHouse (it uses %M/%i differently) — Doris/MySQL %i = minutes, %M = month name. A shared format string renders differently (e.g. '%H:%M:%S' -> ClickHouse '13:June:07' vs Doris '13:45:07'). Not portable without format-string translation.",
+        areas = listOf("datetime", "string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [48] doris: 'rtrim' | clickhouse: 'trimRight'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Right-trim of a character set agrees.",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [49] doris: 'rpad' | clickhouse: 'rightPad'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Right-pad agrees.",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [50] doris: 'left' | clickhouse: 'left'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [51] doris: 'right' | clickhouse: 'right'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [52] doris: 'chr' | clickhouse: 'char'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "chr(65)->'A' in both.",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [53] doris: 'starts_with' | clickhouse: 'startsWith'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [54] doris: 'ends_with' | clickhouse: 'endsWith'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [55] doris: 'instr' | clickhouse: 'position'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "1-based first-occurrence index agrees; argument order differs (instr(hay,needle) vs position(hay,needle)).",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [56] doris: 'initcap' | clickhouse: 'initcap'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Title-casing agrees ('hello world'->'Hello World').",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [57] doris: 'space' | clickhouse: 'space'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [58] doris: 'regexp' | clickhouse: 'match'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Regex search (boolean) agrees; Doris regexp(s,p) ~ ClickHouse match(s,p).",
+        areas = listOf("regex", "string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [59] doris: 'sqrt' | clickhouse: 'sqrt'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [60] doris: 'exp' | clickhouse: 'exp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [61] doris: 'cbrt' | clickhouse: 'cbrt'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "cbrt(27)->3 (modulo float epsilon).",
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [62] doris: 'bitand' | clickhouse: 'bitAnd'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "12&10->8.",
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [63] doris: 'bitor' | clickhouse: 'bitOr'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "12|10->14.",
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [64] doris: 'bitxor' | clickhouse: 'bitXor'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "12^10->6.",
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [65] doris: 'gcd' | clickhouse: 'gcd'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [66] doris: 'power' | clickhouse: 'power'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "power(2,10)->1024.",
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [67] doris: 'minute' | clickhouse: 'toMinute'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [68] doris: 'second' | clickhouse: 'toSecond'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [69] doris: 'dayofyear' | clickhouse: 'toDayOfYear'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [70] doris: 'quarter' | clickhouse: 'toQuarter'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [71] doris: 'last_day' | clickhouse: 'toLastDayOfMonth'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "End-of-month agrees incl. leap year (2024-02 -> 2024-02-29).",
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [72] doris: 'to_date' | clickhouse: 'toDate'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [73] doris: 'date_add' | clickhouse: 'addDays'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Day-add agrees (2024-01-31 +1d -> 2024-02-01); ClickHouse per-unit addDays/addMonths/... vs Doris date_add(d, INTERVAL n unit).",
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [74] doris: 'date_sub' | clickhouse: 'subtractMonths'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Month-sub agrees incl. end-of-month clamp (2024-03-31 -1mo -> 2024-02-29).",
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [75] doris: 'extract' | clickhouse: 'extract'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "EXTRACT(part FROM d) agrees.",
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [76] doris: 'array_size' | clickhouse: 'length'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Array length agrees; ClickHouse uses length() on arrays.",
+        areas = listOf("array"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [77] doris: 'array_contains' | clickhouse: 'has'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Membership agrees.",
+        areas = listOf("array"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [78] doris: 'element_at' | clickhouse: 'arrayElement'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "1-based element access agrees (Doris element_at(a,i) ~ ClickHouse a[i]/arrayElement).",
+        areas = listOf("array"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [79] doris: 'array_join' | clickhouse: 'arrayStringConcat'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Join-with-separator agrees.",
+        areas = listOf("array", "string"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
 )
 
-/** doris->clickhouse lookup: 47 keys (Doris-side names) over 47 entries. */
+private fun hazardsChunk2(): List<FunctionHazard> = listOf(
+    // [80] doris: 'array_max' | clickhouse: 'arrayMax'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        areas = listOf("array"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [81] doris: 'array_distinct' | clickhouse: 'arrayDistinct'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Distinct elements agree (rendering-only difference: Doris prints '[1, 2, 3]' with spaces vs ClickHouse '[1,2,3]').",
+        areas = listOf("array"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [82] doris: 'get_json_string' | clickhouse: 'JSONExtractString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Scalar JSON string extraction agrees (Doris get_json_string(\$.a) ~ ClickHouse JSONExtractString(json,'a')).",
+        areas = listOf("json"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [83] doris: 'json_length' | clickhouse: 'JSONLength'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "JSON array length agrees.",
+        areas = listOf("json"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [84] doris: 'nvl' | clickhouse: 'ifNull'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "nvl(NULL,7)->7 in both.",
+        areas = listOf("null"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [85] doris: 'unhex' | clickhouse: 'unhex'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "unhex('FF') -> single 0xFF byte in both.",
+        areas = listOf("hash"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [86] doris: 'sha1' | clickhouse: 'SHA1'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Doris sha1(x) equals ClickHouse lower(hex(SHA1(x))).",
+        areas = listOf("hash"),
+        provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+)
+
+/** doris->clickhouse lookup: 87 keys (Doris-side names) over 87 entries. */
 internal val DORIS_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[33])
+    put("ARRAY_CONTAINS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[77])
+    put("ARRAY_DISTINCT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[81])
+    put("ARRAY_JOIN", DORIS_CLICKHOUSE_HAZARD_ENTRIES[79])
+    put("ARRAY_MAX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[80])
+    put("ARRAY_SIZE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[76])
     put("ASCII", DORIS_CLICKHOUSE_HAZARD_ENTRIES[11])
+    put("BITAND", DORIS_CLICKHOUSE_HAZARD_ENTRIES[62])
+    put("BITOR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[63])
+    put("BITXOR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[64])
+    put("CBRT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[61])
     put("CEIL", DORIS_CLICKHOUSE_HAZARD_ENTRIES[31])
     put("CHAR_LENGTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[10])
+    put("CHR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[52])
     put("COALESCE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[41])
     put("CONCAT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[16])
     put("CRC32", DORIS_CLICKHOUSE_HAZARD_ENTRIES[46])
     put("DATEDIFF", DORIS_CLICKHOUSE_HAZARD_ENTRIES[38])
+    put("DATE_ADD", DORIS_CLICKHOUSE_HAZARD_ENTRIES[73])
+    put("DATE_FORMAT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[47])
+    put("DATE_SUB", DORIS_CLICKHOUSE_HAZARD_ENTRIES[74])
     put("DATE_TRUNC", DORIS_CLICKHOUSE_HAZARD_ENTRIES[8])
     put("DAYOFMONTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[36])
     put("DAYOFWEEK", DORIS_CLICKHOUSE_HAZARD_ENTRIES[4])
+    put("DAYOFYEAR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[69])
+    put("ELEMENT_AT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[78])
+    put("ENDS_WITH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[54])
+    put("EXP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[60])
+    put("EXTRACT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[75])
     put("FLOOR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[30])
     put("FROM_UNIXTIME", DORIS_CLICKHOUSE_HAZARD_ENTRIES[40])
+    put("GCD", DORIS_CLICKHOUSE_HAZARD_ENTRIES[65])
+    put("GET_JSON_STRING", DORIS_CLICKHOUSE_HAZARD_ENTRIES[82])
     put("GREATEST", DORIS_CLICKHOUSE_HAZARD_ENTRIES[6])
     put("HEX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[45])
     put("HOUR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("IF", DORIS_CLICKHOUSE_HAZARD_ENTRIES[43])
+    put("INITCAP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[56])
+    put("INSTR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[55])
+    put("JSON_LENGTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[83])
+    put("LAST_DAY", DORIS_CLICKHOUSE_HAZARD_ENTRIES[71])
     put("LEAST", DORIS_CLICKHOUSE_HAZARD_ENTRIES[7])
+    put("LEFT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[50])
     put("LENGTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[9])
     put("LN", DORIS_CLICKHOUSE_HAZARD_ENTRIES[25])
     put("LOCATE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[13])
@@ -271,45 +486,80 @@ internal val DORIS_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("LPAD", DORIS_CLICKHOUSE_HAZARD_ENTRIES[17])
     put("LTRIM", DORIS_CLICKHOUSE_HAZARD_ENTRIES[15])
     put("MD5", DORIS_CLICKHOUSE_HAZARD_ENTRIES[44])
+    put("MINUTE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[67])
     put("MOD", DORIS_CLICKHOUSE_HAZARD_ENTRIES[28])
     put("MONTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[35])
     put("NULLIF", DORIS_CLICKHOUSE_HAZARD_ENTRIES[42])
+    put("NVL", DORIS_CLICKHOUSE_HAZARD_ENTRIES[84])
     put("POW", DORIS_CLICKHOUSE_HAZARD_ENTRIES[29])
+    put("POWER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[66])
+    put("QUARTER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[70])
+    put("REGEXP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[58])
     put("REGEXP_EXTRACT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[22])
     put("REGEXP_REPLACE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[21])
     put("REPEAT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[18])
     put("REPLACE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[19])
     put("REVERSE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[2])
+    put("RIGHT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[51])
     put("ROUND", DORIS_CLICKHOUSE_HAZARD_ENTRIES[3])
+    put("RPAD", DORIS_CLICKHOUSE_HAZARD_ENTRIES[49])
+    put("RTRIM", DORIS_CLICKHOUSE_HAZARD_ENTRIES[48])
+    put("SECOND", DORIS_CLICKHOUSE_HAZARD_ENTRIES[68])
+    put("SHA1", DORIS_CLICKHOUSE_HAZARD_ENTRIES[86])
     put("SIGN", DORIS_CLICKHOUSE_HAZARD_ENTRIES[32])
+    put("SPACE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[57])
     put("SPLIT_PART", DORIS_CLICKHOUSE_HAZARD_ENTRIES[20])
+    put("SQRT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[59])
+    put("STARTS_WITH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[53])
     put("SUBSTRING", DORIS_CLICKHOUSE_HAZARD_ENTRIES[12])
+    put("TO_DATE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[72])
     put("TRIM", DORIS_CLICKHOUSE_HAZARD_ENTRIES[14])
     put("TRUNCATE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[23])
+    put("UNHEX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[85])
     put("UNIX_TIMESTAMP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[39])
     put("UPPER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[1])
     put("WEEK", DORIS_CLICKHOUSE_HAZARD_ENTRIES[5])
     put("YEAR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[34])
 }
 
-/** clickhouse->doris lookup: 47 keys (ClickHouse-side names) over 47 entries. */
+/** clickhouse->doris lookup: 84 keys (ClickHouse-side names) over 87 entries. */
 internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[33])
+    put("ADDDAYS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[73])
+    put("ARRAYDISTINCT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[81])
+    put("ARRAYELEMENT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[78])
+    put("ARRAYMAX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[80])
+    put("ARRAYSTRINGCONCAT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[79])
     put("ASCII", DORIS_CLICKHOUSE_HAZARD_ENTRIES[11])
+    put("BITAND", DORIS_CLICKHOUSE_HAZARD_ENTRIES[62])
+    put("BITOR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[63])
+    put("BITXOR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[64])
+    put("CBRT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[61])
     put("CEIL", DORIS_CLICKHOUSE_HAZARD_ENTRIES[31])
+    put("CHAR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[52])
     put("CHAR_LENGTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[10])
     put("COALESCE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[41])
     put("CONCAT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[16])
     put("CRC32", DORIS_CLICKHOUSE_HAZARD_ENTRIES[46])
     put("DATEDIFF", DORIS_CLICKHOUSE_HAZARD_ENTRIES[38])
     put("DATETRUNC", DORIS_CLICKHOUSE_HAZARD_ENTRIES[8])
+    put("ENDSWITH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[54])
+    put("EXP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[60])
     put("EXTRACT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[22])
     put("FLOOR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[30])
+    put("FORMATDATETIME", DORIS_CLICKHOUSE_HAZARD_ENTRIES[47])
     put("FROMUNIXTIMESTAMP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[40])
+    put("GCD", DORIS_CLICKHOUSE_HAZARD_ENTRIES[65])
     put("GREATEST", DORIS_CLICKHOUSE_HAZARD_ENTRIES[6])
+    put("HAS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[77])
     put("HEX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[45])
     put("IF", DORIS_CLICKHOUSE_HAZARD_ENTRIES[43])
+    put("IFNULL", DORIS_CLICKHOUSE_HAZARD_ENTRIES[84])
+    put("INITCAP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[56])
+    put("JSONEXTRACTSTRING", DORIS_CLICKHOUSE_HAZARD_ENTRIES[82])
+    put("JSONLENGTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[83])
     put("LEAST", DORIS_CLICKHOUSE_HAZARD_ENTRIES[7])
+    put("LEFT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[50])
     put("LEFTPAD", DORIS_CLICKHOUSE_HAZARD_ENTRIES[17])
     put("LENGTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[9])
     put("LN", DORIS_CLICKHOUSE_HAZARD_ENTRIES[25])
@@ -317,28 +567,45 @@ internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("LOG10", DORIS_CLICKHOUSE_HAZARD_ENTRIES[26])
     put("LOG2", DORIS_CLICKHOUSE_HAZARD_ENTRIES[27])
     put("LOWER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[0])
+    put("MATCH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[58])
     put("MD5", DORIS_CLICKHOUSE_HAZARD_ENTRIES[44])
     put("MODULO", DORIS_CLICKHOUSE_HAZARD_ENTRIES[28])
     put("NULLIF", DORIS_CLICKHOUSE_HAZARD_ENTRIES[42])
     put("POSITION", DORIS_CLICKHOUSE_HAZARD_ENTRIES[13])
     put("POW", DORIS_CLICKHOUSE_HAZARD_ENTRIES[29])
+    put("POWER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[66])
     put("REPEAT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[18])
     put("REPLACEALL", DORIS_CLICKHOUSE_HAZARD_ENTRIES[19])
     put("REPLACEREGEXPALL", DORIS_CLICKHOUSE_HAZARD_ENTRIES[21])
     put("REVERSE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[2])
+    put("RIGHT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[51])
+    put("RIGHTPAD", DORIS_CLICKHOUSE_HAZARD_ENTRIES[49])
     put("ROUND", DORIS_CLICKHOUSE_HAZARD_ENTRIES[3])
+    put("SHA1", DORIS_CLICKHOUSE_HAZARD_ENTRIES[86])
     put("SIGN", DORIS_CLICKHOUSE_HAZARD_ENTRIES[32])
+    put("SPACE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[57])
     put("SPLITBYCHAR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[20])
+    put("SQRT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[59])
+    put("STARTSWITH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[53])
     put("SUBSTRING", DORIS_CLICKHOUSE_HAZARD_ENTRIES[12])
+    put("SUBTRACTMONTHS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[74])
+    put("TODATE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[72])
     put("TODAYOFMONTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[36])
     put("TODAYOFWEEK", DORIS_CLICKHOUSE_HAZARD_ENTRIES[4])
+    put("TODAYOFYEAR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[69])
     put("TOHOUR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("TOISOWEEK", DORIS_CLICKHOUSE_HAZARD_ENTRIES[5])
+    put("TOLASTDAYOFMONTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[71])
+    put("TOMINUTE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[67])
     put("TOMONTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[35])
+    put("TOQUARTER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[70])
+    put("TOSECOND", DORIS_CLICKHOUSE_HAZARD_ENTRIES[68])
     put("TOUNIXTIMESTAMP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[39])
     put("TOYEAR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[34])
     put("TRIM", DORIS_CLICKHOUSE_HAZARD_ENTRIES[14])
     put("TRIMLEFT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[15])
+    put("TRIMRIGHT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[48])
     put("TRUNCATE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[23])
+    put("UNHEX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[85])
     put("UPPER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[1])
 }
