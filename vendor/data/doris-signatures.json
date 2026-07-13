@@ -42,7 +42,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "AIClassify": {
    "kind": "SCALAR",
@@ -85,7 +86,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AIExtract": {
    "kind": "SCALAR",
@@ -128,7 +130,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AIFilter": {
    "kind": "SCALAR",
@@ -167,7 +170,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AIFixGrammar": {
    "kind": "SCALAR",
@@ -206,7 +210,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AIGenerate": {
    "kind": "SCALAR",
@@ -245,7 +250,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AIMask": {
    "kind": "SCALAR",
@@ -288,7 +294,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AISentiment": {
    "kind": "SCALAR",
@@ -327,7 +334,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AISimilarity": {
    "kind": "SCALAR",
@@ -370,7 +378,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AISummarize": {
    "kind": "SCALAR",
@@ -409,7 +418,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AITranslate": {
    "kind": "SCALAR",
@@ -452,7 +462,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Abs": {
    "kind": "SCALAR",
@@ -524,7 +535,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Acos": {
    "kind": "SCALAR",
@@ -540,7 +552,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Acosh": {
    "kind": "SCALAR",
@@ -556,7 +569,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "AddTime": {
    "kind": "SCALAR",
@@ -589,7 +603,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AesDecrypt": {
    "kind": "SCALAR",
@@ -674,7 +689,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "AesEncrypt": {
    "kind": "SCALAR",
@@ -759,7 +775,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "AnyValue": {
    "kind": "AGGREGATE",
@@ -776,7 +793,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "AppendTrailingCharIfAbsent": {
    "kind": "SCALAR",
@@ -801,7 +819,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Array": {
    "kind": "SCALAR",
@@ -815,7 +834,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ArrayAgg": {
    "kind": "AGGREGATE",
@@ -831,7 +851,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ArrayApply": {
    "kind": "SCALAR",
@@ -839,7 +860,8 @@
     "ARRAY_APPLY"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayAvg": {
    "kind": "SCALAR",
@@ -904,7 +926,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ArrayCompact": {
    "kind": "SCALAR",
@@ -920,7 +943,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayConcat": {
    "kind": "SCALAR",
@@ -936,7 +960,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayContains": {
    "kind": "SCALAR",
@@ -944,7 +969,8 @@
     "ARRAY_CONTAINS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "ArrayContainsAll": {
    "kind": "SCALAR",
@@ -962,7 +988,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayCount": {
    "kind": "SCALAR",
@@ -978,7 +1005,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ArrayCrossProduct": {
    "kind": "SCALAR",
@@ -996,7 +1024,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayCumSum": {
    "kind": "SCALAR",
@@ -1068,7 +1097,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayDifference": {
    "kind": "SCALAR",
@@ -1140,7 +1170,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayDistinct": {
    "kind": "SCALAR",
@@ -1156,7 +1187,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayEnumerate": {
    "kind": "SCALAR",
@@ -1172,7 +1204,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayEnumerateUniq": {
    "kind": "SCALAR",
@@ -1188,7 +1221,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayExcept": {
    "kind": "SCALAR",
@@ -1205,7 +1239,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayExists": {
    "kind": "SCALAR",
@@ -1221,7 +1256,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayFilter": {
    "kind": "SCALAR",
@@ -1238,7 +1274,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayFirst": {
    "kind": "SCALAR",
@@ -1255,7 +1292,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayFirstIndex": {
    "kind": "SCALAR",
@@ -1271,7 +1309,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ArrayFlatten": {
    "kind": "SCALAR",
@@ -1279,7 +1318,8 @@
     "ARRAY_FLATTEN"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayIntersect": {
    "kind": "SCALAR",
@@ -1296,7 +1336,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayJoin": {
    "kind": "SCALAR",
@@ -1322,7 +1363,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayLast": {
    "kind": "SCALAR",
@@ -1339,7 +1381,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayLastIndex": {
    "kind": "SCALAR",
@@ -1355,7 +1398,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ArrayMap": {
    "kind": "SCALAR",
@@ -1371,7 +1415,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "ArrayMatchAll": {
    "kind": "SCALAR",
@@ -1387,7 +1432,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ArrayMatchAny": {
    "kind": "SCALAR",
@@ -1403,7 +1449,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ArrayMax": {
    "kind": "SCALAR",
@@ -1419,7 +1466,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ArrayMin": {
    "kind": "SCALAR",
@@ -1435,7 +1483,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ArrayPopBack": {
    "kind": "SCALAR",
@@ -1451,7 +1500,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayPopFront": {
    "kind": "SCALAR",
@@ -1467,7 +1517,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayPosition": {
    "kind": "SCALAR",
@@ -1475,7 +1526,8 @@
     "ARRAY_POSITION"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "ArrayProduct": {
    "kind": "SCALAR",
@@ -1526,7 +1578,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ArrayPushBack": {
    "kind": "SCALAR",
@@ -1535,7 +1588,8 @@
     "ARRAY_APPEND"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ArrayPushFront": {
    "kind": "SCALAR",
@@ -1543,7 +1597,8 @@
     "ARRAY_PUSHFRONT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ArrayRange": {
    "kind": "SCALAR",
@@ -1594,7 +1649,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ArrayRemove": {
    "kind": "SCALAR",
@@ -1602,7 +1658,8 @@
     "ARRAY_REMOVE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "ArrayRepeat": {
    "kind": "SCALAR",
@@ -1619,7 +1676,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ArrayReverseSort": {
    "kind": "SCALAR",
@@ -1635,7 +1693,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayReverseSplit": {
    "kind": "SCALAR",
@@ -1652,7 +1711,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayShuffle": {
    "kind": "SCALAR",
@@ -1677,7 +1737,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArraySlice": {
    "kind": "SCALAR",
@@ -1703,7 +1764,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArraySort": {
    "kind": "SCALAR",
@@ -1726,7 +1788,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "ArraySortBy": {
    "kind": "SCALAR",
@@ -1743,7 +1806,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "ArraySplit": {
    "kind": "SCALAR",
@@ -1760,7 +1824,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArraySum": {
    "kind": "SCALAR",
@@ -1825,7 +1890,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ArrayUnion": {
    "kind": "SCALAR",
@@ -1842,7 +1908,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArrayWithConstant": {
    "kind": "SCALAR",
@@ -1859,7 +1926,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ArrayZip": {
    "kind": "SCALAR",
@@ -1867,7 +1935,8 @@
     "ARRAY_ZIP"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ArraysOverlap": {
    "kind": "SCALAR",
@@ -1884,7 +1953,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Ascii": {
    "kind": "SCALAR",
@@ -1907,7 +1977,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Asin": {
    "kind": "SCALAR",
@@ -1923,7 +1994,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Asinh": {
    "kind": "SCALAR",
@@ -1939,7 +2011,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "AssertTrue": {
    "kind": "SCALAR",
@@ -1956,7 +2029,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Atan": {
    "kind": "SCALAR",
@@ -1980,7 +2054,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Atan2": {
    "kind": "SCALAR",
@@ -1997,7 +2072,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Atanh": {
    "kind": "SCALAR",
@@ -2013,7 +2089,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "AutoPartitionName": {
    "kind": "SCALAR",
@@ -2036,7 +2113,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Avg": {
    "kind": "AGGREGATE",
@@ -2101,7 +2179,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "AvgMap": {
    "kind": "AGGREGATE",
@@ -2109,7 +2188,8 @@
     "AVG_MAP"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "AvgWeighted": {
    "kind": "AGGREGATE",
@@ -2126,7 +2206,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Backends": {
    "kind": "TABLE_VALUED",
@@ -2134,7 +2215,8 @@
     "BACKENDS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Bin": {
    "kind": "SCALAR",
@@ -2150,7 +2232,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Binlog": {
    "kind": "TABLE_VALUED",
@@ -2158,7 +2241,8 @@
     "BINLOG"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "BitCount": {
    "kind": "SCALAR",
@@ -2202,7 +2286,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitLength": {
    "kind": "SCALAR",
@@ -2225,7 +2310,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitShiftLeft": {
    "kind": "SCALAR",
@@ -2242,7 +2328,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitShiftRight": {
    "kind": "SCALAR",
@@ -2259,7 +2346,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitTest": {
    "kind": "SCALAR",
@@ -2309,7 +2397,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapAgg": {
    "kind": "AGGREGATE",
@@ -2346,7 +2435,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "BitmapAnd": {
    "kind": "SCALAR",
@@ -2363,7 +2453,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapAndCount": {
    "kind": "SCALAR",
@@ -2380,7 +2471,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "BitmapAndNot": {
    "kind": "SCALAR",
@@ -2397,7 +2489,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapAndNotAlias": {
    "kind": "SCALAR",
@@ -2414,7 +2507,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapAndNotCount": {
    "kind": "SCALAR",
@@ -2431,7 +2525,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "BitmapAndNotCountAlias": {
    "kind": "SCALAR",
@@ -2448,7 +2543,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "BitmapContains": {
    "kind": "SCALAR",
@@ -2465,7 +2561,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapCount": {
    "kind": "SCALAR",
@@ -2481,7 +2578,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "BitmapEmpty": {
    "kind": "SCALAR",
@@ -2495,7 +2593,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "BitmapFromArray": {
    "kind": "SCALAR",
@@ -2532,7 +2631,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "BitmapFromBase64": {
    "kind": "SCALAR",
@@ -2555,7 +2655,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "BitmapFromString": {
    "kind": "SCALAR",
@@ -2578,7 +2679,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "BitmapHasAll": {
    "kind": "SCALAR",
@@ -2595,7 +2697,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapHasAny": {
    "kind": "SCALAR",
@@ -2612,7 +2715,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapHash": {
    "kind": "SCALAR",
@@ -2635,7 +2739,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "BitmapHash64": {
    "kind": "SCALAR",
@@ -2658,7 +2763,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "BitmapIntersect": {
    "kind": "AGGREGATE",
@@ -2674,7 +2780,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "BitmapMax": {
    "kind": "SCALAR",
@@ -2690,7 +2797,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "BitmapMin": {
    "kind": "SCALAR",
@@ -2706,7 +2814,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "BitmapNot": {
    "kind": "SCALAR",
@@ -2723,7 +2832,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapOr": {
    "kind": "SCALAR",
@@ -2740,7 +2850,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "BitmapOrCount": {
    "kind": "SCALAR",
@@ -2757,7 +2868,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "BitmapRemove": {
    "kind": "SCALAR",
@@ -2774,7 +2886,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapSubsetInRange": {
    "kind": "SCALAR",
@@ -2792,7 +2905,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "BitmapSubsetLimit": {
    "kind": "SCALAR",
@@ -2810,7 +2924,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "BitmapToArray": {
    "kind": "SCALAR",
@@ -2826,7 +2941,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapToBase64": {
    "kind": "SCALAR",
@@ -2842,7 +2958,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapToString": {
    "kind": "SCALAR",
@@ -2858,7 +2975,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapUnion": {
    "kind": "AGGREGATE",
@@ -2874,7 +2992,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "BitmapUnionCount": {
    "kind": "AGGREGATE",
@@ -2890,7 +3009,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "BitmapUnionInt": {
    "kind": "AGGREGATE",
@@ -2920,7 +3040,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "BitmapXor": {
    "kind": "SCALAR",
@@ -2937,7 +3058,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "BitmapXorCount": {
    "kind": "SCALAR",
@@ -2954,7 +3076,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "BoolAnd": {
    "kind": "AGGREGATE",
@@ -2971,7 +3094,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "BoolOr": {
    "kind": "AGGREGATE",
@@ -2988,7 +3112,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "BoolXor": {
    "kind": "AGGREGATE",
@@ -3005,7 +3130,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Cardinality": {
    "kind": "SCALAR",
@@ -3030,7 +3156,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Catalogs": {
    "kind": "TABLE_VALUED",
@@ -3038,7 +3165,8 @@
     "CATALOGS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Cbrt": {
    "kind": "SCALAR",
@@ -3054,7 +3182,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "CdcStream": {
    "kind": "TABLE_VALUED",
@@ -3062,7 +3191,8 @@
     "CDC_STREAM"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Ceil": {
    "kind": "SCALAR",
@@ -3102,7 +3232,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Century": {
    "kind": "SCALAR",
@@ -3125,7 +3256,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Char": {
    "kind": "SCALAR",
@@ -3142,7 +3274,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "CharacterLength": {
    "kind": "SCALAR",
@@ -3166,7 +3299,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Coalesce": {
    "kind": "SCALAR",
@@ -3174,7 +3308,8 @@
     "COALESCE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "CollectList": {
    "kind": "AGGREGATE",
@@ -3199,7 +3334,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CollectSet": {
    "kind": "AGGREGATE",
@@ -3224,7 +3360,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Compress": {
    "kind": "SCALAR",
@@ -3247,7 +3384,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Concat": {
    "kind": "SCALAR",
@@ -3270,7 +3408,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ConcatWs": {
    "kind": "SCALAR",
@@ -3319,7 +3458,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "ConnectionId": {
    "kind": "SCALAR",
@@ -3333,7 +3473,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Conv": {
    "kind": "SCALAR",
@@ -3369,7 +3510,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ConvertTo": {
    "kind": "SCALAR",
@@ -3386,7 +3528,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ConvertTz": {
    "kind": "SCALAR",
@@ -3404,7 +3547,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Corr": {
    "kind": "AGGREGATE",
@@ -3421,7 +3565,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "CorrWelford": {
    "kind": "AGGREGATE",
@@ -3438,7 +3583,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Cos": {
    "kind": "SCALAR",
@@ -3454,7 +3600,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Cosh": {
    "kind": "SCALAR",
@@ -3470,7 +3617,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "CosineDistance": {
    "kind": "SCALAR",
@@ -3487,7 +3635,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CosineSimilarity": {
    "kind": "SCALAR",
@@ -3504,7 +3653,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Cot": {
    "kind": "SCALAR",
@@ -3520,7 +3670,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Count": {
    "kind": "AGGREGATE",
@@ -3541,7 +3692,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CountByEnum": {
    "kind": "AGGREGATE",
@@ -3557,7 +3709,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CountEqual": {
    "kind": "SCALAR",
@@ -3565,7 +3718,8 @@
     "COUNTEQUAL"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "CountMap": {
    "kind": "AGGREGATE",
@@ -3573,7 +3727,8 @@
     "COUNT_MAP"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CountSubstring": {
    "kind": "SCALAR",
@@ -3599,7 +3754,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Covar": {
    "kind": "AGGREGATE",
@@ -3617,7 +3773,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "CovarSamp": {
    "kind": "AGGREGATE",
@@ -3634,7 +3791,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Crc32": {
    "kind": "SCALAR",
@@ -3657,7 +3815,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Crc32Internal": {
    "kind": "SCALAR",
@@ -3673,7 +3832,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CreateMap": {
    "kind": "SCALAR",
@@ -3687,7 +3847,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CreateNamedStruct": {
    "kind": "SCALAR",
@@ -3695,7 +3856,8 @@
     "NAMED_STRUCT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CreateStruct": {
    "kind": "SCALAR",
@@ -3709,7 +3871,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Csc": {
    "kind": "SCALAR",
@@ -3725,7 +3888,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "CumeDist": {
    "kind": "WINDOW",
@@ -3733,7 +3897,8 @@
     "CUME_DIST"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CurrentCatalog": {
    "kind": "SCALAR",
@@ -3747,7 +3912,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CurrentDate": {
    "kind": "SCALAR",
@@ -3762,7 +3928,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CurrentTime": {
    "kind": "SCALAR",
@@ -3784,7 +3951,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CurrentUser": {
    "kind": "SCALAR",
@@ -3798,7 +3966,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "CutIpv6": {
    "kind": "SCALAR",
@@ -3816,7 +3985,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "CutToFirstSignificantSubdomain": {
    "kind": "SCALAR",
@@ -3832,7 +4002,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DamerauLevenshteinDistance": {
    "kind": "SCALAR",
@@ -3857,7 +4028,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DataSketchesHllUnionAgg": {
    "kind": "AGGREGATE",
@@ -3887,7 +4059,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Database": {
    "kind": "SCALAR",
@@ -3903,7 +4076,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Date": {
    "kind": "SCALAR",
@@ -3919,7 +4093,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DateDiff": {
    "kind": "SCALAR",
@@ -3952,7 +4127,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DateFormat": {
    "kind": "SCALAR",
@@ -3969,7 +4145,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DateTrunc": {
    "kind": "SCALAR",
@@ -3977,7 +4154,8 @@
     "DATE_TRUNC"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DateV2": {
    "kind": "SCALAR",
@@ -3993,7 +4171,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DayCeil": {
    "kind": "SCALAR",
@@ -4098,7 +4277,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DayFloor": {
    "kind": "SCALAR",
@@ -4203,7 +4383,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DayHour": {
    "kind": "SCALAR",
@@ -4219,7 +4400,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DayMicrosecond": {
    "kind": "SCALAR",
@@ -4235,7 +4417,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DayMinute": {
    "kind": "SCALAR",
@@ -4251,7 +4434,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DayName": {
    "kind": "SCALAR",
@@ -4274,7 +4458,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DayOfMonth": {
    "kind": "SCALAR",
@@ -4298,7 +4483,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DayOfWeek": {
    "kind": "SCALAR",
@@ -4322,7 +4508,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DayOfYear": {
    "kind": "SCALAR",
@@ -4346,7 +4533,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DaySecond": {
    "kind": "SCALAR",
@@ -4362,7 +4550,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DaysAdd": {
    "kind": "SCALAR",
@@ -4397,7 +4586,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DaysDiff": {
    "kind": "SCALAR",
@@ -4430,7 +4620,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DaysSub": {
    "kind": "SCALAR",
@@ -4465,7 +4656,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Dceil": {
    "kind": "SCALAR",
@@ -4504,7 +4696,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DecodeAsVarchar": {
    "kind": "SCALAR",
@@ -4541,7 +4734,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DeduplicateMap": {
    "kind": "SCALAR",
@@ -4557,7 +4751,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Degrees": {
    "kind": "SCALAR",
@@ -4573,7 +4768,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DenseRank": {
    "kind": "WINDOW",
@@ -4581,7 +4777,8 @@
     "DENSE_RANK"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Dexp": {
    "kind": "SCALAR",
@@ -4597,7 +4794,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Dfloor": {
    "kind": "SCALAR",
@@ -4636,7 +4834,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DictGet": {
    "kind": "SCALAR",
@@ -4644,7 +4843,8 @@
     "DICT_GET"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "DictGetMany": {
    "kind": "SCALAR",
@@ -4652,7 +4852,8 @@
     "DICT_GET_MANY"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "DigitalMasking": {
    "kind": "SCALAR",
@@ -4668,7 +4869,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Dlog10": {
    "kind": "SCALAR",
@@ -4684,7 +4886,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Domain": {
    "kind": "SCALAR",
@@ -4700,7 +4903,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "DomainWithoutWww": {
    "kind": "SCALAR",
@@ -4716,7 +4920,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Dpow": {
    "kind": "SCALAR",
@@ -4733,7 +4938,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Dround": {
    "kind": "SCALAR",
@@ -4772,7 +4978,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Dsqrt": {
    "kind": "SCALAR",
@@ -4788,7 +4995,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "E": {
    "kind": "SCALAR",
@@ -4802,7 +5010,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ElementAt": {
    "kind": "SCALAR",
@@ -4844,7 +5053,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Elt": {
    "kind": "SCALAR",
@@ -4869,7 +5079,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Embed": {
    "kind": "SCALAR",
@@ -4924,7 +5135,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "EncodeAsBigInt": {
    "kind": "SCALAR",
@@ -4940,7 +5152,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "EncodeAsInt": {
    "kind": "SCALAR",
@@ -4956,7 +5169,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "EncodeAsLargeInt": {
    "kind": "SCALAR",
@@ -4972,7 +5186,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "EncodeAsSmallInt": {
    "kind": "SCALAR",
@@ -4988,7 +5203,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "EndsWith": {
    "kind": "SCALAR",
@@ -5013,7 +5229,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "EsQuery": {
    "kind": "SCALAR",
@@ -5030,7 +5247,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Even": {
    "kind": "SCALAR",
@@ -5046,7 +5264,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Exp": {
    "kind": "SCALAR",
@@ -5062,7 +5281,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Explode": {
    "kind": "TABLE_GENERATING",
@@ -5070,7 +5290,8 @@
     "EXPLODE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeBitmap": {
    "kind": "TABLE_GENERATING",
@@ -5086,7 +5307,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeBitmapOuter": {
    "kind": "TABLE_GENERATING",
@@ -5102,7 +5324,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeJsonArrayDouble": {
    "kind": "TABLE_GENERATING",
@@ -5118,7 +5341,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeJsonArrayDoubleOuter": {
    "kind": "TABLE_GENERATING",
@@ -5134,7 +5358,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeJsonArrayInt": {
    "kind": "TABLE_GENERATING",
@@ -5150,7 +5375,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeJsonArrayIntOuter": {
    "kind": "TABLE_GENERATING",
@@ -5166,7 +5392,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeJsonArrayJson": {
    "kind": "TABLE_GENERATING",
@@ -5182,7 +5409,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeJsonArrayJsonOuter": {
    "kind": "TABLE_GENERATING",
@@ -5198,7 +5426,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeJsonArrayString": {
    "kind": "TABLE_GENERATING",
@@ -5214,7 +5443,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeJsonArrayStringOuter": {
    "kind": "TABLE_GENERATING",
@@ -5230,7 +5460,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeJsonObject": {
    "kind": "TABLE_GENERATING",
@@ -5246,7 +5477,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeJsonObjectOuter": {
    "kind": "TABLE_GENERATING",
@@ -5262,7 +5494,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeMap": {
    "kind": "TABLE_GENERATING",
@@ -5270,7 +5503,8 @@
     "EXPLODE_MAP"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeMapOuter": {
    "kind": "TABLE_GENERATING",
@@ -5278,7 +5512,8 @@
     "EXPLODE_MAP_OUTER"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeNumbers": {
    "kind": "TABLE_GENERATING",
@@ -5294,7 +5529,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeNumbersOuter": {
    "kind": "TABLE_GENERATING",
@@ -5310,7 +5546,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeOuter": {
    "kind": "TABLE_GENERATING",
@@ -5318,7 +5555,8 @@
     "EXPLODE_OUTER"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeSplit": {
    "kind": "TABLE_GENERATING",
@@ -5335,7 +5573,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeSplitOuter": {
    "kind": "TABLE_GENERATING",
@@ -5352,7 +5591,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExplodeVariantArray": {
    "kind": "TABLE_GENERATING",
@@ -5360,7 +5600,8 @@
     "EXPLODE_VARIANT_ARRAY"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ExponentialMovingAverage": {
    "kind": "AGGREGATE",
@@ -5378,7 +5619,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "ExportSet": {
    "kind": "SCALAR",
@@ -5417,7 +5659,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ExtractUrlParameter": {
    "kind": "SCALAR",
@@ -5434,7 +5677,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Factorial": {
    "kind": "SCALAR",
@@ -5450,7 +5694,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Field": {
    "kind": "SCALAR",
@@ -5563,7 +5808,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "File": {
    "kind": "TABLE_VALUED",
@@ -5571,7 +5817,8 @@
     "FILE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "FindInSet": {
    "kind": "SCALAR",
@@ -5596,7 +5843,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "FirstSignificantSubdomain": {
    "kind": "SCALAR",
@@ -5612,7 +5860,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "FirstValue": {
    "kind": "WINDOW",
@@ -5636,7 +5885,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Floor": {
    "kind": "SCALAR",
@@ -5675,7 +5925,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Fmod": {
    "kind": "SCALAR",
@@ -5700,7 +5951,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Format": {
    "kind": "SCALAR",
@@ -5773,7 +6025,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "FormatNumber": {
    "kind": "SCALAR",
@@ -5789,7 +6042,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "FormatRound": {
    "kind": "SCALAR",
@@ -5838,7 +6092,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Fpow": {
    "kind": "SCALAR",
@@ -5855,7 +6110,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "FromBase64": {
    "kind": "SCALAR",
@@ -5878,7 +6134,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "FromBase64Binary": {
    "kind": "SCALAR",
@@ -5894,7 +6151,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "FromBinary": {
    "kind": "SCALAR",
@@ -5911,7 +6169,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "FromDays": {
    "kind": "SCALAR",
@@ -5927,7 +6186,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "FromIso8601Date": {
    "kind": "SCALAR",
@@ -5950,7 +6210,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "FromMicrosecond": {
    "kind": "SCALAR",
@@ -5966,7 +6227,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "FromMillisecond": {
    "kind": "SCALAR",
@@ -5982,7 +6244,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "FromSecond": {
    "kind": "SCALAR",
@@ -5998,7 +6261,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "FromUnixtime": {
    "kind": "SCALAR",
@@ -6053,7 +6317,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Frontends": {
    "kind": "TABLE_VALUED",
@@ -6061,7 +6326,8 @@
     "FRONTENDS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "FrontendsDisks": {
    "kind": "TABLE_VALUED",
@@ -6069,7 +6335,8 @@
     "FRONTENDS_DISKS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "G": {
    "kind": "SCALAR",
@@ -6085,7 +6352,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Gcd": {
    "kind": "SCALAR",
@@ -6134,7 +6402,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "GetFormat": {
    "kind": "SCALAR",
@@ -6159,7 +6428,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "GetVariantType": {
    "kind": "SCALAR",
@@ -6175,7 +6445,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Greatest": {
    "kind": "SCALAR",
@@ -6183,7 +6454,8 @@
     "GREATEST"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "GroupArrayIntersect": {
    "kind": "AGGREGATE",
@@ -6199,7 +6471,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "GroupArrayUnion": {
    "kind": "AGGREGATE",
@@ -6215,7 +6488,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "GroupBitAnd": {
    "kind": "AGGREGATE",
@@ -6259,7 +6533,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "GroupBitOr": {
    "kind": "AGGREGATE",
@@ -6303,7 +6578,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "GroupBitXor": {
    "kind": "AGGREGATE",
@@ -6347,7 +6623,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "GroupBitmapXor": {
    "kind": "AGGREGATE",
@@ -6363,7 +6640,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "GroupCommit": {
    "kind": "TABLE_VALUED",
@@ -6371,7 +6649,8 @@
     "GROUP_COMMIT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "GroupConcat": {
    "kind": "AGGREGATE",
@@ -6379,7 +6658,8 @@
     "GROUP_CONCAT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Grouping": {
    "kind": "SCALAR",
@@ -6387,7 +6667,8 @@
     "GROUPING"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "GroupingId": {
    "kind": "SCALAR",
@@ -6395,7 +6676,8 @@
     "GROUPING_ID"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "HammingDistance": {
    "kind": "SCALAR",
@@ -6420,7 +6702,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Hdfs": {
    "kind": "TABLE_VALUED",
@@ -6428,7 +6711,8 @@
     "HDFS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Hex": {
    "kind": "SCALAR",
@@ -6458,7 +6742,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Histogram": {
    "kind": "AGGREGATE",
@@ -6483,7 +6768,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "HllCardinality": {
    "kind": "SCALAR",
@@ -6499,7 +6785,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "HllEmpty": {
    "kind": "SCALAR",
@@ -6513,7 +6800,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "HllFromBase64": {
    "kind": "SCALAR",
@@ -6536,7 +6824,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "HllHash": {
    "kind": "SCALAR",
@@ -6559,7 +6848,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "HllToBase64": {
    "kind": "SCALAR",
@@ -6575,7 +6865,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "HllUnion": {
    "kind": "AGGREGATE",
@@ -6592,7 +6883,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "HllUnionAgg": {
    "kind": "AGGREGATE",
@@ -6608,7 +6900,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Hour": {
    "kind": "SCALAR",
@@ -6638,7 +6931,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "HourCeil": {
    "kind": "SCALAR",
@@ -6711,7 +7005,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "HourFloor": {
    "kind": "SCALAR",
@@ -6784,7 +7079,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "HourFromUnixtime": {
    "kind": "SCALAR",
@@ -6800,7 +7096,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "HourMicrosecond": {
    "kind": "SCALAR",
@@ -6816,7 +7113,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "HourMinute": {
    "kind": "SCALAR",
@@ -6832,7 +7130,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "HourSecond": {
    "kind": "SCALAR",
@@ -6848,7 +7147,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "HoursAdd": {
    "kind": "SCALAR",
@@ -6873,7 +7173,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "HoursDiff": {
    "kind": "SCALAR",
@@ -6906,7 +7207,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "HoursSub": {
    "kind": "SCALAR",
@@ -6931,7 +7233,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Http": {
    "kind": "TABLE_VALUED",
@@ -6939,7 +7242,8 @@
     "HTTP"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "HttpStream": {
    "kind": "TABLE_VALUED",
@@ -6947,7 +7251,8 @@
     "HTTP_STREAM"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "HudiMeta": {
    "kind": "TABLE_VALUED",
@@ -6955,7 +7260,8 @@
     "HUDI_META"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "If": {
    "kind": "SCALAR",
@@ -6963,7 +7269,8 @@
     "IF"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Ignore": {
    "kind": "SCALAR",
@@ -6971,7 +7278,8 @@
     "IGNORE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Initcap": {
    "kind": "SCALAR",
@@ -6987,7 +7295,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "InnerProduct": {
    "kind": "SCALAR",
@@ -7004,7 +7313,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "InnerProductApproximate": {
    "kind": "SCALAR",
@@ -7021,7 +7331,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Instr": {
    "kind": "SCALAR",
@@ -7046,7 +7357,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "IntersectCount": {
    "kind": "AGGREGATE",
@@ -7054,7 +7366,8 @@
     "INTERSECT_COUNT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Interval": {
    "kind": "SCALAR",
@@ -7071,7 +7384,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "InttoUuid": {
    "kind": "SCALAR",
@@ -7087,7 +7401,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Ipv4CIDRToRange": {
    "kind": "SCALAR",
@@ -7097,7 +7412,8 @@
    "signatures": [],
    "unparsed": [
     "FunctionSignature.ret(retType).args(IPv4Type.INSTANCE, SmallIntType.INSTANCE)"
-   ]
+   ],
+   "nullable_mode": "PropagateNullable"
   },
   "Ipv4NumToString": {
    "kind": "SCALAR",
@@ -7135,7 +7451,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Ipv4StringToNum": {
    "kind": "SCALAR",
@@ -7158,7 +7475,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Ipv4StringToNumOrDefault": {
    "kind": "SCALAR",
@@ -7181,7 +7499,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Ipv4StringToNumOrNull": {
    "kind": "SCALAR",
@@ -7205,7 +7524,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Ipv4ToIpv6": {
    "kind": "SCALAR",
@@ -7221,7 +7541,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Ipv6CIDRToRange": {
    "kind": "SCALAR",
@@ -7233,7 +7554,8 @@
     "FunctionSignature.ret(retType).args(IPv6Type.INSTANCE, SmallIntType.INSTANCE)",
     "FunctionSignature.ret(retType).args(VarcharType.SYSTEM_DEFAULT, SmallIntType.INSTANCE)",
     "FunctionSignature.ret(retType).args(StringType.INSTANCE, SmallIntType.INSTANCE)"
-   ]
+   ],
+   "nullable_mode": "PropagateNullable"
   },
   "Ipv6FromUInt128StringOrNull": {
    "kind": "SCALAR",
@@ -7256,7 +7578,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Ipv6NumToString": {
    "kind": "SCALAR",
@@ -7287,7 +7610,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Ipv6StringToNum": {
    "kind": "SCALAR",
@@ -7310,7 +7634,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Ipv6StringToNumOrDefault": {
    "kind": "SCALAR",
@@ -7333,7 +7658,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Ipv6StringToNumOrNull": {
    "kind": "SCALAR",
@@ -7357,7 +7683,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "IsInf": {
    "kind": "SCALAR",
@@ -7380,7 +7707,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "IsIpAddressInRange": {
    "kind": "SCALAR",
@@ -7437,7 +7765,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "IsIpv4Compat": {
    "kind": "SCALAR",
@@ -7460,7 +7789,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "IsIpv4Mapped": {
    "kind": "SCALAR",
@@ -7483,7 +7813,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "IsIpv4String": {
    "kind": "SCALAR",
@@ -7507,7 +7838,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "IsIpv6String": {
    "kind": "SCALAR",
@@ -7531,7 +7863,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "IsNan": {
    "kind": "SCALAR",
@@ -7554,7 +7887,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "IsUuid": {
    "kind": "SCALAR",
@@ -7577,7 +7911,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "IsValidUtf8": {
    "kind": "SCALAR",
@@ -7601,7 +7936,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Jobs": {
    "kind": "TABLE_VALUED",
@@ -7609,7 +7945,8 @@
     "JOBS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "JsonArray": {
    "kind": "SCALAR",
@@ -7618,7 +7955,8 @@
     "JSONB_ARRAY"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "JsonArrayIgnoreNull": {
    "kind": "SCALAR",
@@ -7627,7 +7965,8 @@
     "JSONB_ARRAY_IGNORE_NULL"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "JsonContains": {
    "kind": "SCALAR",
@@ -7662,7 +8001,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonEach": {
    "kind": "TABLE_GENERATING",
@@ -7678,7 +8018,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "JsonEachOuter": {
    "kind": "TABLE_GENERATING",
@@ -7694,7 +8035,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "JsonEachText": {
    "kind": "TABLE_GENERATING",
@@ -7710,7 +8052,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "JsonEachTextOuter": {
    "kind": "TABLE_GENERATING",
@@ -7726,7 +8069,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "JsonExtractNoQuotes": {
    "kind": "SCALAR",
@@ -7743,7 +8087,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonHash": {
    "kind": "SCALAR",
@@ -7760,7 +8105,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "JsonInsert": {
    "kind": "SCALAR",
@@ -7769,7 +8115,8 @@
     "JSONB_INSERT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonKeys": {
    "kind": "SCALAR",
@@ -7794,7 +8141,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonLength": {
    "kind": "SCALAR",
@@ -7826,7 +8174,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonObject": {
    "kind": "SCALAR",
@@ -7835,7 +8184,8 @@
     "JSONB_OBJECT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "JsonObjectFlatten": {
    "kind": "SCALAR",
@@ -7851,7 +8201,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "JsonQuote": {
    "kind": "SCALAR",
@@ -7867,7 +8218,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "JsonRemove": {
    "kind": "SCALAR",
@@ -7875,7 +8227,8 @@
     "JSON_REMOVE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonReplace": {
    "kind": "SCALAR",
@@ -7884,7 +8237,8 @@
     "JSONB_REPLACE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonSearch": {
    "kind": "SCALAR",
@@ -7902,7 +8256,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonSet": {
    "kind": "SCALAR",
@@ -7911,7 +8266,8 @@
     "JSONB_SET"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonUnQuote": {
    "kind": "SCALAR",
@@ -7927,7 +8283,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbExistsPath": {
    "kind": "SCALAR",
@@ -7953,7 +8310,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "JsonbExtract": {
    "kind": "SCALAR",
@@ -7979,7 +8337,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbExtractBigint": {
    "kind": "SCALAR",
@@ -8006,7 +8365,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbExtractBool": {
    "kind": "SCALAR",
@@ -8032,7 +8392,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbExtractDouble": {
    "kind": "SCALAR",
@@ -8059,7 +8420,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbExtractInt": {
    "kind": "SCALAR",
@@ -8086,7 +8448,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbExtractIsnull": {
    "kind": "SCALAR",
@@ -8112,7 +8475,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbExtractLargeint": {
    "kind": "SCALAR",
@@ -8138,7 +8502,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbExtractString": {
    "kind": "SCALAR",
@@ -8165,7 +8530,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbParse": {
    "kind": "SCALAR",
@@ -8182,7 +8548,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "JsonbParseErrorToNull": {
    "kind": "SCALAR",
@@ -8199,7 +8566,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbParseErrorToValue": {
    "kind": "SCALAR",
@@ -8224,7 +8592,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "JsonbType": {
    "kind": "SCALAR",
@@ -8242,7 +8611,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "JsonbValid": {
    "kind": "SCALAR",
@@ -8266,7 +8636,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Kurt": {
    "kind": "AGGREGATE",
@@ -8284,7 +8655,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "L1Distance": {
    "kind": "SCALAR",
@@ -8301,7 +8673,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "L2Distance": {
    "kind": "SCALAR",
@@ -8318,7 +8691,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "L2DistanceApproximate": {
    "kind": "SCALAR",
@@ -8335,7 +8709,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Lag": {
    "kind": "WINDOW",
@@ -8345,7 +8720,8 @@
    "signatures": [],
    "unparsed": [
     "signatures"
-   ]
+   ],
+   "nullable_mode": "custom"
   },
   "LastDay": {
    "kind": "SCALAR",
@@ -8368,7 +8744,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "LastQueryId": {
    "kind": "SCALAR",
@@ -8382,7 +8759,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "LastValue": {
    "kind": "WINDOW",
@@ -8406,7 +8784,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Lcm": {
    "kind": "SCALAR",
@@ -8447,7 +8826,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Lead": {
    "kind": "WINDOW",
@@ -8457,7 +8837,8 @@
    "signatures": [],
    "unparsed": [
     "signatures"
-   ]
+   ],
+   "nullable_mode": "custom"
   },
   "Least": {
    "kind": "SCALAR",
@@ -8465,7 +8846,8 @@
     "LEAST"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Left": {
    "kind": "SCALAR",
@@ -8491,7 +8873,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Length": {
    "kind": "SCALAR",
@@ -8522,7 +8905,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Levenshtein": {
    "kind": "SCALAR",
@@ -8549,7 +8933,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Like": {
    "kind": "SCALAR",
@@ -8575,7 +8960,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "LinearHistogram": {
    "kind": "AGGREGATE",
@@ -8601,7 +8987,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Ln": {
    "kind": "SCALAR",
@@ -8618,7 +9005,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Local": {
    "kind": "TABLE_VALUED",
@@ -8626,7 +9014,8 @@
     "LOCAL"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Locate": {
    "kind": "SCALAR",
@@ -8670,7 +9059,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Log": {
    "kind": "SCALAR",
@@ -8694,7 +9084,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Log10": {
    "kind": "SCALAR",
@@ -8710,7 +9101,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Log2": {
    "kind": "SCALAR",
@@ -8726,7 +9118,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Lower": {
    "kind": "SCALAR",
@@ -8750,7 +9143,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Lpad": {
    "kind": "SCALAR",
@@ -8777,7 +9171,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Ltrim": {
    "kind": "SCALAR",
@@ -8816,7 +9211,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "LtrimIn": {
    "kind": "SCALAR",
@@ -8855,7 +9251,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MakeDate": {
    "kind": "SCALAR",
@@ -8863,7 +9260,8 @@
     "MAKEDATE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MakeSet": {
    "kind": "SCALAR",
@@ -8888,7 +9286,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MakeTime": {
    "kind": "SCALAR",
@@ -8915,7 +9314,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "MapAgg": {
    "kind": "AGGREGATE",
@@ -8932,7 +9332,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "MapAggV2": {
    "kind": "AGGREGATE",
@@ -8950,7 +9351,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "MapContainsEntry": {
    "kind": "SCALAR",
@@ -8958,7 +9360,8 @@
     "MAP_CONTAINS_ENTRY"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MapContainsKey": {
    "kind": "SCALAR",
@@ -8966,7 +9369,8 @@
     "MAP_CONTAINS_KEY"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MapContainsValue": {
    "kind": "SCALAR",
@@ -8974,7 +9378,8 @@
     "MAP_CONTAINS_VALUE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MapEntries": {
    "kind": "SCALAR",
@@ -8982,7 +9387,8 @@
     "MAP_ENTRIES"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MapKeys": {
    "kind": "SCALAR",
@@ -8998,7 +9404,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MapSize": {
    "kind": "SCALAR",
@@ -9014,7 +9421,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MapValues": {
    "kind": "SCALAR",
@@ -9030,7 +9438,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Mask": {
    "kind": "SCALAR",
@@ -9107,7 +9516,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MaskFirstN": {
    "kind": "SCALAR",
@@ -9146,7 +9556,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MaskLastN": {
    "kind": "SCALAR",
@@ -9185,7 +9596,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Max": {
    "kind": "AGGREGATE",
@@ -9193,7 +9605,8 @@
     "MAX"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MaxBy": {
    "kind": "AGGREGATE",
@@ -9210,7 +9623,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MaxMap": {
    "kind": "AGGREGATE",
@@ -9218,7 +9632,8 @@
     "MAX_MAP"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Md5": {
    "kind": "SCALAR",
@@ -9248,7 +9663,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Md5Sum": {
    "kind": "SCALAR",
@@ -9278,7 +9694,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Median": {
    "kind": "AGGREGATE",
@@ -9336,7 +9753,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MicroSecondTimestamp": {
    "kind": "SCALAR",
@@ -9352,7 +9770,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MicroSecondsAdd": {
    "kind": "SCALAR",
@@ -9377,7 +9796,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MicroSecondsDiff": {
    "kind": "SCALAR",
@@ -9402,7 +9822,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MicroSecondsSub": {
    "kind": "SCALAR",
@@ -9410,7 +9831,8 @@
     "MICROSECONDS_SUB"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Microsecond": {
    "kind": "SCALAR",
@@ -9433,7 +9855,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MicrosecondFromUnixtime": {
    "kind": "SCALAR",
@@ -9449,7 +9872,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MilliSecondTimestamp": {
    "kind": "SCALAR",
@@ -9465,7 +9889,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MilliSecondsAdd": {
    "kind": "SCALAR",
@@ -9473,7 +9898,8 @@
     "MILLISECONDS_ADD"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MilliSecondsDiff": {
    "kind": "SCALAR",
@@ -9498,7 +9924,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MilliSecondsSub": {
    "kind": "SCALAR",
@@ -9506,7 +9933,8 @@
     "MILLISECONDS_SUB"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Min": {
    "kind": "AGGREGATE",
@@ -9514,7 +9942,8 @@
     "MIN"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MinBy": {
    "kind": "AGGREGATE",
@@ -9531,7 +9960,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MinMap": {
    "kind": "AGGREGATE",
@@ -9539,7 +9969,8 @@
     "MIN_MAP"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Minute": {
    "kind": "SCALAR",
@@ -9569,7 +10000,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MinuteCeil": {
    "kind": "SCALAR",
@@ -9642,7 +10074,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MinuteFloor": {
    "kind": "SCALAR",
@@ -9715,7 +10148,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MinuteFromUnixtime": {
    "kind": "SCALAR",
@@ -9731,7 +10165,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MinuteMicrosecond": {
    "kind": "SCALAR",
@@ -9747,7 +10182,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MinuteSecond": {
    "kind": "SCALAR",
@@ -9763,7 +10199,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MinutesAdd": {
    "kind": "SCALAR",
@@ -9788,7 +10225,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MinutesDiff": {
    "kind": "SCALAR",
@@ -9821,7 +10259,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MinutesSub": {
    "kind": "SCALAR",
@@ -9846,7 +10285,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MoneyFormat": {
    "kind": "SCALAR",
@@ -9890,7 +10330,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Month": {
    "kind": "SCALAR",
@@ -9913,7 +10354,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MonthCeil": {
    "kind": "SCALAR",
@@ -10018,7 +10460,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MonthFloor": {
    "kind": "SCALAR",
@@ -10123,7 +10566,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MonthName": {
    "kind": "SCALAR",
@@ -10146,7 +10590,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MonthsAdd": {
    "kind": "SCALAR",
@@ -10180,7 +10625,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MonthsBetween": {
    "kind": "SCALAR",
@@ -10206,7 +10652,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MonthsDiff": {
    "kind": "SCALAR",
@@ -10239,7 +10686,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MonthsSub": {
    "kind": "SCALAR",
@@ -10272,7 +10720,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MultiDistinctCount": {
    "kind": "AGGREGATE",
@@ -10288,7 +10737,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "MultiDistinctGroupConcat": {
    "kind": "AGGREGATE",
@@ -10296,7 +10746,8 @@
     "MULTI_DISTINCT_GROUP_CONCAT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MultiDistinctSum": {
    "kind": "AGGREGATE",
@@ -10304,7 +10755,8 @@
     "MULTI_DISTINCT_SUM"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "MultiDistinctSum0": {
    "kind": "AGGREGATE",
@@ -10312,7 +10764,8 @@
     "MULTI_DISTINCT_SUM0"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "MultiMatch": {
    "kind": "SCALAR",
@@ -10328,7 +10781,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "MultiMatchAny": {
    "kind": "SCALAR",
@@ -10345,7 +10799,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "MultiSearchAllPositions": {
    "kind": "SCALAR",
@@ -10362,7 +10817,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "MurmurHash3128": {
    "kind": "SCALAR",
@@ -10385,7 +10841,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MurmurHash332": {
    "kind": "SCALAR",
@@ -10408,7 +10865,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MurmurHash364": {
    "kind": "SCALAR",
@@ -10431,7 +10889,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MurmurHash364V2": {
    "kind": "SCALAR",
@@ -10454,7 +10913,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MurmurHash3U128": {
    "kind": "SCALAR",
@@ -10477,7 +10937,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MurmurHash3U64V2": {
    "kind": "SCALAR",
@@ -10500,7 +10961,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "MvInfos": {
    "kind": "TABLE_VALUED",
@@ -10508,7 +10970,8 @@
     "MV_INFOS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Ndv": {
    "kind": "AGGREGATE",
@@ -10525,7 +10988,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Negative": {
    "kind": "SCALAR",
@@ -10562,7 +11026,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "NextDay": {
    "kind": "SCALAR",
@@ -10579,7 +11044,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "NgramSearch": {
    "kind": "SCALAR",
@@ -10597,7 +11063,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "NonNullable": {
    "kind": "SCALAR",
@@ -10605,7 +11072,8 @@
     "NON_NULLABLE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "NormalCdf": {
    "kind": "SCALAR",
@@ -10623,7 +11091,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "NormalizeJsonNumbersToDouble": {
    "kind": "SCALAR",
@@ -10640,7 +11109,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "NotNullOrEmpty": {
    "kind": "SCALAR",
@@ -10663,7 +11133,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Now": {
    "kind": "SCALAR",
@@ -10687,7 +11158,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "NthValue": {
    "kind": "WINDOW",
@@ -10704,7 +11176,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Ntile": {
    "kind": "WINDOW",
@@ -10748,7 +11221,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "NullIf": {
    "kind": "SCALAR",
@@ -10756,7 +11230,8 @@
     "NULLIF"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "NullOrEmpty": {
    "kind": "SCALAR",
@@ -10779,7 +11254,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Nullable": {
    "kind": "SCALAR",
@@ -10787,7 +11263,8 @@
     "NULLABLE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Numbers": {
    "kind": "TABLE_VALUED",
@@ -10795,7 +11272,8 @@
     "NUMBERS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Nvl": {
    "kind": "SCALAR",
@@ -10804,7 +11282,8 @@
     "NVL"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "OrthogonalBitmapExprCalculate": {
    "kind": "AGGREGATE",
@@ -10812,7 +11291,8 @@
     "ORTHOGONAL_BITMAP_EXPR_CALCULATE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "OrthogonalBitmapExprCalculateCount": {
    "kind": "AGGREGATE",
@@ -10820,7 +11300,8 @@
     "ORTHOGONAL_BITMAP_EXPR_CALCULATE_COUNT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "OrthogonalBitmapIntersect": {
    "kind": "AGGREGATE",
@@ -10828,7 +11309,8 @@
     "ORTHOGONAL_BITMAP_INTERSECT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "OrthogonalBitmapIntersectCount": {
    "kind": "AGGREGATE",
@@ -10836,7 +11318,8 @@
     "ORTHOGONAL_BITMAP_INTERSECT_COUNT"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "OrthogonalBitmapUnionCount": {
    "kind": "AGGREGATE",
@@ -10852,7 +11335,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Overlay": {
    "kind": "SCALAR",
@@ -10882,7 +11366,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ParquetBloomProbe": {
    "kind": "TABLE_VALUED",
@@ -10890,7 +11375,8 @@
     "PARQUET_BLOOM_PROBE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ParquetFileMetadata": {
    "kind": "TABLE_VALUED",
@@ -10898,7 +11384,8 @@
     "PARQUET_FILE_METADATA"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ParquetKvMetadata": {
    "kind": "TABLE_VALUED",
@@ -10906,7 +11393,8 @@
     "PARQUET_KV_METADATA"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ParquetMeta": {
    "kind": "TABLE_VALUED",
@@ -10914,7 +11402,8 @@
     "PARQUET_META"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "ParseDataSize": {
    "kind": "SCALAR",
@@ -10930,7 +11419,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ParseUrl": {
    "kind": "SCALAR",
@@ -10973,7 +11463,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "PartitionValues": {
    "kind": "TABLE_VALUED",
@@ -10981,7 +11472,8 @@
     "PARTITION_VALUES"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Partitions": {
    "kind": "TABLE_VALUED",
@@ -10989,7 +11481,8 @@
     "PARTITIONS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Password": {
    "kind": "SCALAR",
@@ -11012,7 +11505,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "PercentRank": {
    "kind": "WINDOW",
@@ -11020,7 +11514,8 @@
     "PERCENT_RANK"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Percentile": {
    "kind": "AGGREGATE",
@@ -11086,7 +11581,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "PercentileApprox": {
    "kind": "AGGREGATE",
@@ -11112,7 +11608,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "PercentileApproxWeighted": {
    "kind": "AGGREGATE",
@@ -11140,7 +11637,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "PercentileArray": {
    "kind": "AGGREGATE",
@@ -11205,7 +11703,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "PercentileReservoir": {
    "kind": "AGGREGATE",
@@ -11222,7 +11721,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "PeriodAdd": {
    "kind": "SCALAR",
@@ -11239,7 +11739,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "PeriodDiff": {
    "kind": "SCALAR",
@@ -11256,7 +11757,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Pi": {
    "kind": "SCALAR",
@@ -11270,7 +11772,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Pmod": {
    "kind": "SCALAR",
@@ -11278,7 +11781,8 @@
     "PMOD"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "PosExplode": {
    "kind": "TABLE_GENERATING",
@@ -11286,7 +11790,8 @@
     "POSEXPLODE"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "PosExplodeOuter": {
    "kind": "TABLE_GENERATING",
@@ -11294,7 +11799,8 @@
     "POSEXPLODE_OUTER"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Positive": {
    "kind": "SCALAR",
@@ -11331,7 +11837,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Pow": {
    "kind": "SCALAR",
@@ -11348,7 +11855,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Power": {
    "kind": "SCALAR",
@@ -11365,7 +11873,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "PreviousDay": {
    "kind": "SCALAR",
@@ -11382,7 +11891,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Protocol": {
    "kind": "SCALAR",
@@ -11398,7 +11908,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "QuantilePercent": {
    "kind": "SCALAR",
@@ -11415,7 +11926,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "QuantileStateEmpty": {
    "kind": "SCALAR",
@@ -11429,7 +11941,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "QuantileStateFromBase64": {
    "kind": "SCALAR",
@@ -11452,7 +11965,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "QuantileStateToBase64": {
    "kind": "SCALAR",
@@ -11468,7 +11982,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "QuantileUnion": {
    "kind": "AGGREGATE",
@@ -11484,7 +11999,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Quarter": {
    "kind": "SCALAR",
@@ -11507,7 +12023,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "QuarterCeil": {
    "kind": "SCALAR",
@@ -11612,7 +12129,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "QuarterFloor": {
    "kind": "SCALAR",
@@ -11717,7 +12235,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "QuartersAdd": {
    "kind": "SCALAR",
@@ -11750,7 +12269,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "QuartersDiff": {
    "kind": "SCALAR",
@@ -11783,7 +12303,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "QuartersSub": {
    "kind": "SCALAR",
@@ -11816,7 +12337,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Query": {
    "kind": "TABLE_VALUED",
@@ -11824,7 +12346,8 @@
     "QUERY"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Quote": {
    "kind": "SCALAR",
@@ -11847,7 +12370,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Radians": {
    "kind": "SCALAR",
@@ -11863,7 +12387,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Random": {
    "kind": "SCALAR",
@@ -11893,7 +12418,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "RandomBytes": {
    "kind": "SCALAR",
@@ -11916,7 +12442,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Rank": {
    "kind": "WINDOW",
@@ -11924,7 +12451,8 @@
     "RANK"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Regexp": {
    "kind": "SCALAR",
@@ -11941,7 +12469,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "RegexpCount": {
    "kind": "SCALAR",
@@ -11966,7 +12495,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "RegexpExtract": {
    "kind": "SCALAR",
@@ -11993,7 +12523,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegexpExtractAll": {
    "kind": "SCALAR",
@@ -12018,7 +12549,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegexpExtractOrNull": {
    "kind": "SCALAR",
@@ -12045,7 +12577,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegexpReplace": {
    "kind": "SCALAR",
@@ -12092,7 +12625,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegexpReplaceOne": {
    "kind": "SCALAR",
@@ -12139,7 +12673,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegrAvgx": {
    "kind": "AGGREGATE",
@@ -12156,7 +12691,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegrAvgy": {
    "kind": "AGGREGATE",
@@ -12173,7 +12709,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegrCount": {
    "kind": "AGGREGATE",
@@ -12190,7 +12727,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "RegrIntercept": {
    "kind": "AGGREGATE",
@@ -12207,7 +12745,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegrR2": {
    "kind": "AGGREGATE",
@@ -12224,7 +12763,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegrSlope": {
    "kind": "AGGREGATE",
@@ -12241,7 +12781,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegrSxx": {
    "kind": "AGGREGATE",
@@ -12258,7 +12799,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegrSxy": {
    "kind": "AGGREGATE",
@@ -12275,7 +12817,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "RegrSyy": {
    "kind": "AGGREGATE",
@@ -12292,7 +12835,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Repeat": {
    "kind": "SCALAR",
@@ -12317,7 +12861,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Replace": {
    "kind": "SCALAR",
@@ -12344,7 +12889,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ReplaceEmpty": {
    "kind": "SCALAR",
@@ -12371,7 +12917,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Retention": {
    "kind": "AGGREGATE",
@@ -12387,7 +12934,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Reverse": {
    "kind": "SCALAR",
@@ -12417,7 +12965,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Right": {
    "kind": "SCALAR",
@@ -12443,7 +12992,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Round": {
    "kind": "SCALAR",
@@ -12482,7 +13032,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "RoundBankers": {
    "kind": "SCALAR",
@@ -12521,7 +13072,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "RowNumber": {
    "kind": "WINDOW",
@@ -12529,7 +13081,8 @@
     "ROW_NUMBER"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Rpad": {
    "kind": "SCALAR",
@@ -12556,7 +13109,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Rtrim": {
    "kind": "SCALAR",
@@ -12595,7 +13149,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "RtrimIn": {
    "kind": "SCALAR",
@@ -12634,7 +13189,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "S3": {
    "kind": "TABLE_VALUED",
@@ -12642,7 +13198,8 @@
     "S3"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Score": {
    "kind": "SCALAR",
@@ -12656,7 +13213,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Search": {
    "kind": "SCALAR",
@@ -12680,7 +13238,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Sec": {
    "kind": "SCALAR",
@@ -12696,7 +13255,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SecToTime": {
    "kind": "SCALAR",
@@ -12719,7 +13279,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Second": {
    "kind": "SCALAR",
@@ -12749,7 +13310,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SecondCeil": {
    "kind": "SCALAR",
@@ -12822,7 +13384,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SecondFloor": {
    "kind": "SCALAR",
@@ -12895,7 +13458,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SecondFromUnixtime": {
    "kind": "SCALAR",
@@ -12911,7 +13475,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SecondMicrosecond": {
    "kind": "SCALAR",
@@ -12927,7 +13492,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SecondTimestamp": {
    "kind": "SCALAR",
@@ -12943,7 +13509,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SecondsAdd": {
    "kind": "SCALAR",
@@ -12968,7 +13535,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SecondsDiff": {
    "kind": "SCALAR",
@@ -13001,7 +13569,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SecondsSub": {
    "kind": "SCALAR",
@@ -13026,7 +13595,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Sem": {
    "kind": "AGGREGATE",
@@ -13042,7 +13612,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "SequenceCount": {
    "kind": "AGGREGATE",
@@ -13078,7 +13649,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "SequenceMatch": {
    "kind": "AGGREGATE",
@@ -13114,7 +13686,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "SessionUser": {
    "kind": "SCALAR",
@@ -13128,7 +13701,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Sha1": {
    "kind": "SCALAR",
@@ -13159,7 +13733,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Sha2": {
    "kind": "SCALAR",
@@ -13192,7 +13767,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Sign": {
    "kind": "SCALAR",
@@ -13208,7 +13784,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SignBit": {
    "kind": "SCALAR",
@@ -13224,7 +13801,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Sin": {
    "kind": "SCALAR",
@@ -13240,7 +13818,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Sinh": {
    "kind": "SCALAR",
@@ -13256,7 +13835,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Skew": {
    "kind": "AGGREGATE",
@@ -13274,7 +13854,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Sleep": {
    "kind": "SCALAR",
@@ -13290,7 +13871,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Sm3": {
    "kind": "SCALAR",
@@ -13320,7 +13902,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Sm3sum": {
    "kind": "SCALAR",
@@ -13350,7 +13933,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Sm4Decrypt": {
    "kind": "SCALAR",
@@ -13413,7 +13997,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Sm4Encrypt": {
    "kind": "SCALAR",
@@ -13476,7 +14061,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "SortJsonbObjectKeys": {
    "kind": "SCALAR",
@@ -13493,7 +14079,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Soundex": {
    "kind": "SCALAR",
@@ -13509,7 +14096,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Space": {
    "kind": "SCALAR",
@@ -13525,7 +14113,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SplitByRegexp": {
    "kind": "SCALAR",
@@ -13552,7 +14141,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SplitByString": {
    "kind": "SCALAR",
@@ -13570,7 +14160,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SplitPart": {
    "kind": "SCALAR",
@@ -13597,7 +14188,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Sqrt": {
    "kind": "SCALAR",
@@ -13613,7 +14205,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StAngle": {
    "kind": "SCALAR",
@@ -13631,7 +14224,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StAngleSphere": {
    "kind": "SCALAR",
@@ -13650,7 +14244,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StAreaSquareKm": {
    "kind": "SCALAR",
@@ -13666,7 +14261,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StAreaSquareMeters": {
    "kind": "SCALAR",
@@ -13682,7 +14278,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StAsBinary": {
    "kind": "SCALAR",
@@ -13705,7 +14302,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StAstext": {
    "kind": "SCALAR",
@@ -13728,7 +14326,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StAswkt": {
    "kind": "SCALAR",
@@ -13751,7 +14350,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StAzimuth": {
    "kind": "SCALAR",
@@ -13768,7 +14368,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StCircle": {
    "kind": "SCALAR",
@@ -13786,7 +14387,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StContains": {
    "kind": "SCALAR",
@@ -13803,7 +14405,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StDisjoint": {
    "kind": "SCALAR",
@@ -13828,7 +14431,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StDistance": {
    "kind": "SCALAR",
@@ -13845,7 +14449,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StDistanceSphere": {
    "kind": "SCALAR",
@@ -13864,7 +14469,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StGeomFromWKB": {
    "kind": "SCALAR",
@@ -13887,7 +14493,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StGeometries": {
    "kind": "SCALAR",
@@ -13903,7 +14510,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StGeometryFromWKB": {
    "kind": "SCALAR",
@@ -13926,7 +14534,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StGeometryType": {
    "kind": "SCALAR",
@@ -13942,7 +14551,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StGeometryfromtext": {
    "kind": "SCALAR",
@@ -13965,7 +14575,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StGeomfromtext": {
    "kind": "SCALAR",
@@ -13988,7 +14599,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StIntersects": {
    "kind": "SCALAR",
@@ -14013,7 +14625,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StLength": {
    "kind": "SCALAR",
@@ -14029,7 +14642,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StLinefromtext": {
    "kind": "SCALAR",
@@ -14052,7 +14666,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StLinestringfromtext": {
    "kind": "SCALAR",
@@ -14075,7 +14690,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StNumGeometries": {
    "kind": "SCALAR",
@@ -14091,7 +14707,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StNumPoints": {
    "kind": "SCALAR",
@@ -14108,7 +14725,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StPoint": {
    "kind": "SCALAR",
@@ -14125,7 +14743,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StPolyfromtext": {
    "kind": "SCALAR",
@@ -14148,7 +14767,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StPolygon": {
    "kind": "SCALAR",
@@ -14171,7 +14791,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StPolygonfromtext": {
    "kind": "SCALAR",
@@ -14194,7 +14815,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StTouches": {
    "kind": "SCALAR",
@@ -14219,7 +14841,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StX": {
    "kind": "SCALAR",
@@ -14242,7 +14865,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StY": {
    "kind": "SCALAR",
@@ -14265,7 +14889,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StartsWith": {
    "kind": "SCALAR",
@@ -14290,7 +14915,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Stddev": {
    "kind": "AGGREGATE",
@@ -14308,7 +14934,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "StddevSamp": {
    "kind": "AGGREGATE",
@@ -14324,7 +14951,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "StrToDate": {
    "kind": "SCALAR",
@@ -14349,7 +14977,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "StrToMap": {
    "kind": "SCALAR",
@@ -14406,7 +15035,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Strcmp": {
    "kind": "SCALAR",
@@ -14431,7 +15061,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "StripNullValue": {
    "kind": "SCALAR",
@@ -14447,7 +15078,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "SubBinary": {
    "kind": "SCALAR",
@@ -14473,7 +15105,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SubBitmap": {
    "kind": "SCALAR",
@@ -14491,7 +15124,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "SubReplace": {
    "kind": "SCALAR",
@@ -14538,7 +15172,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "SubTime": {
    "kind": "SCALAR",
@@ -14571,7 +15206,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Substring": {
    "kind": "SCALAR",
@@ -14616,7 +15252,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "SubstringIndex": {
    "kind": "SCALAR",
@@ -14643,7 +15280,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Sum": {
    "kind": "AGGREGATE",
@@ -14708,7 +15346,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Sum0": {
    "kind": "AGGREGATE",
@@ -14773,7 +15412,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "SumMap": {
    "kind": "AGGREGATE",
@@ -14781,7 +15421,8 @@
     "SUM_MAP"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Tan": {
    "kind": "SCALAR",
@@ -14797,7 +15438,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Tanh": {
    "kind": "SCALAR",
@@ -14813,7 +15455,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Tasks": {
    "kind": "TABLE_VALUED",
@@ -14821,7 +15464,8 @@
     "TASKS"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Time": {
    "kind": "SCALAR",
@@ -14837,7 +15481,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "TimeDiff": {
    "kind": "SCALAR",
@@ -14870,7 +15515,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "TimeFormat": {
    "kind": "SCALAR",
@@ -14895,7 +15541,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "TimeToSec": {
    "kind": "SCALAR",
@@ -14911,7 +15558,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Timestamp": {
    "kind": "SCALAR",
@@ -14935,7 +15583,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ToBase64": {
    "kind": "SCALAR",
@@ -14951,7 +15600,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ToBase64Binary": {
    "kind": "SCALAR",
@@ -14967,7 +15617,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ToBinary": {
    "kind": "SCALAR",
@@ -14984,7 +15635,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ToBitmap": {
    "kind": "SCALAR",
@@ -15014,7 +15666,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ToBitmapWithCheck": {
    "kind": "SCALAR",
@@ -15044,7 +15697,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ToDate": {
    "kind": "SCALAR",
@@ -15060,7 +15714,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ToDateV2": {
    "kind": "SCALAR",
@@ -15076,7 +15731,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ToDays": {
    "kind": "SCALAR",
@@ -15092,7 +15748,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ToIpv4": {
    "kind": "SCALAR",
@@ -15115,7 +15772,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ToIpv4OrDefault": {
    "kind": "SCALAR",
@@ -15138,7 +15796,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ToIpv4OrNull": {
    "kind": "SCALAR",
@@ -15161,7 +15820,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ToIpv6": {
    "kind": "SCALAR",
@@ -15184,7 +15844,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ToIpv6OrDefault": {
    "kind": "SCALAR",
@@ -15207,7 +15868,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ToIpv6OrNull": {
    "kind": "SCALAR",
@@ -15230,7 +15892,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "ToIso8601": {
    "kind": "SCALAR",
@@ -15260,7 +15923,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ToJson": {
    "kind": "SCALAR",
@@ -15381,7 +16045,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ToMonday": {
    "kind": "SCALAR",
@@ -15404,7 +16069,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "ToQuantileState": {
    "kind": "SCALAR",
@@ -15421,7 +16087,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "ToSeconds": {
    "kind": "SCALAR",
@@ -15437,7 +16104,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Tokenize": {
    "kind": "SCALAR",
@@ -15454,7 +16122,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "TopLevelDomain": {
    "kind": "SCALAR",
@@ -15470,7 +16139,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "TopN": {
    "kind": "AGGREGATE",
@@ -15496,7 +16166,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "TopNArray": {
    "kind": "AGGREGATE",
@@ -15522,7 +16193,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "TopNWeighted": {
    "kind": "AGGREGATE",
@@ -15816,7 +16488,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Translate": {
    "kind": "SCALAR",
@@ -15843,7 +16516,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Trim": {
    "kind": "SCALAR",
@@ -15882,7 +16556,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "TrimIn": {
    "kind": "SCALAR",
@@ -15921,7 +16596,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Truncate": {
    "kind": "SCALAR",
@@ -15953,7 +16629,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Uncompress": {
    "kind": "SCALAR",
@@ -15976,7 +16653,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Unhex": {
    "kind": "SCALAR",
@@ -15999,7 +16677,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "UnhexNull": {
    "kind": "SCALAR",
@@ -16022,7 +16701,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "UnicodeNormalize": {
    "kind": "SCALAR",
@@ -16047,7 +16727,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Uniform": {
    "kind": "SCALAR",
@@ -16074,7 +16755,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "UnixTimestamp": {
    "kind": "SCALAR",
@@ -16118,7 +16800,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Unnest": {
    "kind": "TABLE_GENERATING",
@@ -16126,7 +16809,8 @@
     "UNNEST"
    ],
    "signatures": [],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": null
   },
   "Upper": {
    "kind": "SCALAR",
@@ -16150,7 +16834,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "UrlDecode": {
    "kind": "SCALAR",
@@ -16173,7 +16858,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "UrlEncode": {
    "kind": "SCALAR",
@@ -16196,7 +16882,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "User": {
    "kind": "SCALAR",
@@ -16210,7 +16897,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "UtcDate": {
    "kind": "SCALAR",
@@ -16224,7 +16912,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "UtcTime": {
    "kind": "SCALAR",
@@ -16245,7 +16934,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "UtcTimestamp": {
    "kind": "SCALAR",
@@ -16266,7 +16956,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Uuid": {
    "kind": "SCALAR",
@@ -16280,7 +16971,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "UuidNumeric": {
    "kind": "SCALAR",
@@ -16294,7 +16986,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "UuidtoInt": {
    "kind": "SCALAR",
@@ -16317,7 +17010,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "Variance": {
    "kind": "AGGREGATE",
@@ -16335,7 +17029,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "VarianceSamp": {
    "kind": "AGGREGATE",
@@ -16352,7 +17047,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Version": {
    "kind": "SCALAR",
@@ -16366,7 +17062,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNotNullable"
   },
   "Week": {
    "kind": "SCALAR",
@@ -16405,7 +17102,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "WeekCeil": {
    "kind": "SCALAR",
@@ -16510,7 +17208,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "WeekFloor": {
    "kind": "SCALAR",
@@ -16615,7 +17314,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "WeekOfYear": {
    "kind": "SCALAR",
@@ -16638,7 +17338,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Weekday": {
    "kind": "SCALAR",
@@ -16661,7 +17362,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "WeeksAdd": {
    "kind": "SCALAR",
@@ -16694,7 +17396,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "WeeksDiff": {
    "kind": "SCALAR",
@@ -16727,7 +17430,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "WeeksSub": {
    "kind": "SCALAR",
@@ -16760,7 +17464,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "WidthBucket": {
    "kind": "SCALAR",
@@ -16829,7 +17534,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "WindowFunnel": {
    "kind": "AGGREGATE",
@@ -16858,7 +17564,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "WindowFunnelV2": {
    "kind": "AGGREGATE",
@@ -16888,7 +17595,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "custom"
   },
   "Xor": {
    "kind": "SCALAR",
@@ -16905,7 +17613,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "XpathString": {
    "kind": "SCALAR",
@@ -16930,7 +17639,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
   },
   "XxHash32": {
    "kind": "SCALAR",
@@ -16960,7 +17670,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "XxHash64": {
    "kind": "SCALAR",
@@ -16991,7 +17702,8 @@
      "variadic": true
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "Year": {
    "kind": "SCALAR",
@@ -17014,7 +17726,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "YearCeil": {
    "kind": "SCALAR",
@@ -17119,7 +17832,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "YearFloor": {
    "kind": "SCALAR",
@@ -17224,7 +17938,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "YearMonth": {
    "kind": "SCALAR",
@@ -17240,7 +17955,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "YearOfWeek": {
    "kind": "SCALAR",
@@ -17257,7 +17973,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "YearWeek": {
    "kind": "SCALAR",
@@ -17296,7 +18013,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "YearsAdd": {
    "kind": "SCALAR",
@@ -17329,7 +18047,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "YearsDiff": {
    "kind": "SCALAR",
@@ -17362,7 +18081,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   },
   "YearsSub": {
    "kind": "SCALAR",
@@ -17395,7 +18115,8 @@
      "variadic": false
     }
    ],
-   "unparsed": []
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
   }
  }
 }

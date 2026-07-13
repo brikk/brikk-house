@@ -225,6 +225,30 @@ class SqlFragmentTest {
         )
     }
 
+    // ------------------------------------------------------- transpileTo pipes
+
+    @Test
+    fun transpileToRendersPipeSyntaxByDefault() {
+        // Default false preserves pipe rendering (pipe-aware consumers, round-trips).
+        val fragment = SqlFragment("FROM t |> WHERE a > 1 |> SELECT a")
+        val result = fragment.transpileTo("doris")
+        assertTrue("|>" in result.sql, result.sql)
+    }
+
+    @Test
+    fun transpileToDesugarsPipesOnRequest() {
+        // Real engines don't speak |>: desugarPipes=true runs ast/PipeDesugar.kt on a
+        // copy before generating — WITH __tmp form, no pipe operator in the output.
+        val fragment = SqlFragment("FROM t |> WHERE a > 1 |> SELECT a")
+        val result = fragment.transpileTo("doris", desugarPipes = true)
+        assertTrue("|>" !in result.sql, result.sql)
+        assertTrue("__tmp" in result.sql, result.sql)
+        assertEquals(emptyList(), result.unsupportedMessages)
+        // The fragment itself is untouched (copy semantics) and still pipe-shaped.
+        assertTrue(fragment.isPipe)
+        assertTrue("|>" in fragment.transpileTo("doris").sql)
+    }
+
     // ------------------------------------------------------- guards and describe
 
     @Test

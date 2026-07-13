@@ -21,6 +21,18 @@ and type-rendering rules). When the JSON is present, FunctionDef.overloads is fi
 joining registry class name -> extracted signatures; names whose class exposes no
 static SIGNATURES keep empty overloads (counted in the run report).
 
+Semantic profiles: the same JSON carries each class's ComputeNullable marker
+("nullable_mode", see the extractor's header), mapped onto FunctionDef.profile:
+  PropagateNullable  -> NullPropagation.STRICT
+  AlwaysNullable     -> NullPropagation.ALWAYS_NULLABLE
+  AlwaysNotNullable  -> NullPropagation.NEVER_NULL
+  "custom"           -> UNKNOWN + notes ("custom nullable() override" — the engine
+                        computes nullability from argument shapes at plan time)
+  anything else      -> UNKNOWN + notes carrying the verbatim marker name (future
+                        markers like PropagateNullableOnDateLikeV2Args — argument-subset
+                        propagation, which STRICT would over-promise; absent at the pin)
+  null (table kinds) -> profile = null (row-set producers, not applicable)
+
 Usage: python3 tools/generate_doris_functions.py [<doris-repo-root>]
        Default source: vendor/data/doris-registry/ (committed, pinned copy of the
        registry files — reproducible from this repo alone). Pass a Doris checkout
@@ -96,12 +108,29 @@ def collect(registry_dir: pathlib.Path) -> dict[str, list[tuple[str, str, list[s
     return by_kind
 
 
-def load_signatures() -> tuple[dict[str, list[dict]], str | None]:
-    """class name -> parsed signature dicts from vendor/data/doris-signatures.json."""
+def load_signatures() -> tuple[dict[str, list[dict]], dict[str, str], str | None]:
+    """(class -> signature dicts, class -> nullable_mode, version) from doris-signatures.json."""
     if not SIGNATURES_JSON.exists():
-        return {}, None
+        return {}, {}, None
     data = json.loads(SIGNATURES_JSON.read_text(encoding="utf-8"))
-    return {cls: e["signatures"] for cls, e in data["classes"].items()}, data.get("doris_version")
+    sigs = {cls: e["signatures"] for cls, e in data["classes"].items()}
+    modes = {cls: m for cls, e in data["classes"].items() if (m := e.get("nullable_mode"))}
+    return sigs, modes, data.get("doris_version")
+
+
+# nullable_mode -> Kotlin SemanticProfile expression (None = no profile; see module docstring).
+def profile_expr(mode: str | None) -> str | None:
+    if mode is None:
+        return None
+    known = {
+        "PropagateNullable": "NullPropagation.STRICT",
+        "AlwaysNullable": "NullPropagation.ALWAYS_NULLABLE",
+        "AlwaysNotNullable": "NullPropagation.NEVER_NULL",
+    }
+    if mode in known:
+        return f"SemanticProfile({known[mode]})"
+    note = "custom nullable() override" if mode == "custom" else f"unmapped nullable marker {mode}"
+    return f'SemanticProfile(NullPropagation.UNKNOWN, "doris: {note}")'
 
 
 def main() -> None:
@@ -117,7 +146,7 @@ def main() -> None:
         registry = VENDORED_REGISTRY
         version = VENDORED_VERSION
     by_kind = collect(registry)
-    signatures_by_class, sig_version = load_signatures()
+    signatures_by_class, modes_by_class, sig_version = load_signatures()
     if signatures_by_class and sig_version and sig_version != version:
         print(f"warning: doris-signatures.json is from {sig_version} but registry is {version} "
               "— re-run tools/extract_doris_signatures.py against the same checkout",
@@ -132,6 +161,10 @@ def main() -> None:
         "// overloads from vendor/data/doris-signatures.json, statically extracted from each",
         "// function class's SIGNATURES field by tools/extract_doris_signatures.py — see that",
         "// script's header for the type-rendering rules incl. ANY_<n>/ARG_<n> placeholders).",
+        "// Profiles map each class's ComputeNullable marker (same JSON, \"nullable_mode\"):",
+        "// PropagateNullable->STRICT, AlwaysNullable->ALWAYS_NULLABLE,",
+        "// AlwaysNotNullable->NEVER_NULL, custom nullable() override->UNKNOWN+notes;",
+        "// table-valued/-generating defs carry no profile (row-set producers).",
         "// Apache Doris is Apache-2.0 licensed. See ATTRIBUTIONS.md and vendor/README.md.",
         "package dev.brikk.house.sql.metadata",
     ]
@@ -141,28 +174,34 @@ def main() -> None:
     # would blow the JVM's 64KB method/clinit bytecode limit).
     blocks: list[tuple[list[str], int]] = []
     total_overloads = defs_with_overloads = defs_without_overloads = 0
+    profile_counts: dict[str, int] = {}
     for kind in ("SCALAR", "AGGREGATE", "WINDOW", "TABLE_VALUED", "TABLE_GENERATING"):
         blocks.append(([f"    // {kind.lower()} ({len(by_kind[kind])})"], 0))
         for cls, name, aliases in sorted(by_kind[kind], key=lambda t: t[1]):
             overloads = signatures_by_class.get(cls, [])
+            mode = modes_by_class.get(cls)
+            profile = profile_expr(mode)
+            profile_counts[mode or "(none)"] = profile_counts.get(mode or "(none)", 0) + 1
+            profile_arg = f", profile = {profile}" if profile else ""
+            cost = 1 + (1 if profile else 0)
             ctor = f'    FunctionDef("{name}", FunctionKind.{kind}'
             if aliases:
                 alias_list = ", ".join(f'"{a}"' for a in aliases)
                 ctor += f", listOf({alias_list})"
             if not overloads:
                 defs_without_overloads += 1
-                blocks.append(([ctor + "),"], 1))
+                blocks.append(([ctor + profile_arg + "),"], cost))
                 continue
             defs_with_overloads += 1
             total_overloads += len(overloads)
-            block = [ctor + (", overloads = listOf(" if aliases else ", overloads = listOf(")]
+            block = [ctor + ", overloads = listOf("]
             for sig in overloads:
                 args = ", ".join(f'"{a}"' for a in sig["args"])
                 ret = sig["return"]
                 variadic = ", variadic = true" if sig["variadic"] else ""
                 block.append(f'        FunctionOverload(listOf({args}), "{ret}"{variadic}),')
-            block.append("    )),")
-            blocks.append((block, 1 + len(overloads)))
+            block.append(f"    ){profile_arg}),")
+            blocks.append((block, cost + len(overloads)))
 
     CHUNK_BUDGET = 400  # constructors per chunk function (JVM method-size headroom)
     chunks: list[list[str]] = [[]]
@@ -190,6 +229,8 @@ def main() -> None:
     if signatures_by_class:
         print(f"overloads: {defs_with_overloads} defs with {total_overloads} overloads; "
               f"{defs_without_overloads} defs without signatures (no static SIGNATURES on class)")
+        print("profiles (defs per nullable mode): "
+              + ", ".join(f"{k}={v}" for k, v in sorted(profile_counts.items())))
     else:
         print("overloads: vendor/data/doris-signatures.json not found — all overloads empty "
               "(run tools/extract_doris_signatures.py)")

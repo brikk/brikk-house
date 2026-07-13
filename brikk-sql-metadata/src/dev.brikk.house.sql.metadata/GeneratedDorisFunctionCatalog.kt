@@ -4,12 +4,16 @@
 // overloads from vendor/data/doris-signatures.json, statically extracted from each
 // function class's SIGNATURES field by tools/extract_doris_signatures.py — see that
 // script's header for the type-rendering rules incl. ANY_<n>/ARG_<n> placeholders).
+// Profiles map each class's ComputeNullable marker (same JSON, "nullable_mode"):
+// PropagateNullable->STRICT, AlwaysNullable->ALWAYS_NULLABLE,
+// AlwaysNotNullable->NEVER_NULL, custom nullable() override->UNKNOWN+notes;
+// table-valued/-generating defs carry no profile (row-set producers).
 // Apache Doris is Apache-2.0 licensed. See ATTRIBUTIONS.md and vendor/README.md.
 package dev.brikk.house.sql.metadata
 
 /** Doris built-in functions: 728 definitions, 826 names incl. aliases, 1434 overloads. */
 val DORIS_FUNCTION_CATALOG: FunctionCatalog = FunctionCatalog(
-    chunk0() + chunk1() + chunk2() + chunk3() + chunk4() + chunk5(),
+    chunk0() + chunk1() + chunk2() + chunk3() + chunk4() + chunk5() + chunk6() + chunk7(),
 )
 
 private fun chunk0(): List<FunctionDef> = listOf(
@@ -24,18 +28,18 @@ private fun chunk0(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TINYINT"), "SMALLINT"),
         FunctionOverload(listOf("DECIMALV2"), "DECIMALV2"),
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ACOS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ACOSH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ADD_TIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "TIME"), "DATETIME"),
         FunctionOverload(listOf("TIME", "TIME"), "TIME"),
         FunctionOverload(listOf("TIMESTAMPTZ", "TIME"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("AES_DECRYPT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
@@ -45,7 +49,7 @@ private fun chunk0(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("STRING", "STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("AES_ENCRYPT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
@@ -55,78 +59,78 @@ private fun chunk0(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("STRING", "STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("AI_CLASSIFY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "ARRAY<STRING>"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "ARRAY<VARCHAR>"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING", "ARRAY<STRING>"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "ARRAY<VARCHAR>"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("AI_EXTRACT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "ARRAY<STRING>"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "ARRAY<VARCHAR>"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING", "ARRAY<STRING>"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "ARRAY<VARCHAR>"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("AI_FILTER", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "BOOLEAN"),
         FunctionOverload(listOf("VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING", "STRING"), "BOOLEAN"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("AI_FIXGRAMMAR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("AI_GENERATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("AI_MASK", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "ARRAY<STRING>"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "ARRAY<VARCHAR>"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "ARRAY<VARCHAR>"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("AI_SENTIMENT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("AI_SIMILARITY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "STRING"), "FLOAT"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "FLOAT"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "FLOAT"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "FLOAT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("AI_SUMMARIZE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("AI_TRANSLATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("APPEND_TRAILING_CHAR_IF_ABSENT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ARRAY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "ARRAY"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("ARRAYS_OVERLAP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>", "ARRAY<ANY_0>"), "BOOLEAN"),
-    )),
-    FunctionDef("ARRAY_APPLY", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("ARRAY_APPLY", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_AVG", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<DOUBLE>"), "DOUBLE"),
         FunctionOverload(listOf("ARRAY<TINYINT>"), "DOUBLE"),
@@ -136,23 +140,23 @@ private fun chunk0(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("ARRAY<LARGEINT>"), "DOUBLE"),
         FunctionOverload(listOf("ARRAY<DECIMAL>"), "DECIMAL"),
         FunctionOverload(listOf("ARRAY<FLOAT>"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ARRAY_COMPACT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_CONCAT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>"), "ARG_0", variadic = true),
-    )),
-    FunctionDef("ARRAY_CONTAINS", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("ARRAY_CONTAINS", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("ARRAY_CONTAINS_ALL", FunctionKind.SCALAR, listOf("HASSUBSTR"), overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>", "ARRAY<ANY_0>"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_COUNT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<BOOLEAN>"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("ARRAY_CROSS_PRODUCT", FunctionKind.SCALAR, listOf("CROSS_PRODUCT"), overloads = listOf(
         FunctionOverload(listOf("ARRAY<FLOAT>", "ARRAY<FLOAT>"), "ARRAY<FLOAT>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_CUM_SUM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<DOUBLE>"), "ARRAY<DOUBLE>"),
         FunctionOverload(listOf("ARRAY<TINYINT>"), "ARRAY<BIGINT>"),
@@ -163,7 +167,7 @@ private fun chunk0(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("ARRAY<DECIMAL>"), "ARRAY<DECIMAL>"),
         FunctionOverload(listOf("ARRAY<DECIMALV2>"), "ARRAY<DECIMALV2>"),
         FunctionOverload(listOf("ARRAY<FLOAT>"), "ARRAY<DOUBLE>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_DIFFERENCE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<DOUBLE>"), "ARRAY<DOUBLE>"),
         FunctionOverload(listOf("ARRAY<TINYINT>"), "ARRAY<SMALLINT>"),
@@ -174,67 +178,67 @@ private fun chunk0(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("ARRAY<FLOAT>"), "ARRAY<DOUBLE>"),
         FunctionOverload(listOf("ARRAY<DECIMALV2>"), "ARG_0"),
         FunctionOverload(listOf("ARRAY<DECIMAL>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_DISTINCT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_ENUMERATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>"), "ARRAY<BIGINT>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_ENUMERATE_UNIQ", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>"), "ARRAY<BIGINT>", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_EXCEPT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>", "ARRAY<ANY_0>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_EXISTS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<BOOLEAN>"), "ARRAY<BOOLEAN>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_FILTER", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>", "ARRAY<BOOLEAN>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_FIRST", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>", "ARRAY<BOOLEAN>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_FIRST_INDEX", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<BOOLEAN>"), "BIGINT"),
-    )),
-    FunctionDef("ARRAY_FLATTEN", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("ARRAY_FLATTEN", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_INTERSECT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>", "ARRAY<ANY_0>"), "ARG_0", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_JOIN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<VARCHAR>", "VARCHAR"), "STRING"),
         FunctionOverload(listOf("ARRAY<VARCHAR>", "VARCHAR", "VARCHAR"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_LAST", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>", "ARRAY<BOOLEAN>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_LAST_INDEX", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<BOOLEAN>"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("ARRAY_MAP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("LAMBDA"), "ANY_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("ARRAY_MATCH_ALL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<BOOLEAN>"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ARRAY_MATCH_ANY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<BOOLEAN>"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ARRAY_MAX", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>"), "ANY_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ARRAY_MIN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>"), "ANY_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ARRAY_POPBACK", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_POPFRONT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>"), "ARG_0"),
-    )),
-    FunctionDef("ARRAY_POSITION", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("ARRAY_POSITION", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("ARRAY_PRODUCT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<DOUBLE>"), "DOUBLE"),
         FunctionOverload(listOf("ARRAY<INT>"), "INT"),
@@ -242,48 +246,48 @@ private fun chunk0(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("ARRAY<LARGEINT>"), "LARGEINT"),
         FunctionOverload(listOf("ARRAY<DECIMAL>"), "DECIMAL"),
         FunctionOverload(listOf("ARRAY<FLOAT>"), "FLOAT"),
-    )),
-    FunctionDef("ARRAY_PUSHBACK", FunctionKind.SCALAR, listOf("ARRAY_APPEND")),
-    FunctionDef("ARRAY_PUSHFRONT", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("ARRAY_PUSHBACK", FunctionKind.SCALAR, listOf("ARRAY_APPEND"), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("ARRAY_PUSHFRONT", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ARRAY_RANGE", FunctionKind.SCALAR, listOf("SEQUENCE"), overloads = listOf(
         FunctionOverload(listOf("INT"), "ARRAY<INT>"),
         FunctionOverload(listOf("INT", "INT"), "ARRAY<INT>"),
         FunctionOverload(listOf("INT", "INT", "INT"), "ARRAY<INT>"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "ARRAY<DATETIME>"),
         FunctionOverload(listOf("DATETIME", "DATETIME", "INT"), "ARRAY<DATETIME>"),
-    )),
-    FunctionDef("ARRAY_REMOVE", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("ARRAY_REMOVE", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("ARRAY_REPEAT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ANY_0", "BIGINT"), "ARRAY<ANY_0>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("ARRAY_REVERSE_SORT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_REVERSE_SPLIT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>", "ARRAY<BOOLEAN>"), "ARRAY<ARG_0>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_SHUFFLE", FunctionKind.SCALAR, listOf("SHUFFLE"), overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>"), "ARG_0"),
         FunctionOverload(listOf("ARRAY<ANY_0>", "BIGINT"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_SIZE", FunctionKind.SCALAR, listOf("CARDINALITY", "SIZE"), overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>"), "BIGINT"),
         FunctionOverload(listOf("MAP<ANY,ANY>"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_SLICE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>", "BIGINT"), "ARG_0"),
         FunctionOverload(listOf("ARRAY<ANY>", "BIGINT", "BIGINT"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_SORT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>"), "ARG_0"),
         FunctionOverload(listOf("LAMBDA"), "ARRAY<ANY>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("ARRAY_SORTBY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>", "ARRAY<ANY>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("ARRAY_SPLIT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>", "ARRAY<BOOLEAN>"), "ARRAY<ARG_0>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_SUM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<DOUBLE>"), "DOUBLE"),
         FunctionOverload(listOf("ARRAY<TINYINT>"), "BIGINT"),
@@ -293,317 +297,317 @@ private fun chunk0(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("ARRAY<LARGEINT>"), "LARGEINT"),
         FunctionOverload(listOf("ARRAY<DECIMAL>"), "DECIMAL"),
         FunctionOverload(listOf("ARRAY<FLOAT>"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ARRAY_UNION", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>", "ARRAY<ANY_0>"), "ARG_0", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ARRAY_WITH_CONSTANT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "ANY_0"), "ARRAY<ANY_0>"),
-    )),
-    FunctionDef("ARRAY_ZIP", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("ARRAY_ZIP", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ASCII", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "INT"),
         FunctionOverload(listOf("STRING"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ASIN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ASINH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ASSERT_TRUE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BOOLEAN", "VARCHAR"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("ATAN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ATAN2", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ATANH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("AUTO_PARTITION_NAME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR", variadic = true),
         FunctionOverload(listOf("STRING"), "STRING", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("BIN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_AND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BITMAP", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_ANDNOT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_ANDNOT_COUNT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("BITMAP_AND_COUNT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BIGINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("BITMAP_AND_NOT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_AND_NOT_COUNT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("BITMAP_CONTAINS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BIGINT"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_COUNT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("BITMAP_EMPTY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("BITMAP_FROM_ARRAY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<BIGINT>"), "BITMAP"),
         FunctionOverload(listOf("ARRAY<INT>"), "BITMAP"),
         FunctionOverload(listOf("ARRAY<SMALLINT>"), "BITMAP"),
         FunctionOverload(listOf("ARRAY<TINYINT>"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("BITMAP_FROM_BASE64", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BITMAP"),
         FunctionOverload(listOf("STRING"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("BITMAP_FROM_STRING", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BITMAP"),
         FunctionOverload(listOf("STRING"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("BITMAP_HASH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BITMAP"),
         FunctionOverload(listOf("STRING"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("BITMAP_HASH64", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BITMAP"),
         FunctionOverload(listOf("STRING"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("BITMAP_HAS_ALL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_HAS_ANY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_MAX", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("BITMAP_MIN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("BITMAP_NOT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_OR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BITMAP", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("BITMAP_OR_COUNT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BIGINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("BITMAP_REMOVE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BIGINT"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+)
+
+private fun chunk1(): List<FunctionDef> = listOf(
     FunctionDef("BITMAP_SUBSET_IN_RANGE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BIGINT", "BIGINT"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("BITMAP_SUBSET_LIMIT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BIGINT", "BIGINT"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("BITMAP_TO_ARRAY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "ARRAY<BIGINT>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_TO_BASE64", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_TO_STRING", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_XOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BITMAP", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BITMAP_XOR_COUNT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BITMAP"), "BIGINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("BIT_COUNT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TINYINT"), "TINYINT"),
         FunctionOverload(listOf("SMALLINT"), "TINYINT"),
         FunctionOverload(listOf("INT"), "TINYINT"),
         FunctionOverload(listOf("BIGINT"), "TINYINT"),
         FunctionOverload(listOf("LARGEINT"), "SMALLINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BIT_LENGTH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "INT"),
         FunctionOverload(listOf("STRING"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BIT_SHIFT_LEFT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "TINYINT"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BIT_SHIFT_RIGHT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "TINYINT"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("BIT_TEST", FunctionKind.SCALAR, listOf("BIT_TEST_ALL"), overloads = listOf(
         FunctionOverload(listOf("TINYINT", "TINYINT"), "TINYINT", variadic = true),
         FunctionOverload(listOf("SMALLINT", "SMALLINT"), "TINYINT", variadic = true),
         FunctionOverload(listOf("INT", "INT"), "TINYINT", variadic = true),
         FunctionOverload(listOf("LARGEINT", "LARGEINT"), "TINYINT", variadic = true),
         FunctionOverload(listOf("BIGINT", "BIGINT"), "TINYINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CBRT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CEIL", FunctionKind.SCALAR, listOf("CEILING"), overloads = listOf(
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
         FunctionOverload(listOf("DECIMAL", "INT"), "DECIMAL"),
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "INT"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CENTURY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "SMALLINT"),
         FunctionOverload(listOf("DATETIME"), "SMALLINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CHAR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "INT"), "STRING", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("CHAR_LENGTH", FunctionKind.SCALAR, listOf("CHARACTER_LENGTH"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "INT"),
         FunctionOverload(listOf("STRING"), "INT"),
-    )),
-    FunctionDef("COALESCE", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("COALESCE", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("COMPRESS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CONCAT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR", variadic = true),
         FunctionOverload(listOf("STRING"), "STRING", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CONCAT_WS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "ARRAY<VARCHAR>"), "VARCHAR"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR", variadic = true),
         FunctionOverload(listOf("STRING", "STRING"), "STRING", variadic = true),
         FunctionOverload(listOf("VARCHAR", "ARRAY<VARCHAR>"), "VARCHAR", variadic = true),
         FunctionOverload(listOf("STRING", "ARRAY<STRING>"), "STRING", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("CONNECTION_ID", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("CONV", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "TINYINT", "TINYINT"), "VARCHAR"),
         FunctionOverload(listOf("VARCHAR", "TINYINT", "TINYINT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "TINYINT", "TINYINT"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("CONVERT_TO", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CONVERT_TZ", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "VARCHAR", "VARCHAR"), "DATETIME"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("COS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("COSH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("COSINE_DISTANCE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<FLOAT>", "ARRAY<FLOAT>"), "FLOAT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("COSINE_SIMILARITY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<FLOAT>", "ARRAY<FLOAT>"), "FLOAT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("COT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
-    FunctionDef("COUNTEQUAL", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("COUNTEQUAL", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("COUNT_SUBSTRINGS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "STRING"), "INT"),
         FunctionOverload(listOf("STRING", "STRING", "INT"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CRC32", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BIGINT"),
         FunctionOverload(listOf("STRING"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CRC32_INTERNAL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ANY"), "BIGINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("CSC", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CURDATE", FunctionKind.SCALAR, listOf("CURRENT_DATE"), overloads = listOf(
         FunctionOverload(listOf(), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("CURRENT_CATALOG", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("CURRENT_USER", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("CURTIME", FunctionKind.SCALAR, listOf("CURRENT_TIME"), overloads = listOf(
         FunctionOverload(listOf(), "TIME"),
         FunctionOverload(listOf("TINYINT"), "TIME"),
-    )),
-)
-
-private fun chunk1(): List<FunctionDef> = listOf(
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("CUT_IPV6", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("IPV6", "TINYINT", "TINYINT"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("CUT_TO_FIRST_SIGNIFICANT_SUBDOMAIN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAMERAU_LEVENSHTEIN_DISTANCE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "INT"),
         FunctionOverload(listOf("STRING", "STRING"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DATABASE", FunctionKind.SCALAR, listOf("SCHEMA", "CURRENT_DATABASE"), overloads = listOf(
         FunctionOverload(listOf(), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("DATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DATEDIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "INT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "INT"),
         FunctionOverload(listOf("DATE", "DATE"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DATEV2", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DATE_FORMAT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "VARCHAR"), "VARCHAR"),
-    )),
-    FunctionDef("DATE_TRUNC", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("DATE_TRUNC", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAY", FunctionKind.SCALAR, listOf("DAYOFMONTH"), overloads = listOf(
         FunctionOverload(listOf("DATE"), "TINYINT"),
         FunctionOverload(listOf("DATETIME"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAYNAME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "VARCHAR"),
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAYOFWEEK", FunctionKind.SCALAR, listOf("DOW"), overloads = listOf(
         FunctionOverload(listOf("DATE"), "TINYINT"),
         FunctionOverload(listOf("DATETIME"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAYOFYEAR", FunctionKind.SCALAR, listOf("DOY"), overloads = listOf(
         FunctionOverload(listOf("DATE"), "SMALLINT"),
         FunctionOverload(listOf("DATETIME"), "SMALLINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAYS_ADD", FunctionKind.SCALAR, listOf("DATE_ADD", "ADDDATE"), overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("DATE", "INT"), "DATE"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAYS_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "BIGINT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "BIGINT"),
         FunctionOverload(listOf("DATE", "DATE"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAYS_SUB", FunctionKind.SCALAR, listOf("DATE_SUB", "SUBDATE"), overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("DATE", "INT"), "DATE"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAY_CEIL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -617,7 +621,7 @@ private fun chunk1(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAY_FLOOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -631,85 +635,85 @@ private fun chunk1(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAY_HOUR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAY_MICROSECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAY_MINUTE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DAY_SECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DCEIL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
         FunctionOverload(listOf("DECIMAL", "INT"), "DECIMAL"),
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "INT"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DECODE_AS_VARCHAR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("SMALLINT"), "VARCHAR"),
         FunctionOverload(listOf("INT"), "VARCHAR"),
         FunctionOverload(listOf("BIGINT"), "VARCHAR"),
         FunctionOverload(listOf("LARGEINT"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DEDUPLICATE_MAP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("MAP<ANY_0,ANY_1>"), "MAP<ANY_0,ANY_1>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DEGREES", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DEXP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DFLOOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
         FunctionOverload(listOf("DECIMAL", "INT"), "DECIMAL"),
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "INT"), "DOUBLE"),
-    )),
-    FunctionDef("DICT_GET", FunctionKind.SCALAR),
-    FunctionDef("DICT_GET_MANY", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("DICT_GET", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("DICT_GET_MANY", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("DIGITAL_MASKING", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("DLOG10", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("DOMAIN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DOMAIN_WITHOUT_WWW", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DPOW", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DROUND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
         FunctionOverload(listOf("DECIMAL", "INT"), "DECIMAL"),
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "INT"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("DSQRT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("E", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("ELEMENT_AT", FunctionKind.SCALAR, listOf("STRUCT_ELEMENT"), overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>", "BIGINT"), "ANY_0"),
         FunctionOverload(listOf("VARIANT", "VARCHAR"), "VARIANT"),
         FunctionOverload(listOf("VARIANT", "BIGINT"), "VARIANT"),
         FunctionOverload(listOf("MAP<ANY_0,ANY_1>", "ANY_0"), "ANY_1"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ELT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("INT", "VARCHAR"), "VARCHAR", variadic = true),
         FunctionOverload(listOf("INT", "STRING"), "STRING", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("EMBED", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "ARRAY<FLOAT>"),
         FunctionOverload(listOf("VARCHAR"), "ARRAY<FLOAT>"),
@@ -717,43 +721,43 @@ private fun chunk1(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "ARRAY<FLOAT>"),
         FunctionOverload(listOf("STRING", "JSON"), "ARRAY<FLOAT>"),
         FunctionOverload(listOf("VARCHAR", "JSON"), "ARRAY<FLOAT>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ENCODE_AS_BIGINT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ENCODE_AS_INT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ENCODE_AS_LARGEINT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "LARGEINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ENCODE_AS_SMALLINT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "SMALLINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ENDS_WITH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ESQUERY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ANY", "VARCHAR"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("EVEN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("EXP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("EXPORT_SET", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("LARGEINT", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("LARGEINT", "STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("LARGEINT", "STRING", "STRING", "STRING", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("EXTRACT_URL_PARAMETER", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FACTORIAL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("FIELD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TINYINT", "TINYINT"), "INT", variadic = true),
         FunctionOverload(listOf("SMALLINT", "SMALLINT"), "INT", variadic = true),
@@ -768,24 +772,24 @@ private fun chunk1(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("DATETIME", "DATETIME"), "INT", variadic = true),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "INT", variadic = true),
         FunctionOverload(listOf("STRING", "STRING"), "INT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FIND_IN_SET", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "INT"),
         FunctionOverload(listOf("STRING", "STRING"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FIRST_SIGNIFICANT_SUBDOMAIN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FLOOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
         FunctionOverload(listOf("DECIMAL", "INT"), "DECIMAL"),
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "INT"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FMOD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("FLOAT", "FLOAT"), "FLOAT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("FORMAT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "TINYINT"), "STRING", variadic = true),
         FunctionOverload(listOf("STRING", "SMALLINT"), "STRING", variadic = true),
@@ -795,46 +799,49 @@ private fun chunk1(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("STRING", "FLOAT"), "STRING", variadic = true),
         FunctionOverload(listOf("STRING", "DOUBLE"), "STRING", variadic = true),
         FunctionOverload(listOf("STRING", "STRING"), "STRING", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FORMAT_NUMBER", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+)
+
+private fun chunk2(): List<FunctionDef> = listOf(
     FunctionDef("FORMAT_ROUND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "INT"), "STRING"),
         FunctionOverload(listOf("LARGEINT", "INT"), "STRING"),
         FunctionOverload(listOf("DOUBLE", "INT"), "STRING"),
         FunctionOverload(listOf("DECIMALV2", "INT"), "STRING"),
         FunctionOverload(listOf("DECIMAL", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FPOW", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FROM_BASE64", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("FROM_BASE64_BINARY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "VARBINARY"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("FROM_BINARY", FunctionKind.SCALAR, listOf("FROM_HEX"), overloads = listOf(
         FunctionOverload(listOf("VARBINARY"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("FROM_DAYS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("INT"), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FROM_ISO8601_DATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "DATE"),
         FunctionOverload(listOf("STRING"), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("FROM_MICROSECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "DATETIME(6)"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FROM_MILLISECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "DATETIME(3)"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FROM_SECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "DATETIME(0)"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("FROM_UNIXTIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "VARCHAR"),
         FunctionOverload(listOf("BIGINT", "VARCHAR"), "VARCHAR"),
@@ -842,68 +849,68 @@ private fun chunk1(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("DECIMAL(18,6)"), "VARCHAR"),
         FunctionOverload(listOf("DECIMAL(18,6)", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("DECIMAL(18,6)", "STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("G", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("GCD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TINYINT", "TINYINT"), "TINYINT"),
         FunctionOverload(listOf("SMALLINT", "SMALLINT"), "SMALLINT"),
         FunctionOverload(listOf("INT", "INT"), "INT"),
         FunctionOverload(listOf("BIGINT", "BIGINT"), "BIGINT"),
         FunctionOverload(listOf("LARGEINT", "LARGEINT"), "LARGEINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("GET_FORMAT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
-    )),
-    FunctionDef("GREATEST", FunctionKind.SCALAR),
-    FunctionDef("GROUPING", FunctionKind.SCALAR),
-    FunctionDef("GROUPING_ID", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("GREATEST", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("GROUPING", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("GROUPING_ID", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("HAMMING_DISTANCE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BIGINT"),
         FunctionOverload(listOf("STRING", "STRING"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HEX", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "VARCHAR"),
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HLL_CARDINALITY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("HLL"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("HLL_EMPTY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "HLL"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("HLL_FROM_BASE64", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "HLL"),
         FunctionOverload(listOf("STRING"), "HLL"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("HLL_HASH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "HLL"),
         FunctionOverload(listOf("STRING"), "HLL"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("HLL_TO_BASE64", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("HLL"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HOUR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "TINYINT"),
         FunctionOverload(listOf("DATE"), "TINYINT"),
         FunctionOverload(listOf("TIME"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HOURS_ADD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HOURS_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "BIGINT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "BIGINT"),
         FunctionOverload(listOf("DATE", "DATE"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HOURS_SUB", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HOUR_CEIL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -913,7 +920,7 @@ private fun chunk1(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HOUR_FLOOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -923,109 +930,109 @@ private fun chunk1(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HOUR_FROM_UNIXTIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HOUR_MICROSECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HOUR_MINUTE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("HOUR_SECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
-    FunctionDef("IF", FunctionKind.SCALAR),
-    FunctionDef("IFNULL", FunctionKind.SCALAR, listOf("NVL")),
-    FunctionDef("IGNORE", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("IF", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("IFNULL", FunctionKind.SCALAR, listOf("NVL"), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("IGNORE", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("INITCAP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("INNER_PRODUCT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<FLOAT>", "ARRAY<FLOAT>"), "FLOAT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("INNER_PRODUCT_APPROXIMATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<FLOAT>", "ARRAY<FLOAT>"), "FLOAT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("INSTR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "INT"),
         FunctionOverload(listOf("STRING", "STRING"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("INTERVAL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "BIGINT"), "INT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("INT_TO_UUID", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("LARGEINT"), "VARCHAR"),
-    )),
-    FunctionDef("IPV4_CIDR_TO_RANGE", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("IPV4_CIDR_TO_RANGE", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("IPV4_NUM_TO_STRING", FunctionKind.SCALAR, listOf("INET_NTOA"), overloads = listOf(
         FunctionOverload(listOf("TINYINT"), "VARCHAR"),
         FunctionOverload(listOf("SMALLINT"), "VARCHAR"),
         FunctionOverload(listOf("INT"), "VARCHAR"),
         FunctionOverload(listOf("BIGINT"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("IPV4_STRING_TO_NUM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BIGINT"),
         FunctionOverload(listOf("STRING"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("IPV4_STRING_TO_NUM_OR_DEFAULT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BIGINT"),
         FunctionOverload(listOf("STRING"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("IPV4_STRING_TO_NUM_OR_NULL", FunctionKind.SCALAR, listOf("INET_ATON"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BIGINT"),
         FunctionOverload(listOf("STRING"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("IPV4_TO_IPV6", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("IPV4"), "IPV6"),
-    )),
-    FunctionDef("IPV6_CIDR_TO_RANGE", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("IPV6_CIDR_TO_RANGE", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("IPV6_FROM_UINT128_STRING_OR_NULL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "IPV6"),
         FunctionOverload(listOf("STRING"), "IPV6"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("IPV6_NUM_TO_STRING", FunctionKind.SCALAR, listOf("INET6_NTOA"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
         FunctionOverload(listOf("IPV6"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("IPV6_STRING_TO_NUM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("IPV6_STRING_TO_NUM_OR_DEFAULT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("IPV6_STRING_TO_NUM_OR_NULL", FunctionKind.SCALAR, listOf("INET6_ATON"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ISINF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "BOOLEAN"),
         FunctionOverload(listOf("FLOAT"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ISNAN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "BOOLEAN"),
         FunctionOverload(listOf("FLOAT"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("IS_IPV4_COMPAT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("IS_IPV4_MAPPED", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("IS_IPV4_STRING", FunctionKind.SCALAR, listOf("IS_IPV4"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("IS_IPV6_STRING", FunctionKind.SCALAR, listOf("IS_IPV6"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("IS_IP_ADDRESS_IN_RANGE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("IPV4", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("IPV4", "STRING"), "BOOLEAN"),
@@ -1033,226 +1040,226 @@ private fun chunk1(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("IPV6", "STRING"), "BOOLEAN"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("IS_UUID", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("IS_VALID_UTF8", FunctionKind.SCALAR, listOf("ISVALIDUTF8"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("JSONB_EXISTS_PATH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("JSON", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("JSONB_EXTRACT", FunctionKind.SCALAR, listOf("JSON_EXTRACT"), overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "JSON", variadic = true),
         FunctionOverload(listOf("JSON", "STRING"), "JSON", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSONB_EXTRACT_BIGINT", FunctionKind.SCALAR, listOf("JSON_EXTRACT_BIGINT", "GET_JSON_BIGINT"), overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "BIGINT"),
         FunctionOverload(listOf("JSON", "STRING"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSONB_EXTRACT_BOOL", FunctionKind.SCALAR, listOf("JSON_EXTRACT_BOOL"), overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("JSON", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSONB_EXTRACT_DOUBLE", FunctionKind.SCALAR, listOf("JSON_EXTRACT_DOUBLE", "GET_JSON_DOUBLE"), overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "DOUBLE"),
         FunctionOverload(listOf("JSON", "STRING"), "DOUBLE"),
-    )),
-)
-
-private fun chunk2(): List<FunctionDef> = listOf(
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSONB_EXTRACT_INT", FunctionKind.SCALAR, listOf("JSON_EXTRACT_INT", "GET_JSON_INT"), overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "INT"),
         FunctionOverload(listOf("JSON", "STRING"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSONB_EXTRACT_ISNULL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("JSON", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSONB_EXTRACT_LARGEINT", FunctionKind.SCALAR, listOf("JSON_EXTRACT_LARGEINT"), overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "LARGEINT"),
         FunctionOverload(listOf("JSON", "STRING"), "LARGEINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSONB_EXTRACT_STRING", FunctionKind.SCALAR, listOf("JSON_EXTRACT_STRING", "GET_JSON_STRING"), overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "STRING"),
         FunctionOverload(listOf("JSON", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSONB_HASH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("JSONB_PARSE", FunctionKind.SCALAR, listOf("JSON_PARSE"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "JSON"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("JSONB_PARSE_ERROR_TO_NULL", FunctionKind.SCALAR, listOf("JSON_PARSE_ERROR_TO_NULL"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "JSON"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSONB_PARSE_ERROR_TO_VALUE", FunctionKind.SCALAR, listOf("JSON_PARSE_ERROR_TO_VALUE"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "JSON"), "JSON"),
         FunctionOverload(listOf("VARCHAR"), "JSON"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("JSONB_TYPE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSONB_VALID", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "INT"),
         FunctionOverload(listOf("JSON"), "INT"),
-    )),
-    FunctionDef("JSON_ARRAY", FunctionKind.SCALAR, listOf("JSONB_ARRAY")),
-    FunctionDef("JSON_ARRAY_IGNORE_NULL", FunctionKind.SCALAR, listOf("JSONB_ARRAY_IGNORE_NULL")),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("JSON_ARRAY", FunctionKind.SCALAR, listOf("JSONB_ARRAY"), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("JSON_ARRAY_IGNORE_NULL", FunctionKind.SCALAR, listOf("JSONB_ARRAY_IGNORE_NULL"), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("JSON_CONTAINS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON", "JSON"), "BOOLEAN"),
         FunctionOverload(listOf("JSON", "JSON", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("JSON", "JSON", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSON_EXISTS_PATH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("JSON", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("JSON_EXTRACT_ISNULL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("JSON", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSON_EXTRACT_NO_QUOTES", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "JSON", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSON_HASH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON"), "BIGINT"),
-    )),
-    FunctionDef("JSON_INSERT", FunctionKind.SCALAR, listOf("JSONB_INSERT")),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("JSON_INSERT", FunctionKind.SCALAR, listOf("JSONB_INSERT"), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSON_KEYS", FunctionKind.SCALAR, listOf("JSONB_KEYS"), overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR"), "ARRAY<STRING>"),
         FunctionOverload(listOf("JSON"), "ARRAY<STRING>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSON_LENGTH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON"), "INT"),
         FunctionOverload(listOf("JSON", "VARCHAR"), "INT"),
         FunctionOverload(listOf("JSON", "STRING"), "INT"),
-    )),
-    FunctionDef("JSON_OBJECT", FunctionKind.SCALAR, listOf("JSONB_OBJECT")),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("JSON_OBJECT", FunctionKind.SCALAR, listOf("JSONB_OBJECT"), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("JSON_OBJECT_FLATTEN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON"), "JSON"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("JSON_QUOTE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
-    )),
-    FunctionDef("JSON_REMOVE", FunctionKind.SCALAR),
-    FunctionDef("JSON_REPLACE", FunctionKind.SCALAR, listOf("JSONB_REPLACE")),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("JSON_REMOVE", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("JSON_REPLACE", FunctionKind.SCALAR, listOf("JSONB_REPLACE"), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSON_SEARCH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON", "VARCHAR", "VARCHAR"), "JSON"),
-    )),
-    FunctionDef("JSON_SET", FunctionKind.SCALAR, listOf("JSONB_SET")),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("JSON_SET", FunctionKind.SCALAR, listOf("JSONB_SET"), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSON_TYPE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSON_UNQUOTE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("JSON_VALID", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "INT"),
         FunctionOverload(listOf("JSON"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("L1_DISTANCE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<FLOAT>", "ARRAY<FLOAT>"), "FLOAT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("L2_DISTANCE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<FLOAT>", "ARRAY<FLOAT>"), "FLOAT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("L2_DISTANCE_APPROXIMATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<FLOAT>", "ARRAY<FLOAT>"), "FLOAT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("LAST_DAY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "DATE"),
         FunctionOverload(listOf("DATETIME"), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("LAST_QUERY_ID", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("LCASE", FunctionKind.SCALAR, listOf("LOWER"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("LCM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TINYINT", "TINYINT"), "SMALLINT"),
         FunctionOverload(listOf("SMALLINT", "SMALLINT"), "INT"),
         FunctionOverload(listOf("INT", "INT"), "BIGINT"),
         FunctionOverload(listOf("BIGINT", "BIGINT"), "LARGEINT"),
-    )),
-    FunctionDef("LEAST", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("LEAST", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("LEFT", FunctionKind.SCALAR, listOf("STRLEFT"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+)
+
+private fun chunk3(): List<FunctionDef> = listOf(
     FunctionDef("LENGTH", FunctionKind.SCALAR, listOf("OCTET_LENGTH"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "INT"),
         FunctionOverload(listOf("STRING"), "INT"),
         FunctionOverload(listOf("VARBINARY"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("LEVENSHTEIN", FunctionKind.SCALAR, listOf("LEVENSHTEIN_DISTANCE", "EDIT_DISTANCE"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "INT"),
         FunctionOverload(listOf("STRING", "STRING"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("LIKE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("LN", FunctionKind.SCALAR, listOf("DLOG1"), overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("LOG", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("LOG10", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("LOG2", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("LPAD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "INT", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("LTRIM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("LTRIM_IN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
-    FunctionDef("MAKEDATE", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("MAKEDATE", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MAKETIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "BIGINT", "BIGINT"), "TIME"),
         FunctionOverload(listOf("BIGINT", "BIGINT", "DOUBLE"), "TIME"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("MAKE_SET", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "VARCHAR"), "VARCHAR", variadic = true),
         FunctionOverload(listOf("BIGINT", "STRING"), "STRING", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("MAP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "MAP"),
-    )),
-    FunctionDef("MAP_CONTAINS_ENTRY", FunctionKind.SCALAR),
-    FunctionDef("MAP_CONTAINS_KEY", FunctionKind.SCALAR),
-    FunctionDef("MAP_CONTAINS_VALUE", FunctionKind.SCALAR),
-    FunctionDef("MAP_ENTRIES", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("MAP_CONTAINS_ENTRY", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("MAP_CONTAINS_KEY", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("MAP_CONTAINS_VALUE", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("MAP_ENTRIES", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MAP_KEYS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("MAP<ANY_0,ANY>"), "ARRAY<ANY_0>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MAP_SIZE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("MAP<ANY,ANY>"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MAP_VALUES", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("MAP<ANY,ANY_0>"), "ARRAY<ANY_0>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MASK", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
@@ -1262,75 +1269,75 @@ private fun chunk2(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MASK_FIRST_N", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MASK_LAST_N", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MD5", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
         FunctionOverload(listOf("VARBINARY"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MD5SUM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR", variadic = true),
         FunctionOverload(listOf("STRING"), "VARCHAR", variadic = true),
         FunctionOverload(listOf("VARBINARY"), "VARCHAR", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MICROSECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "INT"),
         FunctionOverload(listOf("TIME"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MICROSECONDS_ADD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "BIGINT"), "DATETIME"),
         FunctionOverload(listOf("TIMESTAMPTZ", "BIGINT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MICROSECONDS_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "BIGINT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "BIGINT"),
-    )),
-    FunctionDef("MICROSECONDS_SUB", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("MICROSECONDS_SUB", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MICROSECOND_FROM_UNIXTIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DECIMAL(18,6)"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MICROSECOND_TIMESTAMP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "BIGINT"),
-    )),
-    FunctionDef("MILLISECONDS_ADD", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("MILLISECONDS_ADD", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MILLISECONDS_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "BIGINT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "BIGINT"),
-    )),
-    FunctionDef("MILLISECONDS_SUB", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("MILLISECONDS_SUB", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MILLISECOND_TIMESTAMP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MINUTE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "TINYINT"),
         FunctionOverload(listOf("DATE"), "TINYINT"),
         FunctionOverload(listOf("TIME"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MINUTES_ADD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "BIGINT"), "DATETIME"),
         FunctionOverload(listOf("TIMESTAMPTZ", "BIGINT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MINUTES_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "BIGINT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "BIGINT"),
         FunctionOverload(listOf("DATE", "DATE"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MINUTES_SUB", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "BIGINT"), "DATETIME"),
         FunctionOverload(listOf("TIMESTAMPTZ", "BIGINT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MINUTE_CEIL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -1340,7 +1347,7 @@ private fun chunk2(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MINUTE_FLOOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -1350,50 +1357,50 @@ private fun chunk2(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MINUTE_FROM_UNIXTIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MINUTE_MICROSECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MINUTE_SECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MONEY_FORMAT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "VARCHAR"),
         FunctionOverload(listOf("LARGEINT"), "VARCHAR"),
         FunctionOverload(listOf("DOUBLE"), "VARCHAR"),
         FunctionOverload(listOf("DECIMALV2"), "VARCHAR"),
         FunctionOverload(listOf("DECIMAL"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MONTH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "TINYINT"),
         FunctionOverload(listOf("DATETIME"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MONTHNAME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "VARCHAR"),
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MONTHS_ADD", FunctionKind.SCALAR, listOf("ADD_MONTHS"), overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("DATE", "INT"), "DATE"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MONTHS_BETWEEN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE", "DATE", "BOOLEAN"), "DOUBLE"),
         FunctionOverload(listOf("DATE", "DATE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MONTHS_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "BIGINT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "BIGINT"),
         FunctionOverload(listOf("DATE", "DATE"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MONTHS_SUB", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("DATE", "INT"), "DATE"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MONTH_CEIL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -1407,7 +1414,7 @@ private fun chunk2(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MONTH_FLOOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -1421,163 +1428,163 @@ private fun chunk2(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MULTI_MATCH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "BOOLEAN", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("MULTI_MATCH_ANY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "ARRAY<STRING>"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("MULTI_SEARCH_ALL_POSITIONS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "ARRAY<STRING>"), "ARRAY<INT>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("MURMUR_HASH3_128", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "LARGEINT", variadic = true),
         FunctionOverload(listOf("STRING"), "LARGEINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MURMUR_HASH3_32", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "INT", variadic = true),
         FunctionOverload(listOf("STRING"), "INT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MURMUR_HASH3_64", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BIGINT", variadic = true),
         FunctionOverload(listOf("STRING"), "BIGINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MURMUR_HASH3_64_V2", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BIGINT", variadic = true),
         FunctionOverload(listOf("STRING"), "BIGINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MURMUR_HASH3_U128", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "STRING", variadic = true),
         FunctionOverload(listOf("STRING"), "STRING", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("MURMUR_HASH3_U64_V2", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "LARGEINT", variadic = true),
         FunctionOverload(listOf("STRING"), "LARGEINT", variadic = true),
-    )),
-    FunctionDef("NAMED_STRUCT", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("NAMED_STRUCT", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("NEGATIVE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "BIGINT"),
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DECIMALV2"), "DECIMALV2"),
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("NEXT_DAY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE", "STRING"), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("NGRAM_SEARCH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "STRING", "INT"), "DOUBLE"),
-    )),
-    FunctionDef("NON_NULLABLE", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+    FunctionDef("NON_NULLABLE", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("NORMALIZE_JSONB_NUMBERS_TO_DOUBLE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON"), "JSON"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("NORMALIZE_JSON_NUMBERS_TO_DOUBLE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON"), "JSON"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("NORMAL_CDF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("NOT_NULL_OR_EMPTY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("NOW", FunctionKind.SCALAR, listOf("CURRENT_TIMESTAMP", "LOCALTIME", "LOCALTIMESTAMP"), overloads = listOf(
         FunctionOverload(listOf(), "DATETIME"),
         FunctionOverload(listOf("INT"), "DATETIME"),
-    )),
-    FunctionDef("NULLABLE", FunctionKind.SCALAR),
-    FunctionDef("NULLIF", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("NULLABLE", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("NULLIF", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("NULL_OR_EMPTY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("OVERLAY", FunctionKind.SCALAR, listOf("INSERT"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "INT", "INT", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT", "INT", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("PARSE_DATA_SIZE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "LARGEINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("PARSE_URL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("PASSWORD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("PERIOD_ADD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "BIGINT"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("PERIOD_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "BIGINT"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("PI", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "DOUBLE"),
-    )),
-    FunctionDef("PMOD", FunctionKind.SCALAR),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("PMOD", FunctionKind.SCALAR, profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("POSITION", FunctionKind.SCALAR, listOf("LOCATE"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "INT"),
         FunctionOverload(listOf("STRING", "STRING"), "INT"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "INT"), "INT"),
         FunctionOverload(listOf("STRING", "STRING", "INT"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("POSITIVE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "BIGINT"),
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DECIMALV2"), "DECIMALV2"),
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("POW", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("POWER", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("PREVIOUS_DAY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE", "STRING"), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("PROTOCOL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("QUANTILE_PERCENT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("QUANTILE_STATE", "FLOAT"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("QUANTILE_STATE_EMPTY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "QUANTILE_STATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("QUANTILE_STATE_FROM_BASE64", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "QUANTILE_STATE"),
         FunctionOverload(listOf("STRING"), "QUANTILE_STATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("QUANTILE_STATE_TO_BASE64", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("QUANTILE_STATE"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("QUARTER", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "TINYINT"),
         FunctionOverload(listOf("DATE"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("QUARTERS_ADD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("DATE", "INT"), "DATE"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("QUARTERS_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "BIGINT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "BIGINT"),
         FunctionOverload(listOf("DATE", "DATE"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
+)
+
+private fun chunk4(): List<FunctionDef> = listOf(
     FunctionDef("QUARTERS_SUB", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("DATE", "INT"), "DATE"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
-)
-
-private fun chunk3(): List<FunctionDef> = listOf(
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("QUARTER_CEIL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -1591,7 +1598,7 @@ private fun chunk3(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("QUARTER_FLOOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -1605,131 +1612,131 @@ private fun chunk3(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("QUOTE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("RADIANS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("RAND", FunctionKind.SCALAR, listOf("RANDOM"), overloads = listOf(
         FunctionOverload(listOf(), "DOUBLE"),
         FunctionOverload(listOf("BIGINT"), "DOUBLE"),
         FunctionOverload(listOf("BIGINT", "BIGINT"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("RANDOM_BYTES", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("INT"), "STRING"),
         FunctionOverload(listOf("INT"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("REGEXP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("REGEXP_COUNT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "INT"),
         FunctionOverload(listOf("STRING", "STRING"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("REGEXP_EXTRACT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "BIGINT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "BIGINT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGEXP_EXTRACT_ALL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGEXP_EXTRACT_OR_NULL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "BIGINT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "BIGINT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGEXP_REPLACE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGEXP_REPLACE_ONE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REPEAT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REPLACE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("REPLACE_EMPTY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("REVERSE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY>"), "ARG_0"),
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("RIGHT", FunctionKind.SCALAR, listOf("STRRIGHT"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ROUND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
         FunctionOverload(listOf("DECIMAL", "INT"), "DECIMAL"),
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "INT"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ROUND_BANKERS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
         FunctionOverload(listOf("DECIMAL", "INT"), "DECIMAL"),
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "INT"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("RPAD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "INT", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("RTRIM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("RTRIM_IN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SCORE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "FLOAT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("SEARCH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "BOOLEAN"),
         FunctionOverload(listOf("STRING", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("SEC", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "TINYINT"),
         FunctionOverload(listOf("DATE"), "TINYINT"),
         FunctionOverload(listOf("TIME"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SECONDS_ADD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "BIGINT"), "DATETIME"),
         FunctionOverload(listOf("TIMESTAMPTZ", "BIGINT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SECONDS_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "BIGINT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "BIGINT"),
         FunctionOverload(listOf("DATE", "DATE"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SECONDS_SUB", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "BIGINT"), "DATETIME"),
         FunctionOverload(listOf("TIMESTAMPTZ", "BIGINT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SECOND_CEIL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -1739,7 +1746,7 @@ private fun chunk3(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SECOND_FLOOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -1749,58 +1756,58 @@ private fun chunk3(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SECOND_FROM_UNIXTIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SECOND_MICROSECOND", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SECOND_TIMESTAMP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SEC_TO_TIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("INT"), "TIME"),
         FunctionOverload(listOf("DOUBLE"), "TIME"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SESSION_USER", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("SHA1", FunctionKind.SCALAR, listOf("SHA"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
         FunctionOverload(listOf("VARBINARY"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SHA2", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT"), "VARCHAR"),
         FunctionOverload(listOf("VARBINARY", "INT"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SIGN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SIGNBIT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SIN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SINH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SLEEP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("INT"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SM3", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
         FunctionOverload(listOf("VARBINARY"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SM3SUM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR", variadic = true),
         FunctionOverload(listOf("STRING"), "VARCHAR", variadic = true),
         FunctionOverload(listOf("VARBINARY"), "VARCHAR", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SM4_DECRYPT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
@@ -1808,7 +1815,7 @@ private fun chunk3(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("SM4_ENCRYPT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
@@ -1816,51 +1823,51 @@ private fun chunk3(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("SORT_JSONB_OBJECT_KEYS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON"), "JSON"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SORT_JSON_OBJECT_KEYS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON"), "JSON"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SOUNDEX", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SPACE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("INT"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SPLIT_BY_REGEXP", FunctionKind.SCALAR, listOf("REGEXP_SPLIT_TO_ARRAY"), overloads = listOf(
         FunctionOverload(listOf("STRING", "STRING"), "ARRAY<VARCHAR>"),
         FunctionOverload(listOf("STRING", "STRING", "INT"), "ARRAY<VARCHAR>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SPLIT_BY_STRING", FunctionKind.SCALAR, listOf("SPLIT"), overloads = listOf(
         FunctionOverload(listOf("STRING", "STRING"), "ARRAY<VARCHAR>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SPLIT_PART", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("SQRT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("STARTS_WITH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("STRCMP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "TINYINT"),
         FunctionOverload(listOf("STRING", "STRING"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("STRIP_NULL_VALUE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("JSON"), "JSON"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("STRUCT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "STRUCT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("STR_TO_DATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "DATETIME"),
         FunctionOverload(listOf("STRING", "STRING"), "DATETIME"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("STR_TO_MAP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "MAP<STRING,STRING>"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "MAP<STRING,STRING>"),
@@ -1868,239 +1875,239 @@ private fun chunk3(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("STRING"), "MAP<STRING,STRING>"),
         FunctionOverload(listOf("STRING", "STRING"), "MAP<STRING,STRING>"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "MAP<STRING,STRING>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("ST_ANGLE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_ANGLE_SPHERE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE", "DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_AREA_SQUARE_KM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_AREA_SQUARE_METERS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_ASBINARY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_ASTEXT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_ASWKT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_AZIMUTH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_CIRCLE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE", "DOUBLE"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_CONTAINS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_DISJOINT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_DISTANCE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_DISTANCE_SPHERE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE", "DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_GEOMETRIES", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "ARRAY<VARCHAR>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_GEOMETRYFROMTEXT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_GEOMETRYFROMWKB", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_GEOMETRYTYPE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_GEOMFROMTEXT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_GEOMFROMWKB", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_INTERSECTS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_LENGTH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_LINEFROMTEXT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_LINESTRINGFROMTEXT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_NUMGEOMETRIES", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_NUMPOINTS", FunctionKind.SCALAR, listOf("ST_NPOINTS"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_POINT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_POLYFROMTEXT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_POLYGON", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_POLYGONFROMTEXT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+)
+
+private fun chunk5(): List<FunctionDef> = listOf(
     FunctionDef("ST_TOUCHES", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "BOOLEAN"),
         FunctionOverload(listOf("STRING", "STRING"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_X", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "DOUBLE"),
         FunctionOverload(listOf("STRING"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("ST_Y", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "DOUBLE"),
         FunctionOverload(listOf("STRING"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("SUBSTR", FunctionKind.SCALAR, listOf("SUBSTRING", "MID"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "INT", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "INT", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SUBSTRING_INDEX", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SUB_BINARY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARBINARY", "INT"), "VARBINARY"),
         FunctionOverload(listOf("VARBINARY", "INT", "INT"), "VARBINARY"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("SUB_BITMAP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BITMAP", "BIGINT", "BIGINT"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("SUB_REPLACE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "INT"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "INT", "INT"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "INT", "INT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("SUB_TIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "TIME"), "DATETIME"),
         FunctionOverload(listOf("TIME", "TIME"), "TIME"),
         FunctionOverload(listOf("TIMESTAMPTZ", "TIME"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TAN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TANH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "TIME"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TIMEDIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "TIME"),
         FunctionOverload(listOf("DATE", "DATE"), "TIME"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TIMESTAMP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "TIME"), "DATETIME"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TIME_FORMAT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIME", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("DATETIME", "VARCHAR"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("TIME_TO_SEC", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIME"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TOKENIZE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TOP_LEVEL_DOMAIN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TO_BASE64", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TO_BASE64_BINARY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARBINARY"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TO_BINARY", FunctionKind.SCALAR, listOf("TO_HEX"), overloads = listOf(
         FunctionOverload(listOf("STRING"), "VARBINARY"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("TO_BITMAP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "BITMAP"),
         FunctionOverload(listOf("VARCHAR"), "BITMAP"),
         FunctionOverload(listOf("STRING"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("TO_BITMAP_WITH_CHECK", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "BITMAP"),
         FunctionOverload(listOf("VARCHAR"), "BITMAP"),
         FunctionOverload(listOf("STRING"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("TO_DATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TO_DATEV2", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TO_DAYS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TO_IPV4", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "IPV4"),
         FunctionOverload(listOf("STRING"), "IPV4"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("TO_IPV4_OR_DEFAULT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "IPV4"),
         FunctionOverload(listOf("STRING"), "IPV4"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("TO_IPV4_OR_NULL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "IPV4"),
         FunctionOverload(listOf("STRING"), "IPV4"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("TO_IPV6", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "IPV6"),
         FunctionOverload(listOf("STRING"), "IPV6"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("TO_IPV6_OR_DEFAULT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "IPV6"),
         FunctionOverload(listOf("STRING"), "IPV6"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("TO_IPV6_OR_NULL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "IPV6"),
         FunctionOverload(listOf("STRING"), "IPV6"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("TO_ISO8601", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "STRING"),
         FunctionOverload(listOf("DATE"), "STRING"),
         FunctionOverload(listOf("TIMESTAMPTZ"), "STRING"),
-    )),
-)
-
-private fun chunk4(): List<FunctionDef> = listOf(
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TO_JSON", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("NULL"), "JSON"),
         FunctionOverload(listOf("TINYINT"), "JSON"),
@@ -2118,136 +2125,136 @@ private fun chunk4(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("IPV6"), "JSON"),
         FunctionOverload(listOf("TIME"), "JSON"),
         FunctionOverload(listOf("STRING"), "JSON"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TO_MONDAY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "DATE"),
         FunctionOverload(listOf("DATETIME"), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TO_QUANTILE_STATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "FLOAT"), "QUANTILE_STATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("TO_SECONDS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TRANSLATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TRIM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TRIM_IN", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("TRUNCATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DECIMAL", "INT"), "DECIMAL"),
         FunctionOverload(listOf("DOUBLE", "INT"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("UCASE", FunctionKind.SCALAR, listOf("UPPER"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("UNCOMPRESS", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("UNHEX", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("UNHEX_NULL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("UNICODE_NORMALIZE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("UNIFORM", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "BIGINT", "BIGINT"), "BIGINT"),
         FunctionOverload(listOf("DOUBLE", "DOUBLE", "BIGINT"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("UNIX_TIMESTAMP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "BIGINT"),
         FunctionOverload(listOf("DATETIME"), "DECIMAL"),
         FunctionOverload(listOf("DATE"), "BIGINT"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "DECIMAL(18,6)"),
         FunctionOverload(listOf("STRING", "STRING"), "DECIMAL(18,6)"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("URL_DECODE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("URL_ENCODE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("USER", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("UTC_DATE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "DATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("UTC_TIME", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "TIME"),
         FunctionOverload(listOf("INT"), "TIME"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("UTC_TIMESTAMP", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "DATETIME"),
         FunctionOverload(listOf("INT"), "DATETIME"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("UUID", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("UUID_NUMERIC", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "LARGEINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("UUID_TO_INT", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "LARGEINT"),
         FunctionOverload(listOf("STRING"), "LARGEINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("VARIANT_TYPE", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARIANT"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("VERSION", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf(), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("WEEK", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "TINYINT"),
         FunctionOverload(listOf("DATE", "INT"), "TINYINT"),
         FunctionOverload(listOf("DATETIME"), "TINYINT"),
         FunctionOverload(listOf("DATETIME", "INT"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("WEEKDAY", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "TINYINT"),
         FunctionOverload(listOf("DATETIME"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("WEEKOFYEAR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "TINYINT"),
         FunctionOverload(listOf("DATETIME"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("WEEKS_ADD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("DATE", "INT"), "DATE"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("WEEKS_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "BIGINT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "BIGINT"),
         FunctionOverload(listOf("DATE", "DATE"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("WEEKS_SUB", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("DATE", "INT"), "DATE"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("WEEK_CEIL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -2261,7 +2268,7 @@ private fun chunk4(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("WEEK_FLOOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -2275,7 +2282,7 @@ private fun chunk4(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("WIDTH_BUCKET", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE", "DOUBLE", "TINYINT"), "BIGINT"),
         FunctionOverload(listOf("FLOAT", "FLOAT", "FLOAT", "TINYINT"), "BIGINT"),
@@ -2283,49 +2290,49 @@ private fun chunk4(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT"), "BIGINT"),
         FunctionOverload(listOf("INT", "INT", "INT", "INT"), "BIGINT"),
         FunctionOverload(listOf("BIGINT", "BIGINT", "BIGINT", "BIGINT"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("XOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("BOOLEAN", "BOOLEAN"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("XPATH_STRING", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "VARCHAR"),
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("XXHASH_32", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "INT", variadic = true),
         FunctionOverload(listOf("STRING"), "INT", variadic = true),
         FunctionOverload(listOf("VARBINARY"), "INT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("XXHASH_64", FunctionKind.SCALAR, listOf("XXHASH3_64"), overloads = listOf(
         FunctionOverload(listOf("VARCHAR"), "BIGINT", variadic = true),
         FunctionOverload(listOf("STRING"), "BIGINT", variadic = true),
         FunctionOverload(listOf("VARBINARY"), "BIGINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("YEAR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "SMALLINT"),
         FunctionOverload(listOf("DATETIME"), "SMALLINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("YEARS_ADD", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("DATE", "INT"), "DATE"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("YEARS_DIFF", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "BIGINT"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "BIGINT"),
         FunctionOverload(listOf("DATE", "DATE"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("YEARS_SUB", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME", "INT"), "DATETIME"),
         FunctionOverload(listOf("DATE", "INT"), "DATE"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("YEARWEEK", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATE"), "INT"),
         FunctionOverload(listOf("DATE", "INT"), "INT"),
         FunctionOverload(listOf("DATETIME"), "INT"),
         FunctionOverload(listOf("DATETIME", "INT"), "INT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("YEAR_CEIL", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -2339,7 +2346,7 @@ private fun chunk4(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("YEAR_FLOOR", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "DATETIME"),
         FunctionOverload(listOf("DATETIME", "DATETIME"), "DATETIME"),
@@ -2353,29 +2360,32 @@ private fun chunk4(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("TIMESTAMPTZ", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT"), "TIMESTAMPTZ"),
         FunctionOverload(listOf("TIMESTAMPTZ", "INT", "TIMESTAMPTZ"), "TIMESTAMPTZ"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("YEAR_MONTH", FunctionKind.SCALAR, overloads = listOf(
         FunctionOverload(listOf("DATETIME"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     FunctionDef("YEAR_OF_WEEK", FunctionKind.SCALAR, listOf("YOW"), overloads = listOf(
         FunctionOverload(listOf("DATE"), "SMALLINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.STRICT)),
     // aggregate (89)
     FunctionDef("AI_AGG", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR"), "STRING"),
         FunctionOverload(listOf("STRING", "STRING", "STRING"), "STRING"),
         FunctionOverload(listOf("VARCHAR", "VARCHAR", "VARCHAR"), "STRING"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("ANY", FunctionKind.AGGREGATE, listOf("ANY_VALUE"), overloads = listOf(
         FunctionOverload(listOf("ANY"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("APPROX_COUNT_DISTINCT", FunctionKind.AGGREGATE, listOf("NDV"), overloads = listOf(
         FunctionOverload(listOf("ANY"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+)
+
+private fun chunk6(): List<FunctionDef> = listOf(
     FunctionDef("ARRAY_AGG", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("ANY_0"), "ARRAY<ANY_0>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("AVG", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DECIMAL"), "DECIMAL"),
@@ -2385,136 +2395,136 @@ private fun chunk4(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("INT"), "DOUBLE"),
         FunctionOverload(listOf("SMALLINT"), "DOUBLE"),
         FunctionOverload(listOf("TINYINT"), "DOUBLE"),
-    )),
-    FunctionDef("AVG_MAP", FunctionKind.AGGREGATE),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("AVG_MAP", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("AVG_WEIGHTED", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("BITMAP_AGG", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("BIGINT"), "BITMAP"),
         FunctionOverload(listOf("INT"), "BITMAP"),
         FunctionOverload(listOf("SMALLINT"), "BITMAP"),
         FunctionOverload(listOf("TINYINT"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("BITMAP_INTERSECT", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("BITMAP_UNION", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("BITMAP_UNION_COUNT", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("BITMAP_UNION_INT", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("SMALLINT"), "BIGINT"),
         FunctionOverload(listOf("TINYINT"), "BIGINT"),
         FunctionOverload(listOf("INT"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("BOOL_AND", FunctionKind.AGGREGATE, listOf("BOOLAND_AGG"), overloads = listOf(
         FunctionOverload(listOf("BOOLEAN"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("BOOL_OR", FunctionKind.AGGREGATE, listOf("BOOLOR_AGG"), overloads = listOf(
         FunctionOverload(listOf("BOOLEAN"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("BOOL_XOR", FunctionKind.AGGREGATE, listOf("BOOLXOR_AGG"), overloads = listOf(
         FunctionOverload(listOf("BOOLEAN"), "BOOLEAN"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("COLLECT_LIST", FunctionKind.AGGREGATE, listOf("GROUP_ARRAY"), overloads = listOf(
         FunctionOverload(listOf("ANY_0"), "ARRAY<ANY_0>"),
         FunctionOverload(listOf("ANY_0", "INT"), "ARRAY<ANY_0>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("COLLECT_SET", FunctionKind.AGGREGATE, listOf("GROUP_UNIQ_ARRAY"), overloads = listOf(
         FunctionOverload(listOf("ANY_0"), "ARRAY<ANY_0>"),
         FunctionOverload(listOf("ANY_0", "INT"), "ARRAY<ANY_0>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("CORR", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("CORR_WELFORD", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("COUNT", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf(), "BIGINT"),
         FunctionOverload(listOf("ANY"), "BIGINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("COUNT_BY_ENUM", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("STRING"), "STRING", variadic = true),
-    )),
-    FunctionDef("COUNT_MAP", FunctionKind.AGGREGATE),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("COUNT_MAP", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("COVAR", FunctionKind.AGGREGATE, listOf("COVAR_POP"), overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("COVAR_SAMP", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("DATASKETCHES_HLL_UNION_AGG", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("STRING"), "DOUBLE"),
         FunctionOverload(listOf("VARCHAR"), "DOUBLE"),
         FunctionOverload(listOf("VARBINARY"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("EXPONENTIAL_MOVING_AVERAGE", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("GROUP_ARRAY_INTERSECT", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("GROUP_ARRAY_UNION", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("ARRAY<ANY_0>"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("GROUP_BITMAP_XOR", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "BITMAP"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("GROUP_BIT_AND", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("LARGEINT"), "LARGEINT"),
         FunctionOverload(listOf("BIGINT"), "BIGINT"),
         FunctionOverload(listOf("INT"), "INT"),
         FunctionOverload(listOf("SMALLINT"), "SMALLINT"),
         FunctionOverload(listOf("TINYINT"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("GROUP_BIT_OR", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("LARGEINT"), "LARGEINT"),
         FunctionOverload(listOf("BIGINT"), "BIGINT"),
         FunctionOverload(listOf("INT"), "INT"),
         FunctionOverload(listOf("SMALLINT"), "SMALLINT"),
         FunctionOverload(listOf("TINYINT"), "TINYINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("GROUP_BIT_XOR", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("LARGEINT"), "LARGEINT"),
         FunctionOverload(listOf("BIGINT"), "BIGINT"),
         FunctionOverload(listOf("INT"), "INT"),
         FunctionOverload(listOf("SMALLINT"), "SMALLINT"),
         FunctionOverload(listOf("TINYINT"), "TINYINT"),
-    )),
-    FunctionDef("GROUP_CONCAT", FunctionKind.AGGREGATE),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("GROUP_CONCAT", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("HIST", FunctionKind.AGGREGATE, listOf("HISTOGRAM"), overloads = listOf(
         FunctionOverload(listOf("ANY"), "VARCHAR"),
         FunctionOverload(listOf("ANY", "INT"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("HLL_RAW_AGG", FunctionKind.AGGREGATE, listOf("HLL_UNION"), overloads = listOf(
         FunctionOverload(listOf("HLL"), "HLL"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("HLL_UNION_AGG", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("HLL"), "BIGINT"),
-    )),
-    FunctionDef("INTERSECT_COUNT", FunctionKind.AGGREGATE),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("INTERSECT_COUNT", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("KURT", FunctionKind.AGGREGATE, listOf("KURT_POP", "KURTOSIS"), overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("LINEAR_HISTOGRAM", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("ANY", "DOUBLE"), "VARCHAR"),
         FunctionOverload(listOf("ANY", "DOUBLE", "DOUBLE"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("MAP_AGG_V1", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("ANY_0", "ANY_1"), "MAP<ANY_0,ANY_1>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("MAP_AGG_V2", FunctionKind.AGGREGATE, listOf("MAP_AGG"), overloads = listOf(
         FunctionOverload(listOf("ANY_0", "ANY_1"), "MAP<ANY_0,ANY_1>"),
-    )),
-    FunctionDef("MAX", FunctionKind.AGGREGATE),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("MAX", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("MAX_BY", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("ANY", "ANY"), "ARG_0"),
-    )),
-    FunctionDef("MAX_MAP", FunctionKind.AGGREGATE),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("MAX_MAP", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("MEDIAN", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("FLOAT"), "DOUBLE"),
@@ -2523,25 +2533,25 @@ private fun chunk4(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("INT"), "DOUBLE"),
         FunctionOverload(listOf("SMALLINT"), "DOUBLE"),
         FunctionOverload(listOf("TINYINT"), "DOUBLE"),
-    )),
-    FunctionDef("MIN", FunctionKind.AGGREGATE),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("MIN", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("MIN_BY", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("ANY", "ANY"), "ARG_0"),
-    )),
-    FunctionDef("MIN_MAP", FunctionKind.AGGREGATE),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("MIN_MAP", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("MULTI_DISTINCT_COUNT", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("ANY"), "BIGINT", variadic = true),
-    )),
-    FunctionDef("MULTI_DISTINCT_GROUP_CONCAT", FunctionKind.AGGREGATE),
-    FunctionDef("MULTI_DISTINCT_SUM", FunctionKind.AGGREGATE),
-    FunctionDef("MULTI_DISTINCT_SUM0", FunctionKind.AGGREGATE),
-    FunctionDef("ORTHOGONAL_BITMAP_EXPR_CALCULATE", FunctionKind.AGGREGATE),
-    FunctionDef("ORTHOGONAL_BITMAP_EXPR_CALCULATE_COUNT", FunctionKind.AGGREGATE),
-    FunctionDef("ORTHOGONAL_BITMAP_INTERSECT", FunctionKind.AGGREGATE),
-    FunctionDef("ORTHOGONAL_BITMAP_INTERSECT_COUNT", FunctionKind.AGGREGATE),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("MULTI_DISTINCT_GROUP_CONCAT", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("MULTI_DISTINCT_SUM", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
+    FunctionDef("MULTI_DISTINCT_SUM0", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("ORTHOGONAL_BITMAP_EXPR_CALCULATE", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("ORTHOGONAL_BITMAP_EXPR_CALCULATE_COUNT", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("ORTHOGONAL_BITMAP_INTERSECT", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("ORTHOGONAL_BITMAP_INTERSECT_COUNT", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("ORTHOGONAL_BITMAP_UNION_COUNT", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("BITMAP"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("PERCENTILE", FunctionKind.AGGREGATE, listOf("PERCENTILE_CONT"), overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("FLOAT", "DOUBLE"), "DOUBLE"),
@@ -2550,15 +2560,15 @@ private fun chunk4(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("INT", "DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("SMALLINT", "DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("TINYINT", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("PERCENTILE_APPROX", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("PERCENTILE_APPROX_WEIGHTED", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE", "DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("DOUBLE", "DOUBLE", "DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("PERCENTILE_ARRAY", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "ARRAY<DOUBLE>"), "ARRAY<DOUBLE>"),
         FunctionOverload(listOf("FLOAT", "ARRAY<DOUBLE>"), "ARRAY<DOUBLE>"),
@@ -2567,68 +2577,65 @@ private fun chunk4(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("INT", "ARRAY<DOUBLE>"), "ARRAY<DOUBLE>"),
         FunctionOverload(listOf("SMALLINT", "ARRAY<DOUBLE>"), "ARRAY<DOUBLE>"),
         FunctionOverload(listOf("TINYINT", "ARRAY<DOUBLE>"), "ARRAY<DOUBLE>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("PERCENTILE_RESERVOIR", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("QUANTILE_UNION", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("QUANTILE_STATE"), "QUANTILE_STATE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("REGR_AVGX", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGR_AVGY", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGR_COUNT", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("REGR_INTERCEPT", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGR_R2", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGR_SLOPE", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGR_SXX", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGR_SXY", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("REGR_SYY", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("RETENTION", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("BOOLEAN"), "ARRAY<BOOLEAN>", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("SEM", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
-)
-
-private fun chunk5(): List<FunctionDef> = listOf(
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("SEQUENCE_COUNT", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("STRING", "DATE", "BOOLEAN"), "BIGINT", variadic = true),
         FunctionOverload(listOf("STRING", "TIMESTAMPTZ", "BOOLEAN"), "BIGINT", variadic = true),
         FunctionOverload(listOf("STRING", "DATETIME", "BOOLEAN"), "BIGINT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("SEQUENCE_MATCH", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("STRING", "DATE", "BOOLEAN"), "BOOLEAN", variadic = true),
         FunctionOverload(listOf("STRING", "TIMESTAMPTZ", "BOOLEAN"), "BOOLEAN", variadic = true),
         FunctionOverload(listOf("STRING", "DATETIME", "BOOLEAN"), "BOOLEAN", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("SKEW", FunctionKind.AGGREGATE, listOf("SKEW_POP", "SKEWNESS"), overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("STDDEV_POP", FunctionKind.AGGREGATE, listOf("STDDEV", "STD"), overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("STDDEV_SAMP", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("SUM", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("FLOAT"), "DOUBLE"),
@@ -2638,7 +2645,7 @@ private fun chunk5(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("INT"), "BIGINT"),
         FunctionOverload(listOf("SMALLINT"), "BIGINT"),
         FunctionOverload(listOf("TINYINT"), "BIGINT"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("SUM0", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
         FunctionOverload(listOf("FLOAT"), "DOUBLE"),
@@ -2648,16 +2655,16 @@ private fun chunk5(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("INT"), "BIGINT"),
         FunctionOverload(listOf("SMALLINT"), "BIGINT"),
         FunctionOverload(listOf("TINYINT"), "BIGINT"),
-    )),
-    FunctionDef("SUM_MAP", FunctionKind.AGGREGATE),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("SUM_MAP", FunctionKind.AGGREGATE, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("TOPN", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("VARCHAR", "INT"), "VARCHAR"),
         FunctionOverload(listOf("VARCHAR", "INT", "INT"), "VARCHAR"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("TOPN_ARRAY", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("ANY_0", "INT"), "ARRAY<ANY_0>"),
         FunctionOverload(listOf("ANY_0", "INT", "INT"), "ARRAY<ANY_0>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("TOPN_WEIGHTED", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("DOUBLE", "BIGINT", "INT"), "ARRAY<DOUBLE>"),
         FunctionOverload(listOf("DECIMALV2", "BIGINT", "INT"), "ARRAY<DECIMALV2>"),
@@ -2689,47 +2696,47 @@ private fun chunk5(): List<FunctionDef> = listOf(
         FunctionOverload(listOf("STRING", "BIGINT", "INT", "INT"), "ARRAY<STRING>"),
         FunctionOverload(listOf("VARCHAR", "BIGINT", "INT", "INT"), "ARRAY<VARCHAR>"),
         FunctionOverload(listOf("CHAR", "BIGINT", "INT", "INT"), "ARRAY<CHAR>"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("VAR_POP", FunctionKind.AGGREGATE, listOf("VARIANCE_POP", "VARIANCE"), overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("VAR_SAMP", FunctionKind.AGGREGATE, listOf("VARIANCE_SAMP"), overloads = listOf(
         FunctionOverload(listOf("DOUBLE"), "DOUBLE"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("WINDOW_FUNNEL_V1", FunctionKind.AGGREGATE, overloads = listOf(
         FunctionOverload(listOf("BIGINT", "STRING", "TIMESTAMPTZ", "BOOLEAN"), "INT", variadic = true),
         FunctionOverload(listOf("BIGINT", "STRING", "DATETIME", "BOOLEAN"), "INT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("WINDOW_FUNNEL_V2", FunctionKind.AGGREGATE, listOf("WINDOW_FUNNEL"), overloads = listOf(
         FunctionOverload(listOf("BIGINT", "STRING", "TIMESTAMPTZ", "BOOLEAN"), "INT", variadic = true),
         FunctionOverload(listOf("BIGINT", "STRING", "DATETIME", "BOOLEAN"), "INT", variadic = true),
-    )),
+    ), profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     // window (11)
-    FunctionDef("CUME_DIST", FunctionKind.WINDOW),
-    FunctionDef("DENSE_RANK", FunctionKind.WINDOW),
+    FunctionDef("CUME_DIST", FunctionKind.WINDOW, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("DENSE_RANK", FunctionKind.WINDOW, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     FunctionDef("FIRST_VALUE", FunctionKind.WINDOW, overloads = listOf(
         FunctionOverload(listOf("ANY"), "ARG_0"),
         FunctionOverload(listOf("ANY", "BOOLEAN"), "ARG_0"),
-    )),
-    FunctionDef("LAG", FunctionKind.WINDOW),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("LAG", FunctionKind.WINDOW, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("LAST_VALUE", FunctionKind.WINDOW, overloads = listOf(
         FunctionOverload(listOf("ANY"), "ARG_0"),
         FunctionOverload(listOf("ANY", "BOOLEAN"), "ARG_0"),
-    )),
-    FunctionDef("LEAD", FunctionKind.WINDOW),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
+    FunctionDef("LEAD", FunctionKind.WINDOW, profile = SemanticProfile(NullPropagation.UNKNOWN, "doris: custom nullable() override")),
     FunctionDef("NTH_VALUE", FunctionKind.WINDOW, overloads = listOf(
         FunctionOverload(listOf("ANY", "BIGINT"), "ARG_0"),
-    )),
+    ), profile = SemanticProfile(NullPropagation.ALWAYS_NULLABLE)),
     FunctionDef("NTILE", FunctionKind.WINDOW, overloads = listOf(
         FunctionOverload(listOf("TINYINT"), "BIGINT"),
         FunctionOverload(listOf("SMALLINT"), "BIGINT"),
         FunctionOverload(listOf("INT"), "BIGINT"),
         FunctionOverload(listOf("BIGINT"), "BIGINT"),
         FunctionOverload(listOf("LARGEINT"), "LARGEINT"),
-    )),
-    FunctionDef("PERCENT_RANK", FunctionKind.WINDOW),
-    FunctionDef("RANK", FunctionKind.WINDOW),
-    FunctionDef("ROW_NUMBER", FunctionKind.WINDOW),
+    ), profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("PERCENT_RANK", FunctionKind.WINDOW, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("RANK", FunctionKind.WINDOW, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
+    FunctionDef("ROW_NUMBER", FunctionKind.WINDOW, profile = SemanticProfile(NullPropagation.NEVER_NULL)),
     // table_valued (25)
     FunctionDef("BACKENDS", FunctionKind.TABLE_VALUED),
     FunctionDef("BINLOG", FunctionKind.TABLE_VALUED),
@@ -2755,6 +2762,9 @@ private fun chunk5(): List<FunctionDef> = listOf(
     FunctionDef("PARTITION_VALUES", FunctionKind.TABLE_VALUED),
     FunctionDef("QUERY", FunctionKind.TABLE_VALUED),
     FunctionDef("S3", FunctionKind.TABLE_VALUED),
+)
+
+private fun chunk7(): List<FunctionDef> = listOf(
     FunctionDef("TASKS", FunctionKind.TABLE_VALUED),
     // table_generating (28)
     FunctionDef("EXPLODE", FunctionKind.TABLE_GENERATING),

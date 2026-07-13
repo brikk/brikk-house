@@ -71,7 +71,7 @@ the same source of truth Doris registers at startup, more authoritative than doc
 against a newer checkout to refresh. Signatures come from `data/doris-signatures.json`
 (below), joined by class name.
 
-## `data/doris-signatures.json` — Doris function signatures
+## `data/doris-signatures.json` — Doris function signatures + nullable modes
 
 Per-function-class signatures (arg types / return type / variadic), statically extracted
 from each function class's `SIGNATURES` field
@@ -84,6 +84,18 @@ assembled in static initializer blocks (`Lag`, `Lead`, `Ipv4CIDRToRange`,
 `Ipv6CIDRToRange`) — 99.6% signature parse coverage. Type-string conventions (uppercase
 SQL-ish, `ANY_<n>`/`ARG_<n>` type-variable placeholders, `ARRAY<..>`/`MAP<..>`) are
 documented in the extractor's header.
+
+Each class also carries `"nullable_mode"`: its Nereids `ComputeNullable` marker interface
+(`PropagateNullable` / `AlwaysNullable` / `AlwaysNotNullable`, walked over the implements
+clauses + extends chain), `"custom"` when a concrete `nullable()` override wins (Java's
+"class wins" rule — Coalesce, Lag, NullableAggregateFunction subclasses, ...), or `null`
+when nothing is found (table-valued/-generating classes always: row-set producers, scalar
+nullability not applicable). `tools/generate_doris_functions.py` maps these onto
+`FunctionDef.profile` (`SemanticProfile.nullPropagation`): PropagateNullable→STRICT,
+AlwaysNullable→ALWAYS_NULLABLE, AlwaysNotNullable→NEVER_NULL, custom/unmapped
+markers→UNKNOWN with provenance in `notes`, null→no profile. At the pin: 335
+PropagateNullable, 149 AlwaysNullable, 116 AlwaysNotNullable, 68 custom, 53 none (over
+721 classes).
 
 | | |
 |---|---|
@@ -109,10 +121,13 @@ join it in `tools/generate_doris_functions.py`. No network scraping from the gen
 The DuckDB catalog (`brikk-sql-metadata/.../GeneratedDuckdbFunctionCatalog.kt`) is generated
 by `tools/generate_duckdb_functions.py` from the embedded engine itself: the python `duckdb`
 module's `duckdb_functions()` view — the engine's own resolved registry, with per-overload
-signatures and varargs included for free. Pinned to the python module version at generation
-time (currently **v1.5.4**; the generator refuses to run if module and engine versions
-disagree). Refresh: bump the python `duckdb` module, re-run the script. DuckDB is MIT
-licensed (see ATTRIBUTIONS.md).
+signatures, varargs, and parameter names (`parameters` → `FunctionOverload.argNames`,
+verbatim — the only engine catalog that exposes names) included for free. `duckdb_functions()`
+has **no null-handling column** (checked v1.5.4: `has_side_effects` and `stability` are the
+only behavioral flags), so `FunctionDef.profile` stays null for every DuckDB def. Pinned to
+the python module version at generation time (currently **v1.5.4**; the generator refuses to
+run if module and engine versions disagree). Refresh: bump the python `duckdb` module,
+re-run the script. DuckDB is MIT licensed (see ATTRIBUTIONS.md).
 
 ## `data/trino-functions-481.tsv`
 
@@ -140,4 +155,8 @@ the new pin, save as `data/trino-functions-<version>.tsv`, then re-run
 
 Known caveats (carried into the generated Kotlin header): `SHOW FUNCTIONS` does not flag
 variadics (arity is a lower bound), parametric types / type variables appear literally
-(`varchar(x)`, `decimal(p,s)`, `E`), and operators are grammar-level and absent.
+(`varchar(x)`, `decimal(p,s)`, `E`), and operators are grammar-level and absent. It also
+exposes **neither parameter names nor null-handling metadata**, so
+`FunctionOverload.argNames` and `FunctionDef.profile` stay null for every Trino def.
+Populating Trino profiles would require scraping the engine sources (`@SqlNullable` /
+`RETURNS NULL ON NULL INPUT` on the java implementations) — future work.

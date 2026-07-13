@@ -154,15 +154,6 @@ All three placeholder forms tokenize/parse/generate across dialects: positional 
 (`Placeholder`), named `:name` (`Placeholder(this="name")`), and `@name` (`Parameter`).
 These are the anchor points for brikk's binding and (future) table-valued fragment slots.
 
-## Errors
-
-- `ParseError` — structured (message, line, col, context highlight)
-- `TokenError` — tokenizer-level failures
-- `UnsupportedError` — the generator met a node it cannot render in the target dialect
-
-Anything the parser does not yet support fails loudly with a `ParseError` raise-gate —
-there is no silent misparsing.
-
 ## Semantic layer
 
 The full sqlglot semantic pipeline is ported and oracle-gated:
@@ -183,9 +174,38 @@ The full sqlglot semantic pipeline is ported and oracle-gated:
   trackSourceMap = true)` maps errors in *generated* SQL back to the original text.
 - **Native-grammar verification** — the `brikk-sql-verify` module (JVM) checks emitted
   SQL against the target engine's real parser (Doris FE, Trino, DuckDB embedded).
-- **Function catalogs** — the `brikk-sql-metadata` module (featherweight, ~100KB) ships
-  each engine's registered functions with signatures where extractable; powers
-  engine-exact `unmappableFunctions(target)` capability checks.
+- **Function catalogs + semantics** — the `brikk-sql-metadata` module (featherweight,
+  ~100KB) ships each engine's registered functions with signatures where extractable,
+  per-function `SemanticProfile`s (null propagation from Doris's own source; DuckDB
+  parameter names on 96% of overloads), grammar-builtin allowlists for names the
+  engine parses at the grammar level instead of registering (Trino `COALESCE`/`CAST`/
+  `EXTRACT`, DuckDB `COALESCE`/`GROUPING` — `FunctionCatalog.isKnown`), and the
+  probe-verified `HazardRegistry` (trino↔duckdb semantic verdicts with provenance).
+  Powers engine-exact `unmappableFunctions(target)` capability checks and
+  certification below.
+
+### Certified transpilation
+
+`transpileTo()` is best-effort by design. `SqlFragment.certify(target)` rolls every
+diagnostic channel into one `TranspileReport`: unmappable functions (Class-3 capability
+holes), generator `unsupported` flags, raw-passthrough statements (Command/Pragma), and
+probe-verified semantic hazards (`HazardRegistry` in brikk-sql-metadata; trino↔duckdb
+today). Hazards mitigated by a gate-verified dedicated renderer are skipped; divergent/
+unclear verdicts are refusals, conditionally-equivalent ones warnings. Machine mode
+("must work or error"): `transpileStrict(target)` / `report.orThrow()`. Human mode
+("warn me, I'll hand-edit"): read `report.findings`, ship `report.result.sql` anyway.
+Pipe-syntax fragments targeting a real engine should pass `desugarPipes = true`
+(engines don't speak `|>`; available on `transpileTo`/`certify`/`transpileStrict`).
+For full belt-and-braces, follow with a brikk-sql-verify grammar check of the output.
+
+## Errors
+
+- `ParseError` — structured (message, line, col, context highlight)
+- `TokenError` — tokenizer-level failures
+- `UnsupportedError` — the generator met a node it cannot render in the target dialect
+
+Anything the parser does not yet support fails loudly with a `ParseError` raise-gate —
+there is no silent misparsing.
 
 ## Status / known gaps
 
@@ -195,6 +215,8 @@ The full sqlglot semantic pipeline is ported and oracle-gated:
 - UDF typing is stubbed (`Schema.getUdfType` → UNKNOWN); function `sinceVersion`
   metadata awaits a doris-website docs source; Trino semantic profiles (null handling)
   are not exposed by `SHOW FUNCTIONS`.
+- Hazard coverage is trino↔duckdb only today; other pairs gain entries as they get
+  probe-verified evidence.
 - Platforms are temporarily narrowed to JVM while Amper KMP publishing matures (the
   code is pure common Kotlin; restore note in `module.yaml`).
 - Per-dialect gate status lives in the `testResources/**/known-failures*.json` ledgers,

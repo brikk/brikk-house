@@ -20,6 +20,14 @@ Modeling decisions (documented in the generated header too):
   - NULL types (macro params/returns, table-function returns) are emitted as "ANY".
   - variadic = (varargs IS NOT NULL); the vararg element type itself is not captured by
     the overload model — argTypes list only the fixed parameters.
+  - argNames: duckdb_functions().parameters gives per-overload parameter names, captured
+    verbatim into FunctionOverload.argNames (names differ across overloads of the same
+    function — round(x) vs round(x, precision) — hence the per-overload home; generic
+    col0/col1 names and lambda shapes like `lambda(x)` are kept as-is). Rows without
+    names yield argNames=null.
+  - FunctionDef.profile stays null: duckdb_functions() exposes NO null-propagation
+    column (v1.5.4 columns checked: has_side_effects and stability are the only
+    behavioral flags, neither describes NULL handling) — honest UNKNOWN.
 
 Usage: python3 tools/generate_duckdb_functions.py
 """
@@ -64,7 +72,7 @@ def main() -> None:
 
     rows = con.sql(
         """
-        SELECT function_name, function_type, return_type, parameter_types, varargs
+        SELECT function_name, function_type, return_type, parameter_types, varargs, parameters
         FROM duckdb_functions()
         ORDER BY function_name, function_type
         """
@@ -73,12 +81,17 @@ def main() -> None:
     # (name, kind) -> set of (argTypes tuple, returnType, variadic); natives tracks the
     # engine-native function_type strings feeding each group (a few names, e.g.
     # current_database, are registered as BOTH scalar and macro — nativeKind is only set
-    # when every engine row in the group is a macro/table_macro).
+    # when every engine row in the group is a macro/table_macro). arg_names maps each
+    # deduped overload to its parameter names (verified: no two engine rows share an
+    # overload key with different names — enforced below so a future engine bump can't
+    # silently mis-attach names).
     defs: dict[tuple[str, str], set[tuple[tuple[str, ...], str, bool]]] = {}
     natives: dict[tuple[str, str], set[str | None]] = {}
+    arg_names: dict[tuple[str, str, tuple[str, ...], str, bool], tuple[str, ...] | None] = {}
     skipped_pragma = 0
     skipped_ops = 0
-    for name, ftype, ret, param_types, varargs in rows:
+    named_overloads = 0
+    for name, ftype, ret, param_types, varargs, parameters in rows:
         if ftype == "pragma":
             skipped_pragma += 1
             continue
@@ -88,6 +101,12 @@ def main() -> None:
         kind, native = KIND_MAP[ftype]
         arg_types = tuple((t or "ANY") for t in (param_types or []))
         overload = (arg_types, ret or "ANY", varargs is not None)
+        names = tuple(parameters) if parameters else None
+        key = (name, kind, *overload)
+        if key in arg_names and arg_names[key] != names:
+            sys.exit(f"error: conflicting parameter names for {key}: "
+                     f"{arg_names[key]} vs {names} — pick a rule before regenerating")
+        arg_names[key] = names
         defs.setdefault((name, kind), set()).add(overload)
         natives.setdefault((name, kind), set()).add(native)
 
@@ -108,6 +127,8 @@ def main() -> None:
         "//    in FunctionDef.nativeKind (normalized to SCALAR/TABLE_VALUED).",
         "//  - function_type='pragma' rows are skipped (PRAGMA surface, not query-callable).",
         "//  - operator rows (%, ||, ~~, ...) are skipped (grammar-level, not identifiers).",
+        "//    Function-SHAPED grammar-level names (COALESCE, GROUPING, ...) are carried by",
+        "//    the handwritten DuckdbGrammarBuiltins.kt and wired in via grammarBuiltins below.",
         "//  - a name registered under two engine kinds (range, generate_series, ...) yields",
         "//    one def per kind.",
         "//  - NULL parameter/return types (macros, table functions) are emitted as \"ANY\".",
@@ -136,6 +157,10 @@ def main() -> None:
             for arg_types, ret, variadic in sorted(overloads):
                 args = ", ".join(kstr(t) for t in arg_types)
                 suffix = ", variadic = true" if variadic else ""
+                names = arg_names[(name, kind, arg_types, ret, variadic)]
+                if names:
+                    named_overloads += 1
+                    suffix += ", argNames = listOf(" + ", ".join(kstr(n) for n in names) + ")"
                 block.append(f'        FunctionOverload(listOf({args}), {kstr(ret)}{suffix}),')
             block.append(f'    ), nativeKind = "{native}"),' if native else "    )),")
             blocks.append((block, 1 + len(overloads)))
@@ -152,6 +177,9 @@ def main() -> None:
 
     lines.append("val DUCKDB_FUNCTION_CATALOG: FunctionCatalog = FunctionCatalog(")
     lines.append("    " + " + ".join(f"chunk{i}()" for i in range(len(chunks))) + ",")
+    # Grammar-level function-shaped names (parser special forms absent from
+    # duckdb_functions()) live in the handwritten, engine-verified DuckdbGrammarBuiltins.kt.
+    lines.append("    grammarBuiltins = DUCKDB_GRAMMAR_BUILTINS,")
     lines.append(")")
     for i, chunk in enumerate(chunks):
         lines.append("")
@@ -162,6 +190,7 @@ def main() -> None:
     print(
         f"wrote {len(defs)} defs / {total_overloads} overloads from DuckDB {lib_version} -> {OUT}\n"
         f"  per kind: {[f'{k}={v}' for k, v in by_kind.items() if v]}\n"
+        f"  argNames on {named_overloads}/{total_overloads} overloads (rest: engine lists no parameters)\n"
         f"  skipped: {skipped_pragma} pragma rows, {skipped_ops} operator rows"
     )
 
