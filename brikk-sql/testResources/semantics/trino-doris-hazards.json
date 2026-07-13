@@ -1,5 +1,226 @@
 {
   "source_project": "brikk live-probe program",
-  "extracted": null,
-  "pairs": []
+  "extracted": "2026-07-13",
+  "pairs": [
+    {
+      "trino": "lower",
+      "doris": "lower",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#lower"
+    },
+    {
+      "trino": "upper",
+      "doris": "upper",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#upper"
+    },
+    {
+      "trino": "concat",
+      "doris": "concat",
+      "verdict": "identical",
+      "hazard": "Both propagate NULL (Doris live-probed = NULL; Trino prior = NULL). Safe re NULL, unlike DuckDB.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#concat"
+    },
+    {
+      "trino": "greatest",
+      "doris": "greatest",
+      "verdict": "identical",
+      "hazard": "Both return NULL if any arg is NULL (Doris live-probed; Trino prior).",
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#greatest-least"
+    },
+    {
+      "trino": "least",
+      "doris": "least",
+      "verdict": "identical",
+      "hazard": "Both return NULL if any arg is NULL (Doris live-probed; Trino prior).",
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#greatest-least"
+    },
+    {
+      "trino": "split_part",
+      "doris": "split_part",
+      "verdict": "identical",
+      "hazard": "Out-of-bounds index -> NULL on both (Doris live-probed; Trino prior).",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#split-part"
+    },
+    {
+      "trino": "reverse",
+      "doris": "reverse",
+      "verdict": "identical",
+      "hazard": "Both reverse by code point (Doris live-probed; Trino prior code-point-only). DuckDB is the grapheme-aware outlier.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#reverse"
+    },
+    {
+      "trino": "regexp_replace",
+      "doris": "regexp_replace",
+      "verdict": "identical",
+      "hazard": "Both replace ALL matches by default (Doris live-probed; Trino prior).",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#regexp-replace"
+    },
+    {
+      "trino": "ascii",
+      "doris": "ascii",
+      "verdict": "divergent",
+      "hazard": "Doris ascii is byte-oriented (ascii('É')=195, first UTF-8 byte); Trino codepoint (requires varchar(1)). Doris diverges from BOTH Trino and DuckDB. Trino side from prior evidence, not re-run live — confirm with live Trino.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#ascii"
+    },
+    {
+      "trino": "trim",
+      "doris": "trim",
+      "verdict": "divergent",
+      "hazard": "Doris strips ASCII space only; Trino (Java isWhitespace) strips tab/LF/CR/FF/VT. Different whitespace sets. Doris live; Trino prior.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "ltrim",
+      "doris": "ltrim",
+      "verdict": "divergent",
+      "hazard": "Doris ASCII-space-only vs Trino Java-whitespace. Doris live; Trino prior.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "rtrim",
+      "doris": "rtrim",
+      "verdict": "divergent",
+      "hazard": "Doris ASCII-space-only vs Trino Java-whitespace. Doris live; Trino prior.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "bit_count",
+      "doris": "bit_count",
+      "verdict": "divergent",
+      "hazard": "Trino requires explicit bit-width arg; Doris infers. Doris live; Trino prior.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "fmod",
+      "doris": "fmod",
+      "verdict": "divergent",
+      "hazard": "Trino float % uses IEEE-remainder-ish; Doris differs. Doris live; Trino prior.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "regexp_extract_all",
+      "doris": "regexp_extract_all",
+      "verdict": "divergent",
+      "hazard": "Empty-match/array handling differs. Doris live; Trino prior.",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "length",
+      "doris": "length",
+      "verdict": "divergent",
+      "hazard": "Doris length()=bytes; Trino length()=characters. Doris live; Trino prior (char-based).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "abs",
+      "doris": "abs",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "mod",
+      "doris": "mod",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "coalesce",
+      "doris": "coalesce",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "nullif",
+      "doris": "nullif",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "trino": "md5",
+      "doris": "md5",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "hash"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    }
+  ]
 }

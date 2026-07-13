@@ -1,5 +1,226 @@
 {
   "source_project": "brikk live-probe program",
-  "extracted": null,
-  "pairs": []
+  "extracted": "2026-07-13",
+  "pairs": [
+    {
+      "duckdb": "lower",
+      "doris": "lower",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): Turkish 'İ' (U+0130) -> DuckDB simple fold 'i' (U+0069); Doris full fold 'i' + combining dot (U+0069 U+0307). ASCII and most non-ASCII aligned; case-folding of special uppercase forms diverges.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#lower"
+    },
+    {
+      "duckdb": "upper",
+      "doris": "upper",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): German 'ß' (U+00DF) -> DuckDB 'ẞ' (U+1E9E) vs Doris 'SS' (length-changing full fold). ASCII aligned.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#upper"
+    },
+    {
+      "duckdb": "concat",
+      "doris": "concat",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): NULL handling. DuckDB SKIPS NULL args (concat('a',NULL,'c')='ac', concat(NULL,NULL)=''); Doris PROPAGATES NULL (both -> NULL). Never translate by name when any arg may be NULL.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#concat"
+    },
+    {
+      "duckdb": "greatest",
+      "doris": "greatest",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): DuckDB SKIPS NULLs (greatest(1,NULL,2)=2); Doris returns NULL if ANY arg is NULL. Never translate by name when args may be NULL.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#greatest-least"
+    },
+    {
+      "duckdb": "least",
+      "doris": "least",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): DuckDB SKIPS NULLs (least(1,NULL,2)=1); Doris returns NULL if ANY arg is NULL. Never translate by name when args may be NULL.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#greatest-least"
+    },
+    {
+      "duckdb": "split_part",
+      "doris": "split_part",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): out-of-bounds index -> DuckDB returns empty string ''; Doris returns NULL. In-bounds aligned. Do not translate by name without a NULLIF/coalesce wrap.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#split-part"
+    },
+    {
+      "duckdb": "reverse",
+      "doris": "reverse",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): DuckDB reverse is GRAPHEME-cluster-aware (decomposed 'e'+U+0301 stays together); Doris reverses CODE POINTS (combining mark floats to front). Precomposed and ASCII aligned.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#reverse"
+    },
+    {
+      "duckdb": "ascii",
+      "doris": "ascii",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): ascii('É' U+00C9) -> DuckDB 201 (Unicode codepoint of first char); Doris 195 (first UTF-8 byte, 0xC3). Diverges for any non-ASCII first char. ASCII aligned.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#ascii"
+    },
+    {
+      "duckdb": "regexp_replace",
+      "doris": "regexp_replace",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): DuckDB replaces the FIRST match without a 'g' flag (regexp_replace('aaa','a','b')='baa'); Doris replaces ALL matches ('bbb'). A parity translation must force global replace.",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#regexp-replace"
+    },
+    {
+      "duckdb": "trim",
+      "doris": "trim",
+      "verdict": "divergent",
+      "hazard": "DuckDB default trim strips space + EM SPACE (U+2003) + NBSP (U+00A0); Doris strips ASCII space only (keeps tab/EM/NBSP). Probe-verified live.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "ltrim",
+      "doris": "ltrim",
+      "verdict": "divergent",
+      "hazard": "Same whitespace-set divergence as trim (Doris ASCII-space-only vs DuckDB space+EM+NBSP).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "rtrim",
+      "doris": "rtrim",
+      "verdict": "divergent",
+      "hazard": "Same whitespace-set divergence as trim.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "bit_count",
+      "doris": "bit_count",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: bit_count(-1) -> DuckDB 32 (INT32 width), Doris 8. Bit-width inference differs by operand type.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "fmod",
+      "doris": "fmod",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: fmod(-5.3,2) -> DuckDB 0.70 vs Doris -1.30 (sign/definition differ for negative operands).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "regexp_extract_all",
+      "doris": "regexp_extract_all",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: DuckDB returns the match array (['1','2','3']); Doris returned empty — signature/empty-match handling differs. Verify group-index semantics before translating.",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "length",
+      "doris": "length",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: Doris length() counts BYTES (length('世界')=6, length('héllo')=6); DuckDB counts CHARACTERS (2, 5). Use char_length for parity. Diverges from both engines.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "abs",
+      "doris": "abs",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "mod",
+      "doris": "mod",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "coalesce",
+      "doris": "coalesce",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "nullif",
+      "doris": "nullif",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "md5",
+      "doris": "md5",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "hash"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    }
+  ]
 }
