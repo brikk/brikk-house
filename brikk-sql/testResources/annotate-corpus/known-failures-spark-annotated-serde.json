@@ -1,0 +1,40 @@
+{
+  "cases": [
+    {
+      "sql": "DECLARE VAR x INT",
+      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE x INT",
+      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
+      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE x, y, z INT DEFAULT 1",
+      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE x INT = 5",
+      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE five = 5",
+      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE OR REPLACE five = 55",
+      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE VARIABLE size DEFAULT 6",
+      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE some_var STRING",
+      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
+    }
+  ]
+}

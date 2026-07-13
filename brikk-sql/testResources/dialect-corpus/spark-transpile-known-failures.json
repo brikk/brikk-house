@@ -1,0 +1,188 @@
+{
+  "cases": [
+    {
+      "case": "write|spark|CREATE TABLE blah (col_a INT) COMMENT \"Test comment: blah\" PARTITIONED BY (date STRING) USING ICEBERG TBLPROPERTIES('x' = '1')",
+      "reason": "Create preprocess (move_schema_columns_to_partitioned_by / ctas_to_tmp_view) not ported"
+    },
+    {
+      "case": "write|duckdb|CONCAT_WS(' ', NULL, 'Smith')",
+      "reason": "CONCAT_WS coalesce behavior differs (dialect_concat_ws_coalesce) \u2014 target-dialect gap"
+    },
+    {
+      "case": "read|duckdb|SELECT * FROM parquet.`name.parquet`",
+      "reason": "ReadParquet rendering not ported (readparquet_sql)"
+    },
+    {
+      "case": "write|duckdb|SELECT h.id, amount FROM hourlycostagg h LATERAL VIEW inline(h.costs) c",
+      "reason": "cross-dialect lowering gap (preprocess/helper not ported): expected `SELECT h.id, amount FROM hourlycostagg AS h CROSS JOIN LATERAL (SELECT"
+    },
+    {
+      "case": "write|duckdb|SELECT h.id, amount FROM hourlycostagg h LATERAL VIEW inline(h.adjustments) as type, val, curr",
+      "reason": "cross-dialect lowering gap (preprocess/helper not ported): expected `SELECT h.id, amount FROM hourlycostagg AS h CROSS JOIN LATERAL (SELECT"
+    },
+    {
+      "case": "write|duckdb|\n            WITH hourlycostagg AS (\n                SELECT\n                    101 AS id,\n                    ARRAY(\n                        STRUCT(10.0 AS amount, 'USD' AS currency),\n                        STRUCT(20.0 AS amount, 'EUR' AS currency)\n                    ) AS costs,\n                    ARRAY(\n                        STRUCT('tax' AS type, 0.15 AS val, 'EUR' AS currency),\n                        STRUCT('fee' AS type, 5.00 AS val, 'EUR' AS currency)\n                    ) AS adjustments,\n                    ARRAY(\n                        STRUCT(\n                            12.0 AS length,\n                            STRUCT('A' AS tag, 98.5 AS score) AS details\n                        ),\n                        STRUCT(\n                            23.0 AS length,\n                            STRUCT('B' AS tag, 99.5 AS score) AS details\n                        )\n                    ) AS info\n            )\n            SELECT\n                h.id,\n                amount,\n                currency,\n                type,\n                val,\n                leng\n            FROM hourlycostagg h\n            LATERAL VIEW inline(h.costs) c\n            LATERAL VIEW inline(h.adjustments) as type, val, curr\n            LATERAL VIEW inline(h.info) exploded as leng, det\n            ",
+      "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
+    },
+    {
+      "case": "write|duckdb|SELECT id_column, name, age FROM test_table LATERAL VIEW INLINE(struc_column) explode_view AS name, age",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|duckdb|SELECT ARRAY_AGG(x) FILTER (WHERE x = 5) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)",
+      "reason": "ArrayAgg FILTER lowering to target dialect not ported"
+    },
+    {
+      "case": "write|duckdb|SELECT ARRAY_AGG(DISTINCT STRUCT('a'))",
+      "reason": "struct-literal / inherit_struct_field_names preprocess not ported"
+    },
+    {
+      "case": "write|spark|SELECT ARRAY_AGG(DISTINCT STRUCT('a'))",
+      "reason": "inherit_struct_field_names preprocess not ported (STRUCT positional fields keep no colN aliases)"
+    },
+    {
+      "case": "write|duckdb|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+      "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
+    },
+    {
+      "case": "write|postgres|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+      "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
+    },
+    {
+      "case": "write|presto|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+      "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
+    },
+    {
+      "case": "write|duckdb|SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30')",
+      "reason": "date-delta lowering to target dialect not fully ported"
+    },
+    {
+      "case": "write|duckdb|SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30', FALSE)",
+      "reason": "date-delta lowering to target dialect not fully ported"
+    },
+    {
+      "case": "write|spark|SELECT CAST(STRUCT('fooo') AS STRUCT<a: VARCHAR(2)>)",
+      "reason": "inherit_struct_field_names preprocess not ported (STRUCT positional fields keep no colN aliases)"
+    },
+    {
+      "case": "write|presto|SELECT LEFT(x, 2), RIGHT(x, 2)",
+      "reason": "Left/Right SUBSTRING lowering differs across target dialect (Hive-family substring form)"
+    },
+    {
+      "case": "write|hive|SELECT LEFT(x, 2), RIGHT(x, 2)",
+      "reason": "Left/Right SUBSTRING lowering differs across target dialect (Hive-family substring form)"
+    },
+    {
+      "case": "read|spark|SELECT DATE_ADD(MONTH, 20, col)",
+      "reason": "date_delta_to_binary_interval_op / timestampdiff_sql not ported (unit-form DATE_ADD/TIMESTAMPDIFF arg order)"
+    },
+    {
+      "case": "write|spark|SELECT DATE_ADD(MONTH, 20, col)",
+      "reason": "date_delta_to_binary_interval_op / timestampdiff_sql not ported (unit-form DATE_ADD/TIMESTAMPDIFF arg order)"
+    },
+    {
+      "case": "write|spark|SELECT STRUCT(1, 2)",
+      "reason": "inherit_struct_field_names preprocess not ported (STRUCT positional fields keep no colN aliases)"
+    },
+    {
+      "case": "write|presto|SELECT STRUCT(1, 2)",
+      "reason": "STRUCT<->ROW struct-field-name preprocess not ported (target-dialect)"
+    },
+    {
+      "case": "write|duckdb|SELECT STRUCT(1, 2)",
+      "reason": "struct-literal / inherit_struct_field_names preprocess not ported"
+    },
+    {
+      "case": "write|spark|SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t",
+      "reason": "inherit_struct_field_names preprocess not ported (STRUCT positional fields keep no colN aliases)"
+    },
+    {
+      "case": "write|duckdb|SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t",
+      "reason": "struct-literal / inherit_struct_field_names preprocess not ported"
+    },
+    {
+      "case": "write|spark|SELECT TIMESTAMPDIFF(MONTH, foo, bar)",
+      "reason": "date_delta_to_binary_interval_op / timestampdiff_sql not ported (unit-form DATE_ADD/TIMESTAMPDIFF arg order)"
+    },
+    {
+      "case": "write|spark|STRING_AGG(x, ', ')",
+      "reason": "GroupConcat v>=4 LISTAGG branch not modeled (we emit the Spark3 ARRAY_JOIN(COLLECT_LIST) form)"
+    },
+    {
+      "case": "write|spark|LISTAGG(x, ', ')",
+      "reason": "GroupConcat v>=4 LISTAGG branch not modeled (we emit the Spark3 ARRAY_JOIN(COLLECT_LIST) form)"
+    },
+    {
+      "case": "read|spark|WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t",
+      "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
+    },
+    {
+      "case": "write|hive|INSERT OVERWRITE TABLE table WITH cte AS (SELECT cola FROM other_table) SELECT cola FROM cte",
+      "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
+    },
+    {
+      "case": "write|spark|INSERT OVERWRITE TABLE table WITH cte AS (SELECT cola FROM other_table) SELECT cola FROM cte",
+      "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
+    },
+    {
+      "case": "write|spark2|INSERT OVERWRITE TABLE table WITH cte AS (SELECT cola FROM other_table) SELECT cola FROM cte",
+      "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
+    },
+    {
+      "case": "write|presto|SELECT EXPLODE(x) FROM tbl",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|presto|SELECT EXPLODE(col) FROM _u",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|presto|SELECT EXPLODE(col) AS exploded FROM schema.tbl",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|presto|SELECT EXPLODE(ARRAY(1, 2))",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|presto|SELECT POSEXPLODE(ARRAY(2, 3)) AS x",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|duckdb|SELECT POSEXPLODE(ARRAY('a'))",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|presto|SELECT POSEXPLODE(x) AS (a, b)",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|duckdb|SELECT POSEXPLODE(x) AS (a, b)",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|duckdb|SELECT * FROM POSEXPLODE(ARRAY('a'))",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|duckdb|SELECT * FROM POSEXPLODE(ARRAY('a')) AS (a, b)",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|presto|SELECT POSEXPLODE(ARRAY(2, 3)), EXPLODE(ARRAY(4, 5, 6)) FROM tbl",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|presto|SELECT col, pos, POSEXPLODE(ARRAY(2, 3)) FROM _u",
+      "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
+    },
+    {
+      "case": "write|spark|SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))",
+      "reason": "SET VARIABLE / declare-variable rendering not ported"
+    },
+    {
+      "case": "write|duckdb|SELECT TRY_DIVIDE(a, b)",
+      "reason": "SafeDivide/NULLIF guard lowering differs for target dialect"
+    }
+  ]
+}

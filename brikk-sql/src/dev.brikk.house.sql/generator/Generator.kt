@@ -3525,7 +3525,12 @@ open class Generator(
         connectorSql(expression, "XOR", stack)
 
     // sqlglot: Generator.cast_sql
-    open fun castSql(expression: Cast, safePrefix: String? = null): String {
+    open fun castSql(expression: Cast, safePrefix: String? = null): String =
+        baseCastSql(expression, safePrefix)
+
+    // Base implementation, callable by grandchild dialects that must bypass an
+    // intermediate override (sqlglot: `super(HiveGenerator, self).cast_sql(...)`).
+    protected fun baseCastSql(expression: Cast, safePrefix: String? = null): String {
         var formatSql = sql(expression, "format")
         if (formatSql.isNotEmpty()) formatSql = " FORMAT $formatSql"
         var toSql = sql(expression, "to")
@@ -3589,7 +3594,10 @@ open class Generator(
     }
 
     // sqlglot: Generator.altercolumn_sql
-    open fun altercolumnSql(expression: AlterColumn): String {
+    open fun altercolumnSql(expression: AlterColumn): String = baseAltercolumnSql(expression)
+
+    // Base impl callable by grandchild dialects (sqlglot: super(HiveGenerator, self)).
+    protected fun baseAltercolumnSql(expression: AlterColumn): String {
         val thisSql = sql(expression, "this")
 
         val dtype = sql(expression, "dtype")
@@ -3641,7 +3649,10 @@ open class Generator(
     }
 
     // sqlglot: Generator.renamecolumn_sql
-    open fun renamecolumnSql(expression: RenameColumn): String {
+    open fun renamecolumnSql(expression: RenameColumn): String = baseRenamecolumnSql(expression)
+
+    // Base impl callable by grandchild dialects (sqlglot: super(HiveGenerator, self)).
+    protected fun baseRenamecolumnSql(expression: RenameColumn): String {
         val exists = if (expression.args["exists"] == true) " IF EXISTS" else ""
         val oldColumn = sql(expression, "this")
         val newColumn = sql(expression, "to")
@@ -4809,7 +4820,10 @@ open class Generator(
     }
 
     // sqlglot: Generator.struct_sql
-    open fun structSql(expression: Struct): String {
+    open fun structSql(expression: Struct): String = baseStructSql(expression)
+
+    // Base impl callable by grandchild dialects (sqlglot: Generator.struct_sql(self, e)).
+    protected fun baseStructSql(expression: Struct): String {
         expression.set(
             "expressions",
             expression.expressionsArg.map { e ->

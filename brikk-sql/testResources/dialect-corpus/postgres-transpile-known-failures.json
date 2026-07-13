@@ -1,28 +1,56 @@
 {
- "cases": [
-  {
-   "case": "write|mysql|UPDATE foo SET a = bar.a, b = bar.b FROM bar WHERE foo.id = bar.id",
-   "reason": "MySQL update_sql FROM->JOIN rewrite (generators/mysql UPDATE preprocess) not ported"
-  },
-  {
-   "case": "write|presto|SELECT UNNEST(c) FROM t",
-   "reason": "transforms.explode_projection_to_unnest (Presto exp.Select preprocess) not ported"
-  },
-  {
-   "case": "write|presto|SELECT UNNEST(ARRAY[1])",
-   "reason": "transforms.explode_projection_to_unnest (Presto exp.Select preprocess) not ported"
-  },
-  {
-   "case": "write|hive|GENERATE_SERIES('2019-01-01'::TIMESTAMP, NOW(), '1day')",
-   "reason": "hive target: unnest_generate_series / GenerateSeries->EXPLODE(SEQUENCE(..)) preprocess not ported"
-  },
-  {
-   "case": "write|hive|SELECT * FROM GENERATE_SERIES(a, b)",
-   "reason": "hive target: unnest_generate_series (Table GenerateSeries -> EXPLODE(SEQUENCE)) preprocess not ported"
-  },
-  {
-   "case": "write|hive|WITH t AS (SELECT ARRAY[1, 2, 3] AS col) SELECT * FROM t WHERE 1 <= ANY(col) AND 2 = ANY(col)",
-   "reason": "hive target: any_to_exists Select preprocess not ported (ANY -> EXISTS lambda)"
-  }
- ]
+  "cases": [
+    {
+      "case": "write|mysql|UPDATE foo SET a = bar.a, b = bar.b FROM bar WHERE foo.id = bar.id",
+      "reason": "MySQL update_sql FROM->JOIN rewrite (generators/mysql UPDATE preprocess) not ported"
+    },
+    {
+      "case": "write|presto|SELECT UNNEST(c) FROM t",
+      "reason": "transforms.explode_projection_to_unnest (Presto exp.Select preprocess) not ported"
+    },
+    {
+      "case": "write|presto|SELECT UNNEST(ARRAY[1])",
+      "reason": "transforms.explode_projection_to_unnest (Presto exp.Select preprocess) not ported"
+    },
+    {
+      "case": "write|hive|GENERATE_SERIES('2019-01-01'::TIMESTAMP, NOW(), '1day')",
+      "reason": "hive target: unnest_generate_series / GenerateSeries->EXPLODE(SEQUENCE(..)) preprocess not ported"
+    },
+    {
+      "case": "write|hive|SELECT * FROM GENERATE_SERIES(a, b)",
+      "reason": "hive target: unnest_generate_series (Table GenerateSeries -> EXPLODE(SEQUENCE)) preprocess not ported"
+    },
+    {
+      "case": "write|hive|WITH t AS (SELECT ARRAY[1, 2, 3] AS col) SELECT * FROM t WHERE 1 <= ANY(col) AND 2 = ANY(col)",
+      "reason": "hive target: any_to_exists Select preprocess not ported (ANY -> EXISTS lambda)"
+    },
+    {
+      "case": "write|spark|SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount)",
+      "reason": "WithinGroup percentile -> PERCENTILE_APPROX (remove_within_group_for_percentiles) not ported"
+    },
+    {
+      "case": "write|spark|GENERATE_SERIES('2019-01-01'::TIMESTAMP, NOW(), '1day')",
+      "reason": "unnest_to_explode / GenerateSeries EXPLODE(SEQUENCE) preprocess not ported (Spark target)"
+    },
+    {
+      "case": "write|spark2|GENERATE_SERIES('2019-01-01'::TIMESTAMP, NOW(), '1day')",
+      "reason": "unnest_to_explode / GenerateSeries EXPLODE(SEQUENCE) preprocess not ported (Spark target)"
+    },
+    {
+      "case": "write|spark|SELECT * FROM GENERATE_SERIES(a, b)",
+      "reason": "unnest_to_explode / GenerateSeries EXPLODE(SEQUENCE) preprocess not ported (Spark target)"
+    },
+    {
+      "case": "write|spark2|SELECT * FROM GENERATE_SERIES(a, b)",
+      "reason": "unnest_to_explode / GenerateSeries EXPLODE(SEQUENCE) preprocess not ported (Spark target)"
+    },
+    {
+      "case": "write|spark2|WITH t AS (SELECT ARRAY[1, 2, 3] AS col) SELECT * FROM t WHERE 1 <= ANY(col) AND 2 = ANY(col)",
+      "reason": "any_to_exists preprocess not ported (Spark target)"
+    },
+    {
+      "case": "write|spark|WITH t AS (SELECT ARRAY[1, 2, 3] AS col) SELECT * FROM t WHERE 1 <= ANY(col) AND 2 = ANY(col)",
+      "reason": "any_to_exists preprocess not ported (Spark target)"
+    }
+  ]
 }

@@ -1,0 +1,41 @@
+{
+  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "cases": [
+    {
+      "sql": "DECLARE VAR x INT",
+      "reason": "DECLARE statement parsing not ported (no base _parse_declare; SparkParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
+    },
+    {
+      "sql": "DECLARE x INT",
+      "reason": "DECLARE statement parsing not ported (no base _parse_declare; SparkParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
+    },
+    {
+      "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
+      "reason": "DECLARE statement parsing not ported (no base _parse_declare; SparkParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
+    },
+    {
+      "sql": "DECLARE x, y, z INT DEFAULT 1",
+      "reason": "DECLARE statement parsing not ported (no base _parse_declare; SparkParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
+    },
+    {
+      "sql": "DECLARE x INT = 5",
+      "reason": "DECLARE statement parsing not ported (no base _parse_declare; SparkParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
+    },
+    {
+      "sql": "DECLARE five = 5",
+      "reason": "DECLARE statement parsing not ported (no base _parse_declare; SparkParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
+    },
+    {
+      "sql": "DECLARE OR REPLACE five = 55",
+      "reason": "DECLARE statement parsing not ported (no base _parse_declare; SparkParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
+    },
+    {
+      "sql": "DECLARE VARIABLE size DEFAULT 6",
+      "reason": "DECLARE statement parsing not ported (no base _parse_declare; SparkParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
+    },
+    {
+      "sql": "DECLARE some_var STRING",
+      "reason": "DECLARE statement parsing not ported (no base _parse_declare; SparkParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
+    }
+  ]
+}

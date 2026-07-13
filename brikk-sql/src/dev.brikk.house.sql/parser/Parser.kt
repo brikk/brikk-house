@@ -146,6 +146,7 @@ import dev.brikk.house.sql.ast.JSONObjectAgg
 import dev.brikk.house.sql.ast.JSONSchema
 import dev.brikk.house.sql.ast.JSONTable
 import dev.brikk.house.sql.ast.Join
+import dev.brikk.house.sql.ast.JoinHint
 import dev.brikk.house.sql.ast.JournalProperty
 import dev.brikk.house.sql.ast.Kill
 import dev.brikk.house.sql.ast.Lateral
@@ -479,6 +480,9 @@ open class Parser(
 
     // sqlglot: Parser.PIVOT_COLUMN_NAMING
     open val pivotColumnNaming: String get() = "agg_name_if_aliased"
+
+    // sqlglot: Parser.TRIM_PATTERN_FIRST (Spark2/Spark parse the pattern before the target)
+    open val trimPatternFirst: kotlin.Boolean get() = false
 
     // sqlglot: Parser.SUPPORTS_IMPLICIT_UNNEST
     open val supportsImplicitUnnest: kotlin.Boolean get() = false
@@ -3125,7 +3129,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_pivot_aggregation
-    protected fun parsePivotAggregation(): Expression? {
+    protected open fun parsePivotAggregation(): Expression? {
         val func = parseFunction()
         if (func == null) {
             if (prevToken.tokenType == TokenType.COMMA) return null
@@ -9261,6 +9265,14 @@ open class Parser(
         return validateExpression(substring)
     }
 
+    // sqlglot: Parser._parse_join_hint (Spark BROADCAST/MERGE/... query hints)
+    fun parseJoinHint(funcName: String): Expression {
+        val tables = parseCsv { parseTable() }
+        return expression(
+            JoinHint(args("this" to funcName.uppercase(), "expressions" to tables))
+        )
+    }
+
     // sqlglot: Parser._parse_trim (TRIM_PATTERN_FIRST=false in the base parser)
     fun parseTrim(): Expression {
         var position: String? = null
@@ -9273,7 +9285,7 @@ open class Parser(
 
         var this_ = parseBitwise()
         if (matchSet(setOf(TokenType.FROM, TokenType.COMMA))) {
-            val invertOrder = prevToken.tokenType == TokenType.FROM
+            val invertOrder = prevToken.tokenType == TokenType.FROM || trimPatternFirst
             trimExpression = parseBitwise()
 
             if (invertOrder) {

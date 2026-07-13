@@ -1,12 +1,48 @@
 {
- "cases": [
-  {
-   "case": "write|presto|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6])",
-   "reason": "presto exp.Select preprocess pipeline (explode_projection_to_unnest) is not ported (PrestoGenerator KDoc)"
-  },
-  {
-   "case": "write|presto|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6]) FROM x",
-   "reason": "presto exp.Select preprocess pipeline (explode_projection_to_unnest) is not ported (PrestoGenerator KDoc)"
-  }
- ]
+  "cases": [
+    {
+      "case": "write|presto|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6])",
+      "reason": "presto exp.Select preprocess pipeline (explode_projection_to_unnest) is not ported (PrestoGenerator KDoc)"
+    },
+    {
+      "case": "write|presto|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6]) FROM x",
+      "reason": "presto exp.Select preprocess pipeline (explode_projection_to_unnest) is not ported (PrestoGenerator KDoc)"
+    },
+    {
+      "case": "write|spark|SELECT RANGE(1, 5)",
+      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
+    },
+    {
+      "case": "write|spark|SELECT RANGE(1, 5, 2)",
+      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
+    },
+    {
+      "case": "write|spark|SELECT RANGE(1, 1)",
+      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
+    },
+    {
+      "case": "write|spark|SELECT RANGE(5, 1, -1)",
+      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
+    },
+    {
+      "case": "write|spark|SELECT RANGE(5, 1, 0)",
+      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
+    },
+    {
+      "case": "write|spark|WITH t AS (SELECT 5 AS c) SELECT RANGE(1, c) FROM t",
+      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
+    },
+    {
+      "case": "write|spark|WITH t AS (SELECT 2 AS c) SELECT RANGE(1, c) FROM t",
+      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
+    },
+    {
+      "case": "write|spark|SELECT RANGE(1, 2)",
+      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
+    },
+    {
+      "case": "read|spark|SELECT LIST(DISTINCT sample_col) FILTER(WHERE NOT sample_col IS NULL) FROM sample_table",
+      "reason": "ArrayUniqueAgg/LIST FILTER lowering not ported (Spark direction)"
+    }
+  ]
 }

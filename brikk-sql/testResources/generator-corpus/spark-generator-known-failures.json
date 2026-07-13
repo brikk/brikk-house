@@ -1,0 +1,65 @@
+{
+  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "cases": [
+    {
+      "sql": "SELECT TRANSFORM(x) USING 'x' AS (x INT) FROM t",
+      "reason": "QueryTransform (SELECT TRANSFORM ... USING) generation not ported (Hive-inherited gap; querytransform_sql unimplemented in base Generator)"
+    },
+    {
+      "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' AS (a, b, c) FROM person WHERE zip_code > 94511",
+      "reason": "QueryTransform (SELECT TRANSFORM ... USING) generation not ported (Hive-inherited gap; querytransform_sql unimplemented in base Generator)"
+    },
+    {
+      "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' AS (a STRING, b STRING, c STRING) FROM person WHERE zip_code > 94511",
+      "reason": "QueryTransform (SELECT TRANSFORM ... USING) generation not ported (Hive-inherited gap; querytransform_sql unimplemented in base Generator)"
+    },
+    {
+      "sql": "SELECT TRANSFORM(name, age) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n' NULL DEFINED AS 'NULL' USING 'cat' AS (name_age STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY '@' LINES TERMINATED BY '\\n' NULL DEFINED AS 'NULL' FROM person",
+      "reason": "QueryTransform (SELECT TRANSFORM ... USING) generation not ported (Hive-inherited gap; querytransform_sql unimplemented in base Generator)"
+    },
+    {
+      "sql": "SELECT TRANSFORM(zip_code, name, age) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' WITH SERDEPROPERTIES ('field.delim'='\\t') USING 'cat' AS (a STRING, b STRING, c STRING) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' WITH SERDEPROPERTIES ('field.delim'='\\t') FROM person WHERE zip_code > 94511",
+      "reason": "QueryTransform (SELECT TRANSFORM ... USING) generation not ported (Hive-inherited gap; querytransform_sql unimplemented in base Generator)"
+    },
+    {
+      "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' FROM person WHERE zip_code > 94500",
+      "reason": "QueryTransform (SELECT TRANSFORM ... USING) generation not ported (Hive-inherited gap; querytransform_sql unimplemented in base Generator)"
+    },
+    {
+      "sql": "DECLARE VAR x INT",
+      "reason": "DECLARE statement generation not ported (declare_sql unimplemented; parser also does not build Declare \u2014 see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE x INT",
+      "reason": "DECLARE statement generation not ported (declare_sql unimplemented; parser also does not build Declare \u2014 see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
+      "reason": "DECLARE statement generation not ported (declare_sql unimplemented; parser also does not build Declare \u2014 see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE x, y, z INT DEFAULT 1",
+      "reason": "DECLARE statement generation not ported (declare_sql unimplemented; parser also does not build Declare \u2014 see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE x INT = 5",
+      "reason": "DECLARE statement generation not ported (declare_sql unimplemented; parser also does not build Declare \u2014 see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE five = 5",
+      "reason": "DECLARE statement generation not ported (declare_sql unimplemented; parser also does not build Declare \u2014 see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE OR REPLACE five = 55",
+      "reason": "DECLARE statement generation not ported (declare_sql unimplemented; parser also does not build Declare \u2014 see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE VARIABLE size DEFAULT 6",
+      "reason": "DECLARE statement generation not ported (declare_sql unimplemented; parser also does not build Declare \u2014 see spark-parser ledger)"
+    },
+    {
+      "sql": "DECLARE some_var STRING",
+      "reason": "DECLARE statement generation not ported (declare_sql unimplemented; parser also does not build Declare \u2014 see spark-parser ledger)"
+    }
+  ]
+}

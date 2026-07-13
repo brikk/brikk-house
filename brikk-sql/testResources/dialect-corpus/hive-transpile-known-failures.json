@@ -1,60 +1,68 @@
 {
- "cases": [
-  {
-   "case": "write|duckdb|SELECT a, b FROM x LATERAL VIEW EXPLODE(y) t AS a LATERAL VIEW EXPLODE(z) u AS b",
-   "reason": "unnest_to_explode / explode_projection_to_unnest preprocess pipeline not ported (LATERAL VIEW -> CROSS JOIN UNNEST)"
-  },
-  {
-   "case": "write|duckdb|SELECT a FROM x LATERAL VIEW EXPLODE(y) t AS a",
-   "reason": "unnest_to_explode preprocess pipeline not ported (LATERAL VIEW -> CROSS JOIN UNNEST)"
-  },
-  {
-   "case": "write|presto|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
-   "reason": "explode_to_unnest preprocess (POSEXPLODE -> UNNEST WITH ORDINALITY) not ported"
-  },
-  {
-   "case": "write|trino|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
-   "reason": "explode_to_unnest preprocess (POSEXPLODE -> UNNEST WITH ORDINALITY) not ported"
-  },
-  {
-   "case": "write|duckdb|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
-   "reason": "explode_to_unnest preprocess (POSEXPLODE -> UNNEST WITH ORDINALITY) not ported"
-  },
-  {
-   "case": "write|presto|SELECT * FROM x LATERAL VIEW POSEXPLODE(MAP(col, 'val')) t AS pos, key, value",
-   "reason": "explode_to_unnest preprocess (POSEXPLODE over MAP -> UNNEST WITH ORDINALITY) not ported"
-  },
-  {
-   "case": "write|trino|SELECT * FROM x LATERAL VIEW POSEXPLODE(MAP(col, 'val')) t AS pos, key, value",
-   "reason": "explode_to_unnest preprocess (POSEXPLODE over MAP -> UNNEST WITH ORDINALITY) not ported"
-  },
-  {
-   "case": "write|duckdb|SELECT a FROM x LATERAL VIEW EXPLODE(ARRAY(y)) t AS a",
-   "reason": "unnest_to_explode preprocess pipeline not ported (LATERAL VIEW -> CROSS JOIN UNNEST)"
-  },
-  {
-   "case": "write|duckdb|from_unixtime(x, \"yyyy-MM-dd'T'HH\")",
-   "reason": "duckdb target: UnixToStr -> STRFTIME(TO_TIMESTAMP(..)) rewrite not implemented in DuckdbGenerator"
-  },
-  {
-   "case": "write|duckdb|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
-   "reason": "duckdb target: TimeStrToTime -> CAST(.. AS TIMESTAMP) rewrite differs in DuckdbGenerator"
-  },
-  {
-   "case": "write|duckdb|LOCATE('a', x)",
-   "reason": "duckdb target: StrPosition -> STRPOS rewrite not implemented in DuckdbGenerator"
-  },
-  {
-   "case": "write|duckdb|LOCATE('a', x, 3)",
-   "reason": "duckdb target: StrPosition with position -> CASE/STRPOS rewrite not implemented in DuckdbGenerator"
-  },
-  {
-   "case": "write|duckdb|COLLECT_LIST(x)",
-   "reason": "duckdb/presto target: ArrayAgg(nulls_excluded) -> ARRAY_AGG(..) FILTER(WHERE .. IS NOT NULL) not implemented in target generator"
-  },
-  {
-   "case": "write|presto|COLLECT_LIST(x)",
-   "reason": "presto target: ArrayAgg(nulls_excluded) -> ARRAY_AGG(..) FILTER(WHERE .. IS NOT NULL) not implemented in PrestoGenerator"
-  }
- ]
+  "cases": [
+    {
+      "case": "write|duckdb|SELECT a, b FROM x LATERAL VIEW EXPLODE(y) t AS a LATERAL VIEW EXPLODE(z) u AS b",
+      "reason": "unnest_to_explode / explode_projection_to_unnest preprocess pipeline not ported (LATERAL VIEW -> CROSS JOIN UNNEST)"
+    },
+    {
+      "case": "write|duckdb|SELECT a FROM x LATERAL VIEW EXPLODE(y) t AS a",
+      "reason": "unnest_to_explode preprocess pipeline not ported (LATERAL VIEW -> CROSS JOIN UNNEST)"
+    },
+    {
+      "case": "write|presto|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
+      "reason": "explode_to_unnest preprocess (POSEXPLODE -> UNNEST WITH ORDINALITY) not ported"
+    },
+    {
+      "case": "write|trino|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
+      "reason": "explode_to_unnest preprocess (POSEXPLODE -> UNNEST WITH ORDINALITY) not ported"
+    },
+    {
+      "case": "write|duckdb|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
+      "reason": "explode_to_unnest preprocess (POSEXPLODE -> UNNEST WITH ORDINALITY) not ported"
+    },
+    {
+      "case": "write|presto|SELECT * FROM x LATERAL VIEW POSEXPLODE(MAP(col, 'val')) t AS pos, key, value",
+      "reason": "explode_to_unnest preprocess (POSEXPLODE over MAP -> UNNEST WITH ORDINALITY) not ported"
+    },
+    {
+      "case": "write|trino|SELECT * FROM x LATERAL VIEW POSEXPLODE(MAP(col, 'val')) t AS pos, key, value",
+      "reason": "explode_to_unnest preprocess (POSEXPLODE over MAP -> UNNEST WITH ORDINALITY) not ported"
+    },
+    {
+      "case": "write|duckdb|SELECT a FROM x LATERAL VIEW EXPLODE(ARRAY(y)) t AS a",
+      "reason": "unnest_to_explode preprocess pipeline not ported (LATERAL VIEW -> CROSS JOIN UNNEST)"
+    },
+    {
+      "case": "write|duckdb|from_unixtime(x, \"yyyy-MM-dd'T'HH\")",
+      "reason": "duckdb target: UnixToStr -> STRFTIME(TO_TIMESTAMP(..)) rewrite not implemented in DuckdbGenerator"
+    },
+    {
+      "case": "write|duckdb|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
+      "reason": "duckdb target: TimeStrToTime -> CAST(.. AS TIMESTAMP) rewrite differs in DuckdbGenerator"
+    },
+    {
+      "case": "write|duckdb|LOCATE('a', x)",
+      "reason": "duckdb target: StrPosition -> STRPOS rewrite not implemented in DuckdbGenerator"
+    },
+    {
+      "case": "write|duckdb|LOCATE('a', x, 3)",
+      "reason": "duckdb target: StrPosition with position -> CASE/STRPOS rewrite not implemented in DuckdbGenerator"
+    },
+    {
+      "case": "write|duckdb|COLLECT_LIST(x)",
+      "reason": "duckdb/presto target: ArrayAgg(nulls_excluded) -> ARRAY_AGG(..) FILTER(WHERE .. IS NOT NULL) not implemented in target generator"
+    },
+    {
+      "case": "write|presto|COLLECT_LIST(x)",
+      "reason": "presto target: ArrayAgg(nulls_excluded) -> ARRAY_AGG(..) FILTER(WHERE .. IS NOT NULL) not implemented in PrestoGenerator"
+    },
+    {
+      "case": "write|spark|CREATE TABLE x (w STRING) PARTITIONED BY (y INT, z INT)",
+      "reason": "move_schema_columns_to_partitioned_by / Create preprocess not ported (Spark target)"
+    },
+    {
+      "case": "write|spark|ALTER TABLE x CHANGE COLUMN a a VARCHAR(10) CASCADE",
+      "reason": "Spark ALTER COLUMN ... TYPE vs Hive CHANGE COLUMN CASCADE (altercolumn preprocess) not ported"
+    }
+  ]
 }

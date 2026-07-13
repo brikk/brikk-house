@@ -263,6 +263,8 @@ object Dialects {
     val POSTGRES: Dialect = PostgresDialect()
     val CLICKHOUSE: Dialect = ClickhouseDialect()
     val HIVE: Dialect = HiveDialect()
+    val SPARK2: Dialect = Spark2Dialect()
+    val SPARK: Dialect = SparkDialect()
 
     fun forNameOrNull(name: String): Dialect? = when (name.lowercase().trim()) {
         "", "sqlglot" -> BASE
@@ -274,6 +276,8 @@ object Dialects {
         "postgres", "postgresql" -> POSTGRES
         "clickhouse" -> CLICKHOUSE
         "hive" -> HIVE
+        "spark2" -> SPARK2
+        "spark", "sparksql" -> SPARK
         else -> null
     }
 
