@@ -15,6 +15,17 @@ consumable (hence the `-jvm` suffix on the two multiplatform modules).
 | `dev.brikk.house:brikk-sql-metadata-jvm` | Per-engine SQL function and type metadata catalogs. |
 | `dev.brikk.house:brikk-sql-verify` | Native-grammar SQL verification oracles (Trino, DuckDB, Doris). |
 
+### Dialects
+
+Most dialects are faithful ports of the corresponding sqlglot dialect, gated
+differentially against the Python oracle. One is **brikk-native**:
+
+- **`datafusion`** (alias `arrow-datafusion`) — sqlglot has no DataFusion dialect, so
+  this is not a port and has **no sqlglot oracle**. It is gated instead by
+  polyglot-derived fixtures + DataFusion `sqllogictest` parse-acceptance + pipe/hand
+  assertions; an engine verifier is planned (phase 2). See
+  [`docs/brikk-extensions.md`](docs/brikk-extensions.md) §16.
+
 ### Snapshots
 
 Snapshots are **published** to the Central Portal snapshots repository:

@@ -97,6 +97,49 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## polyglot (DataFusion fixture corpus)
+
+`brikk-sql/testResources/dialect-corpus/datafusion-fixtures.json` is imported by
+`tools/import_polyglot_datafusion_fixtures.py` from the hand-authored DataFusion fixture
+suite of [polyglot](https://github.com/tobilg/polyglot) (a Rust sqlglot-alike), files
+`crates/polyglot-sql/tests/custom_fixtures/datafusion/*.json`. sqlglot ships no DataFusion
+dialect, so these fixtures (not a Python oracle) gate brikk's brikk-native `datafusion`
+dialect, whose design also follows polyglot's `crates/polyglot-sql/src/dialects/datafusion.rs`.
+polyglot is licensed under the MIT License:
+
+```
+MIT License
+
+Copyright (c) 2026 TobiLG <github@tobilg.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## Apache DataFusion (sqllogictest parse corpus)
+
+`brikk-sql/testResources/dialect-corpus/datafusion-slt-parse.json` is extracted by
+`tools/extract_datafusion_slt_corpus.py` from a curated subset of
+[Apache DataFusion](https://github.com/apache/datafusion)'s own sqllogictest suite
+(`datafusion/sqllogictest/test_files/*.slt`). It contains only SQL statement text (no
+DataFusion code) used as a real-engine parse-acceptance backstop for brikk's `datafusion`
+dialect. DataFusion is licensed under the Apache License 2.0.
+
 ## GoogleSQL pipe syntax
 
 The pipe-syntax (`|>`) operator semantics implemented in `brikk-sql` (first-class

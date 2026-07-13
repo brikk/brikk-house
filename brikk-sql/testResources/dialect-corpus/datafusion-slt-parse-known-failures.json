@@ -1,0 +1,9 @@
+{
+  "note": "Oracle-less ledger for DatafusionSltParseTest. These are honest parser gaps: real DataFusion SQL that brikk's BASE grammar (reused unchanged by the thin datafusion dialect) does not yet accept. No datafusion parser hooks were added in phase 1; closing these would need an engine verifier to justify the AST shape.",
+  "cases": [
+    {
+      "case": "select.slt:856",
+      "reason": "`SELECT DISTINCT ALL *` combines the DISTINCT and ALL set-quantifiers, which brikk's BASE select parser does not accept (it expects at most one). DataFusion tolerates the redundant pair. Honest grammar gap, deferred (would need a datafusion parser hook + engine verifier)."
+    }
+  ]
+}

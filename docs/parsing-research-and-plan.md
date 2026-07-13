@@ -360,6 +360,11 @@ Work items:
 - Follow-on dialects (decided order; good "overnight" tasks when the near-term queue is
   empty — no more beyond these except by demand):
   1. **datafusion** — top open-source community we care about and can test in our own work.
+     *(Status: **thin phase 1 landed** — brikk-native dialect, NO sqlglot oracle. Gated by
+     polyglot-derived fixtures (`DatafusionFixtureTest`, ≥80% identity modulo ledger) +
+     DataFusion sqllogictest parse-acceptance (`DatafusionSltParseTest`) + pipe smoke +
+     hand assertions. Engine verifier, typing metadata and a FunctionCatalog are deferred
+     to phase 2. See docs/brikk-extensions.md §16.)*
   2. **sparksql** — same rationale (sqlglot chain: Spark(Spark2(Hive))).
   3. **bigquery/googlesql** — mainly because of pipe syntax: it's the origin dialect and
      can oracle-guide our pipe work; Google open-sources the ZetaSQL parser (the Java

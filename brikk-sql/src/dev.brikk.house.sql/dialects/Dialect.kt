@@ -266,6 +266,9 @@ object Dialects {
     val SPARK2: Dialect = Spark2Dialect()
     val SPARK: Dialect = SparkDialect()
 
+    // brikk-native: no sqlglot oracle — see DatafusionDialect.kt.
+    val DATAFUSION: Dialect = DatafusionDialect()
+
     fun forNameOrNull(name: String): Dialect? = when (name.lowercase().trim()) {
         "", "sqlglot" -> BASE
         "mysql" -> MYSQL
@@ -278,6 +281,7 @@ object Dialects {
         "hive" -> HIVE
         "spark2" -> SPARK2
         "spark", "sparksql" -> SPARK
+        "datafusion", "arrow-datafusion" -> DATAFUSION
         else -> null
     }
 

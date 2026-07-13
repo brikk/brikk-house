@@ -1,0 +1,3782 @@
+{
+  "provenance": {
+    "source": "Apache DataFusion sqllogictest test_files (reference/datafusion)",
+    "source_repo": "https://github.com/apache/datafusion",
+    "commit": "4f63ada24056d9ec9b8decc04f128512bcdd735e",
+    "license": "Apache-2.0 \u2014 see ATTRIBUTIONS.md",
+    "files": [
+      "select.slt",
+      "joins.slt",
+      "cte.slt",
+      "subquery.slt",
+      "group_by.slt",
+      "order.slt",
+      "limit.slt",
+      "pipe_operator.slt"
+    ],
+    "note": "Real-engine parse-acceptance corpus: SQL that DataFusion itself accepts. The brikk gate only checks that each statement parses under 'datafusion' without a ParseError (no round-trip / result check \u2014 that is phase 2's engine verifier). Failures are honest parser gaps and are ledgered."
+  },
+  "cases": [
+    {
+      "sql": "SELECT d1, row_number() OVER (partition by d1) as rn1 FROM window_null_string_table order by d1 asc;",
+      "source": "select.slt:71"
+    },
+    {
+      "sql": "SELECT d2, row_number() OVER (partition by d2) as rn1 FROM window_null_string_table ORDER BY d2 asc;",
+      "source": "select.slt:78"
+    },
+    {
+      "sql": "SELECT d2, row_number() OVER (partition by d2 order by d2 desc) as rn1 FROM window_null_string_table ORDER BY d2 desc",
+      "source": "select.slt:85"
+    },
+    {
+      "sql": "SELECT d3, row_number() OVER (partition by d3) as rn1 FROM window_null_string_table;",
+      "source": "select.slt:93"
+    },
+    {
+      "sql": "SELECT c1, c2 FROM test WHERE c1 > 0 AND c1 < 3;",
+      "source": "select.slt:149"
+    },
+    {
+      "sql": "SELECT c1, c3 FROM test WHERE c1 > 2 AND c3 = true;",
+      "source": "select.slt:176"
+    },
+    {
+      "sql": "SELECT some_struct['c0'] FROM nested_get_indexed_field_on_struct_table LIMIT 3;",
+      "source": "select.slt:204"
+    },
+    {
+      "sql": "SELECT some_struct.c0 as l0 FROM nested_get_indexed_field_on_struct_table LIMIT 3;",
+      "source": "select.slt:212"
+    },
+    {
+      "sql": "SELECT some_struct['c0'][1] as i0 FROM nested_get_indexed_field_on_struct_table LIMIT 3;",
+      "source": "select.slt:219"
+    },
+    {
+      "sql": "SELECT d1 FROM string_dictionary_table;",
+      "source": "select.slt:245"
+    },
+    {
+      "sql": "SELECT d1 FROM string_dictionary_table WHERE d1 IS NOT NULL;",
+      "source": "select.slt:253"
+    },
+    {
+      "sql": "SELECT d1 FROM string_dictionary_table WHERE d1 = 'three';",
+      "source": "select.slt:260"
+    },
+    {
+      "sql": "SELECT d1 FROM string_dictionary_table WHERE d1 = d2;",
+      "source": "select.slt:266"
+    },
+    {
+      "sql": "SELECT d1 FROM string_dictionary_table WHERE d1 <= d2;",
+      "source": "select.slt:272"
+    },
+    {
+      "sql": "SELECT d1 FROM string_dictionary_table WHERE d1 = d3;",
+      "source": "select.slt:278"
+    },
+    {
+      "sql": "SELECT concat(d1, '-foo') FROM string_dictionary_table;",
+      "source": "select.slt:290"
+    },
+    {
+      "sql": "SELECT concat(d1, d2) FROM string_dictionary_table;",
+      "source": "select.slt:298"
+    },
+    {
+      "sql": "SELECT COUNT(d1) FROM string_dictionary_table;",
+      "source": "select.slt:306"
+    },
+    {
+      "sql": "SELECT MIN(d1) FROM string_dictionary_table;",
+      "source": "select.slt:312"
+    },
+    {
+      "sql": "SELECT MAX(d1) FROM string_dictionary_table;",
+      "source": "select.slt:318"
+    },
+    {
+      "sql": "SELECT d1, COUNT(*) FROM string_dictionary_table group by d1 order by d1;",
+      "source": "select.slt:324"
+    },
+    {
+      "sql": "SELECT d1, row_number() OVER (partition by d1) as rn1 FROM string_dictionary_table order by d1;",
+      "source": "select.slt:332"
+    },
+    {
+      "sql": "VALUES (1),('2')",
+      "source": "select.slt:352"
+    },
+    {
+      "sql": "VALUES (1),(2.0)",
+      "source": "select.slt:358"
+    },
+    {
+      "sql": "VALUES (1,2), (1,'2')",
+      "source": "select.slt:364"
+    },
+    {
+      "sql": "VALUES (1,'a'),(NULL,'b'),(3,'c')",
+      "source": "select.slt:370"
+    },
+    {
+      "sql": "VALUES (NULL,'a'),(NULL,'b'),(3,'c')",
+      "source": "select.slt:377"
+    },
+    {
+      "sql": "VALUES (NULL,'a'),(NULL,'b'),(NULL,'c')",
+      "source": "select.slt:384"
+    },
+    {
+      "sql": "VALUES (1,'a'),(2,NULL),(3,'c')",
+      "source": "select.slt:391"
+    },
+    {
+      "sql": "VALUES (1,NULL),(2,NULL),(3,'c')",
+      "source": "select.slt:398"
+    },
+    {
+      "sql": "VALUES (1,2,3,4,5,6,7,8,9,10,11,12,13,NULL,'F',3.5)",
+      "source": "select.slt:405"
+    },
+    {
+      "sql": "VALUES (1, CASE WHEN RANDOM() > 0.5 THEN 1 ELSE 1 END),\n       (2, CASE WHEN RANDOM() > 0.5 THEN 2 ELSE 2 END);",
+      "source": "select.slt:411"
+    },
+    {
+      "sql": "SELECT * FROM (VALUES (1,'a'),(2,NULL)) AS t(c1, c2)",
+      "source": "select.slt:418"
+    },
+    {
+      "sql": "SELECT * FROM aggregate_test_100 WHERE 1=2",
+      "source": "select.slt:444"
+    },
+    {
+      "sql": "VALUES (1)",
+      "source": "select.slt:448"
+    },
+    {
+      "sql": "VALUES (-1)",
+      "source": "select.slt:454"
+    },
+    {
+      "sql": "VALUES (2+1,2-1,2>1)",
+      "source": "select.slt:460"
+    },
+    {
+      "sql": "VALUES (1),(2)",
+      "source": "select.slt:466"
+    },
+    {
+      "sql": "VALUES (1,'a'),(2,'b')",
+      "source": "select.slt:473"
+    },
+    {
+      "sql": "SELECT arrow_typeof(COALESCE(column1, column2)) FROM VALUES (null, 1.2);",
+      "source": "select.slt:493"
+    },
+    {
+      "sql": "select arrow_typeof(column1), arrow_typeof(column2), arrow_typeof(column3) from (SELECT column1, column2, column3 FROM VALUES\n(null, 2, 'a'),\n(1.1, null, 'b'),\n(2, 5, null)) LIMIT 1;",
+      "source": "select.slt:499"
+    },
+    {
+      "sql": "select distinct '1' from foo;",
+      "source": "select.slt:509"
+    },
+    {
+      "sql": "select '1' from foo order by column1;",
+      "source": "select.slt:515"
+    },
+    {
+      "sql": "select\n    'nan'::double is distinct from 'nan'::double v1,\n    'nan'::double is not distinct from 'nan'::double v2,\n    'nan'::double is not distinct from null v3,\n    'nan'::double is distinct from null v4,\n    null is distinct from 'nan'::double v5,\n    null is not distinct from 'nan'::double v6,\n    'nan'::float is distinct from 'nan'::float v7,\n    'nan'::float is not distinct from 'nan'::float v8,\n    'nan'::float is not distinct from null v9,\n    'nan'::float is distinct from null v10,\n    null is distinct from 'nan'::float v11,\n    null is not distinct from 'nan'::float v12,\n    1::float is distinct from 2::float v13,\n    'nan'::float is distinct from 1::float v14,\n    'nan'::float is not distinct from 1::float v15,\n    1::float is not distinct from null v16,\n    1::float is distinct from null v17\n;",
+      "source": "select.slt:527"
+    },
+    {
+      "sql": "SELECT \"T\".* from (SELECT 1 a) AS \"T\"",
+      "source": "select.slt:551"
+    },
+    {
+      "sql": "select (isnan('NaN'::double) AND 'NaN'::double > 0) a, (isnan('-NaN'::double) AND '-NaN'::double < 0) b, (isnan('NaN'::float) AND 'NaN'::float > 0) c, (isnan('-NaN'::float) AND '-NaN'::float < 0) d",
+      "source": "select.slt:573"
+    },
+    {
+      "sql": "select * from (select 1 a union all select 2) b order by a limit 1;",
+      "source": "select.slt:579"
+    },
+    {
+      "sql": "select * from (values (1), (2), (3), (4)) limit 2::int OFFSET 1::tinyint",
+      "source": "select.slt:605"
+    },
+    {
+      "sql": "select * from (select 1 a union all select 2) b order by a limit 1+1;",
+      "source": "select.slt:612"
+    },
+    {
+      "sql": "select * from (values (1)) LIMIT 10*100;",
+      "source": "select.slt:619"
+    },
+    {
+      "sql": "select * from (values (1)) LIMIT 100/10;",
+      "source": "select.slt:625"
+    },
+    {
+      "sql": "select * from (values (1), (2), (3), (4)) LIMIT abs(-4) + 4 / -2; -- LIMIT 2",
+      "source": "select.slt:631"
+    },
+    {
+      "sql": "select * from (values (1), (2), (3), (4)) OFFSET abs(-4) + 4 / -2; -- OFFSET 2",
+      "source": "select.slt:638"
+    },
+    {
+      "sql": "select * from (values (1), (2), (3), (4))\n  -- LIMIT 2\n  LIMIT abs(-4) + -1 * 2\n  -- OFFSET 1\n  OFFSET case when 1 < 2 then 1 else 0 end;",
+      "source": "select.slt:645"
+    },
+    {
+      "sql": "select * from (select 1 a union all select 2) b order by a limit null;",
+      "source": "select.slt:659"
+    },
+    {
+      "sql": "select * from (select 1 a union all select 2) b order by a offset null;",
+      "source": "select.slt:666"
+    },
+    {
+      "sql": "select * from (select 1 a union all select 2) b order by a limit 0;",
+      "source": "select.slt:673"
+    },
+    {
+      "sql": "select CASE 10.5 WHEN 0 THEN 1 ELSE 2 END;",
+      "source": "select.slt:678"
+    },
+    {
+      "sql": "select CASE\n  WHEN 10 = 5 THEN 1\n  WHEN 'true' THEN 2\n  ELSE 3\nEND;",
+      "source": "select.slt:684"
+    },
+    {
+      "sql": "select CASE\n  WHEN NULL THEN 1\n  ELSE 2\nEND;",
+      "source": "select.slt:694"
+    },
+    {
+      "sql": "select CASE\n  WHEN 10 > 5 THEN NULL\n  ELSE 2\nEND;",
+      "source": "select.slt:703"
+    },
+    {
+      "sql": "select CASE\n  WHEN 10 = 5 THEN 1\n  ELSE NULL\nEND;",
+      "source": "select.slt:712"
+    },
+    {
+      "sql": "select column1 like column2 from t;",
+      "source": "select.slt:725"
+    },
+    {
+      "sql": "select column1 ilike column2 from t;",
+      "source": "select.slt:730"
+    },
+    {
+      "sql": "select column1 not like column2 from t;",
+      "source": "select.slt:735"
+    },
+    {
+      "sql": "select column1 not ilike column2 from t;",
+      "source": "select.slt:740"
+    },
+    {
+      "sql": "select column1 is distinct from column2 from t;",
+      "source": "select.slt:745"
+    },
+    {
+      "sql": "select column1 is not distinct from column2 from t;",
+      "source": "select.slt:750"
+    },
+    {
+      "sql": "select column1 is distinct from column2 from binary_t;",
+      "source": "select.slt:760"
+    },
+    {
+      "sql": "select column1 is not distinct from column2 from binary_t;",
+      "source": "select.slt:765"
+    },
+    {
+      "sql": "select column1 is distinct from column2 from large_binary_t;",
+      "source": "select.slt:774"
+    },
+    {
+      "sql": "select column1 is not distinct from column2 from large_binary_t;",
+      "source": "select.slt:779"
+    },
+    {
+      "sql": "SELECT c1 FROM aggregate_simple order by c1",
+      "source": "select.slt:786"
+    },
+    {
+      "sql": "SELECT ALL c1 FROM aggregate_simple order by c1",
+      "source": "select.slt:805"
+    },
+    {
+      "sql": "SELECT DISTINCT * FROM aggregate_simple",
+      "source": "select.slt:825"
+    },
+    {
+      "sql": "SELECT ALL * FROM aggregate_simple;",
+      "source": "select.slt:835"
+    },
+    {
+      "sql": "SELECT DISTINCT ALL * FROM aggregate_simple",
+      "source": "select.slt:856"
+    },
+    {
+      "sql": "SELECT DISTINCT c1 FROM aggregate_simple order by c1",
+      "source": "select.slt:860"
+    },
+    {
+      "sql": "SELECT DISTINCT c1, c2 FROM aggregate_simple order by c1",
+      "source": "select.slt:870"
+    },
+    {
+      "sql": "SELECT DISTINCT c3 FROM aggregate_simple order by c3",
+      "source": "select.slt:880"
+    },
+    {
+      "sql": "SELECT DISTINCT c1 + c2 AS a FROM aggregate_simple",
+      "source": "select.slt:887"
+    },
+    {
+      "sql": "select\n1 IS DISTINCT FROM CAST(NULL as INT) as a,\n1 IS DISTINCT FROM 1 as b,\n1 IS NOT DISTINCT FROM CAST(NULL as INT) as c,\n1 IS NOT DISTINCT FROM 1 as d,\nNULL IS DISTINCT FROM NULL as e,\nNULL IS NOT DISTINCT FROM NULL as f,\nNULL is DISTINCT FROM 1 as g,\nNULL is NOT DISTINCT FROM 1 as h",
+      "source": "select.slt:897"
+    },
+    {
+      "sql": "select\nNULL IS DISTINCT FROM NULL as a,\nNULL IS NOT DISTINCT FROM NULL as b,\nNULL is DISTINCT FROM 1 as c,\nNULL is NOT DISTINCT FROM 1 as d,\n1 IS DISTINCT FROM CAST(NULL as INT) as e,\n1 IS DISTINCT FROM 1 as f,\n1 IS NOT DISTINCT FROM CAST(NULL as INT) as g,\n1 IS NOT DISTINCT FROM 1 as h",
+      "source": "select.slt:910"
+    },
+    {
+      "sql": "select\n'x' IS DISTINCT FROM NULL as a,\n'x' IS DISTINCT FROM 'x' as b,\n'x' IS NOT DISTINCT FROM NULL as c,\n'x' IS NOT DISTINCT FROM 'x' as d",
+      "source": "select.slt:924"
+    },
+    {
+      "sql": "SELECT 1 NOT BETWEEN 3 AND 5",
+      "source": "select.slt:934"
+    },
+    {
+      "sql": "SELECT abs(c1) BETWEEN 0 AND LoG(c1 * 100 ) FROM select_between_data ORDER BY c1",
+      "source": "select.slt:945"
+    },
+    {
+      "sql": "SELECT * FROM (VALUES (1)) AS t(x)\nWHERE x BETWEEN -9223372036854775808 AND 9223372036854775807",
+      "source": "select.slt:965"
+    },
+    {
+      "sql": "SELECT value FROM time32_s WHERE time = '01:23:20'",
+      "source": "select.slt:1014"
+    },
+    {
+      "sql": "SELECT value FROM time32_millis WHERE time = '01:23:20'",
+      "source": "select.slt:1021"
+    },
+    {
+      "sql": "SELECT value FROM time64_micros WHERE time = '01:23:20'",
+      "source": "select.slt:1028"
+    },
+    {
+      "sql": "SELECT value FROM time64_nanos WHERE time = '01:23:20'",
+      "source": "select.slt:1035"
+    },
+    {
+      "sql": "WITH\n    v1 AS (SELECT * FROM t1),\n    v2 AS (SELECT v1.id AS id, v1a.id AS id_a, v1b.id AS id_b\nFROM v1, v1 v1a, v1 v1b\nWHERE v1a.id = v1.id - 1\n  AND v1b.id = v1.id + 1)\nSELECT * FROM v2",
+      "source": "select.slt:1047"
+    },
+    {
+      "sql": "WITH t AS (SELECT 1) SELECT * FROM t",
+      "source": "select.slt:1058"
+    },
+    {
+      "sql": "WITH t AS (SELECT 1 AS a), u AS (SELECT 2 AS a)\nSELECT * FROM t\nUNION ALL\nSELECT * FROM u",
+      "source": "select.slt:1064"
+    },
+    {
+      "sql": "WITH t AS (SELECT 1 AS id1), u AS (SELECT 1 AS id2, 5 as x)\nSELECT x\nFROM t\nJOIN u ON (id1 = id2)",
+      "source": "select.slt:1074"
+    },
+    {
+      "sql": "WITH t AS (SELECT 1 AS id1), u AS (SELECT * FROM t) SELECT * from u",
+      "source": "select.slt:1083"
+    },
+    {
+      "sql": "SELECT o1, o2, c3\nFROM (\n    SELECT c1 AS o1, c2 + 1 AS o2, c3\n    FROM (\n        SELECT c1, c2, c3, c4\n        FROM aggregate_test_100\n        WHERE c1 = 'a' AND c2 >= 4\n        ORDER BY c2 ASC, c3 ASC\n    ) AS a\n) AS b",
+      "source": "select.slt:1089"
+    },
+    {
+      "sql": "SELECT o1, o2, c3\nFROM (\n    SELECT c1 AS o1, c2 + 1 AS o2, c3\n    FROM (\n        SELECT c1, c2, c3, c4\n        FROM aggregate_test_100\n        WHERE c1 = 'a' AND c2 >= 4\n        ORDER BY c2 ASC, c3 ASC\n    )\n)",
+      "source": "select.slt:1110"
+    },
+    {
+      "sql": "SELECT o1, o2, c3, p1, p2, p3\nFROM\n    (SELECT c1 AS o1, c2 + 1 AS o2, c3 FROM aggregate_test_100),\n    (SELECT c1 AS p1, c2 - 1 AS p2, c3 AS p3 FROM aggregate_test_100)\nLIMIT 5",
+      "source": "select.slt:1131"
+    },
+    {
+      "sql": "select * from largeutf8_data where large_str = '1'",
+      "source": "select.slt:1159"
+    },
+    {
+      "sql": "select * from largeutf8_data where large_str != '1'",
+      "source": "select.slt:1164"
+    },
+    {
+      "sql": "SELECT * FROM empty_table",
+      "source": "select.slt:1177"
+    },
+    {
+      "sql": "select \"INT32\" from case_sensitive_table;",
+      "source": "select.slt:1194"
+    },
+    {
+      "sql": "SELECT a FROM annotated_data_finite2\n        ORDER BY a\n        LIMIT 5",
+      "source": "select.slt:1233"
+    },
+    {
+      "sql": "SELECT * EXCLUDE(b) FROM (\n  SELECT * EXCLUDE a\n    FROM table1\n    ORDER BY c\n    LIMIT 5\n  )",
+      "source": "select.slt:1259"
+    },
+    {
+      "sql": "SELECT * EXCEPT(a, b)\nFROM table1\nORDER BY c\nLIMIT 5",
+      "source": "select.slt:1274"
+    },
+    {
+      "sql": "SELECT * EXCLUDE(a, b)\nFROM table1\nORDER BY c\nLIMIT 5",
+      "source": "select.slt:1284"
+    },
+    {
+      "sql": "SELECT table1.* EXCLUDE(a, b)\nFROM table1\nORDER BY c\nLIMIT 5",
+      "source": "select.slt:1295"
+    },
+    {
+      "sql": "SELECT a as a1, b as b1, * EXCEPT(a)\nFROM table1",
+      "source": "select.slt:1316"
+    },
+    {
+      "sql": "SELECT * EXCLUDE(b, a)\nFROM table1\nORDER BY c\nLIMIT 5",
+      "source": "select.slt:1391"
+    },
+    {
+      "sql": "select z+1, y from (select x+1 as z, y from t) where y > 1;",
+      "source": "select.slt:1613"
+    },
+    {
+      "sql": "SELECT x/2, x/2+1 FROM t;",
+      "source": "select.slt:1631"
+    },
+    {
+      "sql": "SELECT abs(x), abs(x) + abs(y) FROM t;",
+      "source": "select.slt:1649"
+    },
+    {
+      "sql": "SELECT\nCASE WHEN B.x > 0 THEN A.x / B.x ELSE 0 END AS value1,\nCASE WHEN B.x > 0 AND B.y > 0 THEN A.x / B.x ELSE 0 END AS value3\nFROM t AS A, (SELECT * FROM t WHERE x = 0) AS B;",
+      "source": "select.slt:1662"
+    },
+    {
+      "sql": "select coalesce(1, y/x), coalesce(2, y/x) from t;",
+      "source": "select.slt:1711"
+    },
+    {
+      "sql": "SELECT y > 0 and 1 / y < 1, x > 0 and y > 0 and 1 / y < 1 / x from t;",
+      "source": "select.slt:1722"
+    },
+    {
+      "sql": "SELECT y = 0 or 1 / y < 1, x = 0 or y = 0 or 1 / y < 1 / x from t;",
+      "source": "select.slt:1725"
+    },
+    {
+      "sql": "SELECT column1[1] AS i0\nFROM indexed_field LIMIT 3;",
+      "source": "select.slt:1741"
+    },
+    {
+      "sql": "SELECT column1[1] AS i0\nFROM nested_indexed_field LIMIT 3;",
+      "source": "select.slt:1759"
+    },
+    {
+      "sql": "SELECT column1[1][1] AS i0\nFROM nested_indexed_field LIMIT 3;",
+      "source": "select.slt:1767"
+    },
+    {
+      "sql": "SELECT CASE 1 WHEN 2 THEN 4 / 0 END;",
+      "source": "select.slt:1775"
+    },
+    {
+      "sql": "SELECT i + i FROM test WHERE i > 2;",
+      "source": "select.slt:1789"
+    },
+    {
+      "sql": "SELECT to_timestamp('I AM NOT A TIMESTAMP');",
+      "source": "select.slt:1797"
+    },
+    {
+      "sql": "SELECT CAST('' AS int);",
+      "source": "select.slt:1800"
+    },
+    {
+      "sql": "select * from v;",
+      "source": "select.slt:1813"
+    },
+    {
+      "sql": "select count(1) from v;",
+      "source": "select.slt:1818"
+    },
+    {
+      "sql": "select a + b from (select 1 as a, 2 as b, 1 as \"a + b\");",
+      "source": "select.slt:1826"
+    },
+    {
+      "sql": "select a + 1 from (select a+1 from (select 1 as a));",
+      "source": "select.slt:1832"
+    },
+    {
+      "sql": "select \"a + Int64(1)\" + 10 from (select a+1 from (select 1 as a));",
+      "source": "select.slt:1835"
+    },
+    {
+      "sql": "select a from t;",
+      "source": "select.slt:1847"
+    },
+    {
+      "sql": "SELECT \"test.a\" FROM (SELECT a AS \"test.a\" FROM test)",
+      "source": "select.slt:1861"
+    },
+    {
+      "sql": "SELECT t1.v1 FROM (SELECT 1 AS \"t1.v1\");",
+      "source": "select.slt:1870"
+    },
+    {
+      "sql": "SELECT ('0.54321543215432154321543215432154321'::DECIMAL(35,35) + 10000)::VARCHAR",
+      "source": "select.slt:1874"
+    },
+    {
+      "sql": "select * from t a, t b where id = id + 1;",
+      "source": "select.slt:1881"
+    },
+    {
+      "sql": "select *, count(*) over() as ta from t;",
+      "source": "select.slt:1892"
+    },
+    {
+      "sql": "select t_with_user.user from t_with_user;",
+      "source": "select.slt:1908"
+    },
+    {
+      "sql": "select * from t_with_user where t_with_user.user = 'foo';",
+      "source": "select.slt:1915"
+    },
+    {
+      "sql": "select user from t_with_user;",
+      "source": "select.slt:1920"
+    },
+    {
+      "sql": "select * from t_with_user where user = 'foo';",
+      "source": "select.slt:1927"
+    },
+    {
+      "sql": "select t_with_current_time.current_time is not null from t_with_current_time;",
+      "source": "select.slt:1938"
+    },
+    {
+      "sql": "select current_time is not null from t_with_current_time;",
+      "source": "select.slt:1946"
+    },
+    {
+      "sql": "select \"current_time\" is not null from t_with_current_time;",
+      "source": "select.slt:1954"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM t0 AS tt0 WHERE (4==(3/0));",
+      "source": "select.slt:1965"
+    },
+    {
+      "sql": "SELECT t1.a, t2.b FROM t1 INNER JOIN t2 ON t1.a = t2.a ORDER BY t1.a",
+      "source": "joins.slt:239"
+    },
+    {
+      "sql": "SELECT t1.a, t2.b FROM t1 INNER JOIN t2 ON t2.a = t1.a ORDER BY t1.a",
+      "source": "joins.slt:246"
+    },
+    {
+      "sql": "SELECT * FROM (SELECT null AS id1) t1\nINNER JOIN (SELECT null AS id2) t2 ON id1 = id2",
+      "source": "joins.slt:254"
+    },
+    {
+      "sql": "select a.a, b.b from a join b on a.a = b.b",
+      "source": "joins.slt:285"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_name FROM t1 LEFT JOIN t2 ON t1_id = t2_id ORDER BY t1_id",
+      "source": "joins.slt:314"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_name FROM t1 LEFT JOIN t2 ON t2_id = t1_id ORDER BY t1_id",
+      "source": "joins.slt:323"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_name FROM t1 CROSS JOIN t2 ORDER BY t1_id, t1_name, t2_name",
+      "source": "joins.slt:334"
+    },
+    {
+      "sql": "SELECT t1_id, t2_id, t2_name FROM t1 LEFT JOIN t2 ON t1_id = t2_id WHERE t2_name IS NULL ORDER BY t1_id",
+      "source": "joins.slt:388"
+    },
+    {
+      "sql": "SELECT t1_id, t2_id, t2_name FROM t1 LEFT JOIN t2 ON t1_id = t2_id WHERE t2_id IS NULL ORDER BY t1_id",
+      "source": "joins.slt:398"
+    },
+    {
+      "sql": "SELECT t1_id, t2_id, t2_name FROM t1 LEFT JOIN t2 ON t1_id = t2_id WHERE t2_name IS NOT NULL ORDER BY t1_id",
+      "source": "joins.slt:406"
+    },
+    {
+      "sql": "SELECT t1_id, t2_id, t2_name FROM t1 LEFT JOIN t2 ON t1_id = t2_id WHERE t2_id IS NOT NULL ORDER BY t1_id",
+      "source": "joins.slt:414"
+    },
+    {
+      "sql": "SELECT x.t1_id, y.t1_id FROM t1 x JOIN t1 y ON x.t1_id = 11 AND y.t1_id = 44",
+      "source": "joins.slt:423"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_id FROM t1 RIGHT JOIN t2 ON t1_id = t2_id WHERE t1_name IS NULL ORDER BY t2_id",
+      "source": "joins.slt:429"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_id FROM t1 RIGHT JOIN t2 ON t1_id = t2_id WHERE t1_id IS NULL ORDER BY t2_id",
+      "source": "joins.slt:436"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_id FROM t1 RIGHT JOIN t2 ON t1_id = t2_id WHERE t1_name IS NOT NULL ORDER BY t2_id",
+      "source": "joins.slt:442"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_id FROM t1 RIGHT JOIN t2 ON t1_id = t2_id WHERE t1_id IS NOT NULL ORDER BY t2_id",
+      "source": "joins.slt:450"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_id FROM t1 FULL OUTER JOIN t2 ON t1_id = t2_id WHERE t1_name IS NULL ORDER BY t1_id",
+      "source": "joins.slt:459"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_id FROM t1 FULL OUTER JOIN t2 ON t1_id = t2_id WHERE t1_name IS NOT NULL ORDER BY t1_id",
+      "source": "joins.slt:467"
+    },
+    {
+      "sql": "SELECT id, t1_name, t2_name FROM t1 LEFT JOIN t2 USING (id) ORDER BY id",
+      "source": "joins.slt:504"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_name FROM t1, t2 ORDER BY t1_id, t1_name, t2_name",
+      "source": "joins.slt:552"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_name FROM t1, t2 WHERE 1=1 ORDER BY t1_id, t1_name, t2_name",
+      "source": "joins.slt:572"
+    },
+    {
+      "sql": "SELECT * FROM (SELECT t1_id, t1_name FROM t1 UNION ALL SELECT t1_id, t1_name FROM t1) AS t1 CROSS JOIN t2",
+      "source": "joins.slt:612"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_name FROM t1 CROSS JOIN (SELECT t2_name FROM t2 UNION ALL SELECT t2_name FROM t2) AS t2_data",
+      "source": "joins.slt:648"
+    },
+    {
+      "sql": "SELECT *\nFROM timestamp as a\nJOIN (SELECT * FROM timestamp) as b\nON a.time = b.time\nORDER BY a.time",
+      "source": "joins.slt:834"
+    },
+    {
+      "sql": "SELECT *\nFROM population as a\nJOIN (SELECT * FROM population) as b\nON a.population = b.population\nORDER BY a.population",
+      "source": "joins.slt:856"
+    },
+    {
+      "sql": "SELECT t1.a, t1.b, t1.c, t2.a, t2.b, t2.c\nFROM t1\nINNER JOIN t2 ON t1.a = t2.a\nORDER BY t1.a",
+      "source": "joins.slt:908"
+    },
+    {
+      "sql": "SELECT t1.a, t1.b, t1.c, t2.a, t2.b, t2.c\nFROM t1\nINNER JOIN t2 ON t2.a = t1.a\nORDER BY t1.a",
+      "source": "joins.slt:918"
+    },
+    {
+      "sql": "select * from (select 1 as a, 2 as b) c INNER JOIN (select 1 as a, 3 as d) e on c.a = e.a",
+      "source": "joins.slt:938"
+    },
+    {
+      "sql": "SELECT t1.id, t2.id, t1.city, t2.country FROM cities AS t1 JOIN countries AS t2 ON t1.country_id = t2.id ORDER BY t1.id",
+      "source": "joins.slt:961"
+    },
+    {
+      "sql": "SELECT * FROM t1 LEFT JOIN t2 ON t1_id = t2_id",
+      "source": "joins.slt:997"
+    },
+    {
+      "sql": "SELECT * FROM t2 RIGHT JOIN t1 ON t1_id = t2_id",
+      "source": "joins.slt:1006"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_name\nFROM join_t1\nJOIN join_t2 ON t1_id = t2_id\nORDER BY t1_id",
+      "source": "joins.slt:1187"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t2_name\nFROM join_t1\nJOIN join_t2 ON t2_id = t1_id\nORDER BY t1_id",
+      "source": "joins.slt:1197"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name\nFROM lsaj_t1\nWHERE NOT EXISTS (SELECT 1 FROM lsaj_t2 WHERE t1_id = t2_id)\nORDER BY t1_id",
+      "source": "joins.slt:1234"
+    },
+    {
+      "sql": "SELECT t1_id\nFROM lsaj_t1\nEXCEPT SELECT t2_id FROM lsaj_t2\nORDER BY t1_id",
+      "source": "joins.slt:1243"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name\nFROM lsaj_t1\nLEFT ANTI JOIN lsaj_t2 ON (t1_id = t2_id)\nORDER BY t1_id",
+      "source": "joins.slt:1251"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name\nFROM lsaj_t1\nWHERE NOT EXISTS (SELECT 1 FROM lsaj_t2 WHERE t1_id = t2_id and t1_id > 11)\nORDER BY t1_id",
+      "source": "joins.slt:1295"
+    },
+    {
+      "sql": "select join_t3.s3, join_t4.s4\nfrom join_t3\ninner join join_t4 on join_t3.s3 = join_t4.s4",
+      "source": "joins.slt:1404"
+    },
+    {
+      "sql": "SELECT * FROM join_t3\nEXCEPT\nSELECT * FROM join_t4",
+      "source": "joins.slt:1413"
+    },
+    {
+      "sql": "select col1, col2, coalesce(sum_col3, 0) as sum_col3\nfrom (select distinct col2 from tbl) AS q1\ncross join (select distinct col1 from tbl) AS q2\nleft outer join (SELECT col1, col2, sum(col3) as sum_col3 FROM tbl GROUP BY col1, col2) AS q3\nUSING(col2, col1)\nORDER BY col1, col2",
+      "source": "joins.slt:1846"
+    },
+    {
+      "sql": "select join_t1.t1_id, join_t1.t1_name, join_t1.t1_int\nfrom join_t1\nwhere join_t1.t1_id + 12 in (select join_t2.t2_id + 1 from join_t2)",
+      "source": "joins.slt:1885"
+    },
+    {
+      "sql": "select join_t1.t1_id, join_t1.t1_name, join_t1.t1_int\nfrom join_t1\nwhere join_t1.t1_id + 12 in\n    (\n        select join_t2.t2_id + 1\n        from join_t2\n        where join_t1.t1_int <= join_t2.t2_int and join_t2.t2_int > 0\n    )",
+      "source": "joins.slt:1915"
+    },
+    {
+      "sql": "select join_t1.t1_id, join_t1.t1_name, join_t1.t1_int\nfrom join_t1\nwhere join_t1.t1_id + 12 in\n    (\n        select join_t2.t2_id + 1\n        from join_t2\n        where join_t1.t1_int <= join_t2.t2_int\n          and join_t1.t1_name != join_t2.t2_name\n          and join_t2.t2_int > 0\n    )",
+      "source": "joins.slt:1951"
+    },
+    {
+      "sql": "select join_t1.t1_id, join_t1.t1_name, join_t1.t1_int\nfrom join_t1\nwhere join_t1.t1_id + 12 in\n    (\n        select join_t2.t2_id + 1\n        from join_t2\n        where join_t1.t1_int <= join_t2.t2_int\n          and join_t1.t1_name != join_t2.t2_name\n    )\n  and join_t1.t1_id > 0",
+      "source": "joins.slt:2022"
+    },
+    {
+      "sql": "select join_t1.t1_id, join_t1.t1_name, join_t1.t1_int\nfrom join_t1\nwhere join_t1.t1_id + 12 in (select join_t2.t2_id + 1 from join_t2)\n  and join_t1.t1_int in (select join_t2.t2_int + 1 from join_t2)\n  and join_t1.t1_id > 0",
+      "source": "joins.slt:2059"
+    },
+    {
+      "sql": "SELECT join_t1.t1_id, join_t2.t2_id\nFROM join_t1\nINNER JOIN join_t2 ON join_t1.t1_id > join_t2.t2_id\nWHERE join_t1.t1_id > 10 AND join_t2.t2_int > 1\nORDER BY 1",
+      "source": "joins.slt:2106"
+    },
+    {
+      "sql": "SELECT join_t1.t1_id, join_t2.t2_id\nFROM (select t1_id from join_t1 where join_t1.t1_id > 22) as join_t1\nRIGHT JOIN (select t2_id from join_t2 where join_t2.t2_id > 11) as join_t2\n        ON join_t1.t1_id < join_t2.t2_id\nORDER BY 1, 2",
+      "source": "joins.slt:2175"
+    },
+    {
+      "sql": "SELECT *\nFROM join_t1\nWHERE EXISTS (\n    SELECT t2_id\n    FROM join_t2\n    WHERE join_t1.t1_id + 1 > join_t2.t2_id * 2\n)\nORDER BY 1",
+      "source": "joins.slt:2219"
+    },
+    {
+      "sql": "SELECT *\nFROM join_t1\nWHERE EXISTS (\n    SELECT t2_id\n    FROM join_t2\n    WHERE join_t1.t1_id + 1 > join_t2.t2_id * 2 AND join_t2.t2_int < 3\n)",
+      "source": "joins.slt:2273"
+    },
+    {
+      "sql": "SELECT *\nFROM join_t1\nWHERE EXISTS (\n    SELECT t2_id\n    FROM join_t2\n    WHERE join_t1.t1_id + 1 > join_t2.t2_id * 2 AND join_t1.t1_int < 3\n)",
+      "source": "joins.slt:2320"
+    },
+    {
+      "sql": "SELECT *\nFROM join_t1\nWHERE NOT EXISTS (\n    SELECT t2_id\n    FROM join_t2\n    WHERE join_t1.t1_id + 1 > join_t2.t2_id * 2\n)",
+      "source": "joins.slt:2366"
+    },
+    {
+      "sql": "SELECT *\nFROM join_t1\nWHERE NOT EXISTS (\n    SELECT DISTINCT t2_int\n    FROM join_t2\n    WHERE join_t1.t1_id + 1 > join_t2.t2_id * 2\n)",
+      "source": "joins.slt:2415"
+    },
+    {
+      "sql": "SELECT *\nFROM join_t1\nWHERE NOT EXISTS(\n    SELECT DISTINCT t2_id + t2_int, t2_int\n    FROM join_t2\n    WHERE join_t1.t1_id + 1 > join_t2.t2_id * 2\n)",
+      "source": "joins.slt:2464"
+    },
+    {
+      "sql": "SELECT * FROM join_t1\nWHERE NOT EXISTS(\n    SELECT DISTINCT 1, t2_int\n    FROM join_t2\n    WHERE join_t1.t1_id + 1 > join_t2.t2_id * 2\n)",
+      "source": "joins.slt:2512"
+    },
+    {
+      "sql": "select * from\ntest_timestamps_table",
+      "source": "joins.slt:2557"
+    },
+    {
+      "sql": "select * from\ntest_timestamps_tz_table",
+      "source": "joins.slt:2567"
+    },
+    {
+      "sql": "SELECT * FROM test_timestamps_table as t1 JOIN (SELECT * FROM test_timestamps_table ) as t2 ON t1.nanos = t2.nanos;",
+      "source": "joins.slt:2577"
+    },
+    {
+      "sql": "SELECT * FROM test_timestamps_tz_table as t1 JOIN (SELECT * FROM test_timestamps_tz_table ) as t2 ON t1.nanos = t2.nanos;",
+      "source": "joins.slt:2585"
+    },
+    {
+      "sql": "SELECT * FROM test_timestamps_table as t1 JOIN (SELECT * FROM test_timestamps_table ) as t2 ON t1.micros = t2.micros",
+      "source": "joins.slt:2593"
+    },
+    {
+      "sql": "SELECT * FROM test_timestamps_tz_table as t1 JOIN (SELECT * FROM test_timestamps_tz_table ) as t2 ON t1.micros = t2.micros",
+      "source": "joins.slt:2601"
+    },
+    {
+      "sql": "SELECT * FROM test_timestamps_table as t1 JOIN (SELECT * FROM test_timestamps_table ) as t2 ON t1.millis = t2.millis",
+      "source": "joins.slt:2609"
+    },
+    {
+      "sql": "SELECT * FROM test_timestamps_tz_table as t1 JOIN (SELECT * FROM test_timestamps_tz_table ) as t2 ON t1.millis = t2.millis",
+      "source": "joins.slt:2617"
+    },
+    {
+      "sql": "SELECT t1.c1, t2.c2 FROM test_partition_table t1 JOIN test_partition_table t2 USING (c2) ORDER BY t2.c2;",
+      "source": "joins.slt:2651"
+    },
+    {
+      "sql": "SELECT t1.c1, t2.c2 FROM test_partition_table t1 JOIN test_partition_table t2 USING (t2.c2) ORDER BY t2.c2;",
+      "source": "joins.slt:2666"
+    },
+    {
+      "sql": "SELECT t1.c1, t1.c2, t2.c2 FROM test_partition_table t1 JOIN test_partition_table t2 USING (c2) ORDER BY t2.c2",
+      "source": "joins.slt:2670"
+    },
+    {
+      "sql": "SELECT t1.c1, t1.c2, t2.c2 FROM test_partition_table t1 JOIN test_partition_table t2 ON t1.c2 = t2.c2 ORDER BY t1.c2",
+      "source": "joins.slt:2685"
+    },
+    {
+      "sql": "select * from hashjoin_datatype_table_t1 t1 join hashjoin_datatype_table_t2 t2 on t1.c1 = t2.c1",
+      "source": "joins.slt:2718"
+    },
+    {
+      "sql": "select * from hashjoin_datatype_table_t1 t1 left join hashjoin_datatype_table_t2 t2 on t1.c2 = t2.c2",
+      "source": "joins.slt:2737"
+    },
+    {
+      "sql": "select * from hashjoin_datatype_table_t1 t1 right join hashjoin_datatype_table_t1 t2 on t1.c3 = t2.c3",
+      "source": "joins.slt:2758"
+    },
+    {
+      "sql": "select * from hashjoin_datatype_table_t1 t1 join hashjoin_datatype_table_t2 t2 on t1.c4 = t2.c4",
+      "source": "joins.slt:2778"
+    },
+    {
+      "sql": "select * from hashjoin_datatype_table_t1 t1 right join hashjoin_datatype_table_t2 t2 on t1.c3 = t2.c3",
+      "source": "joins.slt:2854"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name FROM left_semi_anti_join_table_t1 t1 WHERE t1_id IN (SELECT t2_id FROM left_semi_anti_join_table_t2 t2) ORDER BY t1_id",
+      "source": "joins.slt:2910"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name FROM left_semi_anti_join_table_t1 t1 WHERE EXISTS (SELECT 1 FROM left_semi_anti_join_table_t2 t2 WHERE t1_id = t2_id) ORDER BY t1_id",
+      "source": "joins.slt:2918"
+    },
+    {
+      "sql": "SELECT t1_id FROM left_semi_anti_join_table_t1 t1 INTERSECT SELECT t2_id FROM left_semi_anti_join_table_t2 t2 ORDER BY t1_id",
+      "source": "joins.slt:2926"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name FROM left_semi_anti_join_table_t1 t1 LEFT SEMI JOIN left_semi_anti_join_table_t2 t2 ON (t1_id = t2_id) ORDER BY t1_id",
+      "source": "joins.slt:2946"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t1_int FROM right_semi_anti_join_table_t1 t1 WHERE EXISTS (SELECT * FROM right_semi_anti_join_table_t2 t2 where t2.t2_id = t1.t1_id and t2.t2_name <> t1.t1_name) ORDER BY t1_id",
+      "source": "joins.slt:3097"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name, t1_int FROM right_semi_anti_join_table_t2 t2 RIGHT SEMI JOIN right_semi_anti_join_table_t1 t1 on (t2.t2_id = t1.t1_id and t2.t2_name <> t1.t1_name) ORDER BY t1_id",
+      "source": "joins.slt:3114"
+    },
+    {
+      "sql": "select * from ((select 1 as a, 2 as b) c INNER JOIN (select 1 as c, 3 as d) e on c.a = e.c) f;",
+      "source": "joins.slt:3587"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name FROM join_test_left WHERE t1_id NOT IN (SELECT t2_id FROM join_test_right) ORDER BY t1_id;",
+      "source": "joins.slt:3616"
+    },
+    {
+      "sql": "SELECT 1 FROM join_partitioned_table JOIN (SELECT c1 AS id1 FROM join_partitioned_table) AS a ON c1=id1;",
+      "source": "joins.slt:3632"
+    },
+    {
+      "sql": "SELECT * FROM (\n    SELECT 1 as c, 2 as d\n    UNION ALL\n    SELECT 1 as c, 3 AS d\n) as a FULL JOIN (SELECT 1 as e, 3 AS f) AS rhs ON a.c=rhs.e;",
+      "source": "joins.slt:3684"
+    },
+    {
+      "sql": "SELECT * FROM (\n    SELECT * from left_table_no_nulls\n) as lhs RIGHT JOIN (\n    SELECT * from right_table_no_nulls\n    ORDER BY b\n    LIMIT 10\n) AS rhs ON lhs.b=rhs.b",
+      "source": "joins.slt:3896"
+    },
+    {
+      "sql": "SELECT * FROM (\n    SELECT * from left_table_missing_probe\n) as lhs RIGHT JOIN (\n    SELECT * from right_table_missing_probe\n    ORDER BY b\n    LIMIT 10\n) AS rhs ON lhs.b=rhs.b",
+      "source": "joins.slt:3953"
+    },
+    {
+      "sql": "SELECT * FROM (\n    SELECT * from left_table_append_null_build\n) as lhs RIGHT JOIN (\n    SELECT * from right_table_append_null_build\n    ORDER BY b\n    LIMIT 10\n) AS rhs ON lhs.b=rhs.b",
+      "source": "joins.slt:4007"
+    },
+    {
+      "sql": "select t1_id, t1_name, i from join_t1 t1 cross join lateral (select * from unnest(generate_series(1, t1_int))) as series(i);",
+      "source": "joins.slt:4067"
+    },
+    {
+      "sql": "select t1_id, t1_name, i from join_t1 t2 inner join lateral (select * from unnest(generate_series(1, t1_int))) as series(i) on(t1_id > i);",
+      "source": "joins.slt:4091"
+    },
+    {
+      "sql": "select t1_id, t1_name, i from join_t1 t1 right join lateral (select * from unnest(generate_series(1, t1_int))) as series(i);",
+      "source": "joins.slt:4095"
+    },
+    {
+      "sql": "select * from t1 LEFT JOIN t2 ON t1.a = t2.b LIMIT 2;",
+      "source": "joins.slt:4325"
+    },
+    {
+      "sql": "select * from t1 RIGHT JOIN t2 ON t1.a = t2.b LIMIT 2;",
+      "source": "joins.slt:4359"
+    },
+    {
+      "sql": "select * from t1 FULL JOIN t2 ON t1.a = t2.b;",
+      "source": "joins.slt:4391"
+    },
+    {
+      "sql": "select * from t1 FULL JOIN t2 ON t1.a = t2.b LIMIT 2;",
+      "source": "joins.slt:4403"
+    },
+    {
+      "sql": "select * from table1 as t1 natural join table1_stringview as t2;",
+      "source": "joins.slt:4438"
+    },
+    {
+      "sql": "select * from test where a in (select a from test where b > 3) order by c desc nulls first;",
+      "source": "joins.slt:4517"
+    },
+    {
+      "sql": "select * from test where a in (select a from test where b > 3) order by c desc nulls last;",
+      "source": "joins.slt:4523"
+    },
+    {
+      "sql": "SELECT * FROM j1, (j2 CROSS JOIN LATERAL (SELECT * FROM j3 WHERE j1_id + j2_id = j3_id) AS j3_lat);",
+      "source": "joins.slt:4741"
+    },
+    {
+      "sql": "SELECT * FROM compound_field_table_t tee JOIN compound_field_table_u you ON tee.column1['r'] = you.column1['r']",
+      "source": "joins.slt:4826"
+    },
+    {
+      "sql": "SELECT * FROM compound_field_table_t JOIN compound_field_table_u ON compound_field_table_t.column1['r'] = compound_field_table_u.column1['r']",
+      "source": "joins.slt:4833"
+    },
+    {
+      "sql": "SELECT * FROM compound_field_table_t tee JOIN compound_field_table_u you ON tee.column1['c'] = you.column1['c']",
+      "source": "joins.slt:4840"
+    },
+    {
+      "sql": "SELECT * FROM compound_field_table_t tee JOIN compound_field_table_u you ON tee.column1['r'] = you.column1['r'] AND tee.column1['c'] = you.column1['c']",
+      "source": "joins.slt:4847"
+    },
+    {
+      "sql": "SELECT *\nFROM t1\nLEFT ANTI JOIN t2 ON t1.k = t2.k\nORDER BY t1.k\nLIMIT 2;",
+      "source": "joins.slt:4896"
+    },
+    {
+      "sql": "SELECT sum(k1), sum(v1), sum(k2), sum(v2)\nFROM t1\nJOIN t2 ON k1 = k2",
+      "source": "joins.slt:4959"
+    },
+    {
+      "sql": "SELECT sum(k1), sum(v1), sum(k2), sum(v2)\nFROM t1\nLEFT JOIN t2 ON k1 = k2",
+      "source": "joins.slt:4978"
+    },
+    {
+      "sql": "SELECT sum(k1), sum(v1), sum(k2), sum(v2)\nFROM t1\nRIGHT JOIN t2 ON k1 = k2",
+      "source": "joins.slt:4997"
+    },
+    {
+      "sql": "SELECT sum(k1), sum(v1)\nFROM t1\nLEFT SEMI JOIN t2 ON k1 = k2",
+      "source": "joins.slt:5016"
+    },
+    {
+      "sql": "SELECT sum(k2), sum(v2)\nFROM t1\nRIGHT SEMI JOIN t2 ON k1 = k2",
+      "source": "joins.slt:5035"
+    },
+    {
+      "sql": "SELECT sum(k1), sum(v1)\nFROM t1\nLEFT ANTI JOIN t2 ON k1 = k2",
+      "source": "joins.slt:5054"
+    },
+    {
+      "sql": "SELECT sum(k2), sum(v2)\nFROM t1\nRIGHT ANTI JOIN t2 ON k1 = k2",
+      "source": "joins.slt:5073"
+    },
+    {
+      "sql": "SELECT sum(k1), sum(v1), sum(k2), sum(v2)\nFROM t1\nFULL JOIN t2 ON k1 = k2",
+      "source": "joins.slt:5092"
+    },
+    {
+      "sql": "SELECT *\nFROM t2\nWHERE k2 > 0\n    OR EXISTS (\n        SELECT *\n        FROM t1\n        WHERE k2 = k1\n    )",
+      "source": "joins.slt:5117"
+    },
+    {
+      "sql": "SELECT distinct(v1)\nFROM t1\nLEFT ANTI JOIN t2 ON k1 = k2",
+      "source": "joins.slt:5141"
+    },
+    {
+      "sql": "SELECT *\nFROM t1\nLEFT ANTI JOIN t2 ON k1 = k2\nWHERE k1 < 0",
+      "source": "joins.slt:5163"
+    },
+    {
+      "sql": "WITH t1 (k) AS (\n    VALUES (1), (2)\n), t2 (k) AS (\n    VALUES (1)\n)\nSELECT *\nFROM t1\nLEFT ANTI JOIN (\n    SELECT *\n    FROM t2\n    WHERE k <> 1\n) t2 ON t1.k = t2.k;",
+      "source": "joins.slt:5196"
+    },
+    {
+      "sql": "SELECT c\n  FROM t1\n WHERE c > d\n    OR EXISTS(SELECT 1 FROM t1 AS x WHERE x.b<t1.b)\n    OR (c <= d-2 OR c >= d+2)",
+      "source": "joins.slt:5228"
+    },
+    {
+      "sql": "SELECT t1.c0, t1.c1, t1.c2\nFROM t1_c t1\nINNER JOIN t2_c t2 ON t1.c0 = t2.c0;",
+      "source": "joins.slt:5324"
+    },
+    {
+      "sql": "SELECT t1.c0, t1.c1, t1.c2\nFROM t1_c t1\nINNER JOIN t2_c t2 ON t1.c0 = t2.c0 AND t1.c1 = t2.c1;",
+      "source": "joins.slt:5333"
+    },
+    {
+      "sql": "SELECT\n  l.id,\n  l.join_key as left_key,\n  r.join_key as right_key,\n  r.value\nFROM issue_19067_left l\nLEFT JOIN issue_19067_right r ON l.join_key = r.join_key\nORDER BY l.id;",
+      "source": "joins.slt:5379"
+    },
+    {
+      "sql": "SELECT count(1) FROM empty_proj_left RIGHT JOIN empty_proj_right ON empty_proj_left.column1 = empty_proj_right.column1;",
+      "source": "joins.slt:5432"
+    },
+    {
+      "sql": "SELECT count(1) FROM empty_proj_left FULL JOIN empty_proj_right ON empty_proj_left.column1 = empty_proj_right.column1;",
+      "source": "joins.slt:5437"
+    },
+    {
+      "sql": "SELECT s.id, s.region, l.value\nFROM issue_20437_small s\nJOIN issue_20437_large l ON s.id = l.id AND s.region = l.region\nORDER BY s.id;",
+      "source": "joins.slt:5461"
+    },
+    {
+      "sql": "WITH t AS (\n    SELECT *\n    FROM t1\n    LEFT ANTI JOIN t2 ON t1.k = t2.k\n)\nSELECT count(*)\nFROM t;",
+      "source": "joins.slt:5491"
+    },
+    {
+      "sql": "WITH t AS (\n    SELECT *\n    FROM t1\n    LEFT SEMI JOIN t2 ON t1.k = t2.k\n)\nSELECT count(*)\nFROM t;",
+      "source": "joins.slt:5502"
+    },
+    {
+      "sql": "SELECT sub.a, sub.b FROM (\n  SELECT * FROM t1 ORDER BY b LIMIT 1\n) sub\nJOIN t2 ON sub.a = t2.c;",
+      "source": "joins.slt:5556"
+    },
+    {
+      "sql": "SELECT id, v, w FROM nlj_left LEFT JOIN nlj_right ON nlj_left.v < nlj_right.w ORDER BY id, w;",
+      "source": "joins.slt:5585"
+    },
+    {
+      "sql": "select * from (WITH source AS (select 1 as e) SELECT * FROM source) t1,   (WITH source AS (select 1 as e) SELECT * FROM source) t2",
+      "source": "cte.slt:19"
+    },
+    {
+      "sql": "WITH \"T\" AS (SELECT 1 a) SELECT \"T\".* FROM \"T\"",
+      "source": "cte.slt:25"
+    },
+    {
+      "sql": "with barbaz as (select * from orders) select * from \"barbaz\";",
+      "source": "cte.slt:72"
+    },
+    {
+      "sql": "with BarBaz as (select * from orders) select * from \"barbaz\";",
+      "source": "cte.slt:78"
+    },
+    {
+      "sql": "with barbaz as (select * from orders) select * from barbaz;",
+      "source": "cte.slt:84"
+    },
+    {
+      "sql": "WITH RECURSIVE nodes AS (\n    SELECT 1 as id\n    UNION ALL\n    SELECT id + 1 as id\n    FROM nodes\n    WHERE id < 3\n) SELECT * FROM nodes",
+      "source": "cte.slt:120"
+    },
+    {
+      "sql": "WITH RECURSIVE nodes AS (\n    SELECT 1 as id\n    UNION ALL\n    SELECT id + 1 as id\n    FROM nodes\n    WHERE id < 10\n)\nSELECT * FROM nodes",
+      "source": "cte.slt:133"
+    },
+    {
+      "sql": "WITH RECURSIVE t(n) AS (\n    SELECT 1\n    UNION ALL\n    SELECT n + 1 FROM t WHERE n < 10\n)\nSELECT n FROM t",
+      "source": "cte.slt:185"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a, b) AS (\n    SELECT 1, 2\n    UNION ALL\n    SELECT a + 1, b * 2 FROM t WHERE a < 5\n)\nSELECT a, b FROM t",
+      "source": "cte.slt:205"
+    },
+    {
+      "sql": "WITH RECURSIVE t(n) AS (\n    SELECT 1\n    UNION\n    SELECT n + 1 FROM t WHERE n < 5\n)\nSELECT n FROM t",
+      "source": "cte.slt:220"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a, b) AS (\n    SELECT 1\n    UNION ALL\n    SELECT a + 1 FROM t WHERE a < 3\n)\nSELECT * FROM t",
+      "source": "cte.slt:236"
+    },
+    {
+      "sql": "WITH RECURSIVE t(\"N\") AS (\n    SELECT 1\n    UNION ALL\n    SELECT \"N\" + 1 FROM t WHERE \"N\" < 5\n)\nSELECT \"N\" FROM t",
+      "source": "cte.slt:274"
+    },
+    {
+      "sql": "WITH RECURSIVE nodes AS (\n    SELECT id from (VALUES (1), (2)) nodes(id)\n    UNION\n    SELECT id + 1 as id\n    FROM nodes\n    WHERE id < 4\n)\nSELECT * FROM nodes",
+      "source": "cte.slt:289"
+    },
+    {
+      "sql": "WITH RECURSIVE ranges AS (\n    SELECT min, max from (VALUES (1, 1), (2, 2)) ranges(min, max)\n    UNION\n    SELECT min, max + 1 as max\n    FROM ranges\n    WHERE max < 4\n)\nSELECT * FROM ranges",
+      "source": "cte.slt:305"
+    },
+    {
+      "sql": "WITH RECURSIVE balances AS (\n    SELECT * from balance\n    UNION ALL\n    SELECT time + 1 as time, name, account_balance + 10 as account_balance\n    FROM balances\n    WHERE time < 10\n)\nSELECT * FROM balances\nORDER BY time, name, account_balance",
+      "source": "cte.slt:370"
+    },
+    {
+      "sql": "WITH RECURSIVE balances AS (\n    SELECT time as time, name as name, account_balance as account_balance\n    FROM balance\n    UNION ALL\n    SELECT time + 1 as time, balances.name, account_balance + growth.account_growth as account_balance\n    FROM balances\n    JOIN growth\n    ON balances.name = growth.name\n    WHERE time < 10\n)\nSELECT * FROM balances\nORDER BY time, name, account_balance",
+      "source": "cte.slt:425"
+    },
+    {
+      "sql": "WITH RECURSIVE nodes AS (\n    SELECT 1 as id\n    UNION ALL\n    SELECT id + 1 as id\n    FROM nodes\n    WHERE id < 10\n)\nSELECT sum(id) FROM nodes",
+      "source": "cte.slt:479"
+    },
+    {
+      "sql": "WITH RECURSIVE my_cte AS (\n    SELECT a from t\n    UNION ALL\n    SELECT a+2 as a\n    FROM my_cte\n    WHERE a<5\n)\nSELECT * FROM my_cte t1, my_cte",
+      "source": "cte.slt:496"
+    },
+    {
+      "sql": "WITH RECURSIVE \"recursive_cte\" AS (\n    SELECT 1 as \"val\"\n  UNION ALL (\n    WITH \"sub_cte\" AS (\n      SELECT\n        time,\n        1 as \"val\"\n      FROM\n        (SELECT DISTINCT \"time\" FROM \"balance\")\n    )\n    SELECT\n      2 as \"val\"\n    FROM\n      \"recursive_cte\"\n      FULL JOIN \"sub_cte\" ON 1 = 1\n    WHERE\n      \"recursive_cte\".\"val\" < 2\n  )\n)\nSELECT\n   *\nFROM\n  \"recursive_cte\";",
+      "source": "cte.slt:572"
+    },
+    {
+      "sql": "WITH RECURSIVE \"recursive_cte\" AS (\n  (\n    WITH \"min_prices_row_num_cte\" AS (\n      SELECT\n        MIN(\"prices\".\"prices_row_num\") AS \"prices_row_num\"\n      FROM\n        \"prices\"\n    ),\n    \"min_prices_row_num_cte_second\" AS (\n      SELECT\n        MIN(\"prices\".\"prices_row_num\") AS \"prices_row_num_advancement\"\n      FROM\n        \"prices\"\n      WHERE\n        \"prices\".\"prices_row_num\" > (\n          SELECT\n            \"prices_row_num\"\n          FROM\n            \"min_prices_row_num_cte\"\n        )\n    )\n    SELECT\n      0.0 AS \"beg\",\n      (0.0 + 50) AS \"end\",\n      (\n        SELECT\n          \"prices_row_num\"\n        FROM\n          \"min_prices_row_num_cte\"\n      ) AS \"prices_row_num\",\n      (\n        SELECT\n          \"prices_row_num_advancement\"\n        FROM\n          \"min_prices_row_num_cte_second\"\n      ) AS \"prices_row_num_advancement\"\n    FROM\n      \"prices\"\n    WHERE\n      \"prices\".\"prices_row_num\" = (\n        SELECT\n          DISTINCT \"prices_row_num\"\n        FROM\n          \"min_prices_row_num_cte\"\n      )\n  )\n  UNION ALL (\n    WITH \"min_prices_row_num_cte\" AS (\n      SELECT\n        \"prices\".\"prices_row_num\" AS \"prices_row_num\",\n        LEAD(\"prices\".\"prices_row_num\", 1) OVER (\n          ORDER BY \"prices_row_num\"\n        ) AS \"prices_row_num_advancement\"\n      FROM\n        (\n          SELECT\n            DISTINCT \"prices_row_num\"\n          FROM\n            \"prices\"\n        ) AS \"prices\"\n    )\n    SELECT\n      \"recursive_cte\".\"end\" AS \"beg\",\n      (\"recursive_cte\".\"end\" + 50) AS \"end\",\n      \"min_prices_row_num_cte\".\"prices_row_num\" AS \"prices_row_num\",\n      \"min_prices_row_num_cte\".\"prices_row_num_advancement\" AS \"prices_row_num_advancement\"\n    FROM\n      \"recursive_cte\"\n      FULL JOIN \"prices\" ON \"prices\".\"prices_row_num\" = \"recursive_cte\".\"prices_row_num_advancement\"\n      FULL JOIN \"min_prices_row_num_cte\" ON \"min_prices_row_num_cte\".\"prices_row_num\" = COALESCE(\n        \"prices\".\"prices_row_num\",\n        \"recursive_cte\".\"prices_row_num_advancement\"\n      )\n    WHERE\n      \"recursive_cte\".\"prices_row_num_advancement\" IS NOT NULL\n  )\n)\nSELECT\n  DISTINCT *\nFROM\n  \"recursive_cte\"\nORDER BY\n  \"prices_row_num\" ASC;",
+      "source": "cte.slt:606"
+    },
+    {
+      "sql": "WITH RECURSIVE region_sales AS (\n    -- Anchor member\n    SELECT\n        s.salesperson_id AS salesperson_id,\n        SUM(s.sale_amount) AS amount,\n        0 as level\n    FROM\n        sales s\n    GROUP BY\n        s.salesperson_id\n    UNION ALL\n    -- Recursive member\n    SELECT\n      sp.manager_id AS salesperson_id,\n      SUM(rs.amount) AS amount,\n      MIN(rs.level) + 1 as level\n    FROM\n        region_sales rs\n    INNER JOIN salespersons sp ON rs.salesperson_id = sp.salesperson_id\n    WHERE sp.manager_id IS NOT NULL\n    GROUP BY\n      sp.manager_id\n)\nSELECT\n    salesperson_id,\n    MAX(amount) as amount,\n    MAX(level) as hierarchy_level\nFROM\n    region_sales\nGROUP BY\n  salesperson_id\nORDER BY\n  hierarchy_level ASC, salesperson_id ASC;",
+      "source": "cte.slt:802"
+    },
+    {
+      "sql": "WITH RECURSIVE outer_cte AS (\n    SELECT 1 as a\n    UNION ALL (\n        WITH RECURSIVE nested_cte AS (\n           SELECT 1 as a\n           UNION ALL\n           SELECT a + 2 as a\n           FROM nested_cte where a < 3\n        )\n        SELECT outer_cte.a + 2 as a\n        FROM outer_cte JOIN nested_cte USING(a)\n        WHERE nested_cte.a < 4\n    )\n)\nSELECT a FROM outer_cte;",
+      "source": "cte.slt:846"
+    },
+    {
+      "sql": "WITH RECURSIVE outer_cte AS (\n    SELECT 1 as a\n    UNION ALL (\n        WITH RECURSIVE nested_cte AS (\n           SELECT 1 as a\n           UNION ALL (\n               WITH RECURSIVE outer_cte AS (\n                    SELECT 1 as a\n                    UNION ALL\n                    SELECT a + 2 as a\n                    FROM outer_cte where a < 3\n               )\n               SELECT nested_cte.a + outer_cte.a as a\n               FROM nested_cte JOIN outer_cte USING(a)\n               WHERE outer_cte_cte.a < 8\n           )\n        )\n        SELECT outer_cte.a + nested_cte.a as a\n        FROM outer_cte JOIN nested_cte USING(a)\n        WHERE nested_cte.a < 8\n    )\n)\nSELECT a FROM outer_cte;",
+      "source": "cte.slt:868"
+    },
+    {
+      "sql": "WITH RECURSIVE my_cte AS (\n    SELECT 1 as a\n    UNION ALL\n    SELECT my_cte.a+2 as a\n    FROM my_cte join my_cte c2 using(a)\n    WHERE my_cte.a<5\n)\nSELECT a FROM my_cte;",
+      "source": "cte.slt:894"
+    },
+    {
+      "sql": "WITH RECURSIVE recursive_cte AS (\n  SELECT 1 as val\n  UNION ALL\n    (\n      WITH sub_cte AS (\n      SELECT 2 as val\n    )\n    SELECT\n      2 as val\n    FROM recursive_cte\n      CROSS JOIN sub_cte\n    WHERE recursive_cte.val < 2\n  )\n)\nSELECT * FROM recursive_cte;",
+      "source": "cte.slt:906"
+    },
+    {
+      "sql": "WITH RECURSIVE my_cte AS(\n    SELECT 1::int AS a\n    UNION ALL\n    SELECT a::bigint+2 FROM my_cte WHERE a<3\n) SELECT *, arrow_typeof(a) FROM my_cte;",
+      "source": "cte.slt:971"
+    },
+    {
+      "sql": "WITH RECURSIVE my_cte AS (\n    SELECT 1::bigint AS a\n    UNION ALL\n    SELECT a+2, 'a','c' FROM my_cte WHERE a<3\n) SELECT * FROM my_cte;",
+      "source": "cte.slt:983"
+    },
+    {
+      "sql": "WITH RECURSIVE my_cte AS (\n    SELECT 1 AS a\n    UNION ALL\n    SELECT 'abc' FROM my_cte WHERE CAST(a AS text) !='abc'\n) SELECT * FROM my_cte;",
+      "source": "cte.slt:992"
+    },
+    {
+      "sql": "WITH RECURSIVE cte AS (\n    SELECT a FROM (VALUES(1)) AS t(a) WHERE a > 2\n    UNION ALL\n    SELECT 2\n) SELECT * FROM cte;",
+      "source": "cte.slt:1001"
+    },
+    {
+      "sql": "WITH RECURSIVE cte AS (\n    SELECT 1\n    UNION ALL\n    SELECT 2\n) SELECT * FROM cte;",
+      "source": "cte.slt:1012"
+    },
+    {
+      "sql": "WITH RECURSIVE cte AS (\n    SELECT 2\n    UNION\n    SELECT 2\n) SELECT * FROM cte;",
+      "source": "cte.slt:1024"
+    },
+    {
+      "sql": "WITH RECURSIVE cte AS (\n    SELECT 1\n) SELECT * FROM cte;",
+      "source": "cte.slt:1035"
+    },
+    {
+      "sql": "WITH RECURSIVE\nnon_recursive_cte AS (\n  SELECT 1\n),\nrecursive_cte AS (\n  SELECT 1 AS a UNION ALL SELECT a+2 FROM recursive_cte WHERE a < 3\n)\nSELECT * FROM non_recursive_cte, recursive_cte;",
+      "source": "cte.slt:1043"
+    },
+    {
+      "sql": "WITH t AS (SELECT * FROM t where t.a < 2) SELECT * FROM t",
+      "source": "cte.slt:1058"
+    },
+    {
+      "sql": "SELECT * FROM\n  (WITH t AS (select 400 as e) SELECT * FROM t) t1,\n  (WITH t AS (select 500 as e) SELECT * FROM t) t2,\n  t",
+      "source": "cte.slt:1077"
+    },
+    {
+      "sql": "with numbers(a) as (select 1, 2, 3) select * from numbers;",
+      "source": "cte.slt:1087"
+    },
+    {
+      "sql": "with recursive r as (\n  select 0 as k, 0 as v\n  union all\n  (\n    select *\n    from r\n    order by v\n    limit 1\n  )\n)\nselect *\nfrom r\nlimit 5;",
+      "source": "cte.slt:1221"
+    },
+    {
+      "sql": "WITH RECURSIVE trans AS (\n    SELECT * FROM closure\n    UNION\n    SELECT l.start, r.end\n    FROM trans as l, closure AS r\n    WHERE l.end = r.start\n) SELECT * FROM trans ORDER BY start, end",
+      "source": "cte.slt:1279"
+    },
+    {
+      "sql": "SELECT id, parent_id, ts, val\n  FROM cte_schema_reread\n  WHERE id = 'id';",
+      "source": "cte.slt:1394"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a, b) AS (\n  SELECT 0 AS a, 0 AS b\n  UNION ALL\n  SELECT b AS a, CAST(NULL AS INT) AS b FROM t WHERE a IS NOT NULL\n)\nSELECT * FROM t",
+      "source": "cte.slt:1419"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a, b) AS (\n  SELECT 0 AS a, 0 AS b\n  UNION ALL\n  SELECT b AS a, CAST(NULL AS INT) AS b FROM t WHERE a IS NOT NULL\n)\nSELECT * FROM t WHERE a IS NOT NULL",
+      "source": "cte.slt:1433"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a) AS (\n  SELECT 1 AS a\n  UNION ALL\n  SELECT CAST(NULL AS INT) AS a FROM t WHERE a IS NOT NULL\n)\nSELECT * FROM t WHERE a IS NULL",
+      "source": "cte.slt:1446"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a) AS (\n  SELECT 1 AS a\n  UNION\n  SELECT CAST(NULL AS INT) AS a FROM t WHERE a IS NOT NULL\n)\nSELECT * FROM t WHERE a IS NULL",
+      "source": "cte.slt:1457"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a, b) AS (\n  SELECT 0 AS a, 0 AS b\n  UNION ALL\n  SELECT b AS a, CAST(NULL AS INT) AS b FROM t WHERE a IS NOT NULL\n)\nSELECT * FROM t WHERE b IS NULL",
+      "source": "cte.slt:1469"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a) AS (\n  SELECT 1::INT AS a\n  UNION ALL\n  SELECT CAST(NULL AS BIGINT) AS a FROM t WHERE a IS NOT NULL\n)\nSELECT * FROM t WHERE a IS NULL",
+      "source": "cte.slt:1481"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a) AS (\n  SELECT CAST(NULL AS INT) AS a\n  UNION ALL\n  SELECT 1 AS a FROM t WHERE a IS NULL\n)\nSELECT * FROM t",
+      "source": "cte.slt:1504"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a) AS (\n  SELECT 1 AS a\n  UNION ALL\n  SELECT CAST(NULL AS INT) AS a FROM t WHERE a IS NOT NULL\n)\nSELECT COUNT(*), COUNT(a), SUM(a) FROM t",
+      "source": "cte.slt:1516"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a) AS (\n  SELECT 1 AS a\n  UNION ALL\n  SELECT CAST(NULL AS INT) AS a FROM t WHERE a IS NOT NULL\n)\nSELECT x FROM (SELECT a AS x FROM t) WHERE x IS NULL",
+      "source": "cte.slt:1527"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a, b) AS (\n  SELECT 1::INT AS a, 2::INT AS b\n  UNION ALL\n  SELECT a + 1 AS a, CAST(NULL AS BIGINT) AS b FROM t WHERE a < 2\n)\nSELECT * FROM t WHERE b IS NULL",
+      "source": "cte.slt:1539"
+    },
+    {
+      "sql": "WITH RECURSIVE t(a) AS (\n  SELECT 1 AS a\n  UNION ALL\n  SELECT CAST(NULL AS INT) AS a FROM t WHERE a IS NOT NULL\n)\nSELECT t.a, u.b FROM t LEFT JOIN (SELECT 1 AS b) u ON t.a = u.b WHERE u.b IS NULL",
+      "source": "cte.slt:1551"
+    },
+    {
+      "sql": "SELECT DISTINCT id FROM (\n  WITH RECURSIVE t(id) AS (\n    SELECT id FROM recursive_cte_pk\n    UNION ALL\n    SELECT id - 1 FROM t WHERE id > 1\n  )\n  SELECT id FROM t\n)",
+      "source": "cte.slt:1571"
+    },
+    {
+      "sql": "with recursive t(k, v) as (\n  select 1 k, 10 v\n  union all\n  select 2, 20 from t where k = 1\n)\nselect v\nfrom t\norder by 1;",
+      "source": "cte.slt:1611"
+    },
+    {
+      "sql": "with recursive t(k, v) as (\n  select 1 k, 10 v\n  union all\n  select 2, 20 from t where v = 10\n)\nselect v\nfrom t\norder by 1;",
+      "source": "cte.slt:1625"
+    },
+    {
+      "sql": "with recursive t(k, v) as (\n  select 1 k, 10 v\n  union\n  select 2, 10 from t where v = 10\n)\nselect v\nfrom t\norder by 1;",
+      "source": "cte.slt:1640"
+    },
+    {
+      "sql": "with recursive r as (\n    select k, v1\n    from test\n    union all\n    select k * 10, v1\n    from r\n    where k < (\n      select v2\n      from test\n      where k = 2\n    )\n)\nselect *\nfrom r\norder by 1, 2;",
+      "source": "cte.slt:1707"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id + 12 in (\n                           select t2.t2_id + 1 from t2 where t1.t1_int > 0\n                       )",
+      "source": "subquery.slt:106"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id + 12 not in (\n                               select t2.t2_id + 1 from t2 where t1.t1_int > 0\n                           )",
+      "source": "subquery.slt:120"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere not t1.t1_id + 12 in (\n                               select t2.t2_id + 1 from t2 where t1.t1_int > 0\n                           )",
+      "source": "subquery.slt:132"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id in ((\n                       select t2.t2_id from t2\n                  ))",
+      "source": "subquery.slt:145"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id in ((\n                       select t2.t2_id from t2\n                  ))\nand t1.t1_int < 3",
+      "source": "subquery.slt:158"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id not in ((\n                            select t2.t2_id from t2 where t2.t2_int = 3\n                      ))",
+      "source": "subquery.slt:171"
+    },
+    {
+      "sql": "select t1_id\nfrom t1\nwhere t1_int = (select max(i) from (values (1)) as s(i));",
+      "source": "subquery.slt:184"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT sum(t2_int) FROM t2 WHERE t2.t2_id = t1.t1_id) as t2_sum from t1",
+      "source": "subquery.slt:216"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT sum(t2_int * 1.0) + 1 FROM t2 WHERE t2.t2_id = t1.t1_id) as t2_sum from t1",
+      "source": "subquery.slt:249"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT sum(t2_int) FROM t2 WHERE t2.t2_id = t1.t1_id group by t2_id, 'a') as t2_sum from t1",
+      "source": "subquery.slt:282"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT sum(t2_int) FROM t2 WHERE t2.t2_id = t1.t1_id having sum(t2_int) < 3) as t2_sum from t1",
+      "source": "subquery.slt:316"
+    },
+    {
+      "sql": "select o_orderkey from orders\nwhere o_orderstatus in (\n    select l_linestatus from lineitem where l_orderkey = orders.o_orderkey\n);",
+      "source": "subquery.slt:370"
+    },
+    {
+      "sql": "SELECT 1 WHERE EXISTS (SELECT 1)",
+      "source": "subquery.slt:380"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT t3_int FROM t3 WHERE t3.t3_id = t1.t1_id) as t3_int from t1",
+      "source": "subquery.slt:441"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT a FROM (select 1 as a) WHERE a = t1.t1_int) as t2_int from t1",
+      "source": "subquery.slt:495"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name FROM t1 WHERE EXISTS (SELECT * FROM t2 WHERE t2_id = t1_id limit 1)",
+      "source": "subquery.slt:626"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name FROM t1 WHERE EXISTS (SELECT * FROM t2 WHERE t2_id = t1_id limit 0)",
+      "source": "subquery.slt:640"
+    },
+    {
+      "sql": "SELECT t1_id, t1_name FROM t1 WHERE NOT EXISTS (SELECT * FROM t2 WHERE t2_id = t1_id limit 0)",
+      "source": "subquery.slt:652"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT t2_id FROM t2 limit 0) FROM t1",
+      "source": "subquery.slt:697"
+    },
+    {
+      "sql": "select (select count(*) from t1) as b, (select count(1) from t2)",
+      "source": "subquery.slt:828"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT count(*) FROM t2 WHERE t2.t2_int = t1.t1_int) from t1",
+      "source": "subquery.slt:846"
+    },
+    {
+      "sql": "SELECT\n  t1_id,\n  (SELECT count(*) FROM t2 WHERE t2.t2_int = t1.t1_int) + 1 AS a,\n  (SELECT count(*) FROM t2 WHERE t2.t2_int = t1.t1_int) + 2 AS b\nFROM t1",
+      "source": "subquery.slt:859"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT count(*) FROM t2 WHERE t2.t2_int = t1.t1_int) as cnt from t1",
+      "source": "subquery.slt:884"
+    },
+    {
+      "sql": "SELECT\n  t1_id,\n  (\n    SELECT regr_count(1.0, 1.0)\n    FROM t2\n    WHERE t2.t2_int = t1.t1_int\n  ) AS r,\n  (\n    SELECT approx_distinct(t2.t2_id)\n    FROM t2\n    WHERE t2.t2_int = t1.t1_int\n  ) AS d\nFROM t1",
+      "source": "subquery.slt:893"
+    },
+    {
+      "sql": "SELECT\n  t1_id,\n  (\n    SELECT regr_count(1.0, 1.0) + approx_distinct(t2.t2_id)\n    FROM t2\n    WHERE t2.t2_int = t1.t1_int\n  ) AS combined\nFROM t1",
+      "source": "subquery.slt:913"
+    },
+    {
+      "sql": "SELECT t1_id\nFROM t1\nWHERE\n  (\n    SELECT approx_distinct(t2.t2_id)\n    FROM t2\n    WHERE t2.t2_int = t1.t1_int\n  ) = 0",
+      "source": "subquery.slt:928"
+    },
+    {
+      "sql": "SELECT t1_id\nFROM t1\nWHERE\n  (\n    SELECT regr_count(1.0, 1.0)\n    FROM t2\n    WHERE t2.t2_int = t1.t1_int\n  ) = 0",
+      "source": "subquery.slt:941"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT count(*) as _cnt FROM t2 WHERE t2.t2_int = t1.t1_int) as cnt from t1",
+      "source": "subquery.slt:967"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT count(*) + 2 as _cnt FROM t2 WHERE t2.t2_int = t1.t1_int) from t1",
+      "source": "subquery.slt:988"
+    },
+    {
+      "sql": "select t1.t1_int from t1 where (select count(*) from t2 where t1.t1_id = t2.t2_id) < t1.t1_int",
+      "source": "subquery.slt:1011"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT count(*) + 2 as cnt_plus_2 FROM t2 WHERE t2.t2_int = t1.t1_int having count(*) >1) from t1",
+      "source": "subquery.slt:1033"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT count(*) + 2 as cnt_plus_2 FROM t2 WHERE t2.t2_int = t1.t1_int having count(*) = 0) from t1",
+      "source": "subquery.slt:1055"
+    },
+    {
+      "sql": "select t1.t1_int from t1 group by t1.t1_int having (select count(*) from t2 where t1.t1_int = t2.t2_int) = 0",
+      "source": "subquery.slt:1079"
+    },
+    {
+      "sql": "select t1.t1_int from t1 where (select cnt from (select count(*) as cnt, sum(t2_int) from t2 where t1.t1_int = t2.t2_int)) = 0",
+      "source": "subquery.slt:1101"
+    },
+    {
+      "sql": "select t1.t1_int from t1 where (\n    select cnt_plus_one + 1 as cnt_plus_two from (\n        select cnt + 1 as cnt_plus_one from (\n            select count(*) as cnt, sum(t2_int) s from t2 where t1.t1_int = t2.t2_int having cnt = 0\n        )\n    )\n) = 2",
+      "source": "subquery.slt:1130"
+    },
+    {
+      "sql": "select t1.t1_int from t1 where\n       (select case when count(*) = 1 then null else count(*) end as cnt from t2 where t2.t2_int = t1.t1_int) = 0",
+      "source": "subquery.slt:1160"
+    },
+    {
+      "sql": "select t1_int > (select avg(t1_int) from t1) from t1",
+      "source": "subquery.slt:1167"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT case when max(t2.t2_id) > 1 then 'a' else 'b' end FROM t2 WHERE t2.t2_int = t1.t1_int) x from t1",
+      "source": "subquery.slt:1175"
+    },
+    {
+      "sql": "SELECT t1_id, (SELECT max(t2.t2_id) is null FROM t2 WHERE t2.t2_int = t1.t1_int) x from t1",
+      "source": "subquery.slt:1183"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id > 40 or t1.t1_id in (select t2.t2_id from t2 where t1.t1_int > 0)",
+      "source": "subquery.slt:1231"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id = 11 or t1.t1_id + 12 not in (select t2.t2_id + 1 from t2 where t1.t1_int > 0)",
+      "source": "subquery.slt:1259"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id > 40 or exists (select * from t2 where t1.t1_id = t2.t2_id)",
+      "source": "subquery.slt:1285"
+    },
+    {
+      "sql": "select t1_id from t1\nwhere t1_id > 40 or exists (select 1 from t2 where t2.t2_int = t1.t1_int)",
+      "source": "subquery.slt:1340"
+    },
+    {
+      "sql": "select t1_id from t1\nwhere t1_id > 40 or not exists (select 1 from t2 where t2.t2_int > t1.t1_int)",
+      "source": "subquery.slt:1367"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id > 40 or not exists (select * from t2 where t1.t1_id = t2.t2_id)",
+      "source": "subquery.slt:1377"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id in (select t3.t3_id from t3) and (t1.t1_id > 40 or t1.t1_id in (select t2.t2_id from t2 where t1.t1_int > 0))",
+      "source": "subquery.slt:1406"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id > 40 or exists (select * from t2 cross join t3 where t1.t1_id = t2.t2_id)",
+      "source": "subquery.slt:1418"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere exists (\n    select * from t2 where t1.t1_id = t2.t2_id OR exists (\n        select * from t3 where t2.t2_id = t3.t3_id\n    )\n)",
+      "source": "subquery.slt:1430"
+    },
+    {
+      "sql": "SELECT * FROM\n    (VALUES ('catan-prod1-daily', 'success')) as jobs(cron_job_name, status)\n  JOIN\n    (VALUES ('catan-prod1-daily', 'high')) as severity(cron_job_name, level)\n  ON (severity.cron_job_name = jobs.cron_job_name);",
+      "source": "subquery.slt:1447"
+    },
+    {
+      "sql": "select struct(1, 'b')",
+      "source": "subquery.slt:1516"
+    },
+    {
+      "sql": "select (select struct(1, 'b')['c1']);",
+      "source": "subquery.slt:1521"
+    },
+    {
+      "sql": "select 'foo' || (select struct(1, 'b')['c1']);",
+      "source": "subquery.slt:1526"
+    },
+    {
+      "sql": "SELECT  * FROM (VALUES (1), (2))\nWHERE column1  IN (SELECT struct(1, 'b')['c0']);",
+      "source": "subquery.slt:1531"
+    },
+    {
+      "sql": "SELECT  * FROM (VALUES (1), (2))\nWHERE 1+2 = 3 AND column1  IN (SELECT struct(1, 'b')['c0']);",
+      "source": "subquery.slt:1538"
+    },
+    {
+      "sql": "SELECT  * FROM foo\nWHERE EXISTS (SELECT * FROM (values (1)) WHERE column1 = foo.x AND struct(1, 'b')['c0'] = 1);",
+      "source": "subquery.slt:1544"
+    },
+    {
+      "sql": "SELECT  * FROM foo\nWHERE 1+2 = 3 AND EXISTS (SELECT * FROM (values (1)) WHERE column1 = foo.x AND struct(1, 'b')['c0'] = 1);",
+      "source": "subquery.slt:1551"
+    },
+    {
+      "sql": "WITH SubQuery AS (\n    SELECT\n        a.column1,\n        a.column2 AS ts_column,\n        a.column3,\n        SUM(a.column3) OVER (\n            PARTITION BY a.column1\n            ORDER BY a.column2 RANGE BETWEEN INTERVAL '10 minutes' PRECEDING AND CURRENT ROW\n        ) AS moving_sum\n    FROM source_table a\n)\nSELECT\n    column1,\n    ts_column,\n    moving_sum\nFROM SubQuery\nWHERE moving_sum > 60;",
+      "source": "subquery.slt:1578"
+    },
+    {
+      "sql": "SELECT a FROM t1 WHERE EXISTS (SELECT count(*) FROM t2)",
+      "source": "subquery.slt:1618"
+    },
+    {
+      "sql": "select v from set_cmp_t where v > any(select v from set_cmp_s);",
+      "source": "subquery.slt:1668"
+    },
+    {
+      "sql": "select v from set_cmp_t where v < all(select v from set_cmp_empty);",
+      "source": "subquery.slt:1674"
+    },
+    {
+      "sql": "select id from set_cmp_self where age = any(select age from set_cmp_self);",
+      "source": "subquery.slt:1722"
+    },
+    {
+      "sql": "select id from set_cmp_self where age <> all(select age from set_cmp_self);",
+      "source": "subquery.slt:1729"
+    },
+    {
+      "sql": "SELECT (SELECT v FROM sq_values);",
+      "source": "subquery.slt:1894"
+    },
+    {
+      "sql": "SELECT x FROM sq_main WHERE x > (SELECT v FROM sq_values);",
+      "source": "subquery.slt:1898"
+    },
+    {
+      "sql": "SELECT x + (SELECT v FROM sq_values) FROM sq_main;",
+      "source": "subquery.slt:1902"
+    },
+    {
+      "sql": "SELECT (SELECT v FROM sq_values LIMIT 1);",
+      "source": "subquery.slt:1906"
+    },
+    {
+      "sql": "SELECT x FROM sq_main WHERE x > (SELECT v FROM sq_values LIMIT 1);",
+      "source": "subquery.slt:1912"
+    },
+    {
+      "sql": "SELECT (SELECT v FROM sq_empty);",
+      "source": "subquery.slt:1919"
+    },
+    {
+      "sql": "SELECT x + (SELECT v FROM sq_empty) FROM sq_main;",
+      "source": "subquery.slt:1925"
+    },
+    {
+      "sql": "SELECT x FROM sq_main WHERE x > (SELECT v FROM sq_empty);",
+      "source": "subquery.slt:1932"
+    },
+    {
+      "sql": "SELECT (SELECT count(*) FROM sq_empty);",
+      "source": "subquery.slt:1937"
+    },
+    {
+      "sql": "SELECT (SELECT max(v) FROM sq_values);",
+      "source": "subquery.slt:1943"
+    },
+    {
+      "sql": "SELECT (SELECT count(*) FROM sq_empty), (SELECT v FROM sq_values);",
+      "source": "subquery.slt:1949"
+    },
+    {
+      "sql": "SELECT x, count(*) AS cnt FROM sq_main GROUP BY x\nHAVING count(*) > (SELECT min(v) FROM sq_values);",
+      "source": "subquery.slt:1957"
+    },
+    {
+      "sql": "SELECT CASE WHEN x > (SELECT min(v) FROM sq_values)\n            THEN 'big' ELSE 'small' END AS label\nFROM sq_main;",
+      "source": "subquery.slt:1963"
+    },
+    {
+      "sql": "SELECT x FROM sq_main ORDER BY x + (SELECT max(v) FROM sq_values);",
+      "source": "subquery.slt:1972"
+    },
+    {
+      "sql": "SELECT i\nFROM generate_series(1, 10) AS t(i)\nWHERE i > (\n  SELECT avg(j) FROM generate_series(1, 10) AS u(j)\n)\nORDER BY i;",
+      "source": "subquery.slt:2013"
+    },
+    {
+      "sql": "SELECT sum(x + (SELECT max(v) FROM sq_values)) AS s FROM sq_main;",
+      "source": "subquery.slt:2028"
+    },
+    {
+      "sql": "SELECT l.x, r.x AS rx\nFROM sq_main AS l JOIN sq_main AS r\nON l.x = r.x + (SELECT min(v) FROM sq_values);",
+      "source": "subquery.slt:2034"
+    },
+    {
+      "sql": "SELECT (SELECT max(v) + (SELECT min(v) FROM sq_values) FROM sq_values);",
+      "source": "subquery.slt:2041"
+    },
+    {
+      "sql": "SELECT (SELECT s FROM (WITH cte AS (SELECT max(v) AS s FROM sq_values) SELECT s FROM cte));",
+      "source": "subquery.slt:2073"
+    },
+    {
+      "sql": "SELECT x, sum(x + (SELECT max(v) FROM sq_values)) OVER () AS win_sum FROM sq_main;",
+      "source": "subquery.slt:2079"
+    },
+    {
+      "sql": "SELECT count(DISTINCT r) = 1 FROM (\n  SELECT (SELECT random()) AS r\n  FROM (VALUES (1), (2), (3)) AS t(x)\n);",
+      "source": "subquery.slt:2127"
+    },
+    {
+      "sql": "SELECT (SELECT 42) AS k, max(x) FROM (VALUES (1), (2), (3)) AS t(x) GROUP BY k;",
+      "source": "subquery.slt:2137"
+    },
+    {
+      "sql": "SELECT x, max((SELECT 42)) FROM (VALUES (1), (2), (3)) AS t(x) GROUP BY x ORDER BY x;",
+      "source": "subquery.slt:2144"
+    },
+    {
+      "sql": "SELECT (SELECT (SELECT 42));",
+      "source": "subquery.slt:2153"
+    },
+    {
+      "sql": "SELECT (SELECT (SELECT (SELECT 99)));",
+      "source": "subquery.slt:2159"
+    },
+    {
+      "sql": "SELECT (SELECT * FROM (VALUES (1)) AS t(x));",
+      "source": "subquery.slt:2166"
+    },
+    {
+      "sql": "SELECT (SELECT * FROM (VALUES (1, 2)) AS t(x, y));",
+      "source": "subquery.slt:2172"
+    },
+    {
+      "sql": "SELECT x FROM (VALUES (1), (2), (3), (4), (5)) AS t(x)\nWHERE x BETWEEN (SELECT 2) AND (SELECT 4)\nORDER BY x;",
+      "source": "subquery.slt:2176"
+    },
+    {
+      "sql": "SELECT (SELECT DISTINCT 42 FROM (VALUES (1), (2), (3)) AS t(x));",
+      "source": "subquery.slt:2186"
+    },
+    {
+      "sql": "SELECT (SELECT DISTINCT x FROM (VALUES (1), (2), (3)) AS t(x));",
+      "source": "subquery.slt:2192"
+    },
+    {
+      "sql": "SELECT 1 = (SELECT CAST(NULL AS INT));",
+      "source": "subquery.slt:2197"
+    },
+    {
+      "sql": "SELECT CAST(NULL AS INT) = (SELECT 1);",
+      "source": "subquery.slt:2202"
+    },
+    {
+      "sql": "SELECT (WITH cte1 AS (WITH cte2 AS (SELECT 42) SELECT * FROM cte2) SELECT * FROM cte1);",
+      "source": "subquery.slt:2209"
+    },
+    {
+      "sql": "SELECT * FROM (VALUES (1), (2), (3)) AS t(x) ORDER BY x LIMIT (SELECT 2);",
+      "source": "subquery.slt:2216"
+    },
+    {
+      "sql": "SELECT * FROM (VALUES (1), (2), (3)) AS t(x) ORDER BY x OFFSET (SELECT 1);",
+      "source": "subquery.slt:2220"
+    },
+    {
+      "sql": "SELECT (SELECT v FROM (SELECT 1 AS v UNION ALL SELECT 2) AS t ORDER BY v LIMIT 1);",
+      "source": "subquery.slt:2224"
+    },
+    {
+      "sql": "SELECT * FROM dup_filter_t1 WHERE dup_filter_t1.id IN (\n    SELECT dup_filter_t2.id FROM dup_filter_t2 WHERE dup_filter_t2.id > dup_filter_t1.id\n);",
+      "source": "subquery.slt:2334"
+    },
+    {
+      "sql": "SELECT sq_name_t1.id,\n  (SELECT count(*) AS id FROM sq_name_t2 WHERE sq_name_t2.outer_id = sq_name_t1.id) AS cnt\nFROM sq_name_t1\nORDER BY sq_name_t1.id;",
+      "source": "subquery.slt:2353"
+    },
+    {
+      "sql": "SELECT sq_name_t1.id\nFROM sq_name_t1\nWHERE sq_name_t1.id > (\n  SELECT count(*) AS id\n  FROM sq_name_t2\n  WHERE sq_name_t2.outer_id = sq_name_t1.id\n)\nORDER BY sq_name_t1.id;",
+      "source": "subquery.slt:2363"
+    },
+    {
+      "sql": "SELECT sq_name_t1.id * 10 + (\n  SELECT count(*) AS id\n  FROM sq_name_t2\n  WHERE sq_name_t2.outer_id = sq_name_t1.id\n) AS total\nFROM sq_name_t1\nORDER BY sq_name_t1.id;",
+      "source": "subquery.slt:2376"
+    },
+    {
+      "sql": "SELECT column1, column2 FROM subquery_partitioned\nWHERE part = (SELECT 1)\nORDER BY column1;",
+      "source": "subquery.slt:2418"
+    },
+    {
+      "sql": "select cntrycode, count(*) as numcust, sum(c_acctbal) as totacctbal\nfrom (\n    select substring(c_phone from 1 for 2) as cntrycode, c_acctbal\n    from sq_count_customer\n    where c_acctbal > (\n        select avg(c_acctbal) from sq_count_customer where c_acctbal > 0.00\n    )\n      and not exists (\n        select * from sq_count_orders where o_custkey = c_custkey\n      )\n) as custsale\ngroup by cntrycode\norder by cntrycode;",
+      "source": "subquery.slt:2471"
+    },
+    {
+      "sql": "select count(*) from (\n    select cntrycode, count(*) as numcust, sum(c_acctbal) as totacctbal\n    from (\n        select substring(c_phone from 1 for 2) as cntrycode, c_acctbal\n        from sq_count_customer\n        where c_acctbal > (\n            select avg(c_acctbal) from sq_count_customer where c_acctbal > 0.00\n        )\n          and not exists (\n            select * from sq_count_orders where o_custkey = c_custkey\n          )\n    ) as custsale\n    group by cntrycode\n) as q;",
+      "source": "subquery.slt:2490"
+    },
+    {
+      "sql": "SELECT - tab1.col0 * 84 + + 38 AS col2 FROM tab1 GROUP BY tab1.col0",
+      "source": "group_by.slt:56"
+    },
+    {
+      "sql": "SELECT + cor0.col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:63"
+    },
+    {
+      "sql": "SELECT DISTINCT - ( + col1 ) + - 51 AS col0 FROM tab1 AS cor0 GROUP BY col1",
+      "source": "group_by.slt:70"
+    },
+    {
+      "sql": "SELECT col1 * cor0.col1 * 56 AS col1 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:77"
+    },
+    {
+      "sql": "SELECT ALL + tab2.col1 / tab2.col1 FROM tab2 GROUP BY col1",
+      "source": "group_by.slt:84"
+    },
+    {
+      "sql": "SELECT ALL + tab1.col0 FROM tab1 GROUP BY col0",
+      "source": "group_by.slt:91"
+    },
+    {
+      "sql": "SELECT DISTINCT tab1.col0 AS col1 FROM tab1 GROUP BY tab1.col0",
+      "source": "group_by.slt:98"
+    },
+    {
+      "sql": "SELECT ALL col2 FROM tab1 GROUP BY col2",
+      "source": "group_by.slt:105"
+    },
+    {
+      "sql": "SELECT ALL + cor0.col0 FROM tab0 AS cor0 GROUP BY cor0.col0, cor0.col2",
+      "source": "group_by.slt:112"
+    },
+    {
+      "sql": "SELECT DISTINCT * FROM tab0 AS cor0 GROUP BY cor0.col1, cor0.col2, cor0.col0",
+      "source": "group_by.slt:119"
+    },
+    {
+      "sql": "SELECT * FROM tab0 AS cor0 GROUP BY cor0.col1, cor0.col2, cor0.col0",
+      "source": "group_by.slt:126"
+    },
+    {
+      "sql": "SELECT - 9 * cor0.col1 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:133"
+    },
+    {
+      "sql": "SELECT DISTINCT - 21 FROM tab2 GROUP BY col2",
+      "source": "group_by.slt:140"
+    },
+    {
+      "sql": "SELECT DISTINCT - 97 AS col2 FROM tab1 GROUP BY col0",
+      "source": "group_by.slt:145"
+    },
+    {
+      "sql": "SELECT + ( - 1 ) AS col0 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:150"
+    },
+    {
+      "sql": "SELECT - + cor0.col1 FROM tab0, tab0 cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:157"
+    },
+    {
+      "sql": "SELECT + cor0.col0 + 36 AS col2 FROM tab0 AS cor0 GROUP BY col0",
+      "source": "group_by.slt:163"
+    },
+    {
+      "sql": "SELECT cor0.col1 AS col1 FROM tab0 AS cor0 GROUP BY col1",
+      "source": "group_by.slt:170"
+    },
+    {
+      "sql": "SELECT DISTINCT + cor0.col1 FROM tab2 cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:176"
+    },
+    {
+      "sql": "SELECT ALL + cor0.col0 + - col0 col1 FROM tab1 AS cor0 GROUP BY col0",
+      "source": "group_by.slt:183"
+    },
+    {
+      "sql": "SELECT ALL 54 AS col0 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:190"
+    },
+    {
+      "sql": "SELECT 40 AS col1 FROM tab1 cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:197"
+    },
+    {
+      "sql": "SELECT DISTINCT ( cor0.col0 ) AS col0 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:204"
+    },
+    {
+      "sql": "SELECT 62 AS col1 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:211"
+    },
+    {
+      "sql": "SELECT 23 FROM tab2 GROUP BY tab2.col2",
+      "source": "group_by.slt:218"
+    },
+    {
+      "sql": "SELECT + ( - tab0.col0 ) col2 FROM tab0, tab0 AS cor0 GROUP BY tab0.col0",
+      "source": "group_by.slt:225"
+    },
+    {
+      "sql": "SELECT + cor0.col1 FROM tab1 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:232"
+    },
+    {
+      "sql": "SELECT cor0.col1 FROM tab2 AS cor0 GROUP BY cor0.col1, cor0.col2",
+      "source": "group_by.slt:239"
+    },
+    {
+      "sql": "SELECT DISTINCT + 80 + cor0.col2 AS col0 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:246"
+    },
+    {
+      "sql": "SELECT DISTINCT 30 * - 9 AS col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:253"
+    },
+    {
+      "sql": "SELECT DISTINCT - col2 FROM tab1 AS cor0 GROUP BY col2",
+      "source": "group_by.slt:258"
+    },
+    {
+      "sql": "SELECT ALL - col2 AS col0 FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:265"
+    },
+    {
+      "sql": "SELECT DISTINCT + 82 AS col1 FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:272"
+    },
+    {
+      "sql": "SELECT 79 * 19 AS col0 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:277"
+    },
+    {
+      "sql": "SELECT ALL ( + 68 ) FROM tab1 cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:284"
+    },
+    {
+      "sql": "SELECT - col0 AS col0 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:291"
+    },
+    {
+      "sql": "SELECT + 81 col2 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:298"
+    },
+    {
+      "sql": "SELECT ALL cor0.col2 AS col1 FROM tab2 cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:305"
+    },
+    {
+      "sql": "SELECT ALL + cor0.col0 AS col1 FROM tab1 AS cor0 GROUP BY cor0.col1, cor0.col0",
+      "source": "group_by.slt:312"
+    },
+    {
+      "sql": "SELECT - cor0.col2 AS col0 FROM tab0 cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:319"
+    },
+    {
+      "sql": "SELECT cor0.col0 FROM tab1 AS cor0 GROUP BY col0, cor0.col1, cor0.col1",
+      "source": "group_by.slt:326"
+    },
+    {
+      "sql": "SELECT 58 AS col0 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:333"
+    },
+    {
+      "sql": "SELECT ALL cor0.col1 + - 20 AS col1 FROM tab0 cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:339"
+    },
+    {
+      "sql": "SELECT ALL + col1 col0 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:345"
+    },
+    {
+      "sql": "SELECT DISTINCT - - 56 FROM tab2, tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:352"
+    },
+    {
+      "sql": "SELECT - 10 AS col0 FROM tab2, tab1 AS cor0, tab2 AS cor1 GROUP BY cor1.col0",
+      "source": "group_by.slt:357"
+    },
+    {
+      "sql": "SELECT 31 AS col2 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:364"
+    },
+    {
+      "sql": "SELECT col2 AS col0 FROM tab0 cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:371"
+    },
+    {
+      "sql": "SELECT + 70 AS col1 FROM tab0 GROUP BY col0",
+      "source": "group_by.slt:378"
+    },
+    {
+      "sql": "SELECT DISTINCT cor0.col1 AS col0 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:385"
+    },
+    {
+      "sql": "SELECT - cor0.col1 FROM tab2, tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:392"
+    },
+    {
+      "sql": "SELECT DISTINCT + tab0.col0 col1 FROM tab0 GROUP BY tab0.col0",
+      "source": "group_by.slt:399"
+    },
+    {
+      "sql": "SELECT DISTINCT - cor0.col2 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:406"
+    },
+    {
+      "sql": "SELECT + cor0.col0 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:413"
+    },
+    {
+      "sql": "SELECT - 5 AS col2 FROM tab2, tab2 AS cor0, tab2 AS cor1 GROUP BY tab2.col1",
+      "source": "group_by.slt:420"
+    },
+    {
+      "sql": "SELECT DISTINCT 0 AS col2 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:427"
+    },
+    {
+      "sql": "SELECT DISTINCT - - tab2.col0 FROM tab2 GROUP BY col0",
+      "source": "group_by.slt:432"
+    },
+    {
+      "sql": "SELECT DISTINCT * FROM tab2 AS cor0 GROUP BY cor0.col0, col1, cor0.col2",
+      "source": "group_by.slt:439"
+    },
+    {
+      "sql": "SELECT 9 / + cor0.col0 AS col1 FROM tab0 AS cor0 GROUP BY cor0.col0, cor0.col2",
+      "source": "group_by.slt:446"
+    },
+    {
+      "sql": "SELECT ( - 72 ) AS col1 FROM tab1 cor0 GROUP BY cor0.col0, cor0.col2",
+      "source": "group_by.slt:453"
+    },
+    {
+      "sql": "SELECT cor0.col0 AS col2 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:460"
+    },
+    {
+      "sql": "SELECT ( col0 ) FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:467"
+    },
+    {
+      "sql": "SELECT ALL 59 / 26 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:474"
+    },
+    {
+      "sql": "SELECT 15 FROM tab1 AS cor0 GROUP BY col2, col2",
+      "source": "group_by.slt:481"
+    },
+    {
+      "sql": "SELECT CAST ( NULL AS INTEGER ) FROM tab0 AS cor0 GROUP BY cor0.col2, cor0.col2",
+      "source": "group_by.slt:488"
+    },
+    {
+      "sql": "SELECT ALL - 79 AS col2 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:495"
+    },
+    {
+      "sql": "SELECT ALL 69 AS col0 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:502"
+    },
+    {
+      "sql": "SELECT ALL 37 col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:509"
+    },
+    {
+      "sql": "SELECT ALL 55 * 15 AS col0 FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:515"
+    },
+    {
+      "sql": "SELECT ( 63 ) FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:522"
+    },
+    {
+      "sql": "SELECT - cor0.col2 AS col1 FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:529"
+    },
+    {
+      "sql": "SELECT - col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:536"
+    },
+    {
+      "sql": "SELECT ALL 81 * 11 FROM tab2 AS cor0 GROUP BY col1, cor0.col0",
+      "source": "group_by.slt:543"
+    },
+    {
+      "sql": "SELECT ALL 9 FROM tab2 AS cor0 GROUP BY col2",
+      "source": "group_by.slt:550"
+    },
+    {
+      "sql": "SELECT DISTINCT ( - 31 ) col1 FROM tab1 GROUP BY tab1.col0",
+      "source": "group_by.slt:557"
+    },
+    {
+      "sql": "SELECT + + cor0.col0 / - cor0.col0 FROM tab1, tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:562"
+    },
+    {
+      "sql": "SELECT cor0.col2 AS col1 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:569"
+    },
+    {
+      "sql": "SELECT ALL cor0.col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:576"
+    },
+    {
+      "sql": "SELECT ALL + - ( - tab0.col2 ) AS col0 FROM tab0 GROUP BY tab0.col2",
+      "source": "group_by.slt:582"
+    },
+    {
+      "sql": "SELECT 72 AS col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:589"
+    },
+    {
+      "sql": "SELECT - 20 - + col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:595"
+    },
+    {
+      "sql": "SELECT - - 63 FROM tab1 GROUP BY tab1.col0",
+      "source": "group_by.slt:601"
+    },
+    {
+      "sql": "SELECT cor0.col2 FROM tab1 AS cor0 GROUP BY cor0.col2, cor0.col2, col1",
+      "source": "group_by.slt:608"
+    },
+    {
+      "sql": "SELECT + cor0.col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:615"
+    },
+    {
+      "sql": "SELECT DISTINCT cor0.col1 FROM tab1 AS cor0 GROUP BY cor0.col1, cor0.col1",
+      "source": "group_by.slt:621"
+    },
+    {
+      "sql": "SELECT cor0.col0 - col0 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:628"
+    },
+    {
+      "sql": "SELECT 50 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:635"
+    },
+    {
+      "sql": "SELECT - 18 AS col0 FROM tab1 cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:642"
+    },
+    {
+      "sql": "SELECT + cor0.col2 * cor0.col2 FROM tab0 AS cor0 GROUP BY cor0.col0, cor0.col2",
+      "source": "group_by.slt:649"
+    },
+    {
+      "sql": "SELECT ALL 91 / cor0.col1 FROM tab2 AS cor0 GROUP BY col1, cor0.col1",
+      "source": "group_by.slt:656"
+    },
+    {
+      "sql": "SELECT cor0.col2 AS col2 FROM tab0 AS cor0 GROUP BY col2",
+      "source": "group_by.slt:663"
+    },
+    {
+      "sql": "SELECT ALL + 85 AS col1 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:670"
+    },
+    {
+      "sql": "SELECT + 49 AS col2 FROM tab0 cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:677"
+    },
+    {
+      "sql": "SELECT cor0.col2 AS col2 FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:684"
+    },
+    {
+      "sql": "SELECT - col0 AS col0 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:691"
+    },
+    {
+      "sql": "SELECT DISTINCT - 87 AS col1 FROM tab0 AS cor0 GROUP BY col0",
+      "source": "group_by.slt:698"
+    },
+    {
+      "sql": "SELECT + 39 FROM tab0 AS cor0 GROUP BY col1",
+      "source": "group_by.slt:703"
+    },
+    {
+      "sql": "SELECT ALL cor0.col2 * + col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:709"
+    },
+    {
+      "sql": "SELECT 40 FROM tab0 GROUP BY tab0.col1",
+      "source": "group_by.slt:716"
+    },
+    {
+      "sql": "SELECT tab1.col2 AS col0 FROM tab1 GROUP BY tab1.col2",
+      "source": "group_by.slt:722"
+    },
+    {
+      "sql": "SELECT tab2.col0 FROM tab2 GROUP BY tab2.col0",
+      "source": "group_by.slt:729"
+    },
+    {
+      "sql": "SELECT + col0 * + col0 FROM tab0 GROUP BY tab0.col0",
+      "source": "group_by.slt:736"
+    },
+    {
+      "sql": "SELECT ALL cor0.col2 + cor0.col2 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:743"
+    },
+    {
+      "sql": "SELECT DISTINCT cor0.col2 FROM tab1 cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:750"
+    },
+    {
+      "sql": "SELECT ALL + cor0.col2 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:757"
+    },
+    {
+      "sql": "SELECT cor0.col2 AS col2 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:764"
+    },
+    {
+      "sql": "SELECT - 53 / cor0.col0 col0 FROM tab1 cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:771"
+    },
+    {
+      "sql": "SELECT cor0.col1 AS col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:778"
+    },
+    {
+      "sql": "SELECT DISTINCT + cor0.col1 col0 FROM tab2 cor0 GROUP BY cor0.col1, cor0.col0",
+      "source": "group_by.slt:784"
+    },
+    {
+      "sql": "SELECT - cor0.col2 AS col1 FROM tab1 AS cor0 GROUP BY cor0.col0, cor0.col2",
+      "source": "group_by.slt:791"
+    },
+    {
+      "sql": "SELECT cor0.col1 AS col2 FROM tab0 AS cor0 GROUP BY cor0.col1, cor0.col1",
+      "source": "group_by.slt:798"
+    },
+    {
+      "sql": "SELECT 25 AS col1 FROM tab2 cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:804"
+    },
+    {
+      "sql": "SELECT cor0.col0 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:811"
+    },
+    {
+      "sql": "SELECT DISTINCT + 6 FROM tab1 cor0 GROUP BY col2, cor0.col0",
+      "source": "group_by.slt:818"
+    },
+    {
+      "sql": "SELECT cor0.col2 AS col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:823"
+    },
+    {
+      "sql": "SELECT ALL 72 AS col2 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:830"
+    },
+    {
+      "sql": "SELECT ALL + 73 AS col2 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:837"
+    },
+    {
+      "sql": "SELECT tab1.col0 AS col2 FROM tab1 GROUP BY col0",
+      "source": "group_by.slt:844"
+    },
+    {
+      "sql": "SELECT + cor0.col1 AS col0 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:851"
+    },
+    {
+      "sql": "SELECT DISTINCT - cor0.col1 col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:858"
+    },
+    {
+      "sql": "SELECT cor0.col0 * 51 FROM tab1 AS cor0 GROUP BY col0",
+      "source": "group_by.slt:864"
+    },
+    {
+      "sql": "SELECT ALL + 89 FROM tab2, tab1 AS cor0, tab1 AS cor1 GROUP BY cor0.col2",
+      "source": "group_by.slt:871"
+    },
+    {
+      "sql": "SELECT ALL + cor0.col0 - + cor0.col0 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:878"
+    },
+    {
+      "sql": "SELECT ALL 71 AS col0 FROM tab0 GROUP BY col1",
+      "source": "group_by.slt:885"
+    },
+    {
+      "sql": "SELECT - ( + cor0.col0 ) AS col1 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:891"
+    },
+    {
+      "sql": "SELECT 62 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:898"
+    },
+    {
+      "sql": "SELECT ALL - 97 AS col1 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:905"
+    },
+    {
+      "sql": "SELECT DISTINCT + 29 * ( cor0.col0 ) + + 47 FROM tab1 cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:912"
+    },
+    {
+      "sql": "SELECT DISTINCT col2 AS col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:919"
+    },
+    {
+      "sql": "SELECT ALL 40 AS col1 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:926"
+    },
+    {
+      "sql": "SELECT cor0.col1 + cor0.col1 AS col2 FROM tab2 cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:933"
+    },
+    {
+      "sql": "SELECT ( + cor0.col1 ) FROM tab2 AS cor0 GROUP BY cor0.col1, cor0.col1",
+      "source": "group_by.slt:940"
+    },
+    {
+      "sql": "SELECT cor0.col1 * + cor0.col1 col1 FROM tab1 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:947"
+    },
+    {
+      "sql": "SELECT ALL + cor0.col0 FROM tab1 AS cor0 GROUP BY cor0.col2, cor0.col0",
+      "source": "group_by.slt:954"
+    },
+    {
+      "sql": "SELECT - 9 FROM tab2 AS cor0 GROUP BY cor0.col1, cor0.col1, col2",
+      "source": "group_by.slt:961"
+    },
+    {
+      "sql": "SELECT ALL - 7 * cor0.col1 FROM tab1 AS cor0 GROUP BY cor0.col0, cor0.col1",
+      "source": "group_by.slt:968"
+    },
+    {
+      "sql": "SELECT - 21 AS col2 FROM tab1 cor0 GROUP BY cor0.col1, cor0.col1",
+      "source": "group_by.slt:975"
+    },
+    {
+      "sql": "SELECT DISTINCT tab1.col2 FROM tab1 GROUP BY tab1.col2",
+      "source": "group_by.slt:982"
+    },
+    {
+      "sql": "SELECT DISTINCT - 76 FROM tab2 GROUP BY tab2.col2",
+      "source": "group_by.slt:989"
+    },
+    {
+      "sql": "SELECT DISTINCT - cor0.col1 AS col2 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:994"
+    },
+    {
+      "sql": "SELECT cor0.col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1001"
+    },
+    {
+      "sql": "SELECT ALL - cor0.col2 + - 55 AS col1 FROM tab0 AS cor0 GROUP BY col2",
+      "source": "group_by.slt:1007"
+    },
+    {
+      "sql": "SELECT - + 28 FROM tab0, tab2 cor0 GROUP BY tab0.col1",
+      "source": "group_by.slt:1014"
+    },
+    {
+      "sql": "SELECT ALL col1 AS col1 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1020"
+    },
+    {
+      "sql": "SELECT ALL + 35 * 14 AS col1 FROM tab2 GROUP BY tab2.col1",
+      "source": "group_by.slt:1027"
+    },
+    {
+      "sql": "SELECT ALL cor0.col0 FROM tab2 AS cor0 GROUP BY cor0.col0, cor0.col1",
+      "source": "group_by.slt:1034"
+    },
+    {
+      "sql": "SELECT DISTINCT - cor0.col2 * 18 + + 56 FROM tab2 AS cor0 GROUP BY col2",
+      "source": "group_by.slt:1041"
+    },
+    {
+      "sql": "SELECT cor0.col0 FROM tab0 cor0 GROUP BY col0",
+      "source": "group_by.slt:1048"
+    },
+    {
+      "sql": "SELECT ALL - 38 AS col1 FROM tab2 GROUP BY tab2.col2",
+      "source": "group_by.slt:1055"
+    },
+    {
+      "sql": "SELECT - 79 FROM tab0, tab0 cor0, tab0 AS cor1 GROUP BY cor1.col0",
+      "source": "group_by.slt:1062"
+    },
+    {
+      "sql": "SELECT + cor0.col2 FROM tab1 cor0 GROUP BY cor0.col2, cor0.col1",
+      "source": "group_by.slt:1069"
+    },
+    {
+      "sql": "SELECT cor0.col0 FROM tab0 AS cor0 GROUP BY cor0.col2, cor0.col0",
+      "source": "group_by.slt:1076"
+    },
+    {
+      "sql": "SELECT cor0.col2 AS col0 FROM tab0 AS cor0 GROUP BY cor0.col2, cor0.col0",
+      "source": "group_by.slt:1083"
+    },
+    {
+      "sql": "SELECT + - 57 AS col1 FROM tab2 GROUP BY tab2.col2",
+      "source": "group_by.slt:1090"
+    },
+    {
+      "sql": "SELECT ALL - cor0.col1 FROM tab2 cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1097"
+    },
+    {
+      "sql": "SELECT DISTINCT cor0.col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1104"
+    },
+    {
+      "sql": "SELECT - cor0.col0 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1111"
+    },
+    {
+      "sql": "SELECT ( - cor0.col1 ) FROM tab1 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1118"
+    },
+    {
+      "sql": "SELECT DISTINCT - cor0.col2 FROM tab0 cor0 GROUP BY cor0.col2, cor0.col2",
+      "source": "group_by.slt:1125"
+    },
+    {
+      "sql": "SELECT DISTINCT tab1.col1 * ( + tab1.col1 ) FROM tab1 GROUP BY col1",
+      "source": "group_by.slt:1132"
+    },
+    {
+      "sql": "SELECT - cor0.col1 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1139"
+    },
+    {
+      "sql": "SELECT * FROM tab2 AS cor0 GROUP BY cor0.col1, cor0.col2, cor0.col0",
+      "source": "group_by.slt:1146"
+    },
+    {
+      "sql": "SELECT + 83 AS col2 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1153"
+    },
+    {
+      "sql": "SELECT + ( 97 ) + - tab0.col1 FROM tab0, tab1 AS cor0 GROUP BY tab0.col1",
+      "source": "group_by.slt:1160"
+    },
+    {
+      "sql": "SELECT 61 AS col0 FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1166"
+    },
+    {
+      "sql": "SELECT ALL cor0.col2 FROM tab0 cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1173"
+    },
+    {
+      "sql": "SELECT cor0.col2 FROM tab0, tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1180"
+    },
+    {
+      "sql": "SELECT + - 3 FROM tab2 GROUP BY col1",
+      "source": "group_by.slt:1187"
+    },
+    {
+      "sql": "SELECT DISTINCT + 96 FROM tab2 GROUP BY tab2.col1",
+      "source": "group_by.slt:1194"
+    },
+    {
+      "sql": "SELECT ALL 81 FROM tab1 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1199"
+    },
+    {
+      "sql": "SELECT cor0.col0 AS col1 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1206"
+    },
+    {
+      "sql": "SELECT - + 51 col2 FROM tab2, tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1213"
+    },
+    {
+      "sql": "SELECT cor0.col1 + - cor0.col1 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1220"
+    },
+    {
+      "sql": "SELECT 35 AS col2 FROM tab1 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1227"
+    },
+    {
+      "sql": "SELECT + tab2.col1 col0 FROM tab2 GROUP BY tab2.col1",
+      "source": "group_by.slt:1234"
+    },
+    {
+      "sql": "SELECT 37 AS col1 FROM tab0 AS cor0 GROUP BY col0",
+      "source": "group_by.slt:1241"
+    },
+    {
+      "sql": "SELECT + cor0.col1 AS col1 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1248"
+    },
+    {
+      "sql": "SELECT cor0.col1 FROM tab2, tab1 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1255"
+    },
+    {
+      "sql": "SELECT ALL - col0 AS col2 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1262"
+    },
+    {
+      "sql": "SELECT + 77 AS col1 FROM tab1 AS cor0 CROSS JOIN tab0 AS cor1 GROUP BY cor0.col2",
+      "source": "group_by.slt:1269"
+    },
+    {
+      "sql": "SELECT ALL cor0.col0 col1 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1276"
+    },
+    {
+      "sql": "SELECT + cor0.col2 * + cor0.col0 FROM tab0 AS cor0 GROUP BY cor0.col0, cor0.col2",
+      "source": "group_by.slt:1283"
+    },
+    {
+      "sql": "SELECT DISTINCT 39 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1290"
+    },
+    {
+      "sql": "SELECT DISTINCT * FROM tab1 AS cor0 GROUP BY cor0.col0, cor0.col2, cor0.col1",
+      "source": "group_by.slt:1295"
+    },
+    {
+      "sql": "SELECT ALL + 28 FROM tab2 cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1302"
+    },
+    {
+      "sql": "SELECT cor0.col0 AS col0 FROM tab1 AS cor0 GROUP BY cor0.col2, cor0.col0",
+      "source": "group_by.slt:1309"
+    },
+    {
+      "sql": "SELECT ALL cor0.col2 AS col0 FROM tab1 AS cor0 GROUP BY cor0.col2, cor0.col2",
+      "source": "group_by.slt:1316"
+    },
+    {
+      "sql": "SELECT + ( col0 ) * col0 AS col2 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1323"
+    },
+    {
+      "sql": "SELECT - 21 - + 57 / cor0.col0 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1330"
+    },
+    {
+      "sql": "SELECT + 37 + cor0.col0 * cor0.col2 FROM tab2 AS cor0 GROUP BY cor0.col2, col0",
+      "source": "group_by.slt:1337"
+    },
+    {
+      "sql": "SELECT ALL cor0.col2 FROM tab1 AS cor0 GROUP BY cor0.col2, cor0.col0",
+      "source": "group_by.slt:1344"
+    },
+    {
+      "sql": "SELECT * FROM tab1 AS cor0 GROUP BY col2, cor0.col1, cor0.col0",
+      "source": "group_by.slt:1351"
+    },
+    {
+      "sql": "SELECT ( cor0.col2 ) AS col2 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1358"
+    },
+    {
+      "sql": "SELECT DISTINCT 28 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1365"
+    },
+    {
+      "sql": "SELECT ALL - 18 FROM tab0, tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1370"
+    },
+    {
+      "sql": "SELECT DISTINCT cor0.col2 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1377"
+    },
+    {
+      "sql": "SELECT + col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1384"
+    },
+    {
+      "sql": "SELECT - cor0.col0 AS col0 FROM tab1 AS cor0 GROUP BY cor0.col1, cor0.col0",
+      "source": "group_by.slt:1391"
+    },
+    {
+      "sql": "SELECT 29 FROM tab1 AS cor0 GROUP BY cor0.col1, cor0.col0",
+      "source": "group_by.slt:1398"
+    },
+    {
+      "sql": "SELECT - + cor0.col0 - 39 AS col0 FROM tab0, tab0 cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1405"
+    },
+    {
+      "sql": "SELECT ALL 45 AS col0 FROM tab0 GROUP BY tab0.col0",
+      "source": "group_by.slt:1412"
+    },
+    {
+      "sql": "SELECT + 74 AS col1 FROM tab1 GROUP BY tab1.col0",
+      "source": "group_by.slt:1419"
+    },
+    {
+      "sql": "SELECT cor0.col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1426"
+    },
+    {
+      "sql": "SELECT - cor0.col2 + CAST ( 80 AS INTEGER ) FROM tab1 AS cor0 GROUP BY col2",
+      "source": "group_by.slt:1433"
+    },
+    {
+      "sql": "SELECT DISTINCT - cor0.col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1440"
+    },
+    {
+      "sql": "SELECT - 51 * + cor0.col2 FROM tab0, tab2 cor0, tab1 AS cor1 GROUP BY cor0.col2",
+      "source": "group_by.slt:1446"
+    },
+    {
+      "sql": "SELECT ALL + col0 * cor0.col0 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1453"
+    },
+    {
+      "sql": "SELECT DISTINCT ( col0 ) FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1460"
+    },
+    {
+      "sql": "SELECT 87 AS col0 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1467"
+    },
+    {
+      "sql": "SELECT + cor0.col0 AS col2 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1474"
+    },
+    {
+      "sql": "SELECT DISTINCT + 45 col0 FROM tab1 AS cor0 GROUP BY col0",
+      "source": "group_by.slt:1481"
+    },
+    {
+      "sql": "SELECT ALL CAST ( NULL AS INTEGER ) FROM tab2 AS cor0 GROUP BY col1",
+      "source": "group_by.slt:1486"
+    },
+    {
+      "sql": "SELECT ALL cor0.col1 + col1 AS col0 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1493"
+    },
+    {
+      "sql": "SELECT - cor0.col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1499"
+    },
+    {
+      "sql": "SELECT DISTINCT + 99 * 76 + + tab2.col1 AS col2 FROM tab2 GROUP BY col1",
+      "source": "group_by.slt:1505"
+    },
+    {
+      "sql": "SELECT ALL 54 AS col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1512"
+    },
+    {
+      "sql": "SELECT + cor0.col2 AS col0 FROM tab2 AS cor0 GROUP BY cor0.col2, cor0.col0",
+      "source": "group_by.slt:1519"
+    },
+    {
+      "sql": "SELECT cor0.col0 + + 87 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1526"
+    },
+    {
+      "sql": "SELECT cor0.col0 FROM tab2 AS cor0 GROUP BY cor0.col0, cor0.col1, cor0.col0",
+      "source": "group_by.slt:1533"
+    },
+    {
+      "sql": "SELECT ALL col0 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1540"
+    },
+    {
+      "sql": "SELECT DISTINCT - cor0.col0 - + cor0.col0 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1547"
+    },
+    {
+      "sql": "SELECT ALL - 68 * + cor0.col1 FROM tab0 AS cor0 GROUP BY cor0.col1, cor0.col1",
+      "source": "group_by.slt:1554"
+    },
+    {
+      "sql": "SELECT col2 AS col2 FROM tab0 AS cor0 GROUP BY cor0.col1, cor0.col2",
+      "source": "group_by.slt:1560"
+    },
+    {
+      "sql": "SELECT ALL - 11 AS col1 FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1567"
+    },
+    {
+      "sql": "SELECT 66 AS col1 FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1574"
+    },
+    {
+      "sql": "SELECT - cor0.col2 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1581"
+    },
+    {
+      "sql": "SELECT ALL 37 FROM tab2, tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1588"
+    },
+    {
+      "sql": "SELECT DISTINCT + 20 col2 FROM tab0 GROUP BY tab0.col1",
+      "source": "group_by.slt:1594"
+    },
+    {
+      "sql": "SELECT 42 FROM tab0 cor0 GROUP BY col2",
+      "source": "group_by.slt:1599"
+    },
+    {
+      "sql": "SELECT ALL - cor0.col1 AS col1 FROM tab1 cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1606"
+    },
+    {
+      "sql": "SELECT - col2 AS col1 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1613"
+    },
+    {
+      "sql": "SELECT DISTINCT + 86 FROM tab1 GROUP BY tab1.col2",
+      "source": "group_by.slt:1620"
+    },
+    {
+      "sql": "SELECT + cor0.col1 AS col1 FROM tab2, tab0 cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1625"
+    },
+    {
+      "sql": "SELECT - 13 FROM tab0 cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1631"
+    },
+    {
+      "sql": "SELECT tab1.col0 AS col1 FROM tab1 GROUP BY tab1.col0",
+      "source": "group_by.slt:1637"
+    },
+    {
+      "sql": "SELECT ALL cor0.col1 * cor0.col1 AS col0 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1644"
+    },
+    {
+      "sql": "SELECT - cor0.col0 AS col1 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1651"
+    },
+    {
+      "sql": "SELECT cor0.col2 FROM tab1 AS cor0 GROUP BY cor0.col0, cor0.col2",
+      "source": "group_by.slt:1658"
+    },
+    {
+      "sql": "SELECT ALL - 67 AS col0 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1665"
+    },
+    {
+      "sql": "SELECT + 75 AS col2 FROM tab1 cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1672"
+    },
+    {
+      "sql": "SELECT ALL cor0.col1 FROM tab0 AS cor0 GROUP BY col0, cor0.col1",
+      "source": "group_by.slt:1679"
+    },
+    {
+      "sql": "SELECT ALL + cor0.col1 FROM tab0 AS cor0 GROUP BY col1",
+      "source": "group_by.slt:1686"
+    },
+    {
+      "sql": "SELECT DISTINCT - 38 - - cor0.col0 AS col0 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1692"
+    },
+    {
+      "sql": "SELECT + cor0.col0 + - col0 + 21 AS col0 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1699"
+    },
+    {
+      "sql": "SELECT + cor0.col0 FROM tab1 AS cor0 GROUP BY cor0.col2, cor0.col0, cor0.col0",
+      "source": "group_by.slt:1706"
+    },
+    {
+      "sql": "SELECT ALL - cor0.col0 FROM tab0 AS cor0 GROUP BY cor0.col0, cor0.col0",
+      "source": "group_by.slt:1713"
+    },
+    {
+      "sql": "SELECT * FROM tab0 AS cor0 GROUP BY cor0.col2, cor0.col1, cor0.col0",
+      "source": "group_by.slt:1720"
+    },
+    {
+      "sql": "SELECT DISTINCT + + tab2.col2 FROM tab2, tab1 AS cor0 GROUP BY tab2.col2",
+      "source": "group_by.slt:1727"
+    },
+    {
+      "sql": "SELECT cor0.col0 AS col1 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1734"
+    },
+    {
+      "sql": "SELECT col0 AS col0 FROM tab2 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1741"
+    },
+    {
+      "sql": "SELECT - cor0.col0 AS col1 FROM tab1 AS cor0 GROUP BY col0",
+      "source": "group_by.slt:1748"
+    },
+    {
+      "sql": "SELECT DISTINCT ( + 71 ) col1 FROM tab1 GROUP BY tab1.col2",
+      "source": "group_by.slt:1755"
+    },
+    {
+      "sql": "SELECT + 96 * 29 col1 FROM tab2, tab1 AS cor0 GROUP BY tab2.col0",
+      "source": "group_by.slt:1760"
+    },
+    {
+      "sql": "SELECT + 3 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1767"
+    },
+    {
+      "sql": "SELECT 37 FROM tab0 AS cor0 GROUP BY col0",
+      "source": "group_by.slt:1774"
+    },
+    {
+      "sql": "SELECT 82 FROM tab0 cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1781"
+    },
+    {
+      "sql": "SELECT cor0.col2 FROM tab2 cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1787"
+    },
+    {
+      "sql": "SELECT DISTINCT - 87 FROM tab1, tab2 AS cor0, tab2 AS cor1 GROUP BY tab1.col0",
+      "source": "group_by.slt:1794"
+    },
+    {
+      "sql": "SELECT 55 FROM tab1 AS cor0 GROUP BY cor0.col2, cor0.col1",
+      "source": "group_by.slt:1799"
+    },
+    {
+      "sql": "SELECT DISTINCT 35 FROM tab0 cor0 GROUP BY cor0.col2, cor0.col0",
+      "source": "group_by.slt:1806"
+    },
+    {
+      "sql": "SELECT cor0.col0 FROM tab2 cor0 GROUP BY col0",
+      "source": "group_by.slt:1811"
+    },
+    {
+      "sql": "SELECT - cor0.col2 AS col1 FROM tab1 AS cor0 GROUP BY col2",
+      "source": "group_by.slt:1818"
+    },
+    {
+      "sql": "SELECT ALL ( cor0.col2 ) AS col1 FROM tab2, tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1825"
+    },
+    {
+      "sql": "SELECT DISTINCT - col2 FROM tab1 GROUP BY tab1.col2",
+      "source": "group_by.slt:1832"
+    },
+    {
+      "sql": "SELECT 38 FROM tab1 AS cor0 GROUP BY cor0.col1, cor0.col1",
+      "source": "group_by.slt:1839"
+    },
+    {
+      "sql": "SELECT - 16 * - cor0.col0 * 47 FROM tab0 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1846"
+    },
+    {
+      "sql": "SELECT - 31 FROM tab2 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1853"
+    },
+    {
+      "sql": "SELECT ( + 34 ) AS col1 FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1860"
+    },
+    {
+      "sql": "SELECT cor0.col2 AS col0 FROM tab1 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1867"
+    },
+    {
+      "sql": "SELECT DISTINCT 21 FROM tab0 AS cor0 GROUP BY cor0.col2",
+      "source": "group_by.slt:1874"
+    },
+    {
+      "sql": "SELECT 62 AS col2 FROM tab0 cor0 GROUP BY cor0.col1, cor0.col2",
+      "source": "group_by.slt:1879"
+    },
+    {
+      "sql": "SELECT cor0.col0 FROM tab1 cor0 GROUP BY cor0.col0, cor0.col1",
+      "source": "group_by.slt:1886"
+    },
+    {
+      "sql": "SELECT DISTINCT cor0.col0 FROM tab2 AS cor0 GROUP BY cor0.col0, col1",
+      "source": "group_by.slt:1893"
+    },
+    {
+      "sql": "SELECT DISTINCT cor0.col0 AS col2 FROM tab1 AS cor0 GROUP BY cor0.col0",
+      "source": "group_by.slt:1900"
+    },
+    {
+      "sql": "SELECT ALL - ( 30 ) * + cor0.col1 AS col2 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1907"
+    },
+    {
+      "sql": "SELECT DISTINCT 94 AS col1 FROM tab0 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1914"
+    },
+    {
+      "sql": "SELECT DISTINCT + col1 FROM tab2 AS cor0 GROUP BY cor0.col1",
+      "source": "group_by.slt:1919"
+    },
+    {
+      "sql": "SELECT col1, AVG(col2), col0 FROM tab3 GROUP BY ALL",
+      "source": "group_by.slt:1945"
+    },
+    {
+      "sql": "SELECT sub.col1, sub.col0, AVG(sub.col2) AS avg_col2\nFROM (\n  SELECT col1, col0, col2\n  FROM tab3\n  WHERe col3 = -1\n  GROUP BY ALL\n) AS sub\nGROUP BY ALL;",
+      "source": "group_by.slt:1952"
+    },
+    {
+      "sql": "SELECT sub.col1, sub.col0, sub.\"avg(tab3.col2)\" AS avg_col2\nFROM (\n  SELECT col1, avg(col2), col0 FROM tab3 GROUP BY ALL\n) AS sub\nGROUP BY ALL;",
+      "source": "group_by.slt:1965"
+    },
+    {
+      "sql": "SELECT col0, col1, COUNT(col2), SUM(col3) FROM tab3 GROUP BY ALL",
+      "source": "group_by.slt:1976"
+    },
+    {
+      "sql": "SELECT COUNT(*) AS c FROM tab3 GROUP BY ALL",
+      "source": "group_by.slt:1983"
+    },
+    {
+      "sql": "SELECT l.col0, LAST_VALUE(r.col1 ORDER BY r.col0) as last_col1\nFROM tab0 as l\nJOIN tab0 as r\nON l.col0 = r.col0\nGROUP BY l.col0, l.col1, l.col2\nORDER BY l.col0;",
+      "source": "group_by.slt:1989"
+    },
+    {
+      "sql": "SELECT a, b,\n SUM(c) as summation1\n FROM annotated_data_infinite2\n GROUP BY b, a",
+      "source": "group_by.slt:2121"
+    },
+    {
+      "sql": "SELECT a, d,\n SUM(c ORDER BY a DESC) as summation1\n FROM annotated_data_infinite2\n GROUP BY d, a",
+      "source": "group_by.slt:2151"
+    },
+    {
+      "sql": "SELECT a, b, FIRST_VALUE(c ORDER BY a DESC) as first_c\n  FROM annotated_data_infinite2\n  GROUP BY a, b",
+      "source": "group_by.slt:2184"
+    },
+    {
+      "sql": "SELECT a, b, LAST_VALUE(c ORDER BY a DESC, c ASC) as last_c\n  FROM annotated_data_infinite2\n  GROUP BY a, b",
+      "source": "group_by.slt:2210"
+    },
+    {
+      "sql": "SELECT a, b, LAST_VALUE(c order by c) as last_c\n  FROM annotated_data_infinite2\n  GROUP BY a, b",
+      "source": "group_by.slt:2237"
+    },
+    {
+      "sql": "SELECT a, b, ARRAY_AGG(d ORDER BY d)\nFROM annotated_data_infinite2\nGROUP BY a, b;",
+      "source": "group_by.slt:2298"
+    },
+    {
+      "sql": "SELECT a, b, d\nFROM annotated_data_infinite2\nORDER BY a, b, d;",
+      "source": "group_by.slt:2308"
+    },
+    {
+      "sql": "SELECT country, (ARRAY_AGG(amount ORDER BY amount ASC)) AS amounts\n  FROM sales_global\n  GROUP BY country",
+      "source": "group_by.slt:2470"
+    },
+    {
+      "sql": "SELECT s.country, ARRAY_AGG(s.amount ORDER BY s.amount DESC) AS amounts,\n    SUM(s.amount) AS sum1\n  FROM sales_global AS s\n  GROUP BY s.country",
+      "source": "group_by.slt:2499"
+    },
+    {
+      "sql": "SELECT ARRAY_AGG(s.amount ORDER BY s.amount DESC) AS amounts,\n    ARRAY_AGG(s.amount ORDER BY s.amount ASC) AS amounts2,\n    ARRAY_AGG(s.amount ORDER BY s.sn ASC) AS amounts3\n  FROM sales_global AS s\n  GROUP BY s.country",
+      "source": "group_by.slt:2512"
+    },
+    {
+      "sql": "SELECT s.country, ARRAY_AGG(s.amount ORDER BY s.amount DESC) AS amounts,\n  SUM(s.amount) AS sum1\n    FROM (SELECT *\n      FROM sales_global\n      ORDER BY country) AS s\n    GROUP BY s.country",
+      "source": "group_by.slt:2549"
+    },
+    {
+      "sql": "SELECT s.country, s.zip_code, ARRAY_AGG(s.amount ORDER BY s.amount DESC) AS amounts,\n    SUM(s.amount) AS sum1\n      FROM (SELECT *\n        FROM sales_global\n        ORDER BY country) AS s\n      GROUP BY s.country, s.zip_code",
+      "source": "group_by.slt:2586"
+    },
+    {
+      "sql": "SELECT s.country, ARRAY_AGG(s.amount ORDER BY s.country DESC, s.amount DESC) AS amounts,\n  SUM(s.amount) AS sum1\n    FROM (SELECT *\n      FROM sales_global\n      ORDER BY country) AS s\n    GROUP BY s.country",
+      "source": "group_by.slt:2660"
+    },
+    {
+      "sql": "select c, d, first_value(a order by b) from null_group group by c, d;",
+      "source": "group_by.slt:2684"
+    },
+    {
+      "sql": "select k, first_value(val order by o) IGNORE NULLS from first_null group by k;",
+      "source": "group_by.slt:2703"
+    },
+    {
+      "sql": "select k, first_value(val order by o) respect NULLS from first_null group by k;",
+      "source": "group_by.slt:2709"
+    },
+    {
+      "sql": "select k, last_value(val order by o) IGNORE NULLS from last_null group by k;",
+      "source": "group_by.slt:2726"
+    },
+    {
+      "sql": "select k, last_value(val order by o) respect NULLS from last_null group by k;",
+      "source": "group_by.slt:2732"
+    },
+    {
+      "sql": "SELECT country, ARRAY_AGG(amount ORDER BY amount DESC) AS amounts,\n  FIRST_VALUE(amount ORDER BY amount ASC) AS fv1,\n  LAST_VALUE(amount ORDER BY amount DESC) AS fv2\n  FROM sales_global\n  GROUP BY country",
+      "source": "group_by.slt:2756"
+    },
+    {
+      "sql": "SELECT country, ARRAY_AGG(amount ORDER BY amount ASC) AS amounts,\n  FIRST_VALUE(amount ORDER BY amount ASC) AS fv1,\n  LAST_VALUE(amount ORDER BY amount DESC) AS fv2\n  FROM sales_global\n  GROUP BY country",
+      "source": "group_by.slt:2787"
+    },
+    {
+      "sql": "SELECT country, FIRST_VALUE(amount ORDER BY amount ASC) AS fv1,\n  LAST_VALUE(amount ORDER BY amount DESC) AS fv2,\n  ARRAY_AGG(amount ORDER BY amount ASC) AS amounts\n  FROM sales_global\n  GROUP BY country",
+      "source": "group_by.slt:2819"
+    },
+    {
+      "sql": "SELECT country, SUM(amount ORDER BY ts DESC) AS sum1,\n  ARRAY_AGG(amount ORDER BY amount ASC) AS amounts\n  FROM sales_global\n  GROUP BY country",
+      "source": "group_by.slt:2849"
+    },
+    {
+      "sql": "SELECT country, FIRST_VALUE(amount ORDER BY ts DESC) as fv1,\n  LAST_VALUE(amount ORDER BY ts DESC) as lv1,\n  SUM(amount ORDER BY ts DESC) as sum1\n  FROM (SELECT *\n    FROM sales_global\n    ORDER BY ts ASC)\n  GROUP BY country",
+      "source": "group_by.slt:2882"
+    },
+    {
+      "sql": "SELECT country, FIRST_VALUE(amount ORDER BY ts DESC) as fv1,\n    LAST_VALUE(amount ORDER BY ts DESC) as lv1,\n    SUM(amount ORDER BY ts DESC) as sum1\n  FROM sales_global\n  GROUP BY country",
+      "source": "group_by.slt:2915"
+    },
+    {
+      "sql": "SELECT s.zip_code, s.country, s.sn, s.ts, s.currency, LAST_VALUE(e.amount ORDER BY e.sn) AS last_rate\nFROM sales_global AS s\nJOIN sales_global AS e\n  ON s.currency = e.currency AND\n  s.ts >= e.ts\nGROUP BY s.sn, s.zip_code, s.country, s.ts, s.currency\nORDER BY s.sn",
+      "source": "group_by.slt:2953"
+    },
+    {
+      "sql": "SELECT country, FIRST_VALUE(amount ORDER BY ts ASC) AS fv1,\n  LAST_VALUE(amount ORDER BY ts ASC) AS fv2\n  FROM sales_global\n  GROUP BY country\n  ORDER BY country",
+      "source": "group_by.slt:2996"
+    },
+    {
+      "sql": "SELECT country, FIRST_VALUE(amount ORDER BY ts ASC) AS fv1,\n  LAST_VALUE(amount ORDER BY ts DESC) AS fv2\n  FROM sales_global\n  GROUP BY country\n  ORDER BY country",
+      "source": "group_by.slt:3031"
+    },
+    {
+      "sql": "SELECT FIRST_VALUE(amount ORDER BY ts ASC) AS fv1,\n  LAST_VALUE(amount ORDER BY ts ASC) AS fv2\n  FROM sales_global",
+      "source": "group_by.slt:3066"
+    },
+    {
+      "sql": "SELECT FIRST_VALUE(amount ORDER BY ts ASC) AS fv1,\n  LAST_VALUE(amount ORDER BY ts DESC) AS fv2\n  FROM sales_global",
+      "source": "group_by.slt:3092"
+    },
+    {
+      "sql": "SELECT ARRAY_AGG(amount ORDER BY ts ASC) AS array_agg1\n  FROM sales_global",
+      "source": "group_by.slt:3117"
+    },
+    {
+      "sql": "SELECT ARRAY_AGG(amount ORDER BY ts DESC) AS array_agg1\n  FROM sales_global",
+      "source": "group_by.slt:3141"
+    },
+    {
+      "sql": "SELECT ARRAY_AGG(amount ORDER BY amount ASC) AS array_agg1\n  FROM sales_global",
+      "source": "group_by.slt:3165"
+    },
+    {
+      "sql": "SELECT country, ARRAY_AGG(amount ORDER BY amount ASC) AS array_agg1\n  FROM sales_global\n  GROUP BY country\n  ORDER BY country",
+      "source": "group_by.slt:3194"
+    },
+    {
+      "sql": "SELECT country, ARRAY_AGG(amount ORDER BY amount DESC) AS amounts,\n  FIRST_VALUE(amount ORDER BY amount ASC) AS fv1,\n  LAST_VALUE(amount ORDER BY amount DESC) AS fv2\n  FROM sales_global\n  GROUP BY country\n  ORDER BY country",
+      "source": "group_by.slt:3229"
+    },
+    {
+      "sql": "SELECT ARRAY_AGG(e.rate ORDER BY e.sn)\nFROM sales_global AS s\nJOIN exchange_rates AS e\nON s.currency = e.currency_from AND\n   e.currency_to = 'USD' AND\n   s.ts >= e.ts\nGROUP BY s.sn\nORDER BY s.sn;",
+      "source": "group_by.slt:3245"
+    },
+    {
+      "sql": "SELECT FIRST_VALUE(C order by c ASC) as first_c\nFROM multiple_ordered_table\nGROUP BY d\nORDER BY first_c",
+      "source": "group_by.slt:3262"
+    },
+    {
+      "sql": "SELECT s.zip_code, s.country, s.sn, s.ts, s.currency, LAST_VALUE(e.amount ORDER BY e.sn) AS last_rate\nFROM sales_global AS s\nJOIN sales_global AS e\n  ON s.currency = e.currency AND\n  s.ts >= e.ts\nGROUP BY s.sn, s.zip_code, s.country, s.ts, s.currency\nORDER BY s.sn, s.zip_code",
+      "source": "group_by.slt:3274"
+    },
+    {
+      "sql": "SELECT s.sn, s.amount, 2*s.sn\n  FROM sales_global_with_pk AS s\n  GROUP BY sn\n  ORDER BY sn",
+      "source": "group_by.slt:3428"
+    },
+    {
+      "sql": "SELECT s.sn, 2*s.amount, 2*s.sn\n  FROM sales_global_with_pk AS s\n  GROUP BY sn\n  ORDER BY sn",
+      "source": "group_by.slt:3443"
+    },
+    {
+      "sql": "SELECT s.sn, s.amount, 2*s.sn\n  FROM sales_global_with_pk_alternate AS s\n  GROUP BY sn\n  ORDER BY sn",
+      "source": "group_by.slt:3455"
+    },
+    {
+      "sql": "SELECT r.sn, SUM(l.amount), r.amount\n  FROM sales_global_with_pk AS l\n  JOIN sales_global_with_pk AS r\n  ON l.sn >= r.sn\n  GROUP BY r.sn\n  ORDER BY r.sn",
+      "source": "group_by.slt:3498"
+    },
+    {
+      "sql": "SELECT r.sn, SUM(l.amount), r.amount\n  FROM sales_global_with_composite_pk AS l\n  JOIN sales_global_with_composite_pk AS r\n  ON l.sn >= r.sn\n  GROUP BY r.sn, r.ts\n  ORDER BY r.sn",
+      "source": "group_by.slt:3514"
+    },
+    {
+      "sql": "SELECT r.sn, r.amount, SUM(r.amount)\n  FROM (SELECT *\n    FROM sales_global_with_pk as l\n    LEFT JOIN sales_global_with_pk as r\n    ON l.amount >= r.amount + 10)\n  GROUP BY r.sn\nORDER BY r.sn",
+      "source": "group_by.slt:3542"
+    },
+    {
+      "sql": "SELECT l.sn, l.amount, SUM(l.amount)\n  FROM (SELECT *\n    FROM sales_global_with_unique as l\n    LEFT SEMI JOIN sales_global_with_unique as r\n    ON l.amount >= r.amount + 10)\n  GROUP BY l.sn\nORDER BY l.sn",
+      "source": "group_by.slt:3570"
+    },
+    {
+      "sql": "SELECT l.sn, l.amount, SUM(l.amount)\n  FROM (SELECT *\n    FROM sales_global_with_unique as l\n    LEFT ANTI JOIN sales_global_with_unique as r\n    ON l.amount >= r.amount + 10)\n  GROUP BY l.sn\nORDER BY l.sn",
+      "source": "group_by.slt:3586"
+    },
+    {
+      "sql": "SELECT column1, COUNT(*) as column2 FROM (VALUES (['a', 'b'], 1), (['c', 'd', 'e'], 2), (['a', 'b'], 3)) as values0 GROUP BY column1 ORDER BY column2;",
+      "source": "group_by.slt:3598"
+    },
+    {
+      "sql": "SELECT *\n  FROM(SELECT *, SUM(l.amount) OVER(ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) as sum_amount\n    FROM sales_global_with_pk AS l\n  ) as l\n  GROUP BY l.sn\n  ORDER BY l.sn",
+      "source": "group_by.slt:3645"
+    },
+    {
+      "sql": "SELECT l.sn, SUM(l.amount), l.ts\nFROM\n  (SELECT *\n  FROM sales_global_with_pk AS l\n  JOIN sales_global_with_pk AS r ON l.sn >= r.sn)\nGROUP BY l.sn\nORDER BY l.sn",
+      "source": "group_by.slt:3660"
+    },
+    {
+      "sql": "SELECT r.sn, SUM(r.amount), r.ts\nFROM\n  (SELECT r.ts, r.sn, r.amount\n   FROM\n     (SELECT *\n      FROM sales_global_with_pk AS l\n      JOIN sales_global_with_pk AS r ON l.sn >= r.sn))\nGROUP BY r.sn\nORDER BY r.sn",
+      "source": "group_by.slt:3678"
+    },
+    {
+      "sql": "SELECT sn, ts, sum1\nFROM (\n  SELECT ts, sn, SUM(amount) as sum1\n  FROM sales_global_with_pk\n  GROUP BY sn)\nGROUP BY sn\nORDER BY sn",
+      "source": "group_by.slt:3708"
+    },
+    {
+      "sql": "SELECT ts, sum1\nFROM (\n  SELECT ts, SUM(amount) as sum1\n  FROM sales_global_with_pk\n  GROUP BY ts)\nGROUP BY ts\nORDER BY ts",
+      "source": "group_by.slt:3731"
+    },
+    {
+      "sql": "SELECT *\nFROM (\n  SELECT *, ROW_NUMBER() OVER(ORDER BY l.sn) AS rn1\n  FROM (\n    SELECT l.sn, SUM(l.amount)\n    FROM (\n      SELECT l.sn, l.amount, SUM(l.amount) as sum1\n      FROM\n        (SELECT *\n        FROM sales_global_with_pk AS l\n        JOIN sales_global_with_pk AS r ON l.sn >= r.sn)\n      GROUP BY l.sn)\n    GROUP BY l.sn)\n  )\nGROUP BY l.sn\nORDER BY l.sn",
+      "source": "group_by.slt:3749"
+    },
+    {
+      "sql": "SELECT LAST_VALUE(x)\nFROM FOO;",
+      "source": "group_by.slt:3781"
+    },
+    {
+      "sql": "SELECT x, LAST_VALUE(x)\nFROM FOO\nGROUP BY x\nORDER BY x;",
+      "source": "group_by.slt:3787"
+    },
+    {
+      "sql": "SELECT y, LAST_VALUE(x order by x desc)\nFROM FOO\nGROUP BY y\nORDER BY y;",
+      "source": "group_by.slt:3796"
+    },
+    {
+      "sql": "SELECT FIRST_VALUE(x)\nFROM FOO;",
+      "source": "group_by.slt:3827"
+    },
+    {
+      "sql": "SELECT FIRST_VALUE(a ORDER BY a ASC) as first_a,\n  LAST_VALUE(c ORDER BY c DESC) as last_c\nFROM multiple_ordered_table\nGROUP BY d;",
+      "source": "group_by.slt:3869"
+    },
+    {
+      "sql": "SELECT d, FIRST_VALUE(c ORDER BY a DESC, c DESC) as first_a,\n  LAST_VALUE(c ORDER BY c DESC) as last_c\nFROM multiple_ordered_table\nGROUP BY d;",
+      "source": "group_by.slt:3881"
+    },
+    {
+      "sql": "SELECT SUM(DISTINCT x), MAX(DISTINCT x) from t GROUP BY x ORDER BY x;",
+      "source": "group_by.slt:4209"
+    },
+    {
+      "sql": "SELECT MAX(DISTINCT x), SUM(DISTINCT x) from t GROUP BY x ORDER BY x;",
+      "source": "group_by.slt:4215"
+    },
+    {
+      "sql": "SELECT date_bin('15 minutes', ts) as time_chunks\n  FROM unbounded_csv_with_timestamps\n  GROUP BY date_bin('15 minutes', ts)\n  ORDER BY time_chunks DESC\n  LIMIT 5;",
+      "source": "group_by.slt:4285"
+    },
+    {
+      "sql": "SELECT extract(month from ts) as months\n  FROM unbounded_csv_with_timestamps\n  GROUP BY extract(month from ts)\n  ORDER BY months DESC\n  LIMIT 5;",
+      "source": "group_by.slt:4297"
+    },
+    {
+      "sql": "SELECT extract(month from ts) as months\n  FROM csv_with_timestamps\n  GROUP BY extract(month from ts)\n  ORDER BY months DESC\n  LIMIT 5;",
+      "source": "group_by.slt:4339"
+    },
+    {
+      "sql": "select date_part('year', time) as bla, count(distinct state) as count from t1 group by bla;",
+      "source": "group_by.slt:4389"
+    },
+    {
+      "sql": "select date_bin(interval '1 year', time) as bla, count(distinct state) as count from t1 group by bla;",
+      "source": "group_by.slt:4394"
+    },
+    {
+      "sql": "SELECT c1, count(distinct c2), min(distinct c2), min(c3), max(c4) FROM aggregate_test_100 GROUP BY c1 ORDER BY c1;",
+      "source": "group_by.slt:4422"
+    },
+    {
+      "sql": "SELECT c2, count(distinct c3) FILTER (WHERE c1 != 'a') FROM aggregate_test_100 GROUP BY c2 ORDER BY c2;",
+      "source": "group_by.slt:4453"
+    },
+    {
+      "sql": "SELECT c2, count(distinct c3) FILTER (WHERE c1 != 'a'), count(c5) FILTER (WHERE c1 != 'b') FROM aggregate_test_100 GROUP BY c2 ORDER BY c2;",
+      "source": "group_by.slt:4462"
+    },
+    {
+      "sql": "SELECT c, a, SUM(d)\nFROM unbounded_multiple_ordered_table_with_pk\nGROUP BY c\nORDER BY c\nLIMIT 5",
+      "source": "group_by.slt:4492"
+    },
+    {
+      "sql": "SELECT r.*\nFROM sales_global_with_pk as l, sales_global_with_pk as r\nORDER BY 1, 2, 3, 4, 5, 6\nLIMIT 5",
+      "source": "group_by.slt:4506"
+    },
+    {
+      "sql": "SELECT date_trunc('week', t1) as week, sum(c2)\nFROM timestamp_table\nGROUP BY date_trunc('week', t1)",
+      "source": "group_by.slt:4575"
+    },
+    {
+      "sql": "SELECT c2, MAX(t1)\nFROM timestamp_table\nGROUP BY c2\nORDER BY MAX(t1) DESC\nLIMIT 4;",
+      "source": "group_by.slt:4584"
+    },
+    {
+      "sql": "SELECT column2, count(column1) FROM int8_dict GROUP BY column2;",
+      "source": "group_by.slt:4650"
+    },
+    {
+      "sql": "SELECT column1, count(column2) FROM int8_dict GROUP BY column1;",
+      "source": "group_by.slt:4658"
+    },
+    {
+      "sql": "SELECT column1, count(distinct column2) FROM int8_dict GROUP BY column1;",
+      "source": "group_by.slt:4666"
+    },
+    {
+      "sql": "SELECT column2, count(column1) FROM int16_dict GROUP BY column2;",
+      "source": "group_by.slt:4688"
+    },
+    {
+      "sql": "SELECT column1, count(column2) FROM int16_dict GROUP BY column1;",
+      "source": "group_by.slt:4696"
+    },
+    {
+      "sql": "SELECT column1, count(distinct column2) FROM int16_dict GROUP BY column1;",
+      "source": "group_by.slt:4704"
+    },
+    {
+      "sql": "SELECT column2, count(column1) FROM int32_dict GROUP BY column2;",
+      "source": "group_by.slt:4726"
+    },
+    {
+      "sql": "SELECT column1, count(column2) FROM int32_dict GROUP BY column1;",
+      "source": "group_by.slt:4734"
+    },
+    {
+      "sql": "SELECT column1, count(distinct column2) FROM int32_dict GROUP BY column1;",
+      "source": "group_by.slt:4742"
+    },
+    {
+      "sql": "SELECT column2, count(column1) FROM int64_dict GROUP BY column2;",
+      "source": "group_by.slt:4764"
+    },
+    {
+      "sql": "SELECT column1, count(column2) FROM int64_dict GROUP BY column1;",
+      "source": "group_by.slt:4772"
+    },
+    {
+      "sql": "SELECT column1, count(distinct column2) FROM int64_dict GROUP BY column1;",
+      "source": "group_by.slt:4780"
+    },
+    {
+      "sql": "SELECT column2, count(column1) FROM uint8_dict GROUP BY column2;",
+      "source": "group_by.slt:4802"
+    },
+    {
+      "sql": "SELECT column1, count(column2) FROM uint8_dict GROUP BY column1;",
+      "source": "group_by.slt:4810"
+    },
+    {
+      "sql": "SELECT column1, count(distinct column2) FROM uint8_dict GROUP BY column1;",
+      "source": "group_by.slt:4818"
+    },
+    {
+      "sql": "SELECT column2, count(column1) FROM uint16_dict GROUP BY column2;",
+      "source": "group_by.slt:4840"
+    },
+    {
+      "sql": "SELECT column1, count(column2) FROM uint16_dict GROUP BY column1;",
+      "source": "group_by.slt:4848"
+    },
+    {
+      "sql": "SELECT column1, count(distinct column2) FROM uint16_dict GROUP BY column1;",
+      "source": "group_by.slt:4856"
+    },
+    {
+      "sql": "SELECT column2, count(column1) FROM uint32_dict GROUP BY column2;",
+      "source": "group_by.slt:4878"
+    },
+    {
+      "sql": "SELECT column1, count(column2) FROM uint32_dict GROUP BY column1;",
+      "source": "group_by.slt:4886"
+    },
+    {
+      "sql": "SELECT column1, count(distinct column2) FROM uint32_dict GROUP BY column1;",
+      "source": "group_by.slt:4894"
+    },
+    {
+      "sql": "SELECT column2, count(column1) FROM uint64_dict GROUP BY column2;",
+      "source": "group_by.slt:4916"
+    },
+    {
+      "sql": "SELECT column1, count(column2) FROM uint64_dict GROUP BY column1;",
+      "source": "group_by.slt:4924"
+    },
+    {
+      "sql": "SELECT column1, count(distinct column2) FROM uint64_dict GROUP BY column1;",
+      "source": "group_by.slt:4932"
+    },
+    {
+      "sql": "SELECT a, b, NTH_VALUE(c, 2), ARRAY_AGG(c)\nFROM multiple_ordered_table\nGROUP BY a, b\nORDER BY a, b;",
+      "source": "group_by.slt:4948"
+    },
+    {
+      "sql": "SELECT a, b, NTH_VALUE(c, 2 ORDER BY c ASC), ARRAY_AGG(c ORDER BY c ASC)\nFROM multiple_ordered_table\nGROUP BY a, b\nORDER BY a, b;",
+      "source": "group_by.slt:4959"
+    },
+    {
+      "sql": "SELECT a, b, ARRAY_AGG(c ORDER BY c ASC), NTH_VALUE(c, 2 ORDER BY c DESC)\nFROM multiple_ordered_table\nGROUP BY a, b\nORDER BY a, b;",
+      "source": "group_by.slt:4970"
+    },
+    {
+      "sql": "SELECT a, b, NTH_VALUE(c, 2 ORDER BY c ASC), NTH_VALUE(c, 3 ORDER BY c ASC), NTH_VALUE(c, 2 ORDER BY c DESC), NTH_VALUE(c, 3 ORDER BY c DESC)\nFROM multiple_ordered_table\nGROUP BY a, b\nORDER BY a, b;",
+      "source": "group_by.slt:4981"
+    },
+    {
+      "sql": "SELECT a, b, ARRAY_AGG(c ORDER BY c DESC)\nFROM multiple_ordered_table\nGROUP BY a, b\nORDER BY a, b;",
+      "source": "group_by.slt:5007"
+    },
+    {
+      "sql": "SELECT a, b, ARRAY_AGG(d ORDER BY d DESC), NTH_VALUE(d, 1 ORDER BY d DESC), NTH_VALUE(d, 1 ORDER BY d ASC)\nFROM multiple_ordered_table\nGROUP BY a, b\nORDER BY a, b;",
+      "source": "group_by.slt:5018"
+    },
+    {
+      "sql": "SELECT a, b, NTH_VALUE(c, 2) - ARRAY_AGG(c)[2]\nFROM multiple_ordered_table\nGROUP BY a, b\nORDER BY a, b;",
+      "source": "group_by.slt:5034"
+    },
+    {
+      "sql": "SELECT a + 1 AS d, a + 1 + b AS c FROM (SELECT 1 AS a, 2 AS b) GROUP BY a + 1, a + 1 + b;",
+      "source": "group_by.slt:5085"
+    },
+    {
+      "sql": "SELECT\n    DATE_BIN(INTERVAL '2' MINUTE, ts, '2000-01-01') AS ts_chunk,\n    COUNT(keyword) AS alert_keyword_count\nFROM\n    keywords_stream\nWHERE\n    keywords_stream.keyword IN (SELECT keyword FROM ALERT_KEYWORDS)\nGROUP BY\n    ts_chunk;",
+      "source": "group_by.slt:5152"
+    },
+    {
+      "sql": "SELECT (CASE WHEN CONCAT(b, 'hello') = 'test' THEN 'good' ELSE 'bad' END) AS c\n  FROM test_case_expr GROUP BY c;",
+      "source": "group_by.slt:5169"
+    },
+    {
+      "sql": "SELECT (CASE a::BIGINT WHEN 1 THEN 1 END) AS c FROM test_case_expr GROUP BY c;",
+      "source": "group_by.slt:5175"
+    },
+    {
+      "sql": "select a, b, count(*) from t group by grouping sets ((a, b), (a), (b)) order by a, b;",
+      "source": "group_by.slt:5191"
+    },
+    {
+      "sql": "select deptno, job, sal, sum(comm), grouping(deptno), grouping(job), grouping(sal)\nfrom duplicate_grouping_sets\ngroup by grouping sets ((deptno, job), (deptno, sal), (deptno, job))\norder by deptno, job, sal, grouping(deptno), grouping(job), grouping(sal);",
+      "source": "group_by.slt:5213"
+    },
+    {
+      "sql": "select deptno, job, sal, grouping(deptno, job, sal)\nfrom duplicate_grouping_sets\ngroup by grouping sets ((deptno, job), (deptno, sal), (deptno, job))\norder by deptno, job, sal, grouping(deptno, job, sal);",
+      "source": "group_by.slt:5226"
+    },
+    {
+      "sql": "select a, b, count(*) from t group by a, b;",
+      "source": "group_by.slt:5265"
+    },
+    {
+      "sql": "select a, b, count(*) from t group by a, b order by a, b;",
+      "source": "group_by.slt:5302"
+    },
+    {
+      "sql": "SELECT max(input_table.x), min(input_table.x) from input_table GROUP BY input_table.\"row\";",
+      "source": "group_by.slt:5547"
+    },
+    {
+      "sql": "SELECT\n    'foo' AS text,\n    arrow_cast('2024-01-01T00:00:00Z'::timestamptz, 'Timestamp(Microsecond, Some(\"UTC\"))') AS ts\nGROUP BY ts, text",
+      "source": "group_by.slt:5553"
+    },
+    {
+      "sql": "SELECT\n    'foo' AS text,\n    arrow_cast('2024-01-01T00:00:00Z'::timestamptz, 'Timestamp(Second, Some(\"+08:00\"))') AS ts\nGROUP BY ts, text",
+      "source": "group_by.slt:5561"
+    },
+    {
+      "sql": "SELECT id FROM alltypes_plain ORDER BY int_col, double_col",
+      "source": "order.slt:44"
+    },
+    {
+      "sql": "SELECT MIN(c12) FROM aggregate_test_100 ORDER BY MIN(c12)",
+      "source": "order.slt:58"
+    },
+    {
+      "sql": "SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (null, 'three')) AS t (num,letter) ORDER BY num",
+      "source": "order.slt:65"
+    },
+    {
+      "sql": "SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (null, 'three')) AS t (num,letter) ORDER BY num DESC",
+      "source": "order.slt:74"
+    },
+    {
+      "sql": "SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (null, 'three')) AS t (num,letter) ORDER BY num DESC NULLS LAST",
+      "source": "order.slt:83"
+    },
+    {
+      "sql": "SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (null, 'three')) AS t (num,letter) ORDER BY num ASC NULLS FIRST",
+      "source": "order.slt:91"
+    },
+    {
+      "sql": "SELECT arrow_typeof(c1), arrow_typeof(c2), arrow_typeof(c3) FROM test LIMIT 1;",
+      "source": "order.slt:198"
+    },
+    {
+      "sql": "SELECT c1, c2 FROM test ORDER BY c1 DESC, c2 ASC",
+      "source": "order.slt:203"
+    },
+    {
+      "sql": "SELECT c2, c3 FROM aggregate_test_100 ORDER BY c2, c3, c2",
+      "source": "order.slt:322"
+    },
+    {
+      "sql": "SELECT c1, c2 FROM test WHERE c1 > 100000 ORDER BY c1 DESC, c2 ASC",
+      "source": "order.slt:430"
+    },
+    {
+      "sql": "select * from foo",
+      "source": "order.slt:439"
+    },
+    {
+      "sql": "select column1 from foo order by column2;",
+      "source": "order.slt:446"
+    },
+    {
+      "sql": "select column1 from foo order by column1 + column2;",
+      "source": "order.slt:453"
+    },
+    {
+      "sql": "select column1 + column2 from foo group by column1, column2;",
+      "source": "order.slt:467"
+    },
+    {
+      "sql": "select column1 + column2 from foo group by column1, column2 ORDER BY column2 desc;",
+      "source": "order.slt:474"
+    },
+    {
+      "sql": "select column1 from foo group by column1 order by min(column2);",
+      "source": "order.slt:483"
+    },
+    {
+      "sql": "select column1 from foo group by column1 order by min(column2) + max(column2);",
+      "source": "order.slt:491"
+    },
+    {
+      "sql": "select column1 from foo group by column1 order by min(column2), max(column2);",
+      "source": "order.slt:499"
+    },
+    {
+      "sql": "with t as (select 'foo' as x)\nselect x, count(*) as \"Count\"\nfrom t\ngroup by x\norder by 2 desc;",
+      "source": "order.slt:508"
+    },
+    {
+      "sql": "select column1 from foo order by log(column2);",
+      "source": "order.slt:518"
+    },
+    {
+      "sql": "select column1 from foo order by column2 % 2, column2;",
+      "source": "order.slt:526"
+    },
+    {
+      "sql": "select column1, min(column2) as min_val from foo group by column1 order by min(column2);",
+      "source": "order.slt:534"
+    },
+    {
+      "sql": "select column1, count(*) as cnt from foo group by column1 order by count(*) desc;",
+      "source": "order.slt:542"
+    },
+    {
+      "sql": "select column1 from foo group by column1 order by max(column2);",
+      "source": "order.slt:550"
+    },
+    {
+      "sql": "select column1, min(column2) + max(column2) as range_val, min(column2) as min_val from foo group by column1 order by min(column2);",
+      "source": "order.slt:558"
+    },
+    {
+      "sql": "select column1, min(column2) as first_min, min(column2) as second_min from foo group by column1 order by min(column2);",
+      "source": "order.slt:566"
+    },
+    {
+      "sql": "select column1, min(column2) as min_val from foo group by column1 order by CAST(min(column2) AS BIGINT);",
+      "source": "order.slt:574"
+    },
+    {
+      "sql": "select\n  sum(value) AS \"value\",\n  date_trunc('hour',time) AS \"time\"\nFROM t\nGROUP BY time;",
+      "source": "order.slt:598"
+    },
+    {
+      "sql": "select\n  sum(value) AS \"value\",\n  date_trunc('minute',time) AS \"time\"\nFROM t\nGROUP BY time\nORDER BY time;",
+      "source": "order.slt:610"
+    },
+    {
+      "sql": "select\n  date_trunc('minute',time) AS \"time\",\n  sum(value) + sum(value)\nFROM t\nGROUP BY time\nORDER BY sum(value) + sum(value);",
+      "source": "order.slt:623"
+    },
+    {
+      "sql": "SELECT DISTINCT time as \"first_seen\" FROM t ORDER BY \"first_seen\";",
+      "source": "order.slt:649"
+    },
+    {
+      "sql": "SELECT DISTINCT time as \"first_seen\" FROM t ORDER BY time;",
+      "source": "order.slt:658"
+    },
+    {
+      "sql": "SELECT DISTINCT time as \"first_seen\" FROM t ORDER BY 1;",
+      "source": "order.slt:667"
+    },
+    {
+      "sql": "SELECT a FROM repeat_much ORDER BY a LIMIT 20;",
+      "source": "order.slt:853"
+    },
+    {
+      "sql": "SELECT * FROM t1 ORDER BY id DESC, id, name, id ASC;",
+      "source": "order.slt:933"
+    },
+    {
+      "sql": "SELECT * FROM t1 ORDER BY id ASC, id, name, id DESC;",
+      "source": "order.slt:952"
+    },
+    {
+      "sql": "WITH\n    m0(t) AS (\n        VALUES (0), (1), (2)),\n    m1(t) AS (\n        VALUES (0), (1)),\n    u AS (\n        SELECT 0 as m, t FROM m0 GROUP BY 1, 2),\n    v AS (\n        SELECT 1 as m, t FROM m1 GROUP BY 1, 2)\nSELECT * FROM u\nUNION ALL\nSELECT * FROM v\nORDER BY 1, 2;",
+      "source": "order.slt:981"
+    },
+    {
+      "sql": "select column1, column2 from foo ORDER BY column1, column2;",
+      "source": "order.slt:1057"
+    },
+    {
+      "sql": "select column1, column2 from foo ORDER BY column1 desc, column2;",
+      "source": "order.slt:1069"
+    },
+    {
+      "sql": "select column1, column2 from foo ORDER BY column1, column2 desc;",
+      "source": "order.slt:1081"
+    },
+    {
+      "sql": "select column1, column2 from foo ORDER BY column1 desc, column2 desc;",
+      "source": "order.slt:1093"
+    },
+    {
+      "sql": "select column2, column1 from foo ORDER BY column2, column1;",
+      "source": "order.slt:1105"
+    },
+    {
+      "sql": "select column2, column1 from foo ORDER BY column2 desc, column1;",
+      "source": "order.slt:1117"
+    },
+    {
+      "sql": "select column2, column1 from foo ORDER BY column2, column1 desc;",
+      "source": "order.slt:1129"
+    },
+    {
+      "sql": "select column2, column1 from foo ORDER BY column2 desc, column1 desc;",
+      "source": "order.slt:1141"
+    },
+    {
+      "sql": "SELECT\n   SUM(column1)\nFROM foo\nHAVING SUM(column1) > 0\nORDER BY SUM(column1)",
+      "source": "order.slt:1155"
+    },
+    {
+      "sql": "SELECT SUM(column1)\n  FROM foo\nGROUP BY column2\nORDER BY SUM(column1)",
+      "source": "order.slt:1165"
+    },
+    {
+      "sql": "SELECT\n  SUM(column1)\nFROM foo\nGROUP BY column2\nHAVING SUM(column1) < 3\nORDER BY SUM(column1)",
+      "source": "order.slt:1180"
+    },
+    {
+      "sql": "SELECT SUM(column1) FROM foo ORDER BY SUM(column1)",
+      "source": "order.slt:1194"
+    },
+    {
+      "sql": "SELECT column2 FROM foo ORDER BY SUM(column1)",
+      "source": "order.slt:1200"
+    },
+    {
+      "sql": "select a as b, b as c2 from ambiguity_test order by b",
+      "source": "order.slt:1207"
+    },
+    {
+      "sql": "select * from (select c, a, NULL::int as a0, b from t order by a, c) t1\nunion all\nselect * from (select c, NULL::int as a, a0, b from t order by a0, c) t2\norder by c, a, a0, b\nlimit 2;",
+      "source": "order.slt:1227"
+    },
+    {
+      "sql": "select * from (select c, a, NULL::int as a0 from t order by a, c) t1\nunion all\nselect * from (select c, NULL::int as a, a0 from t order by a0, c) t2\norder by c, a, a0\nlimit 2;",
+      "source": "order.slt:1237"
+    },
+    {
+      "sql": "SELECT CAST(c as VARCHAR) as c_str\nFROM ordered_table\nORDER BY c_str\nlimit 5;",
+      "source": "order.slt:1261"
+    },
+    {
+      "sql": "SELECT CAST(c as BIGINT) as c_bigint\nFROM ordered_table\nORDER BY c_bigint\nlimit 5;",
+      "source": "order.slt:1292"
+    },
+    {
+      "sql": "SELECT (SELECT c from ordered_table ORDER BY c LIMIT 1) UNION ALL (SELECT 23 as c from ordered_table ORDER BY c LIMIT 1) ORDER BY c;",
+      "source": "order.slt:1417"
+    },
+    {
+      "sql": "select * from (select b, c, a, NULL::int as a0, d from ordered_table order by a, c) t1\nunion all\nselect * from (select b, c, NULL::int as a, a0, d from ordered_table order by a0, c) t2\norder by d, c, a, a0, b\nlimit 2;",
+      "source": "order.slt:1505"
+    },
+    {
+      "sql": "SELECT\n    CASE\n        WHEN name = 'name1' THEN 0.0\n        WHEN name = 'name2' THEN 0.5\n    END AS a\nFROM (\n    SELECT 'name1' AS name\n    UNION ALL\n    SELECT 'name2'\n)\nORDER BY a DESC;",
+      "source": "order.slt:1549"
+    },
+    {
+      "sql": "SELECT * FROM addresses ORDER BY ALL;",
+      "source": "order.slt:1634"
+    },
+    {
+      "sql": "SELECT * FROM addresses ORDER BY ALL DESC;",
+      "source": "order.slt:1642"
+    },
+    {
+      "sql": "SELECT address, zip FROM addresses ORDER BY ALL;",
+      "source": "order.slt:1650"
+    },
+    {
+      "sql": "SELECT c1 FROM aggregate_test_100 LIMIT 2",
+      "source": "limit.slt:44"
+    },
+    {
+      "sql": "SELECT c2 FROM aggregate_test_100 LIMIT 200",
+      "source": "limit.slt:51"
+    },
+    {
+      "sql": "SELECT c2 FROM aggregate_test_100 LIMIT 100",
+      "source": "limit.slt:156"
+    },
+    {
+      "sql": "SELECT c1 FROM aggregate_test_100 LIMIT 0",
+      "source": "limit.slt:261"
+    },
+    {
+      "sql": "SELECT c1 FROM aggregate_test_100 OFFSET 99",
+      "source": "limit.slt:266"
+    },
+    {
+      "sql": "SELECT c1 FROM aggregate_test_100 OFFSET 100",
+      "source": "limit.slt:272"
+    },
+    {
+      "sql": "SELECT c1 FROM aggregate_test_100 OFFSET 101",
+      "source": "limit.slt:277"
+    },
+    {
+      "sql": "SELECT c1 FROM aggregate_test_100 OFFSET 2 LIMIT 2",
+      "source": "limit.slt:282"
+    },
+    {
+      "sql": "SELECT c1 FROM aggregate_test_100 LIMIT 1 OFFSET 100",
+      "source": "limit.slt:289"
+    },
+    {
+      "sql": "SELECT c1 FROM aggregate_test_100 LIMIT 1 OFFSET 101",
+      "source": "limit.slt:294"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT a FROM t1 LIMIT 3 OFFSET 11);",
+      "source": "limit.slt:319"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT a FROM t1 LIMIT 3 OFFSET 8);",
+      "source": "limit.slt:338"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT a FROM t1 WHERE a > 3 LIMIT 3 OFFSET 6);",
+      "source": "limit.slt:384"
+    },
+    {
+      "sql": "SELECT i FROM t1000 ORDER BY i DESC LIMIT 3;",
+      "source": "limit.slt:434"
+    },
+    {
+      "sql": "SELECT i FROM t1000 ORDER BY i LIMIT 3;",
+      "source": "limit.slt:441"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT i FROM t1000 LIMIT 3);",
+      "source": "limit.slt:448"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM t15;",
+      "source": "limit.slt:482"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT i FROM t15 LIMIT 1);",
+      "source": "limit.slt:487"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT i FROM t15 LIMIT 2);",
+      "source": "limit.slt:492"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT i FROM t15 LIMIT 3);",
+      "source": "limit.slt:497"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT i FROM t15 LIMIT 4);",
+      "source": "limit.slt:502"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT i FROM t15 LIMIT 5);",
+      "source": "limit.slt:507"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT i FROM t15 LIMIT 6);",
+      "source": "limit.slt:512"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT i FROM t15 LIMIT 7);",
+      "source": "limit.slt:517"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT i FROM t15 LIMIT 8);",
+      "source": "limit.slt:522"
+    },
+    {
+      "sql": "SELECT COUNT(*) FROM (SELECT i FROM t15 LIMIT 9);",
+      "source": "limit.slt:527"
+    },
+    {
+      "sql": "SELECT * from data LIMIT 3;",
+      "source": "limit.slt:558"
+    },
+    {
+      "sql": "SELECT b, sum(a) FROM ordered_table GROUP BY b order by b desc;",
+      "source": "limit.slt:611"
+    },
+    {
+      "sql": "SELECT b, sum(a) FROM ordered_table GROUP BY b order by b desc LIMIT 3;",
+      "source": "limit.slt:620"
+    },
+    {
+      "sql": "SELECT b, sum(a) FROM ordered_table GROUP BY b order by b desc OFFSET 1;",
+      "source": "limit.slt:628"
+    },
+    {
+      "sql": "SELECT b, sum(a) FROM ordered_table GROUP BY b order by b desc OFFSET 1 LIMIT 2;",
+      "source": "limit.slt:636"
+    },
+    {
+      "sql": "select t1.b, c, c2 FROM (\n  select b, c FROM ordered_table ORDER BY b desc, c desc OFFSET 1 LIMIT 4\n) as t1 INNER JOIN (\n  select b, c as c2 FROM ordered_table ORDER BY b desc, d desc OFFSET 1 LIMIT 4\n) as t2\nON t1.b = t2.b\nORDER BY t1.b desc, c desc, c2 desc;",
+      "source": "limit.slt:692"
+    },
+    {
+      "sql": "select t1.b, c, c2 FROM (\n  select b, c FROM ordered_table ORDER BY b desc, c desc OFFSET 1 LIMIT 4\n) as t1 INNER JOIN (\n  select b, c as c2 FROM ordered_table ORDER BY b desc, d desc OFFSET 1 LIMIT 4\n) as t2\nON t1.b = t2.b\nORDER BY t1.b desc, c desc, c2 desc\nOFFSET 3 LIMIT 2;",
+      "source": "limit.slt:719"
+    },
+    {
+      "sql": "select * from testSubQueryLimit as t1 join (select * from testSubQueryLimit limit 1) limit 10;",
+      "source": "limit.slt:740"
+    },
+    {
+      "sql": "select * from testSubQueryLimit as t1 join (select * from testSubQueryLimit limit 10) limit 2;",
+      "source": "limit.slt:766"
+    },
+    {
+      "sql": "with selection as (\n    select *\n    from test_limit_with_partitions\n    order by part_key\n    limit 1\n)\nselect 1 as foo\nfrom selection\norder by part_key\nlimit 1000;",
+      "source": "limit.slt:874"
+    },
+    {
+      "sql": "SELECT * FROM (SELECT * FROM t ORDER BY value LIMIT 3) sub WHERE sub.value > 200;",
+      "source": "limit.slt:919"
+    },
+    {
+      "sql": "SELECT * FROM (SELECT * FROM t ORDER BY value DESC LIMIT 3) sub WHERE sub.value < 400;",
+      "source": "limit.slt:925"
+    },
+    {
+      "sql": "SELECT col_b, col_c FROM t21176 LIMIT 5;",
+      "source": "limit.slt:962"
+    },
+    {
+      "sql": "SELECT col_c, col_b FROM t21176 LIMIT 5;",
+      "source": "limit.slt:972"
+    },
+    {
+      "sql": "SELECT col_c FROM t21176 LIMIT 5;",
+      "source": "limit.slt:982"
+    },
+    {
+      "sql": "SELECT * FROM (\n  SELECT g, SUM(x) AS sx, SUM(y) AS sy FROM t22489 GROUP BY g\n  ORDER BY sx DESC LIMIT 4\n) q\nORDER BY sy DESC\nOFFSET 1;",
+      "source": "limit.slt:1006"
+    },
+    {
+      "sql": "SELECT *\nFROM test\n|> WHERE a > 1",
+      "source": "pipe_operator.slt:32"
+    },
+    {
+      "sql": "SELECT *\nFROM test\n|> ORDER BY a DESC",
+      "source": "pipe_operator.slt:41"
+    },
+    {
+      "sql": "SELECT *\nFROM test\n|> ORDER BY a DESC\n|> LIMIT 1",
+      "source": "pipe_operator.slt:51"
+    },
+    {
+      "sql": "SELECT *\nFROM test\n|> SELECT a",
+      "source": "pipe_operator.slt:60"
+    },
+    {
+      "sql": "SELECT *\nFROM test\n|> SELECT a, b\n|> EXTEND a + b AS a_plus_b",
+      "source": "pipe_operator.slt:70"
+    },
+    {
+      "sql": "SELECT *\nFROM test\n|> SELECT a, b\n|> where a = 1\n|> EXTEND a + b AS a_plus_b",
+      "source": "pipe_operator.slt:80"
+    },
+    {
+      "sql": "SELECT *\nFROM test\n|> as test_pipe\n|> select test_pipe.a",
+      "source": "pipe_operator.slt:90"
+    },
+    {
+      "sql": "SELECT *\nFROM test\n|> select a\n|> UNION ALL (\n  SELECT a FROM test\n);",
+      "source": "pipe_operator.slt:101"
+    },
+    {
+      "sql": "SELECT * FROM range(0,3)\n|> INTERSECT DISTINCT\n    (SELECT * FROM range(1,3));",
+      "source": "pipe_operator.slt:117"
+    },
+    {
+      "sql": "select * from range(0,10)\n|> EXCEPT DISTINCT (select * from range(5,10));",
+      "source": "pipe_operator.slt:126"
+    }
+  ],
+  "stats": {
+    "case_count": 937,
+    "per_file": {
+      "select.slt": 144,
+      "joins.slt": 153,
+      "cte.slt": 57,
+      "subquery.slt": 116,
+      "group_by.slt": 410,
+      "order.slt": 70,
+      "limit.slt": 43,
+      "pipe_operator.slt": 10
+    }
+  }
+}

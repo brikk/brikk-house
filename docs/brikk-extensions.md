@@ -328,6 +328,38 @@ All divergence sites are marked in code with the greppable phrase **`brikk exten
   if it stays on the wall-clock tier (a TIMESTAMPTZ detour is semantically wrong for
   zone-less sources).
 
+## 16. DataFusion: an entire brikk-native dialect (no sqlglot counterpart)
+
+- **What:** the `datafusion` dialect (alias `arrow-datafusion`) is brikk-native — sqlglot
+  ships NO DataFusion dialect, so this is not a port and carries no `// sqlglot:`
+  provenance (its comments use `// brikk:`). It is a thin, flag-tuned child of the BASE
+  dialect modeled on polyglot's standalone DataFusion dialect
+  (`reference/polyglot/.../dialects/datafusion.rs`) cross-checked against the DataFusion
+  SQL docs. Generator deltas over BASE: `normalize_functions=lower`,
+  `copyHasIntoKeyword=false`, `supportsLikeQuantifiers=false`, `multiArgDistinct=false`,
+  `supportsWindowExclude=false`; transpile renames SQUARE→power, REGEXP_MATCHES→regexp_match,
+  DATE_FORMAT/TIME_TO_STR→to_char, GROUP_CONCAT/LISTAGG→string_agg (IFNULL→coalesce comes
+  for free from BASE parsing). Tokenizer = `TokenizerConfig.BASE` unchanged (double-quote
+  identifiers, nested comments and the `|>` token are all already BASE-true — no
+  `DatafusionTokenizerTables`). Parser is a near-empty passthrough.
+- **Where:** `dialects/DatafusionDialect.kt`, `DatafusionParser.kt`, `DatafusionGenerator.kt`;
+  registered in `dialects/Dialect.kt` (`Dialects.DATAFUSION`).
+- **Gates (oracle-less — stated in each test's KDoc):**
+  `DatafusionFixtureTest` (polyglot-derived fixtures, `dialect-corpus/datafusion-fixtures.json`
+  via `tools/import_polyglot_datafusion_fixtures.py`, ledgered),
+  `DatafusionSltParseTest` (real-engine parse-acceptance from DataFusion's own
+  sqllogictest suite, `tools/extract_datafusion_slt_corpus.py`, ledgered),
+  `DatafusionPipeSmokeTest` and `DatafusionDialectTest`. An engine verifier is
+  **phase 2** (not built).
+- **Upstream-conflict note:** if a future sqlglot version ADDS its own `datafusion`
+  dialect, the sync MUST reconcile: adopt sqlglot's dialect (retiring this one, moving
+  its fixtures/SLT gates onto the ported implementation) or keep ours if upstream's is
+  thinner — and switch the provenance comments from `// brikk:` to `// sqlglot:` for any
+  behavior that becomes a port. Until then this dialect owns the `datafusion` /
+  `arrow-datafusion` registry names outright.
+- **Conflict risk:** NONE today (native); becomes MEDIUM the moment upstream adds a
+  DataFusion dialect.
+
 ## Not-a-bug findings (for the record)
 
 - **Trino `date_trunc` unit casing:** reported as "lowercase-only, case-sensitive";

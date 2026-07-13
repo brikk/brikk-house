@@ -1,0 +1,1434 @@
+{
+  "provenance": {
+    "source": "polyglot (reference/polyglot) custom_fixtures/datafusion/*.json",
+    "source_repo": "https://github.com/tobilg/polyglot",
+    "commit": "43a44589b6640b8f322a8ffddc653d3264133d34",
+    "license": "MIT (Copyright (c) 2026 TobiLG) \u2014 see ATTRIBUTIONS.md",
+    "note": "DataFusion has no sqlglot dialect; this corpus is hand-authored by polyglot, not machine-derived from a Python oracle. Identity cases assert datafusion parse->generate round-trips; transpile cases assert another dialect's SQL renders to the datafusion canonical form."
+  },
+  "identity": [
+    {
+      "sql": "SELECT 1",
+      "category": "identity",
+      "description": "Simple literal select"
+    },
+    {
+      "sql": "SELECT 1, 2, 3",
+      "category": "identity",
+      "description": "Multiple literal select"
+    },
+    {
+      "sql": "SELECT a, b, c FROM t",
+      "category": "identity",
+      "description": "Simple column select"
+    },
+    {
+      "sql": "SELECT * FROM t",
+      "category": "identity",
+      "description": "Star select"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x > 1",
+      "category": "identity",
+      "description": "Select with WHERE clause"
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY x",
+      "category": "identity",
+      "description": "Select with ORDER BY"
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY x LIMIT 10",
+      "category": "identity",
+      "description": "Select with ORDER BY and LIMIT"
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY x LIMIT 10 OFFSET 5",
+      "category": "identity",
+      "description": "Select with ORDER BY, LIMIT and OFFSET"
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY x ASC",
+      "category": "identity",
+      "description": "ORDER BY ASC"
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY x DESC",
+      "category": "identity",
+      "description": "ORDER BY DESC"
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY x NULLS FIRST",
+      "category": "identity",
+      "description": "ORDER BY NULLS FIRST"
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY x NULLS LAST",
+      "category": "identity",
+      "description": "ORDER BY NULLS LAST"
+    },
+    {
+      "sql": "SELECT DISTINCT x FROM t",
+      "category": "identity",
+      "description": "SELECT DISTINCT"
+    },
+    {
+      "sql": "SELECT ALL x FROM t",
+      "category": "identity",
+      "description": "SELECT ALL"
+    },
+    {
+      "sql": "SELECT a AS x, b AS y FROM t",
+      "category": "identity",
+      "description": "Column aliases"
+    },
+    {
+      "sql": "SELECT * FROM t AS t1",
+      "category": "identity",
+      "description": "Table alias"
+    },
+    {
+      "sql": "SELECT t.* FROM t",
+      "category": "identity",
+      "description": "Qualified star"
+    },
+    {
+      "sql": "SELECT 1 WHERE TRUE",
+      "category": "identity",
+      "description": "WHERE with boolean literal"
+    },
+    {
+      "sql": "SELECT 1 WHERE FALSE",
+      "category": "identity",
+      "description": "WHERE with false literal"
+    },
+    {
+      "sql": "SELECT NULL",
+      "category": "identity",
+      "description": "NULL literal"
+    },
+    {
+      "sql": "SELECT TRUE",
+      "category": "identity",
+      "description": "TRUE literal"
+    },
+    {
+      "sql": "SELECT FALSE",
+      "category": "identity",
+      "description": "FALSE literal"
+    },
+    {
+      "sql": "SELECT 1.5",
+      "category": "identity",
+      "description": "Float literal"
+    },
+    {
+      "sql": "SELECT -1",
+      "category": "identity",
+      "description": "Negative literal"
+    },
+    {
+      "sql": "SELECT 'hello'",
+      "category": "identity",
+      "description": "String literal"
+    },
+    {
+      "sql": "SELECT 'it''s'",
+      "category": "identity",
+      "description": "Escaped string literal"
+    },
+    {
+      "sql": "SELECT x FROM t GROUP BY x",
+      "category": "identity",
+      "description": "GROUP BY"
+    },
+    {
+      "sql": "SELECT x, count(*) FROM t GROUP BY x HAVING count(*) > 1",
+      "category": "identity",
+      "description": "GROUP BY with HAVING"
+    },
+    {
+      "sql": "SELECT x FROM t GROUP BY 1",
+      "category": "identity",
+      "description": "GROUP BY ordinal"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x BETWEEN 1 AND 10",
+      "category": "identity",
+      "description": "BETWEEN"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x NOT BETWEEN 1 AND 10",
+      "category": "identity",
+      "description": "NOT BETWEEN"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x LIKE '%foo%'",
+      "category": "identity",
+      "description": "LIKE"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x NOT LIKE '%foo%'",
+      "category": "identity",
+      "description": "NOT LIKE"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x ILIKE '%foo%'",
+      "category": "identity",
+      "description": "ILIKE (case-insensitive)"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x IS NULL",
+      "category": "identity",
+      "description": "IS NULL"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x IS NOT NULL",
+      "category": "identity",
+      "description": "IS NOT NULL"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x IN (1, 2, 3)",
+      "category": "identity",
+      "description": "IN list"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x NOT IN (1, 2, 3)",
+      "category": "identity",
+      "description": "NOT IN list"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x IN (SELECT y FROM s)",
+      "category": "identity",
+      "description": "IN subquery"
+    },
+    {
+      "sql": "SELECT CASE WHEN x > 1 THEN 'a' ELSE 'b' END FROM t",
+      "category": "identity",
+      "description": "CASE WHEN"
+    },
+    {
+      "sql": "SELECT CASE x WHEN 1 THEN 'a' WHEN 2 THEN 'b' ELSE 'c' END FROM t",
+      "category": "identity",
+      "description": "Simple CASE"
+    },
+    {
+      "sql": "SELECT (SELECT 1)",
+      "category": "identity",
+      "description": "Scalar subquery"
+    },
+    {
+      "sql": "SELECT * FROM (SELECT 1 AS x) AS t",
+      "category": "identity",
+      "description": "Derived table"
+    },
+    {
+      "sql": "SELECT * FROM (SELECT 1 AS x UNION ALL SELECT 2 AS x) AS t",
+      "category": "identity",
+      "description": "Derived table with UNION"
+    },
+    {
+      "sql": "WITH cte AS (SELECT 1 AS x) SELECT * FROM cte",
+      "category": "identity",
+      "description": "Common table expression"
+    },
+    {
+      "sql": "WITH cte1 AS (SELECT 1 AS x), cte2 AS (SELECT 2 AS y) SELECT * FROM cte1, cte2",
+      "category": "identity",
+      "description": "Multiple CTEs"
+    },
+    {
+      "sql": "WITH RECURSIVE cte AS (SELECT 1 AS x UNION ALL SELECT x + 1 FROM cte WHERE x < 10) SELECT * FROM cte",
+      "category": "identity",
+      "description": "Recursive CTE"
+    },
+    {
+      "sql": "SELECT 1 UNION ALL SELECT 2",
+      "category": "identity",
+      "description": "UNION ALL"
+    },
+    {
+      "sql": "SELECT 1 UNION SELECT 2",
+      "category": "identity",
+      "description": "UNION DISTINCT"
+    },
+    {
+      "sql": "SELECT 1 INTERSECT SELECT 2",
+      "category": "identity",
+      "description": "INTERSECT"
+    },
+    {
+      "sql": "SELECT 1 EXCEPT SELECT 2",
+      "category": "identity",
+      "description": "EXCEPT"
+    },
+    {
+      "sql": "SELECT 'hello' || ' ' || 'world'",
+      "category": "identity",
+      "description": "String concatenation"
+    },
+    {
+      "sql": "DESCRIBE t",
+      "category": "identity",
+      "description": "DESCRIBE table"
+    },
+    {
+      "sql": "EXPLAIN SELECT 1",
+      "category": "identity",
+      "description": "EXPLAIN"
+    },
+    {
+      "sql": "SELECT * EXCEPT (col1) FROM t",
+      "category": "select",
+      "description": "Column exclusion with EXCEPT"
+    },
+    {
+      "sql": "SELECT * EXCEPT (col1, col2) FROM t",
+      "category": "select",
+      "description": "Multiple column exclusion with EXCEPT"
+    },
+    {
+      "sql": "SELECT * FROM a INNER JOIN b ON a.id = b.id",
+      "category": "select",
+      "description": "INNER JOIN"
+    },
+    {
+      "sql": "SELECT * FROM a LEFT JOIN b ON a.id = b.id",
+      "category": "select",
+      "description": "LEFT JOIN"
+    },
+    {
+      "sql": "SELECT * FROM a RIGHT JOIN b ON a.id = b.id",
+      "category": "select",
+      "description": "RIGHT JOIN"
+    },
+    {
+      "sql": "SELECT * FROM a FULL OUTER JOIN b ON a.id = b.id",
+      "category": "select",
+      "description": "FULL OUTER JOIN"
+    },
+    {
+      "sql": "SELECT * FROM a CROSS JOIN b",
+      "category": "select",
+      "description": "CROSS JOIN"
+    },
+    {
+      "sql": "SELECT * FROM a LEFT SEMI JOIN b ON a.id = b.id",
+      "category": "select",
+      "description": "LEFT SEMI JOIN"
+    },
+    {
+      "sql": "SELECT * FROM a LEFT ANTI JOIN b ON a.id = b.id",
+      "category": "select",
+      "description": "LEFT ANTI JOIN"
+    },
+    {
+      "sql": "SELECT * FROM a NATURAL JOIN b",
+      "category": "select",
+      "description": "NATURAL JOIN"
+    },
+    {
+      "sql": "SELECT * FROM a JOIN b USING (id)",
+      "category": "select",
+      "description": "JOIN USING"
+    },
+    {
+      "sql": "SELECT * FROM a, b WHERE a.id = b.id",
+      "category": "select",
+      "description": "Comma join (implicit cross join)"
+    },
+    {
+      "sql": "SELECT * FROM t QUALIFY ROW_NUMBER() OVER (PARTITION BY x ORDER BY y) = 1",
+      "category": "select",
+      "description": "QUALIFY clause"
+    },
+    {
+      "sql": "SELECT * FROM t QUALIFY RANK() OVER (ORDER BY x) <= 3",
+      "category": "select",
+      "description": "QUALIFY with RANK"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x > 1 AND y < 10",
+      "category": "select",
+      "description": "Multiple WHERE conditions with AND"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE x > 1 OR y < 10",
+      "category": "select",
+      "description": "WHERE with OR"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE NOT x > 1",
+      "category": "select",
+      "description": "WHERE with NOT"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE (x > 1 AND y < 10) OR z = 5",
+      "category": "select",
+      "description": "Parenthesized conditions"
+    },
+    {
+      "sql": "SELECT *, x + y AS total FROM t",
+      "category": "select",
+      "description": "Computed column with star"
+    },
+    {
+      "sql": "SELECT x, y, x + y AS total FROM t",
+      "category": "select",
+      "description": "Computed column"
+    },
+    {
+      "sql": "SELECT a.*, b.x FROM a JOIN b ON a.id = b.id",
+      "category": "select",
+      "description": "Qualified star with join"
+    },
+    {
+      "sql": "SELECT * FROM t ORDER BY x DESC, y ASC",
+      "category": "select",
+      "description": "Multi-column ORDER BY"
+    },
+    {
+      "sql": "SELECT * FROM t LIMIT 10",
+      "category": "select",
+      "description": "LIMIT without ORDER BY"
+    },
+    {
+      "sql": "SELECT * FROM t GROUP BY ROLLUP (x, y)",
+      "category": "select",
+      "description": "GROUP BY ROLLUP"
+    },
+    {
+      "sql": "SELECT * FROM t GROUP BY CUBE (x, y)",
+      "category": "select",
+      "description": "GROUP BY CUBE"
+    },
+    {
+      "sql": "SELECT * FROM t GROUP BY GROUPING SETS ((x), (y), ())",
+      "category": "select",
+      "description": "GROUP BY GROUPING SETS"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE EXISTS(SELECT 1 FROM s WHERE s.id = t.id)",
+      "category": "select",
+      "description": "EXISTS subquery"
+    },
+    {
+      "sql": "SELECT * FROM t WHERE NOT EXISTS(SELECT 1 FROM s WHERE s.id = t.id)",
+      "category": "select",
+      "description": "NOT EXISTS subquery"
+    },
+    {
+      "sql": "SELECT * FROM unnest(ARRAY[1, 2, 3]) AS t(x)",
+      "category": "select",
+      "description": "UNNEST"
+    },
+    {
+      "sql": "SELECT * FROM generate_series(1, 10) AS t(x)",
+      "category": "select",
+      "description": "Generate series as table source"
+    },
+    {
+      "sql": "SELECT 1 + 2",
+      "category": "operators",
+      "description": "Addition"
+    },
+    {
+      "sql": "SELECT 1 - 2",
+      "category": "operators",
+      "description": "Subtraction"
+    },
+    {
+      "sql": "SELECT 1 * 2",
+      "category": "operators",
+      "description": "Multiplication"
+    },
+    {
+      "sql": "SELECT 1 / 2",
+      "category": "operators",
+      "description": "Division"
+    },
+    {
+      "sql": "SELECT 1 % 2",
+      "category": "operators",
+      "description": "Modulo"
+    },
+    {
+      "sql": "SELECT -x FROM t",
+      "category": "operators",
+      "description": "Unary negation"
+    },
+    {
+      "sql": "SELECT x = 1 FROM t",
+      "category": "operators",
+      "description": "Equality"
+    },
+    {
+      "sql": "SELECT x <> 1 FROM t",
+      "category": "operators",
+      "description": "Not equal"
+    },
+    {
+      "sql": "SELECT x != 1 FROM t",
+      "category": "operators",
+      "description": "Not equal (alternate)"
+    },
+    {
+      "sql": "SELECT x > 1 FROM t",
+      "category": "operators",
+      "description": "Greater than"
+    },
+    {
+      "sql": "SELECT x < 1 FROM t",
+      "category": "operators",
+      "description": "Less than"
+    },
+    {
+      "sql": "SELECT x >= 1 FROM t",
+      "category": "operators",
+      "description": "Greater than or equal"
+    },
+    {
+      "sql": "SELECT x <= 1 FROM t",
+      "category": "operators",
+      "description": "Less than or equal"
+    },
+    {
+      "sql": "SELECT TRUE AND FALSE",
+      "category": "operators",
+      "description": "AND operator"
+    },
+    {
+      "sql": "SELECT TRUE OR FALSE",
+      "category": "operators",
+      "description": "OR operator"
+    },
+    {
+      "sql": "SELECT NOT TRUE",
+      "category": "operators",
+      "description": "NOT operator"
+    },
+    {
+      "sql": "SELECT x & y FROM t",
+      "category": "operators",
+      "description": "Bitwise AND"
+    },
+    {
+      "sql": "SELECT x | y FROM t",
+      "category": "operators",
+      "description": "Bitwise OR"
+    },
+    {
+      "sql": "SELECT x ^ y FROM t",
+      "category": "operators",
+      "description": "Bitwise XOR"
+    },
+    {
+      "sql": "SELECT ~x FROM t",
+      "category": "operators",
+      "description": "Bitwise NOT"
+    },
+    {
+      "sql": "SELECT x << 2 FROM t",
+      "category": "operators",
+      "description": "Left shift"
+    },
+    {
+      "sql": "SELECT x >> 2 FROM t",
+      "category": "operators",
+      "description": "Right shift"
+    },
+    {
+      "sql": "SELECT x ~ 'pattern' FROM t",
+      "category": "operators",
+      "description": "Regex match"
+    },
+    {
+      "sql": "SELECT x ~* 'pattern' FROM t",
+      "category": "operators",
+      "description": "Case-insensitive regex match"
+    },
+    {
+      "sql": "SELECT INTERVAL '1' DAY",
+      "category": "operators",
+      "description": "INTERVAL DAY"
+    },
+    {
+      "sql": "SELECT INTERVAL '1' HOUR",
+      "category": "operators",
+      "description": "INTERVAL HOUR"
+    },
+    {
+      "sql": "SELECT INTERVAL '1' MINUTE",
+      "category": "operators",
+      "description": "INTERVAL MINUTE"
+    },
+    {
+      "sql": "SELECT INTERVAL '1' SECOND",
+      "category": "operators",
+      "description": "INTERVAL SECOND"
+    },
+    {
+      "sql": "SELECT INTERVAL '1' MONTH",
+      "category": "operators",
+      "description": "INTERVAL MONTH"
+    },
+    {
+      "sql": "SELECT INTERVAL '1' YEAR",
+      "category": "operators",
+      "description": "INTERVAL YEAR"
+    },
+    {
+      "sql": "SELECT INTERVAL '1 day 2 hours'",
+      "category": "operators",
+      "description": "INTERVAL compound"
+    },
+    {
+      "sql": "SELECT x IS DISTINCT FROM y FROM t",
+      "category": "operators",
+      "description": "IS DISTINCT FROM"
+    },
+    {
+      "sql": "SELECT x IS NOT DISTINCT FROM y FROM t",
+      "category": "operators",
+      "description": "IS NOT DISTINCT FROM"
+    },
+    {
+      "sql": "SELECT CAST(x AS INT) FROM t",
+      "category": "types",
+      "description": "CAST to INT"
+    },
+    {
+      "sql": "SELECT CAST(x AS INTEGER) FROM t",
+      "category": "types",
+      "description": "CAST to INTEGER"
+    },
+    {
+      "sql": "SELECT CAST(x AS BIGINT) FROM t",
+      "category": "types",
+      "description": "CAST to BIGINT"
+    },
+    {
+      "sql": "SELECT CAST(x AS SMALLINT) FROM t",
+      "category": "types",
+      "description": "CAST to SMALLINT"
+    },
+    {
+      "sql": "SELECT CAST(x AS TINYINT) FROM t",
+      "category": "types",
+      "description": "CAST to TINYINT"
+    },
+    {
+      "sql": "SELECT CAST(x AS FLOAT) FROM t",
+      "category": "types",
+      "description": "CAST to FLOAT"
+    },
+    {
+      "sql": "SELECT CAST(x AS DOUBLE) FROM t",
+      "category": "types",
+      "description": "CAST to DOUBLE"
+    },
+    {
+      "sql": "SELECT CAST(x AS BOOLEAN) FROM t",
+      "category": "types",
+      "description": "CAST to BOOLEAN"
+    },
+    {
+      "sql": "SELECT CAST(x AS VARCHAR) FROM t",
+      "category": "types",
+      "description": "CAST to VARCHAR"
+    },
+    {
+      "sql": "SELECT CAST(x AS TEXT) FROM t",
+      "category": "types",
+      "description": "CAST to TEXT"
+    },
+    {
+      "sql": "SELECT CAST(x AS CHAR) FROM t",
+      "category": "types",
+      "description": "CAST to CHAR"
+    },
+    {
+      "sql": "SELECT CAST(x AS DATE) FROM t",
+      "category": "types",
+      "description": "CAST to DATE"
+    },
+    {
+      "sql": "SELECT CAST(x AS TIMESTAMP) FROM t",
+      "category": "types",
+      "description": "CAST to TIMESTAMP"
+    },
+    {
+      "sql": "SELECT CAST(x AS INTERVAL) FROM t",
+      "category": "types",
+      "description": "CAST to INTERVAL"
+    },
+    {
+      "sql": "SELECT CAST(x AS DECIMAL(10, 2)) FROM t",
+      "category": "types",
+      "description": "CAST to DECIMAL with precision and scale"
+    },
+    {
+      "sql": "SELECT CAST(x AS NUMERIC(10, 2)) FROM t",
+      "category": "types",
+      "description": "CAST to NUMERIC with precision and scale"
+    },
+    {
+      "sql": "SELECT CAST(x AS VARCHAR(255)) FROM t",
+      "category": "types",
+      "description": "CAST to VARCHAR with length"
+    },
+    {
+      "sql": "SELECT TRY_CAST(x AS INT) FROM t",
+      "category": "types",
+      "description": "TRY_CAST to INT"
+    },
+    {
+      "sql": "SELECT TRY_CAST(x AS BIGINT) FROM t",
+      "category": "types",
+      "description": "TRY_CAST to BIGINT"
+    },
+    {
+      "sql": "SELECT TRY_CAST(x AS VARCHAR) FROM t",
+      "category": "types",
+      "description": "TRY_CAST to VARCHAR"
+    },
+    {
+      "sql": "SELECT TRY_CAST(x AS DOUBLE) FROM t",
+      "category": "types",
+      "description": "TRY_CAST to DOUBLE"
+    },
+    {
+      "sql": "SELECT TRY_CAST(x AS TIMESTAMP) FROM t",
+      "category": "types",
+      "description": "TRY_CAST to TIMESTAMP"
+    },
+    {
+      "sql": "SELECT arrow_cast(x, 'Int32') FROM t",
+      "category": "types",
+      "description": "arrow_cast function"
+    },
+    {
+      "sql": "SELECT arrow_cast(x, 'Float64') FROM t",
+      "category": "types",
+      "description": "arrow_cast to Float64"
+    },
+    {
+      "sql": "SELECT arrow_cast(x, 'Utf8') FROM t",
+      "category": "types",
+      "description": "arrow_cast to Utf8"
+    },
+    {
+      "sql": "SELECT arrow_typeof(x) FROM t",
+      "category": "types",
+      "description": "arrow_typeof function"
+    },
+    {
+      "sql": "SELECT x::INT FROM t",
+      "category": "types",
+      "description": "Shorthand CAST with ::"
+    },
+    {
+      "sql": "SELECT x::VARCHAR FROM t",
+      "category": "types",
+      "description": "Shorthand CAST to VARCHAR"
+    },
+    {
+      "sql": "SELECT CAST(x AS BYTEA) FROM t",
+      "category": "types",
+      "description": "CAST to BYTEA (binary)"
+    },
+    {
+      "sql": "SELECT abs(x) FROM t",
+      "category": "functions",
+      "description": "ABS function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT ceil(x) FROM t",
+      "category": "functions",
+      "description": "CEIL function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT floor(x) FROM t",
+      "category": "functions",
+      "description": "FLOOR function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT round(x, 2) FROM t",
+      "category": "functions",
+      "description": "ROUND function"
+    },
+    {
+      "sql": "SELECT trunc(x, 2) FROM t",
+      "category": "functions",
+      "description": "TRUNC function"
+    },
+    {
+      "sql": "SELECT power(x, 2) FROM t",
+      "category": "functions",
+      "description": "POWER function"
+    },
+    {
+      "sql": "SELECT sqrt(x) FROM t",
+      "category": "functions",
+      "description": "SQRT function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT ln(x) FROM t",
+      "category": "functions",
+      "description": "LN function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT log(x) FROM t",
+      "category": "functions",
+      "description": "LOG function"
+    },
+    {
+      "sql": "SELECT log2(x) FROM t",
+      "category": "functions",
+      "description": "LOG2 function"
+    },
+    {
+      "sql": "SELECT log10(x) FROM t",
+      "category": "functions",
+      "description": "LOG10 function"
+    },
+    {
+      "sql": "SELECT exp(x) FROM t",
+      "category": "functions",
+      "description": "EXP function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT coalesce(a, b, c) FROM t",
+      "category": "functions",
+      "description": "COALESCE function"
+    },
+    {
+      "sql": "SELECT nullif(a, b) FROM t",
+      "category": "functions",
+      "description": "NULLIF function"
+    },
+    {
+      "sql": "SELECT greatest(a, b, c) FROM t",
+      "category": "functions",
+      "description": "GREATEST function"
+    },
+    {
+      "sql": "SELECT least(a, b, c) FROM t",
+      "category": "functions",
+      "description": "LEAST function"
+    },
+    {
+      "sql": "SELECT length(s) FROM t",
+      "category": "functions",
+      "description": "LENGTH function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT upper(s) FROM t",
+      "category": "functions",
+      "description": "UPPER function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT lower(s) FROM t",
+      "category": "functions",
+      "description": "LOWER function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT trim(s) FROM t",
+      "category": "functions",
+      "description": "TRIM function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT ltrim(s) FROM t",
+      "category": "functions",
+      "description": "LTRIM function"
+    },
+    {
+      "sql": "SELECT rtrim(s) FROM t",
+      "category": "functions",
+      "description": "RTRIM function"
+    },
+    {
+      "sql": "SELECT substr(s, 1, 5) FROM t",
+      "category": "functions",
+      "description": "SUBSTR function (normalized to SUBSTRING)"
+    },
+    {
+      "sql": "SELECT replace(s, 'old', 'new') FROM t",
+      "category": "functions",
+      "description": "REPLACE function"
+    },
+    {
+      "sql": "SELECT reverse(s) FROM t",
+      "category": "functions",
+      "description": "REVERSE function"
+    },
+    {
+      "sql": "SELECT repeat(s, 3) FROM t",
+      "category": "functions",
+      "description": "REPEAT function"
+    },
+    {
+      "sql": "SELECT concat(a, b, c) FROM t",
+      "category": "functions",
+      "description": "CONCAT function"
+    },
+    {
+      "sql": "SELECT concat_ws('-', a, b, c) FROM t",
+      "category": "functions",
+      "description": "CONCAT_WS function"
+    },
+    {
+      "sql": "SELECT lpad(s, 10, '0') FROM t",
+      "category": "functions",
+      "description": "LPAD function"
+    },
+    {
+      "sql": "SELECT rpad(s, 10, '0') FROM t",
+      "category": "functions",
+      "description": "RPAD function"
+    },
+    {
+      "sql": "SELECT left(s, 5) FROM t",
+      "category": "functions",
+      "description": "LEFT function"
+    },
+    {
+      "sql": "SELECT right(s, 5) FROM t",
+      "category": "functions",
+      "description": "RIGHT function"
+    },
+    {
+      "sql": "SELECT starts_with(s, 'pre') FROM t",
+      "category": "functions",
+      "description": "STARTS_WITH function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT ends_with(s, 'suf') FROM t",
+      "category": "functions",
+      "description": "ENDS_WITH function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT strpos(s, 'sub') FROM t",
+      "category": "functions",
+      "description": "STRPOS function (parsed as dedicated expression)"
+    },
+    {
+      "sql": "SELECT regexp_replace(s, 'pattern', 'replacement') FROM t",
+      "category": "functions",
+      "description": "REGEXP_REPLACE function"
+    },
+    {
+      "sql": "SELECT regexp_match(s, 'pattern') FROM t",
+      "category": "functions",
+      "description": "REGEXP_MATCH function"
+    },
+    {
+      "sql": "SELECT now()",
+      "category": "functions",
+      "description": "NOW function"
+    },
+    {
+      "sql": "SELECT current_date()",
+      "category": "functions",
+      "description": "CURRENT_DATE function"
+    },
+    {
+      "sql": "SELECT current_timestamp()",
+      "category": "functions",
+      "description": "CURRENT_TIMESTAMP function"
+    },
+    {
+      "sql": "SELECT date_trunc('month', ts) FROM t",
+      "category": "functions",
+      "description": "DATE_TRUNC function"
+    },
+    {
+      "sql": "SELECT date_part('year', ts) FROM t",
+      "category": "functions",
+      "description": "DATE_PART function"
+    },
+    {
+      "sql": "SELECT EXTRACT(YEAR FROM ts) FROM t",
+      "category": "functions",
+      "description": "EXTRACT YEAR"
+    },
+    {
+      "sql": "SELECT EXTRACT(MONTH FROM ts) FROM t",
+      "category": "functions",
+      "description": "EXTRACT MONTH"
+    },
+    {
+      "sql": "SELECT EXTRACT(DAY FROM ts) FROM t",
+      "category": "functions",
+      "description": "EXTRACT DAY"
+    },
+    {
+      "sql": "SELECT to_timestamp(s) FROM t",
+      "category": "functions",
+      "description": "TO_TIMESTAMP function"
+    },
+    {
+      "sql": "SELECT to_date(s, '%Y-%m-%d') FROM t",
+      "category": "functions",
+      "description": "TO_DATE function"
+    },
+    {
+      "sql": "SELECT count(*) FROM t",
+      "category": "functions",
+      "description": "COUNT star"
+    },
+    {
+      "sql": "SELECT count(DISTINCT x) FROM t",
+      "category": "functions",
+      "description": "COUNT DISTINCT"
+    },
+    {
+      "sql": "SELECT sum(x) FROM t",
+      "category": "functions",
+      "description": "SUM"
+    },
+    {
+      "sql": "SELECT avg(x) FROM t",
+      "category": "functions",
+      "description": "AVG"
+    },
+    {
+      "sql": "SELECT min(x) FROM t",
+      "category": "functions",
+      "description": "MIN"
+    },
+    {
+      "sql": "SELECT max(x) FROM t",
+      "category": "functions",
+      "description": "MAX"
+    },
+    {
+      "sql": "SELECT median(x) FROM t",
+      "category": "functions",
+      "description": "MEDIAN function"
+    },
+    {
+      "sql": "SELECT approx_distinct(x) FROM t",
+      "category": "functions",
+      "description": "APPROX_DISTINCT function"
+    },
+    {
+      "sql": "SELECT approx_median(x) FROM t",
+      "category": "functions",
+      "description": "APPROX_MEDIAN function"
+    },
+    {
+      "sql": "SELECT approx_percentile_cont(x, 0.5) FROM t",
+      "category": "functions",
+      "description": "APPROX_PERCENTILE_CONT function"
+    },
+    {
+      "sql": "SELECT array_agg(x) FROM t",
+      "category": "functions",
+      "description": "ARRAY_AGG function"
+    },
+    {
+      "sql": "SELECT bool_and(x) FROM t",
+      "category": "functions",
+      "description": "BOOL_AND function"
+    },
+    {
+      "sql": "SELECT bool_or(x) FROM t",
+      "category": "functions",
+      "description": "BOOL_OR function"
+    },
+    {
+      "sql": "SELECT bit_and(x) FROM t",
+      "category": "functions",
+      "description": "BIT_AND function"
+    },
+    {
+      "sql": "SELECT bit_or(x) FROM t",
+      "category": "functions",
+      "description": "BIT_OR function"
+    },
+    {
+      "sql": "SELECT bit_xor(x) FROM t",
+      "category": "functions",
+      "description": "BIT_XOR function"
+    },
+    {
+      "sql": "SELECT ROW_NUMBER() OVER (ORDER BY x) FROM t",
+      "category": "functions",
+      "description": "ROW_NUMBER window function"
+    },
+    {
+      "sql": "SELECT RANK() OVER (ORDER BY x) FROM t",
+      "category": "functions",
+      "description": "RANK window function"
+    },
+    {
+      "sql": "SELECT DENSE_RANK() OVER (ORDER BY x) FROM t",
+      "category": "functions",
+      "description": "DENSE_RANK window function"
+    },
+    {
+      "sql": "SELECT NTILE(4) OVER (ORDER BY x) FROM t",
+      "category": "functions",
+      "description": "NTILE window function"
+    },
+    {
+      "sql": "SELECT LAG(x, 1) OVER (ORDER BY y) FROM t",
+      "category": "functions",
+      "description": "LAG window function"
+    },
+    {
+      "sql": "SELECT LEAD(x, 1) OVER (ORDER BY y) FROM t",
+      "category": "functions",
+      "description": "LEAD window function"
+    },
+    {
+      "sql": "SELECT FIRST_VALUE(x) OVER (ORDER BY y) FROM t",
+      "category": "functions",
+      "description": "FIRST_VALUE window function"
+    },
+    {
+      "sql": "SELECT LAST_VALUE(x) OVER (ORDER BY y) FROM t",
+      "category": "functions",
+      "description": "LAST_VALUE window function"
+    },
+    {
+      "sql": "SELECT NTH_VALUE(x, 3) OVER (ORDER BY y) FROM t",
+      "category": "functions",
+      "description": "NTH_VALUE window function"
+    },
+    {
+      "sql": "SELECT sum(x) OVER (PARTITION BY y ORDER BY z) FROM t",
+      "category": "functions",
+      "description": "Window function with PARTITION BY"
+    },
+    {
+      "sql": "SELECT sum(x) OVER (ORDER BY y ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM t",
+      "category": "functions",
+      "description": "Window function with ROWS frame"
+    },
+    {
+      "sql": "SELECT sum(x) OVER (ORDER BY y ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) FROM t",
+      "category": "functions",
+      "description": "Window function with bounded ROWS frame"
+    },
+    {
+      "sql": "SELECT make_array(1, 2, 3)",
+      "category": "functions",
+      "description": "MAKE_ARRAY function"
+    },
+    {
+      "sql": "SELECT array_length(arr) FROM t",
+      "category": "functions",
+      "description": "ARRAY_LENGTH function"
+    },
+    {
+      "sql": "SELECT array_element(arr, 1) FROM t",
+      "category": "functions",
+      "description": "ARRAY_ELEMENT function"
+    },
+    {
+      "sql": "SELECT array_concat(arr1, arr2) FROM t",
+      "category": "functions",
+      "description": "ARRAY_CONCAT function"
+    },
+    {
+      "sql": "SELECT array_has(arr, 1) FROM t",
+      "category": "functions",
+      "description": "ARRAY_HAS function"
+    },
+    {
+      "sql": "SELECT array_position(arr, 1) FROM t",
+      "category": "functions",
+      "description": "ARRAY_POSITION function"
+    },
+    {
+      "sql": "SELECT array_sort(arr) FROM t",
+      "category": "functions",
+      "description": "ARRAY_SORT function"
+    },
+    {
+      "sql": "SELECT array_distinct(arr) FROM t",
+      "category": "functions",
+      "description": "ARRAY_DISTINCT function"
+    },
+    {
+      "sql": "SELECT struct(1 AS a, 'hello' AS b)",
+      "category": "functions",
+      "description": "STRUCT constructor"
+    },
+    {
+      "sql": "SELECT named_struct('a', 1, 'b', 2)",
+      "category": "functions",
+      "description": "NAMED_STRUCT function"
+    },
+    {
+      "sql": "SELECT md5(s) FROM t",
+      "category": "functions",
+      "description": "MD5 function"
+    },
+    {
+      "sql": "SELECT sha256(s) FROM t",
+      "category": "functions",
+      "description": "SHA256 function"
+    },
+    {
+      "sql": "SELECT encode(s, 'base64') FROM t",
+      "category": "functions",
+      "description": "ENCODE function"
+    },
+    {
+      "sql": "SELECT decode(s, 'base64') FROM t",
+      "category": "functions",
+      "description": "DECODE function"
+    },
+    {
+      "sql": "SELECT random()",
+      "category": "functions",
+      "description": "RANDOM function"
+    },
+    {
+      "sql": "SELECT pi()",
+      "category": "functions",
+      "description": "PI function"
+    },
+    {
+      "sql": "SELECT chr(65)",
+      "category": "functions",
+      "description": "CHR function"
+    },
+    {
+      "sql": "SELECT ascii('A')",
+      "category": "functions",
+      "description": "ASCII function"
+    },
+    {
+      "sql": "SELECT initcap(s) FROM t",
+      "category": "functions",
+      "description": "INITCAP function"
+    },
+    {
+      "sql": "SELECT bit_length(s) FROM t",
+      "category": "functions",
+      "description": "BIT_LENGTH function"
+    },
+    {
+      "sql": "SELECT char_length(s) FROM t",
+      "category": "functions",
+      "description": "CHAR_LENGTH function"
+    },
+    {
+      "sql": "SELECT octet_length(s) FROM t",
+      "category": "functions",
+      "description": "OCTET_LENGTH function"
+    },
+    {
+      "sql": "CREATE TABLE t (a INT, b VARCHAR, c DOUBLE)",
+      "category": "ddl",
+      "description": "Basic CREATE TABLE"
+    },
+    {
+      "sql": "CREATE TABLE t (a INT NOT NULL, b VARCHAR, c DOUBLE)",
+      "category": "ddl",
+      "description": "CREATE TABLE with NOT NULL"
+    },
+    {
+      "sql": "CREATE TABLE t (a INT, b VARCHAR DEFAULT 'hello')",
+      "category": "ddl",
+      "description": "CREATE TABLE with DEFAULT"
+    },
+    {
+      "sql": "CREATE TABLE IF NOT EXISTS t (a INT)",
+      "category": "ddl",
+      "description": "CREATE TABLE IF NOT EXISTS"
+    },
+    {
+      "sql": "CREATE TABLE t AS SELECT * FROM s",
+      "category": "ddl",
+      "description": "CREATE TABLE AS SELECT"
+    },
+    {
+      "sql": "CREATE OR REPLACE TABLE t (a INT)",
+      "category": "ddl",
+      "description": "CREATE OR REPLACE TABLE"
+    },
+    {
+      "sql": "CREATE TABLE t (a INT, b INT, PRIMARY KEY (a))",
+      "category": "ddl",
+      "description": "CREATE TABLE with PRIMARY KEY"
+    },
+    {
+      "sql": "CREATE VIEW v AS SELECT 1",
+      "category": "ddl",
+      "description": "CREATE VIEW"
+    },
+    {
+      "sql": "CREATE VIEW v AS SELECT a, b FROM t WHERE x > 1",
+      "category": "ddl",
+      "description": "CREATE VIEW with query"
+    },
+    {
+      "sql": "CREATE OR REPLACE VIEW v AS SELECT 1",
+      "category": "ddl",
+      "description": "CREATE OR REPLACE VIEW"
+    },
+    {
+      "sql": "DROP TABLE t",
+      "category": "ddl",
+      "description": "DROP TABLE"
+    },
+    {
+      "sql": "DROP TABLE IF EXISTS t",
+      "category": "ddl",
+      "description": "DROP TABLE IF EXISTS"
+    },
+    {
+      "sql": "DROP VIEW v",
+      "category": "ddl",
+      "description": "DROP VIEW"
+    },
+    {
+      "sql": "DROP VIEW IF EXISTS v",
+      "category": "ddl",
+      "description": "DROP VIEW IF EXISTS"
+    },
+    {
+      "sql": "ALTER TABLE t ADD COLUMN c INT",
+      "category": "ddl",
+      "description": "ALTER TABLE ADD COLUMN"
+    },
+    {
+      "sql": "ALTER TABLE t DROP COLUMN c",
+      "category": "ddl",
+      "description": "ALTER TABLE DROP COLUMN"
+    },
+    {
+      "sql": "ALTER TABLE t RENAME TO t2",
+      "category": "ddl",
+      "description": "ALTER TABLE RENAME"
+    },
+    {
+      "sql": "ALTER TABLE t RENAME COLUMN a TO b",
+      "category": "ddl",
+      "description": "ALTER TABLE RENAME COLUMN"
+    },
+    {
+      "sql": "CREATE TABLE t (a BIGINT, b DOUBLE, c BOOLEAN, d TIMESTAMP, e DATE, f INTERVAL)",
+      "category": "ddl",
+      "description": "CREATE TABLE with various Arrow types"
+    },
+    {
+      "sql": "CREATE TABLE t (a TINYINT, b SMALLINT, c INT, d BIGINT)",
+      "category": "ddl",
+      "description": "CREATE TABLE with integer types"
+    },
+    {
+      "sql": "CREATE TABLE t (a FLOAT, b DOUBLE, c DECIMAL(10, 2))",
+      "category": "ddl",
+      "description": "CREATE TABLE with float types"
+    },
+    {
+      "sql": "CREATE TABLE t (a VARCHAR, b TEXT, c CHAR(10))",
+      "category": "ddl",
+      "description": "CREATE TABLE with string types"
+    },
+    {
+      "sql": "INSERT INTO t VALUES (1, 2, 3)",
+      "category": "dml",
+      "description": "INSERT VALUES"
+    },
+    {
+      "sql": "INSERT INTO t VALUES (1, 'a'), (2, 'b'), (3, 'c')",
+      "category": "dml",
+      "description": "INSERT multiple rows"
+    },
+    {
+      "sql": "INSERT INTO t (a, b) VALUES (1, 2)",
+      "category": "dml",
+      "description": "INSERT with column list"
+    },
+    {
+      "sql": "INSERT INTO t (a, b) SELECT x, y FROM s",
+      "category": "dml",
+      "description": "INSERT SELECT"
+    },
+    {
+      "sql": "INSERT INTO t SELECT * FROM s",
+      "category": "dml",
+      "description": "INSERT SELECT star"
+    },
+    {
+      "sql": "INSERT INTO t SELECT * FROM s WHERE x > 1",
+      "category": "dml",
+      "description": "INSERT SELECT with WHERE"
+    },
+    {
+      "sql": "INSERT INTO t (a, b) SELECT x, y FROM s WHERE x > 1 ORDER BY x",
+      "category": "dml",
+      "description": "INSERT SELECT with WHERE and ORDER BY"
+    },
+    {
+      "sql": "INSERT INTO t VALUES (1, NULL)",
+      "category": "dml",
+      "description": "INSERT with NULL"
+    },
+    {
+      "sql": "INSERT INTO t VALUES (1, TRUE, FALSE)",
+      "category": "dml",
+      "description": "INSERT with boolean values"
+    },
+    {
+      "sql": "INSERT INTO t VALUES (1, 'hello', 3.14)",
+      "category": "dml",
+      "description": "INSERT with mixed types"
+    }
+  ],
+  "transpile": [
+    {
+      "sql": "SELECT * EXCEPT (col1) FROM t",
+      "read": "duckdb",
+      "read_sql": "SELECT * EXCLUDE (col1) FROM t",
+      "category": "transpilation",
+      "description": "EXCEPT column exclusion to EXCLUDE for DuckDB/Snowflake"
+    },
+    {
+      "sql": "SELECT CAST(x AS TIMESTAMP) FROM t",
+      "read": "tsql",
+      "read_sql": "SELECT CAST(x AS DATETIME2) FROM t",
+      "category": "transpilation",
+      "description": "TIMESTAMP type mapping: MySQL\u2192DATETIME, TSQL\u2192DATETIME2"
+    },
+    {
+      "sql": "SELECT x IS NOT DISTINCT FROM y",
+      "read": "mysql",
+      "read_sql": "SELECT x <=> y",
+      "category": "transpilation",
+      "description": "IS NOT DISTINCT FROM: MySQL uses x <=> y (null-safe equality)"
+    },
+    {
+      "sql": "SELECT length(s) FROM t",
+      "read": "tsql",
+      "read_sql": "SELECT LEN(s) FROM t",
+      "category": "transpilation",
+      "description": "LENGTH: TSQL\u2192LEN"
+    },
+    {
+      "sql": "SELECT * FROM t LIMIT 10",
+      "read": "tsql",
+      "read_sql": "SELECT TOP 10 * FROM t",
+      "category": "transpilation",
+      "description": "LIMIT without ORDER BY: TSQL\u2192TOP"
+    },
+    {
+      "sql": "SELECT CAST(x AS VARCHAR(MAX)) FROM t",
+      "read": "tsql",
+      "read_sql": "SELECT CAST(x AS NVARCHAR(MAX)) FROM t",
+      "category": "transpilation",
+      "description": "TSQL NVARCHAR(MAX)\u2192VARCHAR(MAX) reverse mapping"
+    }
+  ],
+  "stats": {
+    "identity_count": 275,
+    "transpile_count": 6
+  }
+}
