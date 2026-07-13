@@ -477,19 +477,33 @@ Registry additions: duckdb→doris +22 (2 identical, 2 divergent, 12 conditional
 
 This completes the bucket-A worklist (duckdb→doris and trino→doris both fully probed).
 
-## Worklist status / continuation
+## Worklist status / continuation — COMPLETE
 
-Done (batches 1-2): the prior-DIVERGENT scalar tier + the new `length` find + cheap
-IDENTICAL confirmations. Registry: 21 duckdb→doris (16 divergent, 5 identical),
-21 trino→doris (13 identical, 8 divergent).
+The bucket-A worklist is **fully probed** (batches 1–10). Final registry:
+- **duckdb→doris: 186 pairs** — 80 identical, 55 divergent, 44 conditionally-equivalent,
+  6 unclear, 1 no-equivalent.
+- **trino→doris: 168 pairs** — 83 identical, 35 divergent, 44 conditionally-equivalent,
+  3 unclear, 3 no-equivalent.
 
-Remaining (~300, lower signal): the IDENTICAL/none scalar tail, and the families
-that need more setup — arrays (`array_join/max/min`, `[..]` literals), aggregates
-(`max_by/min_by/any_value/approx_count_distinct`, need GROUP BY), datetime/timezone
-(`date_add/date_format/date_trunc/hour/current_date`, need `SET time_zone` traps),
-and `split`/`date_format` format-string dialects. Method to resume: recreate the
-file-driven differential harness (DuckDB `jdbc:duckdb:` + live Doris FE
-`jdbc:mysql://127.0.0.1:9030`, same-expr, codepoint render), feed batches of
-`fn<TAB>expr` from the worklist's suggested areas, adjudicate DuckDB↔Doris live +
-Doris-vs-prior-Trino. Pattern holds so far: Doris is Java/MySQL-family (matches
-Trino, diverges from DuckDB); the tail is mostly mechanical confirmation.
+Every same-name (bucket-A) function from `doris-probe-worklist.md` now has a verdict on
+both sides (verified via `tools/generate_hazards_registry.py` key counts). The throwaway
+`DifferentialProbe.kt` harness was deleted from doris-focus and the cluster brought down;
+doris-focus is green (`:doris-ducklake:test :doris-ducklake:detekt` BUILD SUCCESSFUL) and
+back at its original commit.
+
+### Residual follow-ups (not blockers)
+- **6 unclear (duckdb) / 3 unclear (trino):** the DuckDB **table functions** (`json_each`,
+  `query`, `parquet_bloom_probe`, `parquet_file_metadata`, `parquet_kv_metadata`) and
+  `unnest` — not probeable through the scalar shared-expr harness; need a table-function
+  harness. Plus `log` (trino single-arg) and `url_encode`/`round`/`substring` edges flagged
+  for a **live-Trino re-probe** (their trino-side provenance says "Trino from prior
+  evidence" — the trino agent should re-confirm the space-encoding, negative `.5`, and
+  `start=0` boundaries in its own project).
+- Pattern confirmed across the whole catalog: Doris is Java/MySQL-family (NULL propagation,
+  MySQL `%` date specs, boolean-as-0/1, full case-folding) so it broadly matches Trino and
+  diverges from DuckDB — with sharp exceptions worth re-reading in the batch sections:
+  `ascii`/`length` (byte-oriented, diverge from BOTH), `log` single-arg (log10 vs ln),
+  bare `stddev`/`variance` (population vs sample), `regr_avgx/count/...` (INTERNAL_ERROR on
+  the live FE), `json_valid` (Doris accepts malformed JSON), Doris `to_hex`/`from_hex`
+  (broken — use `hex`/`unhex`), and the domain-error contract (DuckDB throws / Doris NULL /
+  Trino NaN).

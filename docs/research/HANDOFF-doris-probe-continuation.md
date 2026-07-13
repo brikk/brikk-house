@@ -141,19 +141,19 @@ doubt mark `unclear` — never claim equivalence you didn't verify.
   error message when the JDBC wrapper says the unhelpful "Attempting to execute an
   unsuccessful operation" (= a bind/catalog failure).
 
-## State at handoff (updated 2026-07-13, batches 3–4 done)
-- brikk-house committed through `a6e4d4e` (batches 1–4). duckdb→doris **75** pairs
-  (29 divergent / 40 identical / 6 conditionally-equivalent); trino→doris **66**
-  (16 divergent / 42 identical / 5 conditionally-equivalent / 2 unclear / 1 no-equivalent).
-  Report has `#batch3-numeric` and `#batch4-string` sections. Tree committed (not pushed).
-- **Remaining families (~100 each side):** arrays (`array_*`, `split`, `unnest`), aggregates
-  (`max_by/min_by/any_value/approx_count_distinct/median/histogram/regr_*/kurtosis/skewness`
-  + inline VALUES tables), window (`lag/lead/rank/row_number/ntile/…` need OVER()), datetime
-  /timezone (`date_add/date_sub/date_format/date_trunc/hour/…` + matched `SET time_zone`),
-  json (`json_extract/json_type/json_valid/json_array/json_object/…`), misc scalar/baseline
-  (`current_*/user/version/date/element_at/sequence/truncate/width_bucket/xor/…`), and the
-  no-equivalent trino tail (`array_except/array_union/crc32/normal_cdf/regexp_count/…`).
-- **doris-focus: harness `DifferentialProbe.kt` is PRESENT (recreated) and cluster is UP.**
-  MUST delete the harness + `./smoke.sh --down` before finishing/committing to doris-focus.
-- Original doris-focus state (unchanged, restore target): 0.3.0 migration + inert
-  DorisVerifier on `origin/doris-focus`; tree otherwise clean.
+## State at handoff (updated 2026-07-13) — WORKLIST COMPLETE
+- brikk-house committed through `474cd50` (batches 1–10). **duckdb→doris 186 pairs**
+  (80 identical / 55 divergent / 44 conditionally-equivalent / 6 unclear / 1 no-equivalent);
+  **trino→doris 168 pairs** (83 identical / 35 divergent / 44 conditionally-equivalent /
+  3 unclear / 3 no-equivalent). Report has `#batch3-numeric` … `#batch10-round-substring`
+  sections. Registry regenerated (`tools/generate_hazards_registry.py`); tree committed, NOT
+  pushed. Every bucket-A same-name function in `doris-probe-worklist.md` now has a verdict on
+  both sides.
+- **doris-focus: harness deleted; cluster DOWN; tree clean at original commit `4574124`;
+  `:doris-ducklake:test :doris-ducklake:detekt` = BUILD SUCCESSFUL.** Nothing to restore.
+- **Residual follow-ups (not blockers):** the 6/3 `unclear` verdicts are DuckDB table
+  functions (`json_each`, `query`, `parquet_*`, `unnest`) needing a table-function harness,
+  plus a few trino-side edges (`log` single-arg, `url_encode` space, `round` negative `.5`,
+  `substring` start=0) whose provenance says "Trino from prior evidence" — a **live-Trino
+  re-probe** in the trino project should confirm them. See the REPORT's "Worklist status /
+  continuation — COMPLETE" section.
