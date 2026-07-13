@@ -18,7 +18,7 @@ package dev.brikk.house.sql.verify
  * individual [verify] calls are then fast.
  */
 interface SqlVerifier {
-    /** Engine identifier: `"doris"`, `"trino"`, or `"duckdb"`. */
+    /** Engine identifier: `"doris"`, `"trino"`, `"duckdb"`, or `"postgres"`. */
     val engine: String
 
     /**
@@ -65,20 +65,22 @@ object SqlVerifiers {
      * Returns a verifier for [name] (case-insensitive), or null when the engine is
      * unsupported or unavailable.
      *
-     * Supported engines: `"doris"`, `"trino"`, `"duckdb"`.
+     * Supported engines: `"doris"`, `"trino"`, `"duckdb"`, `"postgres"`.
      *
-     * `"postgres"` is intentionally unsupported for now: there is no mature JVM binding of
-     * `libpg_query` (Postgres's real parser extracted as a C library; Python's `pglast` wraps
-     * it). When a solid JVM binding exists, a PostgresVerifier should wrap it — do not
-     * substitute a non-native grammar, the whole point of this module is engine-exact answers.
+     * `"postgres"` has no parse-only wire API and no mature JVM binding of `libpg_query`
+     * (Postgres's real parser as a C library; Python's `pglast` wraps it), so [PostgresVerifier]
+     * discriminates grammar rejection from catalog/semantic failure by booting a REAL embedded
+     * PostgreSQL and classifying SQLSTATEs — still an engine-exact answer, never a non-native
+     * grammar. Its first call is expensive (native PG boot + one-time binary download); hold
+     * the instance for the session (see [PostgresVerifier] KDoc).
      */
     fun forEngine(name: String): SqlVerifier? = when (name.lowercase()) {
         // Null when the vendored parser jar can't be located (see DorisVerifier KDoc).
         "doris" -> DorisVerifier.createOrNull()
         "trino" -> TrinoVerifier()
         "duckdb" -> DuckdbVerifier()
-        // Postgres: no mature JVM libpg_query binding yet (see KDoc above).
-        "postgres" -> null
+        // Real embedded PostgreSQL + SQLSTATE discrimination (see PostgresVerifier KDoc).
+        "postgres" -> PostgresVerifier()
         else -> null
     }
 }

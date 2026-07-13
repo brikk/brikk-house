@@ -79,6 +79,15 @@ class VerifyCorpusGateTest {
     @Test
     fun duckdbGeneratedSqlIsAcceptedByDuckdbParserModuloLedger() = runGate("duckdb")
 
+    /**
+     * Postgres gate: re-generates postgres-serde.json through brikk's postgres pipeline and
+     * feeds each output to a REAL embedded PostgreSQL via [PostgresVerifier], which discriminates
+     * grammar rejection from catalog/semantic failure by SQLSTATE (see its KDoc). Rejects here
+     * are genuine dialect bugs OR a SQLSTATE we mis-partitioned; both are ledgered with reasons.
+     */
+    @Test
+    fun postgresGeneratedSqlIsAcceptedByPostgresParserModuloLedger() = runGate("postgres")
+
     private fun runGate(engine: String) {
         val corpus = json.decodeFromString(
             Corpus.serializer(),

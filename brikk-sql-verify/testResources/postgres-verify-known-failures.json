@@ -1,0 +1,130 @@
+{
+    "engine": "postgres",
+    "cases": [
+        {
+            "sql": "CAST('a' AS TEXT COLLATE \"de_DE\")",
+            "generated": "CAST('a' AS TEXT COLLATE \"de_DE\")",
+            "error": "DIALECT: brikk emits COLLATE inside the CAST target type (CAST(x AS TEXT COLLATE \"de_DE\")), which PG's grammar rejects — PG wants the COLLATE outside the cast (CAST(x AS text) COLLATE \"de_DE\"). Real generator bug (out of scope: no generator changes this task)."
+        },
+        {
+            "sql": "EXEC AS myfunc @id = 123",
+            "generated": "EXEC AS myfunc @id = 123",
+            "error": "NON-PG CORPUS FIXTURE: T-SQL EXEC ... @param syntax; not valid PostgreSQL. Round-trips unchanged and PG's grammar correctly rejects it."
+        },
+        {
+            "sql": "select count() OVER(partition by a order by a range offset preceding exclude current row)",
+            "generated": "SELECT COUNT() OVER (PARTITION BY a ORDER BY a range BETWEEN offset preceding AND CURRENT ROW EXCLUDE CURRENT ROW)",
+            "error": "DIALECT: brikk rewrites the frame to `range BETWEEN offset preceding AND CURRENT ROW` but `offset` here is a bare unquoted identifier used as a frame bound, which PG rejects (it expects a value expression). Frame-exclusion/offset generation bug. Out of scope."
+        },
+        {
+            "sql": "SELECT DATE_PART('isodow'::varchar(6), current_date)",
+            "generated": "SELECT EXTRACT(CAST('isodow' AS VARCHAR(6)) FROM CURRENT_DATE)",
+            "error": "DIALECT: brikk maps DATE_PART -> EXTRACT and keeps the cast on the field argument, producing EXTRACT(CAST(...) FROM ...); PG's EXTRACT grammar requires an identifier/string field, not a cast expression. Generator bug. Out of scope."
+        },
+        {
+            "sql": "MERGE INTO x USING (SELECT id) AS y ON a = b WHEN MATCHED THEN UPDATE SET x.a = y.b WHEN NOT MATCHED THEN INSERT (a, b) VALUES (y.a, y.b)",
+            "generated": "MERGE INTO x USING (SELECT id) AS y ON a = b WHEN MATCHED THEN UPDATE SET a = y.b WHEN NOT MATCHED THEN INSERT (a, b) VALUES (y.a, y.b)",
+            "error": "ENGINE VERSION: MERGE was added in PostgreSQL 15; the embedded engine is PG 14.22, whose grammar has no MERGE. Not a brikk bug — an artifact of the pinned embedded binary."
+        },
+        {
+            "sql": "SELECT js, js IS JSON AS \"json?\", js IS JSON VALUE AS \"scalar?\", js IS JSON SCALAR AS \"scalar?\", js IS JSON OBJECT AS \"object?\", js IS JSON ARRAY AS \"array?\" FROM t",
+            "generated": "SELECT js, js IS JSON AS \"json?\", js IS JSON VALUE AS \"scalar?\", js IS JSON SCALAR AS \"scalar?\", js IS JSON OBJECT AS \"object?\", js IS JSON ARRAY AS \"array?\" FROM t",
+            "error": "ENGINE VERSION: the `IS JSON` predicate was added in PostgreSQL 16; embedded engine is PG 14.22. Artifact of the pinned binary, not a brikk bug."
+        },
+        {
+            "sql": "SELECT js, js IS JSON ARRAY WITH UNIQUE KEYS AS \"array w. UK?\", js IS JSON ARRAY WITHOUT UNIQUE KEYS AS \"array w/o UK?\", js IS JSON ARRAY UNIQUE KEYS AS \"array w UK 2?\" FROM t",
+            "generated": "SELECT js, js IS JSON ARRAY WITH UNIQUE KEYS AS \"array w. UK?\", js IS JSON ARRAY WITHOUT UNIQUE KEYS AS \"array w/o UK?\", js IS JSON ARRAY UNIQUE KEYS AS \"array w UK 2?\" FROM t",
+            "error": "ENGINE VERSION: `IS JSON ... WITH/WITHOUT UNIQUE KEYS` is PostgreSQL 16; embedded engine is PG 14.22. Artifact of the pinned binary."
+        },
+        {
+            "sql": "MERGE INTO target_table USING source_table AS source ON target.id = source.id WHEN MATCHED THEN DO NOTHING WHEN NOT MATCHED THEN DO NOTHING RETURNING MERGE_ACTION(), *",
+            "generated": "MERGE INTO target_table USING source_table AS source ON target.id = source.id WHEN MATCHED THEN DO NOTHING WHEN NOT MATCHED THEN DO NOTHING RETURNING MERGE_ACTION(), *",
+            "error": "ENGINE VERSION: MERGE (PG 15) plus MERGE RETURNING and MERGE_ACTION() (PG 17); embedded engine is PG 14.22. Artifact of the pinned binary."
+        },
+        {
+            "sql": "SELECT * FROM foo WHERE id = %s",
+            "generated": "SELECT * FROM foo WHERE id = %s",
+            "error": "NON-PG CORPUS FIXTURE: psycopg client-side placeholder `%s`; not PostgreSQL wire syntax. Round-trips unchanged and PG's grammar correctly rejects it."
+        },
+        {
+            "sql": "SELECT * FROM foo WHERE id = %(id_param)s",
+            "generated": "SELECT * FROM foo WHERE id = %(id_param)s",
+            "error": "NON-PG CORPUS FIXTURE: psycopg named placeholder `%(name)s`; not PostgreSQL wire syntax. PG's grammar correctly rejects it."
+        },
+        {
+            "sql": "SELECT * FROM foo WHERE id = ?",
+            "generated": "SELECT * FROM foo WHERE id = ?",
+            "error": "NON-PG CORPUS FIXTURE: qmark placeholder `?`; PostgreSQL uses $1-style parameters, so `?` is a syntax error at end of input. PG's grammar correctly rejects it."
+        },
+        {
+            "sql": "CREATE INDEX IF NOT EXISTS ON t(c)",
+            "generated": "CREATE INDEX IF NOT EXISTS ON t(c)",
+            "error": "CORPUS FIXTURE: index name omitted after IF NOT EXISTS (`CREATE INDEX IF NOT EXISTS ON t(c)`); PG requires a name when IF NOT EXISTS is given, so it rejects at `ON`. The corpus SQL itself is not valid PG. Not a verifier misclassification."
+        },
+        {
+            "sql": "ALTER TABLE t1 SET ACCESS METHOD method",
+            "generated": "ALTER TABLE t1 SET ACCESS METHOD method",
+            "error": "ENGINE VERSION: ALTER TABLE ... SET ACCESS METHOD is PostgreSQL 15; embedded engine is PG 14.22. Artifact of the pinned binary."
+        },
+        {
+            "sql": "CREATE TABLE A (LIKE B INCLUDING CONSTRAINT INCLUDING COMPRESSION EXCLUDING COMMENTS)",
+            "generated": "CREATE TABLE A (LIKE B INCLUDING CONSTRAINT INCLUDING COMPRESSION EXCLUDING COMMENTS)",
+            "error": "CORPUS FIXTURE: LIKE option is spelled `CONSTRAINTS` (plural) in PostgreSQL; `INCLUDING CONSTRAINT` (singular) is rejected. Also COMPRESSION as a LIKE option is PG 14+ but the CONSTRAINT typo fails first. The corpus SQL is not valid PG. Not a verifier misclassification."
+        },
+        {
+            "sql": "CREATE TABLE tbl (col INT UNIQUE NULLS NOT DISTINCT DEFAULT 9.99)",
+            "generated": "CREATE TABLE tbl (col INT UNIQUE NULLS NOT DISTINCT DEFAULT 9.99)",
+            "error": "ENGINE VERSION: UNIQUE NULLS NOT DISTINCT is PostgreSQL 15; embedded engine is PG 14.22. Artifact of the pinned binary."
+        },
+        {
+            "sql": "CREATE TABLE tbl (col UUID, UNIQUE NULLS NOT DISTINCT (col))",
+            "generated": "CREATE TABLE tbl (col UUID, UNIQUE NULLS NOT DISTINCT (col))",
+            "error": "ENGINE VERSION: UNIQUE NULLS NOT DISTINCT is PostgreSQL 15; embedded engine is PG 14.22. Artifact of the pinned binary."
+        },
+        {
+            "sql": "SELECT a, LOGICAL_OR(b) FROM table GROUP BY a",
+            "generated": "SELECT a, BOOL_OR(b) FROM table GROUP BY a",
+            "error": "CORPUS FIXTURE: `table` is a reserved keyword used as a relation name unquoted; PG rejects `FROM table`. The function mapping (LOGICAL_OR -> BOOL_OR) is correct; the reserved-word table name in the fixture is what PG rejects. Not a verifier misclassification."
+        },
+        {
+            "sql": "ANALYZE VERBOSE SKIP_LOCKED TBL(col1, col2)",
+            "generated": "ANALYZE VERBOSE SKIP_LOCKED TBL(col1, col2)",
+            "error": "ENGINE VERSION: the parenthesized ANALYZE option SKIP_LOCKED is PostgreSQL 16; also brikk emits it as a bare token rather than in the `ANALYZE (options)` form. Embedded engine is PG 14.22. Artifact of the pinned binary / generation form. Out of scope."
+        },
+        {
+            "sql": "ANALYZE BUFFER_USAGE_LIMIT 1337 TBL",
+            "generated": "ANALYZE BUFFER_USAGE_LIMIT 1337 TBL",
+            "error": "ENGINE VERSION: ANALYZE BUFFER_USAGE_LIMIT is PostgreSQL 16; also the option belongs inside `ANALYZE (...)`. Embedded engine is PG 14.22. Artifact of the pinned binary / generation form. Out of scope."
+        },
+        {
+            "sql": "'x' 'y' 'z'",
+            "generated": "",
+            "error": "BRIKK PARSE GAP: brikk's parser rejects adjacent string literals (SQL-standard implicit concatenation) — `ParseError: Adjacent string literals are not supported yet`. brikk never emits SQL, so nothing reaches the verifier. Parser feature gap, out of scope (no generator/parser changes this task)."
+        },
+        {
+            "sql": "WITH t(c) AS (SELECT 1) SELECT * INTO UNLOGGED foo FROM (SELECT c AS c FROM t) AS temp",
+            "generated": "",
+            "error": "BRIKK PARSE GAP: `SELECT ... INTO` is unsupported by brikk's parser — `ParseError: SELECT INTO is not supported yet`. Parser feature gap, out of scope."
+        },
+        {
+            "sql": "SELECT * FROM ROWS FROM (FUNC1(col1, col2))",
+            "generated": "",
+            "error": "BRIKK PARSE GAP: `ROWS FROM (...)` table function syntax is unsupported by brikk's parser — `ParseError: ROWS FROM is not supported yet`. Parser feature gap, out of scope."
+        },
+        {
+            "sql": "SELECT * FROM ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT), FUNC2(col2) AS alias2(\"col2\" INT)) WITH ORDINALITY",
+            "generated": "",
+            "error": "BRIKK PARSE GAP: `ROWS FROM (...)` table function syntax is unsupported by brikk's parser — `ParseError: ROWS FROM is not supported yet`. Parser feature gap, out of scope."
+        },
+        {
+            "sql": "SELECT * FROM table1, ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT)) WITH ORDINALITY AS alias3(\"col3\" INT, \"col4\" TEXT)",
+            "generated": "",
+            "error": "BRIKK PARSE GAP: `ROWS FROM (...)` after a comma-joined relation trips brikk's parser — `ParseError: Invalid expression / Unexpected token`. Parser feature gap, out of scope."
+        },
+        {
+            "sql": "WITH RECURSIVE search_graph(id, link, data, depth) AS (SELECT g.id, g.link, g.data, 1 FROM graph AS g UNION ALL SELECT g.id, g.link, g.data, sg.depth + 1 FROM graph AS g, search_graph AS sg WHERE g.id = sg.link) CYCLE id SET is_cycle USING path SELECT * FROM search_graph",
+            "generated": "",
+            "error": "BRIKK PARSE GAP: `WITH ... CYCLE ... SET ... USING` (and SEARCH) clauses are unsupported by brikk's parser — `ParseError: WITH ... SEARCH is not supported yet`. Parser feature gap, out of scope."
+        }
+    ]
+}
