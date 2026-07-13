@@ -140,11 +140,13 @@ PASCAL_DIALECT = {
     "trino": "Trino",
     "duckdb": "Duckdb",
     "doris": "Doris",
+    "clickhouse": "Clickhouse",
 }
 DISPLAY_DIALECT = {
     "trino": "Trino",
     "duckdb": "DuckDB",
     "doris": "Doris",
+    "clickhouse": "ClickHouse",
 }
 
 

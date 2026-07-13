@@ -1,0 +1,27 @@
+acos_v	toString(round(acos(0.5), 10))	round(acos(0.5), 10)::VARCHAR
+asin_v	toString(round(asin(0.5), 10))	round(asin(0.5), 10)::VARCHAR
+atan_v	toString(round(atan(0.5), 10))	round(atan(0.5), 10)::VARCHAR
+atan2_v	toString(round(atan2(1,2), 10))	round(atan2(1,2), 10)::VARCHAR
+sin_v	toString(round(sin(1), 10))	round(sin(1), 10)::VARCHAR
+cos_v	toString(round(cos(1), 10))	round(cos(1), 10)::VARCHAR
+tan_v	toString(round(tan(1), 10))	round(tan(1), 10)::VARCHAR
+sinh_v	toString(round(sinh(1), 10))	round(sinh(1), 10)::VARCHAR
+cosh_v	toString(round(cosh(1), 10))	round(cosh(1), 10)::VARCHAR
+tanh_v	toString(round(tanh(1), 10))	round(tanh(1), 10)::VARCHAR
+cbrt_v	toString(round(cbrt(27), 10))	round(cbrt(27), 10)::VARCHAR
+exp_v	toString(round(exp(2), 10))	round(exp(2), 10)::VARCHAR
+degrees_v	toString(round(degrees(3.14159), 10))	round(degrees(3.14159), 10)::VARCHAR
+radians_v	toString(round(radians(180), 10))	round(radians(180), 10)::VARCHAR
+power_v	toString(round(power(2,10), 10))	round(power(2,10), 10)::VARCHAR
+pow_v	toString(round(pow(2,10), 10))	round(pow(2,10), 10)::VARCHAR
+sqrt_v	toString(round(sqrt(2), 10))	round(sqrt(2), 10)::VARCHAR
+sign_neg	sign(-3.5)	sign(-3.5)
+sign_zero	sign(0)	sign(0)
+abs_v	abs(-7)	abs(-7)
+mod_v	mod(17,5)	mod(17,5)
+corr_v	(SELECT toString(round(corr(x,y),6)) FROM (SELECT 1 x,2 y UNION ALL SELECT 2,4 UNION ALL SELECT 3,5))	(SELECT round(corr(x,y),6)::VARCHAR FROM (SELECT 1 x,2 y UNION ALL SELECT 2,4 UNION ALL SELECT 3,5))
+repeat_v	repeat('ab',3)	repeat('ab',3)
+reverse_ascii	reverse('abc')	reverse('abc')
+translate_v	translate('abcabc','ab','xy')	translate('abcabc','ab','xy')
+to_base64_v	base64Encode('abc')	to_base64('abc')
+from_base64_v	base64Decode('YWJj')	from_base64('YWJj')::VARCHAR

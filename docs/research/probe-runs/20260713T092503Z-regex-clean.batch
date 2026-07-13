@@ -1,0 +1,5 @@
+re_extract_grp0	regexpExtract('2024-05', '([0-9]+)-([0-9]+)', 0)	regexp_extract('2024-05', '([0-9]+)-([0-9]+)', 0)
+re_extract_grp1	regexpExtract('2024-05', '([0-9]+)-([0-9]+)', 1)	regexp_extract('2024-05', '([0-9]+)-([0-9]+)', 1)
+re_extract_grp2	regexpExtract('2024-05', '([0-9]+)-([0-9]+)', 2)	regexp_extract('2024-05', '([0-9]+)-([0-9]+)', 2)
+re_matches_partial	match('hello world', 'wor')	regexp_matches('hello world', 'wor')
+literal_escape_d	'x\\dy'	'x\\dy'

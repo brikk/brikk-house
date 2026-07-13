@@ -1,0 +1,1579 @@
+{
+  "source_project": "clickhouse probe program",
+  "extracted": "2026-07-13",
+  "pairs": [
+    {
+      "duckdb": "lower",
+      "clickhouse": "lower",
+      "verdict": "divergent",
+      "hazard": "ClickHouse lower() is ASCII-only: '\u0130'/'\u00df'/'\u00c9' pass through unchanged; DuckDB lowercases full Unicode. Parity needs ClickHouse lowerUTF8 \u2014 and even that diverges (\u0130->i+U+0307).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"
+    },
+    {
+      "duckdb": "upper",
+      "clickhouse": "upper",
+      "verdict": "divergent",
+      "hazard": "ClickHouse upper() is ASCII-only (\u00df/\u00c9 unchanged) vs DuckDB full-Unicode (\u00df->\u1e9e). upperUTF8 folds but \u00df->'SS' (length-changing), still != DuckDB \u1e9e.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"
+    },
+    {
+      "duckdb": "lcase",
+      "clickhouse": "lower",
+      "verdict": "divergent",
+      "hazard": "lcase is an alias of ASCII-only lower(); '\u0130' unchanged vs DuckDB 'i'.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"
+    },
+    {
+      "duckdb": "ucase",
+      "clickhouse": "upper",
+      "verdict": "divergent",
+      "hazard": "ucase is an alias of ASCII-only upper(); non-ASCII unchanged vs DuckDB folding.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"
+    },
+    {
+      "duckdb": "length",
+      "clickhouse": "length",
+      "verdict": "divergent",
+      "hazard": "ClickHouse length() counts BYTES (\ud83d\ude00->4, \u4e2d\u6587->6, ZWJ family->18); DuckDB length() counts code points. Use lengthUTF8/char_length for code-point parity.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes"
+    },
+    {
+      "duckdb": "char_length",
+      "clickhouse": "char_length",
+      "verdict": "identical",
+      "hazard": "Both count code points (\ud83d\ude00->1); ClickHouse char_length == lengthUTF8.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes"
+    },
+    {
+      "duckdb": "character_length",
+      "clickhouse": "char_length",
+      "verdict": "identical",
+      "hazard": "Alias of char_length; code-point count in both.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes"
+    },
+    {
+      "duckdb": "octet_length",
+      "clickhouse": "octet_length",
+      "verdict": "divergent",
+      "hazard": "ClickHouse octet_length(varchar)=byte count; DuckDB octet_length has no bare-VARCHAR overload (requires BLOB) and errors.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes"
+    },
+    {
+      "duckdb": "reverse",
+      "clickhouse": "reverse",
+      "verdict": "divergent",
+      "hazard": "ClickHouse reverse() reverses BYTES (mangles multi-byte UTF-8 into U+FFFD); DuckDB reverse is grapheme-aware. reverseUTF8 is code-point-aware but still splits combining marks vs DuckDB graphemes.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#reverse-byte-vs-grapheme"
+    },
+    {
+      "duckdb": "trim",
+      "clickhouse": "trim",
+      "verdict": "divergent",
+      "hazard": "ClickHouse trim strips ONLY the ASCII space (0x20): NBSP/EM-SPACE left intact; DuckDB additionally strips NBSP and EM SPACE. Neither strips tab/newline.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"
+    },
+    {
+      "duckdb": "ltrim",
+      "clickhouse": "trimLeft",
+      "verdict": "divergent",
+      "hazard": "Same whitespace-set divergence as trim (ASCII space only in ClickHouse).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"
+    },
+    {
+      "duckdb": "rtrim",
+      "clickhouse": "trimRight",
+      "verdict": "divergent",
+      "hazard": "Same whitespace-set divergence as trim (ASCII space only in ClickHouse).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"
+    },
+    {
+      "duckdb": "concat",
+      "clickhouse": "concat",
+      "verdict": "divergent",
+      "hazard": "ClickHouse concat PROPAGATES NULL (any NULL arg -> NULL); DuckDB SKIPS NULLs (concat('a',NULL,'c')='ac', concat(NULL,NULL)='').",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation"
+    },
+    {
+      "duckdb": "concat_ws",
+      "clickhouse": "concat_ws",
+      "verdict": "divergent",
+      "hazard": "ClickHouse concat_ws propagates NULL from any element -> NULL; DuckDB skips NULL elements. NULL separator -> NULL in both.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation"
+    },
+    {
+      "duckdb": "substr",
+      "clickhouse": "substring",
+      "verdict": "divergent",
+      "hazard": "ClickHouse substring is BYTE-indexed (splits multi-byte chars -> U+FFFD) and start=0 returns '' (not treated as 1); DuckDB is code-point-indexed and clamps start=0 to 1. Negative length also differs. substringUTF8 fixes the multibyte axis only.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0"
+    },
+    {
+      "duckdb": "substring",
+      "clickhouse": "substring",
+      "verdict": "divergent",
+      "hazard": "See substr: byte indexing + start=0 empty + negative-length semantics differ; substringUTF8 needed for code-point parity.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0"
+    },
+    {
+      "duckdb": "position",
+      "clickhouse": "position",
+      "verdict": "divergent",
+      "hazard": "ClickHouse position(haystack, needle) is 1-based like DuckDB, but argument ORDER and the comma form differ from DuckDB's position(needle IN haystack); DuckDB's comma form is strpos(str,search).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr"
+    },
+    {
+      "duckdb": "instr",
+      "clickhouse": "instr",
+      "verdict": "divergent",
+      "hazard": "ClickHouse instr is an alias of positionCaseInsensitive \u2014 CASE-INSENSITIVE search; DuckDB instr is case-sensitive (instr('Hello','h')=1 in CH vs 0 in DuckDB).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr"
+    },
+    {
+      "duckdb": "replace",
+      "clickhouse": "replaceAll",
+      "verdict": "identical",
+      "hazard": "ClickHouse replace == replaceAll: replaces ALL occurrences, same as DuckDB replace.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"
+    },
+    {
+      "duckdb": "regexp_replace",
+      "clickhouse": "replaceRegexpAll",
+      "verdict": "divergent",
+      "hazard": "ClickHouse regexp_replace aliases replaceRegexpAll (replaces ALL matches); DuckDB regexp_replace replaces only the FIRST match unless the 'g' flag is passed. Also empty-pattern behavior differs (CH no-op vs DuckDB inserts at every position).",
+      "areas": [
+        "regex",
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"
+    },
+    {
+      "duckdb": "regexp_extract",
+      "clickhouse": "regexpExtract",
+      "verdict": "identical",
+      "hazard": "Group semantics aligned: group 0 = whole match, group N = Nth capture; probed backslash-free to avoid the literal-escaping confound.",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#regexp-extract-groups"
+    },
+    {
+      "duckdb": "regexp_matches",
+      "clickhouse": "match",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse match() is a partial (unanchored) RE2 search returning UInt8 0/1; DuckDB regexp_matches returns BOOLEAN. Same match set for equivalent patterns; return type differs (0/1 vs true/false).",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering"
+    },
+    {
+      "duckdb": "lpad",
+      "clickhouse": "leftPad",
+      "verdict": "divergent",
+      "hazard": "ClickHouse leftPad pads by BYTES; DuckDB lpad pads by code points. leftPadUTF8 is the code-point variant. ASCII aligned.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes"
+    },
+    {
+      "duckdb": "rpad",
+      "clickhouse": "rightPad",
+      "verdict": "divergent",
+      "hazard": "ClickHouse rightPad pads by BYTES; DuckDB rpad by code points. rightPadUTF8 for parity. ASCII aligned.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes"
+    },
+    {
+      "duckdb": "ascii",
+      "clickhouse": "ascii",
+      "verdict": "divergent",
+      "hazard": "ClickHouse ascii returns the first BYTE (emoji->240); DuckDB returns the first code point (emoji->128512). ASCII inputs aligned.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr"
+    },
+    {
+      "duckdb": "left",
+      "clickhouse": "left",
+      "verdict": "identical",
+      "hazard": "Aligned incl. negative n (all-but-last-|n|). Probe-verified on ASCII.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "right",
+      "clickhouse": "right",
+      "verdict": "identical",
+      "hazard": "Aligned on ASCII probes.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "repeat",
+      "clickhouse": "repeat",
+      "verdict": "identical",
+      "hazard": "repeat(s,0)='' and negative count -> '' in both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "translate",
+      "clickhouse": "translate",
+      "verdict": "identical",
+      "hazard": "Code-point-wise substitution; ASCII probe aligned.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "format",
+      "clickhouse": "format",
+      "verdict": "divergent",
+      "hazard": "ClickHouse format uses positional {0},{1} placeholders (Python/.NET style); DuckDB format uses fmt/printf %-style. Incompatible spec dialects \u2014 never map by name. (ClickHouse printf() matches DuckDB printf.)",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#format-spec"
+    },
+    {
+      "duckdb": "printf",
+      "clickhouse": "printf",
+      "verdict": "identical",
+      "hazard": "Both use C printf %-specifiers; probe 'x=5' aligned.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "soundex",
+      "clickhouse": "soundex",
+      "verdict": "identical",
+      "hazard": "ClickHouse soundex('Robert')='R163' matches DuckDB (which needs no extension here); rename only.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "to_base64",
+      "clickhouse": "base64Encode",
+      "verdict": "identical",
+      "hazard": "Standard alphabet; 'abc'->'YWJj' in both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "from_base64",
+      "clickhouse": "base64Decode",
+      "verdict": "identical",
+      "hazard": "'YWJj'->'abc' in both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "md5",
+      "clickhouse": "MD5",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same digest but return SHAPE differs: ClickHouse MD5 returns FixedString(16) raw bytes; DuckDB md5 returns a lowercase hex VARCHAR. Wrap ClickHouse in lower(hex(...)) to compare. NULL-propagates in both.",
+      "areas": [
+        "hash",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"
+    },
+    {
+      "duckdb": "sha1",
+      "clickhouse": "SHA1",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same digest; ClickHouse SHA1 returns raw bytes (FixedString), DuckDB sha1 returns hex VARCHAR \u2014 hex() wrap required.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"
+    },
+    {
+      "duckdb": "sha256",
+      "clickhouse": "SHA256",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same digest; ClickHouse returns raw bytes vs DuckDB hex VARCHAR \u2014 hex() wrap required.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"
+    },
+    {
+      "duckdb": "abs",
+      "clickhouse": "abs",
+      "verdict": "divergent",
+      "hazard": "abs(-2147483648) (INT32 min): ClickHouse widens the result and returns 2147483648; DuckDB THROWS an overflow error.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-overflow"
+    },
+    {
+      "duckdb": "divide",
+      "clickhouse": "divide",
+      "verdict": "divergent",
+      "hazard": "Float division by zero: ClickHouse returns NULL; DuckDB returns +inf.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero"
+    },
+    {
+      "duckdb": "multiply",
+      "clickhouse": "multiply",
+      "verdict": "identical",
+      "hazard": "Plain multiplication aligned; overflow follows the promotion/wrap axis noted for integer ops.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "mod",
+      "clickhouse": "modulo",
+      "verdict": "divergent",
+      "hazard": "modulo by zero: ClickHouse THROWS (Division by zero, code 153); DuckDB returns NULL. Non-zero modulo (incl. negative operands) aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero"
+    },
+    {
+      "duckdb": "round",
+      "clickhouse": "round",
+      "verdict": "divergent",
+      "hazard": "ClickHouse round() uses banker's rounding (round-half-to-EVEN): round(2.5)=2, round(-2.5)=-2; DuckDB rounds half-AWAY-from-zero: 3 and -3. roundBankers matches ClickHouse round.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers"
+    },
+    {
+      "duckdb": "roundbankers",
+      "clickhouse": "roundBankers",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse roundBankers == its default round (half-even); equals DuckDB only when DuckDB round is forced to banker's, which it is not by default.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers"
+    },
+    {
+      "duckdb": "trunc",
+      "clickhouse": "trunc",
+      "verdict": "identical",
+      "hazard": "Truncation toward zero aligned incl. negatives.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "floor",
+      "clickhouse": "floor",
+      "verdict": "identical",
+      "hazard": "Aligned incl. negatives (floor(-2.5)=-3).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "ceil",
+      "clickhouse": "ceil",
+      "verdict": "identical",
+      "hazard": "Aligned incl. negatives (ceil(-2.5)=-2).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "ceiling",
+      "clickhouse": "ceil",
+      "verdict": "identical",
+      "hazard": "Alias of ceil; aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "sqrt",
+      "clickhouse": "sqrt",
+      "verdict": "divergent",
+      "hazard": "sqrt(-1): ClickHouse returns NULL (nan absorbed to NULL); DuckDB THROWS 'cannot take square root of a negative'.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "duckdb": "ln",
+      "clickhouse": "log",
+      "verdict": "divergent",
+      "hazard": "NAME COLLISION + domain: ClickHouse log(x) is NATURAL log (== ln), so mapping DuckDB ln->log is value-correct, but ln(0)/ln(-1): ClickHouse returns NULL, DuckDB THROWS.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"
+    },
+    {
+      "duckdb": "log",
+      "clickhouse": "log",
+      "verdict": "divergent",
+      "hazard": "ClickHouse single-arg log(x)=natural log; DuckDB single-arg log(x)=log10 (base-10). Mapping log->log silently changes base. DuckDB has no 2-arg log; ClickHouse errors on 2-arg log.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"
+    },
+    {
+      "duckdb": "log10",
+      "clickhouse": "log10",
+      "verdict": "identical",
+      "hazard": "Base-10 log; log10(1000)=3 in both (map DuckDB log10 to ClickHouse log10, never to log).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"
+    },
+    {
+      "duckdb": "log2",
+      "clickhouse": "log2",
+      "verdict": "identical",
+      "hazard": "log2(8)=3 in both.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "factorial",
+      "clickhouse": "factorial",
+      "verdict": "divergent",
+      "hazard": "factorial(-1): ClickHouse returns 1; DuckDB THROWS.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "duckdb": "pow",
+      "clickhouse": "pow",
+      "verdict": "divergent",
+      "hazard": "pow(-8,0.5) (complex result): ClickHouse returns NULL; DuckDB returns nan. Finite real cases aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "duckdb": "power",
+      "clickhouse": "power",
+      "verdict": "divergent",
+      "hazard": "See pow: pow(-8,0.5) NULL vs nan; finite cases aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "duckdb": "sign",
+      "clickhouse": "sign",
+      "verdict": "identical",
+      "hazard": "sign of negative/zero aligned; float NaN not re-probed here.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "isnan",
+      "clickhouse": "isNaN",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same predicate; ClickHouse returns UInt8 0/1, DuckDB BOOLEAN true/false.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering"
+    },
+    {
+      "duckdb": "isfinite",
+      "clickhouse": "isFinite",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same predicate; 0/1 vs true/false return type.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering"
+    },
+    {
+      "duckdb": "gcd",
+      "clickhouse": "gcd",
+      "verdict": "divergent",
+      "hazard": "gcd(0,5): ClickHouse THROWS (Division by zero); DuckDB returns 5. Non-zero pairs aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero"
+    },
+    {
+      "duckdb": "lcm",
+      "clickhouse": "lcm",
+      "verdict": "identical",
+      "hazard": "lcm(4,6)=12 aligned for non-zero args.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "bin",
+      "clickhouse": "bin",
+      "verdict": "divergent",
+      "hazard": "ClickHouse bin(5)='00000101' (zero-padded to a full byte); DuckDB bin(5)='101' (no leading zeros).",
+      "areas": [
+        "numeric",
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#bin-padding"
+    },
+    {
+      "duckdb": "hex",
+      "clickhouse": "hex",
+      "verdict": "identical",
+      "hazard": "hex(255)='FF', hex('A')='41' in both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "unhex",
+      "clickhouse": "unhex",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Rename/behaviour aligned on hex decode; ClickHouse returns String, DuckDB BLOB (type-layer).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"
+    },
+    {
+      "duckdb": "xor",
+      "clickhouse": "xor",
+      "verdict": "divergent",
+      "hazard": "ClickHouse xor is LOGICAL xor (xor(5,3)=0 since both truthy); DuckDB xor is BITWISE (xor(5,3)=6).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#xor-logical-vs-bitwise"
+    },
+    {
+      "duckdb": "pi",
+      "clickhouse": "pi",
+      "verdict": "identical",
+      "hazard": "3.141592653589793 in both.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "exp",
+      "clickhouse": "exp",
+      "verdict": "identical",
+      "hazard": "exp(1)/exp(2) agree to full double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "acos",
+      "clickhouse": "acos",
+      "verdict": "divergent",
+      "hazard": "acos(2) (out of domain): ClickHouse NULL; DuckDB THROWS. In-domain values aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "duckdb": "asin",
+      "clickhouse": "asin",
+      "verdict": "divergent",
+      "hazard": "asin(2) out of domain: ClickHouse NULL; DuckDB THROWS. In-domain aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "duckdb": "acosh",
+      "clickhouse": "acosh",
+      "verdict": "conditionally-equivalent",
+      "hazard": "In-domain aligned to ~double precision; out-of-domain follows the NULL-vs-throw contract (acosh(0)).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "duckdb": "atanh",
+      "clickhouse": "atanh",
+      "verdict": "conditionally-equivalent",
+      "hazard": "In-domain aligned; |x|>=1 follows NULL-vs-throw contract.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "duckdb": "atan",
+      "clickhouse": "atan",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "atan2",
+      "clickhouse": "atan2",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "asinh",
+      "clickhouse": "asinh",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "sin",
+      "clickhouse": "sin",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "cos",
+      "clickhouse": "cos",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "tan",
+      "clickhouse": "tan",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "sinh",
+      "clickhouse": "sinh",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "cosh",
+      "clickhouse": "cosh",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "tanh",
+      "clickhouse": "tanh",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "cbrt",
+      "clickhouse": "cbrt",
+      "verdict": "identical",
+      "hazard": "cbrt(27)=3 aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "degrees",
+      "clickhouse": "degrees",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "radians",
+      "clickhouse": "radians",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "lgamma",
+      "clickhouse": "lgamma",
+      "verdict": "identical",
+      "hazard": "lgamma(5)=3.178054 aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "year",
+      "clickhouse": "toYear",
+      "verdict": "divergent",
+      "hazard": "Value-correct for 1970+, but ClickHouse Date/DateTime cannot represent pre-1970: toDate('1969-12-31') clamps and year() returns 1970. DuckDB handles the full proleptic range.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970"
+    },
+    {
+      "duckdb": "month",
+      "clickhouse": "toMonth",
+      "verdict": "identical",
+      "hazard": "Aligned for representable (>=1970) dates.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "day",
+      "clickhouse": "toDayOfMonth",
+      "verdict": "identical",
+      "hazard": "Aligned for representable dates.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "dayofmonth",
+      "clickhouse": "toDayOfMonth",
+      "verdict": "identical",
+      "hazard": "Aligned for representable dates.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "hour",
+      "clickhouse": "toHour",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Aligned when session timezones match; ClickHouse DateTime is timezone-typed (DateTime('tz') / session_timezone) so an unpinned zone silently shifts results.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "duckdb": "minute",
+      "clickhouse": "toMinute",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "second",
+      "clickhouse": "toSecond",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "millisecond",
+      "clickhouse": "toMillisecond",
+      "verdict": "divergent",
+      "hazard": "ClickHouse toMillisecond returns ONLY the sub-second millisecond component (123); DuckDB millisecond returns seconds*1000+ms (30123).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond"
+    },
+    {
+      "duckdb": "dayofweek",
+      "clickhouse": "toDayOfWeek",
+      "verdict": "divergent",
+      "hazard": "ClickHouse toDayOfWeek is ISO Mon=1..Sun=7; DuckDB dayofweek is Sun=0..Sat=6. Sunday: 7 vs 0.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-dayofweek-numbering"
+    },
+    {
+      "duckdb": "dayofyear",
+      "clickhouse": "toDayOfYear",
+      "verdict": "identical",
+      "hazard": "Leap-day pinned: 2024-02-29 -> 60 in both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "quarter",
+      "clickhouse": "toQuarter",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "week",
+      "clickhouse": "toWeek",
+      "verdict": "divergent",
+      "hazard": "ClickHouse toWeek default mode 0 is Sunday-based (2023-01-01 -> 1); DuckDB week is ISO-8601 (-> 52). Map to toISOWeek for ISO parity.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode"
+    },
+    {
+      "duckdb": "yearweek",
+      "clickhouse": "toYearWeek",
+      "verdict": "divergent",
+      "hazard": "ClickHouse toYearWeek default mode 0 (Sunday weeks, calendar year): 2024-12-30 -> 202452; DuckDB yearweek is ISO (-> 202501). Numbering AND year differ at boundaries.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-yearweek"
+    },
+    {
+      "duckdb": "date_trunc",
+      "clickhouse": "dateTrunc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Aligned on the intersecting unit set for representable dates, but return type differs for some units (ClickHouse dateTrunc('month',DateTime) yielded a Date-shaped value vs DuckDB TIMESTAMP) and the 1970 floor applies.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type"
+    },
+    {
+      "duckdb": "datetrunc",
+      "clickhouse": "dateTrunc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Alias of date_trunc; same caveats.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type"
+    },
+    {
+      "duckdb": "date_diff",
+      "clickhouse": "dateDiff",
+      "verdict": "conditionally-equivalent",
+      "hazard": "With an explicit unit and matched session zones the day-diff aligned (60); ClickHouse requires the unit as first arg and is timezone-typed. 1970 floor applies to operands.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "duckdb": "datediff",
+      "clickhouse": "dateDiff",
+      "verdict": "conditionally-equivalent",
+      "hazard": "See date_diff; ClickHouse datediff needs a unit arg.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "duckdb": "last_day",
+      "clickhouse": "toLastDayOfMonth",
+      "verdict": "divergent",
+      "hazard": "Value-correct for 1970+ (2024-02 -> 29), but 1900-02-15 -> ClickHouse '1970-01-31' (Date range floor) vs DuckDB '1900-02-28'.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970"
+    },
+    {
+      "duckdb": "monthname",
+      "clickhouse": "monthName",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same output ('March') but ClickHouse name is the case-SENSITIVE camelCase monthName; the lowercase monthname is NOT a case-insensitive alias and will not resolve.",
+      "areas": [
+        "datetime",
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#case-sensitivity"
+    },
+    {
+      "duckdb": "now",
+      "clickhouse": "now",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both bind once per query; ClickHouse now() returns DateTime (second precision, timezone-typed) vs DuckDB TIMESTAMP WITH TIME ZONE (microsecond). Precision/type differ.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "duckdb": "current_date",
+      "clickhouse": "today",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse current_date/today() is session-zone dependent (Date type, 1970 floor); do not push where a specific zone/range must hold.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "duckdb": "to_days",
+      "clickhouse": "toRelativeDayNum",
+      "verdict": "divergent",
+      "hazard": "NAME COLLISION: DuckDB to_days(n) constructs an INTERVAL of n days; ClickHouse has no to_days \u2014 the day-number is toRelativeDayNum(date). Completely different intent.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#age-signature"
+    },
+    {
+      "duckdb": "age",
+      "clickhouse": "age",
+      "verdict": "divergent",
+      "hazard": "Different signature: ClickHouse age('unit', start, end) returns an integer count in that unit; DuckDB age(ts, ts) returns an INTERVAL. Never map by name.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#age-signature"
+    },
+    {
+      "duckdb": "timezone",
+      "clickhouse": "timezone",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse timezone() returns the server/session timezone name (String); DuckDB has no zero-arg timezone() scalar (it is a shift function elsewhere) \u2014 session-only, not pushable.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "duckdb": "range",
+      "clickhouse": "range",
+      "verdict": "identical",
+      "hazard": "range(5)->[0..4], range(1,5)->[1..4] in both (list rendering aside).",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "flatten",
+      "clickhouse": "arrayFlatten",
+      "verdict": "identical",
+      "hazard": "One level of nesting flattened in both.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "array_to_string",
+      "clickhouse": "arrayStringConcat",
+      "verdict": "identical",
+      "hazard": "Join aligned incl. NULL elements skipped by both ('a',NULL,'c' -> 'a,c').",
+      "areas": [
+        "array",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "cardinality",
+      "clickhouse": "length",
+      "verdict": "divergent",
+      "hazard": "NAME/TYPE collision: DuckDB cardinality operates ONLY on MAP (errors on a list); ClickHouse cardinality is an alias of length (array element count). Map DuckDB list length to ClickHouse length, not via cardinality.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob"
+    },
+    {
+      "duckdb": "array_agg",
+      "clickhouse": "groupArray",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both collect into an array; ordering is undefined without ORDER BY and NULL-handling of groupArray differs (groupArray drops NULLs; use groupArrayIf/arrays for NULL retention).",
+      "areas": [
+        "aggregate",
+        "array",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"
+    },
+    {
+      "duckdb": "sum",
+      "clickhouse": "sum",
+      "verdict": "divergent",
+      "hazard": "Empty group: ClickHouse sum() -> 0; DuckDB -> NULL. Also ClickHouse sum silently OVERFLOW-WRAPS a fixed-width Int64 (max+1 -> Int64 min) where DuckDB widens. All-NULL input -> NULL in both.",
+      "areas": [
+        "aggregate",
+        "null",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"
+    },
+    {
+      "duckdb": "avg",
+      "clickhouse": "avg",
+      "verdict": "divergent",
+      "hazard": "Empty group: ClickHouse avg() -> nan; DuckDB -> NULL. All-NULL -> NULL in both; populated groups aligned.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"
+    },
+    {
+      "duckdb": "count",
+      "clickhouse": "count",
+      "verdict": "identical",
+      "hazard": "count(expr) skips NULLs; count()/count(*) over empty -> 0 in both.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "min",
+      "clickhouse": "min",
+      "verdict": "divergent",
+      "hazard": "Empty group: ClickHouse min() -> type default (0); DuckDB -> NULL. All-NULL -> NULL in both.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"
+    },
+    {
+      "duckdb": "max",
+      "clickhouse": "max",
+      "verdict": "divergent",
+      "hazard": "Empty group: ClickHouse max() -> type default (0); DuckDB -> NULL. All-NULL -> NULL in both.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"
+    },
+    {
+      "duckdb": "stddev_pop",
+      "clickhouse": "stddevPop",
+      "verdict": "identical",
+      "hazard": "stddevPop({1,2,3})=0.8165 aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "stddev_samp",
+      "clickhouse": "stddevSamp",
+      "verdict": "identical",
+      "hazard": "Sample stddev aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "stddev",
+      "clickhouse": "stddev",
+      "verdict": "identical",
+      "hazard": "Bare stddev = sample in both (=1 for {1,2,3}).",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "var_pop",
+      "clickhouse": "varPop",
+      "verdict": "identical",
+      "hazard": "varPop({1,2,3})=0.6667 aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "var_samp",
+      "clickhouse": "varSamp",
+      "verdict": "identical",
+      "hazard": "Sample variance aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "corr",
+      "clickhouse": "corr",
+      "verdict": "identical",
+      "hazard": "Pearson correlation aligned (0.981981).",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "covar_pop",
+      "clickhouse": "covarPop",
+      "verdict": "identical",
+      "hazard": "Population covariance aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "covar_samp",
+      "clickhouse": "covarSamp",
+      "verdict": "identical",
+      "hazard": "Sample covariance aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "median",
+      "clickhouse": "median",
+      "verdict": "conditionally-equivalent",
+      "hazard": "median({1,2,3})=2 aligned, but ClickHouse median is an alias for the approximate quantile(0.5) (reservoir) \u2014 exact only for small/simple inputs; DuckDB median is exact.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"
+    },
+    {
+      "duckdb": "quantile",
+      "clickhouse": "quantile",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value aligned on the probe, but ClickHouse quantile uses parametric syntax quantile(level)(x) and is APPROXIMATE; DuckDB quantile_cont/quantile is exact and takes level as an argument. Different call shape + exactness.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"
+    },
+    {
+      "duckdb": "any_value",
+      "clickhouse": "any",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse any(x) == any_value; order-dependent / nondeterministic without ORDER BY in both.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "duckdb": "argmax",
+      "clickhouse": "argMax",
+      "verdict": "identical",
+      "hazard": "argMax(y,x) returns y at the max x; aligned with DuckDB arg_max. Ties nondeterministic in both.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "argmin",
+      "clickhouse": "argMin",
+      "verdict": "identical",
+      "hazard": "argMin(y,x) aligned with DuckDB arg_min.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "histogram",
+      "clickhouse": "histogram",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both bucket values, but ClickHouse histogram(bins)(x) is an approximate adaptive-bin aggregate with a different signature and result shape than DuckDB histogram (exact value->count map).",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"
+    },
+    {
+      "duckdb": "string_agg",
+      "clickhouse": "arrayStringConcat",
+      "verdict": "conditionally-equivalent",
+      "hazard": "DuckDB string_agg(x,sep) has no single-function ClickHouse equal; the idiom is arrayStringConcat(groupArray(x),sep). Ordering undefined without ORDER BY.",
+      "areas": [
+        "aggregate",
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "duckdb": "group_concat",
+      "clickhouse": "arrayStringConcat",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same as string_agg: no direct ClickHouse group_concat; compose groupArray + arrayStringConcat. Ordering undefined.",
+      "areas": [
+        "aggregate",
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "duckdb": "entropy",
+      "clickhouse": "entropy",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both compute Shannon entropy of value frequencies; base and exact/approx handling not fully re-probed \u2014 verify before pushing.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"
+    },
+    {
+      "duckdb": "row_number",
+      "clickhouse": "row_number",
+      "verdict": "identical",
+      "hazard": "1,2,3 over ORDER BY in both.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "rank",
+      "clickhouse": "rank",
+      "verdict": "identical",
+      "hazard": "Standard rank aligned.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "dense_rank",
+      "clickhouse": "dense_rank",
+      "verdict": "identical",
+      "hazard": "Dense rank aligned.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "ntile",
+      "clickhouse": "ntile",
+      "verdict": "identical",
+      "hazard": "ntile(2) bucketing aligned.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "first_value",
+      "clickhouse": "first_value",
+      "verdict": "identical",
+      "hazard": "first_value over running frame aligned.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "last_value",
+      "clickhouse": "last_value",
+      "verdict": "identical",
+      "hazard": "last_value over default running frame aligned in both.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "percent_rank",
+      "clickhouse": "percent_rank",
+      "verdict": "identical",
+      "hazard": "0,0.5,1 in both.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "cume_dist",
+      "clickhouse": "cume_dist",
+      "verdict": "identical",
+      "hazard": "0.333,0.667,1 in both.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "duckdb": "lag",
+      "clickhouse": "lag",
+      "verdict": "divergent",
+      "hazard": "Out-of-partition default: ClickHouse lag (lagInFrame) fills the type DEFAULT (0) for the missing first row; DuckDB lag returns NULL.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"
+    },
+    {
+      "duckdb": "lead",
+      "clickhouse": "lead",
+      "verdict": "divergent",
+      "hazard": "Out-of-partition default: ClickHouse lead fills type default (0) past the last row; DuckDB returns NULL.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"
+    },
+    {
+      "duckdb": "nth_value",
+      "clickhouse": "nth_value",
+      "verdict": "divergent",
+      "hazard": "Before the Nth row exists ClickHouse returns the type DEFAULT (0); DuckDB returns NULL.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"
+    },
+    {
+      "duckdb": "rand",
+      "clickhouse": "rand",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Non-deterministic; never pushable/comparable. ClickHouse rand() returns UInt32 range; DuckDB random() returns [0,1) double \u2014 even the range differs.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "duckdb": "today",
+      "clickhouse": "today",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Session/zone-dependent current date; Date type (1970 floor) in ClickHouse. Not pushable to a fixed value.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "duckdb": "version",
+      "clickhouse": "version",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both return an engine version string but the values are engine-specific and never comparable/pushable.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "duckdb": "current_user",
+      "clickhouse": "currentUser",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Session identity string; ClickHouse currentUser()/current_user, values environment-specific, not pushable.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "duckdb": "current_database",
+      "clickhouse": "currentDatabase",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Session catalog name; environment-specific, not pushable.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "duckdb": "uuid",
+      "clickhouse": "generateUUIDv4",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Non-deterministic UUID; same distribution, never comparable/pushable.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "duckdb": "map",
+      "clickhouse": "map",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Constructs a MAP in both but the CONSTRUCTOR SHAPE differs: ClickHouse map(k1,v1,k2,v2,...) (flat kv list) vs DuckDB map([keys],[values]) (two arrays). Value-equal, call-incompatible.",
+      "areas": [
+        "map"
+      ],
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape"
+    }
+  ]
+}
