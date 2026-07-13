@@ -1,4 +1,5 @@
 modules:
+  - brikk-chdb
   - brikk-sql
   - brikk-sql-metadata
   - brikk-sql-verify

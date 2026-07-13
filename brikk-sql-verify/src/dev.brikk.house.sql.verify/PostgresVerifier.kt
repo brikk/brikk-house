@@ -56,21 +56,43 @@ import org.postgresql.util.PSQLException
  * `~/.embedded-postgres-binaries` on the very first run ever (cached across runs). Hold ONE
  * instance for the process/session; per-[verify] cost after boot is sub-millisecond. [verify]
  * is `@Synchronized` (single shared JDBC connection, like [DuckdbVerifier]). Call [close] to
- * stop the embedded server; the JVM shutdown reclaims it otherwise.
+ * stop the embedded server; the JVM shutdown reclaims it otherwise. If embedded Postgres cannot
+ * be extracted, loaded, started, or connected on this host, [verify] does not throw: it returns
+ * `verified=false` with a warning. That is deliberately distinct from parser rejection.
  */
 class PostgresVerifier : SqlVerifier, AutoCloseable {
     override val engine: String = "postgres"
 
     private var embedded: EmbeddedPostgres? = null
     private var lazyConnection: Connection? = null
+    private var unavailableReason: String? = null
     private var counter = 0
 
-    private val connection: Connection
-        get() = lazyConnection ?: run {
+    /** Starts embedded Postgres once; startup failure is host availability, not an SQL result. */
+    private fun connectionOrNull(): Connection? {
+        lazyConnection?.let { return it }
+        unavailableReason?.let { return null }
+        return try {
             val pg = EmbeddedPostgres.builder().start()
             embedded = pg
             pg.postgresDatabase.connection.also { lazyConnection = it }
+        } catch (error: Exception) {
+            markUnavailable(error)
+            null
+        } catch (error: LinkageError) {
+            markUnavailable(error)
+            null
         }
+    }
+
+    private fun markUnavailable(error: Throwable) {
+        runCatching { lazyConnection?.close() }
+        lazyConnection = null
+        runCatching { embedded?.close() }
+        embedded = null
+        unavailableReason = "PostgreSQL verification was not performed: embedded Postgres could not start " +
+            "(${error::class.simpleName}: ${error.message ?: "no detail"})."
+    }
 
     /**
      * PG has no standalone expression parser over the wire, so the fragment is wrapped as
@@ -85,9 +107,14 @@ class PostgresVerifier : SqlVerifier, AutoCloseable {
 
     @Synchronized
     override fun verify(sql: String): VerifyResult {
+        val conn = connectionOrNull() ?: return VerifyResult(
+            accepted = false,
+            verified = false,
+            warning = unavailableReason ?: "PostgreSQL verification was not performed: embedded Postgres is unavailable.",
+        )
         val name = "brikk_v_${counter++}"
         try {
-            connection.createStatement().use { it.execute("PREPARE $name AS $sql") }
+            conn.createStatement().use { it.execute("PREPARE $name AS $sql") }
         } catch (e: PSQLException) {
             // PREPARE only accepts optimizable statements; it rejects DDL/utility statements
             // with the SAME `42601` "syntax error at or near \"<KEYWORD>\"" it uses for a real
@@ -95,11 +122,11 @@ class PostgresVerifier : SqlVerifier, AutoCloseable {
             // retry via rolled-back direct execution: a genuine syntax error fails there too
             // (and is classified rejected), while a valid DDL/utility statement parses cleanly.
             // Non-42601 errors from PREPARE are already a real classification (e.g. 42P01).
-            if (e.sqlState == SYNTAX_ERROR) return verifyByRolledBackExecution(sql)
+            if (e.sqlState == SYNTAX_ERROR) return verifyByRolledBackExecution(sql, conn)
             return classify(sql, e)
         }
         // Prepared successfully: grammar (and analysis) accepted it. Clean up.
-        runCatching { connection.createStatement().use { it.execute("DEALLOCATE $name") } }
+        runCatching { conn.createStatement().use { it.execute("DEALLOCATE $name") } }
         return VerifyResult(accepted = true)
     }
 
@@ -107,8 +134,7 @@ class PostgresVerifier : SqlVerifier, AutoCloseable {
      * Runs [sql] inside a transaction that is ALWAYS rolled back, so parsing/analysis happens
      * for real with no committed side effect. Used for statements PREPARE won't take (DDL etc.).
      */
-    private fun verifyByRolledBackExecution(sql: String): VerifyResult {
-        val conn = connection
+    private fun verifyByRolledBackExecution(sql: String, conn: Connection): VerifyResult {
         val restoreAutoCommit = conn.autoCommit
         conn.autoCommit = false
         try {
@@ -167,6 +193,7 @@ class PostgresVerifier : SqlVerifier, AutoCloseable {
         lazyConnection = null
         runCatching { embedded?.close() }
         embedded = null
+        unavailableReason = null
     }
 
     private companion object {

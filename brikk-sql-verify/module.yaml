@@ -9,6 +9,10 @@ apply:
   - ../publish.module-template.yaml
 
 dependencies:
+  # Embedded ClickHouse parser/executor through the narrow in-process chDB FFM binding.
+  # Phase 0 uses brikk.chdb.library (or ChdbConfig.libraryPath) until native archives are
+  # packaged with brikk-chdb; no CLI, server, or JDBC process is involved.
+  - ../brikk-chdb
   # Trino's own SQL parser. 481 matches the vendored function catalog (vendor/data/trino-functions-481.tsv).
   # NOTE: trino-parser 481 ships class-file 69 => requires a JDK 25 runtime (see settings.jvm.jdk below).
   - io.trino:trino-parser:481
