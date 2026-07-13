@@ -17,6 +17,13 @@ Modeling decisions (from the recipe's caveats, documented in the generated heade
     are kept as literal strings — treat as "any" when mapping.
   - operators (::, ||, CAST, ...) are grammar-level and not in SHOW FUNCTIONS; the
     catalog intentionally excludes them.
+  - FunctionOverload.argNames stays null: SHOW FUNCTIONS lists argument TYPES only,
+    never parameter names.
+  - FunctionDef.profile stays null: SHOW FUNCTIONS exposes no null-handling metadata
+    (its columns are name/types/kind/deterministic/description) — honest UNKNOWN.
+    Populating Trino profiles would require scraping engine sources (@SqlNullable /
+    RETURNS NULL ON NULL INPUT on the java function implementations) — future work,
+    see vendor/README.md.
 
 Usage: python3 tools/generate_trino_functions.py [<tsv-path>]
        (default: vendor/data/trino-functions-481.tsv)
@@ -107,6 +114,8 @@ def main() -> None:
         "//    unknown) are kept as literal strings — treat as \"any\" when mapping.",
         "//  - operators (::, ||, %, CAST, TRY_CAST, subscript, ...) are grammar-level,",
         "//    not functions, and are intentionally absent.",
+        "//  - argNames=null and profile=null everywhere: SHOW FUNCTIONS exposes neither",
+        "//    parameter names nor null-handling metadata (see the generator's header).",
         "package dev.brikk.house.sql.metadata",
         "",
         f"/** Trino {version} built-in functions: {len(defs)} definitions, {total_overloads} overloads. */",

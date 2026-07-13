@@ -13,6 +13,8 @@
 //    unknown) are kept as literal strings — treat as "any" when mapping.
 //  - operators (::, ||, %, CAST, TRY_CAST, subscript, ...) are grammar-level,
 //    not functions, and are intentionally absent.
+//  - argNames=null and profile=null everywhere: SHOW FUNCTIONS exposes neither
+//    parameter names nor null-handling metadata (see the generator's header).
 package dev.brikk.house.sql.metadata
 
 /** Trino 481 built-in functions: 320 definitions, 654 overloads. */
