@@ -23,7 +23,7 @@ Snapshots are **published** to the Central Portal snapshots repository:
 https://central.sonatype.com/repository/maven-snapshots/
 ```
 
-Current snapshot version: **`0.2.0-SNAPSHOT`**
+Current snapshot version: **`0.3.0-SNAPSHOT`**
 
 <details>
 <summary>Gradle (Kotlin DSL)</summary>
@@ -37,9 +37,9 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.brikk.house:brikk-sql-jvm:0.2.0-SNAPSHOT")
-    // implementation("dev.brikk.house:brikk-sql-metadata-jvm:0.2.0-SNAPSHOT") // transitive via brikk-sql-jvm
-    // implementation("dev.brikk.house:brikk-sql-verify:0.2.0-SNAPSHOT")
+    implementation("dev.brikk.house:brikk-sql-jvm:0.3.0-SNAPSHOT")
+    // implementation("dev.brikk.house:brikk-sql-metadata-jvm:0.3.0-SNAPSHOT") // transitive via brikk-sql-jvm
+    // implementation("dev.brikk.house:brikk-sql-verify:0.3.0-SNAPSHOT")
 }
 ```
 </details>
@@ -60,7 +60,7 @@ dependencies {
 <dependency>
   <groupId>dev.brikk.house</groupId>
   <artifactId>brikk-sql-jvm</artifactId>
-  <version>0.2.0-SNAPSHOT</version>
+  <version>0.3.0-SNAPSHOT</version>
 </dependency>
 ```
 </details>
@@ -68,7 +68,7 @@ dependencies {
 ### Releases
 
 Release versions (non-`-SNAPSHOT`) are published to **Maven Central** and resolve from
-`mavenCentral()` with no extra repository configuration. Latest release: **`0.1.0`**.
+`mavenCentral()` with no extra repository configuration. Latest release: **`0.2.0`**.
 
 ## Publishing (maintainers)
 
