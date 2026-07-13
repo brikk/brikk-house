@@ -119,6 +119,37 @@ Registry additions: duckdb→doris +33 (12 divergent, 3 conditionally-equivalent
 18 identical); trino→doris +26 (6 divergent, 2 conditionally-equivalent, 1
 unclear, 17 identical).
 
+## Batch 4 (2026-07-13) — string / hash / encoding tail {#batch4-string}
+
+Live DuckDB↔Doris; Trino via prior evidence + live-DuckDB bridge. Findings:
+
+- **`left` negative count divergent:** `left('héllo',-1)` -> DuckDB `'héll'` (all but
+  last |n|); Doris `''`. Positive + unicode aligned.
+- **`url_encode` space divergent:** DuckDB percent-encodes space (`%20`); Doris
+  form-encodes as `+`. (`url_decode` aligned.) Trino space-handling left `unclear`
+  pending live re-probe.
+- **`to_hex` / `from_hex` are traps on the Doris side:** Doris `to_hex()` returns
+  NULL for both int and string; Doris `from_hex()` does NOT hex-decode (returns the
+  hex of the input bytes). The working Doris equivalents are `hex()` (encode) and
+  `unhex()` (decode) — both match. Trino->Doris must remap, never by name.
+- **Doris lacks `format_number` and `levenshtein_distance`** (`levenshtein` exists
+  and matches). **DuckDB lacks `hamming_distance`, `soundex`, `levenshtein_distance`,
+  `format_number`** (Catalog Errors) — these live only on the Trino->Doris side.
+- **`octet_length` conditionally-equivalent:** byte-count semantics align
+  (`octet_length(encode('héllo'))=6` == Doris `octet_length('héllo')=6`) but DuckDB
+  has no bare-VARCHAR overload (binder error; needs a BLOB arg).
+- **Boolean rendering (systematic):** Doris renders BOOLEAN results as TINYINT `0/1`
+  over the MySQL protocol, vs DuckDB/Trino `true/false`. This is a type-layer
+  representation, not a semantic divergence — `starts_with` and `signbit` marked
+  `conditionally-equivalent` (boolean type mapping required), not divergent.
+- Identical (live): `bit_length` (BYTES*8), `hex`, `unhex`, `from_base64`,
+  `to_base64`, `levenshtein`, `lpad`, `rpad` (incl over-length truncation), `repeat`,
+  `replace`, `translate`, `url_decode`, `right`, `instr`, `concat_ws`, `sha1`,
+  `char_length`, `substr`, `hamming_distance`, `soundex`.
+
+Registry additions: duckdb→doris +21; trino→doris +19; `signbit` revised
+divergent→conditionally-equivalent.
+
 ## Worklist status / continuation
 
 Done (batches 1-2): the prior-DIVERGENT scalar tier + the new `length` find + cheap

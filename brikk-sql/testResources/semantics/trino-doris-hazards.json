@@ -487,6 +487,204 @@
         "numeric"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "trino": "to_hex",
+      "doris": "hex",
+      "verdict": "divergent",
+      "hazard": "Doris to_hex() returns NULL (to_hex(255)=NULL, to_hex('abc')=NULL); the working hex encoder is Doris hex(). Map Trino to_hex -> Doris hex(), never by name. Doris live.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "from_hex",
+      "doris": "unhex",
+      "verdict": "divergent",
+      "hazard": "Doris from_hex('616263') does NOT hex-decode (returns '363136323633'); the correct hex decoder is Doris unhex('616263')='abc' (matches Trino from_hex). Map Trino from_hex -> Doris unhex, never by name. Doris live.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "format_number",
+      "doris": "format_number",
+      "verdict": "no-equivalent",
+      "hazard": "Doris has no format_number function ('Can not found function format_number'). Doris live.",
+      "areas": [
+        "string",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "url_encode",
+      "doris": "url_encode",
+      "verdict": "unclear",
+      "hazard": "Doris url_encode('a b&c')='a+b%26c' (space -> '+'). Trino url_encode space-handling not re-probed this session (prior trino==duckdb 'identical' verdict did not test space; DuckDB uses %20) — verify Trino before mapping. Doris live.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "starts_with",
+      "doris": "starts_with",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value semantics identical but Doris returns TINYINT 0/1 vs Trino BOOLEAN — boolean type mapping required (Doris renders BOOLEAN as 0/1 over MySQL protocol).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "sha1",
+      "doris": "sha1",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Doris sha1('abc') returns hex VARCHAR (matches DuckDB digest); Trino sha1 returns VARBINARY — unhex() wrap required for parity (same pattern as md5).",
+      "areas": [
+        "hash",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "replace",
+      "doris": "replace",
+      "verdict": "conditionally-equivalent",
+      "hazard": "3-arg replace aligned; Trino 2-arg remove form replace(s,search) maps by passing '' as replacement. Doris live.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "levenshtein_distance",
+      "doris": "levenshtein",
+      "verdict": "identical",
+      "hazard": "Doris has no levenshtein_distance; use Doris levenshtein (levenshtein('kitten','sitting')=3, matches). Rename only.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "hamming_distance",
+      "doris": "hamming_distance",
+      "verdict": "identical",
+      "hazard": "hamming_distance('abc','abd')=1 (Doris live; Trino same).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "soundex",
+      "doris": "soundex",
+      "verdict": "identical",
+      "hazard": "soundex('Robert')='R163' (Doris live; Trino same). (DuckDB needs splink_udfs; irrelevant to Trino->Doris.)",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "from_base64",
+      "doris": "from_base64",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "to_base64",
+      "doris": "to_base64",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "lpad",
+      "doris": "lpad",
+      "verdict": "identical",
+      "hazard": "Pad, unicode pad, over-length truncation aligned.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "rpad",
+      "doris": "rpad",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "repeat",
+      "doris": "repeat",
+      "verdict": "identical",
+      "hazard": "repeat('x',0)='' both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "translate",
+      "doris": "translate",
+      "verdict": "identical",
+      "hazard": "Extra from-chars deleted in both.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "url_decode",
+      "doris": "url_decode",
+      "verdict": "identical",
+      "hazard": "url_decode('a%20b')='a b' both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "concat_ws",
+      "doris": "concat_ws",
+      "verdict": "identical",
+      "hazard": "NULL element skipped; NULL separator -> NULL in both.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "substr",
+      "doris": "substr",
+      "verdict": "identical",
+      "hazard": "substr('héllo',2,2)='él' (code-point aligned); Doris has substr.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
     }
   ]
 }

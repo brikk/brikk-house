@@ -345,8 +345,8 @@
     {
       "duckdb": "signbit",
       "doris": "signbit",
-      "verdict": "divergent",
-      "hazard": "Probe-verified live: return TYPE differs — DuckDB returns BOOLEAN (true/false); Doris returns TINYINT (0/1). DuckDB also reports signbit(-0.0)=false. Needs cast on translate.",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value semantics align but return TYPE differs — DuckDB returns BOOLEAN (true/false); Doris returns TINYINT (0/1). DuckDB also reports signbit(-0.0)=false. Boolean type mapping required (Doris renders BOOLEAN as 0/1 over MySQL protocol).",
       "areas": [
         "numeric"
       ],
@@ -561,6 +561,226 @@
         "numeric"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "left",
+      "doris": "left",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: negative count differs — left('héllo',-1): DuckDB returns 'héll' (all but last |n| chars); Doris returns '' (empty). Positive counts and unicode code-point counting align.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "url_encode",
+      "doris": "url_encode",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: space encoding differs — url_encode('a b&c'): DuckDB 'a%20b%26c' (percent-encodes space); Doris 'a+b%26c' (form-encodes space as '+'). '&' aligned.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "octet_length",
+      "doris": "octet_length",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Byte-count semantics align (octet_length(encode('héllo'))=6 DuckDB == octet_length('héllo')=6 Doris) but DuckDB has NO bare-VARCHAR overload — errors 'Could not choose a best candidate function', needs a BLOB arg; Doris accepts VARCHAR directly.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "starts_with",
+      "doris": "starts_with",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value semantics identical (prefix match, code-point aligned) but Doris returns TINYINT 0/1 while DuckDB returns BOOLEAN true/false — boolean type mapping required (Doris renders BOOLEAN as 0/1 over the MySQL protocol).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "bit_length",
+      "doris": "bit_length",
+      "verdict": "identical",
+      "hazard": "Byte-based: bit_length('héllo')=48, bit_length('世界')=48 in both (BYTES*8, not chars*8).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "hex",
+      "doris": "hex",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "unhex",
+      "doris": "unhex",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "from_base64",
+      "doris": "from_base64",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "to_base64",
+      "doris": "to_base64",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "levenshtein",
+      "doris": "levenshtein",
+      "verdict": "identical",
+      "hazard": "levenshtein('kitten','sitting')=3 both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "lpad",
+      "doris": "lpad",
+      "verdict": "identical",
+      "hazard": "Probe-verified live: pad, unicode pad, and over-length truncation (lpad('abcdef',3)='abc') all align.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "rpad",
+      "doris": "rpad",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "repeat",
+      "doris": "repeat",
+      "verdict": "identical",
+      "hazard": "repeat('x',0)='' both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "replace",
+      "doris": "replace",
+      "verdict": "identical",
+      "hazard": "replace('aaa','a','b')='bbb'; no-match returns input unchanged in both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "translate",
+      "doris": "translate",
+      "verdict": "identical",
+      "hazard": "Extra from-chars deleted in both (translate('abcabc','abc','x')='xx').",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "url_decode",
+      "doris": "url_decode",
+      "verdict": "identical",
+      "hazard": "url_decode('a%20b')='a b' both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "right",
+      "doris": "right",
+      "verdict": "identical",
+      "hazard": "Positive count aligned; negative-count untested (cf. left divergence).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "instr",
+      "doris": "instr",
+      "verdict": "identical",
+      "hazard": "instr('héllo','l')=3 (1-based code-point position) both.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "concat_ws",
+      "doris": "concat_ws",
+      "verdict": "identical",
+      "hazard": "NULL element skipped (concat_ws(',','a',NULL,'c')='a,c'); NULL separator -> NULL in both.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "sha1",
+      "doris": "sha1",
+      "verdict": "identical",
+      "hazard": "sha1('abc') hex digest matches; returns hex VARCHAR in both.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "char_length",
+      "doris": "char_length",
+      "verdict": "identical",
+      "hazard": "char_length('héllo')=5 (code-point count) both — the parity target for the divergent byte-based length().",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
     }
   ]
 }
