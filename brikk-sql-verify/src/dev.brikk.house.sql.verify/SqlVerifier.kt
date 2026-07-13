@@ -18,15 +18,17 @@ package dev.brikk.house.sql.verify
  * individual [verify] calls are then fast.
  */
 interface SqlVerifier {
-    /** Engine identifier: `"doris"`, `"trino"`, `"duckdb"`, or `"postgres"`. */
+    /** Engine identifier: `"clickhouse"`, `"doris"`, `"trino"`, `"duckdb"`, or `"postgres"`. */
     val engine: String
 
     /**
      * Runs [sql] (a single statement) through the engine's own parser.
      *
-     * Never throws for invalid SQL: rejection is reported via [VerifyResult.accepted] = false
-     * with the engine's error message and, when the engine reports one, a 1-based line and
-     * column position.
+     * Never throws for invalid SQL: parser rejection is reported via [VerifyResult.accepted] =
+     * false with [VerifyResult.verified] = true, the engine's error message and, when the engine
+     * reports one, a 1-based line and column position. A verifier which cannot be loaded reports
+     * [VerifyResult.verified] = false and a warning instead; that is neither SQL acceptance nor
+     * SQL rejection.
      */
     fun verify(sql: String): VerifyResult
 
@@ -42,8 +44,13 @@ interface SqlVerifier {
 /**
  * Result of a [SqlVerifier.verify] call.
  *
- * @property accepted true when the engine's parser accepted the SQL.
- * @property error the engine's own error message when rejected (never null if [accepted] is false).
+ * @property accepted true when the engine's parser accepted the SQL. Meaningful only when
+ *   [verified] is true; an unavailable verifier returns false so old boolean-only gates fail
+ *   safely rather than accepting unchecked SQL.
+ * @property verified false when no native/parser check was performed; inspect [warning] rather
+ *   than treating it as a syntax rejection.
+ * @property warning an availability diagnostic when [verified] is false.
+ * @property error the engine's own error message when a verified parser rejected the SQL.
  * @property line 1-based line of the error, when the engine reports a position.
  * @property col 1-based column of the error, when the engine reports a position.
  */
@@ -52,6 +59,8 @@ data class VerifyResult(
     val error: String? = null,
     val line: Int? = null,
     val col: Int? = null,
+    val verified: Boolean = true,
+    val warning: String? = null,
 )
 
 /**
@@ -62,10 +71,14 @@ data class VerifyResult(
  */
 object SqlVerifiers {
     /**
-     * Returns a verifier for [name] (case-insensitive), or null when the engine is
-     * unsupported or unavailable.
+     * Returns a verifier for [name] (case-insensitive), or null when the engine is unsupported
+     * or its optional parser resource is unavailable.
      *
-     * Supported engines: `"doris"`, `"trino"`, `"duckdb"`, `"postgres"`.
+     * Supported engines: `"clickhouse"`, `"doris"`, `"trino"`, `"duckdb"`, `"postgres"`.
+     * `"clickhouse"` is always available as a non-throwing verifier. Until a compatible chDB
+     * native library is configured through `brikk.chdb.library`, its results are marked
+     * unverified with a warning; this temporary requirement goes away when brikk-chdb packages
+     * the platform archives.
      *
      * `"postgres"` has no parse-only wire API and no mature JVM binding of `libpg_query`
      * (Postgres's real parser as a C library; Python's `pglast` wraps it), so [PostgresVerifier]
@@ -75,6 +88,7 @@ object SqlVerifiers {
      * the instance for the session (see [PostgresVerifier] KDoc).
      */
     fun forEngine(name: String): SqlVerifier? = when (name.lowercase()) {
+        "clickhouse" -> ClickhouseVerifier.create()
         // Null when the vendored parser jar can't be located (see DorisVerifier KDoc).
         "doris" -> DorisVerifier.createOrNull()
         "trino" -> TrinoVerifier()

@@ -1,4 +1,12 @@
 modules:
+  - brikk-chdb
+  - brikk-chdb-native-linux-arm64
+  - brikk-chdb-native-linux-x64
+  - brikk-chdb-native-macos-arm64
+  - brikk-chdb-native-packaging
   - brikk-sql
   - brikk-sql-metadata
   - brikk-sql-verify
+
+plugins:
+  - ./brikk-chdb-native-packaging
