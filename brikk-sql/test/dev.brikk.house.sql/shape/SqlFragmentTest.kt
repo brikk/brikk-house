@@ -26,8 +26,13 @@ class SqlFragmentTest {
         )
         val fragment = SqlFragment("SELECT SUM(sold) AS total_sold, COUNT(*) AS n FROM produce")
         // Python-verified: SUM(INT) -> BIGINT, COUNT(*) -> BIGINT.
+        // brikk-native nullability: SUM is a NULL-over-empty-group aggregate (nullable),
+        // COUNT returns 0 over an empty group (not-null).
         assertEquals(
-            Shape.of("total_sold" to "BIGINT", "n" to "BIGINT"),
+            Shape(listOf(
+                ColumnShape("total_sold", "BIGINT", nullable = true),
+                ColumnShape("n", "BIGINT", nullable = false),
+            )),
             fragment.outputShape(catalog),
         )
     }
@@ -102,8 +107,13 @@ class SqlFragmentTest {
         assertEquals(3, fragment.stages.size)
         // Python-verified group-key typing: item TEXT flows through the CTE chain;
         // SUM(INT) -> BIGINT as in plainSelectShapeTypesFlowFromCatalog.
+        // brikk-native nullability: item is undeclared (unknown); SUM is a nullable
+        // aggregate — both survive the pipe's CTE-chain desugar.
         assertEquals(
-            Shape.of("item" to "TEXT", "total_sold" to "BIGINT"),
+            Shape(listOf(
+                ColumnShape("item", "TEXT", nullable = null),
+                ColumnShape("total_sold", "BIGINT", nullable = true),
+            )),
             fragment.outputShape(catalog),
         )
     }

@@ -26,8 +26,10 @@ class ShapeError(message: String) : RuntimeException(message)
  * "ARRAY<INT>", "UNKNOWN") — reconstructable by parsing the string back into a DataType
  * (see [dataTypeFromStr]). "UNKNOWN" means undeclared/unresolvable ("declared-any").
  *
- * [nullable] is reserved: outputShape() currently leaves it null (the annotator's
- * nonnull metadata exists but is not surfaced yet).
+ * [nullable] is the BRIKK-NATIVE tri-state nullability verdict surfaced by
+ * outputShape(): true (provably nullable) / false (provably not-null) / null (unknown —
+ * never guessed). Callers MAY also declare it on input shapes to feed column-nullability
+ * inference. See optimizer/AnnotateNullability.kt.
  */
 @Serializable
 data class ColumnShape(
@@ -73,6 +75,14 @@ data class Shape(val columns: List<ColumnShape>) {
      *  - UNKNOWN is asymmetric: an UNKNOWN *expected* type matches anything
      *    (declared-any), but an UNKNOWN *actual* against a concrete expected type is a
      *    mismatch — the actual side cannot prove it satisfies the contract.
+     *
+     * BRIKK-NATIVE nullability participates ONLY when BOTH sides declare it
+     * ([ColumnShape.nullable] non-null): expected=false (contract demands not-null) with
+     * actual=true (provably nullable) is a mismatch, reported in
+     * [ShapeComparison.nullabilityMismatches] as (expected, actual). An expected=true
+     * contract accepts anything; an unknown (null) verdict on EITHER side is not compared
+     * (we never penalize absent evidence). Nullability mismatches count toward
+     * [ShapeVerdict.HAS_LESS] exactly like type mismatches.
      */
     fun compare(actual: Shape, dialect: String = ""): ShapeComparison {
         val d = Dialects.forName(dialect)
@@ -81,6 +91,7 @@ data class Shape(val columns: List<ColumnShape>) {
 
         val missing = mutableListOf<ColumnShape>()
         val typeMismatches = mutableListOf<Pair<ColumnShape, ColumnShape>>()
+        val nullabilityMismatches = mutableListOf<Pair<ColumnShape, ColumnShape>>()
         val matchedKeys = HashSet<String>()
 
         for (expected in columns) {
@@ -94,6 +105,11 @@ data class Shape(val columns: List<ColumnShape>) {
             if (!typesMatch(expected.type, found.type)) {
                 typeMismatches.add(expected to found)
             }
+            // Nullability: only when both sides declare it. A not-null contract
+            // (expected=false) is violated by a provably-nullable actual (true).
+            if (expected.nullable == false && found.nullable == true) {
+                nullabilityMismatches.add(expected to found)
+            }
         }
 
         val additional = actual.columns.filter {
@@ -104,6 +120,7 @@ data class Shape(val columns: List<ColumnShape>) {
             missing = missing,
             additional = additional,
             typeMismatches = typeMismatches,
+            nullabilityMismatches = nullabilityMismatches,
         )
     }
 
@@ -145,22 +162,29 @@ enum class ShapeVerdict {
 }
 
 /**
- * Result of [Shape.compare]. [typeMismatches] pairs are (expected, actual).
+ * Result of [Shape.compare]. [typeMismatches] and [nullabilityMismatches] pairs are
+ * (expected, actual).
  *
- * Verdict semantics: missing columns OR type mismatches -> [ShapeVerdict.HAS_LESS]
- * (a wrong type cannot satisfy the contract any more than an absent column can);
- * otherwise extra columns -> [ShapeVerdict.HAS_ADDITIONAL]; otherwise
- * [ShapeVerdict.SATISFIES].
+ * [nullabilityMismatches] is a dedicated list (not folded into [typeMismatches]) so the
+ * two failure kinds stay distinguishable; it defaults to empty for @Serializable wire
+ * compatibility with persisted comparisons that predate nullability.
+ *
+ * Verdict semantics: missing columns OR type mismatches OR nullability mismatches ->
+ * [ShapeVerdict.HAS_LESS] (a not-null contract broken by a nullable actual cannot satisfy
+ * the contract any more than a wrong type or an absent column can); otherwise extra
+ * columns -> [ShapeVerdict.HAS_ADDITIONAL]; otherwise [ShapeVerdict.SATISFIES].
  */
 @Serializable
 data class ShapeComparison(
     val missing: List<ColumnShape>,
     val additional: List<ColumnShape>,
     val typeMismatches: List<Pair<ColumnShape, ColumnShape>>,
+    val nullabilityMismatches: List<Pair<ColumnShape, ColumnShape>> = emptyList(),
 ) {
     val verdict: ShapeVerdict
         get() = when {
-            missing.isNotEmpty() || typeMismatches.isNotEmpty() -> ShapeVerdict.HAS_LESS
+            missing.isNotEmpty() || typeMismatches.isNotEmpty() ||
+                nullabilityMismatches.isNotEmpty() -> ShapeVerdict.HAS_LESS
             additional.isNotEmpty() -> ShapeVerdict.HAS_ADDITIONAL
             else -> ShapeVerdict.SATISFIES
         }

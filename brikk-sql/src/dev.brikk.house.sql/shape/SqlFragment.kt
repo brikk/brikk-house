@@ -23,6 +23,7 @@ import dev.brikk.house.sql.dialects.Dialect
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.optimizer.MappingSchema
 import dev.brikk.house.sql.optimizer.Node
+import dev.brikk.house.sql.optimizer.annotateNullability
 import dev.brikk.house.sql.optimizer.annotateTypes
 import dev.brikk.house.sql.optimizer.lineage
 import dev.brikk.house.sql.optimizer.lineageAll
@@ -294,8 +295,10 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      *     from the annotated nodes rendered as base-dialect SQL ("UNKNOWN" when
      *     unresolved). For set operations the left-most branch names the output.
      *
-     * [ColumnShape.nullable] is left null for now — the annotator's nonnull metadata
-     * exists but is not surfaced yet (future work).
+     * [ColumnShape.nullable] is populated by the BRIKK-NATIVE nullability pass
+     * ([annotateNullability], run after qualify+annotateTypes): tri-state
+     * true/false/null (null = unknown, never guessed). Each projection's verdict is read
+     * off the (possibly aliased) projection expression.
      */
     fun outputShape(inputs: ShapeCatalog = ShapeCatalog.EMPTY): Shape {
         val prepared = prepareTree(inputs)
@@ -307,10 +310,18 @@ class SqlFragment(val sql: String, val dialect: String = "") {
             validateQualifyColumns = false,
         )
         val annotated = annotateTypes(qualified, schema = schema, dialect = dialectObj)
+        // brikk-native: nullability lives in a sidecar (keyed by node identity), NOT in
+        // node meta — the annotated-serde gates compare our Serde dumps exact-equal, so
+        // an extra meta key would fail them. See AnnotateNullability.kt.
+        val nullability = annotateNullability(annotated, inputs = inputs, dialect = dialectObj)
         val selects = outermostSelect(annotated).selects.filterIsInstance<Expression>()
         return Shape(
             selects.map { sel ->
-                ColumnShape(name = sel.aliasOrName, type = renderType(sel.type))
+                ColumnShape(
+                    name = sel.aliasOrName,
+                    type = renderType(sel.type),
+                    nullable = nullability.nullableOf(sel),
+                )
             }
         )
     }
