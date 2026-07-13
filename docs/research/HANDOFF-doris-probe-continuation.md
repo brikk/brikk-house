@@ -157,3 +157,61 @@ doubt mark `unclear` — never claim equivalence you didn't verify.
   `substring` start=0) whose provenance says "Trino from prior evidence" — a **live-Trino
   re-probe** in the trino project should confirm them. See the REPORT's "Worklist status /
   continuation — COMPLETE" section.
+
+---
+
+# ADDENDUM — Buckets B + C-real + unclears (next scope, ~118 pairs)
+
+Bucket A (same-name, 186 duckdb + 168 trino) is COMPLETE. This addendum scopes
+the meaningful remainder. Same repos/paths/harness/method/schema as above.
+
+## Scope
+- **Bucket B (~92): cross-name mappings** — functions certify *actively translates*
+  to a DIFFERENT Doris name (e.g. duckdb `list_extract` → doris `element_at`).
+- **Bucket C-real (~16):** the genuinely probe-worthy conditional cases (whatever
+  batch-A classified as C-real, not the D noise).
+- **~10 residual `unclear` verdicts** from batch A (6 duckdb-side + 3 trino-side):
+  find every row with `"verdict":"unclear"` in the two hazard JSONs and resolve it.
+- **OUT of scope:** Bucket D (~615, no-equivalent / no mapping) and the reverse
+  directions (doris→duckdb, doris→trino) — not transpile paths we use.
+
+## Why B matters MORE than it looks (the framing)
+For same-name (A), certify passthrough-flags an unverified node. For **cross-name
+(B), certify has a *gate-verified translation* — it emits the rename CONFIDENTLY
+and does NOT raise a hazard.** So a semantic divergence in a B mapping is a
+**confident-but-wrong translation = a brikk-sql generator BUG**, not just a
+missing registry row. When you find one: (a) add the hazard row AND (b) **file it
+to brikk-sql as a generator mapping bug** (note it in the REPORT + flag for the
+maintainer) — that's the higher-value output here.
+
+## How to enumerate B (certify reveals the mapping — no separate worklist needed)
+For each candidate DuckDB scalar function `f` (from `gap-report.json`, or the
+duckdb function catalog in `brikk-sql-metadata`):
+1. `val r = SqlFragment("SELECT f(<args>)","duckdb").certify("doris", desugarPipes=true)`
+2. Inspect `r.result.sql`. If it rewrote `f(...)` to a DIFFERENT doris function
+   name `g(...)` (and `r.ok`, no existing hazard), that's a **bucket-B pair
+   (f→g)** to verify. (Same name → already covered by A; unmappable/refused →
+   not B.)
+3. Differential-probe the ACTUAL mapping: run the DuckDB `f(...)` and the Doris
+   `g(...)` (from `r.result.sql`) via the harness, compare.
+4. Row schema is unchanged — the names just differ:
+   `{"duckdb":"f","doris":"g","verdict":...,"hazard":...,"areas":[...],"provenance":...}`.
+   (Trino side: same, comparing Doris `g` to the documented Trino behavior.)
+
+Tip: you can batch step 1 for many functions in one certify loop (offline, no
+cluster), collect the (f→g) rename pairs, then differential-probe them (cluster)
+in one harness run.
+
+## Method / discipline (unchanged)
+Same harness (recreate, DELETE before finishing), same divergence-pressure inputs
+per the function's areas, same live DuckDB↔Doris + Doris-vs-prior-Trino
+adjudication, same `python3 tools/generate_hazards_registry.py` + `git diff
+--exit-code` CI check, same commit-incrementally-in-brikk-house rule. Heuristic
+still holds (Doris≈Trino, diverges from DuckDB) but VERIFY — a B rename is exactly
+where the generator author's assumption might be wrong.
+
+## Definition of done
+Every B mapping and C-real pair has a verdict; zero `unclear` remain in either
+hazard JSON (or each surviving `unclear` has a one-line reason why it can't be
+resolved live); registry regenerated; any B-mapping divergence filed to brikk-sql
+as a generator bug. Bucket D + reverse remain untouched (documented as out of scope).
