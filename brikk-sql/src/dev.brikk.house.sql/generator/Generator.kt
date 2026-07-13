@@ -51,7 +51,10 @@ open class Generator(
     // "upper" | "lower" | true | false (sqlglot: normalize_functions; base dialect default "upper")
     val normalizeFunctions: kotlin.Any = "upper",
     val leadingComma: Boolean = false,
-    val maxTextWidth: Int = 80,
+    // brikk: pretty-mode wrap width. sqlglot's default is 80; brikk widens it to 120 to
+    // suit modern editors (only affects pretty=true line wrapping — non-pretty output is
+    // single-line regardless).
+    val maxTextWidth: Int = 120,
     val comments: Boolean = true,
     val tokenizerConfig: TokenizerConfig = TokenizerConfig.BASE,
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
