@@ -11,6 +11,7 @@ import dev.brikk.house.sql.ast.Func
 import dev.brikk.house.sql.ast.Interval
 import dev.brikk.house.sql.ast.Sub
 import dev.brikk.house.sql.ast.sqlName
+import dev.brikk.house.sql.ast.sqlNames
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.metadata.FunctionHazard
 import dev.brikk.house.sql.metadata.HazardRegistry
@@ -148,19 +149,34 @@ data class TranspileReport(
  *  2. [TranspileResult.unsupportedMessages] -> REFUSAL/[FindingKind.UNSUPPORTED_TRANSLATION] each.
  *  3. Command/Pragma root -> REFUSAL/[FindingKind.RAW_PASSTHROUGH_STATEMENT].
  *  4. Semantic hazards: every function call in the SOURCE ast is looked up in
- *     [HazardRegistry] under (source dialect, target). DIVERGENT and UNCLEAR verdicts
- *     are REFUSALs, CONDITIONALLY_EQUIVALENT is a WARNING (result-identical under
- *     common conditions — permissive consumers proceed, strict consumers read the
- *     findings); IDENTICAL / NO_EQUIVALENT produce nothing here (NO_EQUIVALENT
- *     surfaces through 1/2 when it matters).
+ *     [HazardRegistry] under a MULTI-KEY key set (see [functionHazardKeys]) so a
+ *     translated (cross-name) function matches its verdict regardless of which surface
+ *     name the entry is filed under. DIVERGENT and UNCLEAR verdicts are REFUSALs,
+ *     CONDITIONALLY_EQUIVALENT is a WARNING (result-identical under common conditions —
+ *     permissive consumers proceed, strict consumers read the findings); IDENTICAL /
+ *     NO_EQUIVALENT produce nothing here (NO_EQUIVALENT surfaces through 1/2 when it
+ *     matters). When several keys hit, the WORST verdict wins (conservative).
  *
- *     MITIGATION RULE: a hazard is SKIPPED when the target generator has a dedicated
- *     renderer for the node's class ([dev.brikk.house.sql.generator.Generator.hasDedicatedRenderer])
- *     — dedicated renderers are the gate-verified translations that exist precisely to
- *     fix these divergences (e.g. trino->duckdb GREATEST/LEAST CASE-wrap, REGEXP_REPLACE
- *     'g' forcing), and the ones that can't fix a case flag it through
- *     unsupportedMessages (channel 2). Unresolved ([Anonymous]) calls are always
- *     checked: their "renderer" is the verbatim passthrough, never a mitigation.
+ *     KEY SET (A — multi-key lookup): a function node is known by more than the name it
+ *     PARSED under, so all of these are tried against the (source→target) map:
+ *       - the parsed node's [sqlName]/[sqlNames] (+ overrides/aliases);
+ *       - the node rendered under the SOURCE dialect — recovers the source SURFACE name
+ *         (e.g. a node parsed as ARRAY_OVERLAPS that the source spells `list_has_any`);
+ *       - the node rendered under the TARGET dialect — the emitted target name.
+ *     Any hit counts. This is a strict improvement: it can only ADD true matches (a name
+ *     the node genuinely carries for this pair), never introduce a false one.
+ *
+ *     VERDICT DRIVES THE DECISION (B): the old rule SKIPPED the hazard whenever the
+ *     target generator had a dedicated renderer for the node — but for a TRANSLATED
+ *     function that renderer is exactly what can be wrong (the doris P1 bugs shipped
+ *     wrong SQL with ok=true for precisely this reason). The renderer no longer
+ *     blanket-clears a hazard. Trust lives in the DATA instead: a probe-verified
+ *     IDENTICAL entry is safe (produces nothing); a DIVERGENT/UNCLEAR entry is unsafe
+ *     and REFUSES whether or not a dedicated renderer exists. The gate-verified fixes
+ *     that formerly relied on the renderer-skip (trino->duckdb concat->||, etc.) are now
+ *     recorded as IDENTICAL entries for the mapping the generator actually emits, so
+ *     they clear through the data, not through blanket renderer trust. Callers that
+ *     can't fix a case still flag it through unsupportedMessages (channel 2).
  *
  * [desugarPipes] is threaded to [SqlFragment.transpileTo] (and the capability check):
  * real engines don't speak `|>`, so when certifying a pipe-syntax fragment for a real
@@ -216,20 +232,25 @@ fun SqlFragment.certify(
         )
     }
 
-    // 4. Probe-verified semantic hazards (source-side names, mitigation-aware).
-    val targetGenerator = Dialects.forName(target).generator()
+    // 4. Probe-verified semantic hazards (multi-key, verdict-driven — see file header).
     for (node in ast.walk(bfs = false)) {
         if (node !is Func) continue
-        val name = when (node) {
-            is Anonymous -> node.name
-            is AnonymousAggFunc -> node.name
-            else -> node.sqlName()
+        val keys = functionHazardKeys(node, target)
+        if (keys.isEmpty()) continue
+        // Multi-key lookup (A): try every name the node is known by for this pair and
+        // keep the WORST verdict (conservative), tracking a stable subject for it.
+        var hazard: FunctionHazard? = null
+        var subject: String? = null
+        for (key in keys) {
+            val hit = HazardRegistry.lookup(dialect, target, key) ?: continue
+            if (hazard == null || verdictRank(hit.verdict) < verdictRank(hazard.verdict)) {
+                hazard = hit
+                subject = key
+            }
         }
-        if (name.isEmpty()) continue
-        val hazard = HazardRegistry.lookup(dialect, target, name) ?: continue
-        val mitigated = node !is Anonymous && node !is AnonymousAggFunc &&
-            targetGenerator.hasDedicatedRenderer(node::class)
-        if (mitigated) continue
+        if (hazard == null) continue
+        // Verdict drives the decision (B): a dedicated renderer no longer clears the
+        // hazard — trust lives in the DATA (IDENTICAL = probe-verified safe).
         val severity = when (hazard.verdict) {
             HazardVerdict.DIVERGENT, HazardVerdict.UNCLEAR -> Severity.REFUSAL
             HazardVerdict.CONDITIONALLY_EQUIVALENT -> Severity.WARNING
@@ -237,7 +258,7 @@ fun SqlFragment.certify(
         }
         findings.add(
             Finding(
-                severity, FindingKind.SEMANTIC_HAZARD, name.uppercase(),
+                severity, FindingKind.SEMANTIC_HAZARD, subject!!.uppercase(),
                 hazardDetail(hazard),
                 provenance = hazard.provenance,
                 areas = hazard.areas,
@@ -278,6 +299,67 @@ private fun hazardDetail(hazard: FunctionHazard): String {
     val verdict = hazard.verdict.name.lowercase().replace('_', '-')
     val text = hazard.hazard ?: "probe-verified '$verdict' verdict"
     return "$verdict: $text"
+}
+
+/**
+ * Conservative worst-first ordering for multi-key hazard collisions, mirroring the
+ * registry's own collision policy (tools/generate_hazards_registry.py): DIVERGENT >
+ * UNCLEAR > CONDITIONALLY_EQUIVALENT > NO_EQUIVALENT > IDENTICAL. Lower rank = worse.
+ */
+private fun verdictRank(v: HazardVerdict): Int = when (v) {
+    HazardVerdict.DIVERGENT -> 0
+    HazardVerdict.UNCLEAR -> 1
+    HazardVerdict.CONDITIONALLY_EQUIVALENT -> 2
+    HazardVerdict.NO_EQUIVALENT -> 3
+    HazardVerdict.IDENTICAL -> 4
+}
+
+/**
+ * The MULTI-KEY hazard key set (A) for one function [node] transpiling `dialect`→[target]:
+ * every name the node can be known by for this pair, so a translated (cross-name) function
+ * matches its verdict regardless of the surface name the entry is filed under.
+ *
+ *  1. the parsed node's [sqlNames] (class name / overrides / aliases); for the unresolved
+ *     [Anonymous]/[AnonymousAggFunc] shapes that is the verbatim call name.
+ *  2. the SOURCE-dialect rendering's leading call name — recovers the source SURFACE name
+ *     (e.g. a node parsed as ARRAY_OVERLAPS that duckdb spells `list_has_any`).
+ *  3. the TARGET-dialect rendering's leading call name — the emitted target name.
+ *
+ * Rendering that produces an operator form (`a || b`, `a IN b`) carries no leading call
+ * name and simply contributes nothing — correct: an operator emission is not a function
+ * name that could match a same-name-passthrough entry.
+ */
+private fun SqlFragment.functionHazardKeys(node: Func, target: String): Set<String> {
+    val keys = LinkedHashSet<String>()
+
+    when (node) {
+        is Anonymous -> node.name.takeIf { it.isNotEmpty() }?.let { keys.add(it.uppercase()) }
+        is AnonymousAggFunc -> node.name.takeIf { it.isNotEmpty() }?.let { keys.add(it.uppercase()) }
+        else -> for (n in node.sqlNames()) if (n.isNotEmpty()) keys.add(n.uppercase())
+    }
+
+    leadingCallName(runCatching { Dialects.forName(dialect).generate(node as Expression) }.getOrNull())
+        ?.let { keys.add(it) }
+    leadingCallName(runCatching { Dialects.forName(target).generate(node as Expression) }.getOrNull())
+        ?.let { keys.add(it) }
+
+    return keys
+}
+
+/**
+ * The leading `NAME(` call name of a rendered fragment, uppercased; null when the render
+ * is null or not call-shaped (an operator/keyword form like `a || b`, which carries no
+ * function name to key on). Function names are bare identifiers (letters, digits, `_`);
+ * we read them up to the first `(`.
+ */
+private fun leadingCallName(rendered: String?): String? {
+    if (rendered == null) return null
+    val open = rendered.indexOf('(')
+    if (open <= 0) return null
+    val name = rendered.substring(0, open).trim()
+    if (name.isEmpty()) return null
+    if (!name.all { it == '_' || it.isLetterOrDigit() }) return null
+    return name.uppercase()
 }
 
 /*

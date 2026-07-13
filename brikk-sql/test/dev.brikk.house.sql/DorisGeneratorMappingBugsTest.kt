@@ -103,7 +103,13 @@ class DorisGeneratorMappingBugsTest {
             "SELECT CAST(s AS DATETIME(6))",
             doris("SELECT from_iso8601_timestamp_nanos(s)", "trino"),
         )
-        assertTrue(certifyOk("SELECT from_iso8601_timestamp_nanos(s)", "trino"))
+        // BEHAVIOR CHANGE (verdict-driven certify): the `from_iso8601_timestamp_nanos ->
+        // cast` hazard is honestly DIVERGENT — the mapping is LOSSY (nanosecond precision
+        // dropped). Under the old renderer-skip this refusal was masked and certify said
+        // ok=true, silently shipping a lossy cast. That is exactly the hole this task
+        // closed: a KNOWN-lossy mapping must NOT certify clean. certify now correctly
+        // REFUSES (real divergence — see BUGS-certify-newly-caught-2026-07-13.md).
+        assertTrue(!certifyOk("SELECT from_iso8601_timestamp_nanos(s)", "trino"))
     }
 
     @Test

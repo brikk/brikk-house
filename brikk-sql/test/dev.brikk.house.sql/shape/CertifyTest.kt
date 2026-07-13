@@ -1,5 +1,6 @@
 package dev.brikk.house.sql.shape
 
+import dev.brikk.house.sql.metadata.HazardRegistry
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -80,35 +81,39 @@ class CertifyTest {
     }
 
     @Test
-    fun dedicatedRendererMitigatesTheHazard() {
-        // 'concat' is hazard-flagged divergent (NULL/coercion algebra) BUT every target
-        // generator has a dedicated Concat renderer — trino->duckdb rewrites to the
-        // gate-verified `||` + coalesce path, so the hazard is mitigated and the report
-        // is fully clean.
+    fun dedicatedRendererNoLongerBlanketTrusted() {
+        // BEHAVIOR CHANGE (verdict-driven certify): a dedicated renderer no longer
+        // blanket-clears a hazard. 'concat' is probe-verified DIVERGENT (NULL algebra)
+        // and — even though trino->duckdb rewrites to `a || b` via the dedicated Concat
+        // renderer — the divergent verdict now REFUSES. The multi-key lookup hits the
+        // source-surface name CONCAT. (The || mapping has a SEPARATE probe-verified
+        // IDENTICAL entry `concat -> || operator`, so this is very likely a stale
+        // false-refusal for this direction; it is HELD FOR OWNER REVIEW, not flipped —
+        // see docs/research/REPORT-certify-hazard-hole-closed-2026-07-13.md.)
         val fwd = report("SELECT concat(a, b) FROM t", "trino", "duckdb")
         assertEquals("SELECT a || b FROM t", fwd.result.sql)
-        assertEquals(emptyList(), fwd.findings)
-        assertTrue(fwd.ok)
-
-        // Reverse direction: equally clean. The COALESCE the renderer emits is a Trino
-        // grammar-level builtin (absent from SHOW FUNCTIONS, parsed by SqlBase.g4 /
-        // AstBuilder) — cleared by the catalog's grammarBuiltins set.
-        val rev = report("SELECT concat(a, b) FROM t", "duckdb", "trino")
-        assertEquals(emptyList(), rev.findings)
-        assertTrue(rev.ok)
+        assertTrue(!fwd.ok)
+        val f = fwd.findings.single()
+        assertEquals(FindingKind.SEMANTIC_HAZARD, f.kind)
+        assertEquals("CONCAT", f.subject)
+        assertTrue(f.detail.startsWith("divergent:"), f.detail)
     }
 
     @Test
-    fun mitigatedHazardStillRefusedWhenGeneratorFlagsIt() {
-        // duckdb->trino GREATEST: the dedicated renderer skips the hazard channel, but
-        // it is exactly the renderer that flags the unverified NULL-algebra reversal
-        // (brikk extension 11) — the refusal arrives via UNSUPPORTED_TRANSLATION.
+    fun divergentHazardRefusesEvenWithDedicatedRendererAndGeneratorFlag() {
+        // duckdb->trino GREATEST: probe-verified DIVERGENT (Trino returns NULL if any
+        // arg is NULL; DuckDB skips NULLs). Previously the dedicated renderer skipped the
+        // SEMANTIC_HAZARD channel and only the renderer's own UNSUPPORTED_TRANSLATION
+        // flag refused. Under verdict-driven certify BOTH now fire — the hazard is a
+        // GENUINE divergence (NULL algebra), so surfacing it is correct, not a false
+        // refusal. Report stays not-ok either way.
         val r = report("SELECT greatest(a, b) FROM t", "duckdb", "trino")
         assertTrue(!r.ok)
-        assertTrue(r.findings.none { it.kind == FindingKind.SEMANTIC_HAZARD })
-        val f = refusals(r).single()
-        assertEquals(FindingKind.UNSUPPORTED_TRANSLATION, f.kind)
-        assertTrue("NULL-skipping" in f.detail, f.detail)
+        val hazard = r.findings.single { it.kind == FindingKind.SEMANTIC_HAZARD }
+        assertEquals(Severity.REFUSAL, hazard.severity)
+        assertTrue("NULL" in hazard.detail, hazard.detail)
+        val flagged = r.findings.single { it.kind == FindingKind.UNSUPPORTED_TRANSLATION }
+        assertTrue("NULL-skipping" in flagged.detail, flagged.detail)
     }
 
     @Test
@@ -309,5 +314,56 @@ class CertifyTest {
         val hazard = report("SELECT lower(x) FROM t", "duckdb", "trino").findings.single()
         assertTrue(hazard.areas.isNotEmpty())
         assertTrue("string" in hazard.areas && "unicode" in hazard.areas, hazard.areas.toString())
+    }
+
+    // --------------------------------------- multi-key lookup + verdict-driven certify
+
+    @Test
+    fun multiKeyLookupHitsSourceSurfaceName() {
+        // duckdb `list_min` parses to the canonical ArrayMin node (sqlName ARRAY_MIN),
+        // NOT the surface name LIST_MIN. The duckdb->trino divergent entry
+        // (`list_min/list_max` -> `array_min/array_max`, NULL/type divergence) is keyed
+        // under the DUCKDB-side surface name LIST_MIN, so a parsed-sqlName-only lookup
+        // (ARRAY_MIN) MISSES it. The multi-key set recovers LIST_MIN by rendering the
+        // node under the SOURCE dialect -> the divergent hazard now fires.
+        val r = report("SELECT list_min(xs) FROM t", "duckdb", "trino")
+        assertEquals("SELECT ARRAY_MIN(xs) FROM t", r.result.sql)
+        assertTrue(!r.ok)
+        val f = r.findings.single { it.kind == FindingKind.SEMANTIC_HAZARD }
+        assertEquals(Severity.REFUSAL, f.severity)
+        // Parsed sqlName alone would have missed: ARRAY_MIN is not a key for this pair.
+        assertEquals(null, HazardRegistry.lookup("duckdb", "trino", "ARRAY_MIN"))
+        assertNotNull(HazardRegistry.lookup("duckdb", "trino", "LIST_MIN"))
+    }
+
+    @Test
+    fun identicalMappingStaysOk() {
+        // duckdb `list_has_any` -> Doris ARRAYS_OVERLAP is a probe-verified IDENTICAL
+        // mapping (the generator fix). An IDENTICAL entry produces NO SEMANTIC_HAZARD
+        // finding even though the source surface name resolves and a dedicated renderer
+        // exists — trust lives in the DATA.
+        val r = report("SELECT list_has_any(a, b) FROM t", "duckdb", "doris")
+        assertEquals("SELECT ARRAYS_OVERLAP(a, b) FROM t", r.result.sql)
+        assertTrue(r.findings.none { it.kind == FindingKind.SEMANTIC_HAZARD }, r.findings.toString())
+    }
+
+    @Test
+    fun conditionallyEquivalentStaysWarningUnderMultiKey() {
+        // A conditionally-equivalent verdict remains a WARNING (ok stays true) under the
+        // verdict-driven rule — only DIVERGENT/UNCLEAR refuse.
+        val r = report("SELECT to_base(n, 16) FROM t", "duckdb", "trino")
+        assertTrue(r.ok)
+        val f = r.findings.single { it.kind == FindingKind.SEMANTIC_HAZARD }
+        assertEquals(Severity.WARNING, f.severity)
+    }
+
+    @Test
+    fun okAcceptingStillWorksOverNewFindings() {
+        // okAccepting composes over the (now more complete) refusal set: waiving the
+        // hazard's areas clears the refusal, exactly as with the old findings.
+        val r = report("SELECT list_min(xs) FROM t", "duckdb", "trino")
+        assertTrue(!r.ok)
+        val f = r.findings.single { it.kind == FindingKind.SEMANTIC_HAZARD }
+        assertTrue(r.okAccepting { it.areas.any { a -> a in f.areas } })
     }
 }

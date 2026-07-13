@@ -189,9 +189,15 @@ The full sqlglot semantic pipeline is ported and oracle-gated:
 `transpileTo()` is best-effort by design. `SqlFragment.certify(target)` rolls every
 diagnostic channel into one `TranspileReport`: unmappable functions (Class-3 capability
 holes), generator `unsupported` flags, raw-passthrough statements (Command/Pragma), and
-probe-verified semantic hazards (`HazardRegistry` in brikk-sql-metadata; trino↔duckdb
-today). Hazards mitigated by a gate-verified dedicated renderer are skipped; divergent/
-unclear verdicts are refusals, conditionally-equivalent ones warnings. Machine mode
+probe-verified semantic hazards (`HazardRegistry` in brikk-sql-metadata; trino↔duckdb,
+trino↔doris, duckdb↔doris). Hazard detection is **verdict-driven and multi-key**: each
+source function is looked up under every name it can be known by for the pair (its parsed
+`sqlName`/aliases plus the names it renders to under the source and target dialects, so a
+translated cross-name function still matches), and the **verdict decides** — divergent/
+unclear are refusals, conditionally-equivalent are warnings, identical/no-equivalent clear.
+A dedicated renderer no longer blanket-trusts a mapping: trust lives in the probe data (an
+`identical` entry is verified-safe; a `divergent` one refuses whether or not a renderer
+exists). Machine mode
 ("must work or error"): `transpileStrict(target)` / `report.orThrow()`. Human mode
 ("warn me, I'll hand-edit"): read `report.findings`, ship `report.result.sql` anyway.
 Pipe-syntax fragments targeting a real engine should pass `desugarPipes = true`
