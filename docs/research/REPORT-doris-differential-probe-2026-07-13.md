@@ -584,7 +584,30 @@ Nine `unclear` verdicts from batch A were revisited.
   Parquet on shared storage); trino `log` & `url_encode` (Doris side confirmed live, but
   the Trino side needs a live-Trino re-probe in the trino project — no live Trino here).
 
-## Worklist status / continuation — COMPLETE
+## Addendum status — Buckets B + C-real + unclears COMPLETE (batches 11–14)
+
+The addendum scope is now fully probed. Final registry (after `generate_hazards_registry.py`):
+- **duckdb→doris: 255 pairs** — 107 identical, 61 divergent, 73 conditionally-equivalent,
+  10 no-equivalent, 4 unclear.
+- **trino→doris: 203 pairs** — 99 identical, 39 divergent, 58 conditionally-equivalent,
+  5 no-equivalent, 2 unclear.
+
+Coverage of the addendum scope:
+- **Bucket B (cross-name):** 56 duckdb + 36 trino mappings, all verified live against the
+  exact generator output (batches 11–12).
+- **Bucket C-real:** 14 duckdb + 2 trino candidates (batch 13) — most are *unimplemented*
+  mappings the generator fail-loud refuses; each recorded with the would-be verdict.
+- **Unclears:** 3 resolved via a TVF row-set probe; the 6 that survive (`query`,
+  3×`parquet_*`, trino `log`/`url_encode`) each carry a firm one-line reason (batch 14).
+
+**Generator mapping BUGS filed** to `BUGS-doris-generator-mappings-2026-07-13.md`
+(6 P1 confident-but-wrong that ship broken SQL, 1 P2 catalog-staleness, 3 P3 fail-loud,
+plus missing-mapping enhancements). The registry now carries matching `divergent`
+hazards so `certify` refuses the confident-but-wrong cases as belt-and-braces.
+
+---
+
+## Worklist status / continuation — COMPLETE (bucket A)
 
 The bucket-A worklist is **fully probed** (batches 1–10). Final registry:
 - **duckdb→doris: 186 pairs** — 80 identical, 55 divergent, 44 conditionally-equivalent,
