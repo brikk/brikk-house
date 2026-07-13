@@ -887,12 +887,18 @@ open class ClickhouseGenerator(
 
             reg(AnyValue::class) { e -> ch().renameFuncSql("any", e) }
             reg(ApproxDistinct::class) { e -> ch().renameFuncSql("uniq", e) }
-            // BUGS-clickhouse-generator-mappings row 1 (P1): ClickHouse LOWER/UPPER are
-            // ASCII-only (non-ASCII passes through unchanged); the source LOWER/UPPER fold
-            // full Unicode. lowerUTF8/upperUTF8 fold multibyte codepoints (a residual
-            // İ/ß full-case-folding edge divergence remains — kept as a hazard).
-            reg(Lower::class) { e -> func("lowerUTF8", e.thisArg) }
-            reg(Upper::class) { e -> func("upperUTF8", e.thisArg) }
+            // BUGS-clickhouse-generator-mappings rows 1 (lower/upper) and 5 (duckdb week):
+            // INTENTIONALLY NOT transformed here. lowerUTF8/upperUTF8/toISOWeek would be
+            // correct for cross-dialect (DuckDB/Trino->ClickHouse) but this generator is
+            // SOURCE-UNAWARE, so the same rewrite fires on ClickHouse->ClickHouse (which
+            // pipe desugaring / toStandardSql uses) and CORRUPTS a native ClickHouse
+            // `lower`/`upper`/`week` (ASCII->unicode, Sunday->ISO). Upstream sqlglot renders
+            // them faithfully for the same reason. The cross-dialect divergence is left to
+            // the divergent hazard (certify surfaces it). The correct auto-fix needs
+            // source-aware generation — see docs/research/SPIKE-source-aware-generator-
+            // transforms-2026-07-13.md.
+            // (Trino `week` parses to WeekOfYear, a node ClickHouse never emits, so that one
+            // IS safe to transform below.)
             // BUGS-clickhouse-generator-mappings rows 3/12 (P1/P2): natural-log collision
             // + invalid 2-arg LOG. See clickhouseLogSql.
             reg(Log::class) { e -> ch().clickhouseLogSql(e as Log) }
@@ -905,32 +911,33 @@ open class ClickhouseGenerator(
             reg(BitwiseXor::class) { e ->
                 func("bitXor", (e as Binary).thisArg, e.args["expression"])
             }
-            // BUGS-clickhouse-generator-mappings row 5 (P1): DuckDB week is ISO-8601;
-            // ClickHouse WEEK/toWeek default mode 0 is Sunday-based. toISOWeek matches.
-            reg(Week::class) { e -> func("toISOWeek", e.thisArg) }
             // BUGS-clickhouse-generator-mappings row 10 (P2): Trino week parses to
             // WeekOfYear; the emitted WEEK_OF_YEAR does not exist in ClickHouse. Trino week
-            // is ISO -> toISOWeek (result-identical).
+            // is ISO -> toISOWeek (result-identical). SAFE for CH->CH: ClickHouse never
+            // parses to the WeekOfYear node, so this only fires cross-dialect (Trino->CH).
             reg(WeekOfYear::class) { e -> func("toISOWeek", e.thisArg) }
             // BUGS-clickhouse-generator-mappings row 9 (P2): the emitted DAY_OF_WEEK does
-            // not exist in ClickHouse. toDayOfWeek is the valid name (a residual numbering
-            // divergence — DuckDB Sunday=0 vs ClickHouse ISO Monday=1..Sunday=7 — remains,
-            // kept as a hazard).
+            // not exist in ClickHouse. toDayOfWeek is the valid name. SAFE for CH->CH:
+            // ClickHouse `dayofweek` == `toDayOfWeek` (both ISO Mon=1..Sun=7, verified 7==7),
+            // so the rename preserves ClickHouse semantics; a residual numbering divergence
+            // vs DuckDB (Sunday=0) remains and is kept as a hazard for the cross-dialect case.
             reg(DayOfWeek::class) { e -> func("toDayOfWeek", e.thisArg) }
             // BUGS-clickhouse-generator-mappings row 11 (P2): the leaked internal node name
             // TIME_TO_UNIX does not exist in ClickHouse. toUnixTimestamp is the real name.
             reg(TimeToUnix::class) { e -> func("toUnixTimestamp", e.thisArg) }
-            // TODO(clickhouse-bugs): DEFERRED rows from BUGS-clickhouse-generator-mappings
-            // (millisecond, row 6, is now fixed via anonymousSql below — verified live):
+            // TODO(clickhouse-bugs): rows from BUGS-clickhouse-generator-mappings not fixed
+            // here (millisecond, row 6, IS fixed via anonymousSql below — verified live):
+            //   rows 1 & 5 (lower/upper, duckdb week): source-aware follow-up — the correct
+            //                    lowerUTF8/upperUTF8/toISOWeek rewrites need source!=clickhouse
+            //                    gating to avoid CH->CH corruption. See SPIKE doc.
             //   row 2  round  : half-away shim `sign(x)*floor(abs(x)*pow(10,d)+0.5)/pow(10,d)`
             //                    is live-VERIFIED (matches DuckDB across 2.5/0.5/-2.5/2dp),
             //                    but `round` is a ClickHouse-NATIVE name and this generator
             //                    is source-unaware, so applying it would regress CH->CH
-            //                    banker's rounding — deferred pending that policy call.
+            //                    banker's rounding — same source-aware follow-up.
             //   row 7  bin    : strip-leading-zeros shim
             //                    `if(x=0,'0',substring(bin(x),position(bin(x),'1')))` is
-            //                    live-VERIFIED, but `bin` is CH-native too — same CH->CH
-            //                    regression concern as round.
+            //                    live-VERIFIED, but `bin` is CH-native too — same concern.
             //   row 8  to_days: the ToDays node is source-ambiguous (DuckDB interval-builder
             //                    vs MySQL day-number) — fix belongs in the DuckDB PARSER,
             //                    not here, so a target rewrite isn't safe for all sources.

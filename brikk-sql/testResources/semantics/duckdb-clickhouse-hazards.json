@@ -966,13 +966,13 @@
     },
     {
       "duckdb": "week",
-      "clickhouse": "toISOWeek",
-      "verdict": "identical",
-      "hazard": "DuckDB week is ISO-8601; the generator now emits toISOWeek, result-identical (not toWeek mode 0 which is Sunday-based).",
+      "clickhouse": "toWeek",
+      "verdict": "divergent",
+      "hazard": "ClickHouse toWeek default mode 0 is Sunday-based (2023-01-01 -> 1); DuckDB week is ISO-8601 (-> 52). The generator renders DuckDB week faithfully as WEEK/toWeek (NOT toISOWeek) because the same rewrite would corrupt native ClickHouse week on ClickHouse->ClickHouse (pipe desugaring) — the correct source-aware fix is deferred (see SPIKE-source-aware-generator-transforms). Map to toISOWeek for ISO parity when transpiling.",
       "areas": [
         "datetime"
       ],
-      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode"
     },
     {
       "duckdb": "yearweek",
