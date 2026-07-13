@@ -215,3 +215,32 @@ Every B mapping and C-real pair has a verdict; zero `unclear` remain in either
 hazard JSON (or each surviving `unclear` has a one-line reason why it can't be
 resolved live); registry regenerated; any B-mapping divergence filed to brikk-sql
 as a generator bug. Bucket D + reverse remain untouched (documented as out of scope).
+
+---
+
+# DATA CAPTURE (MANDATORY) — the raw matrix is the reuse asset, do not lose it
+
+Raw probe data written only to `/tmp/opencode/probe-*.txt|tsv` is **overwritten
+every batch and lost on reboot** — yet the per-engine input→output matrix is
+exactly what makes a FUTURE engine O(N) instead of a full re-probe (see the
+behavior-matrix discussion). So:
+
+1. **Persist every batch durably, before the next batch.** Write into the repo,
+   not just /tmp:
+   - `docs/research/probe-runs/<UTC-ts>-<label>.batch`  — the `fn<TAB>expr` inputs
+   - `docs/research/probe-runs/<UTC-ts>-<label>.tsv`     — the FULL results
+     (`fn\texpr\tSAME|DIFF\tduckdb\tdoris`, codepoint-rendered — never truncate)
+   Commit them alongside the verdict rows. Unique-name per batch — NEVER overwrite.
+2. **Stamp engine versions** once per run into the run dir + REPORT:
+   Doris `SELECT version()`, DuckDB `PRAGMA version` / `pragma_version()`, Trino
+   version. Behavior is version-specific; unstamped verdicts go stale silently.
+3. **Pin + record session state** for datetime/timezone probes: `SET time_zone`
+   (Doris) / `SET TimeZone` (DuckDB) to UTC on BOTH before probing, and record the
+   pin. Otherwise those results are non-reproducible / not apples-to-apples.
+4. **FINAL HARVEST (end of run):** sweep anything left in `/tmp/opencode/probe-*`
+   into `docs/research/probe-runs/`, confirm nothing precious remains only in /tmp,
+   commit. Then (optional, recommended) consolidate all run TSVs into the
+   structured `brikk-sql/testResources/semantics/results/{engine}.json` behavior
+   matrix so pairwise hazards become a derived artifact and the Nth engine is cheap.
+
+Rule of thumb: if a probe result exists only in /tmp, it is NOT captured yet.
