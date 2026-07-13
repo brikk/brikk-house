@@ -6,7 +6,7 @@
       "trino": "lower",
       "clickhouse": "lower",
       "verdict": "divergent",
-      "hazard": "ClickHouse lower() is ASCII-only (\u0130/\u00df unchanged); Trino lower() does full Unicode lower with locale folding (\u0130->i+U+0307). Neither matches; use lowerUTF8 to approach Trino.",
+      "hazard": "ClickHouse lower() is ASCII-only (İ/ß unchanged); Trino lower() does full Unicode lower with locale folding (İ->i+U+0307). Neither matches; use lowerUTF8 to approach Trino.",
       "areas": [
         "string",
         "unicode"
@@ -17,7 +17,7 @@
       "trino": "upper",
       "clickhouse": "upper",
       "verdict": "divergent",
-      "hazard": "ClickHouse upper() ASCII-only; Trino upper() full folding (\u00df->SS). upperUTF8 gives \u00df->SS (matches Trino) but is still ASCII-passthrough for the plain upper name.",
+      "hazard": "ClickHouse upper() ASCII-only; Trino upper() full folding (ß->SS). upperUTF8 gives ß->SS (matches Trino) but is still ASCII-passthrough for the plain upper name.",
       "areas": [
         "string",
         "unicode"
@@ -83,7 +83,7 @@
       "trino": "concat",
       "clickhouse": "concat",
       "verdict": "divergent",
-      "hazard": "ClickHouse concat PROPAGATES NULL -> NULL (matches Trino's NULL propagation). This pair is ALIGNED on NULL \u2014 unlike DuckDB. Verdict divergent only for the string-vs-array concat overload shape; NULL algebra matches Trino.",
+      "hazard": "ClickHouse concat PROPAGATES NULL -> NULL (matches Trino's NULL propagation). This pair is ALIGNED on NULL — unlike DuckDB. Verdict divergent only for the string-vs-array concat overload shape; NULL algebra matches Trino.",
       "areas": [
         "string",
         "null"
@@ -260,7 +260,7 @@
       "trino": "xxhash64",
       "clickhouse": "xxHash64",
       "verdict": "conditionally-equivalent",
-      "hazard": "Both compute XXH64; ClickHouse returns UInt64, Trino xxhash64 returns VARBINARY(8) \u2014 same bits, different type/signedness. (DuckDB has no xxhash64.)",
+      "hazard": "Both compute XXH64; ClickHouse returns UInt64, Trino xxhash64 returns VARBINARY(8) — same bits, different type/signedness. (DuckDB has no xxhash64.)",
       "areas": [
         "hash"
       ],
@@ -280,7 +280,7 @@
       "trino": "mod",
       "clickhouse": "modulo",
       "verdict": "divergent",
-      "hazard": "modulo by zero: ClickHouse throws; Trino also throws (division_by_zero). Non-zero aligned \u2014 this pair is actually aligned on error behavior; divergent flag reserved for the wrap/promotion axis.",
+      "hazard": "modulo by zero: ClickHouse throws; Trino also throws (division_by_zero). Non-zero aligned — this pair is actually aligned on error behavior; divergent flag reserved for the wrap/promotion axis.",
       "areas": [
         "numeric"
       ],
@@ -621,7 +621,7 @@
       "trino": "millisecond",
       "clickhouse": "toMillisecond",
       "verdict": "divergent",
-      "hazard": "ClickHouse toMillisecond = sub-second component only; Trino millisecond(timestamp) = seconds*1000+ms of the second? \u2014 verify; component definitions differ.",
+      "hazard": "ClickHouse toMillisecond = sub-second component only; Trino millisecond(timestamp) = seconds*1000+ms of the second? — verify; component definitions differ.",
       "areas": [
         "datetime"
       ],
@@ -639,13 +639,13 @@
     },
     {
       "trino": "week",
-      "clickhouse": "toWeek",
-      "verdict": "divergent",
-      "hazard": "ClickHouse toWeek default mode Sunday-based; Trino week()/week_of_year is ISO-8601. Map to toISOWeek for Trino parity.",
+      "clickhouse": "toISOWeek",
+      "verdict": "identical",
+      "hazard": "Trino week (week_of_year) is ISO-8601; the generator now emits toISOWeek, result-identical (not toWeek mode 0).",
       "areas": [
         "datetime"
       ],
-      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode"
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"
     },
     {
       "trino": "date_trunc",
@@ -673,7 +673,7 @@
       "trino": "date_format",
       "clickhouse": "formatDateTime",
       "verdict": "divergent",
-      "hazard": "SPEC DIALECT + name: Trino date_format uses Joda/MySQL patterns; ClickHouse formatDateTime uses MySQL-style %-codes where %M is the MONTH NAME (probe: '%M' -> 'March') \u2014 colliding with strftime %M=minute. Never map format strings by passthrough.",
+      "hazard": "SPEC DIALECT + name: Trino date_format uses Joda/MySQL patterns; ClickHouse formatDateTime uses MySQL-style %-codes where %M is the MONTH NAME (probe: '%M' -> 'March') — colliding with strftime %M=minute. Never map format strings by passthrough.",
       "areas": [
         "datetime",
         "string"
@@ -747,7 +747,7 @@
       "trino": "transform",
       "clickhouse": "arrayMap",
       "verdict": "divergent",
-      "hazard": "NAME COLLISION: Trino transform(array, lambda) maps a lambda over elements; ClickHouse transform(x, from_array, to_array, default) is a scalar VALUE-REMAP (CASE-like) \u2014 completely different function. ClickHouse's lambda map is arrayMap.",
+      "hazard": "NAME COLLISION: Trino transform(array, lambda) maps a lambda over elements; ClickHouse transform(x, from_array, to_array, default) is a scalar VALUE-REMAP (CASE-like) — completely different function. ClickHouse's lambda map is arrayMap.",
       "areas": [
         "array"
       ],
@@ -954,7 +954,7 @@
       "trino": "approx_top_k",
       "clickhouse": "topK",
       "verdict": "conditionally-equivalent",
-      "hazard": "Both approximate top-k; ClickHouse topK(k)(x) parametric signature and sketch differ from Trino approx_top_k \u2014 only the top-value set is comparable, not internal state.",
+      "hazard": "Both approximate top-k; ClickHouse topK(k)(x) parametric signature and sketch differ from Trino approx_top_k — only the top-value set is comparable, not internal state.",
       "areas": [
         "aggregate"
       ],

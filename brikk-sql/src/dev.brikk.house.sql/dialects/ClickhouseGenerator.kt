@@ -685,6 +685,60 @@ open class ClickhouseGenerator(
         return func("dateTrunc", unit, expression.thisArg, expression.args["zone"])
     }
 
+    // BUGS-clickhouse-generator-mappings rows 3 (P1) + 12 (P2): the Log node.
+    // The base generator rendered it verbatim as LOG(...), which is wrong for ClickHouse:
+    //   - single-arg log(x) [Log(this=x), no base] means log-base-10 in the source
+    //     (DuckDB LOG_DEFAULTS_TO_LN=false), but ClickHouse LOG(x) is the NATURAL log
+    //     (silent base change);
+    //   - log10(x)/log2(x) parse to Log(this=10|2, expression=x) and were emitted as
+    //     LOG(10, x) / LOG(2, x), which ClickHouse REJECTS (it has no 2-arg log).
+    // ClickHouse exposes dedicated log10/log2; a bare natural log is `log`. So:
+    //   - no base                -> log10(value)         (source single-arg log = base 10)
+    //   - base literal 10        -> log10(value)
+    //   - base literal 2         -> log2(value)
+    //   - arbitrary base b       -> log(value) / log(b)  (change-of-base via natural log,
+    //                                                      exactly log_b(value))
+    open fun clickhouseLogSql(expression: Log): String {
+        // Parser (build_logarithm, LOG_BASE_FIRST=true): LOG(base, value) -> Log(this=base,
+        // expression=value); single-arg LOG(x) -> Log(this=x) with no expression.
+        val value = expression.args["expression"] as? Expression
+        if (value == null) {
+            // Single-arg: `this` is the value; source semantics are base-10.
+            return func("log10", expression.thisArg)
+        }
+        // Two-arg LOG(base, value): `this` is the base.
+        val base = expression.thisArg as? Expression
+        return when {
+            base is Literal && !base.isString && base.name == "10" -> func("log10", value)
+            base is Literal && !base.isString && base.name == "2" -> func("log2", value)
+            else -> "${func("log", value)} / ${func("log", base)}"
+        }
+    }
+
+    // BUGS-clickhouse-generator-mappings row 4 (P1): RegexpReplace. ClickHouse
+    // REGEXP_REPLACE aliases replaceRegexpAll (replaces EVERY match). DuckDB
+    // regexp_replace(s, p, r) replaces only the FIRST match unless the 'g' flag is
+    // present (the parser records single_replace=true + the flag in `modifiers`); Trino
+    // regexp_replace always replaces all (single_replace unset). Emit the matching
+    // ClickHouse primitive: replaceRegexpOne for the DuckDB first-only form, else
+    // replaceRegexpAll. Any regex FLAG other than 'g' (case-insensitive 'i', ...) has no
+    // ClickHouse argument form, so flag it rather than silently drop it.
+    open fun clickhouseRegexpReplaceSql(expression: RegexpReplace): String {
+        val single = expression.args["single_replace"] == true
+        val modifiers = expression.args["modifiers"]
+        val modStr = if (modifiers is Literal && !modifiers.isString) "" else (modifiers as? Literal)?.name ?: ""
+        val global = modStr.contains("g")
+        for (flag in modStr) {
+            if (flag != 'g') {
+                unsupported(
+                    "regexp_replace flag '$flag' has no ClickHouse replaceRegexp* equivalent"
+                )
+            }
+        }
+        val fn = if (single && !global) "replaceRegexpOne" else "replaceRegexpAll"
+        return func(fn, expression.thisArg, expression.args["expression"], expression.args["replacement"])
+    }
+
     companion object {
 
         // sqlglot: ClickHouse.ESCAPED_SEQUENCES (MySQL's map + the \0 unescape)
@@ -813,6 +867,39 @@ open class ClickhouseGenerator(
 
             reg(AnyValue::class) { e -> ch().renameFuncSql("any", e) }
             reg(ApproxDistinct::class) { e -> ch().renameFuncSql("uniq", e) }
+            // BUGS-clickhouse-generator-mappings row 1 (P1): ClickHouse LOWER/UPPER are
+            // ASCII-only (non-ASCII passes through unchanged); the source LOWER/UPPER fold
+            // full Unicode. lowerUTF8/upperUTF8 fold multibyte codepoints (a residual
+            // İ/ß full-case-folding edge divergence remains — kept as a hazard).
+            reg(Lower::class) { e -> func("lowerUTF8", e.thisArg) }
+            reg(Upper::class) { e -> func("upperUTF8", e.thisArg) }
+            // BUGS-clickhouse-generator-mappings rows 3/12 (P1/P2): natural-log collision
+            // + invalid 2-arg LOG. See clickhouseLogSql.
+            reg(Log::class) { e -> ch().clickhouseLogSql(e as Log) }
+            // BUGS-clickhouse-generator-mappings row 4 (P1): first-vs-all replace. See
+            // clickhouseRegexpReplaceSql.
+            reg(RegexpReplace::class) { e -> ch().clickhouseRegexpReplaceSql(e as RegexpReplace) }
+            // BUGS-clickhouse-generator-mappings row 13 (P3): DuckDB xor is BITWISE; the
+            // base emitted `a ^ b`, which ClickHouse has no operator for. bitXor(a, b) is
+            // ClickHouse's bitwise xor (result-identical to DuckDB xor).
+            reg(BitwiseXor::class) { e ->
+                func("bitXor", (e as Binary).thisArg, e.args["expression"])
+            }
+            // BUGS-clickhouse-generator-mappings row 5 (P1): DuckDB week is ISO-8601;
+            // ClickHouse WEEK/toWeek default mode 0 is Sunday-based. toISOWeek matches.
+            reg(Week::class) { e -> func("toISOWeek", e.thisArg) }
+            // BUGS-clickhouse-generator-mappings row 10 (P2): Trino week parses to
+            // WeekOfYear; the emitted WEEK_OF_YEAR does not exist in ClickHouse. Trino week
+            // is ISO -> toISOWeek (result-identical).
+            reg(WeekOfYear::class) { e -> func("toISOWeek", e.thisArg) }
+            // BUGS-clickhouse-generator-mappings row 9 (P2): the emitted DAY_OF_WEEK does
+            // not exist in ClickHouse. toDayOfWeek is the valid name (a residual numbering
+            // divergence — DuckDB Sunday=0 vs ClickHouse ISO Monday=1..Sunday=7 — remains,
+            // kept as a hazard).
+            reg(DayOfWeek::class) { e -> func("toDayOfWeek", e.thisArg) }
+            // BUGS-clickhouse-generator-mappings row 11 (P2): the leaked internal node name
+            // TIME_TO_UNIX does not exist in ClickHouse. toUnixTimestamp is the real name.
+            reg(TimeToUnix::class) { e -> func("toUnixTimestamp", e.thisArg) }
             reg(ArrayDistinct::class) { e -> ch().renameFuncSql("arrayDistinct", e) }
             reg(ArrayConcat::class) { e -> ch().renameFuncSql("arrayConcat", e) }
             reg(ArrayContains::class) { e -> ch().renameFuncSql("has", e) }

@@ -328,11 +328,11 @@ private fun hazardsChunk1(): List<FunctionHazard> = listOf(
         hazard = "Aligned.",
         areas = listOf("datetime"),
         provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
-    // [62] trino: 'week' | clickhouse: 'toWeek'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "ClickHouse toWeek default mode Sunday-based; Trino week()/week_of_year is ISO-8601. Map to toISOWeek for Trino parity.",
+    // [62] trino: 'week' | clickhouse: 'toISOWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Trino week (week_of_year) is ISO-8601; the generator now emits toISOWeek, result-identical (not toWeek mode 0).",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"),
     // [63] trino: 'date_trunc' | clickhouse: 'dateTrunc'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Aligned on the intersecting unit set with matched zones; ClickHouse unit is a string first-arg and DateTime is tz-typed; 1970 floor applies.",
@@ -757,6 +757,7 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TODAY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[105])
     put("TODAYOFMONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[56])
     put("TOHOUR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[57])
+    put("TOISOWEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[62])
     put("TOMILLISECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[60])
     put("TOMINUTE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[58])
     put("TOMONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[55])
@@ -764,7 +765,6 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TOQUARTER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[61])
     put("TOSECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[59])
     put("TOUNIXTIMESTAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[67])
-    put("TOWEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[62])
     put("TOYEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[54])
     put("TRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[4])
     put("TRIMLEFT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[5])

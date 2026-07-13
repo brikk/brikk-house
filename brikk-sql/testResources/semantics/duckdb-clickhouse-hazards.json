@@ -6,7 +6,7 @@
       "duckdb": "lower",
       "clickhouse": "lower",
       "verdict": "divergent",
-      "hazard": "ClickHouse lower() is ASCII-only: '\u0130'/'\u00df'/'\u00c9' pass through unchanged; DuckDB lowercases full Unicode. Parity needs ClickHouse lowerUTF8 \u2014 and even that diverges (\u0130->i+U+0307).",
+      "hazard": "ClickHouse lower() is ASCII-only: 'İ'/'ß'/'É' pass through unchanged; DuckDB lowercases full Unicode. Parity needs ClickHouse lowerUTF8 — and even that diverges (İ->i+U+0307).",
       "areas": [
         "string",
         "unicode"
@@ -17,7 +17,7 @@
       "duckdb": "upper",
       "clickhouse": "upper",
       "verdict": "divergent",
-      "hazard": "ClickHouse upper() is ASCII-only (\u00df/\u00c9 unchanged) vs DuckDB full-Unicode (\u00df->\u1e9e). upperUTF8 folds but \u00df->'SS' (length-changing), still != DuckDB \u1e9e.",
+      "hazard": "ClickHouse upper() is ASCII-only (ß/É unchanged) vs DuckDB full-Unicode (ß->ẞ). upperUTF8 folds but ß->'SS' (length-changing), still != DuckDB ẞ.",
       "areas": [
         "string",
         "unicode"
@@ -28,7 +28,7 @@
       "duckdb": "lcase",
       "clickhouse": "lower",
       "verdict": "divergent",
-      "hazard": "lcase is an alias of ASCII-only lower(); '\u0130' unchanged vs DuckDB 'i'.",
+      "hazard": "lcase is an alias of ASCII-only lower(); 'İ' unchanged vs DuckDB 'i'.",
       "areas": [
         "string",
         "unicode"
@@ -50,7 +50,7 @@
       "duckdb": "length",
       "clickhouse": "length",
       "verdict": "divergent",
-      "hazard": "ClickHouse length() counts BYTES (\ud83d\ude00->4, \u4e2d\u6587->6, ZWJ family->18); DuckDB length() counts code points. Use lengthUTF8/char_length for code-point parity.",
+      "hazard": "ClickHouse length() counts BYTES (😀->4, 中文->6, ZWJ family->18); DuckDB length() counts code points. Use lengthUTF8/char_length for code-point parity.",
       "areas": [
         "string",
         "unicode"
@@ -61,7 +61,7 @@
       "duckdb": "char_length",
       "clickhouse": "char_length",
       "verdict": "identical",
-      "hazard": "Both count code points (\ud83d\ude00->1); ClickHouse char_length == lengthUTF8.",
+      "hazard": "Both count code points (😀->1); ClickHouse char_length == lengthUTF8.",
       "areas": [
         "string",
         "unicode"
@@ -191,7 +191,7 @@
       "duckdb": "instr",
       "clickhouse": "instr",
       "verdict": "divergent",
-      "hazard": "ClickHouse instr is an alias of positionCaseInsensitive \u2014 CASE-INSENSITIVE search; DuckDB instr is case-sensitive (instr('Hello','h')=1 in CH vs 0 in DuckDB).",
+      "hazard": "ClickHouse instr is an alias of positionCaseInsensitive — CASE-INSENSITIVE search; DuckDB instr is case-sensitive (instr('Hello','h')=1 in CH vs 0 in DuckDB).",
       "areas": [
         "string"
       ],
@@ -209,14 +209,14 @@
     },
     {
       "duckdb": "regexp_replace",
-      "clickhouse": "replaceRegexpAll",
-      "verdict": "divergent",
-      "hazard": "ClickHouse regexp_replace aliases replaceRegexpAll (replaces ALL matches); DuckDB regexp_replace replaces only the FIRST match unless the 'g' flag is passed. Also empty-pattern behavior differs (CH no-op vs DuckDB inserts at every position).",
+      "clickhouse": "replaceRegexpOne",
+      "verdict": "identical",
+      "hazard": "DuckDB regexp_replace(s,p,r) replaces only the FIRST match (no 'g' flag); the generator now emits replaceRegexpOne (first-only), result-identical. The 'g'-flag form and Trino's all-form map to replaceRegexpAll. Empty-pattern behavior still worth a live re-check.",
       "areas": [
         "regex",
         "string"
       ],
-      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"
     },
     {
       "duckdb": "regexp_extract",
@@ -315,7 +315,7 @@
       "duckdb": "format",
       "clickhouse": "format",
       "verdict": "divergent",
-      "hazard": "ClickHouse format uses positional {0},{1} placeholders (Python/.NET style); DuckDB format uses fmt/printf %-style. Incompatible spec dialects \u2014 never map by name. (ClickHouse printf() matches DuckDB printf.)",
+      "hazard": "ClickHouse format uses positional {0},{1} placeholders (Python/.NET style); DuckDB format uses fmt/printf %-style. Incompatible spec dialects — never map by name. (ClickHouse printf() matches DuckDB printf.)",
       "areas": [
         "string"
       ],
@@ -376,7 +376,7 @@
       "duckdb": "sha1",
       "clickhouse": "SHA1",
       "verdict": "conditionally-equivalent",
-      "hazard": "Same digest; ClickHouse SHA1 returns raw bytes (FixedString), DuckDB sha1 returns hex VARCHAR \u2014 hex() wrap required.",
+      "hazard": "Same digest; ClickHouse SHA1 returns raw bytes (FixedString), DuckDB sha1 returns hex VARCHAR — hex() wrap required.",
       "areas": [
         "hash"
       ],
@@ -386,7 +386,7 @@
       "duckdb": "sha256",
       "clickhouse": "SHA256",
       "verdict": "conditionally-equivalent",
-      "hazard": "Same digest; ClickHouse returns raw bytes vs DuckDB hex VARCHAR \u2014 hex() wrap required.",
+      "hazard": "Same digest; ClickHouse returns raw bytes vs DuckDB hex VARCHAR — hex() wrap required.",
       "areas": [
         "hash"
       ],
@@ -514,13 +514,13 @@
     },
     {
       "duckdb": "log",
-      "clickhouse": "log",
-      "verdict": "divergent",
-      "hazard": "ClickHouse single-arg log(x)=natural log; DuckDB single-arg log(x)=log10 (base-10). Mapping log->log silently changes base. DuckDB has no 2-arg log; ClickHouse errors on 2-arg log.",
+      "clickhouse": "log10",
+      "verdict": "identical",
+      "hazard": "DuckDB single-arg log(x) is base-10; the generator now emits log10(x), result-identical (never ClickHouse log, which is natural log).",
       "areas": [
         "numeric"
       ],
-      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"
     },
     {
       "duckdb": "log10",
@@ -655,13 +655,13 @@
     },
     {
       "duckdb": "xor",
-      "clickhouse": "xor",
-      "verdict": "divergent",
-      "hazard": "ClickHouse xor is LOGICAL xor (xor(5,3)=0 since both truthy); DuckDB xor is BITWISE (xor(5,3)=6).",
+      "clickhouse": "bitXor",
+      "verdict": "identical",
+      "hazard": "DuckDB xor is bitwise; the generator now emits bitXor(a,b), result-identical (not ClickHouse logical xor, and not the invalid `^` operator).",
       "areas": [
         "numeric"
       ],
-      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#xor-logical-vs-bitwise"
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#xor-logical-vs-bitwise | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"
     },
     {
       "duckdb": "pi",
@@ -966,13 +966,13 @@
     },
     {
       "duckdb": "week",
-      "clickhouse": "toWeek",
-      "verdict": "divergent",
-      "hazard": "ClickHouse toWeek default mode 0 is Sunday-based (2023-01-01 -> 1); DuckDB week is ISO-8601 (-> 52). Map to toISOWeek for ISO parity.",
+      "clickhouse": "toISOWeek",
+      "verdict": "identical",
+      "hazard": "DuckDB week is ISO-8601; the generator now emits toISOWeek, result-identical (not toWeek mode 0 which is Sunday-based).",
       "areas": [
         "datetime"
       ],
-      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode"
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"
     },
     {
       "duckdb": "yearweek",
@@ -1072,7 +1072,7 @@
       "duckdb": "to_days",
       "clickhouse": "toRelativeDayNum",
       "verdict": "divergent",
-      "hazard": "NAME COLLISION: DuckDB to_days(n) constructs an INTERVAL of n days; ClickHouse has no to_days \u2014 the day-number is toRelativeDayNum(date). Completely different intent.",
+      "hazard": "NAME COLLISION: DuckDB to_days(n) constructs an INTERVAL of n days; ClickHouse has no to_days — the day-number is toRelativeDayNum(date). Completely different intent.",
       "areas": [
         "datetime"
       ],
@@ -1092,7 +1092,7 @@
       "duckdb": "timezone",
       "clickhouse": "timezone",
       "verdict": "conditionally-equivalent",
-      "hazard": "ClickHouse timezone() returns the server/session timezone name (String); DuckDB has no zero-arg timezone() scalar (it is a shift function elsewhere) \u2014 session-only, not pushable.",
+      "hazard": "ClickHouse timezone() returns the server/session timezone name (String); DuckDB has no zero-arg timezone() scalar (it is a shift function elsewhere) — session-only, not pushable.",
       "areas": [
         "datetime",
         "timezone"
@@ -1300,7 +1300,7 @@
       "duckdb": "median",
       "clickhouse": "median",
       "verdict": "conditionally-equivalent",
-      "hazard": "median({1,2,3})=2 aligned, but ClickHouse median is an alias for the approximate quantile(0.5) (reservoir) \u2014 exact only for small/simple inputs; DuckDB median is exact.",
+      "hazard": "median({1,2,3})=2 aligned, but ClickHouse median is an alias for the approximate quantile(0.5) (reservoir) — exact only for small/simple inputs; DuckDB median is exact.",
       "areas": [
         "aggregate",
         "numeric"
@@ -1384,7 +1384,7 @@
       "duckdb": "entropy",
       "clickhouse": "entropy",
       "verdict": "conditionally-equivalent",
-      "hazard": "Both compute Shannon entropy of value frequencies; base and exact/approx handling not fully re-probed \u2014 verify before pushing.",
+      "hazard": "Both compute Shannon entropy of value frequencies; base and exact/approx handling not fully re-probed — verify before pushing.",
       "areas": [
         "aggregate",
         "numeric"
@@ -1508,7 +1508,7 @@
       "duckdb": "rand",
       "clickhouse": "rand",
       "verdict": "conditionally-equivalent",
-      "hazard": "Non-deterministic; never pushable/comparable. ClickHouse rand() returns UInt32 range; DuckDB random() returns [0,1) double \u2014 even the range differs.",
+      "hazard": "Non-deterministic; never pushable/comparable. ClickHouse rand() returns UInt32 range; DuckDB random() returns [0,1) double — even the range differs.",
       "areas": [
         "numeric"
       ],

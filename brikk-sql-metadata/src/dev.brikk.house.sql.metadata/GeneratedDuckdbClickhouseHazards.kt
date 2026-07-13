@@ -111,11 +111,11 @@ private fun hazardsChunk0(): List<FunctionHazard> = listOf(
         hazard = "ClickHouse replace == replaceAll: replaces ALL occurrences, same as DuckDB replace.",
         areas = listOf("string"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"),
-    // [19] duckdb: 'regexp_replace' | clickhouse: 'replaceRegexpAll'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "ClickHouse regexp_replace aliases replaceRegexpAll (replaces ALL matches); DuckDB regexp_replace replaces only the FIRST match unless the 'g' flag is passed. Also empty-pattern behavior differs (CH no-op vs DuckDB inserts at every position).",
+    // [19] duckdb: 'regexp_replace' | clickhouse: 'replaceRegexpOne'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB regexp_replace(s,p,r) replaces only the FIRST match (no 'g' flag); the generator now emits replaceRegexpOne (first-only), result-identical. The 'g'-flag form and Trino's all-form map to replaceRegexpAll. Empty-pattern behavior still worth a live re-check.",
         areas = listOf("regex", "string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"),
     // [20] duckdb: 'regexp_extract' | clickhouse: 'regexpExtract'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Group semantics aligned: group 0 = whole match, group N = Nth capture; probed backslash-free to avoid the literal-escaping confound.",
@@ -264,11 +264,11 @@ private fun hazardsChunk1(): List<FunctionHazard> = listOf(
         hazard = "NAME COLLISION + domain: ClickHouse log(x) is NATURAL log (== ln), so mapping DuckDB ln->log is value-correct, but ln(0)/ln(-1): ClickHouse returns NULL, DuckDB THROWS.",
         areas = listOf("numeric"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"),
-    // [49] duckdb: 'log' | clickhouse: 'log'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "ClickHouse single-arg log(x)=natural log; DuckDB single-arg log(x)=log10 (base-10). Mapping log->log silently changes base. DuckDB has no 2-arg log; ClickHouse errors on 2-arg log.",
+    // [49] duckdb: 'log' | clickhouse: 'log10'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB single-arg log(x) is base-10; the generator now emits log10(x), result-identical (never ClickHouse log, which is natural log).",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"),
     // [50] duckdb: 'log10' | clickhouse: 'log10'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Base-10 log; log10(1000)=3 in both (map DuckDB log10 to ClickHouse log10, never to log).",
@@ -334,11 +334,11 @@ private fun hazardsChunk1(): List<FunctionHazard> = listOf(
         hazard = "Rename/behaviour aligned on hex decode; ClickHouse returns String, DuckDB BLOB (type-layer).",
         areas = listOf("string"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
-    // [63] duckdb: 'xor' | clickhouse: 'xor'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "ClickHouse xor is LOGICAL xor (xor(5,3)=0 since both truthy); DuckDB xor is BITWISE (xor(5,3)=6).",
+    // [63] duckdb: 'xor' | clickhouse: 'bitXor'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB xor is bitwise; the generator now emits bitXor(a,b), result-identical (not ClickHouse logical xor, and not the invalid `^` operator).",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#xor-logical-vs-bitwise"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#xor-logical-vs-bitwise | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"),
     // [64] duckdb: 'pi' | clickhouse: 'pi'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "3.141592653589793 in both.",
@@ -492,11 +492,11 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         hazard = "Aligned.",
         areas = listOf("datetime"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
-    // [94] duckdb: 'week' | clickhouse: 'toWeek'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "ClickHouse toWeek default mode 0 is Sunday-based (2023-01-01 -> 1); DuckDB week is ISO-8601 (-> 52). Map to toISOWeek for ISO parity.",
+    // [94] duckdb: 'week' | clickhouse: 'toISOWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB week is ISO-8601; the generator now emits toISOWeek, result-identical (not toWeek mode 0 which is Sunday-based).",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"),
     // [95] duckdb: 'yearweek' | clickhouse: 'toYearWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse toYearWeek default mode 0 (Sunday weeks, calendar year): 2024-12-30 -> 202452; DuckDB yearweek is ISO (-> 202501). Numbering AND year differ at boundaries.",
@@ -964,6 +964,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("BASE64DECODE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[33])
     put("BASE64ENCODE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[32])
     put("BIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[60])
+    put("BITXOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[63])
     put("CBRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[79])
     put("CEIL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[45])
     put("CHAR_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[5])
@@ -1006,7 +1007,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[4])
     put("LGAMMA", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[82])
     put("LOG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[48])
-    put("LOG10", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[50])
+    put("LOG10", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[49])
     put("LOG2", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[51])
     put("LOWER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[0])
     put("MAP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[151])
@@ -1036,7 +1037,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("REGEXPEXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[20])
     put("REPEAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[27])
     put("REPLACEALL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[18])
-    put("REPLACEREGEXPALL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[19])
+    put("REPLACEREGEXPONE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[19])
     put("REVERSE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[8])
     put("RIGHT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[26])
     put("RIGHTPAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[23])
@@ -1063,6 +1064,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("TODAYOFWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[91])
     put("TODAYOFYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[92])
     put("TOHOUR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[87])
+    put("TOISOWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[94])
     put("TOLASTDAYOFMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[100])
     put("TOMILLISECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[90])
     put("TOMINUTE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[88])
@@ -1070,7 +1072,6 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("TOQUARTER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[93])
     put("TORELATIVEDAYNUM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[104])
     put("TOSECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[89])
-    put("TOWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[94])
     put("TOYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[83])
     put("TOYEARWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[95])
     put("TRANSLATE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[28])
@@ -1083,5 +1084,4 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("VARPOP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[120])
     put("VARSAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[121])
     put("VERSION", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[147])
-    put("XOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[63])
 }
