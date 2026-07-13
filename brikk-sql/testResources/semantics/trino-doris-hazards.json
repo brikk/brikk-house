@@ -2136,6 +2136,136 @@
         "float"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "trino": "length",
+      "doris": "char_length",
+      "verdict": "identical",
+      "hazard": "Trino length() counts code points; equals Doris char_length ('中文'->2).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "substr",
+      "doris": "left",
+      "verdict": "identical",
+      "hazard": "Doris left(s,n) == Trino substr(s,1,n).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "substr",
+      "doris": "right",
+      "verdict": "identical",
+      "hazard": "Doris right(s,n) == Trino substr(s,-n).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "substr",
+      "doris": "ends_with",
+      "verdict": "identical",
+      "hazard": "Doris ends_with has no Trino builtin; equals a Trino substr-suffix compare (result-identical).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "strpos",
+      "doris": "instr",
+      "verdict": "identical",
+      "hazard": "1-based first-occurrence index agrees; arg order differs (strpos(hay,needle) vs instr(hay,needle)).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "bitwise_and",
+      "doris": "bitand",
+      "verdict": "identical",
+      "hazard": "12&10->8.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "bitwise_or",
+      "doris": "bitor",
+      "verdict": "identical",
+      "hazard": "12|10->14.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "bitwise_xor",
+      "doris": "bitxor",
+      "verdict": "identical",
+      "hazard": "12^10->6.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "coalesce",
+      "doris": "nvl",
+      "verdict": "identical",
+      "hazard": "Doris nvl(a,b) == Trino coalesce(a,b) for 2 args.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "extract",
+      "doris": "extract",
+      "verdict": "identical",
+      "hazard": "EXTRACT(part FROM d) agrees.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "json_extract_scalar",
+      "doris": "get_json_string",
+      "verdict": "identical",
+      "hazard": "Scalar JSON string extraction agrees.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "json_array_length",
+      "doris": "json_length",
+      "verdict": "identical",
+      "hazard": "JSON array length agrees.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
+    },
+    {
+      "trino": "",
+      "doris": "initcap",
+      "verdict": "no-equivalent",
+      "hazard": "Doris initcap (title-case) has no Trino builtin; Trino needs a manual regexp_replace/upper-first construction.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Trino 481 vs Doris (FE pr62767-local / BE 4.1.2); docs/research/probe-runs/trino-doris-round2.*"
     }
   ]
 }

@@ -133,7 +133,7 @@ class HazardsRegistrySyncTest {
         // Populated by the doris live-probe program; counts must match the generated
         // registries (see HazardRegistryTest pins).
         assertEquals(255, loadPairCount("semantics/duckdb-doris-hazards.json"))
-        assertEquals(203, loadPairCount("semantics/trino-doris-hazards.json"))
+        assertEquals(216, loadPairCount("semantics/trino-doris-hazards.json"))
         assertNotNull(HazardRegistry.lookup("duckdb", "doris", "lower"))
         assertNotNull(HazardRegistry.lookup("trino", "doris", "ascii"))
     }

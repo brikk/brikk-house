@@ -114,7 +114,7 @@ class HazardRegistryTest {
         // Populated by the doris live-probe program (REPORT-doris-differential-probe-
         // 2026-07-13); counts pinned to the ingested registries.
         assertEquals(255, DUCKDB_DORIS_HAZARD_ENTRIES.size)
-        assertEquals(203, TRINO_DORIS_HAZARD_ENTRIES.size)
+        assertEquals(216, TRINO_DORIS_HAZARD_ENTRIES.size)
         assertTrue(DUCKDB_TO_DORIS_HAZARDS.isNotEmpty())
         assertTrue(DORIS_TO_DUCKDB_HAZARDS.isNotEmpty())
         assertTrue(TRINO_TO_DORIS_HAZARDS.isNotEmpty())
