@@ -12,7 +12,7 @@
 #
 # This temporarily enables the release settings in publish.module-template.yaml
 # (version + mavenCentral + signArtifacts) and restores the file on exit, so the committed
-# config keeps the keyless SNAPSHOT / GitHub Packages flows working.
+# config keeps the keyless SNAPSHOT flow working.
 #
 # Central defaults to "manual" mode: this uploads + validates one deployment bundle per
 # module, then stops. Finish the release at:

@@ -93,7 +93,6 @@ Publish a snapshot manually (needs `brikk.mavencentral.user`/`brikk.mavencentral
 
 ```bash
 ./kotlin publish centralSnapshots   # Central snapshots
-./kotlin publish brikkPublic        # GitHub Packages (alternative)
 ./kotlin publish mavenLocal         # local ~/.m2 (smoke test)
 ```
 

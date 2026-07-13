@@ -1,15 +1,13 @@
 # Shared publishing configuration for the public Brikk libraries.
 # Applied by each publishable module via `apply: [ ../publish.module-template.yaml ]`.
 #
-# Credentials (regular repos) are read from the project-root `.env` file (gitignored):
-#   - GitHub Packages PAT:   brikk.gpr.user / brikk.gpr.key
-#   - Central Portal token:  brikk.mavencentral.user / brikk.mavencentral.pass
-# On CI, write those keys into `.env` from the org secrets before publishing to a
-# regular repo (the regular-repo path has NO env-var credential fallback).
+# Credentials for the regular Central snapshots repo are read from the project-root `.env`
+# file (gitignored) under `brikk.mavencentral.user` / `brikk.mavencentral.pass`.
+# On CI, write those keys into `.env` from the org secrets before publishing (the regular-repo
+# path has NO env-var credential fallback).
 #
 # Publish targets:
 #   ./kotlin publish mavenLocal       -> local ~/.m2 (pipeline smoke test)
-#   ./kotlin publish brikkPublic      -> GitHub Packages (SNAPSHOT ok)
 #   ./kotlin publish centralSnapshots -> Central snapshots repo (SNAPSHOT ok; regular deploy)
 #   ./kotlin publish mavenCentral     -> Central release (NON-snapshot only; Portal bundle API,
 #                                        needs KOTLIN_TOOLCHAIN_* env vars + signing; see below)
@@ -18,17 +16,6 @@
 # `kmp/lib` modules, consumers should depend on the per-platform JVM artifact, e.g.
 #   dev.brikk.house:brikk-sql-jvm:0.1.0-SNAPSHOT
 repositories:
-  # The public GitHub Packages Maven repo. Publish with: `./kotlin publish brikkPublic`
-  # resolve: false -> publish-only; keeps it out of dependency resolution (avoids 403 noise
-  # from querying it for third-party release artifacts it doesn't serve).
-  - id: brikkPublic
-    url: https://maven.pkg.github.com/brikk/public-maven
-    publish: true
-    resolve: false
-    credentials:
-      file: .env
-      usernameKey: brikk.gpr.user
-      passwordKey: brikk.gpr.key
   # Central Portal SNAPSHOT repo. This is a *regular* Maven repo (not the Portal bundle API),
   # so it accepts -SNAPSHOT versions and bypasses the release-only publish path.
   # Publish with: `./kotlin publish centralSnapshots`
@@ -56,7 +43,7 @@ settings:
     # --- Central RELEASE toggle (leave disabled for normal dev/snapshot work) ---
     # `mavenCentral: enabled` turns on the Central Portal release path (`./kotlin publish
     # mavenCentral`). It is validated eagerly: enabling it forces `signArtifacts: true`
-    # (which is GLOBAL — then EVERY publish, incl. brikkPublic/centralSnapshots/mavenLocal,
+    # (which is GLOBAL — then EVERY publish, incl. centralSnapshots/mavenLocal,
     # needs KOTLIN_TOOLCHAIN_SIGNING_KEY), and it REJECTS -SNAPSHOT versions.
     # To cut a release, uncomment the two lines below, set `version` to a release (e.g.
     # 0.1.0), and run from CI (creds/signing from KOTLIN_TOOLCHAIN_* env vars). Toolchain

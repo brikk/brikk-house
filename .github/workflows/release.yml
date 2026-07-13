@@ -47,15 +47,13 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Release version: $VERSION"
 
-      # The build config references .env as the credentials file for the brikkPublic and
-      # centralSnapshots repos, so the model won't load unless it exists with those keys.
+      # The build config references .env as the credentials file for the centralSnapshots
+      # repo, so the model won't load unless it exists with those keys.
       # (The mavenCentral release path itself authenticates via the KOTLIN_TOOLCHAIN_* env vars.)
       - name: Write .env credentials
         run: |
           umask 077
           cat > .env <<EOF
-          brikk.gpr.user=${{ github.actor }}
-          brikk.gpr.key=${{ secrets.GITHUB_TOKEN }}
           brikk.mavencentral.user=${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME }}
           brikk.mavencentral.pass=${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD }}
           EOF
