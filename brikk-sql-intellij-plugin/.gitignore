@@ -1,4 +1,0 @@
-# Gradle (this module is a standalone Gradle build; the rest of the repo is Kotlin Toolchain)
-.gradle/
-build/
-.intellijPlatform/
