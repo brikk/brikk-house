@@ -1574,6 +1574,159 @@
         "map"
       ],
       "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape"
+    },
+    {
+      "duckdb": "coalesce",
+      "clickhouse": "coalesce",
+      "verdict": "identical",
+      "hazard": "First non-NULL agrees.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "nullif",
+      "clickhouse": "nullIf",
+      "verdict": "identical",
+      "hazard": "nullif(5,5)->NULL in both.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "if",
+      "clickhouse": "if",
+      "verdict": "identical",
+      "hazard": "if(cond,a,b) agrees.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "ifnull",
+      "clickhouse": "ifNull",
+      "verdict": "identical",
+      "hazard": "ifnull(NULL,7)->7 in both.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "greatest",
+      "clickhouse": "greatest",
+      "verdict": "identical",
+      "hazard": "Both SKIP NULL (greatest(1,NULL,3)->3). NB: differs from Doris, which propagates NULL.",
+      "areas": [
+        "null",
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "least",
+      "clickhouse": "least",
+      "verdict": "identical",
+      "hazard": "Both SKIP NULL (least(1,NULL,3)->1). NB: differs from Doris, which propagates NULL.",
+      "areas": [
+        "null",
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "starts_with",
+      "clickhouse": "startsWith",
+      "verdict": "identical",
+      "hazard": "Prefix test agrees.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "ends_with",
+      "clickhouse": "endsWith",
+      "verdict": "identical",
+      "hazard": "Suffix test agrees.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "split_part",
+      "clickhouse": "splitByChar",
+      "verdict": "identical",
+      "hazard": "1-based part selection agrees; ClickHouse form is splitByChar(delim,str)[n].",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "chr",
+      "clickhouse": "char",
+      "verdict": "identical",
+      "hazard": "Code-point to char agrees (chr(65)->'A').",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "contains",
+      "clickhouse": "position",
+      "verdict": "identical",
+      "hazard": "Substring containment agrees; ClickHouse form is position(hay,needle)>0.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "regexp_full_match",
+      "clickhouse": "match",
+      "verdict": "identical",
+      "hazard": "Full-string regex match agrees; ClickHouse match uses ^...$ anchoring.",
+      "areas": [
+        "regex",
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "bitwise_and",
+      "clickhouse": "bitAnd",
+      "verdict": "identical",
+      "hazard": "Bitwise AND agrees (12&10->8).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "bitwise_or",
+      "clickhouse": "bitOr",
+      "verdict": "identical",
+      "hazard": "Bitwise OR agrees (12|10->14).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "extract",
+      "clickhouse": "extract",
+      "verdict": "identical",
+      "hazard": "EXTRACT(part FROM d) agrees for year.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
     }
   ]
 }

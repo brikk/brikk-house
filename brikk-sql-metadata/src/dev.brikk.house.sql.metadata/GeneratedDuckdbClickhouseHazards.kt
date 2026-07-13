@@ -9,11 +9,12 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 152 probe-verified (duckdb, clickhouse) pair verdicts, in JSON order. */
+/** The 167 probe-verified (duckdb, clickhouse) pair verdicts, in JSON order. */
 internal val DUCKDB_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
-    hazardsChunk3()
+    hazardsChunk3() +
+    hazardsChunk4()
 
 private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     // [0] duckdb: 'lower' | clickhouse: 'lower'
@@ -785,9 +786,87 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         hazard = "Constructs a MAP in both but the CONSTRUCTOR SHAPE differs: ClickHouse map(k1,v1,k2,v2,...) (flat kv list) vs DuckDB map([keys],[values]) (two arrays). Value-equal, call-incompatible.",
         areas = listOf("map"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape"),
+    // [152] duckdb: 'coalesce' | clickhouse: 'coalesce'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "First non-NULL agrees.",
+        areas = listOf("null"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [153] duckdb: 'nullif' | clickhouse: 'nullIf'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "nullif(5,5)->NULL in both.",
+        areas = listOf("null"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [154] duckdb: 'if' | clickhouse: 'if'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "if(cond,a,b) agrees.",
+        areas = listOf("null"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [155] duckdb: 'ifnull' | clickhouse: 'ifNull'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ifnull(NULL,7)->7 in both.",
+        areas = listOf("null"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [156] duckdb: 'greatest' | clickhouse: 'greatest'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Both SKIP NULL (greatest(1,NULL,3)->3). NB: differs from Doris, which propagates NULL.",
+        areas = listOf("null", "numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [157] duckdb: 'least' | clickhouse: 'least'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Both SKIP NULL (least(1,NULL,3)->1). NB: differs from Doris, which propagates NULL.",
+        areas = listOf("null", "numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [158] duckdb: 'starts_with' | clickhouse: 'startsWith'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Prefix test agrees.",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [159] duckdb: 'ends_with' | clickhouse: 'endsWith'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Suffix test agrees.",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
 )
 
-/** duckdb->clickhouse lookup: 152 keys (DuckDB-side names) over 152 entries. */
+private fun hazardsChunk4(): List<FunctionHazard> = listOf(
+    // [160] duckdb: 'split_part' | clickhouse: 'splitByChar'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "1-based part selection agrees; ClickHouse form is splitByChar(delim,str)[n].",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [161] duckdb: 'chr' | clickhouse: 'char'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Code-point to char agrees (chr(65)->'A').",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [162] duckdb: 'contains' | clickhouse: 'position'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Substring containment agrees; ClickHouse form is position(hay,needle)>0.",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [163] duckdb: 'regexp_full_match' | clickhouse: 'match'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Full-string regex match agrees; ClickHouse match uses ^...\$ anchoring.",
+        areas = listOf("regex", "string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [164] duckdb: 'bitwise_and' | clickhouse: 'bitAnd'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Bitwise AND agrees (12&10->8).",
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [165] duckdb: 'bitwise_or' | clickhouse: 'bitOr'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Bitwise OR agrees (12|10->14).",
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [166] duckdb: 'extract' | clickhouse: 'extract'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "EXTRACT(part FROM d) agrees for year.",
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+)
+
+/** duckdb->clickhouse lookup: 167 keys (DuckDB-side names) over 167 entries. */
 internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("ACOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[66])
@@ -806,14 +885,19 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("ATANH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[69])
     put("AVG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[113])
     put("BIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[60])
+    put("BITWISE_AND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[164])
+    put("BITWISE_OR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[165])
     put("CARDINALITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[110])
     put("CBRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[79])
     put("CEIL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[45])
     put("CEILING", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[46])
     put("CHARACTER_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[6])
     put("CHAR_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[5])
+    put("CHR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[161])
+    put("COALESCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[152])
     put("CONCAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[12])
     put("CONCAT_WS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[13])
+    put("CONTAINS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[162])
     put("CORR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[122])
     put("COS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[74])
     put("COSH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[77])
@@ -835,8 +919,10 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("DEGREES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[80])
     put("DENSE_RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[136])
     put("DIVIDE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[38])
+    put("ENDS_WITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[159])
     put("ENTROPY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[133])
     put("EXP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[65])
+    put("EXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[166])
     put("FACTORIAL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[52])
     put("FIRST_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[138])
     put("FLATTEN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[108])
@@ -844,10 +930,13 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("FORMAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[29])
     put("FROM_BASE64", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[33])
     put("GCD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[58])
+    put("GREATEST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[156])
     put("GROUP_CONCAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[132])
     put("HEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[61])
     put("HISTOGRAM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[130])
     put("HOUR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[87])
+    put("IF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[154])
+    put("IFNULL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[155])
     put("INSTR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[17])
     put("ISFINITE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[57])
     put("ISNAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[56])
@@ -857,6 +946,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("LCASE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[2])
     put("LCM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[59])
     put("LEAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[143])
+    put("LEAST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[157])
     put("LEFT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[25])
     put("LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[4])
     put("LGAMMA", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[82])
@@ -881,6 +971,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("NOW", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[102])
     put("NTH_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[144])
     put("NTILE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[137])
+    put("NULLIF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[153])
     put("OCTET_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[7])
     put("PERCENT_RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[140])
     put("PI", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[64])
@@ -895,6 +986,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("RANGE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[107])
     put("RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[135])
     put("REGEXP_EXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[20])
+    put("REGEXP_FULL_MATCH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[163])
     put("REGEXP_MATCHES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[21])
     put("REGEXP_REPLACE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[19])
     put("REPEAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[27])
@@ -913,7 +1005,9 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("SIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[73])
     put("SINH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[76])
     put("SOUNDEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[31])
+    put("SPLIT_PART", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[160])
     put("SQRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[47])
+    put("STARTS_WITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[158])
     put("STDDEV", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[119])
     put("STDDEV_POP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[117])
     put("STDDEV_SAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[118])
@@ -943,7 +1037,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("YEARWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[95])
 }
 
-/** clickhouse->duckdb lookup: 139 keys (ClickHouse-side names) over 152 entries. */
+/** clickhouse->duckdb lookup: 152 keys (ClickHouse-side names) over 167 entries. */
 internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("ACOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[66])
@@ -964,10 +1058,14 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("BASE64DECODE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[33])
     put("BASE64ENCODE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[32])
     put("BIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[60])
+    put("BITAND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[164])
+    put("BITOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[165])
     put("BITXOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[63])
     put("CBRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[79])
     put("CEIL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[45])
+    put("CHAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[161])
     put("CHAR_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[5])
+    put("COALESCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[152])
     put("CONCAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[12])
     put("CONCAT_WS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[13])
     put("CORR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[122])
@@ -984,17 +1082,22 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("DEGREES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[80])
     put("DENSE_RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[136])
     put("DIVIDE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[38])
+    put("ENDSWITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[159])
     put("ENTROPY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[133])
     put("EXP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[65])
+    put("EXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[166])
     put("FACTORIAL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[52])
     put("FIRST_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[138])
     put("FLOOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[44])
     put("FORMAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[29])
     put("GCD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[58])
     put("GENERATEUUIDV4", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[150])
+    put("GREATEST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[156])
     put("GROUPARRAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[111])
     put("HEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[61])
     put("HISTOGRAM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[130])
+    put("IF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[154])
+    put("IFNULL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[155])
     put("INSTR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[17])
     put("ISFINITE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[57])
     put("ISNAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[56])
@@ -1002,6 +1105,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("LAST_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[139])
     put("LCM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[59])
     put("LEAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[143])
+    put("LEAST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[157])
     put("LEFT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[25])
     put("LEFTPAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[22])
     put("LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[4])
@@ -1022,6 +1126,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("NOW", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[102])
     put("NTH_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[144])
     put("NTILE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[137])
+    put("NULLIF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[153])
     put("OCTET_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[7])
     put("PERCENT_RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[140])
     put("PI", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[64])
@@ -1050,7 +1155,9 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("SIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[73])
     put("SINH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[76])
     put("SOUNDEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[31])
+    put("SPLITBYCHAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[160])
     put("SQRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[47])
+    put("STARTSWITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[158])
     put("STDDEV", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[119])
     put("STDDEVPOP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[117])
     put("STDDEVSAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[118])
