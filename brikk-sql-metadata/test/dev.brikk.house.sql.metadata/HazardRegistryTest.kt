@@ -52,7 +52,8 @@ class HazardRegistryTest {
 
     @Test
     fun unknownPairsAndNamesReturnNull() {
-        assertNull(HazardRegistry.lookup("trino", "doris", "lower"))
+        // mysql<->doris has no hazards file; same-dialect pairs never do.
+        assertNull(HazardRegistry.lookup("mysql", "doris", "lower"))
         assertNull(HazardRegistry.lookup("duckdb", "duckdb", "lower"))
         assertNull(HazardRegistry.lookup("trino", "duckdb", "definitely_not_a_function"))
     }
@@ -109,18 +110,18 @@ class HazardRegistryTest {
     }
 
     @Test
-    fun emptyDorisSkeletonPairsAreWired() {
-        // duckdb↔doris and trino↔doris ship empty until live probes land; maps must
-        // exist (wired in HazardRegistry) so regeneration only fills Generated* files.
-        assertEquals(0, DUCKDB_DORIS_HAZARD_ENTRIES.size)
-        assertEquals(0, TRINO_DORIS_HAZARD_ENTRIES.size)
-        assertTrue(DUCKDB_TO_DORIS_HAZARDS.isEmpty())
-        assertTrue(DORIS_TO_DUCKDB_HAZARDS.isEmpty())
-        assertTrue(TRINO_TO_DORIS_HAZARDS.isEmpty())
-        assertTrue(DORIS_TO_TRINO_HAZARDS.isEmpty())
-        assertNull(HazardRegistry.lookup("duckdb", "doris", "abs"))
-        assertNull(HazardRegistry.lookup("trino", "doris", "lower"))
-        assertNull(HazardRegistry.lookup("doris", "duckdb", "abs"))
-        assertNull(HazardRegistry.lookup("doris", "trino", "lower"))
+    fun dorisPairsArePopulatedByLiveProbes() {
+        // Populated by the doris live-probe program (REPORT-doris-differential-probe-
+        // 2026-07-13); counts pinned to the ingested registries.
+        assertEquals(255, DUCKDB_DORIS_HAZARD_ENTRIES.size)
+        assertEquals(203, TRINO_DORIS_HAZARD_ENTRIES.size)
+        assertTrue(DUCKDB_TO_DORIS_HAZARDS.isNotEmpty())
+        assertTrue(DORIS_TO_DUCKDB_HAZARDS.isNotEmpty())
+        assertTrue(TRINO_TO_DORIS_HAZARDS.isNotEmpty())
+        assertTrue(DORIS_TO_TRINO_HAZARDS.isNotEmpty())
+        // Live-probed verdict spot checks: unicode case folding diverges.
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "doris", "lower")?.verdict)
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("trino", "doris", "trim")?.verdict)
     }
+
 }

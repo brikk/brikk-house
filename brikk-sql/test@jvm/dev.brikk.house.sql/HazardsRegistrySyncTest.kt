@@ -129,12 +129,13 @@ class HazardsRegistrySyncTest {
     }
 
     @Test
-    fun emptyDorisSkeletonJsonsShipWithZeroPairs() {
-        // Skeleton JSONs ship with pairs: []; registry wiring is asserted in
-        // brikk-sql-metadata HazardRegistryTest (internal maps). Public lookup stays null.
-        assertEquals(0, loadPairCount("semantics/duckdb-doris-hazards.json"))
-        assertEquals(0, loadPairCount("semantics/trino-doris-hazards.json"))
-        assertNull(HazardRegistry.lookup("duckdb", "doris", "abs"))
-        assertNull(HazardRegistry.lookup("trino", "doris", "abs"))
+    fun dorisJsonsCarryLiveProbePairs() {
+        // Populated by the doris live-probe program; counts must match the generated
+        // registries (see HazardRegistryTest pins).
+        assertEquals(255, loadPairCount("semantics/duckdb-doris-hazards.json"))
+        assertEquals(203, loadPairCount("semantics/trino-doris-hazards.json"))
+        assertNotNull(HazardRegistry.lookup("duckdb", "doris", "lower"))
+        assertNotNull(HazardRegistry.lookup("trino", "doris", "ascii"))
     }
+
 }
