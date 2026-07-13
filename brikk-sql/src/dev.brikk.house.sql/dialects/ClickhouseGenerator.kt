@@ -725,6 +725,24 @@ open class ClickhouseGenerator(
     // ClickHouse primitive: replaceRegexpOne for the DuckDB first-only form, else
     // replaceRegexpAll. Any regex FLAG other than 'g' (case-insensitive 'i', ...) has no
     // ClickHouse argument form, so flag it rather than silently drop it.
+    // BUGS-clickhouse-generator-mappings row 6 (P1): DuckDB/Trino millisecond(t) reaches
+    // us as an unresolved Anonymous call (no canonical node) and used to pass through
+    // verbatim, but ClickHouse has NO `millisecond` function — its toMillisecond returns
+    // only the SUB-SECOND component, whereas the source millisecond is
+    // seconds-within-minute*1000 + ms. Emit the compound. Live-differential-verified vs
+    // ClickHouse 26.5.1.1 + DuckDB 1.5.4 (30123, 0, 5789, 56001 all match). `millisecond`
+    // is not a ClickHouse function name, so this never fires on ClickHouse->ClickHouse.
+    override fun anonymousSql(expression: Anonymous): String {
+        if (expression.name.equals("millisecond", ignoreCase = true)) {
+            val args = expression.expressionsArg
+            if (args.size == 1) {
+                val t = args[0]
+                return "(${func("toSecond", t)} * 1000 + ${func("toMillisecond", t)})"
+            }
+        }
+        return super.anonymousSql(expression)
+    }
+
     open fun clickhouseRegexpReplaceSql(expression: RegexpReplace): String {
         val single = expression.args["single_replace"] == true
         val modifiers = expression.args["modifiers"]
@@ -902,19 +920,22 @@ open class ClickhouseGenerator(
             // BUGS-clickhouse-generator-mappings row 11 (P2): the leaked internal node name
             // TIME_TO_UNIX does not exist in ClickHouse. toUnixTimestamp is the real name.
             reg(TimeToUnix::class) { e -> func("toUnixTimestamp", e.thisArg) }
-            // TODO(clickhouse-bugs): DEFERRED rows from BUGS-clickhouse-generator-mappings,
-            // to be done WITH the live ClickHouse verifier (they need live-edge evidence a
-            // static port can't safely synthesize) — each is still gated by a divergent
-            // hazard:
-            //   row 2  round  : banker's vs half-away; needs a shim that also threads the
-            //                    `decimals` arg (float-precision-sensitive) — verify live.
-            //   row 6  millisecond : Anonymous; rewrite to (toSecond*1000 + toMillisecond)
-            //                    (BUGS-verified formula) — confirm edges, then reconcile.
-            //   row 7  bin    : Anonymous; strip ClickHouse's byte zero-padding.
+            // TODO(clickhouse-bugs): DEFERRED rows from BUGS-clickhouse-generator-mappings
+            // (millisecond, row 6, is now fixed via anonymousSql below — verified live):
+            //   row 2  round  : half-away shim `sign(x)*floor(abs(x)*pow(10,d)+0.5)/pow(10,d)`
+            //                    is live-VERIFIED (matches DuckDB across 2.5/0.5/-2.5/2dp),
+            //                    but `round` is a ClickHouse-NATIVE name and this generator
+            //                    is source-unaware, so applying it would regress CH->CH
+            //                    banker's rounding — deferred pending that policy call.
+            //   row 7  bin    : strip-leading-zeros shim
+            //                    `if(x=0,'0',substring(bin(x),position(bin(x),'1')))` is
+            //                    live-VERIFIED, but `bin` is CH-native too — same CH->CH
+            //                    regression concern as round.
             //   row 8  to_days: the ToDays node is source-ambiguous (DuckDB interval-builder
             //                    vs MySQL day-number) — fix belongs in the DuckDB PARSER,
             //                    not here, so a target rewrite isn't safe for all sources.
-            //   row 14 age    : Anonymous; reconstruct ClickHouse age('unit', start, end).
+            //   row 14 age    : return-type mismatch — DuckDB age(a,b) yields an INTERVAL,
+            //                    ClickHouse age('unit',start,end) a scalar; no clean map.
             reg(ArrayDistinct::class) { e -> ch().renameFuncSql("arrayDistinct", e) }
             reg(ArrayConcat::class) { e -> ch().renameFuncSql("arrayConcat", e) }
             reg(ArrayContains::class) { e -> ch().renameFuncSql("has", e) }

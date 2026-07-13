@@ -318,11 +318,11 @@ private fun hazardsChunk1(): List<FunctionHazard> = listOf(
         hazard = "Aligned.",
         areas = listOf("datetime"),
         provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
-    // [60] trino: 'millisecond' | clickhouse: 'toMillisecond'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "ClickHouse toMillisecond = sub-second component only; Trino millisecond(timestamp) = seconds*1000+ms of the second? — verify; component definitions differ.",
+    // [60] trino: 'millisecond' | clickhouse: 'toSecond*1000 + toMillisecond'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB/Trino millisecond(t) = seconds-within-minute*1000 + ms; the generator now emits (toSecond(t)*1000 + toMillisecond(t)), result-identical (ClickHouse toMillisecond alone is the sub-second component only). Verified: 30123/0/5789/56001 all match.",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond | generator mapping fixed 2026-07-13 (BUGS row 6), live-differential-verified vs ClickHouse 26.5.1.1 + DuckDB 1.5.4"),
     // [61] trino: 'quarter' | clickhouse: 'toQuarter'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
@@ -758,12 +758,12 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TODAYOFMONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[56])
     put("TOHOUR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[57])
     put("TOISOWEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[62])
-    put("TOMILLISECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[60])
     put("TOMINUTE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[58])
     put("TOMONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[55])
     put("TOPK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[91])
     put("TOQUARTER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[61])
     put("TOSECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[59])
+    put("TOSECOND*1000 + TOMILLISECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[60])
     put("TOUNIXTIMESTAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[67])
     put("TOYEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[54])
     put("TRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[4])

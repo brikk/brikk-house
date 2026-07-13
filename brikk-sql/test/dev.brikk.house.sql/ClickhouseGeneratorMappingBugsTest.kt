@@ -106,17 +106,30 @@ class ClickhouseGeneratorMappingBugsTest {
         assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "xor")?.verdict)
     }
 
-    // -- Deferred (documented in the BUGS file): no safe generator rewrite ----------
+    @Test
+    fun p1_millisecond_compound() {
+        // DuckDB/Trino millisecond(t) = seconds-within-minute*1000 + ms; ClickHouse
+        // toMillisecond is the sub-second component only. Emit the compound. Live-
+        // differential-verified vs ClickHouse 26.5.1.1 + DuckDB 1.5.4.
+        assertEquals("SELECT (toSecond(t) * 1000 + toMillisecond(t))", ch("SELECT millisecond(t)", "duckdb"))
+        // Reconciled -> identical (verified). `millisecond` is not a ClickHouse function
+        // name, so the rewrite never fires on ClickHouse->ClickHouse.
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "millisecond")?.verdict)
+    }
+
+    // -- Deferred (documented in the BUGS file) -------------------------------------
 
     @Test
-    fun deferred_stayDivergentAndGuarded() {
-        // round (banker's vs half-away, no pure rename), millisecond / bin / age (reach us
-        // as unresolved Anonymous calls needing compound rewrites), and to_days (a
-        // source-ambiguous name/intent collision) are NOT rewritten this pass; their
-        // divergent hazards correctly keep guarding them (see the BUGS file DEFERRED rows).
+    fun deferred_stayGuarded() {
+        // round / bin (P1): verified half-away / strip-leading-zeros shims EXIST (recorded
+        // in the BUGS file), but `round` and `bin` are ClickHouse-NATIVE names, so a
+        // source-unaware generator rewrite would regress ClickHouse->ClickHouse numeric/
+        // binary results -- deferred pending that policy call. age (return-type mismatch:
+        // DuckDB interval vs ClickHouse scalar) and to_days (parser-level source ambiguity)
+        // are genuinely unmappable here. All stay divergent-and-guarded.
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "round")?.verdict)
-        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "millisecond")?.verdict)
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "bin")?.verdict)
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "age")?.verdict)
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "to_days")?.verdict)
     }
 }

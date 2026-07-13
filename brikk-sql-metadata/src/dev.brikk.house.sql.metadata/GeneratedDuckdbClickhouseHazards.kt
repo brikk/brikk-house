@@ -472,11 +472,11 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         hazard = "Aligned.",
         areas = listOf("datetime"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
-    // [90] duckdb: 'millisecond' | clickhouse: 'toMillisecond'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "ClickHouse toMillisecond returns ONLY the sub-second millisecond component (123); DuckDB millisecond returns seconds*1000+ms (30123).",
+    // [90] duckdb: 'millisecond' | clickhouse: 'toSecond*1000 + toMillisecond'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB/Trino millisecond(t) = seconds-within-minute*1000 + ms; the generator now emits (toSecond(t)*1000 + toMillisecond(t)), result-identical (ClickHouse toMillisecond alone is the sub-second component only). Verified: 30123/0/5789/56001 all match.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond | generator mapping fixed 2026-07-13 (BUGS row 6), live-differential-verified vs ClickHouse 26.5.1.1 + DuckDB 1.5.4"),
     // [91] duckdb: 'dayofweek' | clickhouse: 'toDayOfWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse toDayOfWeek is ISO Mon=1..Sun=7; DuckDB dayofweek is Sun=0..Sat=6. Sunday: 7 vs 0.",
@@ -1066,12 +1066,12 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("TOHOUR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[87])
     put("TOISOWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[94])
     put("TOLASTDAYOFMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[100])
-    put("TOMILLISECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[90])
     put("TOMINUTE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[88])
     put("TOMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[84])
     put("TOQUARTER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[93])
     put("TORELATIVEDAYNUM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[104])
     put("TOSECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[89])
+    put("TOSECOND*1000 + TOMILLISECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[90])
     put("TOYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[83])
     put("TOYEARWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[95])
     put("TRANSLATE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[28])

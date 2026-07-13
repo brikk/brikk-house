@@ -926,13 +926,13 @@
     },
     {
       "duckdb": "millisecond",
-      "clickhouse": "toMillisecond",
-      "verdict": "divergent",
-      "hazard": "ClickHouse toMillisecond returns ONLY the sub-second millisecond component (123); DuckDB millisecond returns seconds*1000+ms (30123).",
+      "clickhouse": "toSecond*1000 + toMillisecond",
+      "verdict": "identical",
+      "hazard": "DuckDB/Trino millisecond(t) = seconds-within-minute*1000 + ms; the generator now emits (toSecond(t)*1000 + toMillisecond(t)), result-identical (ClickHouse toMillisecond alone is the sub-second component only). Verified: 30123/0/5789/56001 all match.",
       "areas": [
         "datetime"
       ],
-      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond"
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond | generator mapping fixed 2026-07-13 (BUGS row 6), live-differential-verified vs ClickHouse 26.5.1.1 + DuckDB 1.5.4"
     },
     {
       "duckdb": "dayofweek",
