@@ -1,0 +1,18 @@
+idx_base1	toString(arrayElement([10,20,30], 1))	([10,20,30])[1]::VARCHAR
+idx_oob_hi	toString(arrayElement([10,20,30], 5))	([10,20,30])[5]::VARCHAR
+idx_oob_zero	toString(arrayElement([10,20,30], 0))	([10,20,30])[0]::VARCHAR
+idx_neg	toString(arrayElement([10,20,30], -1))	list_extract([10,20,30], -1)::VARCHAR
+idx_oob_str	arrayElement(['a','b'], 5)	list_extract(['a','b'], 5)
+card_v	length([1,2,3])	cardinality([1,2,3])
+card_empty	length([])	cardinality([]::INT[])
+empty_check	empty([])	len([]::INT[]) = 0
+arr_to_str	arrayStringConcat([1,2,3], ',')	array_to_string([1,2,3], ',')
+arr_to_str_null	arrayStringConcat(['a',NULL,'c'], ',')	array_to_string(['a',NULL,'c'], ',')
+arr_remove	toString(arrayFilter(x -> x != 2, [1,2,2,3]))	list_filter([1,2,2,3], x -> x != 2)::VARCHAR
+flatten_v	toString(arrayFlatten([[1,2],[3,4]]))	flatten([[1,2],[3,4]])::VARCHAR
+range_v	toString(range(5))	range(5)::VARCHAR
+range_1_5	toString(range(1,5))	range(1,5)::VARCHAR
+has_v	has([1,2,3], 2)	list_contains([1,2,3], 2)
+indexof_found	indexOf([10,20,30], 20)	list_position([10,20,30], 20)
+indexof_absent	indexOf([10,20,30], 99)	list_position([10,20,30], 99)
+arr_has_null	toString([1,NULL,3])	([1,NULL,3])::VARCHAR

@@ -138,4 +138,14 @@ class HazardsRegistrySyncTest {
         assertNotNull(HazardRegistry.lookup("trino", "doris", "ascii"))
     }
 
+    @Test
+    fun clickhouseJsonsCarryLiveProbePairs() {
+        // Populated by the clickhouse differential-probe program; counts must match the
+        // generated registries (see HazardRegistryTest pins).
+        assertEquals(152, loadPairCount("semantics/duckdb-clickhouse-hazards.json"))
+        assertEquals(107, loadPairCount("semantics/trino-clickhouse-hazards.json"))
+        assertNotNull(HazardRegistry.lookup("duckdb", "clickhouse", "length"))
+        assertNotNull(HazardRegistry.lookup("trino", "clickhouse", "date_format"))
+    }
+
 }

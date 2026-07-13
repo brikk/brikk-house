@@ -124,4 +124,24 @@ class HazardRegistryTest {
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("trino", "doris", "trim")?.verdict)
     }
 
+    @Test
+    fun clickhousePairsArePopulatedByLiveProbes() {
+        // Populated by the clickhouse differential-probe program (REPORT-clickhouse-
+        // differential-probe-2026-07-13; ClickHouse 26.5.1.1 via chdb vs DuckDB 1.5.4);
+        // counts pinned to the ingested registries.
+        assertEquals(152, DUCKDB_CLICKHOUSE_HAZARD_ENTRIES.size)
+        assertEquals(107, TRINO_CLICKHOUSE_HAZARD_ENTRIES.size)
+        assertTrue(DUCKDB_TO_CLICKHOUSE_HAZARDS.isNotEmpty())
+        assertTrue(CLICKHOUSE_TO_DUCKDB_HAZARDS.isNotEmpty())
+        assertTrue(TRINO_TO_CLICKHOUSE_HAZARDS.isNotEmpty())
+        assertTrue(CLICKHOUSE_TO_TRINO_HAZARDS.isNotEmpty())
+        // Live-probed verdict spot checks:
+        // ClickHouse length() counts bytes; lower() is ASCII-only.
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "length")?.verdict)
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "round")?.verdict)
+        // ClickHouse regexp_replace = replace-all, matching Trino (differs from DuckDB).
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("trino", "clickhouse", "regexp_replace")?.verdict)
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("trino", "clickhouse", "date_format")?.verdict)
+    }
+
 }

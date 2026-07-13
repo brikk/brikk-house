@@ -1,0 +1,16 @@
+transform_ch_remap	transform(2, [1,2,3], ['a','b','c'], 'z')	transform(2, [1,2,3], ['a','b','c'], 'z')
+transform_du_lambda	'(n/a)'	list_transform([1,2,3], x -> x*10)::VARCHAR
+monthName_v	monthName(toDate('2024-03-15'))	monthname(DATE '2024-03-15')
+width_bucket_v	widthBucket(5.0, 0.0, 10.0, 5)	width_bucket(5.0, 0.0, 10.0, 5)
+truncate_xn	trunc(2.678, 2)	truncate(2.678, 2)
+sha512_v	lower(hex(SHA512('abc')))	sha512('abc')
+ngrams_v	toString(ngrams('abcd', 2))	'n/a'
+e_v	e()	exp(1)
+argmax_v	(SELECT argMax(y, x) FROM (SELECT 1 AS x, 'a' AS y UNION ALL SELECT 3, 'b' UNION ALL SELECT 2, 'c'))	(SELECT arg_max(y, x) FROM (SELECT 1 AS x, 'a' AS y UNION ALL SELECT 3, 'b' UNION ALL SELECT 2, 'c'))
+argmin_v	(SELECT argMin(y, x) FROM (SELECT 1 AS x, 'a' AS y UNION ALL SELECT 3, 'b' UNION ALL SELECT 2, 'c'))	(SELECT arg_min(y, x) FROM (SELECT 1 AS x, 'a' AS y UNION ALL SELECT 3, 'b' UNION ALL SELECT 2, 'c'))
+fmt_pctM_ch	formatDateTime(toDateTime('2024-03-05 09:07:00'), '%M')	formatDateTime(toDateTime('2024-03-05 09:07:00'), '%M')
+fmt_pctM_du	'(n/a)'	strftime(TIMESTAMP '2024-03-05 09:07:00', '%M')
+age_ch	age('day', toDate('2024-01-01'), toDate('2024-01-10'))	age('day', toDate('2024-01-01'), toDate('2024-01-10'))
+age_du	'(n/a)'	age(TIMESTAMP '2024-01-10', TIMESTAMP '2024-01-01')::VARCHAR
+lcase_turkish	lcase('İ')	lcase('İ')
+timezone_ch	timezone()	timezone()

@@ -1,0 +1,42 @@
+intdiv_zero	intDiv(1, 0)	1 // 0	DIFF	<ERR:Code: 153. DB::Exception: Division by zero: In scope SELECT intDiv(1, 0) SETTING>	NULL
+div_zero_float	divide(1.0, 0.0)	1.0 / 0.0	DIFF	NULL	inf
+div_zero_int	1 / 0	1 / 0	DIFF	NULL	inf
+mod_zero	modulo(5, 0)	mod(5, 0)	DIFF	<ERR:Code: 153. DB::Exception: Division by zero: In scope SELECT modulo(5, 0) SETTING>	NULL
+mod_neg	modulo(-5, 3)	mod(-5, 3)	SAME	-2	-2
+mod_fn	mod(-5, 3)	mod(-5, 3)	SAME	-2	-2
+int_overflow_add	toInt32(2147483647) + toInt32(1)	CAST(2147483647 AS INT) + CAST(1 AS INT)	DIFF	2147483648	<ERR:Out of Range Error: Overflow in addition of INT32 (2147483647 + 1)!>
+int8_overflow	toInt8(127) + toInt8(1)	CAST(127 AS TINYINT) + CAST(1 AS TINYINT)	DIFF	128	<ERR:Out of Range Error: Overflow in addition of INT8 (127 + 1)!>
+abs_min_int	abs(toInt32(-2147483648))	abs(CAST(-2147483648 AS INT))	DIFF	2147483648	<ERR:Out of Range Error: Overflow on abs(-2147483648)>
+round_half_2_5	round(2.5)	round(2.5)	DIFF	2	3
+round_half_3_5	round(3.5)	round(3.5)	SAME	4	4
+round_half_neg	round(-2.5)	round(-2.5)	DIFF	-2	-3
+round_d1	round(2.675, 2)	round(2.675, 2)	SAME	2.68	2.68
+roundbankers_25	roundBankers(2.5)	round(2.5)	DIFF	2	3
+trunc_neg	trunc(-2.7)	trunc(-2.7)	SAME	-2	-2
+floor_neg	floor(-2.5)	floor(-2.5)	SAME	-3	-3
+ceil_neg	ceil(-2.5)	ceil(-2.5)	SAME	-2	-2
+sqrt_neg	sqrt(-1)	sqrt(-1)	DIFF	NULL	<ERR:Out of Range Error: cannot take square root of a negative number>
+ln_zero	log(0)	ln(0)	DIFF	NULL	<ERR:Out of Range Error: cannot take logarithm of zero>
+ln_neg	log(-1)	ln(-1)	DIFF	NULL	<ERR:Out of Range Error: cannot take logarithm of a negative number>
+acos_2	acos(2)	acos(2)	DIFF	NULL	<ERR:Invalid Input Error: ACOS is undefined outside [-1,1]>
+asin_2	asin(2)	asin(2)	DIFF	NULL	<ERR:Invalid Input Error: ASIN is undefined outside [-1,1]>
+log_zero	log10(0)	log10(0)	DIFF	NULL	<ERR:Out of Range Error: cannot take logarithm of zero>
+factorial_neg	factorial(-1)	factorial(-1)	DIFF	1	<ERR:Out of Range Error: factorial of a negative number is undefined>
+pow_neg_frac	pow(-8, 0.5)	pow(-8, 0.5)	DIFF	NULL	nan
+log_single	log(100)	log(100)	DIFF	4.605170185988092	2.0
+log2_v	log2(8)	log2(8)	SAME	3	3.0
+log10_v	log10(1000)	log10(1000)	SAME	3	3.0
+log_two_arg	log(2, 8)	log(2, 8)	DIFF	<ERR:Code: 42. DB::Exception: Number of arguments for function log doesn't match: pas>	3.0
+sign_neg	sign(-5)	sign(-5)	SAME	-1	-1
+isnan_v	isNaN(nan)	isnan('nan'::double)	SAME	1	true
+isfinite_inf	isFinite(inf)	isfinite('inf'::double)	SAME	0	false
+gcd_v	gcd(12, 18)	gcd(12, 18)	SAME	6	6
+lcm_v	lcm(4, 6)	lcm(4, 6)	SAME	12	12
+gcd_zero	gcd(0, 5)	gcd(0, 5)	DIFF	<ERR:Code: 153. DB::Exception: Division by zero: In scope SELECT gcd(0, 5) SETTINGS s>	5
+bin_v	bin(5)	bin(5)	DIFF	"00000101"[U+0030 U+0030 U+0030 U+0030 U+0030 U+0031 U+0030 U+0031]	"101"[U+0031 U+0030 U+0031]
+hex_int	hex(255)	hex(255)	SAME	"FF"[U+0046 U+0046]	"FF"[U+0046 U+0046]
+hex_str	hex('A')	hex('A')	SAME	"41"[U+0034 U+0031]	"41"[U+0034 U+0031]
+abs_null	abs(NULL)	abs(NULL)	SAME	NULL	NULL
+plus_null	1 + NULL	1 + NULL	SAME	NULL	NULL
+pi_v	pi()	pi()	SAME	3.141592653589793	3.141592653589793
+exp_1	exp(1)	exp(1)	SAME	2.718281828459045	2.718281828459045

@@ -184,3 +184,45 @@ exposes **neither parameter names nor null-handling metadata**, so
 `FunctionOverload.argNames` and `FunctionDef.profile` stay null for every Trino def.
 Populating Trino profiles would require scraping the engine sources (`@SqlNullable` /
 `RETURNS NULL ON NULL INPUT` on the java implementations) — future work.
+
+## `data/clickhouse-functions-26.5.1.1.tsv`
+
+ClickHouse **26.5.1.1**'s complete function registry (`system.functions`), one row per
+function, 4 tab-separated columns: `name`, `is_aggregate`, `case_insensitive`, `alias_to`.
+1787 functions / 230 aggregate / 255 case-insensitive / 218 aliases. This is the
+prerequisite catalog for the `duckdb↔clickhouse` / `trino↔clickhouse` semantic-hazard probe
+program (see `docs/research/REPORT-clickhouse-differential-probe-2026-07-13.md`).
+`brikk-sql` generates `GeneratedClickhouseFunctionCatalog.kt` from it (not part of this
+probe deliverable).
+
+Two ClickHouse-specific columns beyond the other engines' catalogs:
+- `is_aggregate` — 1 for aggregate functions.
+- `case_insensitive` — 1 when the name resolves case-insensitively (ClickHouse names are
+  case-**sensitive** by default; the 255 flagged as insensitive are the MySQL/SQL-standard
+  compatibility aliases such as `COUNT`, `SUM`, `LOWER`, `SUBSTRING`). Case-sensitivity is
+  itself a hazard axis when a transpiler normalizes identifier case.
+- `alias_to` — non-empty when the name is an alias for another function (218 aliases, e.g.
+  `LOWER` → `lower`, `BIT_AND` → `groupBitAnd`).
+
+| | |
+|---|---|
+| Source | ClickHouse — https://github.com/ClickHouse/ClickHouse |
+| Version | 26.5.1.1 (dumped via `chdb` 4.2.1, the embedded `clickhouse-local` engine for Python — `chdb-core` 26.5.0; `SELECT version()` = `26.5.1.1`) |
+| License | Apache License 2.0 (extracted registry data; see ATTRIBUTIONS.md) |
+
+### Generation method
+
+No ClickHouse server required — `clickhouse-local` mode (here via the `chdb` Python module,
+which embeds the same engine) is enough:
+
+```bash
+python3 -c "import chdb; open('vendor/data/clickhouse-functions-<ver>.tsv','w').write(str(chdb.query(
+  'SELECT name, is_aggregate, case_insensitive, alias_to FROM system.functions ORDER BY name FORMAT TSVWithNames')))"
+# or, with the standalone binary:
+clickhouse local --query "SELECT name, is_aggregate, case_insensitive, alias_to \
+  FROM system.functions ORDER BY name FORMAT TSVWithNames" > vendor/data/clickhouse-functions-<ver>.tsv
+```
+
+Refresh on a version bump: re-dump against the new pin, save as
+`data/clickhouse-functions-<version>.tsv`, update this pin, and re-run brikk-sql's
+`GeneratedClickhouseFunctionCatalog.kt` generator.

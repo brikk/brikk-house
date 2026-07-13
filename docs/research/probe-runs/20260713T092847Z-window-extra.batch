@@ -1,0 +1,24 @@
+row_number	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT row_number() OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT row_number() OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+rank	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT rank() OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT rank() OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+dense_rank	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT dense_rank() OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT dense_rank() OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+lag	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT lag(x) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT lag(x) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+lead	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT lead(x) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT lead(x) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+ntile	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT ntile(2) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT ntile(2) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+first_value	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT first_value(x) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT first_value(x) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+last_value	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT last_value(x) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT last_value(x) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+nth_value	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT nth_value(x,2) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT nth_value(x,2) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+percent_rank	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT round(percent_rank(),4) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT round(percent_rank(),4) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+cume_dist	(SELECT arrayStringConcat(groupArray(w), ',') FROM (SELECT round(cume_dist(),4) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))	(SELECT string_agg(w::VARCHAR, ',') FROM (SELECT round(cume_dist(),4) OVER (ORDER BY x) AS w FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3)))
+minute_v	toMinute(toDateTime('2024-01-01 13:45:30'))	minute(TIMESTAMP '2024-01-01 13:45:30')
+second_v	toSecond(toDateTime('2024-01-01 13:45:30'))	second(TIMESTAMP '2024-01-01 13:45:30')
+millisecond_v	toMillisecond(toDateTime64('2024-01-01 13:45:30.123',3))	millisecond(TIMESTAMP '2024-01-01 13:45:30.123')
+dayofmonth_v	toDayOfMonth(toDate('2024-02-29'))	dayofmonth(DATE '2024-02-29')
+monthname_v	toString(toDate('2024-03-15'))	monthname(DATE '2024-03-15')
+yearweek_v	toYearWeek(toDate('2024-12-30'))	yearweek(DATE '2024-12-30')
+date_v	toString(toDate('2024-06-15'))	date('2024-06-15')::VARCHAR
+date_format_full	formatDateTime(toDateTime('2024-02-05 09:03:07'), '%Y-%m-%d %H:%i:%s')	strftime(TIMESTAMP '2024-02-05 09:03:07', '%Y-%m-%d %H:%M:%S')
+map_v	toString(map('a', 1, 'b', 2))	map(['a','b'],[1,2])::VARCHAR
+rand_runs	rand() >= 0	random() >= 0
+today_runs	today() >= toDate('1970-01-01')	today() >= DATE '1970-01-01'
+lgamma_v	toString(round(lgamma(5),6))	round(lgamma(5),6)::VARCHAR
+quantile_v	(SELECT toString(quantile(0.5)(x)) FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3))	(SELECT quantile_cont(x,0.5)::VARCHAR FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3))

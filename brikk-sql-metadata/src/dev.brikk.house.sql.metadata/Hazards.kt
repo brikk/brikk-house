@@ -69,8 +69,8 @@ data class FunctionHazard(
  *    wins (DIVERGENT > UNCLEAR > CONDITIONALLY_EQUIVALENT > NO_EQUIVALENT > IDENTICAL;
  *    ties: first entry in the JSON) — a hazard registry must be conservative.
  *
- * Wired pairs today: trino↔duckdb (probe-filled), duckdb↔doris and trino↔doris (empty
- * skeletons awaiting live probes). Lookups for unknown pairs simply return null.
+ * Wired pairs today: trino↔duckdb, duckdb↔doris, trino↔doris and duckdb↔clickhouse,
+ * trino↔clickhouse (all probe-filled). Lookups for unknown pairs simply return null.
  */
 object HazardRegistry {
 
@@ -81,6 +81,10 @@ object HazardRegistry {
         ("doris" to "duckdb") to DORIS_TO_DUCKDB_HAZARDS,
         ("trino" to "doris") to TRINO_TO_DORIS_HAZARDS,
         ("doris" to "trino") to DORIS_TO_TRINO_HAZARDS,
+        ("duckdb" to "clickhouse") to DUCKDB_TO_CLICKHOUSE_HAZARDS,
+        ("clickhouse" to "duckdb") to CLICKHOUSE_TO_DUCKDB_HAZARDS,
+        ("trino" to "clickhouse") to TRINO_TO_CLICKHOUSE_HAZARDS,
+        ("clickhouse" to "trino") to CLICKHOUSE_TO_TRINO_HAZARDS,
     )
 
     /**

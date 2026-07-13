@@ -1,0 +1,1788 @@
+name	is_aggregate	case_insensitive	alias_to
+AIClassify	0	0	aiClassify
+AIExtract	0	0	aiExtract
+AIGenerate	0	0	aiGenerate
+AITranslate	0	0	aiTranslate
+BIT_AND	1	1	groupBitAnd
+BIT_OR	1	1	groupBitOr
+BIT_XOR	1	1	groupBitXor
+CARDINALITY	0	1	length
+CAST	0	1	
+CHARACTER_LENGTH	0	1	lengthUTF8
+CHAR_LENGTH	0	1	lengthUTF8
+COVAR_POP	1	1	covarPop
+COVAR_SAMP	1	1	covarSamp
+CRC32	0	1	
+CRC32IEEE	0	1	
+CRC64	0	1	
+DATABASE	0	1	currentDatabase
+DATE	0	1	
+DATE_DIFF	0	0	dateDiff
+DATE_FORMAT	0	1	formatDateTime
+DATE_TRUNC	0	1	dateTrunc
+DAY	0	1	toDayOfMonth
+DAYOFMONTH	0	1	toDayOfMonth
+DAYOFWEEK	0	1	toDayOfWeek
+DAYOFYEAR	0	1	toDayOfYear
+FORMAT_BYTES	0	1	formatReadableSize
+FQDN	0	1	
+FROM_BASE64	0	1	base64Decode
+FROM_DAYS	0	1	fromDaysSinceYearZero
+FROM_UNIXTIME	0	1	fromUnixTimestamp
+HMAC	0	1	
+HOUR	0	1	toHour
+INET6_ATON	0	1	IPv6StringToNum
+INET6_NTOA	0	1	IPv6NumToString
+INET_ATON	0	1	IPv4StringToNum
+INET_NTOA	0	1	IPv4NumToString
+IPv4CIDRToRange	0	0	
+IPv4NumToString	0	0	
+IPv4NumToStringClassC	0	0	
+IPv4StringToNum	0	0	
+IPv4StringToNumOrDefault	0	0	
+IPv4StringToNumOrNull	0	0	
+IPv4ToIPv6	0	0	
+IPv6CIDRToRange	0	0	
+IPv6NumToString	0	0	
+IPv6StringToNum	0	0	
+IPv6StringToNumOrDefault	0	0	
+IPv6StringToNumOrNull	0	0	
+JSONAllPaths	0	0	
+JSONAllPathsWithTypes	0	0	
+JSONAllValues	0	0	
+JSONArrayLength	0	0	
+JSONDynamicPaths	0	0	
+JSONDynamicPathsWithTypes	0	0	
+JSONExtract	0	0	
+JSONExtractArrayRaw	0	0	
+JSONExtractArrayRawCaseInsensitive	0	0	
+JSONExtractBool	0	0	
+JSONExtractBoolCaseInsensitive	0	0	
+JSONExtractCaseInsensitive	0	0	
+JSONExtractFloat	0	0	
+JSONExtractFloatCaseInsensitive	0	0	
+JSONExtractInt	0	0	
+JSONExtractIntCaseInsensitive	0	0	
+JSONExtractKeys	0	0	
+JSONExtractKeysAndValues	0	0	
+JSONExtractKeysAndValuesCaseInsensitive	0	0	
+JSONExtractKeysAndValuesRaw	0	0	
+JSONExtractKeysAndValuesRawCaseInsensitive	0	0	
+JSONExtractKeysCaseInsensitive	0	0	
+JSONExtractRaw	0	0	
+JSONExtractRawCaseInsensitive	0	0	
+JSONExtractString	0	0	
+JSONExtractStringCaseInsensitive	0	0	
+JSONExtractUInt	0	0	
+JSONExtractUIntCaseInsensitive	0	0	
+JSONHas	0	0	
+JSONKey	0	0	
+JSONLength	0	0	
+JSONMergePatch	0	0	
+JSONSharedDataPaths	0	0	
+JSONSharedDataPathsWithTypes	0	0	
+JSONType	0	0	
+JSON_ARRAY_LENGTH	0	1	JSONArrayLength
+JSON_EXISTS	0	0	
+JSON_QUERY	0	0	
+JSON_VALUE	0	0	
+L1Distance	0	0	
+L1Norm	0	0	
+L1Normalize	0	0	
+L2Distance	0	0	
+L2DistanceTransposed	0	0	
+L2Norm	0	0	
+L2Normalize	0	0	
+L2SquaredDistance	0	0	
+L2SquaredNorm	0	0	
+LAST_DAY	0	1	toLastDayOfMonth
+LinfDistance	0	0	
+LinfNorm	0	0	
+LinfNormalize	0	0	
+LpDistance	0	0	
+LpNorm	0	0	
+LpNormalize	0	0	
+MACNumToString	0	0	
+MACStringToNum	0	0	
+MACStringToOUI	0	0	
+MAP_FROM_ARRAYS	0	0	mapFromArrays
+MD4	0	0	
+MD5	0	0	
+MILLISECOND	0	1	toMillisecond
+MINUTE	0	1	toMinute
+MONTH	0	1	toMonth
+NATURAL_SORT_KEY	0	1	naturalSortKey
+OCTET_LENGTH	0	1	length
+QUARTER	0	1	toQuarter
+REGEXP_EXTRACT	0	1	regexpExtract
+REGEXP_MATCHES	0	1	match
+REGEXP_REPLACE	0	1	replaceRegexpAll
+RIPEMD160	0	0	
+SCHEMA	0	1	currentDatabase
+SECOND	0	1	toSecond
+SHA1	0	0	
+SHA224	0	0	
+SHA256	0	0	
+SHA384	0	0	
+SHA512	0	0	
+SHA512_256	0	0	
+STD	1	1	stddevPop
+STDDEV	1	1	stddevSamp
+STDDEV_POP	1	1	stddevPop
+STDDEV_SAMP	1	1	stddevSamp
+ST_LineFromWKB	0	0	readWKBLineString
+ST_MLineFromWKB	0	0	readWKBMultiLineString
+ST_MPolyFromWKB	0	0	readWKBMultiPolygon
+ST_PointFromWKB	0	0	readWKBPoint
+ST_PolyFromWKB	0	0	readWKBPolygon
+SUBSTRING_INDEX	0	1	substringIndex
+SVG	0	0	svg
+TIMESTAMP_DIFF	0	0	dateDiff
+TO_BASE64	0	1	base64Encode
+TO_DAYS	0	1	toDaysSinceYearZero
+TO_UNIXTIME	0	1	parseDateTime
+URLHash	0	0	
+URLHierarchy	0	0	
+URLPathHierarchy	0	0	
+UTCTimestamp	0	1	
+UTC_timestamp	0	1	UTCTimestamp
+UUIDNumToString	0	0	
+UUIDStringToNum	0	0	
+UUIDToNum	0	0	
+UUIDv7ToDateTime	0	0	
+VAR_POP	1	1	varPop
+VAR_SAMP	1	1	varSamp
+WKB	0	0	wkb
+WKT	0	0	wkt
+YEAR	0	1	toYear
+YYYYMMDDToDate	0	1	
+YYYYMMDDToDate32	0	1	
+YYYYMMDDhhmmssToDateTime	0	1	
+YYYYMMDDhhmmssToDateTime64	0	0	
+_CAST	0	1	
+__actionName	0	0	
+__applyFilter	0	0	
+__bitBoolMaskAnd	0	0	
+__bitBoolMaskOr	0	0	
+__bitSwapLastTwo	0	0	
+__bitWrapperFunc	0	0	
+__getScalar	0	0	
+__patchPartitionID	0	0	
+__scalarSubqueryResult	0	0	
+abs	0	1	
+accurateCast	0	0	
+accurateCastOrDefault	0	0	
+accurateCastOrNull	0	0	
+acos	0	1	
+acosh	0	0	
+addDate	0	1	
+addDays	0	0	
+addHours	0	0	
+addInterval	0	0	
+addMicroseconds	0	0	
+addMilliseconds	0	0	
+addMinutes	0	0	
+addMonths	0	0	
+addNanoseconds	0	0	
+addQuarters	0	0	
+addSeconds	0	0	
+addTupleOfIntervals	0	0	
+addWeeks	0	0	
+addYears	0	0	
+addressToLine	0	0	
+addressToLineWithInlines	0	0	
+addressToSymbol	0	0	
+aes_decrypt_mysql	0	0	
+aes_encrypt_mysql	0	0	
+age	0	1	
+aggThrow	1	0	
+aiClassify	0	0	
+aiExtract	0	0	
+aiGenerate	0	0	
+aiTranslate	0	0	
+alphaTokens	0	0	
+analysisOfVariance	1	1	
+and	0	0	
+anova	1	1	analysisOfVariance
+any	1	0	
+anyHeavy	1	0	
+anyLast	1	0	
+anyLastRespectNulls	1	0	anyLast_respect_nulls
+anyLast_respect_nulls	1	0	
+anyRespectNulls	1	0	any_respect_nulls
+anyValueRespectNulls	1	0	any_respect_nulls
+any_respect_nulls	1	0	
+any_value	1	1	any
+any_value_respect_nulls	1	1	any_respect_nulls
+appendTrailingCharIfAbsent	0	0	
+approx_top_count	1	1	approx_top_k
+approx_top_k	1	1	
+approx_top_sum	1	1	
+areaCartesian	0	0	
+areaSpherical	0	0	
+argAndMax	1	0	
+argAndMin	1	0	
+argMax	1	0	
+argMin	1	0	
+array	0	0	
+arrayAUC	0	0	arrayROCAUC
+arrayAUCPR	0	0	
+arrayAll	0	0	
+arrayAutocorrelation	0	0	
+arrayAvg	0	0	
+arrayCompact	0	0	
+arrayConcat	0	0	
+arrayCount	0	0	
+arrayCumSum	0	0	
+arrayCumSumNonNegative	0	0	
+arrayDifference	0	0	
+arrayDistinct	0	0	
+arrayDotProduct	0	0	
+arrayElement	0	0	
+arrayElementOrNull	0	0	
+arrayEnumerate	0	0	
+arrayEnumerateDense	0	0	
+arrayEnumerateDenseRanked	0	0	
+arrayEnumerateUniq	0	0	
+arrayEnumerateUniqRanked	0	0	
+arrayExcept	0	0	
+arrayExists	0	0	
+arrayFill	0	0	
+arrayFilter	0	0	
+arrayFirst	0	0	
+arrayFirstIndex	0	0	
+arrayFirstOrNull	0	0	
+arrayFlatten	0	0	
+arrayFold	0	0	
+arrayIntersect	0	0	
+arrayJaccardIndex	0	0	
+arrayJoin	0	0	
+arrayLast	0	0	
+arrayLastIndex	0	0	
+arrayLastOrNull	0	0	
+arrayLevenshteinDistance	0	0	
+arrayLevenshteinDistanceWeighted	0	0	
+arrayMap	0	0	
+arrayMax	0	0	
+arrayMin	0	0	
+arrayNormalizedGini	0	0	
+arrayPRAUC	0	0	arrayAUCPR
+arrayPartialReverseSort	0	0	
+arrayPartialShuffle	0	1	
+arrayPartialSort	0	0	
+arrayPopBack	0	0	
+arrayPopFront	0	0	
+arrayProduct	0	0	
+arrayPushBack	0	0	
+arrayPushFront	0	0	
+arrayROCAUC	0	0	
+arrayRandomSample	0	0	
+arrayReduce	0	0	
+arrayReduceInRanges	0	0	
+arrayRemove	0	0	
+arrayResize	0	0	
+arrayReverse	0	0	
+arrayReverseFill	0	0	
+arrayReverseSort	0	0	
+arrayReverseSplit	0	0	
+arrayRotateLeft	0	0	
+arrayRotateRight	0	0	
+arrayShiftLeft	0	0	
+arrayShiftRight	0	0	
+arrayShingles	0	0	
+arrayShuffle	0	1	
+arraySimilarity	0	0	
+arraySlice	0	0	
+arraySort	0	0	
+arraySplit	0	0	
+arrayStringConcat	0	0	
+arraySum	0	0	
+arraySymmetricDifference	0	0	
+arrayTranspose	0	0	
+arrayUnion	0	0	
+arrayUniq	0	0	
+arrayWithConstant	0	0	
+arrayZip	0	0	
+arrayZipUnaligned	0	0	
+array_agg	1	1	groupArray
+array_concat_agg	1	1	groupArrayArray
+array_remove	0	1	arrayRemove
+array_to_string	0	1	arrayStringConcat
+ascii	0	1	
+asin	0	1	
+asinh	0	0	
+assumeNotNull	0	0	
+atan	0	1	
+atan2	0	1	
+atanh	0	0	
+authUser	0	0	authenticatedUser
+authenticatedUser	0	0	
+avg	1	1	
+avg2	0	1	
+avgWeighted	1	0	
+bar	0	0	
+base32Decode	0	0	
+base32Encode	0	0	
+base58Decode	0	0	
+base58Encode	0	0	
+base64Decode	0	0	
+base64Encode	0	0	
+base64URLDecode	0	0	
+base64URLEncode	0	0	
+basename	0	0	
+bin	0	1	
+bitAnd	0	0	
+bitCount	0	0	
+bitHammingDistance	0	0	
+bitNot	0	0	
+bitOr	0	0	
+bitPositionsToArray	0	0	
+bitRotateLeft	0	0	
+bitRotateRight	0	0	
+bitShiftLeft	0	0	
+bitShiftRight	0	0	
+bitSlice	0	0	
+bitTest	0	0	
+bitTestAll	0	0	
+bitTestAny	0	0	
+bitXor	0	0	
+bitmapAnd	0	0	
+bitmapAndCardinality	0	0	
+bitmapAndnot	0	0	
+bitmapAndnotCardinality	0	0	
+bitmapBuild	0	0	
+bitmapCardinality	0	0	
+bitmapContains	0	0	
+bitmapHasAll	0	0	
+bitmapHasAny	0	0	
+bitmapMax	0	0	
+bitmapMin	0	0	
+bitmapOr	0	0	
+bitmapOrCardinality	0	0	
+bitmapSubsetInRange	0	0	
+bitmapSubsetLimit	0	0	
+bitmapToArray	0	0	
+bitmapTransform	0	0	
+bitmapXor	0	0	
+bitmapXorCardinality	0	0	
+bitmaskToArray	0	0	
+bitmaskToList	0	0	
+blockNumber	0	0	
+blockSerializedSize	0	0	
+blockSize	0	0	
+boundingRatio	1	0	
+buildId	0	0	
+byteHammingDistance	0	0	
+byteSize	0	0	
+byteSlice	0	1	substring
+byteSwap	0	1	
+caseFoldUTF8	0	0	
+caseWithExpr	0	0	caseWithExpression
+caseWithExpression	0	0	
+caseWithoutExpr	0	0	multiIf
+caseWithoutExpression	0	0	multiIf
+catboostEvaluate	0	0	
+categoricalInformationValue	1	0	
+cbrt	0	0	
+ceil	0	1	
+ceiling	0	1	ceil
+changeDay	0	0	
+changeHour	0	0	
+changeMinute	0	0	
+changeMonth	0	0	
+changeSecond	0	0	
+changeYear	0	0	
+char	0	1	
+chdb	0	1	
+cityHash64	0	0	
+clamp	0	0	
+coalesce	0	1	
+colorOKLABToSRGB	0	0	
+colorOKLCHToSRGB	0	0	
+colorSRGBToOKLAB	0	0	
+colorSRGBToOKLCH	0	0	
+compareSubstrings	0	0	
+concat	0	1	
+concatAssumeInjective	0	0	
+concatWithSeparator	0	0	
+concatWithSeparatorAssumeInjective	0	0	
+concat_ws	0	1	concatWithSeparator
+connectionId	0	1	
+connection_id	0	1	connectionID
+contingency	1	0	
+conv	0	0	
+convertCharset	0	0	
+corr	1	1	
+corrMatrix	1	0	
+corrStable	1	0	
+cos	0	1	
+cosh	0	0	
+cosineDistance	0	0	
+cosineDistanceTransposed	0	0	
+count	1	1	
+countDigits	0	0	
+countEqual	0	0	
+countMatches	0	0	
+countMatchesCaseInsensitive	0	0	
+countSubstrings	0	1	
+countSubstringsCaseInsensitive	0	0	
+countSubstringsCaseInsensitiveUTF8	0	0	
+covarPop	1	0	
+covarPopMatrix	1	0	
+covarPopStable	1	0	
+covarSamp	1	0	
+covarSampMatrix	1	0	
+covarSampStable	1	0	
+cramersV	1	0	
+cramersVBiasCorrected	1	0	
+cume_dist	1	0	
+curdate	0	1	today
+currentDatabase	0	0	
+currentProfiles	0	0	
+currentQueryID	0	0	
+currentRoles	0	0	
+currentSchemas	0	1	
+currentUser	0	0	
+current_database	0	1	currentDatabase
+current_date	0	1	today
+current_query_id	0	1	currentQueryID
+current_schemas	0	1	currentSchemas
+current_timestamp	0	1	now
+current_user	0	1	currentUser
+cutFragment	0	0	
+cutIPv6	0	0	
+cutQueryString	0	0	
+cutQueryStringAndFragment	0	0	
+cutToFirstSignificantSubdomain	0	0	
+cutToFirstSignificantSubdomainCustom	0	0	
+cutToFirstSignificantSubdomainCustomRFC	0	0	
+cutToFirstSignificantSubdomainCustomWithWWW	0	0	
+cutToFirstSignificantSubdomainCustomWithWWWRFC	0	0	
+cutToFirstSignificantSubdomainRFC	0	0	
+cutToFirstSignificantSubdomainWithWWW	0	0	
+cutToFirstSignificantSubdomainWithWWWRFC	0	0	
+cutURLParameter	0	0	
+cutWWW	0	0	
+damerauLevenshteinDistance	0	0	
+dateDiff	0	1	
+dateName	0	1	
+dateTime64ToSnowflake	0	0	
+dateTime64ToSnowflakeID	0	0	
+dateTimeToSnowflake	0	0	
+dateTimeToSnowflakeID	0	0	
+dateTimeToUUIDv7	0	0	
+dateTrunc	0	0	
+date_bin	0	1	toStartOfInterval
+date_diff	0	0	dateDiff
+decodeHTMLComponent	0	0	
+decodeURLComponent	0	0	
+decodeURLFormComponent	0	0	
+decodeXMLComponent	0	0	
+decrypt	0	0	
+defaultProfiles	0	0	
+defaultRoles	0	0	
+defaultValueOfArgumentType	0	0	
+defaultValueOfTypeName	0	0	
+degrees	0	1	
+deltaSum	1	0	
+deltaSumTimestamp	1	0	
+demangle	0	0	
+denseRank	1	0	
+dense_rank	1	1	denseRank
+dictGet	0	0	
+dictGetAll	0	0	
+dictGetChildren	0	0	
+dictGetDate	0	0	
+dictGetDateOrDefault	0	0	
+dictGetDateTime	0	0	
+dictGetDateTimeOrDefault	0	0	
+dictGetDescendants	0	0	
+dictGetFloat32	0	0	
+dictGetFloat32OrDefault	0	0	
+dictGetFloat64	0	0	
+dictGetFloat64OrDefault	0	0	
+dictGetHierarchy	0	0	
+dictGetIPv4	0	0	
+dictGetIPv4OrDefault	0	0	
+dictGetIPv6	0	0	
+dictGetIPv6OrDefault	0	0	
+dictGetInt16	0	0	
+dictGetInt16OrDefault	0	0	
+dictGetInt32	0	0	
+dictGetInt32OrDefault	0	0	
+dictGetInt64	0	0	
+dictGetInt64OrDefault	0	0	
+dictGetInt8	0	0	
+dictGetInt8OrDefault	0	0	
+dictGetKeys	0	0	
+dictGetOrDefault	0	0	
+dictGetOrNull	0	0	
+dictGetString	0	0	
+dictGetStringOrDefault	0	0	
+dictGetUInt16	0	0	
+dictGetUInt16OrDefault	0	0	
+dictGetUInt32	0	0	
+dictGetUInt32OrDefault	0	0	
+dictGetUInt64	0	0	
+dictGetUInt64OrDefault	0	0	
+dictGetUInt8	0	0	
+dictGetUInt8OrDefault	0	0	
+dictGetUUID	0	0	
+dictGetUUIDOrDefault	0	0	
+dictHas	0	0	
+dictIsIn	0	0	
+displayName	0	0	
+distanceCosine	0	1	cosineDistance
+distanceCosineTransposed	0	1	cosineDistanceTransposed
+distanceL1	0	1	L1Distance
+distanceL2	0	1	L2Distance
+distanceL2Squared	0	1	L2SquaredDistance
+distanceL2Transposed	0	1	L2DistanceTransposed
+distanceLinf	0	1	LinfDistance
+distanceLp	0	1	LpDistance
+distinctDynamicTypes	1	0	
+distinctJSONPaths	1	0	
+distinctJSONPathsAndTypes	1	0	
+divide	0	0	
+divideDecimal	0	0	
+divideOrNull	0	0	
+domain	0	0	
+domainRFC	0	0	
+domainWithoutWWW	0	0	
+domainWithoutWWWRFC	0	0	
+dotProduct	0	0	
+dumpColumnStructure	0	0	
+dynamicElement	0	0	
+dynamicType	0	0	
+e	0	0	
+editDistance	0	0	
+editDistanceUTF8	0	0	
+empty	0	0	
+emptyArrayDate	0	0	
+emptyArrayDateTime	0	0	
+emptyArrayFloat32	0	0	
+emptyArrayFloat64	0	0	
+emptyArrayInt16	0	0	
+emptyArrayInt32	0	0	
+emptyArrayInt64	0	0	
+emptyArrayInt8	0	0	
+emptyArrayString	0	0	
+emptyArrayToSingle	0	0	
+emptyArrayUInt16	0	0	
+emptyArrayUInt32	0	0	
+emptyArrayUInt64	0	0	
+emptyArrayUInt8	0	0	
+enabledProfiles	0	0	
+enabledRoles	0	0	
+encodeURLComponent	0	0	
+encodeURLFormComponent	0	0	
+encodeXMLComponent	0	0	
+encrypt	0	0	
+endsWith	0	0	
+endsWithCaseInsensitive	0	0	
+endsWithCaseInsensitiveUTF8	0	0	
+endsWithUTF8	0	0	
+entropy	1	0	
+equals	0	0	
+erf	0	0	
+erfc	0	0	
+errorCodeToName	0	0	
+estimateCompressionRatio	1	0	
+evalMLMethod	0	0	
+exp	0	1	
+exp10	0	0	
+exp2	0	0	
+exponentialMovingAverage	1	0	
+exponentialTimeDecayedAvg	1	0	
+exponentialTimeDecayedCount	1	0	
+exponentialTimeDecayedMax	1	0	
+exponentialTimeDecayedSum	1	0	
+extract	0	0	
+extractAll	0	0	
+extractAllGroups	0	0	extractAllGroupsVertical
+extractAllGroupsHorizontal	0	0	
+extractAllGroupsVertical	0	0	
+extractGroups	0	0	
+extractKeyValuePairs	0	0	
+extractKeyValuePairsWithEscaping	0	0	
+extractTextFromHTML	0	0	
+extractURLParameter	0	0	
+extractURLParameterNames	0	0	
+extractURLParameters	0	0	
+factorial	0	1	
+farmFingerprint64	0	0	
+farmHash64	0	0	
+file	0	0	
+filesystemAvailable	0	0	
+filesystemCapacity	0	0	
+filesystemUnreserved	0	0	
+finalizeAggregation	0	0	
+financialInternalRateOfReturn	0	0	
+financialInternalRateOfReturnExtended	0	0	
+financialNetPresentValue	0	0	
+financialNetPresentValueExtended	0	0	
+firstLine	0	0	
+firstNonDefault	0	1	
+firstSignificantSubdomain	0	0	
+firstSignificantSubdomainCustom	0	0	
+firstSignificantSubdomainCustomRFC	0	0	
+firstSignificantSubdomainRFC	0	0	
+firstValueRespectNulls	1	0	any_respect_nulls
+first_value	1	1	any
+first_value_respect_nulls	1	1	any_respect_nulls
+flameGraph	1	0	
+flatten	0	1	arrayFlatten
+flattenTuple	0	0	
+flipCoordinates	0	0	
+floor	0	1	
+format	0	0	
+formatDateTime	0	0	
+formatDateTimeInJodaSyntax	0	0	
+formatQuery	0	0	
+formatQueryOrNull	0	0	
+formatQuerySingleLine	0	0	
+formatQuerySingleLineOrNull	0	0	
+formatReadableDecimalSize	0	0	
+formatReadableQuantity	0	0	
+formatReadableSize	0	0	
+formatReadableTimeDelta	0	0	
+formatRow	0	0	
+formatRowNoNewline	0	0	
+fragment	0	0	
+fromDaysSinceYearZero	0	0	
+fromDaysSinceYearZero32	0	0	
+fromModifiedJulianDay	0	0	
+fromModifiedJulianDayOrNull	0	0	
+fromUTCTimestamp	0	0	
+fromUnixTimestamp	0	0	
+fromUnixTimestamp64Micro	0	0	
+fromUnixTimestamp64Milli	0	0	
+fromUnixTimestamp64Nano	0	0	
+fromUnixTimestamp64Second	0	0	
+fromUnixTimestampInJodaSyntax	0	0	
+from_utc_timestamp	0	1	fromUTCTimestamp
+fullHostName	0	0	FQDN
+fuzzBits	0	0	
+fuzzQuery	0	0	
+gccMurmurHash	0	0	
+gcd	0	0	
+generateRandomStructure	0	0	
+generateSerialID	0	0	
+generateSnowflakeID	0	0	
+generateUUIDv4	0	0	
+generateUUIDv7	0	0	
+geoDistance	0	0	
+geoToH3	0	0	
+geohashDecode	0	0	
+geohashEncode	0	0	
+geohashesInBox	0	0	
+getClientHTTPHeader	0	0	
+getMacro	0	0	
+getMaxTableNameLengthForDatabase	0	0	
+getMergeTreeSetting	0	0	
+getOSKernelVersion	0	0	
+getServerPort	0	0	
+getServerSetting	0	0	
+getSetting	0	0	
+getSettingOrDefault	0	0	
+getSizeOfEnumType	0	0	
+getSubcolumn	0	0	
+getTypeSerializationStreams	0	0	
+globalIn	0	0	
+globalInIgnoreSet	0	0	
+globalNotIn	0	0	
+globalNotInIgnoreSet	0	0	
+globalNotNullIn	0	0	
+globalNotNullInIgnoreSet	0	0	
+globalNullIn	0	0	
+globalNullInIgnoreSet	0	0	
+globalVariable	0	0	
+greatCircleAngle	0	0	
+greatCircleDistance	0	0	
+greater	0	0	
+greaterOrEquals	0	0	
+greatest	0	1	
+groupArray	1	0	
+groupArrayInsertAt	1	0	
+groupArrayIntersect	1	0	
+groupArrayLast	1	0	
+groupArrayMovingAvg	1	0	
+groupArrayMovingSum	1	0	
+groupArraySample	1	0	
+groupArraySorted	1	0	
+groupBitAnd	1	0	
+groupBitOr	1	0	
+groupBitXor	1	0	
+groupBitmap	1	0	
+groupBitmapAnd	1	0	
+groupBitmapOr	1	0	
+groupBitmapXor	1	0	
+groupConcat	1	0	
+groupNumericIndexedVector	1	0	
+groupUniqArray	1	0	
+group_concat	1	1	groupConcat
+h3CellAreaM2	0	0	
+h3CellAreaRads2	0	0	
+h3Distance	0	0	
+h3EdgeAngle	0	0	
+h3EdgeLengthKm	0	0	
+h3EdgeLengthM	0	0	
+h3ExactEdgeLengthKm	0	0	
+h3ExactEdgeLengthM	0	0	
+h3ExactEdgeLengthRads	0	0	
+h3GetBaseCell	0	0	
+h3GetDestinationIndexFromUnidirectionalEdge	0	0	
+h3GetFaces	0	0	
+h3GetIndexesFromUnidirectionalEdge	0	0	
+h3GetOriginIndexFromUnidirectionalEdge	0	0	
+h3GetPentagonIndexes	0	0	
+h3GetRes0Indexes	0	0	
+h3GetResolution	0	0	
+h3GetUnidirectionalEdge	0	0	
+h3GetUnidirectionalEdgeBoundary	0	0	
+h3GetUnidirectionalEdgesFromHexagon	0	0	
+h3HexAreaKm2	0	0	
+h3HexAreaM2	0	0	
+h3HexRing	0	0	
+h3IndexesAreNeighbors	0	0	
+h3IsPentagon	0	0	
+h3IsResClassIII	0	0	
+h3IsValid	0	0	
+h3Line	0	0	
+h3NumHexagons	0	0	
+h3PointDistKm	0	0	
+h3PointDistM	0	0	
+h3PointDistRads	0	0	
+h3PolygonToCells	0	0	
+h3ToCenterChild	0	0	
+h3ToChildren	0	0	
+h3ToGeo	0	0	
+h3ToGeoBoundary	0	0	
+h3ToParent	0	0	
+h3ToString	0	0	
+h3UnidirectionalEdgeIsValid	0	0	
+h3kRing	0	0	
+halfMD5	0	0	
+has	0	0	
+hasAll	0	0	
+hasAllToken	0	0	hasAllTokens
+hasAllTokens	0	0	
+hasAny	0	0	
+hasAnyToken	0	0	hasAnyTokens
+hasAnyTokens	0	0	
+hasColumnInTable	0	0	
+hasPhrase	0	0	
+hasSubsequence	0	1	
+hasSubsequenceCaseInsensitive	0	1	
+hasSubsequenceCaseInsensitiveUTF8	0	1	
+hasSubsequenceUTF8	0	1	
+hasSubstr	0	0	
+hasThreadFuzzer	0	0	
+hasToken	0	0	
+hasTokenCaseInsensitive	0	1	
+hasTokenCaseInsensitiveOrNull	0	1	
+hasTokenOrNull	0	0	
+hex	0	1	
+highlight	0	0	
+highlightQuery	0	0	
+hilbertDecode	0	0	
+hilbertEncode	0	0	
+histogram	1	0	
+hiveHash	0	0	
+hop	0	0	
+hopEnd	0	0	
+hopStart	0	0	
+hostName	0	0	
+hostname	0	0	hostName
+hypot	0	1	
+icebergBucket	0	0	
+icebergHash	0	0	
+icebergTruncate	0	0	
+identity	0	0	
+if	0	1	
+ifNotFinite	0	0	
+ifNull	0	1	
+ignore	0	0	
+ilike	0	0	
+in	0	0	
+inIgnoreSet	0	0	
+indexHint	0	0	
+indexOf	0	0	
+indexOfAssumeSorted	0	0	
+initcap	0	1	
+initcapUTF8	0	0	
+initialQueryID	0	0	
+initialQueryStartTime	0	0	
+initial_query_id	0	1	initialQueryID
+initial_query_start_time	0	1	initialQueryStartTime
+initializeAggregation	0	0	
+instr	0	1	positionCaseInsensitive
+intDiv	0	0	
+intDivOrNull	0	0	
+intDivOrZero	0	0	
+intExp10	0	0	
+intExp2	0	0	
+intHash32	0	0	
+intHash64	0	0	
+intervalLengthSum	1	0	
+isASCII	0	0	isValidASCII
+isConstant	0	0	
+isDecimalOverflow	0	0	
+isDistinctFrom	0	0	
+isDynamicElementInSharedData	0	0	
+isFinite	0	0	
+isIPAddressInRange	0	0	
+isIPv4String	0	0	
+isIPv6String	0	0	
+isInfinite	0	0	
+isMergeTreePartCoveredBy	0	1	
+isNaN	0	0	
+isNotDistinctFrom	0	0	
+isNotNull	0	0	
+isNull	0	1	
+isNullable	0	0	
+isPrime	0	0	
+isProbablePrime	0	0	
+isValidASCII	0	0	
+isValidJSON	0	0	
+isValidUTF8	0	0	
+isZeroOrNull	0	0	
+jaroSimilarity	0	0	
+jaroWinklerSimilarity	0	0	
+javaHash	0	0	
+javaHashUTF16LE	0	0	
+joinGet	0	0	
+joinGetOrNull	0	0	
+jsonMergePatch	0	0	JSONMergePatch
+jumpConsistentHash	0	0	
+kafkaMurmurHash	0	0	
+keccak256	0	0	
+kolmogorovSmirnovTest	1	1	
+kostikConsistentHash	0	0	
+kql_array_sort_asc	0	0	
+kql_array_sort_desc	0	0	
+kurtPop	1	0	
+kurtSamp	1	0	
+lag	1	1	
+lagInFrame	1	0	
+largestTriangleThreeBuckets	1	0	
+lastValueRespectNulls	1	0	anyLast_respect_nulls
+last_value	1	1	anyLast
+last_value_respect_nulls	1	1	anyLast_respect_nulls
+lcase	0	1	lower
+lcm	0	0	
+lead	1	1	
+leadInFrame	1	0	
+least	0	1	
+left	0	1	
+leftPad	0	0	
+leftPadUTF8	0	0	
+leftUTF8	0	0	
+length	0	1	
+lengthUTF8	0	0	
+less	0	0	
+lessOrEquals	0	0	
+levenshteinDistance	0	0	editDistance
+levenshteinDistanceUTF8	0	0	editDistanceUTF8
+lgamma	0	0	
+like	0	0	
+ln	0	1	log
+locate	0	1	
+log	0	1	
+log10	0	1	
+log1p	0	0	
+log2	0	1	
+logTrace	0	0	
+lowCardinalityIndices	0	0	
+lowCardinalityKeys	0	0	
+lower	0	1	
+lowerUTF8	0	0	
+lpad	0	1	leftPad
+ltrim	0	0	trimLeft
+lttb	1	0	largestTriangleThreeBuckets
+makeDate	0	1	
+makeDate32	0	1	
+makeDateTime	0	1	
+makeDateTime64	0	1	
+mannWhitneyUTest	1	0	
+map	0	0	
+mapAdd	0	0	
+mapAll	0	0	
+mapApply	0	0	
+mapConcat	0	0	
+mapContains	0	0	mapContainsKey
+mapContainsKey	0	0	
+mapContainsKeyLike	0	0	
+mapContainsValue	0	0	
+mapContainsValueLike	0	0	
+mapExists	0	0	
+mapExtractKeyLike	0	0	
+mapExtractValueLike	0	0	
+mapFilter	0	0	
+mapFromArrays	0	0	
+mapFromString	0	0	extractKeyValuePairs
+mapKeys	0	0	
+mapPartialReverseSort	0	0	
+mapPartialSort	0	0	
+mapPopulateSeries	0	0	
+mapReverseSort	0	0	
+mapSort	0	0	
+mapSubtract	0	0	
+mapUpdate	0	0	
+mapValues	0	0	
+match	0	0	
+matchPhrase	0	0	hasPhrase
+materialize	0	0	
+max	1	1	
+max2	0	1	
+maxIntersections	1	0	
+maxIntersectionsPosition	1	0	
+maxMappedArrays	1	0	
+meanZTest	1	0	
+median	1	0	quantile
+medianBFloat16	1	0	quantileBFloat16
+medianBFloat16Weighted	1	0	quantileBFloat16Weighted
+medianDD	1	0	quantileDD
+medianDeterministic	1	0	quantileDeterministic
+medianExact	1	0	quantileExact
+medianExactHigh	1	0	quantileExactHigh
+medianExactLow	1	0	quantileExactLow
+medianExactWeighted	1	0	quantileExactWeighted
+medianExactWeightedInterpolated	1	0	quantileExactWeightedInterpolated
+medianGK	1	0	quantileGK
+medianInterpolatedWeighted	1	0	quantileInterpolatedWeighted
+medianTDigest	1	0	quantileTDigest
+medianTDigestWeighted	1	0	quantileTDigestWeighted
+medianTiming	1	0	quantileTiming
+medianTimingWeighted	1	0	quantileTimingWeighted
+mergeTreePartInfo	0	1	
+metroHash64	0	0	
+mid	0	1	substring
+midpoint	0	1	
+min	1	1	
+min2	0	1	
+minMappedArrays	1	0	
+minSampleSizeContinous	0	0	minSampleSizeContinuous
+minSampleSizeContinuous	0	0	
+minSampleSizeConversion	0	0	
+minus	0	0	
+mismatches	0	0	byteHammingDistance
+mod	0	1	modulo
+modOrNull	0	1	moduloOrNull
+modulo	0	0	
+moduloLegacy	0	0	
+moduloOrNull	0	0	
+moduloOrZero	0	0	
+monthName	0	1	
+mortonDecode	0	0	
+mortonEncode	0	0	
+multiFuzzyMatchAllIndices	0	0	
+multiFuzzyMatchAny	0	0	
+multiFuzzyMatchAnyIndex	0	0	
+multiIf	0	0	
+multiMatchAllIndices	0	0	
+multiMatchAny	0	0	
+multiMatchAnyIndex	0	0	
+multiSearchAllPositions	0	0	
+multiSearchAllPositionsCaseInsensitive	0	0	
+multiSearchAllPositionsCaseInsensitiveUTF8	0	0	
+multiSearchAllPositionsUTF8	0	0	
+multiSearchAny	0	0	
+multiSearchAnyCaseInsensitive	0	0	
+multiSearchAnyCaseInsensitiveUTF8	0	0	
+multiSearchAnyUTF8	0	0	
+multiSearchFirstIndex	0	0	
+multiSearchFirstIndexCaseInsensitive	0	0	
+multiSearchFirstIndexCaseInsensitiveUTF8	0	0	
+multiSearchFirstIndexUTF8	0	0	
+multiSearchFirstPosition	0	0	
+multiSearchFirstPositionCaseInsensitive	0	0	
+multiSearchFirstPositionCaseInsensitiveUTF8	0	0	
+multiSearchFirstPositionUTF8	0	0	
+multiply	0	0	
+multiplyDecimal	0	0	
+murmurHash2_32	0	0	
+murmurHash2_64	0	0	
+murmurHash3_128	0	0	
+murmurHash3_32	0	0	
+murmurHash3_64	0	0	
+naiveBayesClassifier	0	0	
+naturalSortKey	0	0	
+negate	0	0	
+neighbor	0	0	
+nested	0	0	
+netloc	0	0	
+ngramDistance	0	0	
+ngramDistanceCaseInsensitive	0	0	
+ngramDistanceCaseInsensitiveUTF8	0	0	
+ngramDistanceUTF8	0	0	
+ngramMinHash	0	0	
+ngramMinHashArg	0	0	
+ngramMinHashArgCaseInsensitive	0	0	
+ngramMinHashArgCaseInsensitiveUTF8	0	0	
+ngramMinHashArgUTF8	0	0	
+ngramMinHashCaseInsensitive	0	0	
+ngramMinHashCaseInsensitiveUTF8	0	0	
+ngramMinHashUTF8	0	0	
+ngramSearch	0	0	
+ngramSearchCaseInsensitive	0	0	
+ngramSearchCaseInsensitiveUTF8	0	0	
+ngramSearchUTF8	0	0	
+ngramSimHash	0	0	
+ngramSimHashCaseInsensitive	0	0	
+ngramSimHashCaseInsensitiveUTF8	0	0	
+ngramSimHashUTF8	0	0	
+ngrams	0	0	
+nonNegativeDerivative	1	0	
+normL1	0	1	L1Norm
+normL2	0	1	L2Norm
+normL2Squared	0	1	L2SquaredNorm
+normLinf	0	1	LinfNorm
+normLp	0	1	LpNorm
+normalizeL1	0	1	L1Normalize
+normalizeL2	0	1	L2Normalize
+normalizeLinf	0	1	LinfNormalize
+normalizeLp	0	1	LpNormalize
+normalizeQuery	0	0	
+normalizeQueryKeepNames	0	0	
+normalizeUTF8NFC	0	0	
+normalizeUTF8NFD	0	0	
+normalizeUTF8NFKC	0	0	
+normalizeUTF8NFKCCasefold	0	0	
+normalizeUTF8NFKD	0	0	
+normalizedQueryHash	0	0	
+normalizedQueryHashKeepNames	0	0	
+not	0	1	
+notEmpty	0	0	
+notEquals	0	0	
+notILike	0	0	
+notIn	0	0	
+notInIgnoreSet	0	0	
+notLike	0	0	
+notNullIn	0	0	
+notNullInIgnoreSet	0	0	
+nothing	1	0	
+nothingNull	1	0	
+nothingUInt64	1	0	
+now	0	1	
+now64	0	1	
+nowInBlock	0	0	
+nowInBlock64	0	0	
+nth_value	1	1	
+ntile	1	1	
+nullIf	0	1	
+nullIn	0	0	
+nullInIgnoreSet	0	0	
+numericIndexedVectorAllValueSum	0	0	
+numericIndexedVectorBuild	0	0	
+numericIndexedVectorCardinality	0	0	
+numericIndexedVectorGetValue	0	0	
+numericIndexedVectorPointwiseAdd	0	0	
+numericIndexedVectorPointwiseDivide	0	0	
+numericIndexedVectorPointwiseEqual	0	0	
+numericIndexedVectorPointwiseGreater	0	0	
+numericIndexedVectorPointwiseGreaterEqual	0	0	
+numericIndexedVectorPointwiseLess	0	0	
+numericIndexedVectorPointwiseLessEqual	0	0	
+numericIndexedVectorPointwiseMultiply	0	0	
+numericIndexedVectorPointwiseNotEqual	0	0	
+numericIndexedVectorPointwiseSubtract	0	0	
+numericIndexedVectorShortDebugString	0	0	
+numericIndexedVectorToMap	0	0	
+obfuscateQuery	0	0	
+obfuscateQueryWithSeed	0	0	
+or	0	0	
+overlay	0	1	
+overlayUTF8	0	0	
+parseDateTime	0	0	
+parseDateTime32BestEffort	0	0	
+parseDateTime32BestEffortOrNull	0	0	
+parseDateTime32BestEffortOrZero	0	0	
+parseDateTime64	0	0	
+parseDateTime64BestEffort	0	0	
+parseDateTime64BestEffortOrNull	0	0	
+parseDateTime64BestEffortOrZero	0	0	
+parseDateTime64BestEffortUS	0	0	
+parseDateTime64BestEffortUSOrNull	0	0	
+parseDateTime64BestEffortUSOrZero	0	0	
+parseDateTime64InJodaSyntax	0	0	
+parseDateTime64InJodaSyntaxOrNull	0	0	
+parseDateTime64InJodaSyntaxOrZero	0	0	
+parseDateTime64OrNull	0	0	
+parseDateTime64OrZero	0	0	
+parseDateTimeBestEffort	0	0	
+parseDateTimeBestEffortOrNull	0	0	
+parseDateTimeBestEffortOrZero	0	0	
+parseDateTimeBestEffortUS	0	0	
+parseDateTimeBestEffortUSOrNull	0	0	
+parseDateTimeBestEffortUSOrZero	0	0	
+parseDateTimeInJodaSyntax	0	0	
+parseDateTimeInJodaSyntaxOrNull	0	0	
+parseDateTimeInJodaSyntaxOrZero	0	0	
+parseDateTimeOrNull	0	0	
+parseDateTimeOrZero	0	0	
+parseReadableSize	0	0	
+parseReadableSizeOrNull	0	0	
+parseReadableSizeOrZero	0	0	
+parseTimeDelta	0	0	
+partitionID	0	0	partitionId
+partitionId	0	0	
+path	0	0	
+pathFull	0	0	
+percentRank	1	0	
+percent_rank	1	1	percentRank
+perimeterCartesian	0	0	
+perimeterSpherical	0	0	
+pi	0	1	
+plus	0	0	
+pmod	0	1	positiveModulo
+pmodOrNull	0	1	positiveModuloOrNull
+pointInEllipses	0	0	
+pointInPolygon	0	0	
+polygonAreaCartesian	0	0	
+polygonAreaSpherical	0	0	
+polygonConvexHullCartesian	0	0	
+polygonPerimeterCartesian	0	0	
+polygonPerimeterSpherical	0	0	
+polygonsDistanceCartesian	0	0	
+polygonsDistanceSpherical	0	0	
+polygonsEqualsCartesian	0	0	
+polygonsIntersectCartesian	0	0	
+polygonsIntersectSpherical	0	0	
+polygonsIntersectionCartesian	0	0	
+polygonsIntersectionSpherical	0	0	
+polygonsSymDifferenceCartesian	0	0	
+polygonsSymDifferenceSpherical	0	0	
+polygonsUnionCartesian	0	0	
+polygonsUnionSpherical	0	0	
+polygonsWithinCartesian	0	0	
+polygonsWithinSpherical	0	0	
+port	0	0	
+portRFC	0	0	
+position	0	1	
+positionCaseInsensitive	0	0	
+positionCaseInsensitiveUTF8	0	0	
+positionUTF8	0	0	
+positiveModulo	0	1	
+positiveModuloOrNull	0	1	
+positive_modulo	0	1	positiveModulo
+positive_modulo_or_null	0	1	positiveModuloOrNull
+pow	0	1	
+power	0	1	pow
+prettyPrintJSON	0	0	
+printf	0	0	
+proportionsZTest	0	0	
+protocol	0	0	
+quantile	1	0	
+quantileBFloat16	1	0	
+quantileBFloat16Weighted	1	0	
+quantileDD	1	0	
+quantileDeterministic	1	0	
+quantileExact	1	0	
+quantileExactExclusive	1	0	
+quantileExactHigh	1	0	
+quantileExactInclusive	1	0	
+quantileExactLow	1	0	
+quantileExactWeighted	1	0	
+quantileExactWeightedInterpolated	1	0	
+quantileGK	1	0	
+quantileInterpolatedWeighted	1	0	
+quantilePrometheusHistogram	1	0	
+quantileTDigest	1	0	
+quantileTDigestWeighted	1	0	
+quantileTiming	1	0	
+quantileTimingWeighted	1	0	
+quantiles	1	0	
+quantilesBFloat16	1	0	
+quantilesBFloat16Weighted	1	0	
+quantilesDD	1	0	
+quantilesDeterministic	1	0	
+quantilesExact	1	0	
+quantilesExactExclusive	1	0	
+quantilesExactHigh	1	0	
+quantilesExactInclusive	1	0	
+quantilesExactLow	1	0	
+quantilesExactWeighted	1	0	
+quantilesExactWeightedInterpolated	1	0	
+quantilesGK	1	0	
+quantilesInterpolatedWeighted	1	0	
+quantilesPrometheusHistogram	1	0	
+quantilesTDigest	1	0	
+quantilesTDigestWeighted	1	0	
+quantilesTiming	1	0	
+quantilesTimingWeighted	1	0	
+queryID	0	0	
+queryString	0	0	
+queryStringAndFragment	0	0	
+query_id	0	1	queryID
+radians	0	1	
+rand	0	1	
+rand32	0	0	rand
+rand64	0	0	
+randBernoulli	0	0	
+randBinomial	0	0	
+randCanonical	0	0	
+randChiSquared	0	0	
+randConstant	0	0	
+randExponential	0	0	
+randFisherF	0	0	
+randLogNormal	0	0	
+randNegativeBinomial	0	0	
+randNormal	0	0	
+randPoisson	0	0	
+randStudentT	0	0	
+randUniform	0	0	
+randomFixedString	0	0	
+randomPrintableASCII	0	0	
+randomString	0	0	
+randomStringUTF8	0	0	
+range	0	0	
+rank	1	1	
+rankCorr	1	0	
+readWKB	0	0	
+readWKBLineString	0	0	
+readWKBMultiLineString	0	0	
+readWKBMultiPolygon	0	0	
+readWKBPoint	0	0	
+readWKBPolygon	0	0	
+readWKT	0	0	
+readWKTLineString	0	0	
+readWKTMultiLineString	0	0	
+readWKTMultiPolygon	0	0	
+readWKTPoint	0	0	
+readWKTPolygon	0	0	
+readWKTRing	0	0	
+readWkb	0	0	readWKB
+readWkt	0	0	readWKT
+regexpExtract	0	0	
+regexpInstr	0	1	regexpPosition
+regexpPosition	0	0	
+regexpQuoteMeta	0	0	
+regexp_instr	0	1	regexpPosition
+regionHierarchy	0	0	
+regionIn	0	0	
+regionToArea	0	0	
+regionToCity	0	0	
+regionToContinent	0	0	
+regionToCountry	0	0	
+regionToDistrict	0	0	
+regionToName	0	0	
+regionToPopulation	0	0	
+regionToTopContinent	0	0	
+reinterpret	0	0	
+reinterpretAsDate	0	0	
+reinterpretAsDateTime	0	0	
+reinterpretAsFixedString	0	0	
+reinterpretAsFloat32	0	0	
+reinterpretAsFloat64	0	0	
+reinterpretAsInt128	0	0	
+reinterpretAsInt16	0	0	
+reinterpretAsInt256	0	0	
+reinterpretAsInt32	0	0	
+reinterpretAsInt64	0	0	
+reinterpretAsInt8	0	0	
+reinterpretAsString	0	0	
+reinterpretAsUInt128	0	0	
+reinterpretAsUInt16	0	0	
+reinterpretAsUInt256	0	0	
+reinterpretAsUInt32	0	0	
+reinterpretAsUInt64	0	0	
+reinterpretAsUInt8	0	0	
+reinterpretAsUUID	0	0	
+removeAccentsUTF8	0	0	removeDiacriticsUTF8
+removeDiacriticsUTF8	0	0	
+repeat	0	1	
+replace	0	1	replaceAll
+replaceAll	0	0	
+replaceOne	0	0	
+replaceRegexpAll	0	0	
+replaceRegexpOne	0	0	
+replicate	0	0	
+retention	1	0	
+reverse	0	1	
+reverseBySeparator	0	0	
+reverseUTF8	0	0	
+revision	0	1	
+right	0	1	
+rightPad	0	0	
+rightPadUTF8	0	0	
+rightUTF8	0	0	
+round	0	1	
+roundAge	0	0	
+roundBankers	0	0	
+roundDown	0	0	
+roundDuration	0	0	
+roundToExp2	0	0	
+rowNumberInAllBlocks	0	0	
+rowNumberInBlock	0	0	
+row_number	1	1	
+rpad	0	1	rightPad
+rtrim	0	0	trimRight
+runningAccumulate	0	0	
+runningConcurrency	0	0	
+runningDifference	0	0	
+runningDifferenceStartingWithFirstValue	0	0	
+scalarProduct	0	1	dotProduct
+sequenceCount	1	0	
+sequenceMatch	1	0	
+sequenceMatchEvents	1	0	
+sequenceNextNode	1	0	
+seriesDecomposeSTL	0	0	
+seriesOutliersDetectTukey	0	0	
+serverTimeZone	0	0	serverTimezone
+serverTimezone	0	0	
+serverUUID	0	0	
+shardCount	0	0	
+shardNum	0	0	
+showCertificate	0	0	
+sigmoid	0	0	
+sign	0	1	
+simpleJSONExtractBool	0	0	
+simpleJSONExtractFloat	0	0	
+simpleJSONExtractInt	0	0	
+simpleJSONExtractRaw	0	0	
+simpleJSONExtractString	0	0	
+simpleJSONExtractUInt	0	0	
+simpleJSONHas	0	0	
+simpleLinearRegression	1	0	
+sin	0	1	
+singleValueOrNull	1	0	
+sinh	0	0	
+sipHash128	0	0	
+sipHash128Keyed	0	0	
+sipHash128Reference	0	0	
+sipHash128ReferenceKeyed	0	0	
+sipHash64	0	0	
+sipHash64Keyed	0	0	
+skewPop	1	0	
+skewSamp	1	0	
+sleep	0	0	
+sleepEachRow	0	0	
+snowflakeIDToDateTime	0	0	
+snowflakeIDToDateTime64	0	0	
+snowflakeToDateTime	0	0	
+snowflakeToDateTime64	0	0	
+soundex	0	1	
+space	0	1	
+sparkBar	1	0	sparkbar
+sparkbar	1	0	
+sparseGrams	0	0	
+sparseGramsHashes	0	0	
+sparseGramsHashesUTF8	0	0	
+sparseGramsUTF8	0	0	
+splitByAlpha	0	0	alphaTokens
+splitByChar	0	0	
+splitByNonAlpha	0	0	
+splitByRegexp	0	0	
+splitByString	0	0	
+splitByWhitespace	0	0	
+sqid	0	0	sqidEncode
+sqidDecode	0	0	
+sqidEncode	0	0	
+sqrt	0	1	
+startsWith	0	0	
+startsWithCaseInsensitive	0	0	
+startsWithCaseInsensitiveUTF8	0	0	
+startsWithUTF8	0	0	
+stddevPop	1	0	
+stddevPopStable	1	0	
+stddevSamp	1	0	
+stddevSampStable	1	0	
+stochasticLinearRegression	1	0	
+stochasticLogisticRegression	1	0	
+str_to_date	0	1	parseDateTimeOrNull
+str_to_map	0	1	extractKeyValuePairs
+stringBytesEntropy	0	0	
+stringBytesUniq	0	0	
+stringJaccardIndex	0	0	
+stringJaccardIndexUTF8	0	0	
+stringToH3	0	0	
+string_agg	1	1	groupConcat
+structureToCapnProtoSchema	0	0	
+structureToProtobufSchema	0	0	
+studentTTest	1	0	
+studentTTestOneSample	1	0	
+subBitmap	0	0	
+subDate	0	1	
+substr	0	1	substring
+substring	0	1	
+substringIndex	0	0	
+substringIndexUTF8	0	0	
+substringUTF8	0	0	
+subtractDays	0	0	
+subtractHours	0	0	
+subtractInterval	0	0	
+subtractMicroseconds	0	0	
+subtractMilliseconds	0	0	
+subtractMinutes	0	0	
+subtractMonths	0	0	
+subtractNanoseconds	0	0	
+subtractQuarters	0	0	
+subtractSeconds	0	0	
+subtractTupleOfIntervals	0	0	
+subtractWeeks	0	0	
+subtractYears	0	0	
+sum	1	1	
+sumCount	1	0	
+sumKahan	1	0	
+sumMapFiltered	1	0	
+sumMapFilteredWithOverflow	1	0	
+sumMapWithOverflow	1	0	
+sumMappedArrays	1	0	
+sumWithOverflow	1	0	
+svg	0	0	
+tan	0	1	
+tanh	0	1	
+tcpPort	0	0	
+tgamma	0	0	
+theilsU	1	0	
+throwIf	0	0	
+tid	0	0	
+timeDiff	0	1	
+timeSeriesChangesToGrid	1	0	
+timeSeriesCopyTag	0	0	
+timeSeriesCopyTags	0	0	
+timeSeriesDeltaToGrid	1	0	
+timeSeriesDerivToGrid	1	0	
+timeSeriesExtractTag	0	0	
+timeSeriesFromGrid	0	0	
+timeSeriesGroupArray	1	0	
+timeSeriesGroupToSamplingKey	0	0	
+timeSeriesGroupToTags	0	0	
+timeSeriesIdToGroup	0	0	
+timeSeriesIdToTags	0	0	
+timeSeriesIdToTagsGroup	0	0	timeSeriesIdToGroup
+timeSeriesInstantDeltaToGrid	1	0	
+timeSeriesInstantRateToGrid	1	0	
+timeSeriesJoinTags	0	0	
+timeSeriesLastToGrid	1	0	timeSeriesResampleToGridWithStaleness
+timeSeriesLastTwoSamples	1	0	
+timeSeriesPredictLinearToGrid	1	0	
+timeSeriesRange	0	0	
+timeSeriesRateToGrid	1	0	
+timeSeriesRemoveAllTagsExcept	0	0	
+timeSeriesRemoveTag	0	0	
+timeSeriesRemoveTags	0	0	
+timeSeriesReplaceTag	0	0	
+timeSeriesResampleToGridWithStaleness	1	0	
+timeSeriesResetsToGrid	1	0	
+timeSeriesStoreTags	0	0	
+timeSeriesTagsGroupToTags	0	0	timeSeriesGroupToTags
+timeSeriesTagsToGroup	0	0	
+timeSeriesThrowDuplicateSeriesIf	0	0	
+timeSlot	0	0	
+timeSlots	0	0	
+timeZone	0	1	timezone
+timeZoneOf	0	0	timezoneOf
+timeZoneOffset	0	0	timezoneOffset
+time_bucket	0	1	toStartOfInterval
+timestamp	0	1	
+timestampDiff	0	0	dateDiff
+timestamp_diff	0	0	dateDiff
+timezone	0	1	
+timezoneOf	0	0	
+timezoneOffset	0	0	
+toBFloat16	0	0	
+toBFloat16OrNull	0	0	
+toBFloat16OrZero	0	0	
+toBool	0	0	
+toColumnTypeName	0	0	
+toDate	0	0	
+toDate32	0	0	
+toDate32OrDefault	0	0	
+toDate32OrNull	0	0	
+toDate32OrZero	0	0	
+toDateOrDefault	0	0	
+toDateOrNull	0	0	
+toDateOrZero	0	0	
+toDateTime	0	0	
+toDateTime32	0	0	
+toDateTime64	0	0	
+toDateTime64OrDefault	0	0	
+toDateTime64OrNull	0	0	
+toDateTime64OrZero	0	0	
+toDateTimeOrDefault	0	0	
+toDateTimeOrNull	0	0	
+toDateTimeOrZero	0	0	
+toDayOfMonth	0	0	
+toDayOfWeek	0	0	
+toDayOfYear	0	0	
+toDaysInMonth	0	0	
+toDaysSinceYearZero	0	0	
+toDecimal128	0	0	
+toDecimal128OrDefault	0	0	
+toDecimal128OrNull	0	0	
+toDecimal128OrZero	0	0	
+toDecimal256	0	0	
+toDecimal256OrDefault	0	0	
+toDecimal256OrNull	0	0	
+toDecimal256OrZero	0	0	
+toDecimal32	0	0	
+toDecimal32OrDefault	0	0	
+toDecimal32OrNull	0	0	
+toDecimal32OrZero	0	0	
+toDecimal64	0	0	
+toDecimal64OrDefault	0	0	
+toDecimal64OrNull	0	0	
+toDecimal64OrZero	0	0	
+toDecimalString	0	1	
+toFixedString	0	0	
+toFloat32	0	0	
+toFloat32OrDefault	0	0	
+toFloat32OrNull	0	0	
+toFloat32OrZero	0	0	
+toFloat64	0	0	
+toFloat64OrDefault	0	0	
+toFloat64OrNull	0	0	
+toFloat64OrZero	0	0	
+toHour	0	0	
+toIPv4	0	0	
+toIPv4OrDefault	0	0	
+toIPv4OrNull	0	0	
+toIPv4OrZero	0	0	
+toIPv6	0	0	
+toIPv6OrDefault	0	0	
+toIPv6OrNull	0	0	
+toIPv6OrZero	0	0	
+toISOWeek	0	0	
+toISOYear	0	0	
+toInt128	0	0	
+toInt128OrDefault	0	0	
+toInt128OrNull	0	0	
+toInt128OrZero	0	0	
+toInt16	0	0	
+toInt16OrDefault	0	0	
+toInt16OrNull	0	0	
+toInt16OrZero	0	0	
+toInt256	0	0	
+toInt256OrDefault	0	0	
+toInt256OrNull	0	0	
+toInt256OrZero	0	0	
+toInt32	0	0	
+toInt32OrDefault	0	0	
+toInt32OrNull	0	0	
+toInt32OrZero	0	0	
+toInt64	0	0	
+toInt64OrDefault	0	0	
+toInt64OrNull	0	0	
+toInt64OrZero	0	0	
+toInt8	0	0	
+toInt8OrDefault	0	0	
+toInt8OrNull	0	0	
+toInt8OrZero	0	0	
+toInterval	0	0	
+toIntervalDay	0	0	
+toIntervalHour	0	0	
+toIntervalMicrosecond	0	0	
+toIntervalMillisecond	0	0	
+toIntervalMinute	0	0	
+toIntervalMonth	0	0	
+toIntervalNanosecond	0	0	
+toIntervalQuarter	0	0	
+toIntervalSecond	0	0	
+toIntervalWeek	0	0	
+toIntervalYear	0	0	
+toJSONString	0	0	
+toLastDayOfMonth	0	0	
+toLastDayOfWeek	0	0	
+toLowCardinality	0	0	
+toMillisecond	0	0	
+toMinute	0	0	
+toModifiedJulianDay	0	0	
+toModifiedJulianDayOrNull	0	0	
+toMonday	0	0	
+toMonth	0	0	
+toMonthNumSinceEpoch	0	0	
+toNullable	0	0	
+toQuarter	0	0	
+toRelativeDayNum	0	0	
+toRelativeHourNum	0	0	
+toRelativeMinuteNum	0	0	
+toRelativeMonthNum	0	0	
+toRelativeQuarterNum	0	0	
+toRelativeSecondNum	0	0	
+toRelativeWeekNum	0	0	
+toRelativeYearNum	0	0	
+toSecond	0	0	
+toStartOfDay	0	0	
+toStartOfFifteenMinutes	0	0	
+toStartOfFiveMinute	0	0	toStartOfFiveMinutes
+toStartOfFiveMinutes	0	0	
+toStartOfHour	0	0	
+toStartOfISOYear	0	0	
+toStartOfInterval	0	0	
+toStartOfMicrosecond	0	0	
+toStartOfMillisecond	0	0	
+toStartOfMinute	0	0	
+toStartOfMonth	0	0	
+toStartOfNanosecond	0	0	
+toStartOfQuarter	0	0	
+toStartOfSecond	0	0	
+toStartOfTenMinutes	0	0	
+toStartOfWeek	0	0	
+toStartOfYear	0	0	
+toString	0	0	
+toStringCutToZero	0	0	
+toTime	0	0	
+toTime64	0	0	
+toTime64OrNull	0	0	
+toTime64OrZero	0	0	
+toTimeOrNull	0	0	
+toTimeOrZero	0	0	
+toTimeWithFixedDate	0	0	
+toTimeZone	0	0	toTimezone
+toTimezone	0	0	
+toTypeName	0	0	
+toUInt128	0	0	
+toUInt128OrDefault	0	0	
+toUInt128OrNull	0	0	
+toUInt128OrZero	0	0	
+toUInt16	0	0	
+toUInt16OrDefault	0	0	
+toUInt16OrNull	0	0	
+toUInt16OrZero	0	0	
+toUInt256	0	0	
+toUInt256OrDefault	0	0	
+toUInt256OrNull	0	0	
+toUInt256OrZero	0	0	
+toUInt32	0	0	
+toUInt32OrDefault	0	0	
+toUInt32OrNull	0	0	
+toUInt32OrZero	0	0	
+toUInt64	0	0	
+toUInt64OrDefault	0	0	
+toUInt64OrNull	0	0	
+toUInt64OrZero	0	0	
+toUInt8	0	0	
+toUInt8OrDefault	0	0	
+toUInt8OrNull	0	0	
+toUInt8OrZero	0	0	
+toUTCTimestamp	0	0	
+toUUID	0	0	
+toUUIDOrDefault	0	0	
+toUUIDOrNull	0	0	
+toUUIDOrZero	0	0	
+toUnixTimestamp	0	0	
+toUnixTimestamp64Micro	0	0	
+toUnixTimestamp64Milli	0	0	
+toUnixTimestamp64Nano	0	0	
+toUnixTimestamp64Second	0	0	
+toValidUTF8	0	0	
+toWeek	0	0	
+toYYYYMM	0	0	
+toYYYYMMDD	0	0	
+toYYYYMMDDhhmmss	0	0	
+toYear	0	0	
+toYearNumSinceEpoch	0	0	
+toYearWeek	0	0	
+to_utc_timestamp	0	1	toUTCTimestamp
+today	0	1	
+tokenizeQuery	0	0	
+tokens	0	0	
+tokensForLikePattern	0	0	
+topK	1	0	
+topKWeighted	1	0	
+topLevelDomain	0	0	
+topLevelDomainRFC	0	0	
+transactionID	0	0	
+transactionLatestSnapshot	0	0	
+transactionOldestSnapshot	0	0	
+transform	0	0	
+translate	0	0	
+translateUTF8	0	0	
+trim	0	0	trimBoth
+trimBoth	0	0	
+trimLeft	0	0	
+trimRight	0	0	
+trunc	0	1	
+truncate	0	1	trunc
+tryBase32Decode	0	0	
+tryBase58Decode	0	0	
+tryBase64Decode	0	0	
+tryBase64URLDecode	0	0	
+tryDecrypt	0	0	
+tumble	0	0	
+tumbleEnd	0	0	
+tumbleStart	0	0	
+tuple	0	0	
+tupleConcat	0	0	
+tupleDivide	0	0	
+tupleDivideByNumber	0	0	
+tupleElement	0	0	
+tupleHammingDistance	0	0	
+tupleIntDiv	0	0	
+tupleIntDivByNumber	0	0	
+tupleIntDivOrZero	0	0	
+tupleIntDivOrZeroByNumber	0	0	
+tupleMinus	0	0	
+tupleModulo	0	0	
+tupleModuloByNumber	0	0	
+tupleMultiply	0	0	
+tupleMultiplyByNumber	0	0	
+tupleNames	0	0	
+tupleNegate	0	0	
+tuplePlus	0	0	
+tuplePositiveModuloByNumber	0	0	
+tupleToNameValuePairs	0	0	
+ucase	0	1	upper
+unbin	0	1	
+unhex	0	1	
+uniq	1	0	
+uniqCombined	1	0	
+uniqCombined64	1	0	
+uniqExact	1	0	
+uniqHLL12	1	0	
+uniqUpTo	1	0	
+unnest	0	1	arrayJoin
+upper	0	1	
+upperUTF8	0	0	
+uptime	0	0	
+user	0	1	currentUser
+validateNestedArraySizes	0	0	
+varPop	1	0	
+varPopStable	1	0	
+varSamp	1	0	
+varSampStable	1	0	
+variantElement	0	0	
+variantType	0	0	
+vectorDifference	0	1	tupleMinus
+vectorSum	0	1	tuplePlus
+version	0	1	
+visibleWidth	0	0	
+visitParamExtractBool	0	0	simpleJSONExtractBool
+visitParamExtractFloat	0	0	simpleJSONExtractFloat
+visitParamExtractInt	0	0	simpleJSONExtractInt
+visitParamExtractRaw	0	0	simpleJSONExtractRaw
+visitParamExtractString	0	0	simpleJSONExtractString
+visitParamExtractUInt	0	0	simpleJSONExtractUInt
+visitParamHas	0	0	simpleJSONHas
+week	0	1	toWeek
+welchTTest	1	0	
+widthBucket	0	0	
+width_bucket	0	1	widthBucket
+windowFunnel	1	0	
+windowID	0	0	
+wkb	0	0	
+wkt	0	0	
+wordShingleMinHash	0	0	
+wordShingleMinHashArg	0	0	
+wordShingleMinHashArgCaseInsensitive	0	0	
+wordShingleMinHashArgCaseInsensitiveUTF8	0	0	
+wordShingleMinHashArgUTF8	0	0	
+wordShingleMinHashCaseInsensitive	0	0	
+wordShingleMinHashCaseInsensitiveUTF8	0	0	
+wordShingleMinHashUTF8	0	0	
+wordShingleSimHash	0	0	
+wordShingleSimHashCaseInsensitive	0	0	
+wordShingleSimHashCaseInsensitiveUTF8	0	0	
+wordShingleSimHashUTF8	0	0	
+wyHash64	0	0	
+xor	0	0	
+xxHash32	0	0	
+xxHash64	0	0	
+xxh3	0	0	
+xxh3_128	0	0	
+yandexConsistentHash	0	0	kostikConsistentHash
+yearweek	0	1	toYearWeek
+yesterday	0	0	
+zookeeperSessionUptime	0	0	

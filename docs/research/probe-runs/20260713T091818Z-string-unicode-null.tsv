@@ -1,0 +1,52 @@
+lower_turkish	lower('İ')	lower('İ')	DIFF	"İ"[U+0130]	"i"[U+0069]
+lower_turkish_utf8	lowerUTF8('İ')	lower('İ')	DIFF	"i̇"[U+0069 U+0307]	"i"[U+0069]
+upper_sharp_s	upper('ß')	upper('ß')	DIFF	"ß"[U+00DF]	"ẞ"[U+1E9E]
+upper_sharp_s_utf8	upperUTF8('ß')	upper('ß')	DIFF	"SS"[U+0053 U+0053]	"ẞ"[U+1E9E]
+lower_ascii	lower('ABC')	lower('ABC')	SAME	"abc"[U+0061 U+0062 U+0063]	"abc"[U+0061 U+0062 U+0063]
+lower_accent_ascii_fn	lower('CAFÉ')	lower('CAFÉ')	DIFF	"cafÉ"[U+0063 U+0061 U+0066 U+00C9]	"café"[U+0063 U+0061 U+0066 U+00E9]
+lower_accent_utf8_fn	lowerUTF8('CAFÉ')	lower('CAFÉ')	SAME	"café"[U+0063 U+0061 U+0066 U+00E9]	"café"[U+0063 U+0061 U+0066 U+00E9]
+ucase_turkish	ucase('ı')	ucase('ı')	DIFF	"ı"[U+0131]	"I"[U+0049]
+length_emoji	length('😀')	length('😀')	DIFF	4	1
+lengthUTF8_emoji	lengthUTF8('😀')	length('😀')	SAME	1	1
+char_length_emoji	char_length('😀')	char_length('😀')	SAME	1	1
+length_cjk	length('中文')	length('中文')	DIFF	6	2
+octet_length_cjk	octet_length('中文')	octet_length('中文')	DIFF	6	<ERR:Binder Error: Could not choose a best candidate function for the function call ">
+length_family_zwj	length('👨‍👩‍👧')	length('👨‍👩‍👧')	DIFF	18	5
+lengthUTF8_zwj	lengthUTF8('👨‍👩‍👧')	length('👨‍👩‍👧')	SAME	5	5
+reverse_ascii	reverse('abc')	reverse('abc')	SAME	"cba"[U+0063 U+0062 U+0061]	"cba"[U+0063 U+0062 U+0061]
+reverse_cafe_dec	reverse('café')	reverse('café')	DIFF	"�efac"[U+FFFD U+0065 U+0066 U+0061 U+0063]	"éfac"[U+0065 U+0301 U+0066 U+0061 U+0063]
+reverseUTF8_cafe_dec	reverseUTF8('café')	reverse('café')	DIFF	"́efac"[U+0301 U+0065 U+0066 U+0061 U+0063]	"éfac"[U+0065 U+0301 U+0066 U+0061 U+0063]
+reverse_zwj	reverse('👨‍👩‍👧')	reverse('👨‍👩‍👧')	DIFF	"�⩑�⨑�"[U+FFFD U+2A51 U+FFFD U+2A11 U+FFFD]	"👨‍👩‍👧"[U+1F468 U+200D U+1F469 U+200D U+1F467]
+trim_nbsp	trimBoth(' x ')	trim(' x ')	DIFF	" x "[U+00A0 U+0078 U+00A0]	"x"[U+0078]
+trim_emsp	trimBoth(' x ')	trim(' x ')	DIFF	" x "[U+2003 U+0078 U+2003]	"x"[U+0078]
+ltrim_spaces	trimLeft('  x  ')	ltrim('  x  ')	SAME	"x  "[U+0078 U+0020 U+0020]	"x  "[U+0078 U+0020 U+0020]
+rtrim_spaces	trimRight('  x  ')	rtrim('  x  ')	SAME	"  x"[U+0020 U+0020 U+0078]	"  x"[U+0020 U+0020 U+0078]
+concat_mid_null	concat('a', NULL, 'c')	concat('a', NULL, 'c')	DIFF	NULL	"ac"[U+0061 U+0063]
+concat_lead_null	concat(NULL, 'b')	concat(NULL, 'b')	DIFF	NULL	"b"[U+0062]
+concat_all_null	concat(NULL, NULL)	concat(NULL, NULL)	DIFF	NULL	""[]
+concat_ws_null_elem	concat_ws(',', 'a', NULL, 'c')	concat_ws(',', 'a', NULL, 'c')	DIFF	NULL	"a,c"[U+0061 U+002C U+0063]
+concat_ws_null_sep	concat_ws(NULL, 'a', 'c')	concat_ws(NULL, 'a', 'c')	SAME	NULL	NULL
+substr_start0	substring('abcde', 0, 2)	substring('abcde', 0, 2)	DIFF	""[]	"a"[U+0061]
+substr_start1	substring('abcde', 1, 2)	substring('abcde', 1, 2)	SAME	"ab"[U+0061 U+0062]	"ab"[U+0061 U+0062]
+substr_neg	substring('abcde', -2, 2)	substring('abcde', -2, 2)	SAME	"de"[U+0064 U+0065]	"de"[U+0064 U+0065]
+substr_codepoint	substring('café', 4, 1)	substring('café', 4, 1)	SAME	"e"[U+0065]	"e"[U+0065]
+substr_emoji_split	substring('😀x', 1, 1)	substring('😀x', 1, 1)	DIFF	"�"[U+FFFD]	"😀"[U+1F600]
+position_found	position('abcabc', 'b')	position('abcabc', 'b')	DIFF	2	<ERR:Parser Error: syntax error at or near ",">
+position_notfound	position('abc', 'z')	position('abc', 'z')	DIFF	0	<ERR:Parser Error: syntax error at or near ",">
+instr_found	instr('abcabc', 'b')	instr('abcabc', 'b')	SAME	2	2
+replace_all	replace('aXaXa', 'X', 'Y')	replace('aXaXa', 'X', 'Y')	SAME	"aYaYa"[U+0061 U+0059 U+0061 U+0059 U+0061]	"aYaYa"[U+0061 U+0059 U+0061 U+0059 U+0061]
+replaceOne	replaceOne('aXaXa', 'X', 'Y')	replace('aXaXa','X','Y')	DIFF	"aYaXa"[U+0061 U+0059 U+0061 U+0058 U+0061]	"aYaYa"[U+0061 U+0059 U+0061 U+0059 U+0061]
+regexp_replace_basic	replaceRegexpAll('aXaXa', 'X', 'Y')	regexp_replace('aXaXa','X','Y')	DIFF	"aYaYa"[U+0061 U+0059 U+0061 U+0059 U+0061]	"aYaXa"[U+0061 U+0059 U+0061 U+0058 U+0061]
+regexp_replace_first	replaceRegexpOne('aXaXa', 'X', 'Y')	regexp_replace('aXaXa','X','Y')	SAME	"aYaXa"[U+0061 U+0059 U+0061 U+0058 U+0061]	"aYaXa"[U+0061 U+0059 U+0061 U+0058 U+0061]
+lpad_ascii	leftPad('ab', 5, '*')	lpad('ab',5,'*')	SAME	"***ab"[U+002A U+002A U+002A U+0061 U+0062]	"***ab"[U+002A U+002A U+002A U+0061 U+0062]
+lpad_emoji	leftPadUTF8('😀', 5, '*')	lpad('😀',5,'*')	SAME	"****😀"[U+002A U+002A U+002A U+002A U+1F600]	"****😀"[U+002A U+002A U+002A U+002A U+1F600]
+rpad_ascii	rightPad('ab', 5, '*')	rpad('ab',5,'*')	SAME	"ab***"[U+0061 U+0062 U+002A U+002A U+002A]	"ab***"[U+0061 U+0062 U+002A U+002A U+002A]
+ascii_A	ascii('A')	ascii('A')	SAME	65	65
+ascii_emoji	ascii('😀')	ascii('😀')	DIFF	240	128512
+left_n	left('abcde', 2)	left('abcde', 2)	SAME	"ab"[U+0061 U+0062]	"ab"[U+0061 U+0062]
+right_n	right('abcde', 2)	right('abcde', 2)	SAME	"de"[U+0064 U+0065]	"de"[U+0064 U+0065]
+left_neg	left('abcde', -2)	left('abcde', -2)	SAME	"abc"[U+0061 U+0062 U+0063]	"abc"[U+0061 U+0062 U+0063]
+repeat_basic	repeat('ab', 3)	repeat('ab', 3)	SAME	"ababab"[U+0061 U+0062 U+0061 U+0062 U+0061 U+0062]	"ababab"[U+0061 U+0062 U+0061 U+0062 U+0061 U+0062]
+repeat_zero	repeat('ab', 0)	repeat('ab', 0)	SAME	""[]	""[]
+translate_basic	translate('abcabc', 'ab', 'xy')	translate('abcabc', 'ab', 'xy')	SAME	"xycxyc"[U+0078 U+0079 U+0063 U+0078 U+0079 U+0063]	"xycxyc"[U+0078 U+0079 U+0063 U+0078 U+0079 U+0063]
+upper_null	upper(NULL)	upper(NULL)	SAME	NULL	NULL

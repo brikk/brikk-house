@@ -1,0 +1,1120 @@
+{
+  "source_project": "clickhouse probe program",
+  "extracted": "2026-07-13",
+  "pairs": [
+    {
+      "trino": "lower",
+      "clickhouse": "lower",
+      "verdict": "divergent",
+      "hazard": "ClickHouse lower() is ASCII-only (\u0130/\u00df unchanged); Trino lower() does full Unicode lower with locale folding (\u0130->i+U+0307). Neither matches; use lowerUTF8 to approach Trino.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"
+    },
+    {
+      "trino": "upper",
+      "clickhouse": "upper",
+      "verdict": "divergent",
+      "hazard": "ClickHouse upper() ASCII-only; Trino upper() full folding (\u00df->SS). upperUTF8 gives \u00df->SS (matches Trino) but is still ASCII-passthrough for the plain upper name.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"
+    },
+    {
+      "trino": "length",
+      "clickhouse": "length",
+      "verdict": "divergent",
+      "hazard": "ClickHouse length()=BYTE count; Trino length() = code-point count. Use lengthUTF8/char_length for parity.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes"
+    },
+    {
+      "trino": "reverse",
+      "clickhouse": "reverse",
+      "verdict": "divergent",
+      "hazard": "ClickHouse reverse()=byte reverse (mangles UTF-8); Trino reverse is code-point-aware. reverseUTF8 approaches Trino (code points) but not grapheme clusters.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#reverse-byte-vs-grapheme"
+    },
+    {
+      "trino": "trim",
+      "clickhouse": "trim",
+      "verdict": "divergent",
+      "hazard": "ClickHouse trim strips only ASCII space; Trino trim (Java Character.isWhitespace) strips tab/LF/CR/FF/VT too. Different whitespace set.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"
+    },
+    {
+      "trino": "ltrim",
+      "clickhouse": "trimLeft",
+      "verdict": "divergent",
+      "hazard": "Same whitespace-set divergence as trim.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"
+    },
+    {
+      "trino": "rtrim",
+      "clickhouse": "trimRight",
+      "verdict": "divergent",
+      "hazard": "Same whitespace-set divergence as trim.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"
+    },
+    {
+      "trino": "concat",
+      "clickhouse": "concat",
+      "verdict": "divergent",
+      "hazard": "ClickHouse concat PROPAGATES NULL -> NULL (matches Trino's NULL propagation). This pair is ALIGNED on NULL \u2014 unlike DuckDB. Verdict divergent only for the string-vs-array concat overload shape; NULL algebra matches Trino.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation"
+    },
+    {
+      "trino": "concat_ws",
+      "clickhouse": "concat_ws",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse concat_ws propagates NULL element -> NULL; Trino concat_ws SKIPS NULL elements. Divergent on NULL elements; separator-NULL -> NULL in both.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation"
+    },
+    {
+      "trino": "substr",
+      "clickhouse": "substring",
+      "verdict": "divergent",
+      "hazard": "ClickHouse substring is BYTE-indexed and start=0 -> ''; Trino substring is code-point-indexed, 1-based. substringUTF8 fixes multibyte only.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0"
+    },
+    {
+      "trino": "substring",
+      "clickhouse": "substring",
+      "verdict": "divergent",
+      "hazard": "See substr: byte indexing + start=0 differ from Trino code-point semantics.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0"
+    },
+    {
+      "trino": "replace",
+      "clickhouse": "replaceAll",
+      "verdict": "identical",
+      "hazard": "ClickHouse replace == replaceAll (all occurrences); Trino replace(s,from,to) also replaces all. Aligned.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"
+    },
+    {
+      "trino": "regexp_replace",
+      "clickhouse": "replaceRegexpAll",
+      "verdict": "identical",
+      "hazard": "ClickHouse regexp_replace = replaceRegexpAll (ALL matches); Trino regexp_replace also replaces ALL by default. Aligned (both differ from DuckDB's first-only). RE2 in both.",
+      "areas": [
+        "regex",
+        "string"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"
+    },
+    {
+      "trino": "regexp_extract",
+      "clickhouse": "regexpExtract",
+      "verdict": "identical",
+      "hazard": "Group 0 = whole match in both; RE2 engine in both.",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#regexp-extract-groups"
+    },
+    {
+      "trino": "lpad",
+      "clickhouse": "leftPad",
+      "verdict": "divergent",
+      "hazard": "ClickHouse leftPad pads by BYTES; Trino lpad pads by code points. leftPadUTF8 for parity.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes"
+    },
+    {
+      "trino": "rpad",
+      "clickhouse": "rightPad",
+      "verdict": "divergent",
+      "hazard": "ClickHouse rightPad pads by BYTES; Trino rpad by code points. rightPadUTF8 for parity.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes"
+    },
+    {
+      "trino": "soundex",
+      "clickhouse": "soundex",
+      "verdict": "identical",
+      "hazard": "ClickHouse soundex('Robert')='R163'; Trino soundex same American Soundex. Aligned.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "to_base64",
+      "clickhouse": "base64Encode",
+      "verdict": "identical",
+      "hazard": "Standard alphabet in both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "from_base64",
+      "clickhouse": "base64Decode",
+      "verdict": "identical",
+      "hazard": "Aligned decode.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "md5",
+      "clickhouse": "MD5",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same digest; ClickHouse MD5 -> raw bytes (FixedString), Trino md5 -> VARBINARY. Both binary (unlike DuckDB hex) but distinct types; hex() to compare.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"
+    },
+    {
+      "trino": "sha1",
+      "clickhouse": "SHA1",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same digest; ClickHouse raw bytes vs Trino VARBINARY.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"
+    },
+    {
+      "trino": "sha256",
+      "clickhouse": "SHA256",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same digest; raw-bytes vs VARBINARY return.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"
+    },
+    {
+      "trino": "sha512",
+      "clickhouse": "SHA512",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse SHA512 present; same digest as Trino sha512; raw-bytes vs VARBINARY.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"
+    },
+    {
+      "trino": "crc32",
+      "clickhouse": "CRC32",
+      "verdict": "identical",
+      "hazard": "ClickHouse CRC32('abc')=891568578; Trino crc32 returns the same CRC-32 (bigint). (DuckDB has no crc32.)",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"
+    },
+    {
+      "trino": "xxhash64",
+      "clickhouse": "xxHash64",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both compute XXH64; ClickHouse returns UInt64, Trino xxhash64 returns VARBINARY(8) \u2014 same bits, different type/signedness. (DuckDB has no xxhash64.)",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"
+    },
+    {
+      "trino": "abs",
+      "clickhouse": "abs",
+      "verdict": "divergent",
+      "hazard": "abs(INT_MIN): ClickHouse widens to a positive value; Trino throws on the overflow.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-overflow"
+    },
+    {
+      "trino": "mod",
+      "clickhouse": "modulo",
+      "verdict": "divergent",
+      "hazard": "modulo by zero: ClickHouse throws; Trino also throws (division_by_zero). Non-zero aligned \u2014 this pair is actually aligned on error behavior; divergent flag reserved for the wrap/promotion axis.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero"
+    },
+    {
+      "trino": "round",
+      "clickhouse": "round",
+      "verdict": "divergent",
+      "hazard": "ClickHouse round() = banker's (half-even); Trino round() = half-UP (round half away from zero for positives). round(2.5)=2 vs 3.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers"
+    },
+    {
+      "trino": "truncate",
+      "clickhouse": "trunc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse truncate/trunc(x,n) truncates toward zero; Trino truncate(x,n) same intent. Aligned on the probe (2.678,2 -> 2.67).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "ln",
+      "clickhouse": "log",
+      "verdict": "divergent",
+      "hazard": "ClickHouse log(x)=natural log (== Trino ln). Value-correct rename, but domain: ln(0)/ln(-1) -> ClickHouse NULL vs Trino error/NaN.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"
+    },
+    {
+      "trino": "log",
+      "clickhouse": "log",
+      "verdict": "divergent",
+      "hazard": "ClickHouse single-arg log = natural log; Trino log(b,x) is base-b (two-arg). Signature + base collision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"
+    },
+    {
+      "trino": "log10",
+      "clickhouse": "log10",
+      "verdict": "identical",
+      "hazard": "Base-10 log aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"
+    },
+    {
+      "trino": "log2",
+      "clickhouse": "log2",
+      "verdict": "identical",
+      "hazard": "log2(8)=3 aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "pow",
+      "clickhouse": "pow",
+      "verdict": "conditionally-equivalent",
+      "hazard": "pow(-8,0.5): ClickHouse NULL; Trino NaN. Finite real cases aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "trino": "power",
+      "clickhouse": "power",
+      "verdict": "conditionally-equivalent",
+      "hazard": "See pow: complex result NULL vs NaN; finite aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "trino": "sqrt",
+      "clickhouse": "sqrt",
+      "verdict": "divergent",
+      "hazard": "sqrt(-1): ClickHouse NULL; Trino NaN.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "trino": "sign",
+      "clickhouse": "sign",
+      "verdict": "identical",
+      "hazard": "Aligned on integer/zero probes.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "e",
+      "clickhouse": "e",
+      "verdict": "identical",
+      "hazard": "ClickHouse e()=2.718281828459045; Trino e() same constant.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "pi",
+      "clickhouse": "pi",
+      "verdict": "identical",
+      "hazard": "Aligned constant.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "exp",
+      "clickhouse": "exp",
+      "verdict": "identical",
+      "hazard": "Aligned to double precision.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "cbrt",
+      "clickhouse": "cbrt",
+      "verdict": "identical",
+      "hazard": "cbrt(27)=3 aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "acos",
+      "clickhouse": "acos",
+      "verdict": "divergent",
+      "hazard": "acos(2) out of domain: ClickHouse NULL; Trino throws/NaN. In-domain aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "trino": "asin",
+      "clickhouse": "asin",
+      "verdict": "divergent",
+      "hazard": "asin(2) out of domain: ClickHouse NULL; Trino throws/NaN. In-domain aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"
+    },
+    {
+      "trino": "atan",
+      "clickhouse": "atan",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "atan2",
+      "clickhouse": "atan2",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "sin",
+      "clickhouse": "sin",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "cos",
+      "clickhouse": "cos",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "tan",
+      "clickhouse": "tan",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "sinh",
+      "clickhouse": "sinh",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "cosh",
+      "clickhouse": "cosh",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "tanh",
+      "clickhouse": "tanh",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "degrees",
+      "clickhouse": "degrees",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "radians",
+      "clickhouse": "radians",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "width_bucket",
+      "clickhouse": "widthBucket",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse widthBucket present and matched the probe (5 over [0,10]/5 bins -> 3); Trino width_bucket same intent. camelCase name is case-sensitive. (DuckDB lacked width_bucket in this build.)",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#case-sensitivity"
+    },
+    {
+      "trino": "year",
+      "clickhouse": "toYear",
+      "verdict": "divergent",
+      "hazard": "1970+ aligned; ClickHouse Date/DateTime floors at 1970 so pre-1970 timestamps that Trino handles will clamp.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970"
+    },
+    {
+      "trino": "month",
+      "clickhouse": "toMonth",
+      "verdict": "identical",
+      "hazard": "Aligned for representable dates.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "day",
+      "clickhouse": "toDayOfMonth",
+      "verdict": "identical",
+      "hazard": "Aligned for representable dates.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "hour",
+      "clickhouse": "toHour",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Aligned with matched session zones; ClickHouse DateTime is timezone-typed vs Trino's timestamp-with/without-zone distinction.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "trino": "minute",
+      "clickhouse": "toMinute",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "second",
+      "clickhouse": "toSecond",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "millisecond",
+      "clickhouse": "toMillisecond",
+      "verdict": "divergent",
+      "hazard": "ClickHouse toMillisecond = sub-second component only; Trino millisecond(timestamp) = seconds*1000+ms of the second? \u2014 verify; component definitions differ.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond"
+    },
+    {
+      "trino": "quarter",
+      "clickhouse": "toQuarter",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "week",
+      "clickhouse": "toWeek",
+      "verdict": "divergent",
+      "hazard": "ClickHouse toWeek default mode Sunday-based; Trino week()/week_of_year is ISO-8601. Map to toISOWeek for Trino parity.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode"
+    },
+    {
+      "trino": "date_trunc",
+      "clickhouse": "dateTrunc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Aligned on the intersecting unit set with matched zones; ClickHouse unit is a string first-arg and DateTime is tz-typed; 1970 floor applies.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type"
+    },
+    {
+      "trino": "date_diff",
+      "clickhouse": "dateDiff",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both take (unit, a, b); aligned on day diff. ClickHouse tz-typed operands; 1970 floor.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "trino": "date_format",
+      "clickhouse": "formatDateTime",
+      "verdict": "divergent",
+      "hazard": "SPEC DIALECT + name: Trino date_format uses Joda/MySQL patterns; ClickHouse formatDateTime uses MySQL-style %-codes where %M is the MONTH NAME (probe: '%M' -> 'March') \u2014 colliding with strftime %M=minute. Never map format strings by passthrough.",
+      "areas": [
+        "datetime",
+        "string"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#date-format-spec"
+    },
+    {
+      "trino": "from_unixtime",
+      "clickhouse": "fromUnixTimestamp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both epoch-seconds -> timestamp; ClickHouse returns a timezone-typed DateTime (session zone) and Trino from_unixtime(double) returns timestamp(3) with zone. Zone/precision-sensitive.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "trino": "to_unixtime",
+      "clickhouse": "toUnixTimestamp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse toUnixTimestamp(dt) -> UInt32 seconds (session zone); Trino to_unixtime -> double seconds. Value aligned when zones match; type differs.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "trino": "date",
+      "clickhouse": "toDate",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Cast-to-date aligned for 1970+ (2024-06-15); ClickHouse Date floors at 1970.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970"
+    },
+    {
+      "trino": "cardinality",
+      "clickhouse": "length",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino cardinality(array) = element count; ClickHouse length(array) same. (ClickHouse also has cardinality as an alias.) Aligned for arrays; Trino cardinality(map) also -> ClickHouse length(map).",
+      "areas": [
+        "array"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob"
+    },
+    {
+      "trino": "array_remove",
+      "clickhouse": "arrayFilter",
+      "verdict": "divergent",
+      "hazard": "No direct ClickHouse array_remove; idiom is arrayFilter(x->x!=v, arr). NULL-element handling and the lambda shape differ from Trino's element-equality remove.",
+      "areas": [
+        "array",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob"
+    },
+    {
+      "trino": "flatten",
+      "clickhouse": "arrayFlatten",
+      "verdict": "identical",
+      "hazard": "One-level flatten aligned.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "transform",
+      "clickhouse": "arrayMap",
+      "verdict": "divergent",
+      "hazard": "NAME COLLISION: Trino transform(array, lambda) maps a lambda over elements; ClickHouse transform(x, from_array, to_array, default) is a scalar VALUE-REMAP (CASE-like) \u2014 completely different function. ClickHouse's lambda map is arrayMap.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#transform-collision"
+    },
+    {
+      "trino": "ngrams",
+      "clickhouse": "ngrams",
+      "verdict": "divergent",
+      "hazard": "Trino ngrams(array, n) returns an array of n-element sub-arrays; ClickHouse ngrams(string,n) returns overlapping byte/char substrings of a STRING. Different input/output shape.",
+      "areas": [
+        "array",
+        "string"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#transform-collision"
+    },
+    {
+      "trino": "map",
+      "clickhouse": "map",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino map(array_k, array_v) matches ClickHouse map(k1,v1,...) in intent but the constructor SHAPE differs (two arrays vs flat kv list).",
+      "areas": [
+        "map"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape"
+    },
+    {
+      "trino": "sum",
+      "clickhouse": "sum",
+      "verdict": "divergent",
+      "hazard": "Empty group -> 0 (ClickHouse) vs Trino NULL; ClickHouse sum overflow-wraps fixed-width ints where Trino throws/decimals. All-NULL -> NULL in both.",
+      "areas": [
+        "aggregate",
+        "null",
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"
+    },
+    {
+      "trino": "avg",
+      "clickhouse": "avg",
+      "verdict": "divergent",
+      "hazard": "Empty group -> nan (ClickHouse) vs Trino NULL.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"
+    },
+    {
+      "trino": "count",
+      "clickhouse": "count",
+      "verdict": "identical",
+      "hazard": "count(expr) skips NULL; count() empty -> 0 in both.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "min",
+      "clickhouse": "min",
+      "verdict": "divergent",
+      "hazard": "Empty group -> type default (ClickHouse) vs Trino NULL.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"
+    },
+    {
+      "trino": "max",
+      "clickhouse": "max",
+      "verdict": "divergent",
+      "hazard": "Empty group -> type default (ClickHouse) vs Trino NULL.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"
+    },
+    {
+      "trino": "stddev",
+      "clickhouse": "stddev",
+      "verdict": "identical",
+      "hazard": "Bare stddev = sample in both.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "stddev_pop",
+      "clickhouse": "stddevPop",
+      "verdict": "identical",
+      "hazard": "Population stddev aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "stddev_samp",
+      "clickhouse": "stddevSamp",
+      "verdict": "identical",
+      "hazard": "Sample stddev aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "var_pop",
+      "clickhouse": "varPop",
+      "verdict": "identical",
+      "hazard": "Population variance aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "var_samp",
+      "clickhouse": "varSamp",
+      "verdict": "identical",
+      "hazard": "Sample variance aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "corr",
+      "clickhouse": "corr",
+      "verdict": "identical",
+      "hazard": "Pearson correlation aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "covar_pop",
+      "clickhouse": "covarPop",
+      "verdict": "identical",
+      "hazard": "Population covariance aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "covar_samp",
+      "clickhouse": "covarSamp",
+      "verdict": "identical",
+      "hazard": "Sample covariance aligned.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "histogram",
+      "clickhouse": "histogram",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino histogram = exact value->count map; ClickHouse histogram(bins)(x) = approximate adaptive bins. Different shape.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"
+    },
+    {
+      "trino": "array_agg",
+      "clickhouse": "groupArray",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Trino array_agg -> ClickHouse groupArray; ordering undefined without ORDER BY; groupArray drops NULLs.",
+      "areas": [
+        "aggregate",
+        "array",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "trino": "any_value",
+      "clickhouse": "any",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Order-dependent/nondeterministic without ORDER BY in both.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "trino": "approx_top_k",
+      "clickhouse": "topK",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both approximate top-k; ClickHouse topK(k)(x) parametric signature and sketch differ from Trino approx_top_k \u2014 only the top-value set is comparable, not internal state.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"
+    },
+    {
+      "trino": "row_number",
+      "clickhouse": "row_number",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "rank",
+      "clickhouse": "rank",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "dense_rank",
+      "clickhouse": "dense_rank",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "ntile",
+      "clickhouse": "ntile",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "first_value",
+      "clickhouse": "first_value",
+      "verdict": "identical",
+      "hazard": "Aligned on default frame.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "last_value",
+      "clickhouse": "last_value",
+      "verdict": "identical",
+      "hazard": "Aligned on default running frame.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "percent_rank",
+      "clickhouse": "percent_rank",
+      "verdict": "identical",
+      "hazard": "0,0.5,1 aligned.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "cume_dist",
+      "clickhouse": "cume_dist",
+      "verdict": "identical",
+      "hazard": "Aligned.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+    },
+    {
+      "trino": "lag",
+      "clickhouse": "lag",
+      "verdict": "divergent",
+      "hazard": "ClickHouse lag fills the type default (0) out of partition; Trino lag returns NULL (default) unless a default is supplied.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"
+    },
+    {
+      "trino": "lead",
+      "clickhouse": "lead",
+      "verdict": "divergent",
+      "hazard": "ClickHouse lead fills type default (0) past the end; Trino returns NULL.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"
+    },
+    {
+      "trino": "nth_value",
+      "clickhouse": "nth_value",
+      "verdict": "divergent",
+      "hazard": "ClickHouse returns type default before the Nth row; Trino returns NULL.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"
+    },
+    {
+      "trino": "rand",
+      "clickhouse": "rand",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Non-deterministic; ClickHouse rand() -> UInt32, Trino rand() -> double [0,1). Never pushable.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"
+    },
+    {
+      "trino": "now",
+      "clickhouse": "now",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Query-stable; ClickHouse now() DateTime (sec, tz-typed) vs Trino now() timestamp(3) with zone.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "trino": "current_date",
+      "clickhouse": "today",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Session/zone-dependent; ClickHouse Date (1970 floor).",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "trino": "timezone",
+      "clickhouse": "timezone",
+      "verdict": "conditionally-equivalent",
+      "hazard": "ClickHouse timezone() -> session zone name; not a Trino-comparable scalar. Session-only.",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    }
+  ]
+}
