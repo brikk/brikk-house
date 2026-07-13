@@ -198,6 +198,12 @@ Pipe-syntax fragments targeting a real engine should pass `desugarPipes = true`
 (engines don't speak `|>`; available on `transpileTo`/`certify`/`transpileStrict`).
 For full belt-and-braces, follow with a brikk-sql-verify grammar check of the output.
 
+Verdicts stay faithful to the research, but a consumer can accept a refusal its own data
+makes irrelevant via `report.okAccepting { predicate }` — `ok` where every refusal is
+accepted. Each `SEMANTIC_HAZARD` finding carries the hazard's `areas` tags, so an
+ASCII-only corpus can waive the unicode case-folding hazard with
+`report.okAccepting { "unicode" in it.areas }` while any other refusal still blocks.
+
 ## Errors
 
 - `ParseError` — structured (message, line, col, context highlight)

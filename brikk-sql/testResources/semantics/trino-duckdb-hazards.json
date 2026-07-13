@@ -643,6 +643,16 @@
       "provenance": "PLAN-pushdown-datetime.md#test-corpus--designed-for-divergence-pressure"
     },
     {
+      "trino": "DATE + INTERVAL (result type)",
+      "duckdb": "DATE + INTERVAL (result type)",
+      "verdict": "divergent",
+      "hazard": "DATE + INTERVAL / DATE - INTERVAL diverge on RESULT TYPE, not value: DuckDB promotes DATE + INTERVAL to TIMESTAMP (DATE '2024-01-02' + INTERVAL 1 DAY -> '2024-01-03 00:00:00'), Trino keeps DATE ('2024-01-03'). A transpiled expression that round-trips value-equal still returns a different type — downstream casts, comparisons, and string rendering diverge. Construct-level (operator, not function): the fragment's Add/Sub-with-Interval shape must be certified directly, never looked up by function name",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live corpus evidence: trino agent add_files_hive_partition_cast.test:51"
+    },
+    {
       "trino": "date_diff",
       "duckdb": "date_diff",
       "verdict": "identical",

@@ -208,4 +208,106 @@ class CertifyTest {
         val r = report("SELECT lower(a), lower(b) FROM t", "duckdb", "trino")
         assertEquals(1, r.findings.size)
     }
+
+    // ---------------------------------------- construct hazard: DATE + INTERVAL promotion
+
+    @Test
+    fun dateInterval_provablyDate_isRefused() {
+        // CAST(x AS DATE) + INTERVAL '1' DAY: the base operand is provably DATE-typed
+        // (Cast to DATE), so DuckDB->TIMESTAMP promotion certainly applies -> REFUSAL.
+        val r = report("SELECT CAST(x AS DATE) + INTERVAL '1' DAY FROM t", "duckdb", "trino")
+        assertTrue(!r.ok)
+        val f = refusals(r).single()
+        assertEquals(FindingKind.SEMANTIC_HAZARD, f.kind)
+        assertEquals("DATE + INTERVAL", f.subject)
+        assertTrue("promotion" in f.detail, f.detail)
+        assertTrue("datetime" in f.areas, f.areas.toString())
+        assertNotNull(f.provenance)
+        assertTrue("add_files_hive_partition_cast.test:51" in f.provenance!!, f.provenance!!)
+    }
+
+    @Test
+    fun dateLiteralInterval_isRefused() {
+        // DATE '...' literal parses to a Cast-to-DATE too -> provably DATE -> REFUSAL.
+        val r = report("SELECT DATE '2024-01-02' + INTERVAL '1' DAY", "duckdb", "trino")
+        val f = refusals(r).single()
+        assertEquals("DATE + INTERVAL", f.subject)
+    }
+
+    @Test
+    fun dateInterval_bareColumn_isWarningNotRefusal() {
+        // Bare column: operand type unknown from syntax. Can't prove the DATE promotion
+        // (not a hard refusal) but can't rule it out either -> WARNING, ok stays true.
+        val r = report("SELECT date_col + INTERVAL 1 DAY FROM t", "duckdb", "trino")
+        assertTrue(r.ok)
+        val f = r.findings.single()
+        assertEquals(Severity.WARNING, f.severity)
+        assertEquals(FindingKind.SEMANTIC_HAZARD, f.kind)
+        assertEquals("DATE + INTERVAL", f.subject)
+    }
+
+    @Test
+    fun dateInterval_subtraction_isDetected() {
+        // Sub is the same promotion shape.
+        val r = report("SELECT CAST(x AS DATE) - INTERVAL '1' DAY FROM t", "duckdb", "trino")
+        val f = refusals(r).single()
+        assertEquals("DATE - INTERVAL", f.subject)
+    }
+
+    @Test
+    fun dateInterval_firesInBothDirections() {
+        // trino->duckdb is equally affected (either direction).
+        val r = report("SELECT date_col + INTERVAL 1 DAY FROM t", "trino", "duckdb")
+        assertEquals(Severity.WARNING, r.findings.single().severity)
+    }
+
+    @Test
+    fun timestampInterval_provablyTimestamp_noFinding() {
+        // TIMESTAMP '...' + INTERVAL: base is provably TIMESTAMP, so the DATE-promotion
+        // divergence does not apply -> no construct finding at all.
+        val r = report("SELECT TIMESTAMP '2024-01-02' + INTERVAL '1' DAY", "duckdb", "trino")
+        assertTrue(r.findings.none { it.subject == "DATE + INTERVAL" }, r.findings.toString())
+    }
+
+    @Test
+    fun dateInterval_nonAffectedPair_noFinding() {
+        // duckdb->doris has no such live evidence; do not invent it for other pairs.
+        // (doris ships no catalog here, so the only finding is NO_TARGET_CATALOG — never
+        // the DATE+INTERVAL construct hazard.)
+        val r = report("SELECT date_col + INTERVAL 1 DAY FROM t", "duckdb", "doris")
+        assertTrue(r.findings.none { it.subject.contains("INTERVAL") }, r.findings.toString())
+    }
+
+    // -------------------------------------------------- consumer severity policy (areas)
+
+    @Test
+    fun okAccepting_unicodeArea_clearsUnicodeRefusal() {
+        // lower() duckdb->trino stays REFUSAL by default (verdict honest, not downgraded).
+        val r = report("SELECT lower(x) FROM t", "duckdb", "trino")
+        assertTrue(!r.ok)
+        val f = refusals(r).single()
+        assertTrue("unicode" in f.areas, f.areas.toString())
+        // An ASCII-only consumer accepts unicode-scoped refusals -> okAccepting is true.
+        assertTrue(r.okAccepting { "unicode" in it.areas })
+    }
+
+    @Test
+    fun okAccepting_doesNotClearNonUnicodeRefusal() {
+        // An UNMAPPABLE_FUNCTION refusal has empty areas; a unicode-only accept predicate
+        // is false for it -> okAccepting stays false. The consumer only waived unicode.
+        val r = report("SELECT * FROM read_parquet('f.parquet')", "duckdb", "doris")
+        assertTrue(!r.ok)
+        val f = refusals(r).single()
+        assertEquals(FindingKind.UNMAPPABLE_FUNCTION, f.kind)
+        assertEquals(emptyList(), f.areas)
+        assertTrue(!r.okAccepting { "unicode" in it.areas })
+    }
+
+    @Test
+    fun semanticHazardFindingCarriesAreas() {
+        // SEMANTIC_HAZARD findings surface FunctionHazard.areas; others stay empty.
+        val hazard = report("SELECT lower(x) FROM t", "duckdb", "trino").findings.single()
+        assertTrue(hazard.areas.isNotEmpty())
+        assertTrue("string" in hazard.areas && "unicode" in hazard.areas, hazard.areas.toString())
+    }
 }

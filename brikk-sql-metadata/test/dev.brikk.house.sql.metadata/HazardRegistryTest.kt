@@ -88,12 +88,12 @@ class HazardRegistryTest {
 
     @Test
     fun entryAndVerdictCountsArePinned() {
-        // Pinned to trino-duckdb-hazards.json (241 probe-verified pairs); the sync test
+        // Pinned to trino-duckdb-hazards.json (242 probe-verified pairs); the sync test
         // in brikk-sql test@jvm cross-checks content against the JSON itself.
-        assertEquals(241, TRINO_DUCKDB_HAZARD_ENTRIES.size)
+        assertEquals(242, TRINO_DUCKDB_HAZARD_ENTRIES.size)
         val counts = TRINO_DUCKDB_HAZARD_ENTRIES.groupingBy { it.verdict }.eachCount()
         assertEquals(102, counts[HazardVerdict.IDENTICAL])
-        assertEquals(37, counts[HazardVerdict.DIVERGENT])
+        assertEquals(38, counts[HazardVerdict.DIVERGENT])
         assertEquals(52, counts[HazardVerdict.CONDITIONALLY_EQUIVALENT])
         assertEquals(44, counts[HazardVerdict.NO_EQUIVALENT])
         assertEquals(6, counts[HazardVerdict.UNCLEAR])
@@ -101,8 +101,8 @@ class HazardRegistryTest {
 
     @Test
     fun keyCountsPerDirectionArePinned() {
-        assertEquals(385, TRINO_TO_DUCKDB_HAZARDS.size)
-        assertEquals(306, DUCKDB_TO_TRINO_HAZARDS.size)
+        assertEquals(386, TRINO_TO_DUCKDB_HAZARDS.size)
+        assertEquals(307, DUCKDB_TO_TRINO_HAZARDS.size)
         // Every keyed value is one of the shared entries (no copies).
         assertTrue(TRINO_TO_DUCKDB_HAZARDS.values.all { it in TRINO_DUCKDB_HAZARD_ENTRIES })
         assertTrue(DUCKDB_TO_TRINO_HAZARDS.values.all { it in TRINO_DUCKDB_HAZARD_ENTRIES })

@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 241 probe-verified (trino, duckdb) pair verdicts, in JSON order. */
+/** The 242 probe-verified (trino, duckdb) pair verdicts, in JSON order. */
 internal val TRINO_DUCKDB_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -310,890 +310,895 @@ private fun hazardsChunk1(): List<FunctionHazard> = listOf(
         hazard = "Month-end clamp: both engines produce 2024-02-29 (clamps to month end) per their notes, 'but verify — common divergence point in date libraries'",
         areas = listOf("datetime"),
         provenance = "PLAN-pushdown-datetime.md#test-corpus--designed-for-divergence-pressure"),
-    // [62] trino: 'date_diff' | duckdb: 'date_diff'
+    // [62] trino: 'DATE + INTERVAL (result type)' | duckdb: 'DATE + INTERVAL (result type)'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DATE + INTERVAL / DATE - INTERVAL diverge on RESULT TYPE, not value: DuckDB promotes DATE + INTERVAL to TIMESTAMP (DATE '2024-01-02' + INTERVAL 1 DAY -> '2024-01-03 00:00:00'), Trino keeps DATE ('2024-01-03'). A transpiled expression that round-trips value-equal still returns a different type — downstream casts, comparisons, and string rendering diverge. Construct-level (operator, not function): the fragment's Add/Sub-with-Interval shape must be certified directly, never looked up by function name",
+        areas = listOf("datetime"),
+        provenance = "live corpus evidence: trino agent add_files_hive_partition_cast.test:51"),
+    // [63] trino: 'date_diff' | duckdb: 'date_diff'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Both return count of unit-BOUNDARIES crossed (not whole units elapsed); verified empirically: date_diff('month','2024-01-31','2024-02-01') = 1 in both. Beware DuckDB's separate date_sub which returns complete units",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [63] trino: "date_diff('hour', ...) over WTZ across DST" | duckdb: 'date_diff / epoch_diff'
+    // [64] trino: "date_diff('hour', ...) over WTZ across DST" | duckdb: 'date_diff / epoch_diff'
     FunctionHazard(HazardVerdict.UNCLEAR,
         hazard = "'does the lost hour count? Trino: yes (real elapsed time). DuckDB: yes via epoch_diff. Verify; if it doesn't, do not push date_diff on WTZ inputs'",
         areas = listOf("datetime", "timezone"),
         provenance = "PLAN-pushdown-datetime.md#interval--date_diff-semantics"),
-    // [64] trino: 'date_format / format_datetime / parse_datetime / date_parse' | duckdb: 'strftime / strptime'
+    // [65] trino: 'date_format / format_datetime / parse_datetime / date_parse' | duckdb: 'strftime / strptime'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Tier D 'never push': Joda-Time format strings (yyyy-MM-dd) vs C strftime (%Y-%m-%d) are incompatible; safe only if a translation layer owns the format-string language",
         areas = listOf("datetime", "string"),
         provenance = "PLAN-pushdown-datetime.md#date_format--date_parse-trino-vs-strftime--strptime-duckdb"),
-    // [65] trino: 'date_trunc' | duckdb: 'date_trunc'
+    // [66] trino: 'date_trunc' | duckdb: 'date_trunc'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Aligned for intersection unit set (second..year) but DuckDB always returns TIMESTAMP even for DATE input while Trino preserves input type; numeric comparisons still align via auto-cast",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [66] trino: "date_trunc('week', x)" | duckdb: "date_trunc('week', x)"
+    // [67] trino: "date_trunc('week', x)" | duckdb: "date_trunc('week', x)"
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Aligned iff both engines use Monday-start ISO weeks; DuckDB unit set is a superset (decade/century/millennium); their corpus pins Sunday '2024-01-07' -> '2024-01-01'",
         areas = listOf("datetime"),
         provenance = "PLAN-pushdown-datetime.md#date_truncunit-x-unit-strings"),
-    // [67] trino: 'day_of_month' | duckdb: "date_part('day', x)"
+    // [68] trino: 'day_of_month' | duckdb: "date_part('day', x)"
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [68] trino: 'day_of_week / dow' | duckdb: 'isodow'
+    // [69] trino: 'day_of_week / dow' | duckdb: 'isodow'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino day_of_week is 1..7 Monday=1; DuckDB dayofweek/date_part('dow') is 0..6 SUNDAY=0 — must map to isodow, never dayofweek. Pinned: '2024-01-07' -> 7",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [69] trino: 'day_of_year / doy' | duckdb: 'dayofyear'
+    // [70] trino: 'day_of_year / doy' | duckdb: 'dayofyear'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Rename; pinned by leap-day fixture '2024-02-29' -> 60",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [70] trino: 'degrees / radians' | duckdb: 'degrees / radians'
+    // [71] trino: 'degrees / radians' | duckdb: 'degrees / radians'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [71] trino: 'e' | duckdb: 'exp(1)'
+    // [72] trino: 'e' | duckdb: 'exp(1)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "DuckDB has no e(); use exp(1)",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [72] trino: 'element_at (array)' | duckdb: 'list_extract'
+    // [73] trino: 'element_at (array)' | duckdb: 'list_extract'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "element_at returns NULL out-of-bounds and DuckDB list[i] also NULL — aligned; but Trino subscript a[i] RAISES out-of-bounds, so subscript-to-subscript translation is not safe; negative index counts from end in both",
         areas = listOf("null"),
         provenance = "RESEARCH-function-mapping.md#array--list-functions"),
-    // [73] trino: 'element_at (map)' | duckdb: 'element_at / map_extract'
+    // [74] trino: 'element_at (map)' | duckdb: 'element_at / map_extract'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Missing key: Trino returns NULL; DuckDB returns EMPTY LIST (its element_at returns LIST) — do not map without unwrapping",
         areas = listOf("null"),
         provenance = "RESEARCH-function-mapping.md#map-functions"),
-    // [74] trino: 'euclidean_distance / dot_product' | duckdb: 'array_distance / array_dot_product / list_*'
+    // [75] trino: 'euclidean_distance / dot_product' | duckdb: 'array_distance / array_dot_product / list_*'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Names differ, semantics aligned for double arrays of equal length; pushable for ARRAY-typed columns, LIST is DuckDB-only shape",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#array--list-functions"),
-    // [75] trino: 'exp' | duckdb: 'exp'
+    // [76] trino: 'exp' | duckdb: 'exp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [76] trino: 'extract' | duckdb: 'extract / date_part'
+    // [77] trino: 'extract' | duckdb: 'extract / date_part'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Field names mostly aligned but dow/day_of_week numbering differs (see day_of_week)",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [77] trino: 'filter / transform / reduce (lambda forms)' | duckdb: 'list_filter / list_transform / list_reduce'
+    // [78] trino: 'filter / transform / reduce (lambda forms)' | duckdb: 'list_filter / list_transform / list_reduce'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Lambda translation is expression-tree-level, not name-level; reduce shapes differ (Trino has separate inputFn/outputFn); their conservative default: reject",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#array--list-functions"),
-    // [78] trino: 'first_value / last_value / nth_value / lead / lag' | duckdb: 'same names'
+    // [79] trino: 'first_value / last_value / nth_value / lead / lag' | duckdb: 'same names'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB additionally supports IGNORE NULLS grammar",
         areas = listOf("aggregate", "null"),
         provenance = "RESEARCH-function-mapping.md#window-functions"),
-    // [79] trino: 'flatten' | duckdb: 'flatten'
+)
+
+private fun hazardsChunk2(): List<FunctionHazard> = listOf(
+    // [80] trino: 'flatten' | duckdb: 'flatten'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "One-level flatten in both",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#array--list-functions"),
-)
-
-private fun hazardsChunk2(): List<FunctionHazard> = listOf(
-    // [80] trino: 'floor' | duckdb: 'floor'
+    // [81] trino: 'floor' | duckdb: 'floor'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [81] trino: 'format' | duckdb: 'format / printf'
+    // [82] trino: 'format' | duckdb: 'format / printf'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Format specifications differ entirely (Trino: Java Formatter; DuckDB: fmt/printf) — do not translate by name",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [82] trino: 'from_base' | duckdb: '(none)'
+    // [83] trino: 'from_base' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [83] trino: 'from_base64' | duckdb: 'from_base64'
+    // [84] trino: 'from_base64' | duckdb: 'from_base64'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [84] trino: 'from_big_endian_32/64 / to_big_endian_32/64' | duckdb: '(none)'
+    // [85] trino: 'from_big_endian_32/64 / to_big_endian_32/64' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#binary--blob"),
-    // [85] trino: 'from_hex' | duckdb: 'unhex'
+    // [86] trino: 'from_hex' | duckdb: 'unhex'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Rename only; returns BLOB",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [86] trino: 'from_ieee754_32/64 / to_ieee754_32/64' | duckdb: '(none)'
+    // [87] trino: 'from_ieee754_32/64 / to_ieee754_32/64' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#binary--blob"),
-    // [87] trino: 'from_iso8601_timestamp' | duckdb: 'CAST(s AS TIMESTAMP)'
+    // [88] trino: 'from_iso8601_timestamp' | duckdb: 'CAST(s AS TIMESTAMP)'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Map to cast; 'verify offset handling'",
         areas = listOf("datetime", "timezone"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [88] trino: 'from_unixtime' | duckdb: 'to_timestamp'
+    // [89] trino: 'from_unixtime' | duckdb: 'to_timestamp'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino from_unixtime(double) returns TIMESTAMP(3) WITH TIME ZONE and uses session TZ — they reclassified it Tier C (session-zone-dependent), not a plain rename",
         areas = listOf("datetime", "timezone"),
         provenance = "PLAN-pushdown-datetime.md#from_unixtime--to_unixtime"),
-    // [89] trino: 'from_unixtime/1' | duckdb: 'to_timestamp'
+    // [90] trino: 'from_unixtime/1' | duckdb: 'to_timestamp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Same absolute instant; rendering depends on session zone; negative/subsecond/large-epoch round-trips pinned",
         areas = listOf("datetime", "timezone"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [90] trino: 'from_unixtime/2 (zone) / from_unixtime_nanos' | duckdb: '(none)'
+    // [91] trino: 'from_unixtime/2 (zone) / from_unixtime_nanos' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "No DuckDB equivalent / signature mismatch",
         areas = listOf("datetime", "timezone"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [91] trino: 'from_utf8' | duckdb: 'decode'
+    // [92] trino: 'from_utf8' | duckdb: 'decode'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Invalid UTF-8 input: Trino has replacement-char form; DuckDB errors",
         areas = listOf("string", "unicode"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [92] trino: 'geometric_mean' | duckdb: 'geometric_mean'
+    // [93] trino: 'geometric_mean' | duckdb: 'geometric_mean'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("aggregate", "numeric"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [93] trino: 'greatest / least' | duckdb: 'greatest / least'
+    // [94] trino: 'greatest / least' | duckdb: 'greatest / least'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "NULL handling differs: Trino returns NULL if ANY arg is NULL; DuckDB SKIPS NULLs — never translate by name when args may be NULL",
         areas = listOf("null"),
         provenance = "RESEARCH-function-mapping.md#comparison-and-conditional"),
-    // [94] trino: 'hamming_distance' | duckdb: 'hamming'
+    // [95] trino: 'hamming_distance' | duckdb: 'hamming'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Rename only; both raise on unequal-length input",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [95] trino: 'histogram' | duckdb: 'histogram'
+    // [96] trino: 'histogram' | duckdb: 'histogram'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Counts by value in both",
         areas = listOf("aggregate"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [96] trino: 'hmac_md5' | duckdb: '(none)'
+    // [97] trino: 'hmac_md5' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Not ported; only hmac_sha256 implemented natively in parity extension",
         areas = listOf("hash"),
         provenance = "README-duckdb-format-pushdown-reference.md#not-pushable"),
-    // [97] trino: 'hmac_sha1' | duckdb: '(none)'
+    // [98] trino: 'hmac_sha1' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Not ported; only hmac_sha256 implemented natively",
         areas = listOf("hash"),
         provenance = "README-duckdb-format-pushdown-reference.md#not-pushable"),
-    // [98] trino: 'hmac_sha256' | duckdb: "crypto_hmac('sha2-256', ...) (crypto ext)"
+    // [99] trino: 'hmac_sha256' | duckdb: "crypto_hmac('sha2-256', ...) (crypto ext)"
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "crypto_hmac signature is [VARCHAR,VARCHAR,VARCHAR]; Trino hmac_sha256(data,key) takes VARBINARY. A BLOB->VARCHAR bridge ESCAPES non-printable bytes (from_hex('ff00')::VARCHAR becomes the 8-char string '\\xFF\\x00') and silently hashes the wrong bytes — macro route rejected; only a native raw-bytes impl is correct. Also note Trino arg order: data first, key second",
         areas = listOf("hash", "null", "extension"),
         provenance = "TODO-pushdown-duckdb.md#round-6b-ext--crypto-extension--sha512--hmac_sha256-ported-native"),
-    // [99] trino: 'hmac_sha512' | duckdb: '(none)'
+    // [100] trino: 'hmac_sha512' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Not ported; only hmac_sha256 implemented natively",
         areas = listOf("hash"),
         provenance = "README-duckdb-format-pushdown-reference.md#not-pushable"),
-    // [100] trino: 'hour / minute / second' | duckdb: 'hour / minute / second'
+    // [101] trino: 'hour / minute / second' | duckdb: 'hour / minute / second'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Type-gated to DATE / TIMESTAMP-no-TZ in their pushdown",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [101] trino: 'human_readable_seconds' | duckdb: '(none)'
+    // [102] trino: 'human_readable_seconds' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [102] trino: 'if/2' | duckdb: 'CASE / if macro'
+    // [103] trino: 'if/2' | duckdb: 'CASE / if macro'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "2-arg form returns NULL on the false branch (macro encodes this)",
         areas = listOf("null"),
         provenance = "README-duckdb-format-pushdown-reference.md#3-functions"),
-    // [103] trino: 'IN (value list)' | duckdb: 'IN'
+    // [104] trino: 'IN (value list)' | duckdb: 'IN'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "NULL-in-list yields NULL (not false) in both",
         areas = listOf("null"),
         provenance = "RESEARCH-function-mapping.md#comparison-and-conditional"),
-    // [104] trino: 'IPADDRESS / IPPREFIX types' | duckdb: 'INET (core inet extension)'
+    // [105] trino: 'IPADDRESS / IPPREFIX types' | duckdb: 'INET (core inet extension)'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino splits address vs prefix into two types; DuckDB one INET type with embedded CIDR; original mapping doc's 'DuckDB has no IP type' claim was corrected here",
         areas = listOf("extension"),
         provenance = "RESEARCH-function-community-extensions-detail.md#inet-core-extension--not-community"),
-    // [105] trino: 'IS [NOT] DISTINCT FROM' | duckdb: 'IS [NOT] DISTINCT FROM'
+    // [106] trino: 'IS [NOT] DISTINCT FROM' | duckdb: 'IS [NOT] DISTINCT FROM'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "NULL-safe equality aligned",
         areas = listOf("null"),
         provenance = "RESEARCH-function-mapping.md#comparison-and-conditional"),
-    // [106] trino: 'is_json_scalar / json_array_contains / json_array_get / json_size' | duckdb: '(none)'
+    // [107] trino: 'is_json_scalar / json_array_contains / json_array_get / json_size' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#json-functions"),
-    // [107] trino: 'is_nan / is_finite / is_infinite' | duckdb: 'isnan / isfinite / isinf'
+    // [108] trino: 'is_nan / is_finite / is_infinite' | duckdb: 'isnan / isfinite / isinf'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Rename only, behavior aligned; NaN=NaN treated true for grouping/distinct in both but flagged 'verify in pushdown tests'",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [108] trino: 'json_array_length' | duckdb: 'json_array_length'
+    // [109] trino: 'json_array_length' | duckdb: 'json_array_length'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Both exist; verify path-arg behavior",
         areas = listOf("string", "extension"),
         provenance = "RESEARCH-function-mapping.md#json-functions"),
-    // [109] trino: 'json_extract' | duckdb: 'json_extract'
+    // [110] trino: 'json_extract' | duckdb: 'json_extract'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Path syntax differs (Trino restricted JSONPath subset vs DuckDB JSONPath-ish with wildcards); safe only for simple \$.a.b property paths; DuckDB side lives in json extension",
         areas = listOf("string", "extension"),
         provenance = "RESEARCH-function-mapping.md#json-functions"),
-    // [110] trino: 'json_extract_scalar' | duckdb: 'json_extract_string'
+    // [111] trino: 'json_extract_scalar' | duckdb: 'json_extract_string'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Rename, same intent; same path-syntax caveat",
         areas = listOf("string", "extension"),
         provenance = "RESEARCH-function-mapping.md#json-functions"),
-    // [111] trino: 'json_format / json_parse' | duckdb: 'cast to/from JSON'
+    // [112] trino: 'json_format / json_parse' | duckdb: 'cast to/from JSON'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Different API (DuckDB uses casts / to_json / from_json)",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#json-functions"),
-    // [112] trino: 'kurtosis' | duckdb: 'kurtosis / kurtosis_pop'
+    // [113] trino: 'kurtosis' | duckdb: 'kurtosis / kurtosis_pop'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino kurtosis = sample excess; DuckDB has both sample and pop variants — 'push only with explicit match'",
         areas = listOf("aggregate", "numeric"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [113] trino: 'last_day_of_month' | duckdb: 'last_day'
+    // [114] trino: 'last_day_of_month' | duckdb: 'last_day'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Rename; pinned leap-Feb '2024-02-15' -> '2024-02-29' and '1900-02-15' -> '1900-02-28'",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [114] trino: 'length' | duckdb: 'length'
+    // [115] trino: 'length' | duckdb: 'length'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified aligned on full Unicode corpus: code points, emoji counted as 1 (4-byte U+1F600 = length 1)",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [115] trino: 'length (varbinary)' | duckdb: 'octet_length'
+    // [116] trino: 'length (varbinary)' | duckdb: 'octet_length'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same semantics, different name; translator must pick length vs octet_length by Trino argument type",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#binary--blob"),
-    // [116] trino: 'levenshtein_distance' | duckdb: 'levenshtein'
+    // [117] trino: 'levenshtein_distance' | duckdb: 'levenshtein'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Rename only; both compute insertions+deletions+substitutions (code-point)",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [117] trino: 'LIKE / NOT LIKE' | duckdb: 'LIKE / NOT LIKE'
+    // [118] trino: 'LIKE / NOT LIKE' | duckdb: 'LIKE / NOT LIKE'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Wildcards, ESCAPE, NULL handling all aligned; only constant patterns were pushed",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"),
-    // [118] trino: 'listagg' | duckdb: 'string_agg'
+    // [119] trino: 'listagg' | duckdb: 'string_agg'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Trino uses WITHIN GROUP grammar; DuckDB lacks it — different shapes",
         areas = listOf("aggregate", "string"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [119] trino: 'ln' | duckdb: 'ln'
+)
+
+private fun hazardsChunk3(): List<FunctionHazard> = listOf(
+    // [120] trino: 'ln' | duckdb: 'ln'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "NaN on x<=0 in both",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-)
-
-private fun hazardsChunk3(): List<FunctionHazard> = listOf(
-    // [120] trino: 'localtimestamp / localtime' | duckdb: 'localtimestamp / localtime'
+    // [121] trino: 'localtimestamp / localtime' | duckdb: 'localtimestamp / localtime'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same idea, different precision defaults",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [121] trino: 'log (2-arg, base b)' | duckdb: 'ln(x)/ln(b)'
+    // [122] trino: 'log (2-arg, base b)' | duckdb: 'ln(x)/ln(b)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "DuckDB has no 2-arg log; rewrite as ln(x)/ln(b)",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [122] trino: 'log10' | duckdb: 'log10'
+    // [123] trino: 'log10' | duckdb: 'log10'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Name-collision trap: DuckDB single-arg log(x) IS log10 (PostgreSQL convention) while Trino log(b,x) is log-base-b — map log10->log10 explicitly, never to bare log",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [123] trino: 'log2' | duckdb: 'log2'
+    // [124] trino: 'log2' | duckdb: 'log2'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [124] trino: 'lower' | duckdb: 'lower'
+    // [125] trino: 'lower' | duckdb: 'lower'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Probe-verified: Turkish 'İ' -> DuckDB 'i' vs Trino 'i'+U+0307 (full case folding); ASCII and most non-ASCII aligned. Needed native ICU extension for parity",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [125] trino: 'lower/upper case folding via collation' | duckdb: 'NOCASE / nfc_normalize'
+    // [126] trino: 'lower/upper case folding via collation' | duckdb: 'NOCASE / nfc_normalize'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "'Collations / nfc_normalize do NOT fix this (verified by the since-deleted ProbeDuckDbCaseFolding)' — no SQL-level wrapper can reproduce Trino full case folding; native C++ was the only fix",
         areas = listOf("string", "unicode"),
         provenance = "TODO-pushdown-duckdb.md#priority-order (step 3)"),
-    // [126] trino: 'lpad' | duckdb: 'lpad'
+    // [127] trino: 'lpad' | duckdb: 'lpad'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified aligned: pads to code-point count including emoji and CJK (empty-pad edge from mapping doc not covered by this probe)",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [127] trino: 'ltrim' | duckdb: 'ltrim'
+    // [128] trino: 'ltrim' | duckdb: 'ltrim'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Same whitespace-set divergence as trim (tab/LF/CR/FF/VT not stripped by DuckDB default)",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#trim1-ltrim1-rtrim1--different-whitespace-sets"),
-    // [128] trino: 'luhn_check' | duckdb: '(none)'
+    // [129] trino: 'luhn_check' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [129] trino: 'map / map_from_entries' | duckdb: 'map / map_from_entries'
+    // [130] trino: 'map / map_from_entries' | duckdb: 'map / map_from_entries'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#map-functions"),
-    // [130] trino: 'map_agg / map_union / multimap_agg' | duckdb: '(none)'
+    // [131] trino: 'map_agg / map_union / multimap_agg' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("aggregate"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [131] trino: 'map_concat' | duckdb: 'map_concat'
+    // [132] trino: 'map_concat' | duckdb: 'map_concat'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Last-wins on key conflicts in both",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#map-functions"),
-    // [132] trino: 'map_entries' | duckdb: 'map_entries'
+    // [133] trino: 'map_entries' | duckdb: 'map_entries'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Element type differs: Trino row(K,V) vs DuckDB struct(key,value); needs type-layer mapping",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#map-functions"),
-    // [133] trino: 'map_filter / transform_keys / transform_values / map_zip_with' | duckdb: '(none)'
+    // [134] trino: 'map_filter / transform_keys / transform_values / map_zip_with' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Trino lambda forms; DuckDB needs manual unrolling",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#map-functions"),
-    // [134] trino: 'map_keys / map_values' | duckdb: 'map_keys / map_values'
+    // [135] trino: 'map_keys / map_values' | duckdb: 'map_keys / map_values'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#map-functions"),
-    // [135] trino: 'md5' | duckdb: 'unhex(md5(x))'
+    // [136] trino: 'md5' | duckdb: 'unhex(md5(x))'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Probe-verified: DuckDB md5 NULL-propagates correctly (md5(NULL)->NULL) and hex digest matches; but returns hex VARCHAR vs Trino VARBINARY — needs unhex() wrap",
         areas = listOf("hash", "null"),
         provenance = "REPORT-hash-null-handling.md#core-duckdb-hash-null-propagation--aligned-with-trino"),
-    // [136] trino: 'millisecond' | duckdb: "extract('millisecond' FROM x)"
+    // [137] trino: 'millisecond' | duckdb: "extract('millisecond' FROM x)"
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino millisecond() returns millis-OF-SECOND (0..999), not epoch millis; DuckDB extract('millisecond') matches but needs BIGINT cast; pinned '...12:00:00.123' -> 123",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [137] trino: 'min / max' | duckdb: 'min / max'
+    // [138] trino: 'min / max' | duckdb: 'min / max'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Including top/bottom-n variant",
         areas = listOf("aggregate"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [138] trino: 'min_by / max_by' | duckdb: 'arg_min / arg_max'
+    // [139] trino: 'min_by / max_by' | duckdb: 'arg_min / arg_max'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Different names AND NULL semantics: Trino skips NULLs; DuckDB has separate arg_min_null/arg_max_null variants — 'do not push by name'",
         areas = listOf("aggregate", "null"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [139] trino: 'mod (float)' | duckdb: 'fmod'
+    // [140] trino: 'mod (float)' | duckdb: 'fmod'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Trino float % uses IEEE remainder-ish semantics; DuckDB has fmod — 'do not push float % until aligned'; translator gates by arg type",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [140] trino: 'mod (integer)' | duckdb: '% / mod'
+    // [141] trino: 'mod (integer)' | duckdb: '% / mod'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Both follow truncated division (sign follows dividend)",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [141] trino: 'murmur3' | duckdb: 'murmurhash3_x64_128 (hashfuncs ext)'
+    // [142] trino: 'murmur3' | duckdb: 'murmurhash3_x64_128 (hashfuncs ext)'
     FunctionHazard(HazardVerdict.UNCLEAR,
         hazard = "Trino returns LE(h1)++LE(h2) bytes; DuckDB packs UHUGEINT=(h1<<64)|h2 — each half byte-reversed vs Trino. Reconstruction macro drafted but 'the h1==hi64 half-assignment + airlift seed-0 equivalence is inferred from source, not yet confirmed against a live Trino-481 value' — deferred",
         areas = listOf("hash", "extension"),
         provenance = "TODO-pushdown-duckdb.md#round-6c--hashfuncs-extension--xxhash64-ported-native-murmur3-deferred"),
-    // [142] trino: 'ngrams (array form)' | duckdb: 'ngrams (splink_udfs, string form)'
+    // [143] trino: 'ngrams (array form)' | duckdb: 'ngrams (splink_udfs, string form)'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Same name, different operation: Trino ngrams(array, n) returns array slices; splink_udfs ngrams(s, n) returns character n-grams of a string — 'don't conflate'",
         areas = listOf("string", "extension"),
         provenance = "RESEARCH-function-community-extensions-detail.md#splink-udfs"),
-    // [143] trino: 'ngrams / combinations / shuffle' | duckdb: '(none)'
+    // [144] trino: 'ngrams / combinations / shuffle' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "shuffle also non-deterministic",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#array--list-functions"),
-    // [144] trino: 'normalize/1' | duckdb: 'nfc_normalize (native parity impl)'
+    // [145] trino: 'normalize/1' | duckdb: 'nfc_normalize (native parity impl)'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "NFC form works via icu::Normalizer2 in parity extension; only the 1-arg (NFC) form is safe",
         areas = listOf("string", "unicode"),
         provenance = "README-duckdb-format-pushdown-reference.md#3-functions"),
-    // [145] trino: 'normalize/2' | duckdb: '(none)'
+    // [146] trino: 'normalize/2' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "NFD/NFKC/NFKD selector forms not pushable — vendored ICU snapshot ships only NFC data; DuckDB has no built-in equivalent",
         areas = listOf("string", "unicode"),
         provenance = "README-duckdb-format-pushdown-reference.md#not-pushable"),
-    // [146] trino: 'nullif' | duckdb: 'nullif'
+    // [147] trino: 'nullif' | duckdb: 'nullif'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("null"),
         provenance = "RESEARCH-function-mapping.md#comparison-and-conditional"),
-    // [147] trino: 'parse_duration' | duckdb: '(none)'
+    // [148] trino: 'parse_duration' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [148] trino: 'pi' | duckdb: 'pi'
+    // [149] trino: 'pi' | duckdb: 'pi'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [149] trino: 'position (operator form)' | duckdb: 'position(s IN t)'
+    // [150] trino: 'position (operator form)' | duckdb: 'position(s IN t)'
     FunctionHazard(HazardVerdict.UNCLEAR,
         hazard = "Operator-form 'deferred'; never verified/pushed (README lists it as not pushable)",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [150] trino: 'pow / power' | duckdb: 'pow / power'
+    // [151] trino: 'pow / power' | duckdb: 'pow / power'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [151] trino: 'qdigest_agg' | duckdb: 'datasketch_kll* (approximate substitute)'
+    // [152] trino: 'qdigest_agg' | duckdb: 'datasketch_kll* (approximate substitute)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "No exact qdigest port in datasketches ext; KLL/Quantiles/REQ are substitutes — 'cannot push as Trino qdigest semantics'",
         areas = listOf("aggregate", "extension"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [152] trino: 'quarter' | duckdb: 'quarter'
+    // [153] trino: 'quarter' | duckdb: 'quarter'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [153] trino: 'random / rand' | duckdb: 'random'
+    // [154] trino: 'random / rand' | duckdb: 'random'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Non-deterministic (never pushable); Trino bounded forms random(n), random(m,n) have no DuckDB equivalent",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [154] trino: 'reduce_agg' | duckdb: '(none)'
+    // [155] trino: 'reduce_agg' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("aggregate"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [155] trino: 'regexp_count' | duckdb: 'len(regexp_extract_all(...))'
+    // [156] trino: 'regexp_count' | duckdb: 'len(regexp_extract_all(...))'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "No direct DuckDB form",
         areas = listOf("regex"),
         provenance = "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"),
-    // [156] trino: 'regexp_extract/{2,3}' | duckdb: 'regexp_extract'
+    // [157] trino: 'regexp_extract/{2,3}' | duckdb: 'regexp_extract'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified aligned: group 0 = whole match in both",
         areas = listOf("regex", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [157] trino: 'regexp_extract_all' | duckdb: 'regexp_extract_all'
+    // [158] trino: 'regexp_extract_all' | duckdb: 'regexp_extract_all'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "'Empty-match handling differs; verify before pushing'",
         areas = listOf("regex"),
         provenance = "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"),
-    // [158] trino: 'regexp_like' | duckdb: 'regexp_matches'
+    // [159] trino: 'regexp_like' | duckdb: 'regexp_matches'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified aligned: RE2 both sides; Unicode property escapes \\p{Han}, \\p{So}, [\\p{L}]+ identical (deeper property classes untested)",
         areas = listOf("regex", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [159] trino: 'regexp_position' | duckdb: '(none)'
-    FunctionHazard(HazardVerdict.NO_EQUIVALENT,
-        areas = listOf("regex"),
-        provenance = "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"),
 )
 
 private fun hazardsChunk4(): List<FunctionHazard> = listOf(
-    // [160] trino: 'regexp_replace' | duckdb: 'regexp_replace'
+    // [160] trino: 'regexp_position' | duckdb: '(none)'
+    FunctionHazard(HazardVerdict.NO_EQUIVALENT,
+        areas = listOf("regex"),
+        provenance = "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"),
+    // [161] trino: 'regexp_replace' | duckdb: 'regexp_replace'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Trino replaces ALL matches by default; DuckDB replaces first match unless 'g' flag — parity macro forces 'g'",
         areas = listOf("regex"),
         provenance = "README-duckdb-format-pushdown-reference.md#3-functions"),
-    // [161] trino: 'regexp_split' | duckdb: 'regexp_split_to_array / string_split_regex'
+    // [162] trino: 'regexp_split' | duckdb: 'regexp_split_to_array / string_split_regex'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Rename only per their notes; push as renamed call",
         areas = listOf("regex"),
         provenance = "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"),
-    // [162] trino: 'regr_intercept / regr_slope' | duckdb: 'regr_intercept / regr_slope'
+    // [163] trino: 'regr_intercept / regr_slope' | duckdb: 'regr_intercept / regr_slope'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("aggregate", "numeric"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [163] trino: 'repeat (element, count)' | duckdb: 'repeat (list, count)'
+    // [164] trino: 'repeat (element, count)' | duckdb: 'repeat (list, count)'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Same name, different shape: Trino repeats a single element into an array; DuckDB repeat(list,n) repeats the whole list — do not translate by name",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#array--list-functions"),
-    // [164] trino: 'replace' | duckdb: 'replace'
+    // [165] trino: 'replace' | duckdb: 'replace'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified aligned code-point-level; composed vs decomposed inputs treated as distinct on both sides",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [165] trino: 'replace/2' | duckdb: "replace(s, x, '')"
+    // [166] trino: 'replace/2' | duckdb: "replace(s, x, '')"
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino 2-arg remove form has no DuckDB arity; map by passing '' as replacement",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [166] trino: 'reverse' | duckdb: 'reverse'
+    // [167] trino: 'reverse' | duckdb: 'reverse'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Probe-verified: DuckDB reverse is GRAPHEME-cluster-aware, Trino code-point-only — decomposed 'café' reverses keeping e+U+0301 together in DuckDB; ZWJ family emoji returned UNCHANGED by DuckDB but code-point-reversed by Trino. False negatives if pushed",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#reverse1--duckdb-is-grapheme-aware-trino-is-code-point-only"),
-    // [167] trino: 'reverse (array)' | duckdb: 'list_reverse'
+    // [168] trino: 'reverse (array)' | duckdb: 'list_reverse'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#array--list-functions"),
-    // [168] trino: 'reverse (varbinary)' | duckdb: '(none)'
+    // [169] trino: 'reverse (varbinary)' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#binary--blob"),
-    // [169] trino: 'round' | duckdb: 'round'
+    // [170] trino: 'round' | duckdb: 'round'
     FunctionHazard(HazardVerdict.UNCLEAR,
         hazard = "'Trino: round is half-up. DuckDB: round is half-away-from-zero (since 0.10) — verify per version... Do NOT push when d > 0 until verified.' DuckDB also has round_even (banker's)",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [170] trino: 'row_number / rank / dense_rank / percent_rank / ntile' | duckdb: 'same names'
+    // [171] trino: 'row_number / rank / dense_rank / percent_rank / ntile' | duckdb: 'same names'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("aggregate"),
         provenance = "RESEARCH-function-mapping.md#window-functions"),
-    // [171] trino: 'rpad' | duckdb: 'rpad'
+    // [172] trino: 'rpad' | duckdb: 'rpad'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified aligned (same caveat as lpad on empty pad string)",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [172] trino: 'rtrim' | duckdb: 'rtrim'
+    // [173] trino: 'rtrim' | duckdb: 'rtrim'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Same whitespace-set divergence as trim",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#trim1-ltrim1-rtrim1--different-whitespace-sets"),
-    // [173] trino: 'sequence' | duckdb: 'generate_series (NOT range)'
+    // [174] trino: 'sequence' | duckdb: 'generate_series (NOT range)'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino sequence is INCLUSIVE on stop; DuckDB generate_series inclusive but range() is EXCLUSIVE — choose by inclusivity",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#array--list-functions"),
-    // [174] trino: 'session zone ±HH:MM offsets' | duckdb: "SET TimeZone 'Etc/GMT∓N'"
+    // [175] trino: 'session zone ±HH:MM offsets' | duckdb: "SET TimeZone 'Etc/GMT∓N'"
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Probe-verified: DuckDB rejects bare '±HH:MM' zone literals entirely; integer-hour offsets must be translated to Etc/GMT with POSIX SIGN INVERSION (+05:00 -> Etc/GMT-5); fractional offsets (+05:30, -03:30) are inexpressible except via named IANA zones (Asia/Kolkata etc.)",
         areas = listOf("datetime", "timezone"),
         provenance = "REPORT-datetime-tz-handling.md#q2--set-timezone-without-icu--etcgmt-translation-table"),
-    // [175] trino: 'sha1' | duckdb: 'unhex(sha1(x))'
+    // [176] trino: 'sha1' | duckdb: 'unhex(sha1(x))'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same pattern as md5: NULL propagation verified aligned; unhex wrap required for VARBINARY return",
         areas = listOf("hash", "null"),
         provenance = "REPORT-hash-null-handling.md#core-duckdb-hash-null-propagation--aligned-with-trino"),
-    // [176] trino: 'sha256' | duckdb: 'unhex(sha256(x))'
+    // [177] trino: 'sha256' | duckdb: 'unhex(sha256(x))'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Probe-verified: sha256(NULL)->NULL, empty-string digest matches; unhex wrap required for VARBINARY return",
         areas = listOf("hash", "null"),
         provenance = "REPORT-hash-null-handling.md#core-duckdb-hash-null-propagation--aligned-with-trino"),
-    // [177] trino: 'sha512' | duckdb: '(none built-in)'
+    // [178] trino: 'sha512' | duckdb: '(none built-in)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "No DuckDB core builtin; parity extension ships native C++ over WjCryptLib",
         areas = listOf("hash", "extension"),
         provenance = "README-duckdb-format-pushdown-reference.md#3-functions"),
-    // [178] trino: 'sha512' | duckdb: "crypto_hash('sha2-512', x) (crypto ext)"
+    // [179] trino: 'sha512' | duckdb: "crypto_hash('sha2-512', x) (crypto ext)"
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Algorithm matches but output is hex VARCHAR vs Trino VARBINARY — cast required; extension availability per (version x platform) was itself a hazard (404s for DuckDB 1.5.3). Superseded by native parity-extension impl",
         areas = listOf("hash", "extension"),
         provenance = "RESEARCH-function-community-extensions-detail.md#crypto"),
-    // [179] trino: 'sign' | duckdb: 'sign'
+    // [180] trino: 'sign' | duckdb: 'sign'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Float NaN behavior verified to align (both NaN->NaN)",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [180] trino: 'SIMILAR TO' | duckdb: 'SIMILAR TO'
+    // [181] trino: 'SIMILAR TO' | duckdb: 'SIMILAR TO'
     FunctionHazard(HazardVerdict.UNCLEAR,
         hazard = "'Verify subtle differences in */+/? quantifier scoping before pushing'",
         areas = listOf("regex"),
         provenance = "RESEARCH-function-mapping.md#pattern-matching-like-and-regular-expressions"),
-    // [181] trino: 'sin/cos/tan/asin/acos/atan/atan2' | duckdb: 'same names'
+    // [182] trino: 'sin/cos/tan/asin/acos/atan/atan2' | duckdb: 'same names'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [182] trino: 'sinh/cosh/tanh' | duckdb: 'sinh/cosh/tanh'
+    // [183] trino: 'sinh/cosh/tanh' | duckdb: 'sinh/cosh/tanh'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [183] trino: 'skewness' | duckdb: 'skewness'
+    // [184] trino: 'skewness' | duckdb: 'skewness'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("aggregate", "numeric"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [184] trino: 'slice' | duckdb: 'list_slice'
+    // [185] trino: 'slice' | duckdb: 'list_slice'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "DIFFERENT SHAPE: Trino slice(a, start, LENGTH) vs DuckDB list_slice(a, begin, END) (Python-like) — slice(a,2,3) is 3 elements from 2, list_slice(a,2,3) is elements 2..3. Do not translate by name",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#array--list-functions"),
-    // [185] trino: 'soundex' | duckdb: 'soundex (splink_udfs ext)'
+    // [186] trino: 'soundex' | duckdb: 'soundex (splink_udfs ext)'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Only available when splink_udfs community extension is loaded",
         areas = listOf("string", "extension"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [186] trino: 'split' | duckdb: 'string_split'
+    // [187] trino: 'split' | duckdb: 'string_split'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Empty-string delimiter: Trino splits to character array, DuckDB returns single-element array; Trino limit form has no equivalent",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [187] trino: 'split_part' | duckdb: 'split_part'
+    // [188] trino: 'split_part' | duckdb: 'split_part'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Out-of-bounds index: Trino returns NULL, DuckDB returns empty string — do not translate by name without NULLIF wrap",
         areas = listOf("string", "null"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [188] trino: 'spooky_hash_v2_32 / spooky_hash_v2_64' | duckdb: '(none)'
+    // [189] trino: 'spooky_hash_v2_32 / spooky_hash_v2_64' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "No extension cover",
         areas = listOf("hash"),
         provenance = "RESEARCH-function-mapping.md#hash--digest"),
-    // [189] trino: 'sqrt' | duckdb: 'sqrt'
+    // [190] trino: 'sqrt' | duckdb: 'sqrt'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "NaN on negative input in both",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [190] trino: 'starts_with' | duckdb: 'starts_with'
+    // [191] trino: 'starts_with' | duckdb: 'starts_with'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified aligned (binary prefix on UTF-8 is codepoint-aligned)",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [191] trino: 'string comparison operators (= <> < <= > >=)' | duckdb: 'same, BINARY collation'
+    // [192] trino: 'string comparison operators (= <> < <= > >=)' | duckdb: 'same, BINARY collation'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB UTF-8 byte comparison is monotonic with Trino's code-point comparison — probe-verified same result on all inputs; precomposed vs decomposed unequal in BOTH (same 'wrong' answer). NOCASE collation is NOT full Unicode case folding (fails İ vs i+U+0307, ß vs ss)",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#comparison-operators"),
-    // [192] trino: 'strpos' | duckdb: 'strpos'
+    // [193] trino: 'strpos' | duckdb: 'strpos'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified aligned: 1-based code-point index, 0 if not found",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [193] trino: 'strpos/3' | duckdb: '(none)'
+    // [194] trino: 'strpos/3' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "N-th occurrence instance arg is Trino-only",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [194] trino: 'substr (varbinary)' | duckdb: '(none direct)'
+    // [195] trino: 'substr (varbinary)' | duckdb: '(none direct)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Use cast to bitstring or hex-level work",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#binary--blob"),
-    // [195] trino: 'substring/2' | duckdb: 'substring/2'
+    // [196] trino: 'substring/2' | duckdb: 'substring/2'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Verified aligned on code-point unit (both split combining marks/ZWJ/flags at codepoint boundaries); negative start counts from end in both; but start=0 unverified ('Trino: undefined-ish, DuckDB: behaves like 1')",
         areas = listOf("string", "unicode"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [196] trino: 'substring/{2,3}' | duckdb: 'substring'
+    // [197] trino: 'substring/{2,3}' | duckdb: 'substring'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified aligned: 1-based code-point index; both engines treat combining marks and ZWJ-sequence members as separate code points (substring can split a grapheme identically in both)",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [197] trino: 'sum' | duckdb: 'sum'
+    // [198] trino: 'sum' | duckdb: 'sum'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Both skip NULLs; all-NULL -> NULL; both throw on overflow",
         areas = listOf("aggregate", "null", "numeric"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [198] trino: 'tdigest_agg / value_at_quantile / quantile_at_value' | duckdb: 'datasketch_tdigest* (datasketches ext)'
+    // [199] trino: 'tdigest_agg / value_at_quantile / quantile_at_value' | duckdb: 'datasketch_tdigest* (datasketches ext)'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same state-incompatibility caveat as theta",
         areas = listOf("aggregate", "extension"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [199] trino: 'theta_sketch_union / theta_sketch_cardinality' | duckdb: 'datasketch_theta* (datasketches ext)'
+)
+
+private fun hazardsChunk5(): List<FunctionHazard> = listOf(
+    // [200] trino: 'theta_sketch_union / theta_sketch_cardinality' | duckdb: 'datasketch_theta* (datasketches ext)'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Serialized sketch states NOT wire-compatible with Trino's — only computed-cardinality/set-op results safe, never sketch values crossing engines",
         areas = listOf("aggregate", "extension", "hash"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-)
-
-private fun hazardsChunk5(): List<FunctionHazard> = listOf(
-    // [200] trino: 'TIMESTAMP (no TZ) extracts' | duckdb: 'TIMESTAMP extracts'
+    // [201] trino: 'TIMESTAMP (no TZ) extracts' | duckdb: 'TIMESTAMP extracts'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified wall-clock and session-zone-invariant in both engines (year/hour/day stable across reader zones); DATE likewise TZ-invariant",
         areas = listOf("datetime", "timezone"),
         provenance = "REPORT-datetime-tz-handling.md#q1--timestamptz-storage-shape-duckdb-and-ducklake"),
-    // [201] trino: 'TIMESTAMP precision defaults' | duckdb: 'TIMESTAMP precision'
+    // [202] trino: 'TIMESTAMP precision defaults' | duckdb: 'TIMESTAMP precision'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Trino default precision 3 (millis) vs DuckDB 6 (micros) — 'mismatched precision is a common divergence source'; verify date_trunc('millisecond') rounds the same way",
         areas = listOf("datetime", "numeric"),
         provenance = "PLAN-pushdown-datetime.md#precision"),
-    // [202] trino: 'TIMESTAMP WITH TIME ZONE (type semantics)' | duckdb: 'TIMESTAMPTZ'
+    // [203] trino: 'TIMESTAMP WITH TIME ZONE (type semantics)' | duckdb: 'TIMESTAMPTZ'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Probe-verified: DuckDB TIMESTAMPTZ stores an instant ONLY — writer's session zone is discarded and reading session's TimeZone reinterprets it; Trino WTZ carries a per-value zone. Any function over WTZ is only equivalent if the DuckDB session TimeZone is forced to Trino's session zone",
         areas = listOf("datetime", "timezone"),
         provenance = "REPORT-datetime-tz-handling.md#q1--timestamptz-storage-shape-duckdb-and-ducklake"),
-    // [203] trino: 'timezone_hour / timezone_minute' | duckdb: "date_part('timezone_hour', x)"
+    // [204] trino: 'timezone_hour / timezone_minute' | duckdb: "date_part('timezone_hour', x)"
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "No direct DuckDB function; emulate via date_part",
         areas = listOf("datetime", "timezone"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [204] trino: 'to_base' | duckdb: 'to_base'
+    // [205] trino: 'to_base' | duckdb: 'to_base'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Semantics match for positive ints; DuckDB adds min_length padding arg",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [205] trino: 'to_base32' | duckdb: '(none)'
+    // [206] trino: 'to_base32' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [206] trino: 'to_base64' | duckdb: 'to_base64'
+    // [207] trino: 'to_base64' | duckdb: 'to_base64'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Standard alphabet in both",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [207] trino: 'to_base64url' | duckdb: '(none)'
+    // [208] trino: 'to_base64url' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "URL-safe alphabet form is Trino-only",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [208] trino: 'to_hex' | duckdb: 'hex'
+    // [209] trino: 'to_hex' | duckdb: 'hex'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Rename only",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [209] trino: 'to_hex / from_hex / to_base64 / from_base64 / url_encode / url_decode' | duckdb: 'hex / unhex / to_base64 / from_base64 / url_encode / url_decode'
+    // [210] trino: 'to_hex / from_hex / to_base64 / from_base64 / url_encode / url_decode' | duckdb: 'hex / unhex / to_base64 / from_base64 / url_encode / url_decode'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe sanity check: all NULL-propagate correctly",
         areas = listOf("string", "null"),
         provenance = "REPORT-hash-null-handling.md#round-4-encoding-macros--sanity-check"),
-    // [210] trino: 'to_iso8601' | duckdb: 'strftime / cast'
+    // [211] trino: 'to_iso8601' | duckdb: 'strftime / cast'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "No direct function; push as cast or do not push",
         areas = listOf("datetime", "string"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [211] trino: 'to_milliseconds' | duckdb: 'to_milliseconds'
+    // [212] trino: 'to_milliseconds' | duckdb: 'to_milliseconds'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Same name, different operand types: Trino takes INTERVAL, DuckDB takes INTEGER (constructs interval) — not 1:1",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [212] trino: 'to_unixtime' | duckdb: 'epoch(t)::DOUBLE'
+    // [213] trino: 'to_unixtime' | duckdb: 'epoch(t)::DOUBLE'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Requires explicit DOUBLE cast (DuckDB epoch returns bigint seconds, Trino returns double); pinned epoch 0.0 and pre-epoch -1.0",
         areas = listOf("datetime", "numeric"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [213] trino: 'to_unixtime (over TIMESTAMP WITH TIME ZONE)' | duckdb: 'epoch(...)::DOUBLE'
+    // [214] trino: 'to_unixtime (over TIMESTAMP WITH TIME ZONE)' | duckdb: 'epoch(...)::DOUBLE'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "The lone zone-INVARIANT entry in their catalog: returns absolute UTC epoch in both engines regardless of session zone — safe over WTZ even without zone plumbing",
         areas = listOf("datetime", "timezone"),
         provenance = "TODO-pushdown-duckdb.md#status (step 4 chunk 3)"),
-    // [214] trino: 'to_utf8' | duckdb: 'encode'
+    // [215] trino: 'to_utf8' | duckdb: 'encode'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Rename only; semantics match",
         areas = listOf("string", "unicode"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [215] trino: 'translate' | duckdb: 'translate'
+    // [216] trino: 'translate' | duckdb: 'translate'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Probe-verified aligned: code-point-wise substitution; extra from-chars deleted in both",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [216] trino: 'trim' | duckdb: 'trim'
+    // [217] trino: 'trim' | duckdb: 'trim'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Probe-verified: DuckDB bare trim strips space + EM SPACE but NOT tab/LF/CR/FF/VT; Trino (Java Character.isWhitespace) strips all of those; both leave NBSP/ZWSP. trim('\\thello\\t')='hello' in Trino but unchanged in DuckDB — real false-negative risk on TSV/log data",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#trim1-ltrim1-rtrim1--different-whitespace-sets"),
-    // [217] trino: 'truncate' | duckdb: 'trunc'
+    // [218] trino: 'truncate' | duckdb: 'trunc'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Rename only; same truncate-toward-zero semantics",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [218] trino: 'truncate/2 (x, n)' | duckdb: '(none)'
+    // [219] trino: 'truncate/2 (x, n)' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "DuckDB trunc is 1-arg only; would need cast(x*pow(10,n))/pow(10,n) shim — deferred",
         areas = listOf("numeric"),
         provenance = "TODO-pushdown-duckdb.md#round-6a--core-duckdb-extras-no-new-extensions--shipped"),
-    // [219] trino: 'try' | duckdb: '(none)'
+    // [220] trino: 'try' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "DuckDB has only TRY_CAST, no general try(expr)",
         areas = listOf("null"),
         provenance = "RESEARCH-function-mapping.md#comparison-and-conditional"),
-    // [220] trino: 'TRY_CAST' | duckdb: 'TRY_CAST'
+    // [221] trino: 'TRY_CAST' | duckdb: 'TRY_CAST'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Same primitive-type gate as CAST",
         areas = listOf("numeric", "string"),
         provenance = "RESEARCH-function-mapping.md#conversion--cast--try-cast"),
-    // [221] trino: 'typeof' | duckdb: 'typeof'
+    // [222] trino: 'typeof' | duckdb: 'typeof'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Returns engine-specific type-name strings — never comparable across engines",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#conversion--cast--try-cast"),
-    // [222] trino: 'tzdb historical offsets (e.g. Europe/Moscow pre-2014)' | duckdb: 'ICU tz data'
+    // [223] trino: 'tzdb historical offsets (e.g. Europe/Moscow pre-2014)' | duckdb: 'ICU tz data'
     FunctionHazard(HazardVerdict.UNCLEAR,
         hazard = "'the tzdb version they were built against can differ... if DuckDB and java.time disagree on the offset for any historical instant, we have to either pin tzdb versions... or refuse to push for the affected window' — flagged as open follow-up, never probed",
         areas = listOf("datetime", "timezone"),
         provenance = "REPORT-datetime-tz-handling.md#open-follow-up-probes-not-blockers-for-the-step-4-pr"),
-    // [223] trino: 'upper' | duckdb: 'upper'
+    // [224] trino: 'upper' | duckdb: 'upper'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Probe-verified: German 'ß' -> DuckDB 'ẞ' (U+1E9E) vs Trino 'SS' (Java full folding, length-changing); ASCII aligned. Needed native ICU extension",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-string-unicode-audit.md#summary-table"),
-    // [224] trino: 'url_decode' | duckdb: 'url_decode'
+    // [225] trino: 'url_decode' | duckdb: 'url_decode'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [225] trino: 'url_encode' | duckdb: 'url_encode'
+    // [226] trino: 'url_encode' | duckdb: 'url_encode'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "RFC 3986 percent-encoding aligned",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [226] trino: 'url_extract_parameter' | duckdb: 'extract_query_parameters (netquack, table function)'
+    // [227] trino: 'url_extract_parameter' | duckdb: 'extract_query_parameters (netquack, table function)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Trino scalar vs DuckDB TABLE function — shape change (correlated subquery) required; not a scalar mapping",
         areas = listOf("string", "extension"),
         provenance = "RESEARCH-function-community-extensions-detail.md#netquack"),
-    // [227] trino: 'url_extract_protocol/host/port/path/query/fragment' | duckdb: 'extract_schema/host/port/path/query_string/fragment (netquack ext)'
+    // [228] trino: 'url_extract_protocol/host/port/path/query/fragment' | duckdb: 'extract_schema/host/port/path/query_string/fragment (netquack ext)'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Systematic NULL-vs-empty-string: Trino url_extract_* are @SqlNullable, NULL on absent/malformed; netquack returns '' (extract_schema('ex.com/a')=''). url_extract_port: Trino BIGINT/NULL vs DuckDB VARCHAR/''. url_extract_path('http://ex.com'): Trino '' vs DuckDB '/'. Rejected as not lossless",
         areas = listOf("string", "null", "extension"),
         provenance = "TODO-pushdown-duckdb.md#round-6d--netquack-extension--not-pushable-research-2026-06-06"),
-    // [228] trino: 'uuid' | duckdb: 'uuid / uuidv4 / gen_random_uuid'
+    // [229] trino: 'uuid' | duckdb: 'uuid / uuidv4 / gen_random_uuid'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Non-deterministic — same distribution but never pushable/comparable",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#uuid"),
-    // [229] trino: 'variance / var_pop / var_samp / stddev / stddev_pop / stddev_samp' | duckdb: 'var_pop / var_samp / stddev_pop / stddev_samp'
+    // [230] trino: 'variance / var_pop / var_samp / stddev / stddev_pop / stddev_samp' | duckdb: 'var_pop / var_samp / stddev_pop / stddev_samp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Trino bare variance/stddev are aliases for the _samp forms",
         areas = listOf("aggregate", "numeric"),
         provenance = "RESEARCH-function-mapping.md#aggregate-functions"),
-    // [230] trino: 'week / week_of_year' | duckdb: 'week'
+    // [231] trino: 'week / week_of_year' | duckdb: 'week'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Both ISO-8601 (Mon-start, week 01 contains Jan 4); probed: week('2023-01-01')=52, week('2024-12-30')=1",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [231] trino: 'width_bucket' | duckdb: 'equi_width_bins'
+    // [232] trino: 'width_bucket' | duckdb: 'equi_width_bins'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Different shape; not 1:1",
         areas = listOf("numeric"),
         provenance = "RESEARCH-function-mapping.md#numeric--math-functions"),
-    // [232] trino: 'with_timezone' | duckdb: 'timezone(zone, t)'
+    // [233] trino: 'with_timezone' | duckdb: 'timezone(zone, t)'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Arg order flipped; result TIMESTAMPTZ in both",
         areas = listOf("datetime", "timezone"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [233] trino: 'word_stem' | duckdb: '(none)'
+    // [234] trino: 'word_stem' | duckdb: '(none)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
-    // [234] trino: 'xxhash64' | duckdb: '(none built-in)'
+    // [235] trino: 'xxhash64' | duckdb: '(none built-in)'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Parity extension native C++ over vendored xxHash; result emitted BIG-ENDIAN to match Trino byte order",
         areas = listOf("hash", "extension"),
         provenance = "README-duckdb-format-pushdown-reference.md#3-functions"),
-    // [235] trino: 'xxhash64' | duckdb: 'xxh64 (hashfuncs ext)'
+    // [236] trino: 'xxhash64' | duckdb: 'xxh64 (hashfuncs ext)'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Algorithm identical (frozen spec, seed 0) but Trino serializes the u64 BIG-ENDIAN into VARBINARY (Long.reverseBytes + LE write); DuckDB xxh64 returns UBIGINT — naive mapping compares different shapes; their interim macro was unhex(printf('%016x', xxh64(b))), later replaced by native C++ emitting big-endian bytes",
         areas = listOf("hash", "extension"),
         provenance = "TODO-pushdown-duckdb.md#round-6c--hashfuncs-extension--xxhash64-ported-native-murmur3-deferred"),
-    // [236] trino: 'year / month / day' | duckdb: 'year / month / day'
+    // [237] trino: 'year / month / day' | duckdb: 'year / month / day'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned on DATE and TIMESTAMP input",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [237] trino: 'year/hour/etc over TIMESTAMP WITH TIME ZONE' | duckdb: 'year/hour/etc under SET TimeZone'
+    // [238] trino: 'year/hour/etc over TIMESTAMP WITH TIME ZONE' | duckdb: 'year/hour/etc under SET TimeZone'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Probe-verified equivalent ONLY with SET TimeZone = Trino session zone before evaluation; without it, year(tz_col)=2024 can silently return 2025 rows (Asia/Singapore year-boundary smoking gun: year of '2024-12-31 22:00:00+00' = 2025/hour 6). DuckDB default TimeZone is the host JVM/system zone, not UTC — silent portability bomb",
         areas = listOf("datetime", "timezone"),
         provenance = "REPORT-datetime-tz-handling.md#q3--embedded-jdbcduckdb-default-timezone"),
-    // [238] trino: 'year_of_week / yow' | duckdb: "extract('isoyear' FROM x)"
+    // [239] trino: 'year_of_week / yow' | duckdb: "extract('isoyear' FROM x)"
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB has no bare isoyear() function — reach via extract; cast to BIGINT; pinned '2024-12-30' -> 2025",
         areas = listOf("datetime"),
         provenance = "RESEARCH-function-mapping.md#date--time--timestamp--interval-functions"),
-    // [239] trino: 'zip / zip_with' | duckdb: 'list_zip'
+)
+
+private fun hazardsChunk6(): List<FunctionHazard> = listOf(
+    // [240] trino: 'zip / zip_with' | duckdb: 'list_zip'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Trino zip_with takes a lambda; DuckDB list_zip returns list of structs — different shapes",
         areas = listOf("string"),
         provenance = "RESEARCH-function-mapping.md#array--list-functions"),
-)
-
-private fun hazardsChunk6(): List<FunctionHazard> = listOf(
-    // [240] trino: '|| (concat operator)' | duckdb: '|| (concat operator)'
+    // [241] trino: '|| (concat operator)' | duckdb: '|| (concat operator)'
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("string", "null"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
 )
 
-/** trino->duckdb lookup: 385 keys (Trino-side names) over 241 entries. */
+/** trino->duckdb lookup: 386 keys (Trino-side names) over 242 entries. */
 internal val TRINO_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("(NO TRINO EQUIVALENT)", TRINO_DUCKDB_HAZARD_ENTRIES[0])
     put("= <> < <= > >= (COMPARISON)", TRINO_DUCKDB_HAZARD_ENTRIES[1])
     put("ABS", TRINO_DUCKDB_HAZARD_ENTRIES[2])
-    put("ACOS", TRINO_DUCKDB_HAZARD_ENTRIES[181])
+    put("ACOS", TRINO_DUCKDB_HAZARD_ENTRIES[182])
     put("ALL_MATCH", TRINO_DUCKDB_HAZARD_ENTRIES[3])
     put("ALL_MATCH / ANY_MATCH", TRINO_DUCKDB_HAZARD_ENTRIES[3])
     put("AND", TRINO_DUCKDB_HAZARD_ENTRIES[4])
@@ -1221,9 +1226,9 @@ internal val TRINO_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ARRAY_REMOVE", TRINO_DUCKDB_HAZARD_ENTRIES[18])
     put("ARRAY_SORT", TRINO_DUCKDB_HAZARD_ENTRIES[19])
     put("ARRAY_UNION", TRINO_DUCKDB_HAZARD_ENTRIES[20])
-    put("ASIN", TRINO_DUCKDB_HAZARD_ENTRIES[181])
-    put("ATAN", TRINO_DUCKDB_HAZARD_ENTRIES[181])
-    put("ATAN2", TRINO_DUCKDB_HAZARD_ENTRIES[181])
+    put("ASIN", TRINO_DUCKDB_HAZARD_ENTRIES[182])
+    put("ATAN", TRINO_DUCKDB_HAZARD_ENTRIES[182])
+    put("ATAN2", TRINO_DUCKDB_HAZARD_ENTRIES[182])
     put("AT_TIMEZONE", TRINO_DUCKDB_HAZARD_ENTRIES[21])
     put("AVG", TRINO_DUCKDB_HAZARD_ENTRIES[22])
     put("BETA_CDF", TRINO_DUCKDB_HAZARD_ENTRIES[23])
@@ -1256,7 +1261,7 @@ internal val TRINO_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("CHR", TRINO_DUCKDB_HAZARD_ENTRIES[43])
     put("COALESCE", TRINO_DUCKDB_HAZARD_ENTRIES[44])
     put("CODEPOINT", TRINO_DUCKDB_HAZARD_ENTRIES[45])
-    put("COMBINATIONS", TRINO_DUCKDB_HAZARD_ENTRIES[143])
+    put("COMBINATIONS", TRINO_DUCKDB_HAZARD_ENTRIES[144])
     put("CONCAT", TRINO_DUCKDB_HAZARD_ENTRIES[46])
     put("CONCAT (ARRAYS)", TRINO_DUCKDB_HAZARD_ENTRIES[48])
     put("CONCAT_WS", TRINO_DUCKDB_HAZARD_ENTRIES[49])
@@ -1264,8 +1269,8 @@ internal val TRINO_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("CONTAINS (NETWORK, ADDRESS)", TRINO_DUCKDB_HAZARD_ENTRIES[51])
     put("CORR", TRINO_DUCKDB_HAZARD_ENTRIES[52])
     put("CORR / COVAR_POP / COVAR_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[52])
-    put("COS", TRINO_DUCKDB_HAZARD_ENTRIES[181])
-    put("COSH", TRINO_DUCKDB_HAZARD_ENTRIES[182])
+    put("COS", TRINO_DUCKDB_HAZARD_ENTRIES[182])
+    put("COSH", TRINO_DUCKDB_HAZARD_ENTRIES[183])
     put("COSINE_DISTANCE", TRINO_DUCKDB_HAZARD_ENTRIES[53])
     put("COSINE_DISTANCE / COSINE_SIMILARITY", TRINO_DUCKDB_HAZARD_ENTRIES[53])
     put("COSINE_SIMILARITY", TRINO_DUCKDB_HAZARD_ENTRIES[53])
@@ -1279,310 +1284,311 @@ internal val TRINO_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("CURRENT_DATE", TRINO_DUCKDB_HAZARD_ENTRIES[58])
     put("CURRENT_TIMESTAMP", TRINO_DUCKDB_HAZARD_ENTRIES[59])
     put("CURRENT_TIMESTAMP / NOW", TRINO_DUCKDB_HAZARD_ENTRIES[59])
+    put("DATE + INTERVAL (RESULT TYPE)", TRINO_DUCKDB_HAZARD_ENTRIES[62])
     put("DATE_ADD", TRINO_DUCKDB_HAZARD_ENTRIES[60])
     put("DATE_ADD('MONTH', 1, DATE '2024-01-31')", TRINO_DUCKDB_HAZARD_ENTRIES[61])
-    put("DATE_DIFF", TRINO_DUCKDB_HAZARD_ENTRIES[62])
-    put("DATE_DIFF('HOUR', ...) OVER WTZ ACROSS DST", TRINO_DUCKDB_HAZARD_ENTRIES[63])
-    put("DATE_FORMAT", TRINO_DUCKDB_HAZARD_ENTRIES[64])
-    put("DATE_FORMAT / FORMAT_DATETIME / PARSE_DATETIME / DATE_PARSE", TRINO_DUCKDB_HAZARD_ENTRIES[64])
-    put("DATE_PARSE", TRINO_DUCKDB_HAZARD_ENTRIES[64])
-    put("DATE_TRUNC", TRINO_DUCKDB_HAZARD_ENTRIES[65])
-    put("DATE_TRUNC('WEEK', X)", TRINO_DUCKDB_HAZARD_ENTRIES[66])
-    put("DAY", TRINO_DUCKDB_HAZARD_ENTRIES[236])
-    put("DAY_OF_MONTH", TRINO_DUCKDB_HAZARD_ENTRIES[67])
-    put("DAY_OF_WEEK", TRINO_DUCKDB_HAZARD_ENTRIES[68])
-    put("DAY_OF_WEEK / DOW", TRINO_DUCKDB_HAZARD_ENTRIES[68])
-    put("DAY_OF_YEAR", TRINO_DUCKDB_HAZARD_ENTRIES[69])
-    put("DAY_OF_YEAR / DOY", TRINO_DUCKDB_HAZARD_ENTRIES[69])
-    put("DEGREES", TRINO_DUCKDB_HAZARD_ENTRIES[70])
-    put("DEGREES / RADIANS", TRINO_DUCKDB_HAZARD_ENTRIES[70])
-    put("DENSE_RANK", TRINO_DUCKDB_HAZARD_ENTRIES[170])
-    put("DOT_PRODUCT", TRINO_DUCKDB_HAZARD_ENTRIES[74])
-    put("DOW", TRINO_DUCKDB_HAZARD_ENTRIES[68])
-    put("DOY", TRINO_DUCKDB_HAZARD_ENTRIES[69])
-    put("E", TRINO_DUCKDB_HAZARD_ENTRIES[71])
-    put("ELEMENT_AT (ARRAY)", TRINO_DUCKDB_HAZARD_ENTRIES[72])
-    put("ELEMENT_AT (MAP)", TRINO_DUCKDB_HAZARD_ENTRIES[73])
-    put("EUCLIDEAN_DISTANCE", TRINO_DUCKDB_HAZARD_ENTRIES[74])
-    put("EUCLIDEAN_DISTANCE / DOT_PRODUCT", TRINO_DUCKDB_HAZARD_ENTRIES[74])
+    put("DATE_DIFF", TRINO_DUCKDB_HAZARD_ENTRIES[63])
+    put("DATE_DIFF('HOUR', ...) OVER WTZ ACROSS DST", TRINO_DUCKDB_HAZARD_ENTRIES[64])
+    put("DATE_FORMAT", TRINO_DUCKDB_HAZARD_ENTRIES[65])
+    put("DATE_FORMAT / FORMAT_DATETIME / PARSE_DATETIME / DATE_PARSE", TRINO_DUCKDB_HAZARD_ENTRIES[65])
+    put("DATE_PARSE", TRINO_DUCKDB_HAZARD_ENTRIES[65])
+    put("DATE_TRUNC", TRINO_DUCKDB_HAZARD_ENTRIES[66])
+    put("DATE_TRUNC('WEEK', X)", TRINO_DUCKDB_HAZARD_ENTRIES[67])
+    put("DAY", TRINO_DUCKDB_HAZARD_ENTRIES[237])
+    put("DAY_OF_MONTH", TRINO_DUCKDB_HAZARD_ENTRIES[68])
+    put("DAY_OF_WEEK", TRINO_DUCKDB_HAZARD_ENTRIES[69])
+    put("DAY_OF_WEEK / DOW", TRINO_DUCKDB_HAZARD_ENTRIES[69])
+    put("DAY_OF_YEAR", TRINO_DUCKDB_HAZARD_ENTRIES[70])
+    put("DAY_OF_YEAR / DOY", TRINO_DUCKDB_HAZARD_ENTRIES[70])
+    put("DEGREES", TRINO_DUCKDB_HAZARD_ENTRIES[71])
+    put("DEGREES / RADIANS", TRINO_DUCKDB_HAZARD_ENTRIES[71])
+    put("DENSE_RANK", TRINO_DUCKDB_HAZARD_ENTRIES[171])
+    put("DOT_PRODUCT", TRINO_DUCKDB_HAZARD_ENTRIES[75])
+    put("DOW", TRINO_DUCKDB_HAZARD_ENTRIES[69])
+    put("DOY", TRINO_DUCKDB_HAZARD_ENTRIES[70])
+    put("E", TRINO_DUCKDB_HAZARD_ENTRIES[72])
+    put("ELEMENT_AT (ARRAY)", TRINO_DUCKDB_HAZARD_ENTRIES[73])
+    put("ELEMENT_AT (MAP)", TRINO_DUCKDB_HAZARD_ENTRIES[74])
+    put("EUCLIDEAN_DISTANCE", TRINO_DUCKDB_HAZARD_ENTRIES[75])
+    put("EUCLIDEAN_DISTANCE / DOT_PRODUCT", TRINO_DUCKDB_HAZARD_ENTRIES[75])
     put("EVERY", TRINO_DUCKDB_HAZARD_ENTRIES[35])
-    put("EXP", TRINO_DUCKDB_HAZARD_ENTRIES[75])
-    put("EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[76])
-    put("FILTER", TRINO_DUCKDB_HAZARD_ENTRIES[77])
-    put("FILTER / TRANSFORM / REDUCE (LAMBDA FORMS)", TRINO_DUCKDB_HAZARD_ENTRIES[77])
-    put("FIRST_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[78])
-    put("FIRST_VALUE / LAST_VALUE / NTH_VALUE / LEAD / LAG", TRINO_DUCKDB_HAZARD_ENTRIES[78])
-    put("FLATTEN", TRINO_DUCKDB_HAZARD_ENTRIES[79])
-    put("FLOOR", TRINO_DUCKDB_HAZARD_ENTRIES[80])
-    put("FORMAT", TRINO_DUCKDB_HAZARD_ENTRIES[81])
-    put("FORMAT_DATETIME", TRINO_DUCKDB_HAZARD_ENTRIES[64])
-    put("FRAGMENT", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("FROM_BASE", TRINO_DUCKDB_HAZARD_ENTRIES[82])
-    put("FROM_BASE64", TRINO_DUCKDB_HAZARD_ENTRIES[83])
-    put("FROM_BIG_ENDIAN_32", TRINO_DUCKDB_HAZARD_ENTRIES[84])
-    put("FROM_BIG_ENDIAN_32/64 / TO_BIG_ENDIAN_32/64", TRINO_DUCKDB_HAZARD_ENTRIES[84])
-    put("FROM_HEX", TRINO_DUCKDB_HAZARD_ENTRIES[85])
-    put("FROM_IEEE754_32", TRINO_DUCKDB_HAZARD_ENTRIES[86])
-    put("FROM_IEEE754_32/64 / TO_IEEE754_32/64", TRINO_DUCKDB_HAZARD_ENTRIES[86])
-    put("FROM_ISO8601_TIMESTAMP", TRINO_DUCKDB_HAZARD_ENTRIES[87])
-    put("FROM_UNIXTIME", TRINO_DUCKDB_HAZARD_ENTRIES[88])
-    put("FROM_UNIXTIME/1", TRINO_DUCKDB_HAZARD_ENTRIES[89])
-    put("FROM_UNIXTIME/2 (ZONE) / FROM_UNIXTIME_NANOS", TRINO_DUCKDB_HAZARD_ENTRIES[90])
-    put("FROM_UNIXTIME_NANOS", TRINO_DUCKDB_HAZARD_ENTRIES[90])
-    put("FROM_UTF8", TRINO_DUCKDB_HAZARD_ENTRIES[91])
-    put("GEOMETRIC_MEAN", TRINO_DUCKDB_HAZARD_ENTRIES[92])
-    put("GREATEST", TRINO_DUCKDB_HAZARD_ENTRIES[93])
-    put("GREATEST / LEAST", TRINO_DUCKDB_HAZARD_ENTRIES[93])
-    put("HAMMING_DISTANCE", TRINO_DUCKDB_HAZARD_ENTRIES[94])
-    put("HISTOGRAM", TRINO_DUCKDB_HAZARD_ENTRIES[95])
-    put("HMAC_MD5", TRINO_DUCKDB_HAZARD_ENTRIES[96])
-    put("HMAC_SHA1", TRINO_DUCKDB_HAZARD_ENTRIES[97])
-    put("HMAC_SHA256", TRINO_DUCKDB_HAZARD_ENTRIES[98])
-    put("HMAC_SHA512", TRINO_DUCKDB_HAZARD_ENTRIES[99])
-    put("HOST", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("HOUR", TRINO_DUCKDB_HAZARD_ENTRIES[237])
-    put("HOUR / MINUTE / SECOND", TRINO_DUCKDB_HAZARD_ENTRIES[100])
-    put("HUMAN_READABLE_SECONDS", TRINO_DUCKDB_HAZARD_ENTRIES[101])
-    put("IF", TRINO_DUCKDB_HAZARD_ENTRIES[102])
-    put("IF/2", TRINO_DUCKDB_HAZARD_ENTRIES[102])
-    put("IN (VALUE LIST)", TRINO_DUCKDB_HAZARD_ENTRIES[103])
+    put("EXP", TRINO_DUCKDB_HAZARD_ENTRIES[76])
+    put("EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[77])
+    put("FILTER", TRINO_DUCKDB_HAZARD_ENTRIES[78])
+    put("FILTER / TRANSFORM / REDUCE (LAMBDA FORMS)", TRINO_DUCKDB_HAZARD_ENTRIES[78])
+    put("FIRST_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[79])
+    put("FIRST_VALUE / LAST_VALUE / NTH_VALUE / LEAD / LAG", TRINO_DUCKDB_HAZARD_ENTRIES[79])
+    put("FLATTEN", TRINO_DUCKDB_HAZARD_ENTRIES[80])
+    put("FLOOR", TRINO_DUCKDB_HAZARD_ENTRIES[81])
+    put("FORMAT", TRINO_DUCKDB_HAZARD_ENTRIES[82])
+    put("FORMAT_DATETIME", TRINO_DUCKDB_HAZARD_ENTRIES[65])
+    put("FRAGMENT", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("FROM_BASE", TRINO_DUCKDB_HAZARD_ENTRIES[83])
+    put("FROM_BASE64", TRINO_DUCKDB_HAZARD_ENTRIES[84])
+    put("FROM_BIG_ENDIAN_32", TRINO_DUCKDB_HAZARD_ENTRIES[85])
+    put("FROM_BIG_ENDIAN_32/64 / TO_BIG_ENDIAN_32/64", TRINO_DUCKDB_HAZARD_ENTRIES[85])
+    put("FROM_HEX", TRINO_DUCKDB_HAZARD_ENTRIES[86])
+    put("FROM_IEEE754_32", TRINO_DUCKDB_HAZARD_ENTRIES[87])
+    put("FROM_IEEE754_32/64 / TO_IEEE754_32/64", TRINO_DUCKDB_HAZARD_ENTRIES[87])
+    put("FROM_ISO8601_TIMESTAMP", TRINO_DUCKDB_HAZARD_ENTRIES[88])
+    put("FROM_UNIXTIME", TRINO_DUCKDB_HAZARD_ENTRIES[89])
+    put("FROM_UNIXTIME/1", TRINO_DUCKDB_HAZARD_ENTRIES[90])
+    put("FROM_UNIXTIME/2 (ZONE) / FROM_UNIXTIME_NANOS", TRINO_DUCKDB_HAZARD_ENTRIES[91])
+    put("FROM_UNIXTIME_NANOS", TRINO_DUCKDB_HAZARD_ENTRIES[91])
+    put("FROM_UTF8", TRINO_DUCKDB_HAZARD_ENTRIES[92])
+    put("GEOMETRIC_MEAN", TRINO_DUCKDB_HAZARD_ENTRIES[93])
+    put("GREATEST", TRINO_DUCKDB_HAZARD_ENTRIES[94])
+    put("GREATEST / LEAST", TRINO_DUCKDB_HAZARD_ENTRIES[94])
+    put("HAMMING_DISTANCE", TRINO_DUCKDB_HAZARD_ENTRIES[95])
+    put("HISTOGRAM", TRINO_DUCKDB_HAZARD_ENTRIES[96])
+    put("HMAC_MD5", TRINO_DUCKDB_HAZARD_ENTRIES[97])
+    put("HMAC_SHA1", TRINO_DUCKDB_HAZARD_ENTRIES[98])
+    put("HMAC_SHA256", TRINO_DUCKDB_HAZARD_ENTRIES[99])
+    put("HMAC_SHA512", TRINO_DUCKDB_HAZARD_ENTRIES[100])
+    put("HOST", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("HOUR", TRINO_DUCKDB_HAZARD_ENTRIES[238])
+    put("HOUR / MINUTE / SECOND", TRINO_DUCKDB_HAZARD_ENTRIES[101])
+    put("HUMAN_READABLE_SECONDS", TRINO_DUCKDB_HAZARD_ENTRIES[102])
+    put("IF", TRINO_DUCKDB_HAZARD_ENTRIES[103])
+    put("IF/2", TRINO_DUCKDB_HAZARD_ENTRIES[103])
+    put("IN (VALUE LIST)", TRINO_DUCKDB_HAZARD_ENTRIES[104])
     put("INVERSE_BETA_CDF", TRINO_DUCKDB_HAZARD_ENTRIES[23])
     put("INVERSE_NORMAL_CDF", TRINO_DUCKDB_HAZARD_ENTRIES[23])
-    put("IPADDRESS", TRINO_DUCKDB_HAZARD_ENTRIES[104])
-    put("IPADDRESS / IPPREFIX TYPES", TRINO_DUCKDB_HAZARD_ENTRIES[104])
-    put("IS [NOT] DISTINCT FROM", TRINO_DUCKDB_HAZARD_ENTRIES[105])
-    put("IS_FINITE", TRINO_DUCKDB_HAZARD_ENTRIES[107])
-    put("IS_INFINITE", TRINO_DUCKDB_HAZARD_ENTRIES[107])
-    put("IS_JSON_SCALAR", TRINO_DUCKDB_HAZARD_ENTRIES[106])
-    put("IS_JSON_SCALAR / JSON_ARRAY_CONTAINS / JSON_ARRAY_GET / JSON_SIZE", TRINO_DUCKDB_HAZARD_ENTRIES[106])
-    put("IS_NAN", TRINO_DUCKDB_HAZARD_ENTRIES[107])
-    put("IS_NAN / IS_FINITE / IS_INFINITE", TRINO_DUCKDB_HAZARD_ENTRIES[107])
-    put("JSON_ARRAY_CONTAINS", TRINO_DUCKDB_HAZARD_ENTRIES[106])
-    put("JSON_ARRAY_GET", TRINO_DUCKDB_HAZARD_ENTRIES[106])
-    put("JSON_ARRAY_LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[108])
-    put("JSON_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[109])
-    put("JSON_EXTRACT_SCALAR", TRINO_DUCKDB_HAZARD_ENTRIES[110])
-    put("JSON_FORMAT", TRINO_DUCKDB_HAZARD_ENTRIES[111])
-    put("JSON_FORMAT / JSON_PARSE", TRINO_DUCKDB_HAZARD_ENTRIES[111])
-    put("JSON_PARSE", TRINO_DUCKDB_HAZARD_ENTRIES[111])
-    put("JSON_SIZE", TRINO_DUCKDB_HAZARD_ENTRIES[106])
-    put("KURTOSIS", TRINO_DUCKDB_HAZARD_ENTRIES[112])
-    put("LAG", TRINO_DUCKDB_HAZARD_ENTRIES[78])
-    put("LAST_DAY_OF_MONTH", TRINO_DUCKDB_HAZARD_ENTRIES[113])
-    put("LAST_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[78])
-    put("LEAD", TRINO_DUCKDB_HAZARD_ENTRIES[78])
-    put("LEAST", TRINO_DUCKDB_HAZARD_ENTRIES[93])
-    put("LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[114])
-    put("LENGTH (VARBINARY)", TRINO_DUCKDB_HAZARD_ENTRIES[115])
-    put("LEVENSHTEIN_DISTANCE", TRINO_DUCKDB_HAZARD_ENTRIES[116])
-    put("LIKE", TRINO_DUCKDB_HAZARD_ENTRIES[117])
-    put("LIKE / NOT LIKE", TRINO_DUCKDB_HAZARD_ENTRIES[117])
-    put("LISTAGG", TRINO_DUCKDB_HAZARD_ENTRIES[118])
-    put("LN", TRINO_DUCKDB_HAZARD_ENTRIES[119])
-    put("LOCALTIME", TRINO_DUCKDB_HAZARD_ENTRIES[120])
-    put("LOCALTIMESTAMP", TRINO_DUCKDB_HAZARD_ENTRIES[120])
-    put("LOCALTIMESTAMP / LOCALTIME", TRINO_DUCKDB_HAZARD_ENTRIES[120])
-    put("LOG (2-ARG, BASE B)", TRINO_DUCKDB_HAZARD_ENTRIES[121])
-    put("LOG10", TRINO_DUCKDB_HAZARD_ENTRIES[122])
-    put("LOG2", TRINO_DUCKDB_HAZARD_ENTRIES[123])
-    put("LOWER", TRINO_DUCKDB_HAZARD_ENTRIES[124])
-    put("LOWER/UPPER CASE FOLDING VIA COLLATION", TRINO_DUCKDB_HAZARD_ENTRIES[125])
-    put("LPAD", TRINO_DUCKDB_HAZARD_ENTRIES[126])
-    put("LTRIM", TRINO_DUCKDB_HAZARD_ENTRIES[127])
-    put("LUHN_CHECK", TRINO_DUCKDB_HAZARD_ENTRIES[128])
-    put("MAP", TRINO_DUCKDB_HAZARD_ENTRIES[129])
-    put("MAP / MAP_FROM_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[129])
-    put("MAP_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[130])
-    put("MAP_AGG / MAP_UNION / MULTIMAP_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[130])
-    put("MAP_CONCAT", TRINO_DUCKDB_HAZARD_ENTRIES[131])
-    put("MAP_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[132])
-    put("MAP_FILTER", TRINO_DUCKDB_HAZARD_ENTRIES[133])
-    put("MAP_FILTER / TRANSFORM_KEYS / TRANSFORM_VALUES / MAP_ZIP_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[133])
-    put("MAP_FROM_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[129])
-    put("MAP_KEYS", TRINO_DUCKDB_HAZARD_ENTRIES[134])
-    put("MAP_KEYS / MAP_VALUES", TRINO_DUCKDB_HAZARD_ENTRIES[134])
-    put("MAP_UNION", TRINO_DUCKDB_HAZARD_ENTRIES[130])
-    put("MAP_VALUES", TRINO_DUCKDB_HAZARD_ENTRIES[134])
-    put("MAP_ZIP_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[133])
-    put("MAX", TRINO_DUCKDB_HAZARD_ENTRIES[137])
-    put("MAX_BY", TRINO_DUCKDB_HAZARD_ENTRIES[138])
-    put("MD5", TRINO_DUCKDB_HAZARD_ENTRIES[135])
-    put("MILLISECOND", TRINO_DUCKDB_HAZARD_ENTRIES[136])
-    put("MIN", TRINO_DUCKDB_HAZARD_ENTRIES[137])
-    put("MIN / MAX", TRINO_DUCKDB_HAZARD_ENTRIES[137])
-    put("MINUTE", TRINO_DUCKDB_HAZARD_ENTRIES[100])
-    put("MIN_BY", TRINO_DUCKDB_HAZARD_ENTRIES[138])
-    put("MIN_BY / MAX_BY", TRINO_DUCKDB_HAZARD_ENTRIES[138])
-    put("MOD (FLOAT)", TRINO_DUCKDB_HAZARD_ENTRIES[139])
-    put("MOD (INTEGER)", TRINO_DUCKDB_HAZARD_ENTRIES[140])
-    put("MONTH", TRINO_DUCKDB_HAZARD_ENTRIES[236])
-    put("MULTIMAP_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[130])
-    put("MURMUR3", TRINO_DUCKDB_HAZARD_ENTRIES[141])
-    put("NGRAMS", TRINO_DUCKDB_HAZARD_ENTRIES[143])
-    put("NGRAMS (ARRAY FORM)", TRINO_DUCKDB_HAZARD_ENTRIES[142])
-    put("NGRAMS / COMBINATIONS / SHUFFLE", TRINO_DUCKDB_HAZARD_ENTRIES[143])
-    put("NORMALIZE", TRINO_DUCKDB_HAZARD_ENTRIES[144])
-    put("NORMALIZE/1", TRINO_DUCKDB_HAZARD_ENTRIES[144])
-    put("NORMALIZE/2", TRINO_DUCKDB_HAZARD_ENTRIES[145])
+    put("IPADDRESS", TRINO_DUCKDB_HAZARD_ENTRIES[105])
+    put("IPADDRESS / IPPREFIX TYPES", TRINO_DUCKDB_HAZARD_ENTRIES[105])
+    put("IS [NOT] DISTINCT FROM", TRINO_DUCKDB_HAZARD_ENTRIES[106])
+    put("IS_FINITE", TRINO_DUCKDB_HAZARD_ENTRIES[108])
+    put("IS_INFINITE", TRINO_DUCKDB_HAZARD_ENTRIES[108])
+    put("IS_JSON_SCALAR", TRINO_DUCKDB_HAZARD_ENTRIES[107])
+    put("IS_JSON_SCALAR / JSON_ARRAY_CONTAINS / JSON_ARRAY_GET / JSON_SIZE", TRINO_DUCKDB_HAZARD_ENTRIES[107])
+    put("IS_NAN", TRINO_DUCKDB_HAZARD_ENTRIES[108])
+    put("IS_NAN / IS_FINITE / IS_INFINITE", TRINO_DUCKDB_HAZARD_ENTRIES[108])
+    put("JSON_ARRAY_CONTAINS", TRINO_DUCKDB_HAZARD_ENTRIES[107])
+    put("JSON_ARRAY_GET", TRINO_DUCKDB_HAZARD_ENTRIES[107])
+    put("JSON_ARRAY_LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[109])
+    put("JSON_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[110])
+    put("JSON_EXTRACT_SCALAR", TRINO_DUCKDB_HAZARD_ENTRIES[111])
+    put("JSON_FORMAT", TRINO_DUCKDB_HAZARD_ENTRIES[112])
+    put("JSON_FORMAT / JSON_PARSE", TRINO_DUCKDB_HAZARD_ENTRIES[112])
+    put("JSON_PARSE", TRINO_DUCKDB_HAZARD_ENTRIES[112])
+    put("JSON_SIZE", TRINO_DUCKDB_HAZARD_ENTRIES[107])
+    put("KURTOSIS", TRINO_DUCKDB_HAZARD_ENTRIES[113])
+    put("LAG", TRINO_DUCKDB_HAZARD_ENTRIES[79])
+    put("LAST_DAY_OF_MONTH", TRINO_DUCKDB_HAZARD_ENTRIES[114])
+    put("LAST_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[79])
+    put("LEAD", TRINO_DUCKDB_HAZARD_ENTRIES[79])
+    put("LEAST", TRINO_DUCKDB_HAZARD_ENTRIES[94])
+    put("LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[115])
+    put("LENGTH (VARBINARY)", TRINO_DUCKDB_HAZARD_ENTRIES[116])
+    put("LEVENSHTEIN_DISTANCE", TRINO_DUCKDB_HAZARD_ENTRIES[117])
+    put("LIKE", TRINO_DUCKDB_HAZARD_ENTRIES[118])
+    put("LIKE / NOT LIKE", TRINO_DUCKDB_HAZARD_ENTRIES[118])
+    put("LISTAGG", TRINO_DUCKDB_HAZARD_ENTRIES[119])
+    put("LN", TRINO_DUCKDB_HAZARD_ENTRIES[120])
+    put("LOCALTIME", TRINO_DUCKDB_HAZARD_ENTRIES[121])
+    put("LOCALTIMESTAMP", TRINO_DUCKDB_HAZARD_ENTRIES[121])
+    put("LOCALTIMESTAMP / LOCALTIME", TRINO_DUCKDB_HAZARD_ENTRIES[121])
+    put("LOG (2-ARG, BASE B)", TRINO_DUCKDB_HAZARD_ENTRIES[122])
+    put("LOG10", TRINO_DUCKDB_HAZARD_ENTRIES[123])
+    put("LOG2", TRINO_DUCKDB_HAZARD_ENTRIES[124])
+    put("LOWER", TRINO_DUCKDB_HAZARD_ENTRIES[125])
+    put("LOWER/UPPER CASE FOLDING VIA COLLATION", TRINO_DUCKDB_HAZARD_ENTRIES[126])
+    put("LPAD", TRINO_DUCKDB_HAZARD_ENTRIES[127])
+    put("LTRIM", TRINO_DUCKDB_HAZARD_ENTRIES[128])
+    put("LUHN_CHECK", TRINO_DUCKDB_HAZARD_ENTRIES[129])
+    put("MAP", TRINO_DUCKDB_HAZARD_ENTRIES[130])
+    put("MAP / MAP_FROM_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[130])
+    put("MAP_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[131])
+    put("MAP_AGG / MAP_UNION / MULTIMAP_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[131])
+    put("MAP_CONCAT", TRINO_DUCKDB_HAZARD_ENTRIES[132])
+    put("MAP_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[133])
+    put("MAP_FILTER", TRINO_DUCKDB_HAZARD_ENTRIES[134])
+    put("MAP_FILTER / TRANSFORM_KEYS / TRANSFORM_VALUES / MAP_ZIP_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[134])
+    put("MAP_FROM_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[130])
+    put("MAP_KEYS", TRINO_DUCKDB_HAZARD_ENTRIES[135])
+    put("MAP_KEYS / MAP_VALUES", TRINO_DUCKDB_HAZARD_ENTRIES[135])
+    put("MAP_UNION", TRINO_DUCKDB_HAZARD_ENTRIES[131])
+    put("MAP_VALUES", TRINO_DUCKDB_HAZARD_ENTRIES[135])
+    put("MAP_ZIP_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[134])
+    put("MAX", TRINO_DUCKDB_HAZARD_ENTRIES[138])
+    put("MAX_BY", TRINO_DUCKDB_HAZARD_ENTRIES[139])
+    put("MD5", TRINO_DUCKDB_HAZARD_ENTRIES[136])
+    put("MILLISECOND", TRINO_DUCKDB_HAZARD_ENTRIES[137])
+    put("MIN", TRINO_DUCKDB_HAZARD_ENTRIES[138])
+    put("MIN / MAX", TRINO_DUCKDB_HAZARD_ENTRIES[138])
+    put("MINUTE", TRINO_DUCKDB_HAZARD_ENTRIES[101])
+    put("MIN_BY", TRINO_DUCKDB_HAZARD_ENTRIES[139])
+    put("MIN_BY / MAX_BY", TRINO_DUCKDB_HAZARD_ENTRIES[139])
+    put("MOD (FLOAT)", TRINO_DUCKDB_HAZARD_ENTRIES[140])
+    put("MOD (INTEGER)", TRINO_DUCKDB_HAZARD_ENTRIES[141])
+    put("MONTH", TRINO_DUCKDB_HAZARD_ENTRIES[237])
+    put("MULTIMAP_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[131])
+    put("MURMUR3", TRINO_DUCKDB_HAZARD_ENTRIES[142])
+    put("NGRAMS", TRINO_DUCKDB_HAZARD_ENTRIES[144])
+    put("NGRAMS (ARRAY FORM)", TRINO_DUCKDB_HAZARD_ENTRIES[143])
+    put("NGRAMS / COMBINATIONS / SHUFFLE", TRINO_DUCKDB_HAZARD_ENTRIES[144])
+    put("NORMALIZE", TRINO_DUCKDB_HAZARD_ENTRIES[145])
+    put("NORMALIZE/1", TRINO_DUCKDB_HAZARD_ENTRIES[145])
+    put("NORMALIZE/2", TRINO_DUCKDB_HAZARD_ENTRIES[146])
     put("NORMAL_CDF", TRINO_DUCKDB_HAZARD_ENTRIES[23])
     put("NOT", TRINO_DUCKDB_HAZARD_ENTRIES[4])
     put("NOW", TRINO_DUCKDB_HAZARD_ENTRIES[59])
-    put("NTH_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[78])
-    put("NTILE", TRINO_DUCKDB_HAZARD_ENTRIES[170])
-    put("NULLIF", TRINO_DUCKDB_HAZARD_ENTRIES[146])
+    put("NTH_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[79])
+    put("NTILE", TRINO_DUCKDB_HAZARD_ENTRIES[171])
+    put("NULLIF", TRINO_DUCKDB_HAZARD_ENTRIES[147])
     put("OR", TRINO_DUCKDB_HAZARD_ENTRIES[4])
-    put("PARSE_DATETIME", TRINO_DUCKDB_HAZARD_ENTRIES[64])
-    put("PARSE_DURATION", TRINO_DUCKDB_HAZARD_ENTRIES[147])
-    put("PATH", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("PERCENT_RANK", TRINO_DUCKDB_HAZARD_ENTRIES[170])
-    put("PI", TRINO_DUCKDB_HAZARD_ENTRIES[148])
-    put("PORT", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("POSITION (OPERATOR FORM)", TRINO_DUCKDB_HAZARD_ENTRIES[149])
-    put("POW", TRINO_DUCKDB_HAZARD_ENTRIES[150])
-    put("POW / POWER", TRINO_DUCKDB_HAZARD_ENTRIES[150])
-    put("POWER", TRINO_DUCKDB_HAZARD_ENTRIES[150])
-    put("QDIGEST_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[151])
-    put("QUANTILE_AT_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[198])
-    put("QUARTER", TRINO_DUCKDB_HAZARD_ENTRIES[152])
-    put("QUERY", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("RADIANS", TRINO_DUCKDB_HAZARD_ENTRIES[70])
-    put("RAND", TRINO_DUCKDB_HAZARD_ENTRIES[153])
-    put("RANDOM", TRINO_DUCKDB_HAZARD_ENTRIES[153])
-    put("RANDOM / RAND", TRINO_DUCKDB_HAZARD_ENTRIES[153])
-    put("RANK", TRINO_DUCKDB_HAZARD_ENTRIES[170])
-    put("REDUCE_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[154])
-    put("REGEXP_COUNT", TRINO_DUCKDB_HAZARD_ENTRIES[155])
-    put("REGEXP_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[156])
-    put("REGEXP_EXTRACT/{2,3}", TRINO_DUCKDB_HAZARD_ENTRIES[156])
-    put("REGEXP_EXTRACT_ALL", TRINO_DUCKDB_HAZARD_ENTRIES[157])
-    put("REGEXP_LIKE", TRINO_DUCKDB_HAZARD_ENTRIES[158])
-    put("REGEXP_POSITION", TRINO_DUCKDB_HAZARD_ENTRIES[159])
-    put("REGEXP_REPLACE", TRINO_DUCKDB_HAZARD_ENTRIES[160])
-    put("REGEXP_SPLIT", TRINO_DUCKDB_HAZARD_ENTRIES[161])
-    put("REGR_INTERCEPT", TRINO_DUCKDB_HAZARD_ENTRIES[162])
-    put("REGR_INTERCEPT / REGR_SLOPE", TRINO_DUCKDB_HAZARD_ENTRIES[162])
-    put("REGR_SLOPE", TRINO_DUCKDB_HAZARD_ENTRIES[162])
-    put("REPEAT (ELEMENT, COUNT)", TRINO_DUCKDB_HAZARD_ENTRIES[163])
-    put("REPLACE", TRINO_DUCKDB_HAZARD_ENTRIES[165])
-    put("REPLACE/2", TRINO_DUCKDB_HAZARD_ENTRIES[165])
-    put("REVERSE", TRINO_DUCKDB_HAZARD_ENTRIES[166])
-    put("REVERSE (ARRAY)", TRINO_DUCKDB_HAZARD_ENTRIES[167])
-    put("REVERSE (VARBINARY)", TRINO_DUCKDB_HAZARD_ENTRIES[168])
-    put("ROUND", TRINO_DUCKDB_HAZARD_ENTRIES[169])
-    put("ROW_NUMBER", TRINO_DUCKDB_HAZARD_ENTRIES[170])
-    put("ROW_NUMBER / RANK / DENSE_RANK / PERCENT_RANK / NTILE", TRINO_DUCKDB_HAZARD_ENTRIES[170])
-    put("RPAD", TRINO_DUCKDB_HAZARD_ENTRIES[171])
-    put("RTRIM", TRINO_DUCKDB_HAZARD_ENTRIES[172])
-    put("SECOND", TRINO_DUCKDB_HAZARD_ENTRIES[100])
-    put("SEQUENCE", TRINO_DUCKDB_HAZARD_ENTRIES[173])
-    put("SESSION ZONE ±HH:MM OFFSETS", TRINO_DUCKDB_HAZARD_ENTRIES[174])
-    put("SHA1", TRINO_DUCKDB_HAZARD_ENTRIES[175])
-    put("SHA256", TRINO_DUCKDB_HAZARD_ENTRIES[176])
-    put("SHA512", TRINO_DUCKDB_HAZARD_ENTRIES[178])
-    put("SHUFFLE", TRINO_DUCKDB_HAZARD_ENTRIES[143])
-    put("SIGN", TRINO_DUCKDB_HAZARD_ENTRIES[179])
-    put("SIMILAR TO", TRINO_DUCKDB_HAZARD_ENTRIES[180])
-    put("SIN", TRINO_DUCKDB_HAZARD_ENTRIES[181])
-    put("SIN/COS/TAN/ASIN/ACOS/ATAN/ATAN2", TRINO_DUCKDB_HAZARD_ENTRIES[181])
-    put("SINH", TRINO_DUCKDB_HAZARD_ENTRIES[182])
-    put("SINH/COSH/TANH", TRINO_DUCKDB_HAZARD_ENTRIES[182])
-    put("SKEWNESS", TRINO_DUCKDB_HAZARD_ENTRIES[183])
-    put("SLICE", TRINO_DUCKDB_HAZARD_ENTRIES[184])
-    put("SOUNDEX", TRINO_DUCKDB_HAZARD_ENTRIES[185])
-    put("SPLIT", TRINO_DUCKDB_HAZARD_ENTRIES[186])
-    put("SPLIT_PART", TRINO_DUCKDB_HAZARD_ENTRIES[187])
-    put("SPOOKY_HASH_V2_32", TRINO_DUCKDB_HAZARD_ENTRIES[188])
-    put("SPOOKY_HASH_V2_32 / SPOOKY_HASH_V2_64", TRINO_DUCKDB_HAZARD_ENTRIES[188])
-    put("SPOOKY_HASH_V2_64", TRINO_DUCKDB_HAZARD_ENTRIES[188])
-    put("SQRT", TRINO_DUCKDB_HAZARD_ENTRIES[189])
-    put("STARTS_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[190])
-    put("STDDEV", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("STDDEV_POP", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("STDDEV_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("STRING COMPARISON OPERATORS (= <> < <= > >=)", TRINO_DUCKDB_HAZARD_ENTRIES[191])
-    put("STRPOS", TRINO_DUCKDB_HAZARD_ENTRIES[193])
-    put("STRPOS/3", TRINO_DUCKDB_HAZARD_ENTRIES[193])
-    put("SUBSTR (VARBINARY)", TRINO_DUCKDB_HAZARD_ENTRIES[194])
-    put("SUBSTRING", TRINO_DUCKDB_HAZARD_ENTRIES[195])
-    put("SUBSTRING/2", TRINO_DUCKDB_HAZARD_ENTRIES[195])
-    put("SUBSTRING/{2,3}", TRINO_DUCKDB_HAZARD_ENTRIES[196])
-    put("SUM", TRINO_DUCKDB_HAZARD_ENTRIES[197])
-    put("TAN", TRINO_DUCKDB_HAZARD_ENTRIES[181])
-    put("TANH", TRINO_DUCKDB_HAZARD_ENTRIES[182])
-    put("TDIGEST_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[198])
-    put("TDIGEST_AGG / VALUE_AT_QUANTILE / QUANTILE_AT_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[198])
-    put("THETA_SKETCH_CARDINALITY", TRINO_DUCKDB_HAZARD_ENTRIES[199])
-    put("THETA_SKETCH_UNION", TRINO_DUCKDB_HAZARD_ENTRIES[199])
-    put("THETA_SKETCH_UNION / THETA_SKETCH_CARDINALITY", TRINO_DUCKDB_HAZARD_ENTRIES[199])
-    put("TIMESTAMP (NO TZ) EXTRACTS", TRINO_DUCKDB_HAZARD_ENTRIES[200])
-    put("TIMESTAMP PRECISION DEFAULTS", TRINO_DUCKDB_HAZARD_ENTRIES[201])
-    put("TIMESTAMP WITH TIME ZONE (TYPE SEMANTICS)", TRINO_DUCKDB_HAZARD_ENTRIES[202])
-    put("TIMEZONE_HOUR", TRINO_DUCKDB_HAZARD_ENTRIES[203])
-    put("TIMEZONE_HOUR / TIMEZONE_MINUTE", TRINO_DUCKDB_HAZARD_ENTRIES[203])
-    put("TIMEZONE_MINUTE", TRINO_DUCKDB_HAZARD_ENTRIES[203])
-    put("TO_BASE", TRINO_DUCKDB_HAZARD_ENTRIES[204])
-    put("TO_BASE32", TRINO_DUCKDB_HAZARD_ENTRIES[205])
-    put("TO_BASE64", TRINO_DUCKDB_HAZARD_ENTRIES[206])
-    put("TO_BASE64URL", TRINO_DUCKDB_HAZARD_ENTRIES[207])
-    put("TO_BIG_ENDIAN_32", TRINO_DUCKDB_HAZARD_ENTRIES[84])
-    put("TO_HEX", TRINO_DUCKDB_HAZARD_ENTRIES[208])
-    put("TO_HEX / FROM_HEX / TO_BASE64 / FROM_BASE64 / URL_ENCODE / URL_DECODE", TRINO_DUCKDB_HAZARD_ENTRIES[209])
-    put("TO_IEEE754_32", TRINO_DUCKDB_HAZARD_ENTRIES[86])
-    put("TO_ISO8601", TRINO_DUCKDB_HAZARD_ENTRIES[210])
-    put("TO_MILLISECONDS", TRINO_DUCKDB_HAZARD_ENTRIES[211])
-    put("TO_UNIXTIME", TRINO_DUCKDB_HAZARD_ENTRIES[212])
-    put("TO_UNIXTIME (OVER TIMESTAMP WITH TIME ZONE)", TRINO_DUCKDB_HAZARD_ENTRIES[213])
-    put("TO_UTF8", TRINO_DUCKDB_HAZARD_ENTRIES[214])
-    put("TRANSFORM", TRINO_DUCKDB_HAZARD_ENTRIES[77])
-    put("TRANSFORM_KEYS", TRINO_DUCKDB_HAZARD_ENTRIES[133])
-    put("TRANSFORM_VALUES", TRINO_DUCKDB_HAZARD_ENTRIES[133])
-    put("TRANSLATE", TRINO_DUCKDB_HAZARD_ENTRIES[215])
-    put("TRIM", TRINO_DUCKDB_HAZARD_ENTRIES[216])
-    put("TRUNCATE", TRINO_DUCKDB_HAZARD_ENTRIES[218])
-    put("TRUNCATE/2 (X, N)", TRINO_DUCKDB_HAZARD_ENTRIES[218])
-    put("TRY", TRINO_DUCKDB_HAZARD_ENTRIES[219])
-    put("TRY_CAST", TRINO_DUCKDB_HAZARD_ENTRIES[220])
-    put("TYPEOF", TRINO_DUCKDB_HAZARD_ENTRIES[221])
-    put("TZDB HISTORICAL OFFSETS (E.G. EUROPE/MOSCOW PRE-2014)", TRINO_DUCKDB_HAZARD_ENTRIES[222])
+    put("PARSE_DATETIME", TRINO_DUCKDB_HAZARD_ENTRIES[65])
+    put("PARSE_DURATION", TRINO_DUCKDB_HAZARD_ENTRIES[148])
+    put("PATH", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("PERCENT_RANK", TRINO_DUCKDB_HAZARD_ENTRIES[171])
+    put("PI", TRINO_DUCKDB_HAZARD_ENTRIES[149])
+    put("PORT", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("POSITION (OPERATOR FORM)", TRINO_DUCKDB_HAZARD_ENTRIES[150])
+    put("POW", TRINO_DUCKDB_HAZARD_ENTRIES[151])
+    put("POW / POWER", TRINO_DUCKDB_HAZARD_ENTRIES[151])
+    put("POWER", TRINO_DUCKDB_HAZARD_ENTRIES[151])
+    put("QDIGEST_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[152])
+    put("QUANTILE_AT_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[199])
+    put("QUARTER", TRINO_DUCKDB_HAZARD_ENTRIES[153])
+    put("QUERY", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("RADIANS", TRINO_DUCKDB_HAZARD_ENTRIES[71])
+    put("RAND", TRINO_DUCKDB_HAZARD_ENTRIES[154])
+    put("RANDOM", TRINO_DUCKDB_HAZARD_ENTRIES[154])
+    put("RANDOM / RAND", TRINO_DUCKDB_HAZARD_ENTRIES[154])
+    put("RANK", TRINO_DUCKDB_HAZARD_ENTRIES[171])
+    put("REDUCE_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[155])
+    put("REGEXP_COUNT", TRINO_DUCKDB_HAZARD_ENTRIES[156])
+    put("REGEXP_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[157])
+    put("REGEXP_EXTRACT/{2,3}", TRINO_DUCKDB_HAZARD_ENTRIES[157])
+    put("REGEXP_EXTRACT_ALL", TRINO_DUCKDB_HAZARD_ENTRIES[158])
+    put("REGEXP_LIKE", TRINO_DUCKDB_HAZARD_ENTRIES[159])
+    put("REGEXP_POSITION", TRINO_DUCKDB_HAZARD_ENTRIES[160])
+    put("REGEXP_REPLACE", TRINO_DUCKDB_HAZARD_ENTRIES[161])
+    put("REGEXP_SPLIT", TRINO_DUCKDB_HAZARD_ENTRIES[162])
+    put("REGR_INTERCEPT", TRINO_DUCKDB_HAZARD_ENTRIES[163])
+    put("REGR_INTERCEPT / REGR_SLOPE", TRINO_DUCKDB_HAZARD_ENTRIES[163])
+    put("REGR_SLOPE", TRINO_DUCKDB_HAZARD_ENTRIES[163])
+    put("REPEAT (ELEMENT, COUNT)", TRINO_DUCKDB_HAZARD_ENTRIES[164])
+    put("REPLACE", TRINO_DUCKDB_HAZARD_ENTRIES[166])
+    put("REPLACE/2", TRINO_DUCKDB_HAZARD_ENTRIES[166])
+    put("REVERSE", TRINO_DUCKDB_HAZARD_ENTRIES[167])
+    put("REVERSE (ARRAY)", TRINO_DUCKDB_HAZARD_ENTRIES[168])
+    put("REVERSE (VARBINARY)", TRINO_DUCKDB_HAZARD_ENTRIES[169])
+    put("ROUND", TRINO_DUCKDB_HAZARD_ENTRIES[170])
+    put("ROW_NUMBER", TRINO_DUCKDB_HAZARD_ENTRIES[171])
+    put("ROW_NUMBER / RANK / DENSE_RANK / PERCENT_RANK / NTILE", TRINO_DUCKDB_HAZARD_ENTRIES[171])
+    put("RPAD", TRINO_DUCKDB_HAZARD_ENTRIES[172])
+    put("RTRIM", TRINO_DUCKDB_HAZARD_ENTRIES[173])
+    put("SECOND", TRINO_DUCKDB_HAZARD_ENTRIES[101])
+    put("SEQUENCE", TRINO_DUCKDB_HAZARD_ENTRIES[174])
+    put("SESSION ZONE ±HH:MM OFFSETS", TRINO_DUCKDB_HAZARD_ENTRIES[175])
+    put("SHA1", TRINO_DUCKDB_HAZARD_ENTRIES[176])
+    put("SHA256", TRINO_DUCKDB_HAZARD_ENTRIES[177])
+    put("SHA512", TRINO_DUCKDB_HAZARD_ENTRIES[179])
+    put("SHUFFLE", TRINO_DUCKDB_HAZARD_ENTRIES[144])
+    put("SIGN", TRINO_DUCKDB_HAZARD_ENTRIES[180])
+    put("SIMILAR TO", TRINO_DUCKDB_HAZARD_ENTRIES[181])
+    put("SIN", TRINO_DUCKDB_HAZARD_ENTRIES[182])
+    put("SIN/COS/TAN/ASIN/ACOS/ATAN/ATAN2", TRINO_DUCKDB_HAZARD_ENTRIES[182])
+    put("SINH", TRINO_DUCKDB_HAZARD_ENTRIES[183])
+    put("SINH/COSH/TANH", TRINO_DUCKDB_HAZARD_ENTRIES[183])
+    put("SKEWNESS", TRINO_DUCKDB_HAZARD_ENTRIES[184])
+    put("SLICE", TRINO_DUCKDB_HAZARD_ENTRIES[185])
+    put("SOUNDEX", TRINO_DUCKDB_HAZARD_ENTRIES[186])
+    put("SPLIT", TRINO_DUCKDB_HAZARD_ENTRIES[187])
+    put("SPLIT_PART", TRINO_DUCKDB_HAZARD_ENTRIES[188])
+    put("SPOOKY_HASH_V2_32", TRINO_DUCKDB_HAZARD_ENTRIES[189])
+    put("SPOOKY_HASH_V2_32 / SPOOKY_HASH_V2_64", TRINO_DUCKDB_HAZARD_ENTRIES[189])
+    put("SPOOKY_HASH_V2_64", TRINO_DUCKDB_HAZARD_ENTRIES[189])
+    put("SQRT", TRINO_DUCKDB_HAZARD_ENTRIES[190])
+    put("STARTS_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[191])
+    put("STDDEV", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("STDDEV_POP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("STDDEV_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("STRING COMPARISON OPERATORS (= <> < <= > >=)", TRINO_DUCKDB_HAZARD_ENTRIES[192])
+    put("STRPOS", TRINO_DUCKDB_HAZARD_ENTRIES[194])
+    put("STRPOS/3", TRINO_DUCKDB_HAZARD_ENTRIES[194])
+    put("SUBSTR (VARBINARY)", TRINO_DUCKDB_HAZARD_ENTRIES[195])
+    put("SUBSTRING", TRINO_DUCKDB_HAZARD_ENTRIES[196])
+    put("SUBSTRING/2", TRINO_DUCKDB_HAZARD_ENTRIES[196])
+    put("SUBSTRING/{2,3}", TRINO_DUCKDB_HAZARD_ENTRIES[197])
+    put("SUM", TRINO_DUCKDB_HAZARD_ENTRIES[198])
+    put("TAN", TRINO_DUCKDB_HAZARD_ENTRIES[182])
+    put("TANH", TRINO_DUCKDB_HAZARD_ENTRIES[183])
+    put("TDIGEST_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[199])
+    put("TDIGEST_AGG / VALUE_AT_QUANTILE / QUANTILE_AT_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[199])
+    put("THETA_SKETCH_CARDINALITY", TRINO_DUCKDB_HAZARD_ENTRIES[200])
+    put("THETA_SKETCH_UNION", TRINO_DUCKDB_HAZARD_ENTRIES[200])
+    put("THETA_SKETCH_UNION / THETA_SKETCH_CARDINALITY", TRINO_DUCKDB_HAZARD_ENTRIES[200])
+    put("TIMESTAMP (NO TZ) EXTRACTS", TRINO_DUCKDB_HAZARD_ENTRIES[201])
+    put("TIMESTAMP PRECISION DEFAULTS", TRINO_DUCKDB_HAZARD_ENTRIES[202])
+    put("TIMESTAMP WITH TIME ZONE (TYPE SEMANTICS)", TRINO_DUCKDB_HAZARD_ENTRIES[203])
+    put("TIMEZONE_HOUR", TRINO_DUCKDB_HAZARD_ENTRIES[204])
+    put("TIMEZONE_HOUR / TIMEZONE_MINUTE", TRINO_DUCKDB_HAZARD_ENTRIES[204])
+    put("TIMEZONE_MINUTE", TRINO_DUCKDB_HAZARD_ENTRIES[204])
+    put("TO_BASE", TRINO_DUCKDB_HAZARD_ENTRIES[205])
+    put("TO_BASE32", TRINO_DUCKDB_HAZARD_ENTRIES[206])
+    put("TO_BASE64", TRINO_DUCKDB_HAZARD_ENTRIES[207])
+    put("TO_BASE64URL", TRINO_DUCKDB_HAZARD_ENTRIES[208])
+    put("TO_BIG_ENDIAN_32", TRINO_DUCKDB_HAZARD_ENTRIES[85])
+    put("TO_HEX", TRINO_DUCKDB_HAZARD_ENTRIES[209])
+    put("TO_HEX / FROM_HEX / TO_BASE64 / FROM_BASE64 / URL_ENCODE / URL_DECODE", TRINO_DUCKDB_HAZARD_ENTRIES[210])
+    put("TO_IEEE754_32", TRINO_DUCKDB_HAZARD_ENTRIES[87])
+    put("TO_ISO8601", TRINO_DUCKDB_HAZARD_ENTRIES[211])
+    put("TO_MILLISECONDS", TRINO_DUCKDB_HAZARD_ENTRIES[212])
+    put("TO_UNIXTIME", TRINO_DUCKDB_HAZARD_ENTRIES[213])
+    put("TO_UNIXTIME (OVER TIMESTAMP WITH TIME ZONE)", TRINO_DUCKDB_HAZARD_ENTRIES[214])
+    put("TO_UTF8", TRINO_DUCKDB_HAZARD_ENTRIES[215])
+    put("TRANSFORM", TRINO_DUCKDB_HAZARD_ENTRIES[78])
+    put("TRANSFORM_KEYS", TRINO_DUCKDB_HAZARD_ENTRIES[134])
+    put("TRANSFORM_VALUES", TRINO_DUCKDB_HAZARD_ENTRIES[134])
+    put("TRANSLATE", TRINO_DUCKDB_HAZARD_ENTRIES[216])
+    put("TRIM", TRINO_DUCKDB_HAZARD_ENTRIES[217])
+    put("TRUNCATE", TRINO_DUCKDB_HAZARD_ENTRIES[219])
+    put("TRUNCATE/2 (X, N)", TRINO_DUCKDB_HAZARD_ENTRIES[219])
+    put("TRY", TRINO_DUCKDB_HAZARD_ENTRIES[220])
+    put("TRY_CAST", TRINO_DUCKDB_HAZARD_ENTRIES[221])
+    put("TYPEOF", TRINO_DUCKDB_HAZARD_ENTRIES[222])
+    put("TZDB HISTORICAL OFFSETS (E.G. EUROPE/MOSCOW PRE-2014)", TRINO_DUCKDB_HAZARD_ENTRIES[223])
     put("T_CDF", TRINO_DUCKDB_HAZARD_ENTRIES[23])
     put("T_PDF", TRINO_DUCKDB_HAZARD_ENTRIES[23])
-    put("UPPER", TRINO_DUCKDB_HAZARD_ENTRIES[223])
-    put("URL_DECODE", TRINO_DUCKDB_HAZARD_ENTRIES[209])
-    put("URL_ENCODE", TRINO_DUCKDB_HAZARD_ENTRIES[209])
-    put("URL_EXTRACT_PARAMETER", TRINO_DUCKDB_HAZARD_ENTRIES[226])
-    put("URL_EXTRACT_PROTOCOL", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("URL_EXTRACT_PROTOCOL/HOST/PORT/PATH/QUERY/FRAGMENT", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("UUID", TRINO_DUCKDB_HAZARD_ENTRIES[228])
-    put("VALUE_AT_QUANTILE", TRINO_DUCKDB_HAZARD_ENTRIES[198])
-    put("VARIANCE", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("VARIANCE / VAR_POP / VAR_SAMP / STDDEV / STDDEV_POP / STDDEV_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("VAR_POP", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("VAR_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("WEEK", TRINO_DUCKDB_HAZARD_ENTRIES[230])
-    put("WEEK / WEEK_OF_YEAR", TRINO_DUCKDB_HAZARD_ENTRIES[230])
-    put("WEEK_OF_YEAR", TRINO_DUCKDB_HAZARD_ENTRIES[230])
-    put("WIDTH_BUCKET", TRINO_DUCKDB_HAZARD_ENTRIES[231])
-    put("WITH_TIMEZONE", TRINO_DUCKDB_HAZARD_ENTRIES[232])
-    put("WORD_STEM", TRINO_DUCKDB_HAZARD_ENTRIES[233])
-    put("XXHASH64", TRINO_DUCKDB_HAZARD_ENTRIES[235])
-    put("YEAR", TRINO_DUCKDB_HAZARD_ENTRIES[237])
-    put("YEAR / MONTH / DAY", TRINO_DUCKDB_HAZARD_ENTRIES[236])
-    put("YEAR/HOUR/ETC OVER TIMESTAMP WITH TIME ZONE", TRINO_DUCKDB_HAZARD_ENTRIES[237])
-    put("YEAR_OF_WEEK", TRINO_DUCKDB_HAZARD_ENTRIES[238])
-    put("YEAR_OF_WEEK / YOW", TRINO_DUCKDB_HAZARD_ENTRIES[238])
-    put("YOW", TRINO_DUCKDB_HAZARD_ENTRIES[238])
-    put("ZIP", TRINO_DUCKDB_HAZARD_ENTRIES[239])
-    put("ZIP / ZIP_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[239])
-    put("ZIP_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[239])
-    put("|| (CONCAT OPERATOR)", TRINO_DUCKDB_HAZARD_ENTRIES[240])
+    put("UPPER", TRINO_DUCKDB_HAZARD_ENTRIES[224])
+    put("URL_DECODE", TRINO_DUCKDB_HAZARD_ENTRIES[210])
+    put("URL_ENCODE", TRINO_DUCKDB_HAZARD_ENTRIES[210])
+    put("URL_EXTRACT_PARAMETER", TRINO_DUCKDB_HAZARD_ENTRIES[227])
+    put("URL_EXTRACT_PROTOCOL", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("URL_EXTRACT_PROTOCOL/HOST/PORT/PATH/QUERY/FRAGMENT", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("UUID", TRINO_DUCKDB_HAZARD_ENTRIES[229])
+    put("VALUE_AT_QUANTILE", TRINO_DUCKDB_HAZARD_ENTRIES[199])
+    put("VARIANCE", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("VARIANCE / VAR_POP / VAR_SAMP / STDDEV / STDDEV_POP / STDDEV_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("VAR_POP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("VAR_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("WEEK", TRINO_DUCKDB_HAZARD_ENTRIES[231])
+    put("WEEK / WEEK_OF_YEAR", TRINO_DUCKDB_HAZARD_ENTRIES[231])
+    put("WEEK_OF_YEAR", TRINO_DUCKDB_HAZARD_ENTRIES[231])
+    put("WIDTH_BUCKET", TRINO_DUCKDB_HAZARD_ENTRIES[232])
+    put("WITH_TIMEZONE", TRINO_DUCKDB_HAZARD_ENTRIES[233])
+    put("WORD_STEM", TRINO_DUCKDB_HAZARD_ENTRIES[234])
+    put("XXHASH64", TRINO_DUCKDB_HAZARD_ENTRIES[236])
+    put("YEAR", TRINO_DUCKDB_HAZARD_ENTRIES[238])
+    put("YEAR / MONTH / DAY", TRINO_DUCKDB_HAZARD_ENTRIES[237])
+    put("YEAR/HOUR/ETC OVER TIMESTAMP WITH TIME ZONE", TRINO_DUCKDB_HAZARD_ENTRIES[238])
+    put("YEAR_OF_WEEK", TRINO_DUCKDB_HAZARD_ENTRIES[239])
+    put("YEAR_OF_WEEK / YOW", TRINO_DUCKDB_HAZARD_ENTRIES[239])
+    put("YOW", TRINO_DUCKDB_HAZARD_ENTRIES[239])
+    put("ZIP", TRINO_DUCKDB_HAZARD_ENTRIES[240])
+    put("ZIP / ZIP_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[240])
+    put("ZIP_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[240])
+    put("|| (CONCAT OPERATOR)", TRINO_DUCKDB_HAZARD_ENTRIES[241])
 }
 
-/** duckdb->trino lookup: 306 keys (DuckDB-side names) over 241 entries. */
+/** duckdb->trino lookup: 307 keys (DuckDB-side names) over 242 entries. */
 internal val DUCKDB_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
-    put("% / MOD", TRINO_DUCKDB_HAZARD_ENTRIES[140])
+    put("% / MOD", TRINO_DUCKDB_HAZARD_ENTRIES[141])
     put("& OPERATOR", TRINO_DUCKDB_HAZARD_ENTRIES[27])
-    put("(NONE BUILT-IN)", TRINO_DUCKDB_HAZARD_ENTRIES[177])
-    put("(NONE DIRECT)", TRINO_DUCKDB_HAZARD_ENTRIES[194])
+    put("(NONE BUILT-IN)", TRINO_DUCKDB_HAZARD_ENTRIES[178])
+    put("(NONE DIRECT)", TRINO_DUCKDB_HAZARD_ENTRIES[195])
     put("(NONE)", TRINO_DUCKDB_HAZARD_ENTRIES[3])
     put("+ INTERVAL 1 MONTH", TRINO_DUCKDB_HAZARD_ENTRIES[61])
     put("<< OPERATOR", TRINO_DUCKDB_HAZARD_ENTRIES[29])
@@ -1594,16 +1600,16 @@ internal val DUCKDB_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ANY_VALUE", TRINO_DUCKDB_HAZARD_ENTRIES[8])
     put("ANY_VALUE / FIRST / LAST", TRINO_DUCKDB_HAZARD_ENTRIES[8])
     put("APPROX_COUNT_DISTINCT", TRINO_DUCKDB_HAZARD_ENTRIES[5])
-    put("ARG_MAX", TRINO_DUCKDB_HAZARD_ENTRIES[138])
-    put("ARG_MIN", TRINO_DUCKDB_HAZARD_ENTRIES[138])
-    put("ARG_MIN / ARG_MAX", TRINO_DUCKDB_HAZARD_ENTRIES[138])
+    put("ARG_MAX", TRINO_DUCKDB_HAZARD_ENTRIES[139])
+    put("ARG_MIN", TRINO_DUCKDB_HAZARD_ENTRIES[139])
+    put("ARG_MIN / ARG_MAX", TRINO_DUCKDB_HAZARD_ENTRIES[139])
     put("ARRAY_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[9])
     put("ARRAY_AGG / LIST", TRINO_DUCKDB_HAZARD_ENTRIES[9])
     put("ARRAY_COSINE_DISTANCE", TRINO_DUCKDB_HAZARD_ENTRIES[53])
     put("ARRAY_COSINE_DISTANCE / LIST_COSINE_DISTANCE ETC", TRINO_DUCKDB_HAZARD_ENTRIES[53])
-    put("ARRAY_DISTANCE", TRINO_DUCKDB_HAZARD_ENTRIES[74])
-    put("ARRAY_DISTANCE / ARRAY_DOT_PRODUCT / LIST_*", TRINO_DUCKDB_HAZARD_ENTRIES[74])
-    put("ARRAY_DOT_PRODUCT", TRINO_DUCKDB_HAZARD_ENTRIES[74])
+    put("ARRAY_DISTANCE", TRINO_DUCKDB_HAZARD_ENTRIES[75])
+    put("ARRAY_DISTANCE / ARRAY_DOT_PRODUCT / LIST_*", TRINO_DUCKDB_HAZARD_ENTRIES[75])
+    put("ARRAY_DOT_PRODUCT", TRINO_DUCKDB_HAZARD_ENTRIES[75])
     put("ARRAY_LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[37])
     put("ARRAY_TO_STRING", TRINO_DUCKDB_HAZARD_ENTRIES[15])
     put("ASCII", TRINO_DUCKDB_HAZARD_ENTRIES[45])
@@ -1618,11 +1624,11 @@ internal val DUCKDB_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("BOOL_AND", TRINO_DUCKDB_HAZARD_ENTRIES[35])
     put("BOOL_OR", TRINO_DUCKDB_HAZARD_ENTRIES[36])
     put("CARDINALITY", TRINO_DUCKDB_HAZARD_ENTRIES[38])
-    put("CASE", TRINO_DUCKDB_HAZARD_ENTRIES[102])
-    put("CASE / IF MACRO", TRINO_DUCKDB_HAZARD_ENTRIES[102])
-    put("CAST", TRINO_DUCKDB_HAZARD_ENTRIES[210])
-    put("CAST TO/FROM JSON", TRINO_DUCKDB_HAZARD_ENTRIES[111])
-    put("CAST(S AS TIMESTAMP)", TRINO_DUCKDB_HAZARD_ENTRIES[87])
+    put("CASE", TRINO_DUCKDB_HAZARD_ENTRIES[103])
+    put("CASE / IF MACRO", TRINO_DUCKDB_HAZARD_ENTRIES[103])
+    put("CAST", TRINO_DUCKDB_HAZARD_ENTRIES[211])
+    put("CAST TO/FROM JSON", TRINO_DUCKDB_HAZARD_ENTRIES[112])
+    put("CAST(S AS TIMESTAMP)", TRINO_DUCKDB_HAZARD_ENTRIES[88])
     put("CBRT", TRINO_DUCKDB_HAZARD_ENTRIES[40])
     put("CEIL", TRINO_DUCKDB_HAZARD_ENTRIES[41])
     put("CEIL / CEILING", TRINO_DUCKDB_HAZARD_ENTRIES[41])
@@ -1633,106 +1639,107 @@ internal val DUCKDB_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("CONCAT_WS", TRINO_DUCKDB_HAZARD_ENTRIES[49])
     put("CORR", TRINO_DUCKDB_HAZARD_ENTRIES[52])
     put("CORR / COVAR_POP / COVAR_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[52])
-    put("COSH", TRINO_DUCKDB_HAZARD_ENTRIES[182])
+    put("COSH", TRINO_DUCKDB_HAZARD_ENTRIES[183])
     put("COUNT", TRINO_DUCKDB_HAZARD_ENTRIES[54])
     put("COUNTIF", TRINO_DUCKDB_HAZARD_ENTRIES[55])
     put("COUNT_IF", TRINO_DUCKDB_HAZARD_ENTRIES[55])
     put("COUNT_IF / COUNTIF", TRINO_DUCKDB_HAZARD_ENTRIES[55])
     put("COVAR_POP", TRINO_DUCKDB_HAZARD_ENTRIES[52])
     put("COVAR_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[52])
-    put("CRYPTO_HASH('SHA2-512', X) (CRYPTO EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[178])
-    put("CRYPTO_HMAC('SHA2-256', ...) (CRYPTO EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[98])
+    put("CRYPTO_HASH('SHA2-512', X) (CRYPTO EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[179])
+    put("CRYPTO_HMAC('SHA2-256', ...) (CRYPTO EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[99])
     put("CUME_DIST", TRINO_DUCKDB_HAZARD_ENTRIES[57])
     put("CURRENT_DATE", TRINO_DUCKDB_HAZARD_ENTRIES[58])
     put("CURRENT_DATE / TODAY()", TRINO_DUCKDB_HAZARD_ENTRIES[58])
     put("CURRENT_TIMESTAMP", TRINO_DUCKDB_HAZARD_ENTRIES[59])
     put("CURRENT_TIMESTAMP / NOW", TRINO_DUCKDB_HAZARD_ENTRIES[59])
     put("DATASKETCH_FREQUENT_ITEMS (DATASKETCHES EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[6])
-    put("DATASKETCH_KLL* (APPROXIMATE SUBSTITUTE)", TRINO_DUCKDB_HAZARD_ENTRIES[151])
-    put("DATASKETCH_TDIGEST* (DATASKETCHES EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[198])
-    put("DATASKETCH_THETA* (DATASKETCHES EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[199])
-    put("DATE_DIFF", TRINO_DUCKDB_HAZARD_ENTRIES[63])
-    put("DATE_DIFF / EPOCH_DIFF", TRINO_DUCKDB_HAZARD_ENTRIES[63])
-    put("DATE_PART", TRINO_DUCKDB_HAZARD_ENTRIES[76])
-    put("DATE_PART('DAY', X)", TRINO_DUCKDB_HAZARD_ENTRIES[67])
-    put("DATE_PART('TIMEZONE_HOUR', X)", TRINO_DUCKDB_HAZARD_ENTRIES[203])
-    put("DATE_TRUNC", TRINO_DUCKDB_HAZARD_ENTRIES[65])
-    put("DATE_TRUNC('WEEK', X)", TRINO_DUCKDB_HAZARD_ENTRIES[66])
-    put("DAY", TRINO_DUCKDB_HAZARD_ENTRIES[236])
-    put("DAYOFYEAR", TRINO_DUCKDB_HAZARD_ENTRIES[69])
-    put("DECODE", TRINO_DUCKDB_HAZARD_ENTRIES[91])
-    put("DEGREES", TRINO_DUCKDB_HAZARD_ENTRIES[70])
-    put("DEGREES / RADIANS", TRINO_DUCKDB_HAZARD_ENTRIES[70])
-    put("ELEMENT_AT", TRINO_DUCKDB_HAZARD_ENTRIES[73])
-    put("ELEMENT_AT / MAP_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[73])
-    put("ENCODE", TRINO_DUCKDB_HAZARD_ENTRIES[214])
-    put("EPOCH(...)::DOUBLE", TRINO_DUCKDB_HAZARD_ENTRIES[213])
-    put("EPOCH(T)::DOUBLE", TRINO_DUCKDB_HAZARD_ENTRIES[212])
-    put("EPOCH_DIFF", TRINO_DUCKDB_HAZARD_ENTRIES[63])
-    put("EQUI_WIDTH_BINS", TRINO_DUCKDB_HAZARD_ENTRIES[231])
-    put("EXP", TRINO_DUCKDB_HAZARD_ENTRIES[75])
-    put("EXP(1)", TRINO_DUCKDB_HAZARD_ENTRIES[71])
-    put("EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[76])
-    put("EXTRACT / DATE_PART", TRINO_DUCKDB_HAZARD_ENTRIES[76])
-    put("EXTRACT('ISOYEAR' FROM X)", TRINO_DUCKDB_HAZARD_ENTRIES[238])
-    put("EXTRACT('MILLISECOND' FROM X)", TRINO_DUCKDB_HAZARD_ENTRIES[136])
-    put("EXTRACT_QUERY_PARAMETERS (NETQUACK, TABLE FUNCTION)", TRINO_DUCKDB_HAZARD_ENTRIES[226])
-    put("EXTRACT_SCHEMA", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("EXTRACT_SCHEMA/HOST/PORT/PATH/QUERY_STRING/FRAGMENT (NETQUACK EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[227])
+    put("DATASKETCH_KLL* (APPROXIMATE SUBSTITUTE)", TRINO_DUCKDB_HAZARD_ENTRIES[152])
+    put("DATASKETCH_TDIGEST* (DATASKETCHES EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[199])
+    put("DATASKETCH_THETA* (DATASKETCHES EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[200])
+    put("DATE + INTERVAL (RESULT TYPE)", TRINO_DUCKDB_HAZARD_ENTRIES[62])
+    put("DATE_DIFF", TRINO_DUCKDB_HAZARD_ENTRIES[64])
+    put("DATE_DIFF / EPOCH_DIFF", TRINO_DUCKDB_HAZARD_ENTRIES[64])
+    put("DATE_PART", TRINO_DUCKDB_HAZARD_ENTRIES[77])
+    put("DATE_PART('DAY', X)", TRINO_DUCKDB_HAZARD_ENTRIES[68])
+    put("DATE_PART('TIMEZONE_HOUR', X)", TRINO_DUCKDB_HAZARD_ENTRIES[204])
+    put("DATE_TRUNC", TRINO_DUCKDB_HAZARD_ENTRIES[66])
+    put("DATE_TRUNC('WEEK', X)", TRINO_DUCKDB_HAZARD_ENTRIES[67])
+    put("DAY", TRINO_DUCKDB_HAZARD_ENTRIES[237])
+    put("DAYOFYEAR", TRINO_DUCKDB_HAZARD_ENTRIES[70])
+    put("DECODE", TRINO_DUCKDB_HAZARD_ENTRIES[92])
+    put("DEGREES", TRINO_DUCKDB_HAZARD_ENTRIES[71])
+    put("DEGREES / RADIANS", TRINO_DUCKDB_HAZARD_ENTRIES[71])
+    put("ELEMENT_AT", TRINO_DUCKDB_HAZARD_ENTRIES[74])
+    put("ELEMENT_AT / MAP_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[74])
+    put("ENCODE", TRINO_DUCKDB_HAZARD_ENTRIES[215])
+    put("EPOCH(...)::DOUBLE", TRINO_DUCKDB_HAZARD_ENTRIES[214])
+    put("EPOCH(T)::DOUBLE", TRINO_DUCKDB_HAZARD_ENTRIES[213])
+    put("EPOCH_DIFF", TRINO_DUCKDB_HAZARD_ENTRIES[64])
+    put("EQUI_WIDTH_BINS", TRINO_DUCKDB_HAZARD_ENTRIES[232])
+    put("EXP", TRINO_DUCKDB_HAZARD_ENTRIES[76])
+    put("EXP(1)", TRINO_DUCKDB_HAZARD_ENTRIES[72])
+    put("EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[77])
+    put("EXTRACT / DATE_PART", TRINO_DUCKDB_HAZARD_ENTRIES[77])
+    put("EXTRACT('ISOYEAR' FROM X)", TRINO_DUCKDB_HAZARD_ENTRIES[239])
+    put("EXTRACT('MILLISECOND' FROM X)", TRINO_DUCKDB_HAZARD_ENTRIES[137])
+    put("EXTRACT_QUERY_PARAMETERS (NETQUACK, TABLE FUNCTION)", TRINO_DUCKDB_HAZARD_ENTRIES[227])
+    put("EXTRACT_SCHEMA", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("EXTRACT_SCHEMA/HOST/PORT/PATH/QUERY_STRING/FRAGMENT (NETQUACK EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[228])
     put("FIRST", TRINO_DUCKDB_HAZARD_ENTRIES[8])
-    put("FLATTEN", TRINO_DUCKDB_HAZARD_ENTRIES[79])
-    put("FLOOR", TRINO_DUCKDB_HAZARD_ENTRIES[80])
-    put("FMOD", TRINO_DUCKDB_HAZARD_ENTRIES[139])
-    put("FORMAT", TRINO_DUCKDB_HAZARD_ENTRIES[81])
-    put("FORMAT / PRINTF", TRINO_DUCKDB_HAZARD_ENTRIES[81])
-    put("FROM_BASE64", TRINO_DUCKDB_HAZARD_ENTRIES[83])
-    put("GENERATE_SERIES (NOT RANGE)", TRINO_DUCKDB_HAZARD_ENTRIES[173])
-    put("GEN_RANDOM_UUID", TRINO_DUCKDB_HAZARD_ENTRIES[228])
-    put("GEOMETRIC_MEAN", TRINO_DUCKDB_HAZARD_ENTRIES[92])
-    put("GREATEST", TRINO_DUCKDB_HAZARD_ENTRIES[93])
-    put("GREATEST / LEAST", TRINO_DUCKDB_HAZARD_ENTRIES[93])
-    put("HAMMING", TRINO_DUCKDB_HAZARD_ENTRIES[94])
+    put("FLATTEN", TRINO_DUCKDB_HAZARD_ENTRIES[80])
+    put("FLOOR", TRINO_DUCKDB_HAZARD_ENTRIES[81])
+    put("FMOD", TRINO_DUCKDB_HAZARD_ENTRIES[140])
+    put("FORMAT", TRINO_DUCKDB_HAZARD_ENTRIES[82])
+    put("FORMAT / PRINTF", TRINO_DUCKDB_HAZARD_ENTRIES[82])
+    put("FROM_BASE64", TRINO_DUCKDB_HAZARD_ENTRIES[84])
+    put("GENERATE_SERIES (NOT RANGE)", TRINO_DUCKDB_HAZARD_ENTRIES[174])
+    put("GEN_RANDOM_UUID", TRINO_DUCKDB_HAZARD_ENTRIES[229])
+    put("GEOMETRIC_MEAN", TRINO_DUCKDB_HAZARD_ENTRIES[93])
+    put("GREATEST", TRINO_DUCKDB_HAZARD_ENTRIES[94])
+    put("GREATEST / LEAST", TRINO_DUCKDB_HAZARD_ENTRIES[94])
+    put("HAMMING", TRINO_DUCKDB_HAZARD_ENTRIES[95])
     put("HASH(VALUE, ...) VARIADIC", TRINO_DUCKDB_HAZARD_ENTRIES[0])
-    put("HEX", TRINO_DUCKDB_HAZARD_ENTRIES[208])
-    put("HEX / UNHEX / TO_BASE64 / FROM_BASE64 / URL_ENCODE / URL_DECODE", TRINO_DUCKDB_HAZARD_ENTRIES[209])
-    put("HISTOGRAM", TRINO_DUCKDB_HAZARD_ENTRIES[95])
-    put("HOST", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("HOUR", TRINO_DUCKDB_HAZARD_ENTRIES[237])
-    put("HOUR / MINUTE / SECOND", TRINO_DUCKDB_HAZARD_ENTRIES[100])
-    put("ICU TZ DATA", TRINO_DUCKDB_HAZARD_ENTRIES[222])
-    put("IN", TRINO_DUCKDB_HAZARD_ENTRIES[103])
-    put("INET (CORE INET EXTENSION)", TRINO_DUCKDB_HAZARD_ENTRIES[104])
-    put("IS [NOT] DISTINCT FROM", TRINO_DUCKDB_HAZARD_ENTRIES[105])
-    put("ISFINITE", TRINO_DUCKDB_HAZARD_ENTRIES[107])
-    put("ISINF", TRINO_DUCKDB_HAZARD_ENTRIES[107])
-    put("ISNAN", TRINO_DUCKDB_HAZARD_ENTRIES[107])
-    put("ISNAN / ISFINITE / ISINF", TRINO_DUCKDB_HAZARD_ENTRIES[107])
-    put("ISODOW", TRINO_DUCKDB_HAZARD_ENTRIES[68])
-    put("JSON_ARRAY_LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[108])
-    put("JSON_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[109])
-    put("JSON_EXTRACT_STRING", TRINO_DUCKDB_HAZARD_ENTRIES[110])
-    put("KURTOSIS", TRINO_DUCKDB_HAZARD_ENTRIES[112])
-    put("KURTOSIS / KURTOSIS_POP", TRINO_DUCKDB_HAZARD_ENTRIES[112])
-    put("KURTOSIS_POP", TRINO_DUCKDB_HAZARD_ENTRIES[112])
+    put("HEX", TRINO_DUCKDB_HAZARD_ENTRIES[209])
+    put("HEX / UNHEX / TO_BASE64 / FROM_BASE64 / URL_ENCODE / URL_DECODE", TRINO_DUCKDB_HAZARD_ENTRIES[210])
+    put("HISTOGRAM", TRINO_DUCKDB_HAZARD_ENTRIES[96])
+    put("HOST", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("HOUR", TRINO_DUCKDB_HAZARD_ENTRIES[238])
+    put("HOUR / MINUTE / SECOND", TRINO_DUCKDB_HAZARD_ENTRIES[101])
+    put("ICU TZ DATA", TRINO_DUCKDB_HAZARD_ENTRIES[223])
+    put("IN", TRINO_DUCKDB_HAZARD_ENTRIES[104])
+    put("INET (CORE INET EXTENSION)", TRINO_DUCKDB_HAZARD_ENTRIES[105])
+    put("IS [NOT] DISTINCT FROM", TRINO_DUCKDB_HAZARD_ENTRIES[106])
+    put("ISFINITE", TRINO_DUCKDB_HAZARD_ENTRIES[108])
+    put("ISINF", TRINO_DUCKDB_HAZARD_ENTRIES[108])
+    put("ISNAN", TRINO_DUCKDB_HAZARD_ENTRIES[108])
+    put("ISNAN / ISFINITE / ISINF", TRINO_DUCKDB_HAZARD_ENTRIES[108])
+    put("ISODOW", TRINO_DUCKDB_HAZARD_ENTRIES[69])
+    put("JSON_ARRAY_LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[109])
+    put("JSON_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[110])
+    put("JSON_EXTRACT_STRING", TRINO_DUCKDB_HAZARD_ENTRIES[111])
+    put("KURTOSIS", TRINO_DUCKDB_HAZARD_ENTRIES[113])
+    put("KURTOSIS / KURTOSIS_POP", TRINO_DUCKDB_HAZARD_ENTRIES[113])
+    put("KURTOSIS_POP", TRINO_DUCKDB_HAZARD_ENTRIES[113])
     put("LAST", TRINO_DUCKDB_HAZARD_ENTRIES[8])
-    put("LAST_DAY", TRINO_DUCKDB_HAZARD_ENTRIES[113])
-    put("LEAST", TRINO_DUCKDB_HAZARD_ENTRIES[93])
+    put("LAST_DAY", TRINO_DUCKDB_HAZARD_ENTRIES[114])
+    put("LEAST", TRINO_DUCKDB_HAZARD_ENTRIES[94])
     put("LEN", TRINO_DUCKDB_HAZARD_ENTRIES[37])
-    put("LEN(REGEXP_EXTRACT_ALL(...))", TRINO_DUCKDB_HAZARD_ENTRIES[155])
+    put("LEN(REGEXP_EXTRACT_ALL(...))", TRINO_DUCKDB_HAZARD_ENTRIES[156])
     put("LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[37])
     put("LENGTH / LEN / ARRAY_LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[37])
-    put("LEVENSHTEIN", TRINO_DUCKDB_HAZARD_ENTRIES[116])
-    put("LIKE", TRINO_DUCKDB_HAZARD_ENTRIES[117])
-    put("LIKE / NOT LIKE", TRINO_DUCKDB_HAZARD_ENTRIES[117])
+    put("LEVENSHTEIN", TRINO_DUCKDB_HAZARD_ENTRIES[117])
+    put("LIKE", TRINO_DUCKDB_HAZARD_ENTRIES[118])
+    put("LIKE / NOT LIKE", TRINO_DUCKDB_HAZARD_ENTRIES[118])
     put("LIST", TRINO_DUCKDB_HAZARD_ENTRIES[9])
     put("LIST_CONCAT", TRINO_DUCKDB_HAZARD_ENTRIES[48])
     put("LIST_CONCAT / ||", TRINO_DUCKDB_HAZARD_ENTRIES[48])
     put("LIST_CONTAINS", TRINO_DUCKDB_HAZARD_ENTRIES[50])
     put("LIST_DISTINCT", TRINO_DUCKDB_HAZARD_ENTRIES[10])
     put("LIST_DISTINCT(LIST_CONCAT(...))", TRINO_DUCKDB_HAZARD_ENTRIES[20])
-    put("LIST_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[72])
-    put("LIST_FILTER", TRINO_DUCKDB_HAZARD_ENTRIES[77])
-    put("LIST_FILTER / LIST_TRANSFORM / LIST_REDUCE", TRINO_DUCKDB_HAZARD_ENTRIES[77])
+    put("LIST_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[73])
+    put("LIST_FILTER", TRINO_DUCKDB_HAZARD_ENTRIES[78])
+    put("LIST_FILTER / LIST_TRANSFORM / LIST_REDUCE", TRINO_DUCKDB_HAZARD_ENTRIES[78])
     put("LIST_FILTER WORKAROUND", TRINO_DUCKDB_HAZARD_ENTRIES[18])
     put("LIST_FIRST", TRINO_DUCKDB_HAZARD_ENTRIES[12])
     put("LIST_FIRST / LIST_LAST", TRINO_DUCKDB_HAZARD_ENTRIES[12])
@@ -1743,146 +1750,146 @@ internal val DUCKDB_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("LIST_MIN", TRINO_DUCKDB_HAZARD_ENTRIES[16])
     put("LIST_MIN / LIST_MAX", TRINO_DUCKDB_HAZARD_ENTRIES[16])
     put("LIST_POSITION", TRINO_DUCKDB_HAZARD_ENTRIES[17])
-    put("LIST_REDUCE", TRINO_DUCKDB_HAZARD_ENTRIES[77])
-    put("LIST_REVERSE", TRINO_DUCKDB_HAZARD_ENTRIES[167])
-    put("LIST_SLICE", TRINO_DUCKDB_HAZARD_ENTRIES[184])
+    put("LIST_REDUCE", TRINO_DUCKDB_HAZARD_ENTRIES[78])
+    put("LIST_REVERSE", TRINO_DUCKDB_HAZARD_ENTRIES[168])
+    put("LIST_SLICE", TRINO_DUCKDB_HAZARD_ENTRIES[185])
     put("LIST_SORT", TRINO_DUCKDB_HAZARD_ENTRIES[19])
-    put("LIST_TRANSFORM", TRINO_DUCKDB_HAZARD_ENTRIES[77])
-    put("LIST_ZIP", TRINO_DUCKDB_HAZARD_ENTRIES[239])
-    put("LN", TRINO_DUCKDB_HAZARD_ENTRIES[119])
-    put("LN(X)/LN(B)", TRINO_DUCKDB_HAZARD_ENTRIES[121])
-    put("LOCALTIME", TRINO_DUCKDB_HAZARD_ENTRIES[120])
-    put("LOCALTIMESTAMP", TRINO_DUCKDB_HAZARD_ENTRIES[120])
-    put("LOCALTIMESTAMP / LOCALTIME", TRINO_DUCKDB_HAZARD_ENTRIES[120])
-    put("LOG10", TRINO_DUCKDB_HAZARD_ENTRIES[122])
-    put("LOG2", TRINO_DUCKDB_HAZARD_ENTRIES[123])
-    put("LOWER", TRINO_DUCKDB_HAZARD_ENTRIES[124])
-    put("LPAD", TRINO_DUCKDB_HAZARD_ENTRIES[126])
-    put("LTRIM", TRINO_DUCKDB_HAZARD_ENTRIES[127])
-    put("MAP", TRINO_DUCKDB_HAZARD_ENTRIES[129])
-    put("MAP / MAP_FROM_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[129])
-    put("MAP_CONCAT", TRINO_DUCKDB_HAZARD_ENTRIES[131])
-    put("MAP_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[132])
-    put("MAP_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[73])
-    put("MAP_FROM_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[129])
-    put("MAP_KEYS", TRINO_DUCKDB_HAZARD_ENTRIES[134])
-    put("MAP_KEYS / MAP_VALUES", TRINO_DUCKDB_HAZARD_ENTRIES[134])
-    put("MAP_VALUES", TRINO_DUCKDB_HAZARD_ENTRIES[134])
-    put("MAX", TRINO_DUCKDB_HAZARD_ENTRIES[137])
-    put("MIN", TRINO_DUCKDB_HAZARD_ENTRIES[137])
-    put("MIN / MAX", TRINO_DUCKDB_HAZARD_ENTRIES[137])
-    put("MINUTE", TRINO_DUCKDB_HAZARD_ENTRIES[100])
-    put("MOD", TRINO_DUCKDB_HAZARD_ENTRIES[140])
-    put("MONTH", TRINO_DUCKDB_HAZARD_ENTRIES[236])
-    put("MURMURHASH3_X64_128 (HASHFUNCS EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[141])
-    put("NFC_NORMALIZE", TRINO_DUCKDB_HAZARD_ENTRIES[125])
-    put("NFC_NORMALIZE (NATIVE PARITY IMPL)", TRINO_DUCKDB_HAZARD_ENTRIES[144])
-    put("NGRAMS (SPLINK_UDFS, STRING FORM)", TRINO_DUCKDB_HAZARD_ENTRIES[142])
-    put("NOCASE", TRINO_DUCKDB_HAZARD_ENTRIES[125])
-    put("NOCASE / NFC_NORMALIZE", TRINO_DUCKDB_HAZARD_ENTRIES[125])
+    put("LIST_TRANSFORM", TRINO_DUCKDB_HAZARD_ENTRIES[78])
+    put("LIST_ZIP", TRINO_DUCKDB_HAZARD_ENTRIES[240])
+    put("LN", TRINO_DUCKDB_HAZARD_ENTRIES[120])
+    put("LN(X)/LN(B)", TRINO_DUCKDB_HAZARD_ENTRIES[122])
+    put("LOCALTIME", TRINO_DUCKDB_HAZARD_ENTRIES[121])
+    put("LOCALTIMESTAMP", TRINO_DUCKDB_HAZARD_ENTRIES[121])
+    put("LOCALTIMESTAMP / LOCALTIME", TRINO_DUCKDB_HAZARD_ENTRIES[121])
+    put("LOG10", TRINO_DUCKDB_HAZARD_ENTRIES[123])
+    put("LOG2", TRINO_DUCKDB_HAZARD_ENTRIES[124])
+    put("LOWER", TRINO_DUCKDB_HAZARD_ENTRIES[125])
+    put("LPAD", TRINO_DUCKDB_HAZARD_ENTRIES[127])
+    put("LTRIM", TRINO_DUCKDB_HAZARD_ENTRIES[128])
+    put("MAP", TRINO_DUCKDB_HAZARD_ENTRIES[130])
+    put("MAP / MAP_FROM_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[130])
+    put("MAP_CONCAT", TRINO_DUCKDB_HAZARD_ENTRIES[132])
+    put("MAP_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[133])
+    put("MAP_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[74])
+    put("MAP_FROM_ENTRIES", TRINO_DUCKDB_HAZARD_ENTRIES[130])
+    put("MAP_KEYS", TRINO_DUCKDB_HAZARD_ENTRIES[135])
+    put("MAP_KEYS / MAP_VALUES", TRINO_DUCKDB_HAZARD_ENTRIES[135])
+    put("MAP_VALUES", TRINO_DUCKDB_HAZARD_ENTRIES[135])
+    put("MAX", TRINO_DUCKDB_HAZARD_ENTRIES[138])
+    put("MIN", TRINO_DUCKDB_HAZARD_ENTRIES[138])
+    put("MIN / MAX", TRINO_DUCKDB_HAZARD_ENTRIES[138])
+    put("MINUTE", TRINO_DUCKDB_HAZARD_ENTRIES[101])
+    put("MOD", TRINO_DUCKDB_HAZARD_ENTRIES[141])
+    put("MONTH", TRINO_DUCKDB_HAZARD_ENTRIES[237])
+    put("MURMURHASH3_X64_128 (HASHFUNCS EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[142])
+    put("NFC_NORMALIZE", TRINO_DUCKDB_HAZARD_ENTRIES[126])
+    put("NFC_NORMALIZE (NATIVE PARITY IMPL)", TRINO_DUCKDB_HAZARD_ENTRIES[145])
+    put("NGRAMS (SPLINK_UDFS, STRING FORM)", TRINO_DUCKDB_HAZARD_ENTRIES[143])
+    put("NOCASE", TRINO_DUCKDB_HAZARD_ENTRIES[126])
+    put("NOCASE / NFC_NORMALIZE", TRINO_DUCKDB_HAZARD_ENTRIES[126])
     put("NOT", TRINO_DUCKDB_HAZARD_ENTRIES[4])
     put("NOW", TRINO_DUCKDB_HAZARD_ENTRIES[59])
-    put("NULLIF", TRINO_DUCKDB_HAZARD_ENTRIES[146])
-    put("OCTET_LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[115])
+    put("NULLIF", TRINO_DUCKDB_HAZARD_ENTRIES[147])
+    put("OCTET_LENGTH", TRINO_DUCKDB_HAZARD_ENTRIES[116])
     put("OR", TRINO_DUCKDB_HAZARD_ENTRIES[4])
     put("ORD", TRINO_DUCKDB_HAZARD_ENTRIES[45])
-    put("PATH", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("PI", TRINO_DUCKDB_HAZARD_ENTRIES[148])
-    put("PORT", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("POSITION(S IN T)", TRINO_DUCKDB_HAZARD_ENTRIES[149])
-    put("POW", TRINO_DUCKDB_HAZARD_ENTRIES[150])
-    put("POW / POWER", TRINO_DUCKDB_HAZARD_ENTRIES[150])
-    put("POWER", TRINO_DUCKDB_HAZARD_ENTRIES[150])
-    put("PRINTF", TRINO_DUCKDB_HAZARD_ENTRIES[81])
+    put("PATH", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("PI", TRINO_DUCKDB_HAZARD_ENTRIES[149])
+    put("PORT", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("POSITION(S IN T)", TRINO_DUCKDB_HAZARD_ENTRIES[150])
+    put("POW", TRINO_DUCKDB_HAZARD_ENTRIES[151])
+    put("POW / POWER", TRINO_DUCKDB_HAZARD_ENTRIES[151])
+    put("POWER", TRINO_DUCKDB_HAZARD_ENTRIES[151])
+    put("PRINTF", TRINO_DUCKDB_HAZARD_ENTRIES[82])
     put("QUANTILE_CONT", TRINO_DUCKDB_HAZARD_ENTRIES[7])
     put("QUANTILE_CONT / QUANTILE_DISC", TRINO_DUCKDB_HAZARD_ENTRIES[7])
     put("QUANTILE_DISC", TRINO_DUCKDB_HAZARD_ENTRIES[7])
-    put("QUARTER", TRINO_DUCKDB_HAZARD_ENTRIES[152])
-    put("QUERY_STRING", TRINO_DUCKDB_HAZARD_ENTRIES[227])
-    put("RADIANS", TRINO_DUCKDB_HAZARD_ENTRIES[70])
-    put("RANDOM", TRINO_DUCKDB_HAZARD_ENTRIES[153])
-    put("REGEXP_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[156])
-    put("REGEXP_EXTRACT_ALL", TRINO_DUCKDB_HAZARD_ENTRIES[157])
-    put("REGEXP_MATCHES", TRINO_DUCKDB_HAZARD_ENTRIES[158])
-    put("REGEXP_REPLACE", TRINO_DUCKDB_HAZARD_ENTRIES[160])
-    put("REGEXP_SPLIT_TO_ARRAY", TRINO_DUCKDB_HAZARD_ENTRIES[161])
-    put("REGEXP_SPLIT_TO_ARRAY / STRING_SPLIT_REGEX", TRINO_DUCKDB_HAZARD_ENTRIES[161])
-    put("REGR_INTERCEPT", TRINO_DUCKDB_HAZARD_ENTRIES[162])
-    put("REGR_INTERCEPT / REGR_SLOPE", TRINO_DUCKDB_HAZARD_ENTRIES[162])
-    put("REGR_SLOPE", TRINO_DUCKDB_HAZARD_ENTRIES[162])
-    put("REPEAT (LIST, COUNT)", TRINO_DUCKDB_HAZARD_ENTRIES[163])
-    put("REPLACE", TRINO_DUCKDB_HAZARD_ENTRIES[164])
-    put("REPLACE(S, X, '')", TRINO_DUCKDB_HAZARD_ENTRIES[165])
-    put("REVERSE", TRINO_DUCKDB_HAZARD_ENTRIES[166])
-    put("ROUND", TRINO_DUCKDB_HAZARD_ENTRIES[169])
-    put("RPAD", TRINO_DUCKDB_HAZARD_ENTRIES[171])
-    put("RTRIM", TRINO_DUCKDB_HAZARD_ENTRIES[172])
-    put("SAME NAMES", TRINO_DUCKDB_HAZARD_ENTRIES[78])
+    put("QUARTER", TRINO_DUCKDB_HAZARD_ENTRIES[153])
+    put("QUERY_STRING", TRINO_DUCKDB_HAZARD_ENTRIES[228])
+    put("RADIANS", TRINO_DUCKDB_HAZARD_ENTRIES[71])
+    put("RANDOM", TRINO_DUCKDB_HAZARD_ENTRIES[154])
+    put("REGEXP_EXTRACT", TRINO_DUCKDB_HAZARD_ENTRIES[157])
+    put("REGEXP_EXTRACT_ALL", TRINO_DUCKDB_HAZARD_ENTRIES[158])
+    put("REGEXP_MATCHES", TRINO_DUCKDB_HAZARD_ENTRIES[159])
+    put("REGEXP_REPLACE", TRINO_DUCKDB_HAZARD_ENTRIES[161])
+    put("REGEXP_SPLIT_TO_ARRAY", TRINO_DUCKDB_HAZARD_ENTRIES[162])
+    put("REGEXP_SPLIT_TO_ARRAY / STRING_SPLIT_REGEX", TRINO_DUCKDB_HAZARD_ENTRIES[162])
+    put("REGR_INTERCEPT", TRINO_DUCKDB_HAZARD_ENTRIES[163])
+    put("REGR_INTERCEPT / REGR_SLOPE", TRINO_DUCKDB_HAZARD_ENTRIES[163])
+    put("REGR_SLOPE", TRINO_DUCKDB_HAZARD_ENTRIES[163])
+    put("REPEAT (LIST, COUNT)", TRINO_DUCKDB_HAZARD_ENTRIES[164])
+    put("REPLACE", TRINO_DUCKDB_HAZARD_ENTRIES[165])
+    put("REPLACE(S, X, '')", TRINO_DUCKDB_HAZARD_ENTRIES[166])
+    put("REVERSE", TRINO_DUCKDB_HAZARD_ENTRIES[167])
+    put("ROUND", TRINO_DUCKDB_HAZARD_ENTRIES[170])
+    put("RPAD", TRINO_DUCKDB_HAZARD_ENTRIES[172])
+    put("RTRIM", TRINO_DUCKDB_HAZARD_ENTRIES[173])
+    put("SAME NAMES", TRINO_DUCKDB_HAZARD_ENTRIES[79])
     put("SAME OPERATORS", TRINO_DUCKDB_HAZARD_ENTRIES[1])
-    put("SAME, BINARY COLLATION", TRINO_DUCKDB_HAZARD_ENTRIES[191])
-    put("SECOND", TRINO_DUCKDB_HAZARD_ENTRIES[100])
-    put("SET TIMEZONE 'ETC/GMT∓N'", TRINO_DUCKDB_HAZARD_ENTRIES[174])
-    put("SIGN", TRINO_DUCKDB_HAZARD_ENTRIES[179])
-    put("SIMILAR TO", TRINO_DUCKDB_HAZARD_ENTRIES[180])
-    put("SINH", TRINO_DUCKDB_HAZARD_ENTRIES[182])
-    put("SINH/COSH/TANH", TRINO_DUCKDB_HAZARD_ENTRIES[182])
-    put("SKEWNESS", TRINO_DUCKDB_HAZARD_ENTRIES[183])
-    put("SOUNDEX (SPLINK_UDFS EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[185])
-    put("SPLIT_PART", TRINO_DUCKDB_HAZARD_ENTRIES[187])
-    put("SQRT", TRINO_DUCKDB_HAZARD_ENTRIES[189])
-    put("STARTS_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[190])
-    put("STDDEV_POP", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("STDDEV_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("STRFTIME", TRINO_DUCKDB_HAZARD_ENTRIES[64])
-    put("STRFTIME / CAST", TRINO_DUCKDB_HAZARD_ENTRIES[210])
-    put("STRFTIME / STRPTIME", TRINO_DUCKDB_HAZARD_ENTRIES[64])
-    put("STRING_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[118])
-    put("STRING_SPLIT", TRINO_DUCKDB_HAZARD_ENTRIES[186])
-    put("STRING_SPLIT_REGEX", TRINO_DUCKDB_HAZARD_ENTRIES[161])
-    put("STRPOS", TRINO_DUCKDB_HAZARD_ENTRIES[192])
-    put("STRPTIME", TRINO_DUCKDB_HAZARD_ENTRIES[64])
-    put("SUBSTRING", TRINO_DUCKDB_HAZARD_ENTRIES[195])
-    put("SUBSTRING/2", TRINO_DUCKDB_HAZARD_ENTRIES[195])
-    put("SUM", TRINO_DUCKDB_HAZARD_ENTRIES[197])
-    put("TANH", TRINO_DUCKDB_HAZARD_ENTRIES[182])
-    put("TIMESTAMP EXTRACTS", TRINO_DUCKDB_HAZARD_ENTRIES[200])
-    put("TIMESTAMP PRECISION", TRINO_DUCKDB_HAZARD_ENTRIES[201])
-    put("TIMESTAMPTZ", TRINO_DUCKDB_HAZARD_ENTRIES[202])
-    put("TIMEZONE(ZONE, T)", TRINO_DUCKDB_HAZARD_ENTRIES[232])
+    put("SAME, BINARY COLLATION", TRINO_DUCKDB_HAZARD_ENTRIES[192])
+    put("SECOND", TRINO_DUCKDB_HAZARD_ENTRIES[101])
+    put("SET TIMEZONE 'ETC/GMT∓N'", TRINO_DUCKDB_HAZARD_ENTRIES[175])
+    put("SIGN", TRINO_DUCKDB_HAZARD_ENTRIES[180])
+    put("SIMILAR TO", TRINO_DUCKDB_HAZARD_ENTRIES[181])
+    put("SINH", TRINO_DUCKDB_HAZARD_ENTRIES[183])
+    put("SINH/COSH/TANH", TRINO_DUCKDB_HAZARD_ENTRIES[183])
+    put("SKEWNESS", TRINO_DUCKDB_HAZARD_ENTRIES[184])
+    put("SOUNDEX (SPLINK_UDFS EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[186])
+    put("SPLIT_PART", TRINO_DUCKDB_HAZARD_ENTRIES[188])
+    put("SQRT", TRINO_DUCKDB_HAZARD_ENTRIES[190])
+    put("STARTS_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[191])
+    put("STDDEV_POP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("STDDEV_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("STRFTIME", TRINO_DUCKDB_HAZARD_ENTRIES[65])
+    put("STRFTIME / CAST", TRINO_DUCKDB_HAZARD_ENTRIES[211])
+    put("STRFTIME / STRPTIME", TRINO_DUCKDB_HAZARD_ENTRIES[65])
+    put("STRING_AGG", TRINO_DUCKDB_HAZARD_ENTRIES[119])
+    put("STRING_SPLIT", TRINO_DUCKDB_HAZARD_ENTRIES[187])
+    put("STRING_SPLIT_REGEX", TRINO_DUCKDB_HAZARD_ENTRIES[162])
+    put("STRPOS", TRINO_DUCKDB_HAZARD_ENTRIES[193])
+    put("STRPTIME", TRINO_DUCKDB_HAZARD_ENTRIES[65])
+    put("SUBSTRING", TRINO_DUCKDB_HAZARD_ENTRIES[196])
+    put("SUBSTRING/2", TRINO_DUCKDB_HAZARD_ENTRIES[196])
+    put("SUM", TRINO_DUCKDB_HAZARD_ENTRIES[198])
+    put("TANH", TRINO_DUCKDB_HAZARD_ENTRIES[183])
+    put("TIMESTAMP EXTRACTS", TRINO_DUCKDB_HAZARD_ENTRIES[201])
+    put("TIMESTAMP PRECISION", TRINO_DUCKDB_HAZARD_ENTRIES[202])
+    put("TIMESTAMPTZ", TRINO_DUCKDB_HAZARD_ENTRIES[203])
+    put("TIMEZONE(ZONE, T)", TRINO_DUCKDB_HAZARD_ENTRIES[233])
     put("TODAY", TRINO_DUCKDB_HAZARD_ENTRIES[58])
-    put("TO_BASE", TRINO_DUCKDB_HAZARD_ENTRIES[204])
-    put("TO_BASE64", TRINO_DUCKDB_HAZARD_ENTRIES[206])
-    put("TO_MILLISECONDS", TRINO_DUCKDB_HAZARD_ENTRIES[211])
-    put("TO_TIMESTAMP", TRINO_DUCKDB_HAZARD_ENTRIES[88])
-    put("TRANSLATE", TRINO_DUCKDB_HAZARD_ENTRIES[215])
-    put("TRIM", TRINO_DUCKDB_HAZARD_ENTRIES[216])
-    put("TRUNC", TRINO_DUCKDB_HAZARD_ENTRIES[217])
-    put("TRY_CAST", TRINO_DUCKDB_HAZARD_ENTRIES[220])
-    put("TYPEOF", TRINO_DUCKDB_HAZARD_ENTRIES[221])
-    put("UNHEX", TRINO_DUCKDB_HAZARD_ENTRIES[85])
-    put("UNHEX(MD5(X))", TRINO_DUCKDB_HAZARD_ENTRIES[135])
-    put("UNHEX(SHA1(X))", TRINO_DUCKDB_HAZARD_ENTRIES[175])
-    put("UNHEX(SHA256(X))", TRINO_DUCKDB_HAZARD_ENTRIES[176])
+    put("TO_BASE", TRINO_DUCKDB_HAZARD_ENTRIES[205])
+    put("TO_BASE64", TRINO_DUCKDB_HAZARD_ENTRIES[207])
+    put("TO_MILLISECONDS", TRINO_DUCKDB_HAZARD_ENTRIES[212])
+    put("TO_TIMESTAMP", TRINO_DUCKDB_HAZARD_ENTRIES[89])
+    put("TRANSLATE", TRINO_DUCKDB_HAZARD_ENTRIES[216])
+    put("TRIM", TRINO_DUCKDB_HAZARD_ENTRIES[217])
+    put("TRUNC", TRINO_DUCKDB_HAZARD_ENTRIES[218])
+    put("TRY_CAST", TRINO_DUCKDB_HAZARD_ENTRIES[221])
+    put("TYPEOF", TRINO_DUCKDB_HAZARD_ENTRIES[222])
+    put("UNHEX", TRINO_DUCKDB_HAZARD_ENTRIES[86])
+    put("UNHEX(MD5(X))", TRINO_DUCKDB_HAZARD_ENTRIES[136])
+    put("UNHEX(SHA1(X))", TRINO_DUCKDB_HAZARD_ENTRIES[176])
+    put("UNHEX(SHA256(X))", TRINO_DUCKDB_HAZARD_ENTRIES[177])
     put("UNICODE", TRINO_DUCKDB_HAZARD_ENTRIES[45])
     put("UNICODE / ASCII / ORD", TRINO_DUCKDB_HAZARD_ENTRIES[45])
-    put("UPPER", TRINO_DUCKDB_HAZARD_ENTRIES[223])
-    put("URL_DECODE", TRINO_DUCKDB_HAZARD_ENTRIES[209])
-    put("URL_ENCODE", TRINO_DUCKDB_HAZARD_ENTRIES[209])
-    put("UUID", TRINO_DUCKDB_HAZARD_ENTRIES[228])
-    put("UUID / UUIDV4 / GEN_RANDOM_UUID", TRINO_DUCKDB_HAZARD_ENTRIES[228])
-    put("UUIDV4", TRINO_DUCKDB_HAZARD_ENTRIES[228])
-    put("VAR_POP", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("VAR_POP / VAR_SAMP / STDDEV_POP / STDDEV_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("VAR_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[229])
-    put("WEEK", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("UPPER", TRINO_DUCKDB_HAZARD_ENTRIES[224])
+    put("URL_DECODE", TRINO_DUCKDB_HAZARD_ENTRIES[210])
+    put("URL_ENCODE", TRINO_DUCKDB_HAZARD_ENTRIES[210])
+    put("UUID", TRINO_DUCKDB_HAZARD_ENTRIES[229])
+    put("UUID / UUIDV4 / GEN_RANDOM_UUID", TRINO_DUCKDB_HAZARD_ENTRIES[229])
+    put("UUIDV4", TRINO_DUCKDB_HAZARD_ENTRIES[229])
+    put("VAR_POP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("VAR_POP / VAR_SAMP / STDDEV_POP / STDDEV_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("VAR_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
+    put("WEEK", TRINO_DUCKDB_HAZARD_ENTRIES[231])
     put("X + INTERVAL N UNIT", TRINO_DUCKDB_HAZARD_ENTRIES[60])
     put("XOR(X, Y)", TRINO_DUCKDB_HAZARD_ENTRIES[34])
-    put("XXH64 (HASHFUNCS EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[235])
-    put("YEAR", TRINO_DUCKDB_HAZARD_ENTRIES[237])
-    put("YEAR / MONTH / DAY", TRINO_DUCKDB_HAZARD_ENTRIES[236])
-    put("YEAR/HOUR/ETC UNDER SET TIMEZONE", TRINO_DUCKDB_HAZARD_ENTRIES[237])
+    put("XXH64 (HASHFUNCS EXT)", TRINO_DUCKDB_HAZARD_ENTRIES[236])
+    put("YEAR", TRINO_DUCKDB_HAZARD_ENTRIES[238])
+    put("YEAR / MONTH / DAY", TRINO_DUCKDB_HAZARD_ENTRIES[237])
+    put("YEAR/HOUR/ETC UNDER SET TIMEZONE", TRINO_DUCKDB_HAZARD_ENTRIES[238])
     put("| OPERATOR", TRINO_DUCKDB_HAZARD_ENTRIES[31])
-    put("|| (CONCAT OPERATOR)", TRINO_DUCKDB_HAZARD_ENTRIES[240])
+    put("|| (CONCAT OPERATOR)", TRINO_DUCKDB_HAZARD_ENTRIES[241])
     put("|| OPERATOR", TRINO_DUCKDB_HAZARD_ENTRIES[47])
     put("~ OPERATOR", TRINO_DUCKDB_HAZARD_ENTRIES[30])
 }

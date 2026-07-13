@@ -81,7 +81,7 @@ class HazardsRegistrySyncTest {
     @Test
     fun everyJsonPairIsRetrievableInBothDirections() {
         val pairs = loadTrinoDuckdbPairs()
-        assertEquals(241, pairs.size, "hazards JSON pair count changed — regenerate the registry")
+        assertEquals(242, pairs.size, "hazards JSON pair count changed — regenerate the registry")
         for (pair in pairs) {
             val fwd = HazardRegistry.lookup("trino", "duckdb", pair.trino)
             assertNotNull(fwd, "trino->duckdb lookup missing for ${pair.trino}")
