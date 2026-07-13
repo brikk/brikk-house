@@ -685,6 +685,404 @@
         "unicode"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "trino": "avg",
+      "doris": "avg",
+      "verdict": "identical",
+      "hazard": "avg{1,2,3,NULL}=2.0 (NULLs skipped); empty->NULL. Doris live; Trino from prior evidence (Trino==DuckDB).",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "sum",
+      "doris": "sum",
+      "verdict": "identical",
+      "hazard": "sum{1,2,NULL}=3; empty->NULL both. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "count",
+      "doris": "count",
+      "verdict": "identical",
+      "hazard": "count(x) skips NULL; count(*) counts rows. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "max",
+      "doris": "max",
+      "verdict": "identical",
+      "hazard": "max ignores NULL. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "min",
+      "doris": "min",
+      "verdict": "identical",
+      "hazard": "min ignores NULL. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "bool_and",
+      "doris": "bool_and",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value semantics identical but Doris renders BOOLEAN as TINYINT 0/1 over MySQL protocol vs Trino true/false — boolean type mapping required. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "boolean"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "bool_or",
+      "doris": "bool_or",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value semantics identical but Doris renders BOOLEAN as 0/1 vs Trino true/false — boolean type mapping. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "boolean"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "any_value",
+      "doris": "any_value",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Order-sensitive/nondeterministic arbitrary group value; matched this probe but not guaranteed. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "max_by",
+      "doris": "max_by",
+      "verdict": "conditionally-equivalent",
+      "hazard": "arg_max semantics matched (picks value at max key) but tie-breaking nondeterministic. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "min_by",
+      "doris": "min_by",
+      "verdict": "conditionally-equivalent",
+      "hazard": "arg_min semantics matched (min_by(y,x) picks y at min x = 'a') but tie-breaking nondeterministic. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "corr",
+      "doris": "corr",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff vs live DuckDB (0.9999008674099173 vs ...172) — value-equivalent. Doris live; Trino from prior evidence (Trino==DuckDB).",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "covar_pop",
+      "doris": "covar_pop",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff — value-equivalent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "covar_samp",
+      "doris": "covar_samp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff (2.05 vs 2.049999999999999) — value-equivalent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "stddev_pop",
+      "doris": "stddev_pop",
+      "verdict": "identical",
+      "hazard": "stddev_pop{1,2,4}=1.247219128924647 exact match vs live DuckDB. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "stddev_samp",
+      "doris": "stddev_samp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff — value-equivalent; sample (N-1) normalization matches. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "var_pop",
+      "doris": "var_pop",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff — value-equivalent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "var_samp",
+      "doris": "var_samp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff — value-equivalent; sample (N-1) matches. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "stddev",
+      "doris": "stddev",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: DEFAULT MISMATCH. Trino stddev == stddev_samp (N-1) = 1.5275252316519468; Doris stddev == stddev_pop (N) = 1.247219128924647 over {1,2,4}. Doris's bare stddev is POPULATION, not sample. Must map Trino stddev -> Doris stddev_samp for parity, never by name.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "variance",
+      "doris": "variance",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: DEFAULT MISMATCH. Trino variance == var_samp (N-1) = 2.3333333333333335; Doris variance == var_pop (N) = 1.555555555555556 over {1,2,4}. Doris's bare variance is POPULATION, not sample. Must map Trino variance -> Doris var_samp for parity, never by name.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "skewness",
+      "doris": "skewness",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: different formula/default. Over {1,2,4,8}: DuckDB(=Trino sample) 1.1376243669576889 vs Doris 0.6568077344996993 (population moment). Sample-vs-population divergence. Doris live; Trino via DuckDB bridge.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "kurtosis",
+      "doris": "kurtosis",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: different formula/default. Over {1,2,4,8}: DuckDB(=Trino sample excess) 0.7576559546313808 vs Doris -1.098979206049149 (population excess). Sign and magnitude differ. Doris live; Trino via DuckDB bridge.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "regr_intercept",
+      "doris": "regr_intercept",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff — value-equivalent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "regr_slope",
+      "doris": "regr_slope",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff (2.05 vs 2.049999999999999) — value-equivalent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "array_agg",
+      "doris": "array_agg",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Returns a LIST/ARRAY (type layer). Order is input-order-dependent and nondeterministic without ORDER BY: DuckDB preserved input order [3,1,2] while Doris returned [1,2,3] on the same UNION-ALL. Add explicit ORDER BY for deterministic parity. Doris live; Trino via DuckDB bridge.",
+      "areas": [
+        "aggregate",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "map_agg",
+      "doris": "map_agg",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Returns a MAP (type layer). Doris has map_agg; Trino map_agg builds key->value. Element ordering within the map is nondeterministic — conditionally-equivalent. DuckDB lacks map_agg (Trino-only bridge; compare via histogram/map). Doris live; Trino from prior evidence.",
+      "areas": [
+        "aggregate",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "histogram",
+      "doris": "histogram",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: incompatible return type/semantics. Trino histogram returns a MAP(value->count) (matching DuckDB {a=2,b=1}); Doris histogram returns an approximate-quantile bucket JSON string. Not interchangeable by name. Doris live; Trino via DuckDB bridge.",
+      "areas": [
+        "aggregate",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "row_number",
+      "doris": "row_number",
+      "verdict": "identical",
+      "hazard": "row_number() OVER(ORDER BY x) = 1,2,3 both. Doris live; Trino from prior evidence.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "rank",
+      "doris": "rank",
+      "verdict": "identical",
+      "hazard": "rank() with tie = 1,1,3 (gap). Doris live; Trino from prior evidence.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "dense_rank",
+      "doris": "dense_rank",
+      "verdict": "identical",
+      "hazard": "dense_rank() with tie = 1,1,2 (no gap). Doris live; Trino from prior evidence.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "ntile",
+      "doris": "ntile",
+      "verdict": "identical",
+      "hazard": "ntile(2) over 3 rows = 1,1,2 both. Doris live; Trino from prior evidence.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "lag",
+      "doris": "lag",
+      "verdict": "identical",
+      "hazard": "lag(x) OVER(ORDER BY x) -> NULL,1,2 both. Doris live; Trino from prior evidence.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "lead",
+      "doris": "lead",
+      "verdict": "identical",
+      "hazard": "lead(x) OVER(ORDER BY x) -> 2,3,NULL both. Doris live; Trino from prior evidence.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "first_value",
+      "doris": "first_value",
+      "verdict": "identical",
+      "hazard": "first_value(x) OVER(ORDER BY x) = 1,1,1 both. Doris live; Trino from prior evidence.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "last_value",
+      "doris": "last_value",
+      "verdict": "identical",
+      "hazard": "last_value(x) OVER(ORDER BY x) = 1,2,3 both — same default frame (running window). Doris live; Trino from prior evidence.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "nth_value",
+      "doris": "nth_value",
+      "verdict": "identical",
+      "hazard": "nth_value(x,2) OVER(ORDER BY x) = NULL,2,2 both. Doris live; Trino from prior evidence.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "percent_rank",
+      "doris": "percent_rank",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Values identical (0,0.5,1) but Doris renders integral doubles as '0'/'1' vs '0.0'/'1.0' — numeric rendering only. Doris live; Trino from prior evidence.",
+      "areas": [
+        "window",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "trino": "cume_dist",
+      "doris": "cume_dist",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Values identical (0.333..,0.666..,1) but Doris renders trailing 1.0 as '1' — numeric rendering only. Doris live; Trino from prior evidence.",
+      "areas": [
+        "window",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
     }
   ]
 }

@@ -9,9 +9,10 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 75 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
+/** The 118 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
 internal val DUCKDB_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
-    hazardsChunk1()
+    hazardsChunk1() +
+    hazardsChunk2()
 
 private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     // [0] duckdb: 'lower' | doris: 'lower'
@@ -365,41 +366,277 @@ private fun hazardsChunk1(): List<FunctionHazard> = listOf(
         hazard = "char_length('héllo')=5 (code-point count) both — the parity target for the divergent byte-based length().",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"),
+    // [75] duckdb: 'avg' | doris: 'avg'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Probe-verified live: avg over {1,2,3,NULL}=2.0 both (NULLs skipped); empty input -> NULL both.",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [76] duckdb: 'sum' | doris: 'sum'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "sum over {1,2,NULL}=3 both; empty input -> NULL both (not 0).",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [77] duckdb: 'count' | doris: 'count'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "count(x) skips NULL (=2 over {1,NULL,3}); count(*) counts rows (=3). Both match.",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [78] duckdb: 'max' | doris: 'max'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "max over {1,3,NULL}=3 both (NULL ignored).",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [79] duckdb: 'min' | doris: 'min'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "min over {1,3,NULL}=1 both (NULL ignored).",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
 )
 
-/** duckdb->doris lookup: 75 keys (DuckDB-side names) over 75 entries. */
+private fun hazardsChunk2(): List<FunctionHazard> = listOf(
+    // [80] duckdb: 'median' | doris: 'median'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "median over {1,2,3,4}=2.5 both (interpolated).",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [81] duckdb: 'bool_and' | doris: 'bool_and'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Value semantics identical (bool_and{true,false,NULL}=false, all-true=true) but Doris renders BOOLEAN as TINYINT 0/1 over MySQL protocol vs DuckDB true/false — boolean type mapping required.",
+        areas = listOf("aggregate", "boolean"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [82] duckdb: 'bool_or' | doris: 'bool_or'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Value semantics identical (bool_or{true,false,NULL}=true, all-false=false) but Doris renders BOOLEAN as TINYINT 0/1 vs DuckDB true/false — boolean type mapping required.",
+        areas = listOf("aggregate", "boolean"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [83] duckdb: 'any_value' | doris: 'any_value'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Order-sensitive/nondeterministic: returns an arbitrary group value. Matched on this probe (both 'a') but not guaranteed under different input ordering/parallelism.",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [84] duckdb: 'max_by' | doris: 'max_by'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "arg_max semantics matched (max_by(y,x) picks y at max x = 'c') but tie-breaking is nondeterministic across engines — conditionally-equivalent on ties.",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [85] duckdb: 'approx_count_distinct' | doris: 'approx_count_distinct'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Exact match on small input (=3) but HLL sketch states are not interchangeable and estimates diverge at scale — approximate by contract.",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [86] duckdb: 'corr' | doris: 'corr'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Probe-verified live: last-ULP float diff (DuckDB 0.9999008674099173 vs Doris ...172) from accumulation order — value-equivalent.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [87] duckdb: 'covar_pop' | doris: 'covar_pop'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff (DuckDB 1.3666666666666665 vs Doris 1.366666666666665) — value-equivalent.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [88] duckdb: 'covar_samp' | doris: 'covar_samp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff (DuckDB 2.05 vs Doris 2.049999999999999) — value-equivalent; sample (N-1) normalization matches.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [89] duckdb: 'stddev_pop' | doris: 'stddev_pop'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "stddev_pop over {1,2,4}=1.247219128924647 exact match both.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [90] duckdb: 'stddev_samp' | doris: 'stddev_samp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff (DuckDB 1.5275252316519468 vs Doris 1.527525231651947) — value-equivalent; sample (N-1) normalization matches.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [91] duckdb: 'var_pop' | doris: 'var_pop'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff (DuckDB 1.5555555555555556 vs Doris 1.555555555555556) — value-equivalent.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [92] duckdb: 'var_samp' | doris: 'var_samp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff (DuckDB 2.3333333333333335 vs Doris 2.333333333333333) — value-equivalent; sample (N-1) normalization matches.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [93] duckdb: 'skewness' | doris: 'skewness'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: NOT ULP — different formula. Over {1,2,4,8}: DuckDB 1.1376243669576889 (sample/bias-corrected) vs Doris 0.6568077344996993 (population moment). Values are far apart; sample-vs-population default divergence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [94] duckdb: 'kurtosis' | doris: 'kurtosis'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: NOT ULP — different formula/default. Over {1,2,4,8}: DuckDB 0.7576559546313808 (sample excess kurtosis, bias-corrected) vs Doris -1.098979206049149 (population excess). Sign and magnitude differ; sample-vs-population divergence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [95] duckdb: 'regr_intercept' | doris: 'regr_intercept'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff (DuckDB -0.06666666666666643 vs Doris -0.06666666666666583) — value-equivalent.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [96] duckdb: 'regr_slope' | doris: 'regr_slope'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff (DuckDB 2.05 vs Doris 2.049999999999999) — value-equivalent.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [97] duckdb: 'regr_avgx' | doris: 'regr_avgx'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR at execution (reproduced on 2- and 3-row inputs, same query shape that works for regr_intercept/regr_slope) while DuckDB returns 2.0/1.5. regr_avgx is unusable on this Doris FE build.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [98] duckdb: 'regr_avgy' | doris: 'regr_avgy'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR at execution while DuckDB returns 4.033333333333333. regr_avgy unusable on this Doris FE build.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [99] duckdb: 'regr_count' | doris: 'regr_count'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR (reproduced on both null-bearing and clean inputs) while DuckDB returns the pair count (2). regr_count unusable on this Doris FE build.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [100] duckdb: 'regr_r2' | doris: 'regr_r2'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR while DuckDB returns 0.9998017446471051. regr_r2 unusable on this Doris FE build.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [101] duckdb: 'regr_sxx' | doris: 'regr_sxx'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR while DuckDB returns 2.0. regr_sxx unusable on this Doris FE build.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [102] duckdb: 'regr_sxy' | doris: 'regr_sxy'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR while DuckDB returns 4.1. regr_sxy unusable on this Doris FE build.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [103] duckdb: 'regr_syy' | doris: 'regr_syy'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR while DuckDB returns 8.406666666666666. regr_syy unusable on this Doris FE build.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [104] duckdb: 'sem' | doris: 'sem'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: over {1,2,4} DuckDB sem=0.7200822998230956 (standard error of mean = stddev_samp/sqrt(N) = 1.5275/sqrt(3)) vs Doris sem=0.8819171036881968. Doris's sem does not match DuckDB's standard-error-of-mean definition — semantic divergence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [105] duckdb: 'histogram' | doris: 'histogram'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: incompatible return types/semantics. DuckDB histogram returns a MAP of value->count ({1=2, 2=1}); Doris histogram returns an approximate-quantile bucket JSON string ({\"num_buckets\":2,\"buckets\":[{\"lower\"...\"count\":2...}]}). Not interchangeable by name.",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [106] duckdb: 'cardinality' | doris: 'cardinality'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: DuckDB cardinality operates ONLY on MAP ('Binder Error: Cardinality can only operate on MAPs' for a list) — use len/array_length for lists; Doris cardinality(array(1,2,3))=3 works on arrays. Different domain: map-only (DuckDB) vs array (Doris).",
+        areas = listOf("aggregate", "collection"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [107] duckdb: 'row_number' | doris: 'row_number'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "row_number() OVER(ORDER BY x) = 1,2,3 both.",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [108] duckdb: 'rank' | doris: 'rank'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "rank() with a tie = 1,1,3 both (gap after tie).",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [109] duckdb: 'dense_rank' | doris: 'dense_rank'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "dense_rank() with a tie = 1,1,2 both (no gap).",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [110] duckdb: 'ntile' | doris: 'ntile'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ntile(2) over 3 rows = 1,1,2 both.",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [111] duckdb: 'lag' | doris: 'lag'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "lag(x) OVER(ORDER BY x) = NULL,1,2 -> concat '1,2' (leading NULL dropped by group_concat) both.",
+        areas = listOf("window", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [112] duckdb: 'lead' | doris: 'lead'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "lead(x) OVER(ORDER BY x) = 2,3,NULL -> '2,3' both.",
+        areas = listOf("window", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [113] duckdb: 'first_value' | doris: 'first_value'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "first_value(x) OVER(ORDER BY x) = 1,1,1 both.",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [114] duckdb: 'last_value' | doris: 'last_value'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "last_value(x) OVER(ORDER BY x) = 1,2,3 both (default frame RANGE UNBOUNDED PRECEDING..CURRENT ROW, so last_value = current). Both engines agree on the default frame.",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [115] duckdb: 'nth_value' | doris: 'nth_value'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "nth_value(x,2) OVER(ORDER BY x) = NULL,2,2 -> '2,2' both (NULL until 2nd row reached in default frame).",
+        areas = listOf("window", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [116] duckdb: 'percent_rank' | doris: 'percent_rank'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Values identical (0,0.5,1) but Doris renders integral doubles as '0'/'1' while DuckDB renders '0.0'/'1.0' — numeric string rendering only.",
+        areas = listOf("window", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [117] duckdb: 'cume_dist' | doris: 'cume_dist'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Values identical (0.333..,0.666..,1) but Doris renders the trailing 1.0 as '1' vs DuckDB '1.0' — numeric string rendering only.",
+        areas = listOf("window", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+)
+
+/** duckdb->doris lookup: 118 keys (DuckDB-side names) over 118 entries. */
 internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
     put("ACOSH", DUCKDB_DORIS_HAZARD_ENTRIES[24])
+    put("ANY_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[83])
+    put("APPROX_COUNT_DISTINCT", DUCKDB_DORIS_HAZARD_ENTRIES[85])
     put("ASCII", DUCKDB_DORIS_HAZARD_ENTRIES[7])
     put("ASIN", DUCKDB_DORIS_HAZARD_ENTRIES[22])
     put("ASINH", DUCKDB_DORIS_HAZARD_ENTRIES[33])
     put("ATAN", DUCKDB_DORIS_HAZARD_ENTRIES[42])
     put("ATAN2", DUCKDB_DORIS_HAZARD_ENTRIES[43])
     put("ATANH", DUCKDB_DORIS_HAZARD_ENTRIES[23])
+    put("AVG", DUCKDB_DORIS_HAZARD_ENTRIES[75])
     put("BIN", DUCKDB_DORIS_HAZARD_ENTRIES[51])
     put("BIT_COUNT", DUCKDB_DORIS_HAZARD_ENTRIES[12])
     put("BIT_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[58])
+    put("BOOL_AND", DUCKDB_DORIS_HAZARD_ENTRIES[81])
+    put("BOOL_OR", DUCKDB_DORIS_HAZARD_ENTRIES[82])
+    put("CARDINALITY", DUCKDB_DORIS_HAZARD_ENTRIES[106])
     put("CBRT", DUCKDB_DORIS_HAZARD_ENTRIES[34])
     put("CEIL", DUCKDB_DORIS_HAZARD_ENTRIES[46])
     put("CHAR_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[74])
     put("COALESCE", DUCKDB_DORIS_HAZARD_ENTRIES[18])
     put("CONCAT", DUCKDB_DORIS_HAZARD_ENTRIES[2])
     put("CONCAT_WS", DUCKDB_DORIS_HAZARD_ENTRIES[72])
+    put("CORR", DUCKDB_DORIS_HAZARD_ENTRIES[86])
     put("COS", DUCKDB_DORIS_HAZARD_ENTRIES[37])
     put("COSH", DUCKDB_DORIS_HAZARD_ENTRIES[39])
     put("COT", DUCKDB_DORIS_HAZARD_ENTRIES[30])
+    put("COUNT", DUCKDB_DORIS_HAZARD_ENTRIES[77])
+    put("COVAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[87])
+    put("COVAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[88])
+    put("CUME_DIST", DUCKDB_DORIS_HAZARD_ENTRIES[117])
     put("DEGREES", DUCKDB_DORIS_HAZARD_ENTRIES[44])
+    put("DENSE_RANK", DUCKDB_DORIS_HAZARD_ENTRIES[109])
     put("EVEN", DUCKDB_DORIS_HAZARD_ENTRIES[50])
     put("EXP", DUCKDB_DORIS_HAZARD_ENTRIES[35])
     put("FACTORIAL", DUCKDB_DORIS_HAZARD_ENTRIES[29])
+    put("FIRST_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[113])
     put("FLOOR", DUCKDB_DORIS_HAZARD_ENTRIES[47])
     put("FMOD", DUCKDB_DORIS_HAZARD_ENTRIES[13])
     put("FROM_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[61])
     put("GREATEST", DUCKDB_DORIS_HAZARD_ENTRIES[3])
     put("HEX", DUCKDB_DORIS_HAZARD_ENTRIES[59])
+    put("HISTOGRAM", DUCKDB_DORIS_HAZARD_ENTRIES[105])
     put("INSTR", DUCKDB_DORIS_HAZARD_ENTRIES[71])
+    put("KURTOSIS", DUCKDB_DORIS_HAZARD_ENTRIES[94])
+    put("LAG", DUCKDB_DORIS_HAZARD_ENTRIES[111])
+    put("LAST_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[114])
+    put("LEAD", DUCKDB_DORIS_HAZARD_ENTRIES[112])
     put("LEAST", DUCKDB_DORIS_HAZARD_ENTRIES[4])
     put("LEFT", DUCKDB_DORIS_HAZARD_ENTRIES[54])
     put("LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[15])
@@ -411,30 +648,53 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("LOWER", DUCKDB_DORIS_HAZARD_ENTRIES[0])
     put("LPAD", DUCKDB_DORIS_HAZARD_ENTRIES[64])
     put("LTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[10])
+    put("MAX", DUCKDB_DORIS_HAZARD_ENTRIES[78])
+    put("MAX_BY", DUCKDB_DORIS_HAZARD_ENTRIES[84])
     put("MD5", DUCKDB_DORIS_HAZARD_ENTRIES[20])
+    put("MEDIAN", DUCKDB_DORIS_HAZARD_ENTRIES[80])
+    put("MIN", DUCKDB_DORIS_HAZARD_ENTRIES[79])
     put("MOD", DUCKDB_DORIS_HAZARD_ENTRIES[17])
+    put("NTH_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[115])
+    put("NTILE", DUCKDB_DORIS_HAZARD_ENTRIES[110])
     put("NULLIF", DUCKDB_DORIS_HAZARD_ENTRIES[19])
     put("OCTET_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[56])
+    put("PERCENT_RANK", DUCKDB_DORIS_HAZARD_ENTRIES[116])
     put("PI", DUCKDB_DORIS_HAZARD_ENTRIES[49])
     put("POW", DUCKDB_DORIS_HAZARD_ENTRIES[52])
     put("POWER", DUCKDB_DORIS_HAZARD_ENTRIES[53])
     put("RADIANS", DUCKDB_DORIS_HAZARD_ENTRIES[45])
+    put("RANK", DUCKDB_DORIS_HAZARD_ENTRIES[108])
     put("REGEXP_EXTRACT_ALL", DUCKDB_DORIS_HAZARD_ENTRIES[14])
     put("REGEXP_REPLACE", DUCKDB_DORIS_HAZARD_ENTRIES[8])
+    put("REGR_AVGX", DUCKDB_DORIS_HAZARD_ENTRIES[97])
+    put("REGR_AVGY", DUCKDB_DORIS_HAZARD_ENTRIES[98])
+    put("REGR_COUNT", DUCKDB_DORIS_HAZARD_ENTRIES[99])
+    put("REGR_INTERCEPT", DUCKDB_DORIS_HAZARD_ENTRIES[95])
+    put("REGR_R2", DUCKDB_DORIS_HAZARD_ENTRIES[100])
+    put("REGR_SLOPE", DUCKDB_DORIS_HAZARD_ENTRIES[96])
+    put("REGR_SXX", DUCKDB_DORIS_HAZARD_ENTRIES[101])
+    put("REGR_SXY", DUCKDB_DORIS_HAZARD_ENTRIES[102])
+    put("REGR_SYY", DUCKDB_DORIS_HAZARD_ENTRIES[103])
     put("REPEAT", DUCKDB_DORIS_HAZARD_ENTRIES[66])
     put("REPLACE", DUCKDB_DORIS_HAZARD_ENTRIES[67])
     put("REVERSE", DUCKDB_DORIS_HAZARD_ENTRIES[6])
     put("RIGHT", DUCKDB_DORIS_HAZARD_ENTRIES[70])
+    put("ROW_NUMBER", DUCKDB_DORIS_HAZARD_ENTRIES[107])
     put("RPAD", DUCKDB_DORIS_HAZARD_ENTRIES[65])
     put("RTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[11])
+    put("SEM", DUCKDB_DORIS_HAZARD_ENTRIES[104])
     put("SHA1", DUCKDB_DORIS_HAZARD_ENTRIES[73])
     put("SIGN", DUCKDB_DORIS_HAZARD_ENTRIES[48])
     put("SIGNBIT", DUCKDB_DORIS_HAZARD_ENTRIES[32])
     put("SIN", DUCKDB_DORIS_HAZARD_ENTRIES[36])
     put("SINH", DUCKDB_DORIS_HAZARD_ENTRIES[40])
+    put("SKEWNESS", DUCKDB_DORIS_HAZARD_ENTRIES[93])
     put("SPLIT_PART", DUCKDB_DORIS_HAZARD_ENTRIES[5])
     put("SQRT", DUCKDB_DORIS_HAZARD_ENTRIES[28])
     put("STARTS_WITH", DUCKDB_DORIS_HAZARD_ENTRIES[57])
+    put("STDDEV_POP", DUCKDB_DORIS_HAZARD_ENTRIES[89])
+    put("STDDEV_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[90])
+    put("SUM", DUCKDB_DORIS_HAZARD_ENTRIES[76])
     put("TAN", DUCKDB_DORIS_HAZARD_ENTRIES[38])
     put("TANH", DUCKDB_DORIS_HAZARD_ENTRIES[41])
     put("TO_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[62])
@@ -444,41 +704,61 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("UPPER", DUCKDB_DORIS_HAZARD_ENTRIES[1])
     put("URL_DECODE", DUCKDB_DORIS_HAZARD_ENTRIES[69])
     put("URL_ENCODE", DUCKDB_DORIS_HAZARD_ENTRIES[55])
+    put("VAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[91])
+    put("VAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[92])
 }
 
-/** doris->duckdb lookup: 75 keys (Doris-side names) over 75 entries. */
+/** doris->duckdb lookup: 118 keys (Doris-side names) over 118 entries. */
 internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
     put("ACOSH", DUCKDB_DORIS_HAZARD_ENTRIES[24])
+    put("ANY_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[83])
+    put("APPROX_COUNT_DISTINCT", DUCKDB_DORIS_HAZARD_ENTRIES[85])
     put("ASCII", DUCKDB_DORIS_HAZARD_ENTRIES[7])
     put("ASIN", DUCKDB_DORIS_HAZARD_ENTRIES[22])
     put("ASINH", DUCKDB_DORIS_HAZARD_ENTRIES[33])
     put("ATAN", DUCKDB_DORIS_HAZARD_ENTRIES[42])
     put("ATAN2", DUCKDB_DORIS_HAZARD_ENTRIES[43])
     put("ATANH", DUCKDB_DORIS_HAZARD_ENTRIES[23])
+    put("AVG", DUCKDB_DORIS_HAZARD_ENTRIES[75])
     put("BIN", DUCKDB_DORIS_HAZARD_ENTRIES[51])
     put("BIT_COUNT", DUCKDB_DORIS_HAZARD_ENTRIES[12])
     put("BIT_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[58])
+    put("BOOL_AND", DUCKDB_DORIS_HAZARD_ENTRIES[81])
+    put("BOOL_OR", DUCKDB_DORIS_HAZARD_ENTRIES[82])
+    put("CARDINALITY", DUCKDB_DORIS_HAZARD_ENTRIES[106])
     put("CBRT", DUCKDB_DORIS_HAZARD_ENTRIES[34])
     put("CEIL", DUCKDB_DORIS_HAZARD_ENTRIES[46])
     put("CHAR_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[74])
     put("COALESCE", DUCKDB_DORIS_HAZARD_ENTRIES[18])
     put("CONCAT", DUCKDB_DORIS_HAZARD_ENTRIES[2])
     put("CONCAT_WS", DUCKDB_DORIS_HAZARD_ENTRIES[72])
+    put("CORR", DUCKDB_DORIS_HAZARD_ENTRIES[86])
     put("COS", DUCKDB_DORIS_HAZARD_ENTRIES[37])
     put("COSH", DUCKDB_DORIS_HAZARD_ENTRIES[39])
     put("COT", DUCKDB_DORIS_HAZARD_ENTRIES[30])
+    put("COUNT", DUCKDB_DORIS_HAZARD_ENTRIES[77])
+    put("COVAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[87])
+    put("COVAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[88])
+    put("CUME_DIST", DUCKDB_DORIS_HAZARD_ENTRIES[117])
     put("DEGREES", DUCKDB_DORIS_HAZARD_ENTRIES[44])
+    put("DENSE_RANK", DUCKDB_DORIS_HAZARD_ENTRIES[109])
     put("EVEN", DUCKDB_DORIS_HAZARD_ENTRIES[50])
     put("EXP", DUCKDB_DORIS_HAZARD_ENTRIES[35])
     put("FACTORIAL", DUCKDB_DORIS_HAZARD_ENTRIES[29])
+    put("FIRST_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[113])
     put("FLOOR", DUCKDB_DORIS_HAZARD_ENTRIES[47])
     put("FMOD", DUCKDB_DORIS_HAZARD_ENTRIES[13])
     put("FROM_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[61])
     put("GREATEST", DUCKDB_DORIS_HAZARD_ENTRIES[3])
     put("HEX", DUCKDB_DORIS_HAZARD_ENTRIES[59])
+    put("HISTOGRAM", DUCKDB_DORIS_HAZARD_ENTRIES[105])
     put("INSTR", DUCKDB_DORIS_HAZARD_ENTRIES[71])
+    put("KURTOSIS", DUCKDB_DORIS_HAZARD_ENTRIES[94])
+    put("LAG", DUCKDB_DORIS_HAZARD_ENTRIES[111])
+    put("LAST_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[114])
+    put("LEAD", DUCKDB_DORIS_HAZARD_ENTRIES[112])
     put("LEAST", DUCKDB_DORIS_HAZARD_ENTRIES[4])
     put("LEFT", DUCKDB_DORIS_HAZARD_ENTRIES[54])
     put("LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[15])
@@ -490,30 +770,53 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("LOWER", DUCKDB_DORIS_HAZARD_ENTRIES[0])
     put("LPAD", DUCKDB_DORIS_HAZARD_ENTRIES[64])
     put("LTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[10])
+    put("MAX", DUCKDB_DORIS_HAZARD_ENTRIES[78])
+    put("MAX_BY", DUCKDB_DORIS_HAZARD_ENTRIES[84])
     put("MD5", DUCKDB_DORIS_HAZARD_ENTRIES[20])
+    put("MEDIAN", DUCKDB_DORIS_HAZARD_ENTRIES[80])
+    put("MIN", DUCKDB_DORIS_HAZARD_ENTRIES[79])
     put("MOD", DUCKDB_DORIS_HAZARD_ENTRIES[17])
+    put("NTH_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[115])
+    put("NTILE", DUCKDB_DORIS_HAZARD_ENTRIES[110])
     put("NULLIF", DUCKDB_DORIS_HAZARD_ENTRIES[19])
     put("OCTET_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[56])
+    put("PERCENT_RANK", DUCKDB_DORIS_HAZARD_ENTRIES[116])
     put("PI", DUCKDB_DORIS_HAZARD_ENTRIES[49])
     put("POW", DUCKDB_DORIS_HAZARD_ENTRIES[52])
     put("POWER", DUCKDB_DORIS_HAZARD_ENTRIES[53])
     put("RADIANS", DUCKDB_DORIS_HAZARD_ENTRIES[45])
+    put("RANK", DUCKDB_DORIS_HAZARD_ENTRIES[108])
     put("REGEXP_EXTRACT_ALL", DUCKDB_DORIS_HAZARD_ENTRIES[14])
     put("REGEXP_REPLACE", DUCKDB_DORIS_HAZARD_ENTRIES[8])
+    put("REGR_AVGX", DUCKDB_DORIS_HAZARD_ENTRIES[97])
+    put("REGR_AVGY", DUCKDB_DORIS_HAZARD_ENTRIES[98])
+    put("REGR_COUNT", DUCKDB_DORIS_HAZARD_ENTRIES[99])
+    put("REGR_INTERCEPT", DUCKDB_DORIS_HAZARD_ENTRIES[95])
+    put("REGR_R2", DUCKDB_DORIS_HAZARD_ENTRIES[100])
+    put("REGR_SLOPE", DUCKDB_DORIS_HAZARD_ENTRIES[96])
+    put("REGR_SXX", DUCKDB_DORIS_HAZARD_ENTRIES[101])
+    put("REGR_SXY", DUCKDB_DORIS_HAZARD_ENTRIES[102])
+    put("REGR_SYY", DUCKDB_DORIS_HAZARD_ENTRIES[103])
     put("REPEAT", DUCKDB_DORIS_HAZARD_ENTRIES[66])
     put("REPLACE", DUCKDB_DORIS_HAZARD_ENTRIES[67])
     put("REVERSE", DUCKDB_DORIS_HAZARD_ENTRIES[6])
     put("RIGHT", DUCKDB_DORIS_HAZARD_ENTRIES[70])
+    put("ROW_NUMBER", DUCKDB_DORIS_HAZARD_ENTRIES[107])
     put("RPAD", DUCKDB_DORIS_HAZARD_ENTRIES[65])
     put("RTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[11])
+    put("SEM", DUCKDB_DORIS_HAZARD_ENTRIES[104])
     put("SHA1", DUCKDB_DORIS_HAZARD_ENTRIES[73])
     put("SIGN", DUCKDB_DORIS_HAZARD_ENTRIES[48])
     put("SIGNBIT", DUCKDB_DORIS_HAZARD_ENTRIES[32])
     put("SIN", DUCKDB_DORIS_HAZARD_ENTRIES[36])
     put("SINH", DUCKDB_DORIS_HAZARD_ENTRIES[40])
+    put("SKEWNESS", DUCKDB_DORIS_HAZARD_ENTRIES[93])
     put("SPLIT_PART", DUCKDB_DORIS_HAZARD_ENTRIES[5])
     put("SQRT", DUCKDB_DORIS_HAZARD_ENTRIES[28])
     put("STARTS_WITH", DUCKDB_DORIS_HAZARD_ENTRIES[57])
+    put("STDDEV_POP", DUCKDB_DORIS_HAZARD_ENTRIES[89])
+    put("STDDEV_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[90])
+    put("SUM", DUCKDB_DORIS_HAZARD_ENTRIES[76])
     put("TAN", DUCKDB_DORIS_HAZARD_ENTRIES[38])
     put("TANH", DUCKDB_DORIS_HAZARD_ENTRIES[41])
     put("TO_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[62])
@@ -523,4 +826,6 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("UPPER", DUCKDB_DORIS_HAZARD_ENTRIES[1])
     put("URL_DECODE", DUCKDB_DORIS_HAZARD_ENTRIES[69])
     put("URL_ENCODE", DUCKDB_DORIS_HAZARD_ENTRIES[55])
+    put("VAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[91])
+    put("VAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[92])
 }

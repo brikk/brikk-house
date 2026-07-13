@@ -110,6 +110,50 @@ doubt mark `unclear` — never claim equivalence you didn't verify.
 - Commit brikk-house incrementally (no other agent on its main; diff is 0→N so clear).
 - Delete the harness from doris-focus before finishing; keep doris-focus green (`:doris-ducklake:test :detekt`) and untouched otherwise.
 
-## State at handoff
-- brikk-house committed `738159b` (batches 1–2: 21+21 pairs, report, regenerated registry).
-- doris-focus: 0.3.0 migration + inert DorisVerifier pushed to `origin/doris-focus`; tree clean; cluster **down**.
+## Reusable findings so far (VERIFY per fn, but these patterns hold)
+- **Domain-error contract diverges 3 ways:** live DuckDB 1.5.4 THROWS on out-of-domain
+  (`acos(2)`, `ln(0)`, `sqrt(-1)`, `factorial(-1)`, `cot(0)`, …); Doris returns NULL
+  (`cot(0)`→Infinity); prior-Trino evidence = NaN. (This live DuckDB throwing
+  contradicts the older "NaN in both" prior-corpus notes — DuckDB version drift.)
+- **Transcendental last-ULP:** irrational-returning fns agree to ~15 sig digits but the
+  final rendered digit often differs (`exp cbrt asinh ln log10 log(2-arg)`) →
+  `conditionally-equivalent` where a probed point differed, `identical` where all matched.
+- **`log` single-arg trap:** DuckDB `log(x)`=log10; Doris `log(x)`=natural log. 2-arg agrees.
+- **Boolean rendering:** Doris renders BOOLEAN as TINYINT `0/1` over MySQL wire vs
+  DuckDB/Trino `true/false` → mark `conditionally-equivalent` (type mapping), NOT divergent.
+- **Doris hex traps:** Doris `to_hex()`→NULL, `from_hex()` doesn't decode; use Doris
+  `hex()` / `unhex()`. **Doris lacks:** `format_number`, `levenshtein_distance` (use
+  `levenshtein`). **DuckDB lacks:** `hamming_distance`, `soundex`, `levenshtein_distance`,
+  `format_number`; `octet_length` needs a BLOB arg (no bare-VARCHAR overload).
+- Trino side is adjudicated via the **live-DuckDB bridge**: prior corpus says Trino==DuckDB
+  for most, so where Doris==live-DuckDB → identical; ULP diff → conditionally-equivalent;
+  Doris-NULL vs Trino-NaN (domain) → divergent. Provenance still says "Doris live; Trino
+  from prior evidence".
+
+## Tooling added this session
+- `/tmp/opencode/add_pairs.py <duckdb|trino> <spec.json>` — appends a JSON array of pair
+  objects to the right hazard file, dedup-by-side-name, writes indent=2. Use it instead of
+  hand-editing the JSON.
+- `/tmp/opencode/WORKER-BRIEF.md` — self-contained brief for delegating one family to a
+  worker subagent (probe→adjudicate→append→report→regen→commit). Dispatch workers ONE AT A
+  TIME (the Doris FE + file-driven harness is a shared singleton; probing cannot parallelize).
+- A python `duckdb` is available in `/tmp/opencode/venv` (activate it) to get DuckDB's REAL
+  error message when the JDBC wrapper says the unhelpful "Attempting to execute an
+  unsuccessful operation" (= a bind/catalog failure).
+
+## State at handoff (updated 2026-07-13, batches 3–4 done)
+- brikk-house committed through `a6e4d4e` (batches 1–4). duckdb→doris **75** pairs
+  (29 divergent / 40 identical / 6 conditionally-equivalent); trino→doris **66**
+  (16 divergent / 42 identical / 5 conditionally-equivalent / 2 unclear / 1 no-equivalent).
+  Report has `#batch3-numeric` and `#batch4-string` sections. Tree committed (not pushed).
+- **Remaining families (~100 each side):** arrays (`array_*`, `split`, `unnest`), aggregates
+  (`max_by/min_by/any_value/approx_count_distinct/median/histogram/regr_*/kurtosis/skewness`
+  + inline VALUES tables), window (`lag/lead/rank/row_number/ntile/…` need OVER()), datetime
+  /timezone (`date_add/date_sub/date_format/date_trunc/hour/…` + matched `SET time_zone`),
+  json (`json_extract/json_type/json_valid/json_array/json_object/…`), misc scalar/baseline
+  (`current_*/user/version/date/element_at/sequence/truncate/width_bucket/xor/…`), and the
+  no-equivalent trino tail (`array_except/array_union/crc32/normal_cdf/regexp_count/…`).
+- **doris-focus: harness `DifferentialProbe.kt` is PRESENT (recreated) and cluster is UP.**
+  MUST delete the harness + `./smoke.sh --down` before finishing/committing to doris-focus.
+- Original doris-focus state (unchanged, restore target): 0.3.0 migration + inert
+  DorisVerifier on `origin/doris-focus`; tree otherwise clean.

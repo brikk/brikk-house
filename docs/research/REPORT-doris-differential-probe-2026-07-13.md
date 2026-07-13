@@ -150,6 +150,54 @@ Live DuckDB↔Doris; Trino via prior evidence + live-DuckDB bridge. Findings:
 Registry additions: duckdb→doris +21; trino→doris +19; `signbit` revised
 divergent→conditionally-equivalent.
 
+## Batch 5 (2026-07-13) — aggregate / window functions {#batch5-agg}
+
+Live DuckDB↔Doris via the UNION-ALL scalar-subquery form; window fns wrapped with
+`group_concat(...)` over `OVER(ORDER BY x)`. Trino via prior evidence + live-DuckDB
+bridge. Divergence pressure: NULL elements, empty input, ties, ordering.
+
+- **`regr_avgx/avgy/count/r2/sxx/sxy/syy` are BROKEN on this Doris FE:** every one
+  throws `errCode = 2 ... [INTERNAL_ERROR]` at execution (reproduced on 2- and 3-row
+  inputs) while DuckDB returns values — `divergent`. Notably `regr_intercept` and
+  `regr_slope` use the *same query shape* and work (ULP-only), so it is the specific
+  regr_* variants that are unusable, not the harness form.
+- **`stddev` / `variance` DEFAULT MISMATCH (trino→doris):** Trino/DuckDB bare
+  `stddev`==`stddev_samp` (N-1) and `variance`==`var_samp`; Doris bare `stddev`/
+  `variance` are POPULATION (N). Over {1,2,4}: Trino stddev 1.5275 vs Doris 1.2472;
+  variance 2.3333 vs 1.5556. Must remap Trino `stddev`→Doris `stddev_samp` and
+  `variance`→`var_samp`, never by name — `divergent`.
+- **`skewness` / `kurtosis` sample-vs-population divergence:** not ULP — different
+  formulas. `skewness{1,2,4,8}` DuckDB 1.1376 (bias-corrected sample) vs Doris 0.6568
+  (population moment); `kurtosis` DuckDB 0.7577 vs Doris -1.0990 (sign flips) —
+  `divergent`.
+- **`sem` divergent:** DuckDB sem = stddev_samp/√N = 0.7201 over {1,2,4}; Doris sem
+  = 0.8819 — Doris does not use the standard-error-of-mean definition.
+- **`histogram` incompatible:** DuckDB/Trino return a MAP(value→count) (`{1=2, 2=1}`);
+  Doris `histogram` returns an approximate-quantile **bucket JSON string** — different
+  type and semantic, `divergent`, never interchangeable by name.
+- **`cardinality` different domain:** DuckDB `cardinality` operates ONLY on MAP
+  (`Binder Error: Cardinality can only operate on MAPs` for a list — use `len`);
+  Doris `cardinality(array(1,2,3))=3` works on arrays — `divergent` (domain).
+- **`array_agg`/`map_agg` order-sensitive (type layer):** return LIST/MAP; input-order
+  dependent without ORDER BY (DuckDB kept [3,1,2], Doris returned [1,2,3]) —
+  `conditionally-equivalent`, add explicit ORDER BY for parity.
+- **Statistical ULP-only (`conditionally-equivalent`):** `corr`, `covar_pop`,
+  `covar_samp`, `stddev_samp`, `var_pop`, `var_samp`, `regr_intercept`, `regr_slope`
+  — last-ULP accumulation-order diffs, value-equivalent. `stddev_pop` exact-matched.
+- **Boolean rendering:** `bool_and`/`bool_or` value-identical but Doris renders BOOLEAN
+  as TINYINT 0/1 — `conditionally-equivalent` (type mapping).
+- **Nondeterministic:** `any_value`, `max_by`, `min_by` order-sensitive;
+  `approx_count_distinct` HLL states non-interchangeable — all
+  `conditionally-equivalent`.
+- **`percent_rank`/`cume_dist` numeric rendering:** values identical, Doris renders
+  integral doubles as `0`/`1` vs DuckDB `0.0`/`1.0` — `conditionally-equivalent`.
+- **Identical (live):** `avg`, `sum`, `count`/`count(*)`, `max`, `min`, `median`
+  (NULL-skip + empty→NULL verified), and window fns `row_number`, `rank`,
+  `dense_rank`, `ntile`, `lag`, `lead`, `first_value`, `last_value`, `nth_value`
+  (ties, NULL edges, and default frames all align).
+
+Registry additions: duckdb→doris +43; trino→doris +37.
+
 ## Worklist status / continuation
 
 Done (batches 1-2): the prior-DIVERGENT scalar tier + the new `length` find + cheap

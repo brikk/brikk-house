@@ -9,9 +9,10 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 66 probe-verified (trino, doris) pair verdicts, in JSON order. */
+/** The 103 probe-verified (trino, doris) pair verdicts, in JSON order. */
 internal val TRINO_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
-    hazardsChunk1()
+    hazardsChunk1() +
+    hazardsChunk2()
 
 private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     // [0] trino: 'lower' | doris: 'lower'
@@ -320,27 +321,227 @@ private fun hazardsChunk1(): List<FunctionHazard> = listOf(
         hazard = "substr('héllo',2,2)='él' (code-point aligned); Doris has substr.",
         areas = listOf("string", "unicode"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"),
+    // [66] trino: 'avg' | doris: 'avg'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "avg{1,2,3,NULL}=2.0 (NULLs skipped); empty->NULL. Doris live; Trino from prior evidence (Trino==DuckDB).",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [67] trino: 'sum' | doris: 'sum'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "sum{1,2,NULL}=3; empty->NULL both. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [68] trino: 'count' | doris: 'count'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "count(x) skips NULL; count(*) counts rows. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [69] trino: 'max' | doris: 'max'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "max ignores NULL. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [70] trino: 'min' | doris: 'min'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "min ignores NULL. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [71] trino: 'bool_and' | doris: 'bool_and'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Value semantics identical but Doris renders BOOLEAN as TINYINT 0/1 over MySQL protocol vs Trino true/false — boolean type mapping required. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "boolean"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [72] trino: 'bool_or' | doris: 'bool_or'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Value semantics identical but Doris renders BOOLEAN as 0/1 vs Trino true/false — boolean type mapping. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "boolean"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [73] trino: 'any_value' | doris: 'any_value'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Order-sensitive/nondeterministic arbitrary group value; matched this probe but not guaranteed. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [74] trino: 'max_by' | doris: 'max_by'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "arg_max semantics matched (picks value at max key) but tie-breaking nondeterministic. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [75] trino: 'min_by' | doris: 'min_by'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "arg_min semantics matched (min_by(y,x) picks y at min x = 'a') but tie-breaking nondeterministic. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [76] trino: 'corr' | doris: 'corr'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff vs live DuckDB (0.9999008674099173 vs ...172) — value-equivalent. Doris live; Trino from prior evidence (Trino==DuckDB).",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [77] trino: 'covar_pop' | doris: 'covar_pop'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff — value-equivalent. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [78] trino: 'covar_samp' | doris: 'covar_samp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff (2.05 vs 2.049999999999999) — value-equivalent. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [79] trino: 'stddev_pop' | doris: 'stddev_pop'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "stddev_pop{1,2,4}=1.247219128924647 exact match vs live DuckDB. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
 )
 
-/** trino->doris lookup: 66 keys (Trino-side names) over 66 entries. */
+private fun hazardsChunk2(): List<FunctionHazard> = listOf(
+    // [80] trino: 'stddev_samp' | doris: 'stddev_samp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff — value-equivalent; sample (N-1) normalization matches. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [81] trino: 'var_pop' | doris: 'var_pop'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff — value-equivalent. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [82] trino: 'var_samp' | doris: 'var_samp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff — value-equivalent; sample (N-1) matches. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [83] trino: 'stddev' | doris: 'stddev'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: DEFAULT MISMATCH. Trino stddev == stddev_samp (N-1) = 1.5275252316519468; Doris stddev == stddev_pop (N) = 1.247219128924647 over {1,2,4}. Doris's bare stddev is POPULATION, not sample. Must map Trino stddev -> Doris stddev_samp for parity, never by name.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [84] trino: 'variance' | doris: 'variance'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: DEFAULT MISMATCH. Trino variance == var_samp (N-1) = 2.3333333333333335; Doris variance == var_pop (N) = 1.555555555555556 over {1,2,4}. Doris's bare variance is POPULATION, not sample. Must map Trino variance -> Doris var_samp for parity, never by name.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [85] trino: 'skewness' | doris: 'skewness'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: different formula/default. Over {1,2,4,8}: DuckDB(=Trino sample) 1.1376243669576889 vs Doris 0.6568077344996993 (population moment). Sample-vs-population divergence. Doris live; Trino via DuckDB bridge.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [86] trino: 'kurtosis' | doris: 'kurtosis'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: different formula/default. Over {1,2,4,8}: DuckDB(=Trino sample excess) 0.7576559546313808 vs Doris -1.098979206049149 (population excess). Sign and magnitude differ. Doris live; Trino via DuckDB bridge.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [87] trino: 'regr_intercept' | doris: 'regr_intercept'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff — value-equivalent. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [88] trino: 'regr_slope' | doris: 'regr_slope'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Last-ULP float diff (2.05 vs 2.049999999999999) — value-equivalent. Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [89] trino: 'array_agg' | doris: 'array_agg'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Returns a LIST/ARRAY (type layer). Order is input-order-dependent and nondeterministic without ORDER BY: DuckDB preserved input order [3,1,2] while Doris returned [1,2,3] on the same UNION-ALL. Add explicit ORDER BY for deterministic parity. Doris live; Trino via DuckDB bridge.",
+        areas = listOf("aggregate", "collection"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [90] trino: 'map_agg' | doris: 'map_agg'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Returns a MAP (type layer). Doris has map_agg; Trino map_agg builds key->value. Element ordering within the map is nondeterministic — conditionally-equivalent. DuckDB lacks map_agg (Trino-only bridge; compare via histogram/map). Doris live; Trino from prior evidence.",
+        areas = listOf("aggregate", "collection"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [91] trino: 'histogram' | doris: 'histogram'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Probe-verified live: incompatible return type/semantics. Trino histogram returns a MAP(value->count) (matching DuckDB {a=2,b=1}); Doris histogram returns an approximate-quantile bucket JSON string. Not interchangeable by name. Doris live; Trino via DuckDB bridge.",
+        areas = listOf("aggregate", "collection"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [92] trino: 'row_number' | doris: 'row_number'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "row_number() OVER(ORDER BY x) = 1,2,3 both. Doris live; Trino from prior evidence.",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [93] trino: 'rank' | doris: 'rank'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "rank() with tie = 1,1,3 (gap). Doris live; Trino from prior evidence.",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [94] trino: 'dense_rank' | doris: 'dense_rank'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "dense_rank() with tie = 1,1,2 (no gap). Doris live; Trino from prior evidence.",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [95] trino: 'ntile' | doris: 'ntile'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ntile(2) over 3 rows = 1,1,2 both. Doris live; Trino from prior evidence.",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [96] trino: 'lag' | doris: 'lag'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "lag(x) OVER(ORDER BY x) -> NULL,1,2 both. Doris live; Trino from prior evidence.",
+        areas = listOf("window", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [97] trino: 'lead' | doris: 'lead'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "lead(x) OVER(ORDER BY x) -> 2,3,NULL both. Doris live; Trino from prior evidence.",
+        areas = listOf("window", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [98] trino: 'first_value' | doris: 'first_value'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "first_value(x) OVER(ORDER BY x) = 1,1,1 both. Doris live; Trino from prior evidence.",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [99] trino: 'last_value' | doris: 'last_value'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "last_value(x) OVER(ORDER BY x) = 1,2,3 both — same default frame (running window). Doris live; Trino from prior evidence.",
+        areas = listOf("window"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [100] trino: 'nth_value' | doris: 'nth_value'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "nth_value(x,2) OVER(ORDER BY x) = NULL,2,2 both. Doris live; Trino from prior evidence.",
+        areas = listOf("window", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [101] trino: 'percent_rank' | doris: 'percent_rank'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Values identical (0,0.5,1) but Doris renders integral doubles as '0'/'1' vs '0.0'/'1.0' — numeric rendering only. Doris live; Trino from prior evidence.",
+        areas = listOf("window", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+    // [102] trino: 'cume_dist' | doris: 'cume_dist'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Values identical (0.333..,0.666..,1) but Doris renders trailing 1.0 as '1' — numeric rendering only. Doris live; Trino from prior evidence.",
+        areas = listOf("window", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"),
+)
+
+/** trino->doris lookup: 103 keys (Trino-side names) over 103 entries. */
 internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
+    put("ANY_VALUE", TRINO_DORIS_HAZARD_ENTRIES[73])
+    put("ARRAY_AGG", TRINO_DORIS_HAZARD_ENTRIES[89])
     put("ASCII", TRINO_DORIS_HAZARD_ENTRIES[8])
     put("ASIN", TRINO_DORIS_HAZARD_ENTRIES[22])
     put("ATAN", TRINO_DORIS_HAZARD_ENTRIES[30])
     put("ATAN2", TRINO_DORIS_HAZARD_ENTRIES[31])
+    put("AVG", TRINO_DORIS_HAZARD_ENTRIES[66])
     put("BIT_COUNT", TRINO_DORIS_HAZARD_ENTRIES[12])
+    put("BOOL_AND", TRINO_DORIS_HAZARD_ENTRIES[71])
+    put("BOOL_OR", TRINO_DORIS_HAZARD_ENTRIES[72])
     put("CBRT", TRINO_DORIS_HAZARD_ENTRIES[29])
     put("CEIL", TRINO_DORIS_HAZARD_ENTRIES[38])
     put("CEILING", TRINO_DORIS_HAZARD_ENTRIES[39])
     put("COALESCE", TRINO_DORIS_HAZARD_ENTRIES[18])
     put("CONCAT", TRINO_DORIS_HAZARD_ENTRIES[2])
     put("CONCAT_WS", TRINO_DORIS_HAZARD_ENTRIES[64])
+    put("CORR", TRINO_DORIS_HAZARD_ENTRIES[76])
     put("COS", TRINO_DORIS_HAZARD_ENTRIES[32])
     put("COSH", TRINO_DORIS_HAZARD_ENTRIES[33])
+    put("COUNT", TRINO_DORIS_HAZARD_ENTRIES[68])
+    put("COVAR_POP", TRINO_DORIS_HAZARD_ENTRIES[77])
+    put("COVAR_SAMP", TRINO_DORIS_HAZARD_ENTRIES[78])
+    put("CUME_DIST", TRINO_DORIS_HAZARD_ENTRIES[102])
     put("DEGREES", TRINO_DORIS_HAZARD_ENTRIES[41])
+    put("DENSE_RANK", TRINO_DORIS_HAZARD_ENTRIES[94])
     put("EXP", TRINO_DORIS_HAZARD_ENTRIES[28])
+    put("FIRST_VALUE", TRINO_DORIS_HAZARD_ENTRIES[98])
     put("FLOOR", TRINO_DORIS_HAZARD_ENTRIES[40])
     put("FMOD", TRINO_DORIS_HAZARD_ENTRIES[13])
     put("FORMAT_NUMBER", TRINO_DORIS_HAZARD_ENTRIES[49])
@@ -348,6 +549,11 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("FROM_HEX", TRINO_DORIS_HAZARD_ENTRIES[48])
     put("GREATEST", TRINO_DORIS_HAZARD_ENTRIES[3])
     put("HAMMING_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[55])
+    put("HISTOGRAM", TRINO_DORIS_HAZARD_ENTRIES[91])
+    put("KURTOSIS", TRINO_DORIS_HAZARD_ENTRIES[86])
+    put("LAG", TRINO_DORIS_HAZARD_ENTRIES[96])
+    put("LAST_VALUE", TRINO_DORIS_HAZARD_ENTRIES[99])
+    put("LEAD", TRINO_DORIS_HAZARD_ENTRIES[97])
     put("LEAST", TRINO_DORIS_HAZARD_ENTRIES[4])
     put("LENGTH", TRINO_DORIS_HAZARD_ENTRIES[15])
     put("LEVENSHTEIN_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[54])
@@ -358,29 +564,46 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("LOWER", TRINO_DORIS_HAZARD_ENTRIES[0])
     put("LPAD", TRINO_DORIS_HAZARD_ENTRIES[59])
     put("LTRIM", TRINO_DORIS_HAZARD_ENTRIES[10])
+    put("MAP_AGG", TRINO_DORIS_HAZARD_ENTRIES[90])
+    put("MAX", TRINO_DORIS_HAZARD_ENTRIES[69])
+    put("MAX_BY", TRINO_DORIS_HAZARD_ENTRIES[74])
     put("MD5", TRINO_DORIS_HAZARD_ENTRIES[20])
+    put("MIN", TRINO_DORIS_HAZARD_ENTRIES[70])
+    put("MIN_BY", TRINO_DORIS_HAZARD_ENTRIES[75])
     put("MOD", TRINO_DORIS_HAZARD_ENTRIES[17])
+    put("NTH_VALUE", TRINO_DORIS_HAZARD_ENTRIES[100])
+    put("NTILE", TRINO_DORIS_HAZARD_ENTRIES[95])
     put("NULLIF", TRINO_DORIS_HAZARD_ENTRIES[19])
+    put("PERCENT_RANK", TRINO_DORIS_HAZARD_ENTRIES[101])
     put("PI", TRINO_DORIS_HAZARD_ENTRIES[43])
     put("POW", TRINO_DORIS_HAZARD_ENTRIES[45])
     put("POWER", TRINO_DORIS_HAZARD_ENTRIES[46])
     put("RADIANS", TRINO_DORIS_HAZARD_ENTRIES[42])
+    put("RANK", TRINO_DORIS_HAZARD_ENTRIES[93])
     put("REGEXP_EXTRACT_ALL", TRINO_DORIS_HAZARD_ENTRIES[14])
     put("REGEXP_REPLACE", TRINO_DORIS_HAZARD_ENTRIES[7])
+    put("REGR_INTERCEPT", TRINO_DORIS_HAZARD_ENTRIES[87])
+    put("REGR_SLOPE", TRINO_DORIS_HAZARD_ENTRIES[88])
     put("REPEAT", TRINO_DORIS_HAZARD_ENTRIES[61])
     put("REPLACE", TRINO_DORIS_HAZARD_ENTRIES[53])
     put("REVERSE", TRINO_DORIS_HAZARD_ENTRIES[6])
+    put("ROW_NUMBER", TRINO_DORIS_HAZARD_ENTRIES[92])
     put("RPAD", TRINO_DORIS_HAZARD_ENTRIES[60])
     put("RTRIM", TRINO_DORIS_HAZARD_ENTRIES[11])
     put("SHA1", TRINO_DORIS_HAZARD_ENTRIES[52])
     put("SIGN", TRINO_DORIS_HAZARD_ENTRIES[44])
     put("SIN", TRINO_DORIS_HAZARD_ENTRIES[34])
     put("SINH", TRINO_DORIS_HAZARD_ENTRIES[35])
+    put("SKEWNESS", TRINO_DORIS_HAZARD_ENTRIES[85])
     put("SOUNDEX", TRINO_DORIS_HAZARD_ENTRIES[56])
     put("SPLIT_PART", TRINO_DORIS_HAZARD_ENTRIES[5])
     put("SQRT", TRINO_DORIS_HAZARD_ENTRIES[24])
     put("STARTS_WITH", TRINO_DORIS_HAZARD_ENTRIES[51])
+    put("STDDEV", TRINO_DORIS_HAZARD_ENTRIES[83])
+    put("STDDEV_POP", TRINO_DORIS_HAZARD_ENTRIES[79])
+    put("STDDEV_SAMP", TRINO_DORIS_HAZARD_ENTRIES[80])
     put("SUBSTR", TRINO_DORIS_HAZARD_ENTRIES[65])
+    put("SUM", TRINO_DORIS_HAZARD_ENTRIES[67])
     put("TAN", TRINO_DORIS_HAZARD_ENTRIES[36])
     put("TANH", TRINO_DORIS_HAZARD_ENTRIES[37])
     put("TO_BASE64", TRINO_DORIS_HAZARD_ENTRIES[58])
@@ -390,27 +613,42 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("UPPER", TRINO_DORIS_HAZARD_ENTRIES[1])
     put("URL_DECODE", TRINO_DORIS_HAZARD_ENTRIES[63])
     put("URL_ENCODE", TRINO_DORIS_HAZARD_ENTRIES[50])
+    put("VARIANCE", TRINO_DORIS_HAZARD_ENTRIES[84])
+    put("VAR_POP", TRINO_DORIS_HAZARD_ENTRIES[81])
+    put("VAR_SAMP", TRINO_DORIS_HAZARD_ENTRIES[82])
 }
 
-/** doris->trino lookup: 66 keys (Doris-side names) over 66 entries. */
+/** doris->trino lookup: 103 keys (Doris-side names) over 103 entries. */
 internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
+    put("ANY_VALUE", TRINO_DORIS_HAZARD_ENTRIES[73])
+    put("ARRAY_AGG", TRINO_DORIS_HAZARD_ENTRIES[89])
     put("ASCII", TRINO_DORIS_HAZARD_ENTRIES[8])
     put("ASIN", TRINO_DORIS_HAZARD_ENTRIES[22])
     put("ATAN", TRINO_DORIS_HAZARD_ENTRIES[30])
     put("ATAN2", TRINO_DORIS_HAZARD_ENTRIES[31])
+    put("AVG", TRINO_DORIS_HAZARD_ENTRIES[66])
     put("BIT_COUNT", TRINO_DORIS_HAZARD_ENTRIES[12])
+    put("BOOL_AND", TRINO_DORIS_HAZARD_ENTRIES[71])
+    put("BOOL_OR", TRINO_DORIS_HAZARD_ENTRIES[72])
     put("CBRT", TRINO_DORIS_HAZARD_ENTRIES[29])
     put("CEIL", TRINO_DORIS_HAZARD_ENTRIES[38])
     put("CEILING", TRINO_DORIS_HAZARD_ENTRIES[39])
     put("COALESCE", TRINO_DORIS_HAZARD_ENTRIES[18])
     put("CONCAT", TRINO_DORIS_HAZARD_ENTRIES[2])
     put("CONCAT_WS", TRINO_DORIS_HAZARD_ENTRIES[64])
+    put("CORR", TRINO_DORIS_HAZARD_ENTRIES[76])
     put("COS", TRINO_DORIS_HAZARD_ENTRIES[32])
     put("COSH", TRINO_DORIS_HAZARD_ENTRIES[33])
+    put("COUNT", TRINO_DORIS_HAZARD_ENTRIES[68])
+    put("COVAR_POP", TRINO_DORIS_HAZARD_ENTRIES[77])
+    put("COVAR_SAMP", TRINO_DORIS_HAZARD_ENTRIES[78])
+    put("CUME_DIST", TRINO_DORIS_HAZARD_ENTRIES[102])
     put("DEGREES", TRINO_DORIS_HAZARD_ENTRIES[41])
+    put("DENSE_RANK", TRINO_DORIS_HAZARD_ENTRIES[94])
     put("EXP", TRINO_DORIS_HAZARD_ENTRIES[28])
+    put("FIRST_VALUE", TRINO_DORIS_HAZARD_ENTRIES[98])
     put("FLOOR", TRINO_DORIS_HAZARD_ENTRIES[40])
     put("FMOD", TRINO_DORIS_HAZARD_ENTRIES[13])
     put("FORMAT_NUMBER", TRINO_DORIS_HAZARD_ENTRIES[49])
@@ -418,6 +656,11 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("GREATEST", TRINO_DORIS_HAZARD_ENTRIES[3])
     put("HAMMING_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[55])
     put("HEX", TRINO_DORIS_HAZARD_ENTRIES[47])
+    put("HISTOGRAM", TRINO_DORIS_HAZARD_ENTRIES[91])
+    put("KURTOSIS", TRINO_DORIS_HAZARD_ENTRIES[86])
+    put("LAG", TRINO_DORIS_HAZARD_ENTRIES[96])
+    put("LAST_VALUE", TRINO_DORIS_HAZARD_ENTRIES[99])
+    put("LEAD", TRINO_DORIS_HAZARD_ENTRIES[97])
     put("LEAST", TRINO_DORIS_HAZARD_ENTRIES[4])
     put("LENGTH", TRINO_DORIS_HAZARD_ENTRIES[15])
     put("LEVENSHTEIN", TRINO_DORIS_HAZARD_ENTRIES[54])
@@ -428,29 +671,46 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("LOWER", TRINO_DORIS_HAZARD_ENTRIES[0])
     put("LPAD", TRINO_DORIS_HAZARD_ENTRIES[59])
     put("LTRIM", TRINO_DORIS_HAZARD_ENTRIES[10])
+    put("MAP_AGG", TRINO_DORIS_HAZARD_ENTRIES[90])
+    put("MAX", TRINO_DORIS_HAZARD_ENTRIES[69])
+    put("MAX_BY", TRINO_DORIS_HAZARD_ENTRIES[74])
     put("MD5", TRINO_DORIS_HAZARD_ENTRIES[20])
+    put("MIN", TRINO_DORIS_HAZARD_ENTRIES[70])
+    put("MIN_BY", TRINO_DORIS_HAZARD_ENTRIES[75])
     put("MOD", TRINO_DORIS_HAZARD_ENTRIES[17])
+    put("NTH_VALUE", TRINO_DORIS_HAZARD_ENTRIES[100])
+    put("NTILE", TRINO_DORIS_HAZARD_ENTRIES[95])
     put("NULLIF", TRINO_DORIS_HAZARD_ENTRIES[19])
+    put("PERCENT_RANK", TRINO_DORIS_HAZARD_ENTRIES[101])
     put("PI", TRINO_DORIS_HAZARD_ENTRIES[43])
     put("POW", TRINO_DORIS_HAZARD_ENTRIES[45])
     put("POWER", TRINO_DORIS_HAZARD_ENTRIES[46])
     put("RADIANS", TRINO_DORIS_HAZARD_ENTRIES[42])
+    put("RANK", TRINO_DORIS_HAZARD_ENTRIES[93])
     put("REGEXP_EXTRACT_ALL", TRINO_DORIS_HAZARD_ENTRIES[14])
     put("REGEXP_REPLACE", TRINO_DORIS_HAZARD_ENTRIES[7])
+    put("REGR_INTERCEPT", TRINO_DORIS_HAZARD_ENTRIES[87])
+    put("REGR_SLOPE", TRINO_DORIS_HAZARD_ENTRIES[88])
     put("REPEAT", TRINO_DORIS_HAZARD_ENTRIES[61])
     put("REPLACE", TRINO_DORIS_HAZARD_ENTRIES[53])
     put("REVERSE", TRINO_DORIS_HAZARD_ENTRIES[6])
+    put("ROW_NUMBER", TRINO_DORIS_HAZARD_ENTRIES[92])
     put("RPAD", TRINO_DORIS_HAZARD_ENTRIES[60])
     put("RTRIM", TRINO_DORIS_HAZARD_ENTRIES[11])
     put("SHA1", TRINO_DORIS_HAZARD_ENTRIES[52])
     put("SIGN", TRINO_DORIS_HAZARD_ENTRIES[44])
     put("SIN", TRINO_DORIS_HAZARD_ENTRIES[34])
     put("SINH", TRINO_DORIS_HAZARD_ENTRIES[35])
+    put("SKEWNESS", TRINO_DORIS_HAZARD_ENTRIES[85])
     put("SOUNDEX", TRINO_DORIS_HAZARD_ENTRIES[56])
     put("SPLIT_PART", TRINO_DORIS_HAZARD_ENTRIES[5])
     put("SQRT", TRINO_DORIS_HAZARD_ENTRIES[24])
     put("STARTS_WITH", TRINO_DORIS_HAZARD_ENTRIES[51])
+    put("STDDEV", TRINO_DORIS_HAZARD_ENTRIES[83])
+    put("STDDEV_POP", TRINO_DORIS_HAZARD_ENTRIES[79])
+    put("STDDEV_SAMP", TRINO_DORIS_HAZARD_ENTRIES[80])
     put("SUBSTR", TRINO_DORIS_HAZARD_ENTRIES[65])
+    put("SUM", TRINO_DORIS_HAZARD_ENTRIES[67])
     put("TAN", TRINO_DORIS_HAZARD_ENTRIES[36])
     put("TANH", TRINO_DORIS_HAZARD_ENTRIES[37])
     put("TO_BASE64", TRINO_DORIS_HAZARD_ENTRIES[58])
@@ -460,4 +720,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("UPPER", TRINO_DORIS_HAZARD_ENTRIES[1])
     put("URL_DECODE", TRINO_DORIS_HAZARD_ENTRIES[63])
     put("URL_ENCODE", TRINO_DORIS_HAZARD_ENTRIES[50])
+    put("VARIANCE", TRINO_DORIS_HAZARD_ENTRIES[84])
+    put("VAR_POP", TRINO_DORIS_HAZARD_ENTRIES[81])
+    put("VAR_SAMP", TRINO_DORIS_HAZARD_ENTRIES[82])
 }
