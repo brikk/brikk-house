@@ -1,7 +1,7 @@
 # `brikk-chdb`: embedded chDB for Kotlin/JVM
 
 Status: phase-0 implementation — branch `codex/brikk-chdb`. The macOS-arm64
-released-library smoke test passes; consumer packaging and Linux smoke tests remain.
+released-library and packaged-resource smoke tests pass; Linux smoke tests remain.
 
 ## Decision
 
@@ -124,24 +124,57 @@ JNI or a JDK-22-only module.
 `brikk-chdb` pins `chdb-core` **v26.5.0**. Its GitHub release supplies standalone
 dynamic and static `libchdb` archives for Linux x86_64/aarch64 and macOS arm64
 (and its release manifest is the checksum authority). It does not publish a
-Maven-native artifact that Kotlin Toolchain can select by host. Packaging those
-already-built archives for JVM consumers is now the main engineering task, not
-the FFM calls.
+Maven-native artifact that Kotlin Toolchain can select by host.
 
-Phase 0 supports an explicit `brikk.chdb.library` path so the ABI and API can be
-proved without hiding packaging work.  A published module is not complete until
-one of these is implemented:
+Kotlin Toolchain now builds three small, separately publishable resource modules:
 
-1. Brikk-published, platform-specific native resource artifacts with explicit
-   consumer selection; or
-2. a single verified distribution jar containing the supported platform binaries
-   and extracting only the matching binary to a content-addressed temp directory.
+```text
+brikk-chdb-native-macos-arm64
+brikk-chdb-native-linux-x64
+brikk-chdb-native-linux-arm64
+```
 
-Never fetch a mutable `latest` release at application startup.  Every artifact
-must record the upstream release, SHA-256, OS, architecture, and ClickHouse
-version.  Initial support should be the platforms Brikk can test: macOS arm64,
-Linux x64, and Linux arm64; Windows follows only after an upstream native binary
-and CI proof exist.
+The local `brikk-chdb-native-packaging` Toolchain plugin downloads each pinned
+archive only while building/publishing its matching module, verifies the archive
+SHA-256, extracts only `libchdb.so`, then records the library SHA-256 in the JAR
+resource manifest. No native binary is committed to Git. Consumers put exactly
+one matching native artifact on their runtime classpath alongside `brikk-chdb`.
+The core loader extracts that checksum-verified resource to a content-addressed
+temporary path and calls `System.load`; an explicit `brikk.chdb.library` path
+still takes precedence for development/overrides.
+
+The module names are intentionally explicit rather than one universal JAR: the
+three current libraries total hundreds of megabytes and Maven has no automatic
+host classifier choice in Kotlin Toolchain. An unsupported host (currently
+including Windows) simply gives `ClickhouseVerifier` an unverified warning.
+
+Never fetch a mutable `latest` release at application startup. Every artifact
+records the upstream release, SHA-256, OS, architecture, and ClickHouse version.
+Initial support is the platforms Brikk can test: macOS arm64, Linux x64, and
+Linux arm64; Windows follows only after an upstream native binary and CI proof
+exist.
+
+### Native packaging handoff
+
+macOS arm64 has been proved end-to-end: `./kotlin build -m
+brikk-chdb-native-macos-arm64` produced a JAR with the generated resource, and
+a clean JShell process containing only `brikk-chdb`, that JAR, and Kotlin stdlib
+ran `Chdb.open()` with **no explicit library path** and returned `42` for
+`SELECT 6 * 7`.
+
+Linux agents should run the analogous commands before publishing their artifact:
+
+```sh
+./kotlin build -m brikk-chdb-native-linux-x64
+./kotlin build -m brikk-chdb-native-linux-arm64
+```
+
+Each command downloads only its platform archive, validates the SHA-256 pinned
+in that module's `chdb-native.properties`, and builds the resource JAR. Then run
+the `brikk-chdb` integration smoke test with the generated `libchdb.so` and
+`--enable-native-access=ALL-UNNAMED`; finally run the resource-JAR loading smoke
+test on that host before publishing. Do not change the checksum merely to make a
+download pass—treat an upstream archive change as an intentional version bump.
 
 ## ClickHouse verifier
 

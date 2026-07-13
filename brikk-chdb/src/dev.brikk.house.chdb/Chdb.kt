@@ -50,8 +50,8 @@ data class ChdbConfig(
     val arguments: List<String> = emptyList(),
     /**
      * Absolute or relative path to the platform-specific `libchdb` binary. When absent,
-     * [Chdb.libraryPathProperty] is used. Phase 0 intentionally has no download or bundled
-     * native artifact fallback.
+     * [Chdb.libraryPathProperty] is used, then a matching `brikk-chdb-native-*` runtime
+     * resource when present. No runtime download occurs.
      */
     val libraryPath: Path? = null,
 )

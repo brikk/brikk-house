@@ -1,0 +1,8 @@
+# Build-time-only Kotlin Toolchain plugin. It turns a pinned upstream libchdb archive into
+# generated module resources; native archives never live in Git.
+product: jvm/amper-plugin
+
+settings:
+  jvm:
+    jdk:
+      version: 25

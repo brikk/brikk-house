@@ -7,8 +7,12 @@ import java.lang.foreign.MemorySegment
 import java.lang.foreign.SymbolLookup
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.MethodHandle
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
+import java.util.Properties
 
 /**
  * Direct binding to the non-deprecated opaque-handle API in chdb-core's
@@ -36,11 +40,12 @@ internal object NativeChdb {
         val requested = config.libraryPath ?: System.getProperty(Chdb.libraryPathProperty)
             ?.takeIf(String::isNotBlank)
             ?.let(Path::of)
+        val path = requested?.toAbsolutePath()?.normalize() ?: PackagedChdbNative.extractForCurrentHost()
             ?: throw unavailable(
-                "No chDB native library was configured. Set ${Chdb.libraryPathProperty} " +
-                    "or ChdbConfig.libraryPath to an absolute path to libchdb.",
+                "No compatible packaged chDB native resource was found for this host. Add the " +
+                    "matching brikk-chdb-native-* runtime artifact, or set ${Chdb.libraryPathProperty} " +
+                    "or ChdbConfig.libraryPath to libchdb.",
             )
-        val path = requested.toAbsolutePath().normalize()
         if (!Files.isRegularFile(path)) {
             throw unavailable("chDB native library does not exist or is not a regular file: $path")
         }
@@ -88,6 +93,67 @@ internal object NativeChdb {
                 "${System.getProperty("os.arch")}.",
             cause,
         )
+}
+
+/** Extracts a verified platform resource into a content-addressed temp directory for System.load. */
+private object PackagedChdbNative {
+    private const val resourceRoot = "META-INF/brikk/chdb/native"
+    private val extractionLock = Any()
+
+    fun extractForCurrentHost(): Path? = platformForCurrentHost()?.let(::extract)
+
+    private fun extract(platform: String): Path? = synchronized(extractionLock) {
+        val base = "$resourceRoot/$platform"
+        val manifest = Chdb::class.java.classLoader.getResourceAsStream("$base/manifest.properties")
+            ?: return@synchronized null
+        val properties = Properties().also { manifest.use(it::load) }
+        val expectedSha256 = properties.getProperty("librarySha256")?.lowercase()
+            ?.takeIf { it.matches(Regex("[0-9a-f]{64}")) }
+            ?: throw ChdbUnavailableException("Packaged chDB resource $base has no valid librarySha256")
+        val library = properties.getProperty("library") ?: "libchdb.so"
+        require(library == "libchdb.so") { "Unsupported packaged chDB library name: $library" }
+        val resource = Chdb::class.java.classLoader.getResourceAsStream("$base/$library")
+            ?: throw ChdbUnavailableException("Packaged chDB manifest exists but $base/$library is missing")
+
+        val destination = Path.of(System.getProperty("java.io.tmpdir"), "brikk-chdb", expectedSha256, library)
+        if (Files.isRegularFile(destination) && sha256(destination) == expectedSha256) return@synchronized destination
+        Files.createDirectories(destination.parent)
+        val temporary = Files.createTempFile(destination.parent, "$library-", ".tmp")
+        try {
+            resource.use { input -> Files.newOutputStream(temporary).use(input::copyTo) }
+            check(sha256(temporary) == expectedSha256) { "Packaged chDB resource checksum mismatch for $platform" }
+            try {
+                Files.move(temporary, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+            } catch (_: AtomicMoveNotSupportedException) {
+                Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING)
+            }
+            destination
+        } finally {
+            Files.deleteIfExists(temporary)
+        }
+    }
+
+    private fun platformForCurrentHost(): String? {
+        val os = System.getProperty("os.name").lowercase()
+        val arch = System.getProperty("os.arch").lowercase()
+        return when {
+            (os.contains("mac") || os.contains("darwin")) && arch in setOf("aarch64", "arm64") -> "macos-arm64"
+            os.contains("linux") && arch in setOf("amd64", "x86_64") -> "linux-x64"
+            os.contains("linux") && arch in setOf("aarch64", "arm64") -> "linux-arm64"
+            else -> null
+        }
+    }
+
+    private fun sha256(file: Path): String = MessageDigest.getInstance("SHA-256").also { digest ->
+        Files.newInputStream(file).use { input ->
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                digest.update(buffer, 0, count)
+            }
+        }
+    }.digest().joinToString("") { "%02x".format(it.toInt() and 0xff) }
 }
 
 private class NativeChdbSession(
