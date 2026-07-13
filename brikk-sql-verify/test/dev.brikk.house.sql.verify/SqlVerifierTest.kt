@@ -324,6 +324,44 @@ class SqlVerifierTest {
         }
     }
 
+    @Test
+    fun dorisAcceptsBrikkGeneratorMappingFixes() {
+        // docs/research/BUGS-doris-generator-mappings-2026-07-13.md: the corrected
+        // renderings the Doris generator now emits (asserted in brikk-sql's
+        // DorisGeneratorMappingBugsTest) must be grammar-accepted by the real Doris FE
+        // parser. (Grammar-only: the FE parser does not resolve function names, so this
+        // pins syntax, not the semantic verdicts — those come from the live-probe REPORT.)
+        val verifier = SqlVerifiers.forEngine("doris")!!
+        val renderings = listOf(
+            // P1
+            "SELECT ARRAYS_OVERLAP(a, b)",
+            "SELECT FROM_MILLISECOND(ms)",
+            "SELECT SPLIT_BY_REGEXP(s, p)",
+            "SELECT NAMED_STRUCT('a', 1, 'b', 'x')",
+            "SELECT JSON_CONTAINS(j, v)",
+            "SELECT JSON_UNQUOTE(JSON_EXTRACT(j, p))",
+            // P2
+            "SELECT ARRAY_SIZE(a)",
+            // P3
+            "SELECT DATE_FORMAT(ts, '%Y')",
+            "SELECT CAST(s AS DATETIME(6))",
+            // enhancements
+            "SELECT GCD(a, b)",
+            "SELECT LCM(a, b)",
+            "SELECT ARRAY_POSITION(a, b)",
+            "SELECT ENDS_WITH(s, x)",
+            "SELECT NOW()",
+            "SELECT ST_ASBINARY(g)",
+            "SELECT ISNAN(x)",
+            "SELECT ARRAY_SLICE(a, 1, 3)",
+            "SELECT ARRAY_SLICE(a, 2)",
+        )
+        for (sql in renderings) {
+            val result = verifier.verify(sql)
+            assertTrue(result.accepted, "Doris FE parser rejected `$sql`: ${result.error}")
+        }
+    }
+
     // -- postgres -------------------------------------------------------------------------
     //
     // All postgres cases share ONE embedded PG instance (booting a native server + one-time

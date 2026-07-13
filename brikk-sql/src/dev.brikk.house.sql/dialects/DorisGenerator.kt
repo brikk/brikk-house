@@ -85,6 +85,15 @@ open class DorisGenerator(
     // sqlglot: Doris.TIME_FORMAT
     override val dialectTimeFormat: String get() = "'yyyy-MM-dd HH:mm:ss'"
 
+    // BUGS-doris-generator-mappings row 7 (P2): ArraySize (duckdb array_length / len) must
+    // render as ARRAY_SIZE, not the base default ARRAY_LENGTH. The live Doris FE has NO
+    // ARRAY_LENGTH ("Can not found function 'ARRAY_LENGTH'"); the correct name is ARRAY_SIZE
+    // (aliases CARDINALITY/SIZE; GeneratedDorisFunctionCatalog: ARRAY_SIZE, live = 3). NOTE:
+    // this is fixed at the GENERATOR mapping only — the pinned function catalog is NOT
+    // mutated (it faithfully reflects the pinned vendored FE registry; the ARRAY_LENGTH
+    // presence/absence is a version skew between our pin and the probe program's live FE).
+    override val arraySizeName: String get() = "ARRAY_SIZE"
+
     // ------------------------------------------------------------------
     // brikk extension: first-class Doris arrays (registry entry 7; upstream-PR candidate)
     //
@@ -150,6 +159,38 @@ open class DorisGenerator(
                 func("ARRAY_SORT", expression.thisArg)
             }
         }
+    }
+
+    // BUGS-doris-generator-mappings enhancement: ArraySlice -> Doris ARRAY_SLICE, which
+    // takes (array, offset, LENGTH) rather than DuckDB list_slice's (array, begin, END).
+    // Convert an integer-literal end index to a length (END - BEGIN + 1). A non-literal
+    // begin/end can't be statically converted, so flag it (rather than emit a diverging
+    // naive rename) and fall back to the two-arg ARRAY_SLICE (offset-to-tail) form.
+    open fun dorisArraySliceSql(expression: ArraySlice): String {
+        val arr = expression.thisArg
+        val start = expression.args["start"] as? Expression
+        val end = expression.args["end"] as? Expression
+
+        if (end == null) {
+            // list_slice(a, begin) -> array_slice(a, offset) (to the tail); identical.
+            return func("ARRAY_SLICE", arr, start)
+        }
+
+        fun intLit(e: Expression?): Long? =
+            if (e is Literal && e.isInt) e.name.toLongOrNull() else null
+
+        val startVal = intLit(start)
+        val endVal = intLit(end)
+        if (startVal != null && endVal != null) {
+            val length = endVal - startVal + 1
+            return func("ARRAY_SLICE", arr, start, Literal.number(length.toString()))
+        }
+
+        unsupported(
+            "list_slice with a non-integer-literal begin/end cannot be converted to Doris " +
+                "ARRAY_SLICE's (offset, length) form without diverging"
+        )
+        return func("ARRAY_SLICE", arr, start)
     }
 
     // brikk extension (docs/brikk-extensions.md entry 14): SHA2Digest -> UNHEX(SHA2(x, n)).
@@ -226,6 +267,50 @@ open class DorisGenerator(
         return if (timeFormat != dialectTimeFormat) timeFormat else null
     }
 
+    // BUGS-doris-generator-mappings row 2 (P1): UnixToTime -> the Doris epoch family.
+    // UnixToTime carries a `scale` (10^scale sub-second units per second: 0 = seconds,
+    // 3 = ms [duckdb epoch_ms], 6 = us) and optionally a `format`. Doris exposes a
+    // scale-keyed conversion family (FROM_SECOND / FROM_MILLISECOND / FROM_MICROSECOND,
+    // each BIGINT -> DATETIME; GeneratedDorisFunctionCatalog), which is the correct idiom
+    // for a bare unix->datetime conversion. When a FORMAT is present the source wants a
+    // formatted STRING, which is exactly FROM_UNIXTIME(seconds, format) — but that path
+    // only accepts SECONDS, so a non-seconds scale with a format is flagged (no direct
+    // Doris equivalent) and rendered seconds-style rather than silently overflowing.
+    open fun dorisUnixToTimeSql(expression: UnixToTime): String {
+        val scale = expression.args["scale"]
+        val format = dorisTimeFormat(expression)
+        val scaleStr: String? = when {
+            scale == null -> "0"
+            scale is Literal && !scale.isString -> scale.name
+            else -> null
+        }
+
+        if (format != null) {
+            // Formatted output: FROM_UNIXTIME(seconds, format). Only valid for seconds.
+            if (scaleStr != "0") {
+                unsupported(
+                    "FROM_UNIXTIME with a format string only accepts SECONDS; a sub-second " +
+                        "scale ($scaleStr) has no direct Doris equivalent"
+                )
+            }
+            return func("FROM_UNIXTIME", expression.thisArg, format)
+        }
+
+        val fn = when (scaleStr) {
+            "0" -> "FROM_SECOND"
+            "3" -> "FROM_MILLISECOND"
+            "6" -> "FROM_MICROSECOND"
+            else -> {
+                unsupported(
+                    "UnixToTime scale '$scaleStr' has no Doris epoch-conversion function " +
+                        "(FROM_SECOND/FROM_MILLISECOND/FROM_MICROSECOND cover 0/3/6)"
+                )
+                "FROM_SECOND"
+            }
+        }
+        return func(fn, expression.thisArg)
+    }
+
     // sqlglot: Generator.lastday_sql with LAST_DAY_SUPPORTS_DATE_PART = False
     open fun lastdaySql(expression: LastDay): String {
         val unit = expression.text("unit")
@@ -238,6 +323,49 @@ open class DorisGenerator(
     // ------------------------------------------------------------------
     // Overridden generator methods (sqlglot: generators/doris.py methods)
     // ------------------------------------------------------------------
+
+    // BUGS-doris-generator-mappings row 4 (P1): duckdb struct_pack(a:=1,...) parses to a
+    // Struct of PropertyEQ (name := value). The base rendering emits STRUCT(1 AS a, ...),
+    // but Doris STRUCT rejects `expr AS name` alias syntax (error) and bare STRUCT(1,'x')
+    // loses the field names. Doris NAMED_STRUCT('a',1,'b','x') (GeneratedDorisFunctionCatalog:
+    // NAMED_STRUCT, since 2.0; verified live {"a":1,"b":"x"}) preserves them. Named-less
+    // struct() literals (no PropertyEQ) keep the base STRUCT rendering.
+    override fun structSql(expression: Struct): String {
+        val exprs = expression.expressionsArg
+        val allNamed = exprs.isNotEmpty() && exprs.all { it is PropertyEQ }
+        if (!allNamed) return super.structSql(expression)
+
+        val args = mutableListOf<kotlin.Any?>()
+        for (e in exprs) {
+            val prop = e as PropertyEQ
+            // PropertyEQ `this` is the field name (Identifier/Column/Literal), rendered as
+            // a string-literal key for NAMED_STRUCT.
+            args.add(Literal.string(prop.name))
+            args.add(prop.args["expression"])
+        }
+        return func("NAMED_STRUCT", *args.toTypedArray())
+    }
+
+    // BUGS-doris-generator-mappings enhancements: a small allowlist of source functions
+    // that reach us as unresolved Anonymous calls (no canonical AST node exists) but have
+    // a trivially-identical Doris equivalent under a different NAME. Renaming the emitted
+    // name (arguments unchanged) is result-identical and lifts the fail-loud refusal.
+    // Evidence: REPORT-doris-differential-probe-2026-07-13.md "Verified live" list.
+    //   greatest_common_divisor -> GCD, least_common_multiple -> LCM (duckdb),
+    //   st_aswkb -> ST_ASBINARY (duckdb geometry).
+    private val anonymousRenames: Map<String, String> = mapOf(
+        "GREATEST_COMMON_DIVISOR" to "GCD",
+        "LEAST_COMMON_MULTIPLE" to "LCM",
+        "ST_ASWKB" to "ST_ASBINARY",
+    )
+
+    override fun anonymousSql(expression: Anonymous): String {
+        val renamed = anonymousRenames[expression.name.uppercase()]
+        if (renamed != null) {
+            return func(renamed, *expression.expressionsArg.toTypedArray())
+        }
+        return super.anonymousSql(expression)
+    }
 
     // sqlglot: DorisGenerator.uniquekeyproperty_sql
     override fun uniquekeypropertySql(expression: UniqueKeyProperty, prefix: String): String {
@@ -426,11 +554,23 @@ open class DorisGenerator(
             fun Generator.dg(): DorisGenerator = this as DorisGenerator
 
             reg(AddMonths::class) { e -> dg().renameFuncSql("MONTHS_ADD", e) }
+            // BUGS-doris-generator-mappings row 1 (P1): duckdb list_has_any(a,b) parses to
+            // ArrayOverlaps, whose base rendering is `a && b`. Doris `&&` is logical-AND
+            // and cannot cast arrays to boolean (runtime error), so emit ARRAYS_OVERLAP(a,b)
+            // (GeneratedDorisFunctionCatalog: ARRAYS_OVERLAP; verified live = 1).
+            reg(ArrayOverlaps::class) { e ->
+                func("ARRAYS_OVERLAP", (e as Binary).left, e.right)
+            }
             reg(ApproxDistinct::class) { e -> dg().approxCountDistinctSql(e as ApproxDistinct) }
             reg(ArgMax::class) { e -> dg().renameFuncSql("MAX_BY", e) }
             reg(ArgMin::class) { e -> dg().renameFuncSql("MIN_BY", e) }
             reg(ArrayAgg::class) { e -> dg().renameFuncSql("COLLECT_LIST", e) }
             reg(ArrayToString::class) { e -> dg().renameFuncSql("ARRAY_JOIN", e) }
+            // BUGS-doris-generator-mappings enhancement: duckdb list_slice(a,begin,END) ->
+            // ArraySlice. Doris ARRAY_SLICE(arr, offset, LENGTH) uses a length, not an end
+            // index, so dorisArraySliceSql converts end->length. Verified: list_slice(a,2,4)
+            // = [a2,a3,a4] equals array_slice(a,2,3).
+            reg(ArraySlice::class) { e -> dg().dorisArraySliceSql(e as ArraySlice) }
             reg(ArrayUniqueAgg::class) { e -> dg().renameFuncSql("COLLECT_SET", e) }
             reg(CurrentDate::class) { _ -> func("CURRENT_DATE") }
             reg(CurrentTimestamp::class) { _ -> func("NOW") }
@@ -441,9 +581,27 @@ open class DorisGenerator(
             reg(GroupConcat::class) { e ->
                 func("GROUP_CONCAT", e.thisArg, e.args["separator"] ?: Literal.string(","))
             }
+            // BUGS-doris-generator-mappings row 6 (P1): trino json_extract_scalar unwraps
+            // to a RAW scalar, but Doris JSON_EXTRACT keeps JSON quotes on string scalars
+            // (`'"hi"'` vs `'hi'`). Wrap in JSON_UNQUOTE so string scalars come back
+            // unquoted, matching Trino (numeric scalars are unaffected). Verified live =
+            // 'hi' (REPORT batch11-bucketb trino). Was previously bare JSON_EXTRACT.
             reg(JSONExtractScalar::class) { e ->
-                func("JSON_EXTRACT", e.thisArg, e.args["expression"])
+                func("JSON_UNQUOTE", func("JSON_EXTRACT", e.thisArg, e.args["expression"]))
             }
+            // BUGS-doris-generator-mappings row 5 (P1): trino json_array_contains(j,v)
+            // parses to JSONArrayContains, whose inherited MySQL rendering is
+            // `j MEMBER OF(v)` — this errors at runtime on Doris (both operand orders).
+            // Doris JSON_CONTAINS(j, v) (GeneratedDorisFunctionCatalog; verified live = 1)
+            // is the equivalent.
+            reg(JSONArrayContains::class) { e ->
+                func("JSON_CONTAINS", (e as Binary).left, e.right)
+            }
+            // BUGS-doris-generator-mappings enhancement: trino is_nan(x) parses to IsNan;
+            // Doris function is ISNAN, not IS_NAN (GeneratedDorisFunctionCatalog: ISNAN).
+            // (DuckdbGenerator already renders IsNan -> ISNAN; Doris was falling back to the
+            // verbatim IS_NAN sql-name and refusing.)
+            reg(IsNan::class) { e -> dg().renameFuncSql("ISNAN", e) }
             reg(Lag::class) { e -> dg().lagLeadSql(e) }
             reg(Lead::class) { e -> dg().lagLeadSql(e) }
             reg(MapNode::class) { e -> dg().renameFuncSql("ARRAY_MAP", e) }
@@ -451,20 +609,43 @@ open class DorisGenerator(
                 "${propertyName(e as Property, stringKey = true)}=${sql(e, "value")}"
             }
             reg(RegexpLike::class) { e -> dg().renameFuncSql("REGEXP", e) }
-            reg(RegexpSplit::class) { e -> dg().renameFuncSql("SPLIT_BY_STRING", e) }
+            // BUGS-doris-generator-mappings row 3 (P1): string_split_regex / regexp_split
+            // are REGEX splits, but SPLIT_BY_STRING splits on the pattern as a LITERAL.
+            // Doris SPLIT_BY_REGEXP (alias REGEXP_SPLIT_TO_ARRAY, doris-signatures.json /
+            // GeneratedDorisFunctionCatalog) is the regex-splitting function. The literal
+            // Split / StringToArray nodes correctly keep SPLIT_BY_STRING below.
+            reg(RegexpSplit::class) { e -> dg().renameFuncSql("SPLIT_BY_REGEXP", e) }
             reg(SchemaCommentProperty::class) { e -> nakedProperty(e as Property) }
             reg(Split::class) { e -> dg().renameFuncSql("SPLIT_BY_STRING", e) }
             reg(StringToArray::class) { e -> dg().renameFuncSql("SPLIT_BY_STRING", e) }
             reg(StrToUnix::class) { e -> func("UNIX_TIMESTAMP", e.thisArg, formatTime(e)) }
             reg(TimeStrToDate::class) { e -> dg().renameFuncSql("TO_DATE", e) }
             reg(TsOrDsAdd::class) { e -> func("DATE_ADD", e.thisArg, e.args["expression"]) }
+            // BUGS-doris-generator-mappings row 8 (P3): duckdb strftime(ts,fmt) parses to
+            // TimeToStr and renders DATE_FORMAT(ts, fmt) directly. But re-parsing that under
+            // Doris (MysqlParser.DATE_FORMAT) wraps the arg in the INTERNAL
+            // TsOrDsToTimestamp node, which had no Doris renderer -> the capability check
+            // saw TS_OR_DS_TO_TIMESTAMP verbatim and falsely REFUSED (UNMAPPABLE). Doris has
+            // no TS_OR_DS_TO_TIMESTAMP function; the node just means "coerce to datetime",
+            // so render it as a plain CAST(... AS DATETIME) — matches the live behavior of
+            // date_format(cast(ts as datetime), fmt).
+            reg(TsOrDsToTimestamp::class) { e ->
+                sql(Cast(args("this" to e.thisArg, "to" to DataType(args("this" to DType.DATETIME)))))
+            }
             reg(TsOrDsToDate::class) { e -> func("TO_DATE", e.thisArg) }
             reg(TimeToUnix::class) { e -> dg().renameFuncSql("UNIX_TIMESTAMP", e) }
             reg(TimestampTrunc::class) { e -> func("DATE_TRUNC", e.thisArg, unitToStr(e)) }
             reg(UnixToStr::class) { e ->
                 func("FROM_UNIXTIME", e.thisArg, dg().dorisTimeFormat(e))
             }
-            reg(UnixToTime::class) { e -> dg().renameFuncSql("FROM_UNIXTIME", e) }
+            // BUGS-doris-generator-mappings row 2 (P1): epoch_ms(ms) parses to
+            // UnixToTime(scale=3). The old `renameFuncSql("FROM_UNIXTIME", e)` flattened
+            // ALL args -> FROM_UNIXTIME(ms, 3), which is doubly wrong: Doris FROM_UNIXTIME
+            // takes SECONDS (ms overflows) and its 2nd arg is a FORMAT STRING (literal 3 ->
+            // '3'), not a fractional-second scale. Doris has a scale-keyed epoch family
+            // FROM_SECOND / FROM_MILLISECOND / FROM_MICROSECOND (all BIGINT -> DATETIME),
+            // used by dorisUnixToTimeSql below.
+            reg(UnixToTime::class) { e -> dg().dorisUnixToTimeSql(e as UnixToTime) }
 
             // brikk extension (docs/brikk-extensions.md entry 14, NOT sqlglot parity):
             // catalog-backed fixes for renders the Python oracle emits under names Doris
@@ -537,6 +718,32 @@ open class DorisGenerator(
             // (DATETIME, DATETIME, INTERVAL), end-EXCLUSIVE like duckdb range); Python
             // emits GENERATE_SERIES, which Doris does not have.
             reg(GenerateSeries::class) { e -> dg().dorisGenerateSeriesSql(e as GenerateSeries) }
+
+            // BUGS-doris-generator-mappings row 9 (P3): trino from_iso8601_timestamp_nanos(s)
+            // parses to FromISO8601TimestampNanos, whose base rendering is CAST(s AS
+            // TIMESTAMPTZ) -> Doris CAST(s AS DATETIME), which drops ALL fractional seconds.
+            // Doris DATETIME(6) keeps microseconds (its max sub-second precision), so cast
+            // to DATETIME(6) to retain as much as Doris can represent. LOSSY: the Trino
+            // source keeps NANOseconds (9 digits); Doris DATETIME tops out at microseconds
+            // (6 digits), so the final 3 digits of nanosecond precision are unrepresentable
+            // and silently dropped.
+            reg(FromISO8601TimestampNanos::class) { e ->
+                sql(
+                    Cast(
+                        args(
+                            "this" to e.thisArg,
+                            "to" to DataType(
+                                args(
+                                    "this" to DType.DATETIME,
+                                    "expressions" to listOf(
+                                        DataTypeParam(args("this" to Literal.number("6")))
+                                    ),
+                                )
+                            ),
+                        )
+                    )
+                )
+            }
 
             // sqlglot: LAST_DAY_SUPPORTS_DATE_PART = False (base lastday_sql flag)
             reg(LastDay::class) { e -> dg().lastdaySql(e as LastDay) }

@@ -1,3 +1,8 @@
 {
- "cases": []
+ "cases": [
+  {
+   "case": "write|postgres|SELECT JSON_UNQUOTE(JSON_EXTRACT(CAST('{\"key\": 1}' AS JSONB), '$.key'))",
+   "reason": "BUGS-doris-generator-mappings-2026-07-13 row 6: a scalar JSON extract now renders for Doris as the WRAPPED form JSON_UNQUOTE(JSON_EXTRACT(...)) (was bare JSON_EXTRACT, which kept JSON quotes). The Doris canonical `sql` therefore parses back to JSONUnquote(JSONExtractScalar), a two-node shape that does not collapse to a single Postgres JSON_EXTRACT_PATH on the round-trip (Postgres keeps the outer JSON_UNQUOTE). The doris and read directions are correct; only this synthetic doris->postgres re-derivation cannot reconstruct the original single-node form."
+  }
+ ]
 }

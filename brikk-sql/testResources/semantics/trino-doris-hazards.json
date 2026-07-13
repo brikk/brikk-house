@@ -2062,36 +2062,36 @@
     },
     {
       "trino": "json_array_contains",
-      "doris": "member_of",
-      "verdict": "divergent",
-      "hazard": "GENERATOR BUG (confident, certify ok=true): json_array_contains(json,val) emitted as `json MEMBER OF(val)` which errors at runtime on Doris (both operand orders). Correct Doris equivalent is JSON_CONTAINS(json, val) (verified live = 1). Filed as generator bug.",
+      "doris": "json_contains",
+      "verdict": "identical",
+      "hazard": "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 5): json_array_contains(json,val) now emits JSON_CONTAINS(json, val) (was the wrong `json MEMBER OF(val)`, which errors at runtime). JSON_CONTAINS is result-identical (verified live = 1). Verdict divergent->identical; the divergent entry only guarded the wrong rendering (never fired: certify keys on JSONArrayContains's sqlName + dedicated renderer masking) — re-verify against live FE.",
       "areas": [
         "json"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino; generator fixed in BUGS-doris-generator-mappings-2026-07-13"
     },
     {
       "trino": "json_extract_scalar",
-      "doris": "json_extract",
-      "verdict": "divergent",
-      "hazard": "json_extract_scalar unwraps to a raw scalar in Trino, but the generator maps it to Doris JSON_EXTRACT which keeps JSON quoting on string scalars: json_extract_scalar('{\"a\":\"hi\"}','$.a')='hi' (Trino) vs '\"hi\"' (Doris). Numeric scalars match. Correct mapping needs JSON_UNQUOTE(JSON_EXTRACT(...)) (verified live = 'hi'). Doris live; Trino from prior evidence.",
+      "doris": "json_unquote",
+      "verdict": "identical",
+      "hazard": "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 6): json_extract_scalar(j,p) now emits JSON_UNQUOTE(JSON_EXTRACT(j,p)) (was bare JSON_EXTRACT, which kept JSON quotes on string scalars: '\"hi\"' vs Trino's 'hi'). The JSON_UNQUOTE wrap makes string scalars match (verified live = 'hi'); numeric scalars were already fine. Verdict divergent->identical; the divergent entry only guarded the wrong rendering (never fired: certify keys on JSONExtractScalar's sqlName + dedicated renderer masking) — re-verify against live FE.",
       "areas": [
         "json",
         "string"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino; generator fixed in BUGS-doris-generator-mappings-2026-07-13"
     },
     {
       "trino": "regexp_split",
-      "doris": "split_by_string",
-      "verdict": "divergent",
-      "hazard": "GENERATOR BUG (confident, certify ok=true): regexp_split(s,pat) (REGEX split) mapped to SPLIT_BY_STRING(s,pat) which splits on pat as a LITERAL. regexp_split('a1b2c','[0-9]') splits on digits (Trino) vs Doris returns ['a1b2c'] (no split). Needs a regex-splitting Doris function. Filed as generator bug (same class as duckdb string_split_regex).",
+      "doris": "split_by_regexp",
+      "verdict": "identical",
+      "hazard": "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 3): regexp_split(s,pat) now emits SPLIT_BY_REGEXP(s,pat) (was the wrong SPLIT_BY_STRING, a LITERAL split). SPLIT_BY_REGEXP is Doris's regex-splitting function, so 'a1b2c'/'[0-9]' splits on digits, matching Trino. Verdict divergent->identical; the divergent entry only guarded the wrong rendering (never fired: certify keys on RegexpSplit's sqlName + dedicated renderer masking) — re-verify against live FE. Same class as duckdb string_split_regex.",
       "areas": [
         "string",
         "regex",
         "array"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino; generator fixed in BUGS-doris-generator-mappings-2026-07-13"
     },
     {
       "trino": "from_utf8",
@@ -2130,7 +2130,7 @@
       "trino": "is_nan",
       "doris": "isnan",
       "verdict": "conditionally-equivalent",
-      "hazard": "MISSING MAPPING: generator emits IS_NAN (and NAN) which Doris does not register (certify REFUSES) — the live Doris fn is ISNAN (is_nan(cast('nan' as double))=1). is_nan->isnan would be safe modulo boolean type mapping (Trino BOOLEAN vs Doris TINYINT 1/0). Doris live; Trino from prior evidence.",
+      "hazard": "MAPPING ADDED (BUGS-doris-generator-mappings-2026-07-13 enhancement): is_nan (IsNan node) now emits ISNAN (was falling back to the verbatim IS_NAN sql-name, which Doris does not register). Live Doris ISNAN(cast('nan' as double))=1; safe modulo boolean type mapping (Trino BOOLEAN vs Doris TINYINT 1/0).",
       "areas": [
         "numeric",
         "float"

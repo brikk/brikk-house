@@ -1146,25 +1146,25 @@ private fun hazardsChunk5(): List<FunctionHazard> = listOf(
         areas = listOf("datetime", "string"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"),
     // [230] duckdb: 'list_has_any' | doris: 'arrays_overlap'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "GENERATOR BUG (confident, certify ok=true): list_has_any(a,b) is emitted as `a && b`, but Doris `&&` is logical-AND and cannot cast arrays to boolean (runtime error 'can not cast from origin type Array to Boolean'). Correct mapping is ARRAYS_OVERLAP(a,b) (verified live = 1). Filed as brikk-sql generator mapping bug.",
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 1): list_has_any(a,b) now emits ARRAYS_OVERLAP(a,b) (was the wrong `a && b`). The corrected mapping is result-identical (verified live = 1). Verdict downgraded divergent->identical; the divergent entry only guarded the wrong rendering, which never actually fired (certify keys on the parsed ArrayOverlaps sqlName ARRAY_OVERLAPS, not this LIST_HAS_ANY key, AND ArrayOverlaps has a dedicated renderer that the mitigation rule skips) — re-verify against live FE.",
         areas = listOf("array"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"),
-    // [231] duckdb: 'epoch_ms' | doris: 'from_unixtime'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "GENERATOR BUG (confident, certify ok=true): epoch_ms(ms) -> FROM_UNIXTIME(ms, 3). Two errors: (1) Doris from_unixtime expects SECONDS not ms, so ms overflows (INVALID_ARGUMENT); (2) from_unixtime's 2nd arg is a FORMAT STRING, not a fractional-second precision, so the literal 3 is misinterpreted (from_unixtime(1710506096,3) -> '3'). DuckDB epoch_ms(1710506096000) = 2024-03-15 12:34:56. Filed as generator bug.",
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb; generator fixed in BUGS-doris-generator-mappings-2026-07-13"),
+    // [231] duckdb: 'epoch_ms' | doris: 'from_millisecond'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 2): epoch_ms(ms) now emits FROM_MILLISECOND(ms) (was the wrong FROM_UNIXTIME(ms, 3), which overflowed on ms input and mis-passed 3 as a format string). Doris FROM_MILLISECOND(BIGINT)->DATETIME(3) is the ms->datetime idiom (scale 3 = epoch_ms). Verdict divergent->identical; the divergent entry only guarded the wrong rendering (never fired: certify keys on UnixToTime's sqlName + dedicated renderer masking) — re-verify against live FE.",
         areas = listOf("datetime"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"),
-    // [232] duckdb: 'string_split_regex' | doris: 'split_by_string'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "GENERATOR BUG (confident, certify ok=true): string_split_regex(s,pat) (REGEX split) is mapped to SPLIT_BY_STRING(s,pat) which treats pat as a LITERAL delimiter. string_split_regex('a1b2c','[0-9]') = ['a','b','c'] (DuckDB) vs ['a1b2c'] (Doris, no split). Needs a regex-splitting Doris function. Filed as generator bug.",
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb; generator fixed in BUGS-doris-generator-mappings-2026-07-13"),
+    // [232] duckdb: 'string_split_regex' | doris: 'split_by_regexp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 3): string_split_regex(s,pat) now emits SPLIT_BY_REGEXP(s,pat) (was the wrong SPLIT_BY_STRING, a LITERAL split). SPLIT_BY_REGEXP (alias REGEXP_SPLIT_TO_ARRAY) is Doris's regex-splitting function, so 'a1b2c'/'[0-9]' -> ['a','b','c'] matches DuckDB. Verdict divergent->identical; the divergent entry only guarded the wrong rendering (never fired: certify keys on RegexpSplit's sqlName + dedicated renderer masking) — re-verify against live FE.",
         areas = listOf("string", "regex", "array"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"),
-    // [233] duckdb: 'struct_pack' | doris: 'struct'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "GENERATOR BUG (confident, certify ok=true): struct_pack(a:=1,b:='x') -> STRUCT(1 AS a, 'x' AS b). Doris STRUCT does not accept `expr AS name` alias syntax (runtime error); bare STRUCT(1,'x') loses field names ({\"col1\":1,...}). Correct mapping is NAMED_STRUCT('a',1,'b','x') (verified live {\"a\":1,\"b\":\"x\"}). Filed as generator bug.",
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb; generator fixed in BUGS-doris-generator-mappings-2026-07-13"),
+    // [233] duckdb: 'struct_pack' | doris: 'named_struct'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 4): struct_pack(a:=1,b:='x') now emits NAMED_STRUCT('a',1,'b','x') (was the wrong STRUCT(1 AS a, ...), which Doris rejects). NAMED_STRUCT preserves field names (verified live {\"a\":1,\"b\":\"x\"}). Verdict divergent->identical; the divergent entry only guarded the wrong rendering (never fired: certify keys on Struct's sqlName + dedicated renderer masking) — re-verify against live FE.",
         areas = listOf("struct"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb; generator fixed in BUGS-doris-generator-mappings-2026-07-13"),
     // [234] duckdb: 'get_bit' | doris: 'getbit'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Generator emits GETBIT which Doris does not register ('Can not found function getbit'); certify correctly REFUSES (UNMAPPABLE_FUNCTION). No live Doris bit-extract equivalent found.",
@@ -1203,11 +1203,11 @@ private fun hazardsChunk6(): List<FunctionHazard> = listOf(
         hazard = "Generator emits PERCENTILE_DISC (unregistered in Doris, 'Can not found function percentile_disc'); certify REFUSES. Doris has percentile/percentile_approx (different).",
         areas = listOf("aggregate", "numeric"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"),
-    // [241] duckdb: 'array_length' | doris: 'array_length'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "CONFIDENT-BUT-WRONG / CATALOG BUG (certify ok=true): array_length is emitted verbatim and the brikk-sql-metadata Doris catalog lists ARRAY_LENGTH, so certify passes it — but the live Doris FE errors 'Can not found function ARRAY_LENGTH'. Correct Doris fn is ARRAY_SIZE / SIZE (live = 3, identical). Filed: remove array_length from the Doris function catalog and/or map array_length->array_size.",
+    // [241] duckdb: 'array_length' | doris: 'array_size'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 7): array_length (ArraySize node) now emits ARRAY_SIZE (was the base default ARRAY_LENGTH, which the live Doris FE lacks: 'Can not found function ARRAY_LENGTH'). ARRAY_SIZE is live-valid (= 3, identical). Fixed at the GENERATOR mapping only (DorisGenerator.arraySizeName='ARRAY_SIZE'); the pinned function catalog is NOT mutated — ARRAY_LENGTH's presence/absence is a version skew between our pinned vendored FE registry and the probe program's live FE. Verdict divergent->identical; re-verify against live FE.",
         areas = listOf("array"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc; generator fixed in BUGS-doris-generator-mappings-2026-07-13"),
     // [242] duckdb: 'map_extract' | doris: 'element_at'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "DuckDB map_extract(m,k) returns a LIST wrapping the value ([1]); Doris ELEMENT_AT(m,k) returns the scalar value (1). Different result shape (list vs scalar). Generator currently REFUSES map_extract (emits MAP_EXTRACT, unmappable; also mismaps the MAP() constructor to ARRAY_MAP).",
@@ -1225,17 +1225,17 @@ private fun hazardsChunk6(): List<FunctionHazard> = listOf(
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
     // [245] duckdb: 'greatest_common_divisor' | doris: 'gcd'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "MISSING MAPPING (generator refuses, GREATEST_COMMON_DIVISOR unmappable): Doris GCD(12,18)=6 matches DuckDB — a greatest_common_divisor->gcd mapping would be identical. Fail-loud today.",
+        hazard = "MAPPING ADDED (BUGS-doris-generator-mappings-2026-07-13 enhancement): greatest_common_divisor now emits GCD (Anonymous rename in DorisGenerator). Doris GCD(12,18)=6 matches DuckDB — identical.",
         areas = listOf("numeric"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
     // [246] duckdb: 'least_common_multiple' | doris: 'lcm'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "MISSING MAPPING (generator refuses, LEAST_COMMON_MULTIPLE unmappable): Doris LCM(4,6)=12 matches DuckDB — least_common_multiple->lcm would be identical. Fail-loud today.",
+        hazard = "MAPPING ADDED (BUGS-doris-generator-mappings-2026-07-13 enhancement): least_common_multiple now emits LCM (Anonymous rename in DorisGenerator). Doris LCM(4,6)=12 matches DuckDB — identical.",
         areas = listOf("numeric"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
     // [247] duckdb: 'list_position' | doris: 'array_position'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "MISSING MAPPING (generator refuses, LIST_POSITION unmappable): Doris ARRAY_POSITION([10,20,30],20)=2 matches DuckDB — list_position->array_position would be identical. Fail-loud today.",
+        hazard = "MAPPING ADDED (BUGS-doris-generator-mappings-2026-07-13 enhancement): list_position now parses to ArrayPosition and emits ARRAY_POSITION. Doris ARRAY_POSITION([10,20,30],20)=2 matches DuckDB — identical.",
         areas = listOf("array"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
     // [248] duckdb: 'list_intersect' | doris: 'array_intersect'
@@ -1245,7 +1245,7 @@ private fun hazardsChunk6(): List<FunctionHazard> = listOf(
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
     // [249] duckdb: 'list_slice' | doris: 'array_slice'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
-        hazard = "MISSING MAPPING (generator refuses, LIST_SLICE unmappable): ARG SEMANTICS DIFFER — DuckDB list_slice(a,begin,END) uses an end index, Doris ARRAY_SLICE(a,start,LENGTH) uses a length. list_slice(a,2,4)=[2,3,4] equals array_slice(a,2,3) only after converting end->length. A naive rename WITHOUT arg conversion would diverge.",
+        hazard = "MAPPING ADDED (BUGS-doris-generator-mappings-2026-07-13 enhancement): list_slice now parses to ArraySlice and emits ARRAY_SLICE with an END->LENGTH conversion (DorisGenerator.dorisArraySliceSql). DuckDB list_slice(a,begin,END) uses an end index; Doris ARRAY_SLICE(a,start,LENGTH) uses a length, so list_slice(a,2,4)=[2,3,4] -> array_slice(a,2,3) (identical). A non-integer-literal begin/end can't be statically converted, so that case is flagged instead of diverging — hence CONDITIONALLY-EQUIVALENT.",
         areas = listOf("array"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
     // [250] duckdb: 'list_zip' | doris: 'array_zip'
@@ -1260,17 +1260,17 @@ private fun hazardsChunk6(): List<FunctionHazard> = listOf(
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
     // [252] duckdb: 'suffix' | doris: 'ends_with'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
-        hazard = "MISSING MAPPING (generator refuses, SUFFIX unmappable): DuckDB suffix is an ends_with alias; Doris ENDS_WITH('hello','lo')=1 vs DuckDB true — boolean type mapping only. suffix->ends_with would be safe. Fail-loud today.",
+        hazard = "MAPPING ADDED (BUGS-doris-generator-mappings-2026-07-13 enhancement): suffix now parses to EndsWith and emits ENDS_WITH. DuckDB suffix is an ends_with alias; Doris ENDS_WITH('hello','lo')=1 vs DuckDB true — boolean type mapping only, otherwise identical.",
         areas = listOf("string"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
     // [253] duckdb: 'st_aswkb' | doris: 'st_asbinary'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
-        hazard = "MISSING MAPPING (generator refuses, ST_ASWKB unmappable): Doris ST_ASBINARY(ST_POINT(1,2)) returns the WKB bytes; both are WKB but differ in binary getString rendering. Geo; fail-loud today.",
+        hazard = "MAPPING ADDED (BUGS-doris-generator-mappings-2026-07-13 enhancement): st_aswkb now emits ST_ASBINARY (Anonymous rename in DorisGenerator). Doris ST_ASBINARY(ST_POINT(1,2)) returns the WKB bytes; both are WKB but can differ in binary getString rendering, so this stays CONDITIONALLY-EQUIVALENT (an inherent binary-rendering divergence, independent of the mapping) and certify surfaces it as a WARNING. Geo/binary.",
         areas = listOf("geo", "binary"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
     // [254] duckdb: 'get_current_timestamp' | doris: 'now'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
-        hazard = "MISSING MAPPING (generator refuses, GET_CURRENT_TIMESTAMP unmappable): Doris NOW() is the equivalent (wall-clock now); differs in precision/session-zone. get_current_timestamp->now would be safe. Fail-loud today.",
+        hazard = "MAPPING ADDED (BUGS-doris-generator-mappings-2026-07-13 enhancement): get_current_timestamp now parses to CurrentTimestamp and emits NOW(). Doris NOW() is the wall-clock-now equivalent; differs only in precision/session-zone.",
         areas = listOf("datetime"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
 )
@@ -1534,7 +1534,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("YEARWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[132])
 }
 
-/** doris->duckdb lookup: 244 keys (Doris-side names) over 255 entries. */
+/** doris->duckdb lookup: 245 keys (Doris-side names) over 255 entries. */
 internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -1551,7 +1551,6 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ARRAY_FILTER", DUCKDB_DORIS_HAZARD_ENTRIES[199])
     put("ARRAY_INTERSECT", DUCKDB_DORIS_HAZARD_ENTRIES[248])
     put("ARRAY_JOIN", DUCKDB_DORIS_HAZARD_ENTRIES[196])
-    put("ARRAY_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[241])
     put("ARRAY_MAP", DUCKDB_DORIS_HAZARD_ENTRIES[205])
     put("ARRAY_MAX", DUCKDB_DORIS_HAZARD_ENTRIES[200])
     put("ARRAY_MIN", DUCKDB_DORIS_HAZARD_ENTRIES[201])
@@ -1559,6 +1558,7 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ARRAY_PUSHFRONT", DUCKDB_DORIS_HAZARD_ENTRIES[202])
     put("ARRAY_RANGE", DUCKDB_DORIS_HAZARD_ENTRIES[195])
     put("ARRAY_REVERSE_SORT", DUCKDB_DORIS_HAZARD_ENTRIES[203])
+    put("ARRAY_SIZE", DUCKDB_DORIS_HAZARD_ENTRIES[241])
     put("ARRAY_SLICE", DUCKDB_DORIS_HAZARD_ENTRIES[249])
     put("ARRAY_SORT", DUCKDB_DORIS_HAZARD_ENTRIES[204])
     put("ARRAY_ZIP", DUCKDB_DORIS_HAZARD_ENTRIES[250])
@@ -1624,7 +1624,8 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("FORMAT", DUCKDB_DORIS_HAZARD_ENTRIES[162])
     put("FROM_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[61])
     put("FROM_BINARY", DUCKDB_DORIS_HAZARD_ENTRIES[244])
-    put("FROM_UNIXTIME", DUCKDB_DORIS_HAZARD_ENTRIES[231])
+    put("FROM_MILLISECOND", DUCKDB_DORIS_HAZARD_ENTRIES[231])
+    put("FROM_UNIXTIME", DUCKDB_DORIS_HAZARD_ENTRIES[217])
     put("GCD", DUCKDB_DORIS_HAZARD_ENTRIES[245])
     put("GETBIT", DUCKDB_DORIS_HAZARD_ENTRIES[234])
     put("GREATEST", DUCKDB_DORIS_HAZARD_ENTRIES[3])
@@ -1740,13 +1741,13 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("SIN", DUCKDB_DORIS_HAZARD_ENTRIES[36])
     put("SINH", DUCKDB_DORIS_HAZARD_ENTRIES[40])
     put("SKEWNESS", DUCKDB_DORIS_HAZARD_ENTRIES[93])
-    put("SPLIT_BY_STRING", DUCKDB_DORIS_HAZARD_ENTRIES[232])
+    put("SPLIT_BY_REGEXP", DUCKDB_DORIS_HAZARD_ENTRIES[232])
+    put("SPLIT_BY_STRING", DUCKDB_DORIS_HAZARD_ENTRIES[223])
     put("SPLIT_PART", DUCKDB_DORIS_HAZARD_ENTRIES[5])
     put("SQRT", DUCKDB_DORIS_HAZARD_ENTRIES[28])
     put("STARTS_WITH", DUCKDB_DORIS_HAZARD_ENTRIES[57])
     put("STDDEV_POP", DUCKDB_DORIS_HAZARD_ENTRIES[89])
     put("STDDEV_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[90])
-    put("STRUCT", DUCKDB_DORIS_HAZARD_ENTRIES[233])
     put("STR_TO_DATE", DUCKDB_DORIS_HAZARD_ENTRIES[216])
     put("ST_ASBINARY", DUCKDB_DORIS_HAZARD_ENTRIES[253])
     put("ST_ASTEXT", DUCKDB_DORIS_HAZARD_ENTRIES[177])

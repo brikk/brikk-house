@@ -983,21 +983,21 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         hazard = "from_iso8601_timestamp_nanos -> CAST(x AS DATETIME); Trino returns timestamp(9) preserving nanoseconds, but Doris CAST drops ALL fractional seconds ('2024-03-15T12:34:56.123456789' -> 2024-03-15 12:34:56). Sub-second precision lost entirely. Doris live; Trino from prior evidence.",
         areas = listOf("datetime"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"),
-    // [196] trino: 'json_array_contains' | doris: 'member_of'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "GENERATOR BUG (confident, certify ok=true): json_array_contains(json,val) emitted as `json MEMBER OF(val)` which errors at runtime on Doris (both operand orders). Correct Doris equivalent is JSON_CONTAINS(json, val) (verified live = 1). Filed as generator bug.",
+    // [196] trino: 'json_array_contains' | doris: 'json_contains'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 5): json_array_contains(json,val) now emits JSON_CONTAINS(json, val) (was the wrong `json MEMBER OF(val)`, which errors at runtime). JSON_CONTAINS is result-identical (verified live = 1). Verdict divergent->identical; the divergent entry only guarded the wrong rendering (never fired: certify keys on JSONArrayContains's sqlName + dedicated renderer masking) — re-verify against live FE.",
         areas = listOf("json"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"),
-    // [197] trino: 'json_extract_scalar' | doris: 'json_extract'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "json_extract_scalar unwraps to a raw scalar in Trino, but the generator maps it to Doris JSON_EXTRACT which keeps JSON quoting on string scalars: json_extract_scalar('{\"a\":\"hi\"}','\$.a')='hi' (Trino) vs '\"hi\"' (Doris). Numeric scalars match. Correct mapping needs JSON_UNQUOTE(JSON_EXTRACT(...)) (verified live = 'hi'). Doris live; Trino from prior evidence.",
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino; generator fixed in BUGS-doris-generator-mappings-2026-07-13"),
+    // [197] trino: 'json_extract_scalar' | doris: 'json_unquote'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 6): json_extract_scalar(j,p) now emits JSON_UNQUOTE(JSON_EXTRACT(j,p)) (was bare JSON_EXTRACT, which kept JSON quotes on string scalars: '\"hi\"' vs Trino's 'hi'). The JSON_UNQUOTE wrap makes string scalars match (verified live = 'hi'); numeric scalars were already fine. Verdict divergent->identical; the divergent entry only guarded the wrong rendering (never fired: certify keys on JSONExtractScalar's sqlName + dedicated renderer masking) — re-verify against live FE.",
         areas = listOf("json", "string"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"),
-    // [198] trino: 'regexp_split' | doris: 'split_by_string'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "GENERATOR BUG (confident, certify ok=true): regexp_split(s,pat) (REGEX split) mapped to SPLIT_BY_STRING(s,pat) which splits on pat as a LITERAL. regexp_split('a1b2c','[0-9]') splits on digits (Trino) vs Doris returns ['a1b2c'] (no split). Needs a regex-splitting Doris function. Filed as generator bug (same class as duckdb string_split_regex).",
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino; generator fixed in BUGS-doris-generator-mappings-2026-07-13"),
+    // [198] trino: 'regexp_split' | doris: 'split_by_regexp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "GENERATOR FIXED (BUGS-doris-generator-mappings-2026-07-13 row 3): regexp_split(s,pat) now emits SPLIT_BY_REGEXP(s,pat) (was the wrong SPLIT_BY_STRING, a LITERAL split). SPLIT_BY_REGEXP is Doris's regex-splitting function, so 'a1b2c'/'[0-9]' splits on digits, matching Trino. Verdict divergent->identical; the divergent entry only guarded the wrong rendering (never fired: certify keys on RegexpSplit's sqlName + dedicated renderer masking) — re-verify against live FE. Same class as duckdb string_split_regex.",
         areas = listOf("string", "regex", "array"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino; generator fixed in BUGS-doris-generator-mappings-2026-07-13"),
     // [199] trino: 'from_utf8' | doris: 'decode'
     FunctionHazard(HazardVerdict.NO_EQUIVALENT,
         hazard = "Generator emits DECODE(bytes,'utf-8') which Doris does not register (UNMAPPABLE_FUNCTION); certify REFUSES. No working Doris bytes->utf8-string equivalent found (convert(... using utf8) errors RUNTIME_ERROR). Doris live; Trino from prior evidence.",
@@ -1018,7 +1018,7 @@ private fun hazardsChunk5(): List<FunctionHazard> = listOf(
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
     // [202] trino: 'is_nan' | doris: 'isnan'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
-        hazard = "MISSING MAPPING: generator emits IS_NAN (and NAN) which Doris does not register (certify REFUSES) — the live Doris fn is ISNAN (is_nan(cast('nan' as double))=1). is_nan->isnan would be safe modulo boolean type mapping (Trino BOOLEAN vs Doris TINYINT 1/0). Doris live; Trino from prior evidence.",
+        hazard = "MAPPING ADDED (BUGS-doris-generator-mappings-2026-07-13 enhancement): is_nan (IsNan node) now emits ISNAN (was falling back to the verbatim IS_NAN sql-name, which Doris does not register). Live Doris ISNAN(cast('nan' as double))=1; safe modulo boolean type mapping (Trino BOOLEAN vs Doris TINYINT 1/0).",
         areas = listOf("numeric", "float"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
 )
@@ -1230,7 +1230,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("YOW", TRINO_DORIS_HAZARD_ENTRIES[117])
 }
 
-/** doris->trino lookup: 197 keys (Doris-side names) over 203 entries. */
+/** doris->trino lookup: 199 keys (Doris-side names) over 203 entries. */
 internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("&", TRINO_DORIS_HAZARD_ENTRIES[168])
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
@@ -1316,9 +1316,11 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("HISTOGRAM", TRINO_DORIS_HAZARD_ENTRIES[91])
     put("HOUR", TRINO_DORIS_HAZARD_ENTRIES[114])
     put("ISNAN", TRINO_DORIS_HAZARD_ENTRIES[202])
-    put("JSON_EXTRACT", TRINO_DORIS_HAZARD_ENTRIES[197])
+    put("JSON_CONTAINS", TRINO_DORIS_HAZARD_ENTRIES[196])
+    put("JSON_EXTRACT", TRINO_DORIS_HAZARD_ENTRIES[147])
     put("JSON_FORMAT", TRINO_DORIS_HAZARD_ENTRIES[149])
     put("JSON_PARSE", TRINO_DORIS_HAZARD_ENTRIES[148])
+    put("JSON_UNQUOTE", TRINO_DORIS_HAZARD_ENTRIES[197])
     put("KURTOSIS", TRINO_DORIS_HAZARD_ENTRIES[86])
     put("L2_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[187])
     put("LAG", TRINO_DORIS_HAZARD_ENTRIES[96])
@@ -1344,7 +1346,6 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("MAX", TRINO_DORIS_HAZARD_ENTRIES[69])
     put("MAX_BY", TRINO_DORIS_HAZARD_ENTRIES[74])
     put("MD5", TRINO_DORIS_HAZARD_ENTRIES[20])
-    put("MEMBER_OF", TRINO_DORIS_HAZARD_ENTRIES[196])
     put("MIN", TRINO_DORIS_HAZARD_ENTRIES[70])
     put("MINUTE", TRINO_DORIS_HAZARD_ENTRIES[112])
     put("MIN_BY", TRINO_DORIS_HAZARD_ENTRIES[75])
@@ -1390,6 +1391,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("SINH", TRINO_DORIS_HAZARD_ENTRIES[35])
     put("SKEWNESS", TRINO_DORIS_HAZARD_ENTRIES[85])
     put("SOUNDEX", TRINO_DORIS_HAZARD_ENTRIES[56])
+    put("SPLIT_BY_REGEXP", TRINO_DORIS_HAZARD_ENTRIES[198])
     put("SPLIT_BY_STRING", TRINO_DORIS_HAZARD_ENTRIES[141])
     put("SPLIT_PART", TRINO_DORIS_HAZARD_ENTRIES[5])
     put("SQRT", TRINO_DORIS_HAZARD_ENTRIES[24])

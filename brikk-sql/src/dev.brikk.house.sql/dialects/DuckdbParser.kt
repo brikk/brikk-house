@@ -13,7 +13,9 @@ import dev.brikk.house.sql.ast.ArrayIntersect
 import dev.brikk.house.sql.ast.ArrayMax
 import dev.brikk.house.sql.ast.ArrayMin
 import dev.brikk.house.sql.ast.ArrayOverlaps
+import dev.brikk.house.sql.ast.ArrayPosition
 import dev.brikk.house.sql.ast.ArrayPrepend
+import dev.brikk.house.sql.ast.ArraySlice
 import dev.brikk.house.sql.ast.Attach
 import dev.brikk.house.sql.ast.AttachOption
 import dev.brikk.house.sql.ast.BitwiseAndAgg
@@ -27,6 +29,7 @@ import dev.brikk.house.sql.ast.CosineDistance
 import dev.brikk.house.sql.ast.CurrentCatalog
 import dev.brikk.house.sql.ast.CurrentDate
 import dev.brikk.house.sql.ast.CurrentTime
+import dev.brikk.house.sql.ast.CurrentTimestamp
 import dev.brikk.house.sql.ast.CurrentVersion
 import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.DataType
@@ -37,6 +40,7 @@ import dev.brikk.house.sql.ast.DateFromParts
 import dev.brikk.house.sql.ast.Decode
 import dev.brikk.house.sql.ast.Detach
 import dev.brikk.house.sql.ast.Encode
+import dev.brikk.house.sql.ast.EndsWith
 import dev.brikk.house.sql.ast.EuclideanDistance
 import dev.brikk.house.sql.ast.Explode
 import dev.brikk.house.sql.ast.Expression
@@ -594,6 +598,10 @@ object DuckdbParserTables {
         }
         put("GENERATE_SERIES", buildGenerateSeries())
         put("GET_CURRENT_TIME", fromArgList(listOf("this"), false) { CurrentTime(it) })
+        // BUGS-doris-generator-mappings enhancement: get_current_timestamp() -> the
+        // canonical CurrentTimestamp node, which DorisGenerator already renders as NOW().
+        // Was previously Anonymous GET_CURRENT_TIMESTAMP -> unmappable refusal.
+        put("GET_CURRENT_TIMESTAMP") { _ -> CurrentTimestamp() }
         put("GET_BIT") { a ->
             Getbit(
                 args("this" to seqGet(a, 0), "expression" to seqGet(a, 1), "zero_is_msb" to true)
@@ -644,6 +652,21 @@ object DuckdbParserTables {
         )
         put("LIST_MAX", fromArgList(listOf("this"), false) { ArrayMax(it) })
         put("LIST_MIN", fromArgList(listOf("this"), false) { ArrayMin(it) })
+        // BUGS-doris-generator-mappings enhancement: list_position(list, elem) -> the
+        // canonical ArrayPosition node (renders ARRAY_POSITION, which Doris has; verified
+        // identical). Was previously Anonymous LIST_POSITION -> unmappable refusal.
+        put(
+            "LIST_POSITION",
+            fromArgList(listOf("this", "expression", "zero_based"), false) { ArrayPosition(it) },
+        )
+        // BUGS-doris-generator-mappings enhancement: list_slice(list, begin, END) -> the
+        // canonical ArraySlice node. DuckDB uses an END index; Doris ARRAY_SLICE uses a
+        // LENGTH, so DorisGenerator.arraysliceSql converts end->length. Was Anonymous
+        // LIST_SLICE -> unmappable refusal.
+        put(
+            "LIST_SLICE",
+            fromArgList(listOf("this", "start", "end", "step"), false) { ArraySlice(it) },
+        )
         put("LIST_PREPEND", ::buildArrayPrependDuckdb)
         put("LIST_REVERSE_SORT", ::buildSortArrayDesc)
         put("LIST_SORT", fromArgList(listOf("this", "asc", "nulls_first"), false) { SortArray(it) })
@@ -680,6 +703,10 @@ object DuckdbParserTables {
                 )
             )
         }
+        // BUGS-doris-generator-mappings enhancement: suffix(string, search) -> the
+        // canonical EndsWith node (renders ENDS_WITH, which Doris has; verified identical).
+        // Was previously Anonymous SUFFIX -> unmappable refusal.
+        put("SUFFIX", fromArgList(listOf("this", "expression"), false) { EndsWith(it) })
         put("SHA256") { a ->
             SHA2(args("this" to seqGet(a, 0), "length" to Literal.number("256")))
         }

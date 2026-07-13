@@ -245,12 +245,12 @@
       }
     },
     {
-      "sql": "SELECT JSON_EXTRACT(CAST('{\"key\": 1}' AS JSONB), '$.key')",
+      "sql": "SELECT JSON_UNQUOTE(JSON_EXTRACT(CAST('{\"key\": 1}' AS JSONB), '$.key'))",
       "read": {
         "postgres": "SELECT '{\"key\": 1}'::jsonb ->> 'key'"
       },
       "write": {
-        "doris": "SELECT JSON_EXTRACT(CAST('{\"key\": 1}' AS JSONB), '$.key')",
+        "doris": "SELECT JSON_UNQUOTE(JSON_EXTRACT(CAST('{\"key\": 1}' AS JSONB), '$.key'))",
         "postgres": "SELECT JSON_EXTRACT_PATH(CAST('{\"key\": 1}' AS JSONB), 'key')"
       }
     },
