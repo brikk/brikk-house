@@ -6,6 +6,8 @@ import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
+import dev.brikk.house.sql.generator.eliminateDistinctOn
+import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
 import dev.brikk.house.sql.parser.BigqueryTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -474,6 +476,20 @@ open class BigqueryGenerator(
             reg(Rollback::class) { _ -> "ROLLBACK TRANSACTION" }
             reg(ParseTime::class) { e -> func("PARSE_TIME", bg().formatTime(e), e.args["this"]) }
             reg(ParseDatetime::class) { e -> func("PARSE_DATETIME", bg().formatTime(e), e.args["this"]) }
+            // sqlglot bigquery order: [explode_projection_to_unnest(), unqualify_unnest,
+            // eliminate_distinct_on, _alias_ordered_group, eliminate_semi_and_anti_joins].
+            // explode_projection_to_unnest and _alias_ordered_group remain NOT PORTED
+            // (ledgered). unqualify_unnest is also NOT wired here: our parser stores an
+            // explicit UNNEST alias in TableAlias.this (sqlglot's bigquery parser moves it
+            // to TableAlias.columns via _implicit_unnests_to_explicit), so sqlglot's
+            // .alias-based unnest-alias collection is a no-op there while ours would
+            // over-strip `h.c2` -> `c2`. Porting it cleanly needs the parser-side implicit
+            // unnest rewrite; left ledgered.
+            reg(Select::class) { e ->
+                var s = eliminateDistinctOn(e)
+                s = eliminateSemiAndAntiJoins(s)
+                selectSql(s as Select)
+            }
             reg(SHA::class) { e -> bg().renameFuncSql("SHA1", e) }
             reg(SHA1Digest::class) { e -> bg().renameFuncSql("SHA1", e) }
             reg(StabilityProperty::class) { e ->

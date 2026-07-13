@@ -8,6 +8,10 @@ import dev.brikk.house.sql.ast.Map as MapNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
+import dev.brikk.house.sql.generator.eliminateDistinctOn
+import dev.brikk.house.sql.generator.unnestToExplode
+import dev.brikk.house.sql.generator.anyToExists
+import dev.brikk.house.sql.generator.inheritStructFieldNames
 import dev.brikk.house.sql.parser.HiveTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -86,6 +90,11 @@ open class HiveGenerator(
     override val trySupported: Boolean get() = false
     override val supportsUescape: Boolean get() = false
     override val limitFetch: String get() = "LIMIT"
+
+    // sqlglot: HiveGenerator.EXPRESSIONS_WITHOUT_NESTED_CTES (drives move_ctes_to_top_level)
+    override val expressionsWithoutNestedCtes:
+        Set<kotlin.reflect.KClass<out Expression>>
+        get() = setOf(Insert::class, Select::class, Subquery::class, SetOperation::class)
     override val tablesampleWithMethod: Boolean get() = false
     override val joinHints: Boolean get() = false
     override val tableHints: Boolean get() = false
@@ -622,6 +631,16 @@ open class HiveGenerator(
                 func("SORT_ARRAY", e.thisArg)
             }
             reg(With::class) { e -> hg().noRecursiveCteSql(e as With) }
+            // sqlglot: hive exp.Array preprocess [inherit_struct_field_names]
+            reg(ArrayNode::class) { e -> functionFallbackSql(inheritStructFieldNames(e) as ArrayNode) }
+            // sqlglot: hive exp.Select preprocess pipeline
+            // [eliminate_distinct_on, unnest_to_explode(unnest_using_arrays_zip=False), any_to_exists]
+            reg(Select::class) { e ->
+                var s = eliminateDistinctOn(e)
+                s = unnestToExplode(s, unnestUsingArraysZip = false)
+                s = anyToExists(s)
+                selectSql(s as Select)
+            }
             reg(DateAdd::class) { e -> hg().addDateSql(e) }
             reg(DateDiff::class) { e -> hg().dateDiffSql(e) }
             reg(DateStrToDate::class) { e -> hg().datestrtodateSql(e as DateStrToDate) }

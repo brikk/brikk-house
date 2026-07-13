@@ -8,6 +8,8 @@ import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
+import dev.brikk.house.sql.generator.eliminateQualify
+import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
 import dev.brikk.house.sql.parser.PostgresTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -1278,6 +1280,13 @@ open class PostgresGenerator(
                 )
             }
             reg(Round::class) { e -> pg().roundSql(e as Round) }
+            // sqlglot: postgres exp.Select preprocess pipeline
+            // [eliminate_semi_and_anti_joins, eliminate_qualify]
+            reg(Select::class) { e ->
+                var s = eliminateSemiAndAntiJoins(e)
+                s = eliminateQualify(s)
+                selectSql(s as Select)
+            }
             reg(SHA2::class) { e -> pg().sha256Sql(e as SHA2) }
             reg(SHA2Digest::class) { e -> pg().sha2DigestSql(e as SHA2Digest) }
             reg(StrPosition::class) { e -> pg().strpositionSql(e as StrPosition) }

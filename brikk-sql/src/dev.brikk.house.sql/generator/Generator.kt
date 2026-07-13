@@ -392,9 +392,24 @@ open class Generator(
         return SourceMap(final, entries)
     }
 
-    // sqlglot: Generator.preprocess (base dialect: EXPRESSIONS_WITHOUT_NESTED_CTES empty,
-    // ENSURE_BOOLS false -> identity)
-    open fun preprocess(expression: Expression): Expression = expression
+    // sqlglot: Generator.EXPRESSIONS_WITHOUT_NESTED_CTES (base: empty set). Dialects that
+    // only allow top-level CTEs (Hive/Spark<3, T-SQL) override this.
+    open val expressionsWithoutNestedCtes: Set<kotlin.reflect.KClass<out Expression>> get() = emptySet()
+
+    // sqlglot: Generator.preprocess -> Generator._move_ctes_to_top_level. ENSURE_BOOLS is
+    // false for every dialect we currently model, so only the nested-CTE hoist runs.
+    open fun preprocess(expression: Expression): Expression = moveCtesToTopLevelIfNeeded(expression)
+
+    // sqlglot: Generator._move_ctes_to_top_level
+    protected fun moveCtesToTopLevelIfNeeded(expression: Expression): Expression {
+        if (expression.parent == null &&
+            expression::class in expressionsWithoutNestedCtes &&
+            expression.findAll(dev.brikk.house.sql.ast.With::class).any { it.parent !== expression }
+        ) {
+            return moveCtesToTopLevel(expression)
+        }
+        return expression
+    }
 
     // sqlglot: Generator.unsupported (unsupported_level WARN: collect only)
     open fun unsupported(message: String) {

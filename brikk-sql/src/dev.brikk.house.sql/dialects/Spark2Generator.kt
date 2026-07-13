@@ -7,6 +7,9 @@ import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.generator.eliminateQualify
+import dev.brikk.house.sql.generator.eliminateDistinctOn
+import dev.brikk.house.sql.generator.unnestToExplode
+import dev.brikk.house.sql.generator.anyToExists
 import dev.brikk.house.sql.parser.Spark2TokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -263,7 +266,15 @@ open class Spark2Generator(
             reg(RegexpReplace::class) { e ->
                 func("REGEXP_REPLACE", e.thisArg, e.args["expression"], e.args["replacement"], e.args["position"])
             }
-            reg(Select::class) { e -> selectSql(eliminateQualify(e) as Select) }
+            // sqlglot: spark2 exp.Select preprocess pipeline
+            // [eliminate_qualify, eliminate_distinct_on, unnest_to_explode, any_to_exists]
+            reg(Select::class) { e ->
+                var s = eliminateQualify(e)
+                s = eliminateDistinctOn(s)
+                s = unnestToExplode(s)
+                s = anyToExists(s)
+                selectSql(s as Select)
+            }
             reg(SHA2Digest::class) { e ->
                 func("SHA2", e.thisArg, e.args["length"] ?: Literal.number("256"))
             }
