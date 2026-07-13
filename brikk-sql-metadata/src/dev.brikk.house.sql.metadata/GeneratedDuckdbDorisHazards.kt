@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 162 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
+/** The 184 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
 internal val DUCKDB_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -812,9 +812,119 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         hazard = "json_each is a TABLE function in DuckDB (Binder Error: 'json_each is a table function but was used as a scalar function; must be in a FROM clause'), so it is not probeable through the scalar shared-expr harness. Doris exposes json_each / json_each_text as table functions too, but a row-set/ordering comparison was not performed. Marked unclear — needs a table-function harness, not a scalar probe.",
         areas = listOf("json", "table-function"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"),
+    // [162] duckdb: 'format' | doris: 'format'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Doris format == DuckDB format (fmt/printf brace-style). Probe-verified live: format('{} and {}','a','b')='a and b' both; format('{:d}',42)='42' both; format('{:05d}',42)='00042' both; format('{:.2f}',3.14159)='3.14' both; and printf-style format('%d and %s',42,'x') returns the LITERAL '%d and %s' on BOTH (brace-only interpolation, % not a spec). NOTE: this is the fmt/printf dialect, NOT Trino's Java-Formatter %-dialect.",
+        areas = listOf("string", "format"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [163] duckdb: 'version' | doris: 'version'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Both are zero-arg scalars returning a version string but the VALUES differ by design: DuckDB version()='v1.5.4' (DuckDB engine version), Doris version()='5.7.99' (the MySQL-protocol compatibility version the Doris FE reports, not the Doris release). Same function name, incomparable semantics — do not treat as equivalent.",
+        areas = listOf("metadata"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [164] duckdb: 'xor' | doris: 'xor'
+    FunctionHazard(HazardVerdict.NO_EQUIVALENT,
+        hazard = "DuckDB xor(a,b) is a bitwise integer XOR scalar (xor(5,3)=6; DuckDB has NO boolean xor — xor(true,false) is a Binder Error). On this live Doris FE build xor() does NOT resolve for integer args (FE errCode=2, function not found). Doris uses the bitxor()/bitmap or the # operator instead; no direct xor scalar. No-equivalent on Doris.",
+        areas = listOf("bitwise"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [165] duckdb: 'isinf' | doris: 'isinf'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same infinity detection semantics, only boolean render differs (type mapping): isinf(inf) DuckDB=true / Doris=1; isinf(1.0) DuckDB=false / Doris=0. Values agree; treat Doris 1/0 as boolean.",
+        areas = listOf("math", "float"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [166] duckdb: 'isnan' | doris: 'isnan'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same NaN detection, only boolean render differs (type mapping): isnan(nan) DuckDB=true / Doris=1; isnan(1.0) DuckDB=false / Doris=0. Values agree.",
+        areas = listOf("math", "float"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [167] duckdb: 'uuid' | doris: 'uuid'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both produce a 36-char canonical UUID string (length(cast(uuid() as varchar))=36 both). Non-deterministic — same shape but NEVER pushable/comparable value-for-value.",
+        areas = listOf("random", "nondeterministic"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [168] duckdb: 'random' | doris: 'random'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both return a double in [0,1) (probe cast(random()>=0 and random()<1 as int)=1 both). Non-deterministic — never pushable/comparable value-for-value.",
+        areas = listOf("random", "nondeterministic"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [169] duckdb: 'to_json' | doris: 'to_json'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "to_json([1,2,3])='[1,2,3]' on both (compact JSON serialization). Aligned for the array case.",
+        areas = listOf("json"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [170] duckdb: 'regexp_extract' | doris: 'regexp_extract'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "SIGNATURE divergence, probe-verified. The 2-arg whole-match form regexp_extract('abc123','[0-9]+') works in DuckDB (='123') but ERRORS on Doris (FE 'Can not found function regexp_extract' for that arity). The 3-arg explicit-group form is aligned: regexp_extract('abc123','([0-9]+)',0)='123' both, and ('([a-z]+)([0-9]+)',2)='123' both. Doris REQUIRES the group-index argument; group 0 = whole match on both. Divergent on the 2-arg form.",
+        areas = listOf("string", "regex"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [171] duckdb: 'map' | doris: 'map'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "CONSTRUCTOR SIGNATURE differs. DuckDB map([k1,k2],[v1,v2]) takes two parallel LIST args; Doris map(k1,v1,k2,v2) takes flattened alternating key/value scalars. Probe-verified: feeding DuckDB syntax map([1,2],['a','b']) to Doris does NOT build the same map — Doris map_keys(map([1,2],['a','b']))=[[1, 2]] (the array became a single key), vs DuckDB=[1, 2]. Not portable by name; must translate the constructor.",
+        areas = listOf("map", "collection"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [172] duckdb: 'map_keys' | doris: 'map_keys'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same semantics once the map is built with each engine's own constructor. Doris map_keys(map(1,'a',2,'b'))='[1, 2]' matches DuckDB map_keys(map([1,2],['a','b']))=[1, 2]; array_size=2; element [1]=1 both. Conditionally-equivalent because it depends on the divergent map() constructor and on array render.",
+        areas = listOf("map", "collection"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [173] duckdb: 'map_values' | doris: 'map_values'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same value set; only render differs. Doris map_values(map(1,'a',2,'b'))='[\"a\", \"b\"]' (JSON-quoted elements) vs DuckDB=['a', 'b'] (unquoted via getString). Element-wise equal; parse required; also depends on divergent map() constructor.",
+        areas = listOf("map", "collection"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [174] duckdb: 'map_entries' | doris: 'map_entries'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Element STRUCT shape aligns: Doris map_entries(map(1,'a',2,'b'))='[{\"key\":1, \"value\":\"a\"}, {\"key\":2, \"value\":\"b\"}]' — same key/value field names as DuckDB's struct(key,value) {'key':1,'value':'a'}. Only render (JSON-quoting) and the divergent map() constructor differ; element type row/struct is compatible.",
+        areas = listOf("map", "collection"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [175] duckdb: 'map_contains_entry' | doris: 'map_contains_entry'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both test key+value pair membership. Doris map_contains_entry(map(1,'a',2,'b'),1,'a')=1 (Doris takes flattened key,value args); DuckDB map_contains_entry(map([1],['a']),1,'a')=true. Same truth, boolean render 1 vs true, plus divergent map() constructor.",
+        areas = listOf("map", "collection"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [176] duckdb: 'map_contains_value' | doris: 'map_contains_value'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both test value membership. Doris map_contains_value(map(1,'a',2,'b'),'a')=1; DuckDB map_contains_value(map([1],['a']),'a')=true. Same truth, boolean render 1 vs true, plus divergent map() constructor.",
+        areas = listOf("map", "collection"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [177] duckdb: 'st_astext' | doris: 'st_astext'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both render WKT identically: st_astext(st_point(1,2))='POINT (1 2)' on Doris; DuckDB (spatial extension) also 'POINT (1 2)' (verified via python-duckdb with LOAD spatial). Conditionally-equivalent: DuckDB requires the spatial extension (not present in the plain JDBC harness connection, which errors), Doris ST_* are native — same WKT text once available.",
+        areas = listOf("geo", "spatial"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [178] duckdb: 'st_geomfromwkb' | doris: 'st_geomfromwkb'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "WKB->geometry round-trips to the same WKT on Doris: st_astext(st_geomfromwkb(st_asbinary(st_point(1,2))))='POINT (1 2)' (Doris also accepts st_geometryfromwkb, same result). DuckDB provides st_geomfromwkb via the spatial extension (verified via python-duckdb). Conditionally-equivalent for the same DuckDB-extension caveat.",
+        areas = listOf("geo", "spatial"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [179] duckdb: 'query' | doris: 'query'
+    FunctionHazard(HazardVerdict.UNCLEAR,
+        hazard = "table function, not scalar-probeable — cannot be evaluated through the scalar shared-expr harness; needs a table-function harness for a row-set/ordering comparison.",
+        areas = listOf("table-function"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [180] duckdb: 'parquet_bloom_probe' | doris: 'parquet_bloom_probe'
+    FunctionHazard(HazardVerdict.UNCLEAR,
+        hazard = "table function, not scalar-probeable — needs a table-function harness.",
+        areas = listOf("table-function", "parquet"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [181] duckdb: 'parquet_file_metadata' | doris: 'parquet_file_metadata'
+    FunctionHazard(HazardVerdict.UNCLEAR,
+        hazard = "table function, not scalar-probeable — needs a table-function harness.",
+        areas = listOf("table-function", "parquet"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [182] duckdb: 'parquet_kv_metadata' | doris: 'parquet_kv_metadata'
+    FunctionHazard(HazardVerdict.UNCLEAR,
+        hazard = "table function, not scalar-probeable — needs a table-function harness.",
+        areas = listOf("table-function", "parquet"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+    // [183] duckdb: 'unnest' | doris: 'unnest'
+    FunctionHazard(HazardVerdict.UNCLEAR,
+        hazard = "table function (row-generating), not scalar-probeable through the shared-expr harness; needs a table-function harness for a row-set/ordering comparison.",
+        areas = listOf("table-function"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
 )
 
-/** duckdb->doris lookup: 162 keys (DuckDB-side names) over 162 entries. */
+/** duckdb->doris lookup: 184 keys (DuckDB-side names) over 184 entries. */
 internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -872,12 +982,15 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("FIRST_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[113])
     put("FLOOR", DUCKDB_DORIS_HAZARD_ENTRIES[47])
     put("FMOD", DUCKDB_DORIS_HAZARD_ENTRIES[13])
+    put("FORMAT", DUCKDB_DORIS_HAZARD_ENTRIES[162])
     put("FROM_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[61])
     put("GREATEST", DUCKDB_DORIS_HAZARD_ENTRIES[3])
     put("HEX", DUCKDB_DORIS_HAZARD_ENTRIES[59])
     put("HISTOGRAM", DUCKDB_DORIS_HAZARD_ENTRIES[105])
     put("HOUR", DUCKDB_DORIS_HAZARD_ENTRIES[133])
     put("INSTR", DUCKDB_DORIS_HAZARD_ENTRIES[71])
+    put("ISINF", DUCKDB_DORIS_HAZARD_ENTRIES[165])
+    put("ISNAN", DUCKDB_DORIS_HAZARD_ENTRIES[166])
     put("JSON_ARRAY", DUCKDB_DORIS_HAZARD_ENTRIES[154])
     put("JSON_CONTAINS", DUCKDB_DORIS_HAZARD_ENTRIES[157])
     put("JSON_EACH", DUCKDB_DORIS_HAZARD_ENTRIES[161])
@@ -904,6 +1017,12 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("LOWER", DUCKDB_DORIS_HAZARD_ENTRIES[0])
     put("LPAD", DUCKDB_DORIS_HAZARD_ENTRIES[64])
     put("LTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[10])
+    put("MAP", DUCKDB_DORIS_HAZARD_ENTRIES[171])
+    put("MAP_CONTAINS_ENTRY", DUCKDB_DORIS_HAZARD_ENTRIES[175])
+    put("MAP_CONTAINS_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[176])
+    put("MAP_ENTRIES", DUCKDB_DORIS_HAZARD_ENTRIES[174])
+    put("MAP_KEYS", DUCKDB_DORIS_HAZARD_ENTRIES[172])
+    put("MAP_VALUES", DUCKDB_DORIS_HAZARD_ENTRIES[173])
     put("MAX", DUCKDB_DORIS_HAZARD_ENTRIES[78])
     put("MAX_BY", DUCKDB_DORIS_HAZARD_ENTRIES[84])
     put("MD5", DUCKDB_DORIS_HAZARD_ENTRIES[20])
@@ -919,13 +1038,19 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("NTILE", DUCKDB_DORIS_HAZARD_ENTRIES[110])
     put("NULLIF", DUCKDB_DORIS_HAZARD_ENTRIES[19])
     put("OCTET_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[56])
+    put("PARQUET_BLOOM_PROBE", DUCKDB_DORIS_HAZARD_ENTRIES[180])
+    put("PARQUET_FILE_METADATA", DUCKDB_DORIS_HAZARD_ENTRIES[181])
+    put("PARQUET_KV_METADATA", DUCKDB_DORIS_HAZARD_ENTRIES[182])
     put("PERCENT_RANK", DUCKDB_DORIS_HAZARD_ENTRIES[116])
     put("PI", DUCKDB_DORIS_HAZARD_ENTRIES[49])
     put("POW", DUCKDB_DORIS_HAZARD_ENTRIES[52])
     put("POWER", DUCKDB_DORIS_HAZARD_ENTRIES[53])
     put("QUARTER", DUCKDB_DORIS_HAZARD_ENTRIES[128])
+    put("QUERY", DUCKDB_DORIS_HAZARD_ENTRIES[179])
     put("RADIANS", DUCKDB_DORIS_HAZARD_ENTRIES[45])
+    put("RANDOM", DUCKDB_DORIS_HAZARD_ENTRIES[168])
     put("RANK", DUCKDB_DORIS_HAZARD_ENTRIES[108])
+    put("REGEXP_EXTRACT", DUCKDB_DORIS_HAZARD_ENTRIES[170])
     put("REGEXP_EXTRACT_ALL", DUCKDB_DORIS_HAZARD_ENTRIES[14])
     put("REGEXP_REPLACE", DUCKDB_DORIS_HAZARD_ENTRIES[8])
     put("REGR_AVGX", DUCKDB_DORIS_HAZARD_ENTRIES[97])
@@ -958,29 +1083,36 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("STARTS_WITH", DUCKDB_DORIS_HAZARD_ENTRIES[57])
     put("STDDEV_POP", DUCKDB_DORIS_HAZARD_ENTRIES[89])
     put("STDDEV_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[90])
+    put("ST_ASTEXT", DUCKDB_DORIS_HAZARD_ENTRIES[177])
+    put("ST_GEOMFROMWKB", DUCKDB_DORIS_HAZARD_ENTRIES[178])
     put("SUM", DUCKDB_DORIS_HAZARD_ENTRIES[76])
     put("TAN", DUCKDB_DORIS_HAZARD_ENTRIES[38])
     put("TANH", DUCKDB_DORIS_HAZARD_ENTRIES[41])
     put("TO_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[62])
     put("TO_DAYS", DUCKDB_DORIS_HAZARD_ENTRIES[139])
+    put("TO_JSON", DUCKDB_DORIS_HAZARD_ENTRIES[169])
     put("TO_SECONDS", DUCKDB_DORIS_HAZARD_ENTRIES[140])
     put("TRANSLATE", DUCKDB_DORIS_HAZARD_ENTRIES[68])
     put("TRIM", DUCKDB_DORIS_HAZARD_ENTRIES[9])
     put("UNHEX", DUCKDB_DORIS_HAZARD_ENTRIES[60])
+    put("UNNEST", DUCKDB_DORIS_HAZARD_ENTRIES[183])
     put("UPPER", DUCKDB_DORIS_HAZARD_ENTRIES[1])
     put("URL_DECODE", DUCKDB_DORIS_HAZARD_ENTRIES[69])
     put("URL_ENCODE", DUCKDB_DORIS_HAZARD_ENTRIES[55])
     put("USER", DUCKDB_DORIS_HAZARD_ENTRIES[148])
+    put("UUID", DUCKDB_DORIS_HAZARD_ENTRIES[167])
     put("VAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[91])
     put("VAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[92])
+    put("VERSION", DUCKDB_DORIS_HAZARD_ENTRIES[163])
     put("WEEK", DUCKDB_DORIS_HAZARD_ENTRIES[129])
     put("WEEKDAY", DUCKDB_DORIS_HAZARD_ENTRIES[130])
     put("WEEKOFYEAR", DUCKDB_DORIS_HAZARD_ENTRIES[131])
+    put("XOR", DUCKDB_DORIS_HAZARD_ENTRIES[164])
     put("YEAR", DUCKDB_DORIS_HAZARD_ENTRIES[127])
     put("YEARWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[132])
 }
 
-/** doris->duckdb lookup: 162 keys (Doris-side names) over 162 entries. */
+/** doris->duckdb lookup: 184 keys (Doris-side names) over 184 entries. */
 internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -1038,12 +1170,15 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("FIRST_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[113])
     put("FLOOR", DUCKDB_DORIS_HAZARD_ENTRIES[47])
     put("FMOD", DUCKDB_DORIS_HAZARD_ENTRIES[13])
+    put("FORMAT", DUCKDB_DORIS_HAZARD_ENTRIES[162])
     put("FROM_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[61])
     put("GREATEST", DUCKDB_DORIS_HAZARD_ENTRIES[3])
     put("HEX", DUCKDB_DORIS_HAZARD_ENTRIES[59])
     put("HISTOGRAM", DUCKDB_DORIS_HAZARD_ENTRIES[105])
     put("HOUR", DUCKDB_DORIS_HAZARD_ENTRIES[133])
     put("INSTR", DUCKDB_DORIS_HAZARD_ENTRIES[71])
+    put("ISINF", DUCKDB_DORIS_HAZARD_ENTRIES[165])
+    put("ISNAN", DUCKDB_DORIS_HAZARD_ENTRIES[166])
     put("JSON_ARRAY", DUCKDB_DORIS_HAZARD_ENTRIES[154])
     put("JSON_CONTAINS", DUCKDB_DORIS_HAZARD_ENTRIES[157])
     put("JSON_EACH", DUCKDB_DORIS_HAZARD_ENTRIES[161])
@@ -1070,6 +1205,12 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("LOWER", DUCKDB_DORIS_HAZARD_ENTRIES[0])
     put("LPAD", DUCKDB_DORIS_HAZARD_ENTRIES[64])
     put("LTRIM", DUCKDB_DORIS_HAZARD_ENTRIES[10])
+    put("MAP", DUCKDB_DORIS_HAZARD_ENTRIES[171])
+    put("MAP_CONTAINS_ENTRY", DUCKDB_DORIS_HAZARD_ENTRIES[175])
+    put("MAP_CONTAINS_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[176])
+    put("MAP_ENTRIES", DUCKDB_DORIS_HAZARD_ENTRIES[174])
+    put("MAP_KEYS", DUCKDB_DORIS_HAZARD_ENTRIES[172])
+    put("MAP_VALUES", DUCKDB_DORIS_HAZARD_ENTRIES[173])
     put("MAX", DUCKDB_DORIS_HAZARD_ENTRIES[78])
     put("MAX_BY", DUCKDB_DORIS_HAZARD_ENTRIES[84])
     put("MD5", DUCKDB_DORIS_HAZARD_ENTRIES[20])
@@ -1085,13 +1226,19 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("NTILE", DUCKDB_DORIS_HAZARD_ENTRIES[110])
     put("NULLIF", DUCKDB_DORIS_HAZARD_ENTRIES[19])
     put("OCTET_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[56])
+    put("PARQUET_BLOOM_PROBE", DUCKDB_DORIS_HAZARD_ENTRIES[180])
+    put("PARQUET_FILE_METADATA", DUCKDB_DORIS_HAZARD_ENTRIES[181])
+    put("PARQUET_KV_METADATA", DUCKDB_DORIS_HAZARD_ENTRIES[182])
     put("PERCENT_RANK", DUCKDB_DORIS_HAZARD_ENTRIES[116])
     put("PI", DUCKDB_DORIS_HAZARD_ENTRIES[49])
     put("POW", DUCKDB_DORIS_HAZARD_ENTRIES[52])
     put("POWER", DUCKDB_DORIS_HAZARD_ENTRIES[53])
     put("QUARTER", DUCKDB_DORIS_HAZARD_ENTRIES[128])
+    put("QUERY", DUCKDB_DORIS_HAZARD_ENTRIES[179])
     put("RADIANS", DUCKDB_DORIS_HAZARD_ENTRIES[45])
+    put("RANDOM", DUCKDB_DORIS_HAZARD_ENTRIES[168])
     put("RANK", DUCKDB_DORIS_HAZARD_ENTRIES[108])
+    put("REGEXP_EXTRACT", DUCKDB_DORIS_HAZARD_ENTRIES[170])
     put("REGEXP_EXTRACT_ALL", DUCKDB_DORIS_HAZARD_ENTRIES[14])
     put("REGEXP_REPLACE", DUCKDB_DORIS_HAZARD_ENTRIES[8])
     put("REGR_AVGX", DUCKDB_DORIS_HAZARD_ENTRIES[97])
@@ -1124,24 +1271,31 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("STARTS_WITH", DUCKDB_DORIS_HAZARD_ENTRIES[57])
     put("STDDEV_POP", DUCKDB_DORIS_HAZARD_ENTRIES[89])
     put("STDDEV_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[90])
+    put("ST_ASTEXT", DUCKDB_DORIS_HAZARD_ENTRIES[177])
+    put("ST_GEOMFROMWKB", DUCKDB_DORIS_HAZARD_ENTRIES[178])
     put("SUM", DUCKDB_DORIS_HAZARD_ENTRIES[76])
     put("TAN", DUCKDB_DORIS_HAZARD_ENTRIES[38])
     put("TANH", DUCKDB_DORIS_HAZARD_ENTRIES[41])
     put("TO_BASE64", DUCKDB_DORIS_HAZARD_ENTRIES[62])
     put("TO_DAYS", DUCKDB_DORIS_HAZARD_ENTRIES[139])
+    put("TO_JSON", DUCKDB_DORIS_HAZARD_ENTRIES[169])
     put("TO_SECONDS", DUCKDB_DORIS_HAZARD_ENTRIES[140])
     put("TRANSLATE", DUCKDB_DORIS_HAZARD_ENTRIES[68])
     put("TRIM", DUCKDB_DORIS_HAZARD_ENTRIES[9])
     put("UNHEX", DUCKDB_DORIS_HAZARD_ENTRIES[60])
+    put("UNNEST", DUCKDB_DORIS_HAZARD_ENTRIES[183])
     put("UPPER", DUCKDB_DORIS_HAZARD_ENTRIES[1])
     put("URL_DECODE", DUCKDB_DORIS_HAZARD_ENTRIES[69])
     put("URL_ENCODE", DUCKDB_DORIS_HAZARD_ENTRIES[55])
     put("USER", DUCKDB_DORIS_HAZARD_ENTRIES[148])
+    put("UUID", DUCKDB_DORIS_HAZARD_ENTRIES[167])
     put("VAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[91])
     put("VAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[92])
+    put("VERSION", DUCKDB_DORIS_HAZARD_ENTRIES[163])
     put("WEEK", DUCKDB_DORIS_HAZARD_ENTRIES[129])
     put("WEEKDAY", DUCKDB_DORIS_HAZARD_ENTRIES[130])
     put("WEEKOFYEAR", DUCKDB_DORIS_HAZARD_ENTRIES[131])
+    put("XOR", DUCKDB_DORIS_HAZARD_ENTRIES[164])
     put("YEAR", DUCKDB_DORIS_HAZARD_ENTRIES[127])
     put("YEARWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[132])
 }

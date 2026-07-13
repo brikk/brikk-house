@@ -384,6 +384,84 @@ added as pairs): `get_json_string`='x', `get_json_int`=1, `json_length('[1,2,3]'
 =3, `json_exists_path('{"a":1}','$.a')`=1 / `'$.z'`=0. Registry additions:
 duckdb→doris +10, trino→doris +3. One `unclear` (`json_each`, table fn).
 
+## Batch 9 (FINAL content batch) — misc / map / regex / no-equivalent tail {#batch9-misc}
+
+Everything not covered by batches 1-8: format, version, xor, isinf/isnan, the map
+family, uuid/random/rand, to_json, ST_* geo, regexp_extract, plus the Trino-only
+math/string tail (e, crc32, normal_cdf, regexp_count, truncate, width_bucket,
+parse_data_size). All probe-verified live on the Doris FE; Trino side bridged
+through live DuckDB / re-adjudicated against Doris with Trino's known semantics.
+
+**duckdb→doris:**
+- **`format` — `identical`:** Doris `format` is the SAME fmt/printf brace dialect as
+  DuckDB. Verified: `format('{} and {}','a','b')`='a and b', `format('{:d}',42)`='42',
+  `format('{:05d}',42)`='00042', `format('{:.2f}',3.14159)`='3.14' — all match; and
+  `format('%d and %s',42,'x')` returns the LITERAL `%d and %s` on BOTH (%-not-a-spec).
+  This is NOT Trino's Java-Formatter %-dialect.
+- **`version` — `divergent`:** same name, incomparable values by design — DuckDB
+  `version()`='v1.5.4' (engine version) vs Doris='5.7.99' (MySQL-protocol compat
+  version the FE reports).
+- **`xor` — `no-equivalent`:** DuckDB `xor(5,3)`=6 is bitwise-int (no boolean xor —
+  `xor(true,false)` is a Binder Error). Doris FE does NOT resolve `xor()` for ints
+  (errCode=2 function-not-found). Doris uses `bitxor()` / `#`.
+- **`isinf` / `isnan` — `conditionally-equivalent`:** same detection, boolean render
+  only (DuckDB true/false vs Doris 1/0). `isinf(inf)`=true/1, `isinf(1.0)`=false/0;
+  `isnan(nan)`=true/1, `isnan(1.0)`=false/0.
+- **`uuid` / `random` — `conditionally-equivalent`:** UUID is 36 chars both; random in
+  [0,1) both. Non-deterministic → never pushable.
+- **`to_json` — `identical`:** `to_json([1,2,3])`='[1,2,3]' both.
+- **`regexp_extract` — `divergent` (SIGNATURE):** 2-arg whole-match form
+  `regexp_extract('abc123','[0-9]+')`=123 in DuckDB but ERRORS on Doris (FE
+  can-not-found for that arity). The 3-arg group form is aligned: `('([0-9]+)',0)`=123,
+  `('([a-z]+)([0-9]+)',2)`=123 both (group 0 = whole match). Doris REQUIRES the group
+  index arg.
+- **`map` — `divergent` (CONSTRUCTOR):** DuckDB `map([k..],[v..])` (two parallel lists)
+  vs Doris `map(k,v,k,v)` (flattened scalars). Feeding DuckDB syntax to Doris does NOT
+  build the same map: Doris `map_keys(map([1,2],['a','b']))`=`[[1, 2]]` (array became a
+  single key) vs DuckDB `[1,2]`. Must translate the constructor.
+- **`map_keys` / `map_values` / `map_entries` / `map_contains_entry` /
+  `map_contains_value` — `conditionally-equivalent`:** same semantics once each engine's
+  own constructor is used. Doris `map_keys(map(1,'a',2,'b'))`='[1, 2]', `map_values`=
+  '["a", "b"]' (JSON-quoted render vs DuckDB unquoted), `map_entries`=
+  '[{"key":1, "value":"a"}, …]' — Doris struct field names key/value ALIGN with DuckDB's
+  struct(key,value). `map_contains_entry(map(1,'a',2,'b'),1,'a')`=1 and
+  `map_contains_value(…,'a')`=1. Divergent map() constructor + render/boolean mapping.
+- **`st_astext` / `st_geomfromwkb` — `conditionally-equivalent`:** Doris ST_* are native;
+  `st_astext(st_point(1,2))`='POINT (1 2)', WKB round-trip
+  `st_astext(st_geomfromwkb(st_asbinary(st_point(1,2))))`='POINT (1 2)' (Doris also has
+  `st_geometryfromwkb`). DuckDB matches the SAME WKT but only with the `spatial`
+  extension LOADed (verified via python-duckdb); the plain JDBC harness connection lacks
+  it → conditionally-equivalent.
+
+**trino→doris** (Doris live; Trino from prior evidence — several were `no-equivalent`
+vs DuckDB but Doris HAS them, so re-adjudicated against Doris):
+- **`e` — `identical`:** `e()`=2.718281828459045 = Trino Euler's number.
+- **`crc32` — `identical`:** `crc32('abc')`=891568578 = standard CRC-32 of 'abc'.
+- **`normal_cdf` — `identical`:** `normal_cdf(0,1,0.5)`=0.6914624612740131 = Φ(0.5); arg
+  order (mean, sd, value) matches Trino.
+- **`regexp_count` — `identical`:** `regexp_count('a1b2c3','[0-9]')`=3.
+- **`truncate` — `identical`:** `truncate(3.14159,2)`=3.14 (truncate toward zero).
+- **`width_bucket` — `identical`:** `width_bucket(5.0,0.0,10.0,5)`=3 — signature and
+  bucketing match Trino (re-adjudicated; DuckDB corpus had said "different shape").
+- **`parse_data_size` — `identical`:** `parse_data_size('1kB')`=1024 (kB=1024 bytes).
+- **`regexp_extract` — `conditionally-equivalent`:** group semantics match but Trino's
+  2-arg whole-match form has no Doris arity; use the 3-arg explicit-group form.
+- **`rand` / `random` / `uuid` — `conditionally-equivalent`:** non-deterministic; Trino's
+  bounded `random(n)`/`random(m,n)` bound semantics were not probed on Doris.
+- **`map` — `divergent`; `map_keys` / `map_values` / `map_entries` —
+  `conditionally-equivalent`:** same constructor-signature divergence as duckdb→doris;
+  `map_entries` element type Trino row(K,V) vs Doris named struct(key,value) needs a
+  type-layer mapping.
+
+**Table functions — `unclear` (not scalar-probeable):** `query`, `parquet_bloom_probe`,
+`parquet_file_metadata`, `parquet_kv_metadata`, `unnest` are TABLE functions; they cannot
+be evaluated through the scalar shared-expr harness. Marked `unclear` with reason
+"table function, not scalar-probeable" — need a table-function harness.
+
+Registry additions: duckdb→doris +22 (2 identical, 2 divergent, 12 conditionally-equiv,
+1 no-equivalent, 5 unclear table-fns), trino→doris +16 (7 identical, 1 divergent,
+7 conditionally-equiv, 1 unclear table-fn `unnest`).
+
 ## Worklist status / continuation
 
 Done (batches 1-2): the prior-DIVERGENT scalar tier + the new `length` find + cheap

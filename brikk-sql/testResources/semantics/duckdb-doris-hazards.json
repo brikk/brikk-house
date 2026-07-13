@@ -1682,9 +1682,9 @@
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
     },
-  {
-    "duckdb": "json_each",
-    "doris": "json_each",
+    {
+      "duckdb": "json_each",
+      "doris": "json_each",
       "verdict": "unclear",
       "hazard": "json_each is a TABLE function in DuckDB (Binder Error: 'json_each is a table function but was used as a scalar function; must be in a FROM clause'), so it is not probeable through the scalar shared-expr harness. Doris exposes json_each / json_each_text as table functions too, but a row-set/ordering comparison was not performed. Marked unclear — needs a table-function harness, not a scalar probe.",
       "areas": [
@@ -1692,6 +1692,243 @@
         "table-function"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "duckdb": "format",
+      "doris": "format",
+      "verdict": "identical",
+      "hazard": "Doris format == DuckDB format (fmt/printf brace-style). Probe-verified live: format('{} and {}','a','b')='a and b' both; format('{:d}',42)='42' both; format('{:05d}',42)='00042' both; format('{:.2f}',3.14159)='3.14' both; and printf-style format('%d and %s',42,'x') returns the LITERAL '%d and %s' on BOTH (brace-only interpolation, % not a spec). NOTE: this is the fmt/printf dialect, NOT Trino's Java-Formatter %-dialect.",
+      "areas": [
+        "string",
+        "format"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "version",
+      "doris": "version",
+      "verdict": "divergent",
+      "hazard": "Both are zero-arg scalars returning a version string but the VALUES differ by design: DuckDB version()='v1.5.4' (DuckDB engine version), Doris version()='5.7.99' (the MySQL-protocol compatibility version the Doris FE reports, not the Doris release). Same function name, incomparable semantics — do not treat as equivalent.",
+      "areas": [
+        "metadata"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "xor",
+      "doris": "xor",
+      "verdict": "no-equivalent",
+      "hazard": "DuckDB xor(a,b) is a bitwise integer XOR scalar (xor(5,3)=6; DuckDB has NO boolean xor — xor(true,false) is a Binder Error). On this live Doris FE build xor() does NOT resolve for integer args (FE errCode=2, function not found). Doris uses the bitxor()/bitmap or the # operator instead; no direct xor scalar. No-equivalent on Doris.",
+      "areas": [
+        "bitwise"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "isinf",
+      "doris": "isinf",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same infinity detection semantics, only boolean render differs (type mapping): isinf(inf) DuckDB=true / Doris=1; isinf(1.0) DuckDB=false / Doris=0. Values agree; treat Doris 1/0 as boolean.",
+      "areas": [
+        "math",
+        "float"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "isnan",
+      "doris": "isnan",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same NaN detection, only boolean render differs (type mapping): isnan(nan) DuckDB=true / Doris=1; isnan(1.0) DuckDB=false / Doris=0. Values agree.",
+      "areas": [
+        "math",
+        "float"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "uuid",
+      "doris": "uuid",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both produce a 36-char canonical UUID string (length(cast(uuid() as varchar))=36 both). Non-deterministic — same shape but NEVER pushable/comparable value-for-value.",
+      "areas": [
+        "random",
+        "nondeterministic"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "random",
+      "doris": "random",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both return a double in [0,1) (probe cast(random()>=0 and random()<1 as int)=1 both). Non-deterministic — never pushable/comparable value-for-value.",
+      "areas": [
+        "random",
+        "nondeterministic"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "to_json",
+      "doris": "to_json",
+      "verdict": "identical",
+      "hazard": "to_json([1,2,3])='[1,2,3]' on both (compact JSON serialization). Aligned for the array case.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "regexp_extract",
+      "doris": "regexp_extract",
+      "verdict": "divergent",
+      "hazard": "SIGNATURE divergence, probe-verified. The 2-arg whole-match form regexp_extract('abc123','[0-9]+') works in DuckDB (='123') but ERRORS on Doris (FE 'Can not found function regexp_extract' for that arity). The 3-arg explicit-group form is aligned: regexp_extract('abc123','([0-9]+)',0)='123' both, and ('([a-z]+)([0-9]+)',2)='123' both. Doris REQUIRES the group-index argument; group 0 = whole match on both. Divergent on the 2-arg form.",
+      "areas": [
+        "string",
+        "regex"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map",
+      "doris": "map",
+      "verdict": "divergent",
+      "hazard": "CONSTRUCTOR SIGNATURE differs. DuckDB map([k1,k2],[v1,v2]) takes two parallel LIST args; Doris map(k1,v1,k2,v2) takes flattened alternating key/value scalars. Probe-verified: feeding DuckDB syntax map([1,2],['a','b']) to Doris does NOT build the same map — Doris map_keys(map([1,2],['a','b']))=[[1, 2]] (the array became a single key), vs DuckDB=[1, 2]. Not portable by name; must translate the constructor.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map_keys",
+      "doris": "map_keys",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same semantics once the map is built with each engine's own constructor. Doris map_keys(map(1,'a',2,'b'))='[1, 2]' matches DuckDB map_keys(map([1,2],['a','b']))=[1, 2]; array_size=2; element [1]=1 both. Conditionally-equivalent because it depends on the divergent map() constructor and on array render.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map_values",
+      "doris": "map_values",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same value set; only render differs. Doris map_values(map(1,'a',2,'b'))='[\"a\", \"b\"]' (JSON-quoted elements) vs DuckDB=['a', 'b'] (unquoted via getString). Element-wise equal; parse required; also depends on divergent map() constructor.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map_entries",
+      "doris": "map_entries",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Element STRUCT shape aligns: Doris map_entries(map(1,'a',2,'b'))='[{\"key\":1, \"value\":\"a\"}, {\"key\":2, \"value\":\"b\"}]' — same key/value field names as DuckDB's struct(key,value) {'key':1,'value':'a'}. Only render (JSON-quoting) and the divergent map() constructor differ; element type row/struct is compatible.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map_contains_entry",
+      "doris": "map_contains_entry",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both test key+value pair membership. Doris map_contains_entry(map(1,'a',2,'b'),1,'a')=1 (Doris takes flattened key,value args); DuckDB map_contains_entry(map([1],['a']),1,'a')=true. Same truth, boolean render 1 vs true, plus divergent map() constructor.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map_contains_value",
+      "doris": "map_contains_value",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both test value membership. Doris map_contains_value(map(1,'a',2,'b'),'a')=1; DuckDB map_contains_value(map([1],['a']),'a')=true. Same truth, boolean render 1 vs true, plus divergent map() constructor.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "st_astext",
+      "doris": "st_astext",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both render WKT identically: st_astext(st_point(1,2))='POINT (1 2)' on Doris; DuckDB (spatial extension) also 'POINT (1 2)' (verified via python-duckdb with LOAD spatial). Conditionally-equivalent: DuckDB requires the spatial extension (not present in the plain JDBC harness connection, which errors), Doris ST_* are native — same WKT text once available.",
+      "areas": [
+        "geo",
+        "spatial"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "st_geomfromwkb",
+      "doris": "st_geomfromwkb",
+      "verdict": "conditionally-equivalent",
+      "hazard": "WKB->geometry round-trips to the same WKT on Doris: st_astext(st_geomfromwkb(st_asbinary(st_point(1,2))))='POINT (1 2)' (Doris also accepts st_geometryfromwkb, same result). DuckDB provides st_geomfromwkb via the spatial extension (verified via python-duckdb). Conditionally-equivalent for the same DuckDB-extension caveat.",
+      "areas": [
+        "geo",
+        "spatial"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "doris": "query",
+      "verdict": "unclear",
+      "hazard": "table function, not scalar-probeable — cannot be evaluated through the scalar shared-expr harness; needs a table-function harness for a row-set/ordering comparison.",
+      "areas": [
+        "table-function"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "duckdb": "query"
+    },
+    {
+      "doris": "parquet_bloom_probe",
+      "verdict": "unclear",
+      "hazard": "table function, not scalar-probeable — needs a table-function harness.",
+      "areas": [
+        "table-function",
+        "parquet"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "duckdb": "parquet_bloom_probe"
+    },
+    {
+      "doris": "parquet_file_metadata",
+      "verdict": "unclear",
+      "hazard": "table function, not scalar-probeable — needs a table-function harness.",
+      "areas": [
+        "table-function",
+        "parquet"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "duckdb": "parquet_file_metadata"
+    },
+    {
+      "doris": "parquet_kv_metadata",
+      "verdict": "unclear",
+      "hazard": "table function, not scalar-probeable — needs a table-function harness.",
+      "areas": [
+        "table-function",
+        "parquet"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "duckdb": "parquet_kv_metadata"
+    },
+    {
+      "doris": "unnest",
+      "verdict": "unclear",
+      "hazard": "table function (row-generating), not scalar-probeable through the shared-expr harness; needs a table-function harness for a row-set/ordering comparison.",
+      "areas": [
+        "table-function"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "duckdb": "unnest"
     }
   ]
 }
