@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
  * SEMANTIC HAZARD REGISTRY
  *
  * Live-probe-verified cross-engine semantics verdicts for function pairs, generated from
- * brikk-sql/testResources/semantics/trino-duckdb-hazards.json (the source of truth) by
- * tools/generate_hazards_registry.py into GeneratedTrinoDuckdbHazards.kt.
+ * brikk-sql/testResources/semantics/<a>-<b>-hazards.json (one file per dialect pair; the
+ * source of truth) by tools/generate_hazards_registry.py into GeneratedABHazards.kt per pair.
  *
  * Same stable-accessor posture as FunctionCatalog.kt: this module is the featherweight
  * metadata artifact external consumers embed — keep the surface small, additive-only,
@@ -55,8 +55,8 @@ data class FunctionHazard(
 
 /**
  * Directional lookup over the shipped hazard pair data. Each JSON pair entry is keyed
- * BOTH ways: trino→duckdb consults the entry's Trino-side name, duckdb→trino the
- * DuckDB-side name (the name a fragment parsed under that source dialect would carry).
+ * BOTH ways: a→b consults the entry's a-side name, b→a the b-side name (the name a
+ * fragment parsed under that source dialect would carry).
  *
  * Keying (see tools/generate_hazards_registry.py, mirrored here for consumers):
  *  - the raw side-name string, uppercased (constructs like "CAST (primitive)" or
@@ -69,14 +69,18 @@ data class FunctionHazard(
  *    wins (DIVERGENT > UNCLEAR > CONDITIONALLY_EQUIVALENT > NO_EQUIVALENT > IDENTICAL;
  *    ties: first entry in the JSON) — a hazard registry must be conservative.
  *
- * The registry is designed to grow more dialect pairs (doris, ...) — lookups for
- * unknown pairs simply return null.
+ * Wired pairs today: trino↔duckdb (probe-filled), duckdb↔doris and trino↔doris (empty
+ * skeletons awaiting live probes). Lookups for unknown pairs simply return null.
  */
 object HazardRegistry {
 
     private val pairs: Map<Pair<String, String>, Map<String, FunctionHazard>> = mapOf(
         ("trino" to "duckdb") to TRINO_TO_DUCKDB_HAZARDS,
         ("duckdb" to "trino") to DUCKDB_TO_TRINO_HAZARDS,
+        ("duckdb" to "doris") to DUCKDB_TO_DORIS_HAZARDS,
+        ("doris" to "duckdb") to DORIS_TO_DUCKDB_HAZARDS,
+        ("trino" to "doris") to TRINO_TO_DORIS_HAZARDS,
+        ("doris" to "trino") to DORIS_TO_TRINO_HAZARDS,
     )
 
     /**

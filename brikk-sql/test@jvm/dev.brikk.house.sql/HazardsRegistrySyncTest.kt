@@ -10,12 +10,13 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * Pins the shipped hazard registry (brikk-sql-metadata GeneratedTrinoDuckdbHazards.kt)
- * against its source of truth, testResources/semantics/trino-duckdb-hazards.json:
+ * Pins the shipped hazard registry (brikk-sql-metadata Generated…Hazards.kt) against
+ * its sources of truth under testResources/semantics/ (the pair hazards JSON files):
  * tools/generate_hazards_registry.py is byte-deterministic, and this test fails when
  * the JSON changes without a regeneration (or vice versa).
  *
@@ -23,6 +24,9 @@ import kotlin.test.fail
  * claim the same lookup key (e.g. Trino 'concat'); the registry keeps the WORST
  * verdict — so a raw-name lookup must return a verdict at least as severe as the
  * entry's own.
+ *
+ * Empty skeleton pairs (duckdb↔doris, trino↔doris) are wired through HazardRegistry
+ * but contribute no keys until probes land.
  */
 class HazardsRegistrySyncTest {
 
@@ -44,7 +48,7 @@ class HazardsRegistrySyncTest {
         val provenance: String,
     )
 
-    private fun loadPairs(): List<JsonPair> {
+    private fun loadTrinoDuckdbPairs(): List<JsonPair> {
         val root = json.parseToJsonElement(resource("semantics/trino-duckdb-hazards.json")).jsonObject
         return root.getValue("pairs").jsonArray.map { entry ->
             val obj = entry.jsonObject
@@ -60,6 +64,11 @@ class HazardsRegistrySyncTest {
         }
     }
 
+    private fun loadPairCount(path: String): Int {
+        val root = json.parseToJsonElement(resource(path)).jsonObject
+        return root.getValue("pairs").jsonArray.size
+    }
+
     /** Worst-first severity rank (must match tools/generate_hazards_registry.py). */
     private val rank = mapOf(
         HazardVerdict.DIVERGENT to 0,
@@ -71,7 +80,7 @@ class HazardsRegistrySyncTest {
 
     @Test
     fun everyJsonPairIsRetrievableInBothDirections() {
-        val pairs = loadPairs()
+        val pairs = loadTrinoDuckdbPairs()
         assertEquals(241, pairs.size, "hazards JSON pair count changed — regenerate the registry")
         for (pair in pairs) {
             val fwd = HazardRegistry.lookup("trino", "duckdb", pair.trino)
@@ -93,7 +102,7 @@ class HazardsRegistrySyncTest {
 
     @Test
     fun collisionFreeKeysMatchTheirJsonEntryExactly() {
-        val pairs = loadPairs()
+        val pairs = loadTrinoDuckdbPairs()
         // Raw side-names claimed by exactly one entry must round-trip all fields.
         for (side in listOf("trino", "duckdb")) {
             val byName = pairs.groupBy {
@@ -117,5 +126,15 @@ class HazardsRegistrySyncTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun emptyDorisSkeletonJsonsShipWithZeroPairs() {
+        // Skeleton JSONs ship with pairs: []; registry wiring is asserted in
+        // brikk-sql-metadata HazardRegistryTest (internal maps). Public lookup stays null.
+        assertEquals(0, loadPairCount("semantics/duckdb-doris-hazards.json"))
+        assertEquals(0, loadPairCount("semantics/trino-doris-hazards.json"))
+        assertNull(HazardRegistry.lookup("duckdb", "doris", "abs"))
+        assertNull(HazardRegistry.lookup("trino", "doris", "abs"))
     }
 }

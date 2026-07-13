@@ -107,4 +107,20 @@ class HazardRegistryTest {
         assertTrue(TRINO_TO_DUCKDB_HAZARDS.values.all { it in TRINO_DUCKDB_HAZARD_ENTRIES })
         assertTrue(DUCKDB_TO_TRINO_HAZARDS.values.all { it in TRINO_DUCKDB_HAZARD_ENTRIES })
     }
+
+    @Test
+    fun emptyDorisSkeletonPairsAreWired() {
+        // duckdb↔doris and trino↔doris ship empty until live probes land; maps must
+        // exist (wired in HazardRegistry) so regeneration only fills Generated* files.
+        assertEquals(0, DUCKDB_DORIS_HAZARD_ENTRIES.size)
+        assertEquals(0, TRINO_DORIS_HAZARD_ENTRIES.size)
+        assertTrue(DUCKDB_TO_DORIS_HAZARDS.isEmpty())
+        assertTrue(DORIS_TO_DUCKDB_HAZARDS.isEmpty())
+        assertTrue(TRINO_TO_DORIS_HAZARDS.isEmpty())
+        assertTrue(DORIS_TO_TRINO_HAZARDS.isEmpty())
+        assertNull(HazardRegistry.lookup("duckdb", "doris", "abs"))
+        assertNull(HazardRegistry.lookup("trino", "doris", "lower"))
+        assertNull(HazardRegistry.lookup("doris", "duckdb", "abs"))
+        assertNull(HazardRegistry.lookup("doris", "trino", "lower"))
+    }
 }
