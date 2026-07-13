@@ -1,0 +1,56 @@
+# High-fidelity SQL verification oracles: the genuinely heavy, real-engine checks that are
+# too large to ship in an IDE plugin. Embedded native PostgreSQL and chDB ClickHouse live
+# here; the lightweight JVM parsers (Trino/Doris/DuckDB) are re-exposed from brikk-sql-verify
+# so a single SqlOracles.forEngine registry offers the fullest available fidelity per engine.
+# Used only for offline/extreme validation (corpus gates), not the shipped SqlVerifiers registry.
+product: jvm/lib
+
+# TODO(review): used verbatim as the published POM <description> (required by Maven Central).
+description: High-fidelity SQL verification oracles (real engines) — embedded PostgreSQL + chDB ClickHouse, plus the JVM Trino/Doris/DuckDB parsers re-exposed as a full oracle set.
+
+apply:
+  - ../publish.module-template.yaml
+
+dependencies:
+  # Re-exposes the SqlVerifier interface + VerifyResult + the lightweight fidelity verifiers
+  # (Trino/Doris/DuckDB) and the advisory ShardingSphere oracle. `exported` so downstream
+  # consumers of brikk-sql-oracle see the interface and those verifiers transitively.
+  - ../brikk-sql-verify: exported
+  # The in-process chDB FFM binding, for the ClickHouse oracle.
+  - ../brikk-chdb
+  # Embedded PostgreSQL for PostgresVerifier. Postgres has no parse-only wire API and no
+  # mature JVM libpg_query binding, so verification is done by a REAL PG engine and
+  # SQLSTATE discrimination. Zonky ships PG as a NATIVE binary (PostgreSQL 14.22) launched
+  # as a subprocess plus the standard org.postgresql JDBC driver 42.7.x — nothing in the
+  # hot path is JVM-version-sensitive, so JDK 25 is fine (the library itself is Java-8
+  # bytecode). The platform PG binary is downloaded to ~/.embedded-postgres-binaries on
+  # first boot and cached across runs; CI/offline consumers should warm that cache.
+  - io.zonky.test:embedded-postgres:2.2.2
+  # The platform binary provider. embedded-postgres declares all four platforms with
+  # runtime scope; Amper's compile classpath doesn't need them, but the runtime resolver
+  # must include the one for this host (linux-amd64). Declared explicitly so it is present
+  # regardless of transitive runtime-scope handling.
+  - io.zonky.test.postgres:embedded-postgres-binaries-linux-amd64:14.22.0
+
+test-dependencies:
+  # The verify gate re-generates every corpus SQL through brikk's own parser+generator:
+  # the corpora's "generated" strings are the Python oracle's outputs, and ours diverge
+  # from them exactly at the registered brikk extensions (docs/brikk-extensions.md), so
+  # the gate must feed the engines what WE actually emit.
+  - ../brikk-sql
+
+settings:
+  publishing:
+    # Explicit artifactId is required by Maven Central publishing (toolchain 0.11); equals the
+    # default (module name). Published coordinate: dev.brikk.house:brikk-sql-oracle.
+    artifactId: brikk-sql-oracle
+  jvm:
+    # The final java.lang.foreign API is required by brikk-chdb; this is intentionally FFM.
+    jdk:
+      version: 25
+    test:
+      # chDB uses restricted FFM; without this the JDK 25 test JVM warns and native teardown
+      # can segfault.
+      freeJvmArgs: ["--enable-native-access=ALL-UNNAMED"]
+  kotlin:
+    serialization: json

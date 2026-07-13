@@ -73,6 +73,9 @@ class VerifyCorpusGateTest {
         runGateOver(engine, "doris-transpile", sqls, ledger)
     }
 
+    private fun verifierFor(engine: String): SqlVerifier =
+        SqlOracles.forEngine(engine) ?: fail("no verifier available for engine $engine")
+
     @Test
     fun trinoGeneratedSqlIsAcceptedByTrinoParserModuloLedger() = runGate("trino")
 
@@ -81,9 +84,13 @@ class VerifyCorpusGateTest {
 
     /**
      * Postgres gate: re-generates postgres-serde.json through brikk's postgres pipeline and
-     * feeds each output to a REAL embedded PostgreSQL via [PostgresVerifier], which discriminates
-     * grammar rejection from catalog/semantic failure by SQLSTATE (see its KDoc). Rejects here
+     * feeds each output to a REAL embedded PostgreSQL, which discriminates grammar rejection
+     * from catalog/semantic failure by SQLSTATE (see [PostgresVerifier]'s KDoc). Rejects here
      * are genuine dialect bugs OR a SQLSTATE we mis-partitioned; both are ledgered with reasons.
+     *
+     * [SqlOracles.forEngine] routes `"postgres"` to the fidelity embedded PostgreSQL oracle
+     * (whereas [SqlVerifiers.forEngine] would return the advisory ShardingSphere verifier), so
+     * this gate needs no special-case verifier.
      */
     @Test
     fun postgresGeneratedSqlIsAcceptedByPostgresParserModuloLedger() = runGate("postgres")
@@ -112,8 +119,23 @@ class VerifyCorpusGateTest {
         sqls: List<String>,
         ledger: Ledger,
     ) {
-        val verifier = SqlVerifiers.forEngine(engine)
-            ?: fail("no verifier available for engine $engine")
+        // SqlOracles routes postgres -> embedded PG and clickhouse -> chDB; trino/doris/duckdb
+        // reuse the lightweight JVM parsers. Close it afterwards to stop any embedded engine.
+        val verifier = verifierFor(engine)
+        try {
+            runGateWith(engine, label, sqls, ledger, verifier)
+        } finally {
+            (verifier as? AutoCloseable)?.let { runCatching { it.close() } }
+        }
+    }
+
+    private fun runGateWith(
+        engine: String,
+        label: String,
+        sqls: List<String>,
+        ledger: Ledger,
+        verifier: SqlVerifier,
+    ) {
         check(ledger.engine == engine) { "ledger engine mismatch: ${ledger.engine} != $engine" }
 
         val dialect = Dialects.forName(engine)
@@ -217,7 +239,7 @@ class VerifyCorpusGateTest {
 
     private fun ledgerResource(path: String): String {
         val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql-verify/testResources/$path").takeIf { it.exists() }?.inputStream()
+            ?: java.io.File("brikk-sql-oracle/testResources/$path").takeIf { it.exists() }?.inputStream()
             ?: java.io.File("testResources/$path").takeIf { it.exists() }?.inputStream()
             ?: fail("ledger $path not found on classpath or filesystem")
         return stream.use { it.readBytes().decodeToString() }

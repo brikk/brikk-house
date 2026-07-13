@@ -1,0 +1,15 @@
+product: jvm/lib
+description: chDB v26.5.0 native resource for macOS arm64.
+
+apply:
+  - ../publish.module-template.yaml
+
+plugins:
+  brikk-chdb-native-packaging: enabled
+
+settings:
+  publishing:
+    artifactId: brikk-chdb-native-macos-arm64
+  jvm:
+    jdk:
+      version: 25
