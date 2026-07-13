@@ -101,8 +101,9 @@ class PostgresVerifier : SqlVerifier, AutoCloseable {
      */
     override fun verifyExpression(sql: String): VerifyResult {
         val result = verify("SELECT $sql")
-        if (result.accepted || result.line != 1 || result.col == null) return result
-        return result.copy(col = (result.col - WRAPPER_PREFIX).coerceAtLeast(1))
+        val col = result.col
+        if (result.accepted || result.line != 1 || col == null) return result
+        return result.copy(col = (col - WRAPPER_PREFIX).coerceAtLeast(1))
     }
 
     @Synchronized

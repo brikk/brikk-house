@@ -7,6 +7,7 @@ modules:
   - brikk-sql
   - brikk-sql-metadata
   - brikk-sql-verify
+  - brikk-sql-oracle
 
 plugins:
   - ./brikk-chdb-native-packaging

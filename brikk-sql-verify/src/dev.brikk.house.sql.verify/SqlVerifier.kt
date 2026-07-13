@@ -18,7 +18,10 @@ package dev.brikk.house.sql.verify
  * individual [verify] calls are then fast.
  */
 interface SqlVerifier {
-    /** Engine identifier: `"clickhouse"`, `"doris"`, `"trino"`, `"duckdb"`, or `"postgres"`. */
+    /**
+     * Engine identifier: `"clickhouse"`, `"doris"`, `"trino"`, `"duckdb"`, `"postgres"`,
+     * `"mysql"`, or `"hive"`.
+     */
     val engine: String
 
     /**
@@ -53,6 +56,10 @@ interface SqlVerifier {
  * @property error the engine's own error message when a verified parser rejected the SQL.
  * @property line 1-based line of the error, when the engine reports a position.
  * @property col 1-based column of the error, when the engine reports a position.
+ * @property advisory true when produced by a re-implemented grammar oracle (ShardingSphere)
+ *   rather than the engine's own parser; consumers may treat an advisory `accepted=false` as a
+ *   non-blocking warning rather than a hard rejection. Engine-exact/fidelity verifiers (Trino,
+ *   DuckDB, Doris, embedded PostgreSQL, chDB ClickHouse) leave this false.
  */
 data class VerifyResult(
     val accepted: Boolean,
@@ -61,6 +68,7 @@ data class VerifyResult(
     val col: Int? = null,
     val verified: Boolean = true,
     val warning: String? = null,
+    val advisory: Boolean = false,
 )
 
 /**
@@ -74,27 +82,34 @@ object SqlVerifiers {
      * Returns a verifier for [name] (case-insensitive), or null when the engine is unsupported
      * or its optional parser resource is unavailable.
      *
-     * Supported engines: `"clickhouse"`, `"doris"`, `"trino"`, `"duckdb"`, `"postgres"`.
-     * `"clickhouse"` is always available as a non-throwing verifier. Until a compatible chDB
-     * native library is configured through `brikk.chdb.library`, its results are marked
-     * unverified with a warning; this temporary requirement goes away when brikk-chdb packages
-     * the platform archives.
+     * Supported engines: `"trino"`, `"duckdb"`, `"doris"`, `"postgres"`, `"mysql"`, `"hive"`,
+     * `"clickhouse"`.
      *
-     * `"postgres"` has no parse-only wire API and no mature JVM binding of `libpg_query`
-     * (Postgres's real parser as a C library; Python's `pglast` wraps it), so [PostgresVerifier]
-     * discriminates grammar rejection from catalog/semantic failure by booting a REAL embedded
-     * PostgreSQL and classifying SQLSTATEs — still an engine-exact answer, never a non-native
-     * grammar. Its first call is expensive (native PG boot + one-time binary download); hold
-     * the instance for the session (see [PostgresVerifier] KDoc).
+     * This registry returns the **portable/advisory** verifier suitable for IDE/shipped use.
+     * Engines split into two tiers:
+     *
+     * - **Fidelity (native, non-advisory):** `"trino"`, `"duckdb"`, `"doris"` use each engine's
+     *   own parser (trino-parser, embedded DuckDB, vendored Doris FE). Results have
+     *   `advisory = false`.
+     * - **Advisory (portable grammar oracle):** `"postgres"`, `"mysql"`, `"hive"`, `"clickhouse"`
+     *   use the pure-JVM ShardingSphere SQL parser (see [ShardingSphereVerifier]). Results have
+     *   `advisory = true`; consumers may treat an advisory reject as a warning. Fidelity oracles
+     *   for these engines live in the heavyweight `brikk-sql-oracle` module and are reached via
+     *   its `SqlOracles.forEngine` registry: `PostgresVerifier` (real embedded PostgreSQL +
+     *   SQLSTATE discrimination) for the postgres corpus gate, and `ClickhouseVerifier` (chDB
+     *   `EXPLAIN AST`) for offline ClickHouse fidelity checks.
      */
     fun forEngine(name: String): SqlVerifier? = when (name.lowercase()) {
-        "clickhouse" -> ClickhouseVerifier.create()
         // Null when the vendored parser jar can't be located (see DorisVerifier KDoc).
         "doris" -> DorisVerifier.createOrNull()
         "trino" -> TrinoVerifier()
         "duckdb" -> DuckdbVerifier()
-        // Real embedded PostgreSQL + SQLSTATE discrimination (see PostgresVerifier KDoc).
-        "postgres" -> PostgresVerifier()
+        // Advisory ShardingSphere grammar oracles (see ShardingSphereVerifier KDoc). The
+        // engine-exact fidelity oracles (embedded PG, chDB CH) are constructed explicitly.
+        "postgres" -> ShardingSphereVerifier.forEngine("postgres")
+        "mysql" -> ShardingSphereVerifier.forEngine("mysql")
+        "hive" -> ShardingSphereVerifier.forEngine("hive")
+        "clickhouse" -> ShardingSphereVerifier.forEngine("clickhouse")
         else -> null
     }
 }

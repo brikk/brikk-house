@@ -3,16 +3,24 @@
 product: jvm/lib
 
 # TODO(review): used verbatim as the published POM <description> (required by Maven Central).
-description: Native-grammar SQL verification oracles (Trino, DuckDB, Doris) for brikk-sql.
+description: SQL verification oracles (Trino, DuckDB, Doris fidelity; ShardingSphere advisory) for brikk-sql.
 
 apply:
   - ../publish.module-template.yaml
 
 dependencies:
-  # Embedded ClickHouse parser/executor through the narrow in-process chDB FFM binding.
-  # Phase 0 uses brikk.chdb.library (or ChdbConfig.libraryPath) until native archives are
-  # packaged with brikk-chdb; no CLI, server, or JDBC process is involved.
-  - ../brikk-chdb
+  # Pure-JVM ShardingSphere 5.5.2 SQL parser: the portable/advisory grammar oracle for
+  # postgres, mysql, hive, and clickhouse (see ShardingSphereVerifier). It coexists with
+  # trino-parser/Doris on antlr4-runtime 4.13.2 (which those force); ShardingSphere's grammars
+  # were generated with ANTLR 4.10.1 so first parse logs a cosmetic "Tool version ... does not
+  # match runtime" warning — benign, the grammars parse correctly under 4.13.2.
+  - org.apache.shardingsphere:shardingsphere-parser-sql-engine:5.5.2
+  - org.apache.shardingsphere:shardingsphere-parser-sql-postgresql:5.5.2
+  - org.apache.shardingsphere:shardingsphere-parser-sql-mysql:5.5.2
+  - org.apache.shardingsphere:shardingsphere-parser-sql-hive:5.5.2
+  - org.apache.shardingsphere:shardingsphere-parser-sql-clickhouse:5.5.2
+  # Needed for Hive's database-type SPI to load (without it the Hive parser can't resolve).
+  - org.apache.shardingsphere:shardingsphere-infra-database-hive:5.5.2
   # Trino's own SQL parser. 481 matches the vendored function catalog (vendor/data/trino-functions-481.tsv).
   # NOTE: trino-parser 481 ships class-file 69 => requires a JDK 25 runtime (see settings.jvm.jdk below).
   - io.trino:trino-parser:481
@@ -29,19 +37,6 @@ dependencies:
   # NOTE: trino-parser pulls antlr4-runtime 4.13.2, which overrides this declaration;
   # ANTLR 4.13.x runtimes are compatible with the 4.13.1-generated Doris parser.
   - org.antlr:antlr4-runtime:4.13.1
-  # Embedded PostgreSQL for PostgresVerifier. Postgres has no parse-only wire API and no
-  # mature JVM libpg_query binding, so verification is done by a REAL PG engine and
-  # SQLSTATE discrimination. Zonky ships PG as a NATIVE binary (PostgreSQL 14.22) launched
-  # as a subprocess plus the standard org.postgresql JDBC driver 42.7.x — nothing in the
-  # hot path is JVM-version-sensitive, so JDK 25 is fine (the library itself is Java-8
-  # bytecode). The platform PG binary is downloaded to ~/.embedded-postgres-binaries on
-  # first boot and cached across runs; CI/offline consumers should warm that cache.
-  - io.zonky.test:embedded-postgres:2.2.2
-  # The platform binary provider. embedded-postgres declares all four platforms with
-  # runtime scope; Amper's compile classpath doesn't need them, but the runtime resolver
-  # must include the one for this host (linux-amd64). Declared explicitly so it is present
-  # regardless of transitive runtime-scope handling.
-  - io.zonky.test.postgres:embedded-postgres-binaries-linux-amd64:14.22.0
 
 test-dependencies:
   # The verify gate re-generates every corpus SQL through brikk's own parser+generator:

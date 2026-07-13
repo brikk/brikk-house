@@ -12,8 +12,10 @@ class ClickhouseVerifierTest {
     fun unavailableNativeLibraryReturnsWarningInsteadOfThrowing() {
         // The regular focused test invocation deliberately has no libchdb. The verifier is
         // opt-in until brikk-chdb packages platform archives, rather than starting a CLI/server.
+        // Constructed directly: the chDB verifier is a fidelity oracle, no longer registered in
+        // SqlVerifiers.forEngine (which now returns the advisory ShardingSphere verifier).
         if (System.getProperty("brikk.chdb.integrationLibrary") == null) {
-            val result = SqlVerifiers.forEngine("clickhouse")!!.verify("SELECT 1")
+            val result = ClickhouseVerifier.create().verify("SELECT 1")
             assertFalse(result.verified)
             assertFalse(result.accepted)
             assertNotNull(result.warning)
