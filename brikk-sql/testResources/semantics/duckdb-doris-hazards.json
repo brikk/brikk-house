@@ -1570,6 +1570,27 @@
         "session"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "array_append",
+      "doris": "array_append",
+      "verdict": "identical",
+      "hazard": "Probe-verified live: array_append([1,2],3) -> [1,2,3] on both (element-wise e[1]=1,e[3]=3 SAME). Same fn name works on both. NOTE the length-accessor name trap: Doris has NO array_length (errors 'Can not found function array_length'), use array_size; DuckDB has array_length but NO array_size — this affects the wrapper, not array_append itself.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "duckdb": "array_cross_product",
+      "doris": "array_cross_product",
+      "verdict": "identical",
+      "hazard": "Probe-verified live: this is the 3-D VECTOR cross product, NOT a cartesian product — array_cross_product([1,2,3],[4,5,6]) = [-3,6,-3] element-wise SAME on both (e1=-3,e2=6,e3=-3, size=3). Same fn name works on both engines.",
+      "areas": [
+        "array",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
     }
   ]
 }

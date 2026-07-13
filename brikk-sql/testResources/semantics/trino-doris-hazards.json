@@ -1308,6 +1308,237 @@
         "datetime"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "trino": "array_distinct",
+      "doris": "array_distinct",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Doris live: array_distinct([1,1,2,3,3])=[1,2,3] (size 3, e1=1 — preserves first-occurrence order). Trino array_distinct also preserves order (==DuckDB list_distinct set-wise, but DuckDB returns reversed [3,2,1]). Set/length identical; ORDER matches Trino but the DuckDB bridge reorders — order-preservation must be verified per element, not by raw render. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_first",
+      "doris": "array_first",
+      "verdict": "divergent",
+      "hazard": "SIGNATURE trap. Doris live: array_first is a LAMBDA/predicate fn — array_first(x->x>0,[10,20,30])=10 (first element matching the predicate; the array is the SECOND arg). Trino array_first(array) returns the plain first element with no predicate. Arity/semantics differ -> map by rewriting to array_first(x->true, arr) or element_at(arr,1). Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_last",
+      "doris": "array_last",
+      "verdict": "divergent",
+      "hazard": "SIGNATURE trap (same as array_first). Doris live: array_last(x->x>0,[10,20,30])=30 — lambda predicate first, array second. Trino array_last(array) is the plain last element. Map via array_last(x->true,arr) or element_at(arr,-1). Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_intersect",
+      "doris": "array_intersect",
+      "verdict": "identical",
+      "hazard": "Doris live: array_intersect([1,2,3],[2,3,4])=[2,3] (e1=2, size 2). Matches Trino (prior corpus: Trino array_intersect==DuckDB list_intersect identical). Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_position",
+      "doris": "array_position",
+      "verdict": "identical",
+      "hazard": "Doris live: array_position([10,20,30],20)=2 (1-based), and NOT-FOUND array_position([10,20,30],99)=0. Trino array_position is also 1-based and returns 0 when absent (matches). NOTE the DuckDB bridge differs on not-found (list_position returns NULL, not 0) — do not adjudicate via DuckDB here. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_sort",
+      "doris": "array_sort",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Doris live: array_sort([3,1,2]) ascending -> e1=1,e3=3; NULL-bearing array_sort([3,NULL,1]) keeps NULL (size preserved =3). Trino array_sort places NULLs last; verify NULL ordering per element before relying on it. Ascending default aligns. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_except",
+      "doris": "array_except",
+      "verdict": "identical",
+      "hazard": "Doris live: array_except([1,2,3,4],[2,4])=[1,3] (size 2, e1=1). Trino array_except is the same set-difference. (Prior corpus marked it no-equivalent on the DuckDB side — DuckDB lacks it — but Doris HAS it and matches Trino.) Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_remove",
+      "doris": "array_remove",
+      "verdict": "identical",
+      "hazard": "Doris live: array_remove([1,2,3,2],2)=[1,3] (size 2, e1=1) — removes ALL occurrences. Trino array_remove is the same. (Prior corpus: DuckDB lacks it, needed list_filter workaround; Doris HAS it and matches Trino.) Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_union",
+      "doris": "array_union",
+      "verdict": "identical",
+      "hazard": "Doris live: array_union([1,2,3],[3,4]) -> size 4 (distinct union). Trino array_union is the same. (Prior corpus: DuckDB needed list_distinct(list_concat(...)); Doris HAS array_union by name and matches Trino.) Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "arrays_overlap",
+      "doris": "arrays_overlap",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Doris live: arrays_overlap([1,2],[2,3])=1 (overlap) and arrays_overlap([1,2],[3,4])=0 (disjoint). Value semantics match Trino, but Doris returns TINYINT 0/1 while Trino returns BOOLEAN — boolean type mapping required (Doris renders BOOLEAN as 0/1 over the MySQL protocol). Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "boolean"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "cardinality",
+      "doris": "array_size",
+      "verdict": "divergent",
+      "hazard": "Doris live: array length is array_size([1,2,3])=3; Doris cardinality also works on arrays, but the portable name is array_size (Doris has NO array_length). Trino cardinality(array) returns element count -> value matches via array_size, but the name maps to array_size (or element count). Map-cardinality (Trino) also -> not covered here. Rename required. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "map"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "element_at",
+      "doris": "element_at",
+      "verdict": "divergent",
+      "hazard": "Doris live: element_at([10,20,30],2)=20 (1-based) but OUT-OF-BOUNDS element_at([10,20,30],9)=NULL (returns NULL, does not throw). Trino element_at on an array THROWS on out-of-bounds index (does NOT return NULL) — divergent on the OOB path. In-bounds 1-based access aligns. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "contains",
+      "doris": "array_contains",
+      "verdict": "divergent",
+      "hazard": "Doris live: 'contains' does NOT exist ('Can not found function contains'); the array-membership fn is array_contains([1,2,3],2) -> 1 (TINYINT). Trino contains(array,elem) returns BOOLEAN true. Both a NAME map (contains->array_contains) AND a boolean 0/1-vs-true/false type map are required. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "boolean"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_join",
+      "doris": "array_join",
+      "verdict": "divergent",
+      "hazard": "Doris live: array_join([1,2,3],'-')='1-2-3'; with a NULL element array_join([1,NULL,3],'-')='1-3' (NULL SKIPPED when no 3rd nullReplacement arg). Trino array_join(x,sep) ALSO skips NULLs by default, but the 3-arg form array_join(x,sep,nullStr) semantics/prior corpus marks array_join->DuckDB array_to_string as divergent (DuckDB array_to_string has no null-replacement 3rd arg). Value of the 2-arg NULL-skip aligns Doris<->Trino; adjudicated divergent to carry the 3-arg/DuckDB-bridge hazard forward. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_max",
+      "doris": "array_max",
+      "verdict": "divergent",
+      "hazard": "NULL-propagation divergence. Doris live: array_max([1,2,3])=3 and array_max([1,NULL,2])=2 (Doris SKIPS NULL elements). Trino array_max PROPAGATES NULL — array_max(array[1,null,2]) returns NULL if any element is NULL. So on a NULL-bearing array Doris(2) != Trino(NULL). Non-NULL arrays align. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "array_min",
+      "doris": "array_min",
+      "verdict": "divergent",
+      "hazard": "NULL-propagation divergence (same as array_max). Doris live: array_min([3,1,2])=1 and array_min([1,NULL,2])=1 (Doris SKIPS NULL). Trino array_min propagates NULL -> NULL when any element is NULL. Non-NULL arrays align; NULL-bearing arrays diverge. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "split",
+      "doris": "split_by_string",
+      "verdict": "divergent",
+      "hazard": "Doris live: split_by_string('a,b,c',',') -> size 3 works; Doris has split_by_string (and split_part), NOT a Trino-style split(str,delim,limit). Prior corpus already marks Trino split->DuckDB string_split as divergent (Trino split has a 3-arg limit form and empty-delimiter behavior differs). Map Trino split -> Doris split_by_string, never by name; verify empty-delimiter and limit-arg per case. Doris live; Trino from prior evidence.",
+      "areas": [
+        "string",
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "shuffle",
+      "doris": "shuffle",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Doris live: shuffle([1,2,3]) returns a size-3 array (nondeterministic permutation). Trino shuffle is likewise a random permutation. Equal as a multiset but element ORDER is nondeterministic per call -> conditionally-equivalent (nondeterministic; compare as multiset only). (Prior corpus: DuckDB has no shuffle -> no-equivalent on the DuckDB side; Doris HAS shuffle.) Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "sequence",
+      "doris": "sequence",
+      "verdict": "identical",
+      "hazard": "Doris live: sequence(1,5) -> size 5, last element =5 (INCLUSIVE stop). Trino sequence(1,5) is also inclusive [1..5]. (DuckDB bridge: generate_series is inclusive/range is exclusive — use generate_series, per prior corpus conditionally-equivalent.) Doris matches Trino inclusive semantics. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "cosine_similarity",
+      "doris": "cosine_similarity",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Doris live: cosine_similarity([1,2,3],[1,2,3])=1.0. Matches Trino/DuckDB (list_cosine_similarity=1.0) on the value; float representation/ULP may differ. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "cosine_distance",
+      "doris": "cosine_distance",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Doris live: cosine_distance([1,2,3],[4,5,6])=0.02536809 vs DuckDB/Trino list_cosine_distance=0.025368153802923787 — same value, differs only in the last ULP digits / render precision (Doris ~8 sig figs). Float ULP diff -> conditionally-equivalent. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "trino": "cardinality_map",
+      "doris": "cardinality",
+      "verdict": "identical",
+      "hazard": "Map cardinality maps by name: Doris cardinality(map) and Trino cardinality(map) both return the entry count (matches DuckDB cardinality(MAP)=2). Only the ARRAY overload of cardinality needs the array_size rename (see the cardinality/array_size pair). Doris live; Trino from prior evidence.",
+      "areas": [
+        "map"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
     }
   ]
 }

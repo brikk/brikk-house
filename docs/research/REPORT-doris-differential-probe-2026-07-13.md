@@ -253,6 +253,79 @@ evidence"). Divergence pressure: leap day `2024-02-29`, ISO-week edge `2023-01-0
 
 Registry additions: duckdb→doris +32; trino→doris +22.
 
+## Batch 7 (2026-07-13) — array family {#batch7-array}
+
+Live DuckDB↔Doris via the shared-expr harness; Trino side bridged through live
+DuckDB + the prior `trino-duckdb-hazards.json` corpus (provenance notes "Doris
+live; Trino from prior evidence"). Array-returning outputs render via JDBC
+`getString` differently per engine, so every array result was re-probed with
+`array_size(...)` (Doris) / `array_length(...)` (DuckDB) for length AND `x[1]`
+element access for values — never adjudicated on a raw SAME/DIFF of the array
+render. Divergence pressure: NULL elements, out-of-bounds index, duplicates,
+mixed ordering.
+
+- **Length-accessor NAME TRAP (`array_size` vs `array_length`):** Doris has NO
+  `array_length` (`Can not found function 'array_length'`); it uses `array_size`.
+  DuckDB has `array_length`/`len`/`length` but NO `array_size`. So the length
+  wrapper itself is non-portable even where the underlying fn is identical.
+- **`cardinality` — `divergent` (domain):** DuckDB `cardinality` operates on MAPs
+  ONLY (`Binder Error: Cardinality can only operate on MAPs` on an array arg);
+  Doris `cardinality([1,2,3])=3` works on arrays. Portable array-length target is
+  Doris `array_size`. Map `cardinality`→`cardinality` by name is fine (identical).
+- **`array_cross_product` — `identical` (but note the semantics):** this is the
+  3-D VECTOR cross product, NOT a cartesian product —
+  `array_cross_product([1,2,3],[4,5,6])=[-3,6,-3]` element-wise SAME on both.
+- **`array_append` — `identical`:** `array_append([1,2],3)=[1,2,3]` both, same name.
+- **`array_first`/`array_last` — `divergent` (SIGNATURE trap):** Doris forms are
+  LAMBDA/predicate fns with the array as the SECOND arg
+  (`array_first(x->x>0,[10,20,30])=10`, `array_last(x->x>0,…)=30`). Trino
+  `array_first(array)`/`array_last(array)` take the plain array. Rewrite via
+  `array_first(x->true,arr)` or `element_at(arr,±1)`.
+- **`array_max`/`array_min` — `divergent` (NULL propagation):** Doris SKIPS NULL
+  elements (`array_max([1,NULL,2])=2`, `array_min([1,NULL,2])=1`); Trino
+  PROPAGATES NULL (any NULL element → NULL). Non-NULL arrays align.
+- **`element_at` — `divergent` (OOB):** Doris `element_at([10,20,30],9)=NULL`
+  (returns NULL, no throw); Trino element_at on an array THROWS out-of-bounds.
+  In-bounds 1-based access aligns.
+- **`array_position` — `identical`:** 1-based; NOT-FOUND returns `0`
+  (`array_position([10,20,30],99)=0`) — matches Trino. (DuckDB bridge differs:
+  `list_position` not-found → NULL, so do not adjudicate this via DuckDB.)
+- **`contains` → `array_contains` — `divergent`:** Doris has NO `contains`
+  (`Can not found function 'contains'`); membership is `array_contains(...)` → `1`
+  (TINYINT). Trino `contains` returns BOOLEAN — NAME map + boolean 0/1 type map.
+- **`arrays_overlap` — `conditionally-equivalent`:** values match (overlap→1,
+  disjoint→0) but Doris returns TINYINT 0/1 vs Trino BOOLEAN.
+- **`array_distinct` — `conditionally-equivalent`:** Doris preserves
+  first-occurrence order (`array_distinct([1,1,2,3,3])=[1,2,3]`, matches Trino);
+  the DuckDB bridge (`list_distinct`) reverses to `[3,2,1]` — order must be
+  checked per element, not by raw render. On Doris `array_distinct` DOES exist.
+- **`array_except`/`array_remove`/`array_union` — `identical` on Doris:** all three
+  exist by name on Doris and match Trino set semantics
+  (`array_except([1,2,3,4],[2,4])=[1,3]`, `array_remove([1,2,3,2],2)=[1,3]` removes
+  all occurrences, `array_union([1,2,3],[3,4])` size 4). The prior corpus had these
+  as `no-equivalent` on the DuckDB side (DuckDB lacks them) — Doris has them.
+- **`array_join` — `divergent`:** `array_join([1,NULL,3],'-')='1-3'` (NULL element
+  SKIPPED with no nullReplacement arg); carries the 3-arg/DuckDB-`array_to_string`
+  divergence from prior corpus forward.
+- **`split` → `split_by_string` — `divergent`:** Doris exposes `split_by_string`
+  (and `split_part`), NOT a Trino `split(str,delim,limit)`; map by name, verify
+  empty-delimiter/limit per case.
+- **`sequence` — `identical`:** inclusive stop (`sequence(1,5)` size 5, last=5),
+  matches Trino. (DuckDB bridge: `generate_series` inclusive, `range` exclusive.)
+- **`shuffle` — `conditionally-equivalent`:** nondeterministic permutation, equal
+  as a multiset only. (DuckDB has no `shuffle`; Doris does.)
+- **`array_sort` — `conditionally-equivalent`:** ascending default aligns; NULL
+  placement to be verified per element.
+- **`cosine_similarity` — `conditionally-equivalent`:** `=1.0` for identical
+  vectors, ULP/render only.
+- **`cosine_distance` — `conditionally-equivalent`:** Doris `0.02536809` vs
+  DuckDB/Trino `0.025368153802923787` — ULP/precision-render diff only.
+
+No fns marked `unclear` or blocked this batch. `array_agg` skipped (done in
+batch 5). Registry additions: duckdb→doris +2 (`array_append`, `array_cross_product`;
+`cardinality` already present from a prior batch, verdict consistent);
+trino→doris +22.
+
 ## Worklist status / continuation
 
 Done (batches 1-2): the prior-DIVERGENT scalar tier + the new `length` find + cheap

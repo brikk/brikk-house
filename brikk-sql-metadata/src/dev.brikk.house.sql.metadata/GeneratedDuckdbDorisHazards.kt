@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 150 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
+/** The 152 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
 internal val DUCKDB_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -748,15 +748,27 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         hazard = "Both return the current instant but RENDERING and zone differ: DuckDB now() -> ISO '2026-07-13T07:38:31.612504Z' (TZ-aware, 'Z' suffix, microseconds); Doris now() -> '2026-07-13 07:38:31' (space sep, second precision, session-zone). Session-zone dependent; value-equivalent instant, format/precision differs.",
         areas = listOf("datetime", "session"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [150] duckdb: 'array_append' | doris: 'array_append'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Probe-verified live: array_append([1,2],3) -> [1,2,3] on both (element-wise e[1]=1,e[3]=3 SAME). Same fn name works on both. NOTE the length-accessor name trap: Doris has NO array_length (errors 'Can not found function array_length'), use array_size; DuckDB has array_length but NO array_size — this affects the wrapper, not array_append itself.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [151] duckdb: 'array_cross_product' | doris: 'array_cross_product'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Probe-verified live: this is the 3-D VECTOR cross product, NOT a cartesian product — array_cross_product([1,2,3],[4,5,6]) = [-3,6,-3] element-wise SAME on both (e1=-3,e2=6,e3=-3, size=3). Same fn name works on both engines.",
+        areas = listOf("array", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
 )
 
-/** duckdb->doris lookup: 150 keys (DuckDB-side names) over 150 entries. */
+/** duckdb->doris lookup: 152 keys (DuckDB-side names) over 152 entries. */
 internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
     put("ACOSH", DUCKDB_DORIS_HAZARD_ENTRIES[24])
     put("ANY_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[83])
     put("APPROX_COUNT_DISTINCT", DUCKDB_DORIS_HAZARD_ENTRIES[85])
+    put("ARRAY_APPEND", DUCKDB_DORIS_HAZARD_ENTRIES[150])
+    put("ARRAY_CROSS_PRODUCT", DUCKDB_DORIS_HAZARD_ENTRIES[151])
     put("ASCII", DUCKDB_DORIS_HAZARD_ENTRIES[7])
     put("ASIN", DUCKDB_DORIS_HAZARD_ENTRIES[22])
     put("ASINH", DUCKDB_DORIS_HAZARD_ENTRIES[33])
@@ -904,13 +916,15 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("YEARWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[132])
 }
 
-/** doris->duckdb lookup: 150 keys (Doris-side names) over 150 entries. */
+/** doris->duckdb lookup: 152 keys (Doris-side names) over 152 entries. */
 internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
     put("ACOSH", DUCKDB_DORIS_HAZARD_ENTRIES[24])
     put("ANY_VALUE", DUCKDB_DORIS_HAZARD_ENTRIES[83])
     put("APPROX_COUNT_DISTINCT", DUCKDB_DORIS_HAZARD_ENTRIES[85])
+    put("ARRAY_APPEND", DUCKDB_DORIS_HAZARD_ENTRIES[150])
+    put("ARRAY_CROSS_PRODUCT", DUCKDB_DORIS_HAZARD_ENTRIES[151])
     put("ASCII", DUCKDB_DORIS_HAZARD_ENTRIES[7])
     put("ASIN", DUCKDB_DORIS_HAZARD_ENTRIES[22])
     put("ASINH", DUCKDB_DORIS_HAZARD_ENTRIES[33])

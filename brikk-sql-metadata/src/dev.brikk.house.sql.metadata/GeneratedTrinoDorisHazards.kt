@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 125 probe-verified (trino, doris) pair verdicts, in JSON order. */
+/** The 147 probe-verified (trino, doris) pair verdicts, in JSON order. */
 internal val TRINO_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -623,14 +623,137 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         hazard = "Rename: Trino last_day_of_month(DATE '2024-02-15')='2024-02-29'; Doris last_day(DATE '2024-02-15')='2024-02-29' (probe-verified live, leap-Feb). Doris live; Trino from prior evidence.",
         areas = listOf("datetime"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"),
+    // [125] trino: 'array_distinct' | doris: 'array_distinct'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Doris live: array_distinct([1,1,2,3,3])=[1,2,3] (size 3, e1=1 — preserves first-occurrence order). Trino array_distinct also preserves order (==DuckDB list_distinct set-wise, but DuckDB returns reversed [3,2,1]). Set/length identical; ORDER matches Trino but the DuckDB bridge reorders — order-preservation must be verified per element, not by raw render. Doris live; Trino from prior evidence.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [126] trino: 'array_first' | doris: 'array_first'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "SIGNATURE trap. Doris live: array_first is a LAMBDA/predicate fn — array_first(x->x>0,[10,20,30])=10 (first element matching the predicate; the array is the SECOND arg). Trino array_first(array) returns the plain first element with no predicate. Arity/semantics differ -> map by rewriting to array_first(x->true, arr) or element_at(arr,1). Doris live; Trino from prior evidence.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [127] trino: 'array_last' | doris: 'array_last'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "SIGNATURE trap (same as array_first). Doris live: array_last(x->x>0,[10,20,30])=30 — lambda predicate first, array second. Trino array_last(array) is the plain last element. Map via array_last(x->true,arr) or element_at(arr,-1). Doris live; Trino from prior evidence.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [128] trino: 'array_intersect' | doris: 'array_intersect'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Doris live: array_intersect([1,2,3],[2,3,4])=[2,3] (e1=2, size 2). Matches Trino (prior corpus: Trino array_intersect==DuckDB list_intersect identical). Doris live; Trino from prior evidence.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [129] trino: 'array_position' | doris: 'array_position'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Doris live: array_position([10,20,30],20)=2 (1-based), and NOT-FOUND array_position([10,20,30],99)=0. Trino array_position is also 1-based and returns 0 when absent (matches). NOTE the DuckDB bridge differs on not-found (list_position returns NULL, not 0) — do not adjudicate via DuckDB here. Doris live; Trino from prior evidence.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [130] trino: 'array_sort' | doris: 'array_sort'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Doris live: array_sort([3,1,2]) ascending -> e1=1,e3=3; NULL-bearing array_sort([3,NULL,1]) keeps NULL (size preserved =3). Trino array_sort places NULLs last; verify NULL ordering per element before relying on it. Ascending default aligns. Doris live; Trino from prior evidence.",
+        areas = listOf("array", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [131] trino: 'array_except' | doris: 'array_except'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Doris live: array_except([1,2,3,4],[2,4])=[1,3] (size 2, e1=1). Trino array_except is the same set-difference. (Prior corpus marked it no-equivalent on the DuckDB side — DuckDB lacks it — but Doris HAS it and matches Trino.) Doris live; Trino from prior evidence.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [132] trino: 'array_remove' | doris: 'array_remove'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Doris live: array_remove([1,2,3,2],2)=[1,3] (size 2, e1=1) — removes ALL occurrences. Trino array_remove is the same. (Prior corpus: DuckDB lacks it, needed list_filter workaround; Doris HAS it and matches Trino.) Doris live; Trino from prior evidence.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [133] trino: 'array_union' | doris: 'array_union'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Doris live: array_union([1,2,3],[3,4]) -> size 4 (distinct union). Trino array_union is the same. (Prior corpus: DuckDB needed list_distinct(list_concat(...)); Doris HAS array_union by name and matches Trino.) Doris live; Trino from prior evidence.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [134] trino: 'arrays_overlap' | doris: 'arrays_overlap'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Doris live: arrays_overlap([1,2],[2,3])=1 (overlap) and arrays_overlap([1,2],[3,4])=0 (disjoint). Value semantics match Trino, but Doris returns TINYINT 0/1 while Trino returns BOOLEAN — boolean type mapping required (Doris renders BOOLEAN as 0/1 over the MySQL protocol). Doris live; Trino from prior evidence.",
+        areas = listOf("array", "boolean"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [135] trino: 'cardinality' | doris: 'array_size'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Doris live: array length is array_size([1,2,3])=3; Doris cardinality also works on arrays, but the portable name is array_size (Doris has NO array_length). Trino cardinality(array) returns element count -> value matches via array_size, but the name maps to array_size (or element count). Map-cardinality (Trino) also -> not covered here. Rename required. Doris live; Trino from prior evidence.",
+        areas = listOf("array", "map"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [136] trino: 'element_at' | doris: 'element_at'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Doris live: element_at([10,20,30],2)=20 (1-based) but OUT-OF-BOUNDS element_at([10,20,30],9)=NULL (returns NULL, does not throw). Trino element_at on an array THROWS on out-of-bounds index (does NOT return NULL) — divergent on the OOB path. In-bounds 1-based access aligns. Doris live; Trino from prior evidence.",
+        areas = listOf("array", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [137] trino: 'contains' | doris: 'array_contains'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Doris live: 'contains' does NOT exist ('Can not found function contains'); the array-membership fn is array_contains([1,2,3],2) -> 1 (TINYINT). Trino contains(array,elem) returns BOOLEAN true. Both a NAME map (contains->array_contains) AND a boolean 0/1-vs-true/false type map are required. Doris live; Trino from prior evidence.",
+        areas = listOf("array", "boolean"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [138] trino: 'array_join' | doris: 'array_join'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Doris live: array_join([1,2,3],'-')='1-2-3'; with a NULL element array_join([1,NULL,3],'-')='1-3' (NULL SKIPPED when no 3rd nullReplacement arg). Trino array_join(x,sep) ALSO skips NULLs by default, but the 3-arg form array_join(x,sep,nullStr) semantics/prior corpus marks array_join->DuckDB array_to_string as divergent (DuckDB array_to_string has no null-replacement 3rd arg). Value of the 2-arg NULL-skip aligns Doris<->Trino; adjudicated divergent to carry the 3-arg/DuckDB-bridge hazard forward. Doris live; Trino from prior evidence.",
+        areas = listOf("array", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [139] trino: 'array_max' | doris: 'array_max'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "NULL-propagation divergence. Doris live: array_max([1,2,3])=3 and array_max([1,NULL,2])=2 (Doris SKIPS NULL elements). Trino array_max PROPAGATES NULL — array_max(array[1,null,2]) returns NULL if any element is NULL. So on a NULL-bearing array Doris(2) != Trino(NULL). Non-NULL arrays align. Doris live; Trino from prior evidence.",
+        areas = listOf("array", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [140] trino: 'array_min' | doris: 'array_min'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "NULL-propagation divergence (same as array_max). Doris live: array_min([3,1,2])=1 and array_min([1,NULL,2])=1 (Doris SKIPS NULL). Trino array_min propagates NULL -> NULL when any element is NULL. Non-NULL arrays align; NULL-bearing arrays diverge. Doris live; Trino from prior evidence.",
+        areas = listOf("array", "null"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [141] trino: 'split' | doris: 'split_by_string'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Doris live: split_by_string('a,b,c',',') -> size 3 works; Doris has split_by_string (and split_part), NOT a Trino-style split(str,delim,limit). Prior corpus already marks Trino split->DuckDB string_split as divergent (Trino split has a 3-arg limit form and empty-delimiter behavior differs). Map Trino split -> Doris split_by_string, never by name; verify empty-delimiter and limit-arg per case. Doris live; Trino from prior evidence.",
+        areas = listOf("string", "array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [142] trino: 'shuffle' | doris: 'shuffle'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Doris live: shuffle([1,2,3]) returns a size-3 array (nondeterministic permutation). Trino shuffle is likewise a random permutation. Equal as a multiset but element ORDER is nondeterministic per call -> conditionally-equivalent (nondeterministic; compare as multiset only). (Prior corpus: DuckDB has no shuffle -> no-equivalent on the DuckDB side; Doris HAS shuffle.) Doris live; Trino from prior evidence.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [143] trino: 'sequence' | doris: 'sequence'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Doris live: sequence(1,5) -> size 5, last element =5 (INCLUSIVE stop). Trino sequence(1,5) is also inclusive [1..5]. (DuckDB bridge: generate_series is inclusive/range is exclusive — use generate_series, per prior corpus conditionally-equivalent.) Doris matches Trino inclusive semantics. Doris live; Trino from prior evidence.",
+        areas = listOf("array"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [144] trino: 'cosine_similarity' | doris: 'cosine_similarity'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Doris live: cosine_similarity([1,2,3],[1,2,3])=1.0. Matches Trino/DuckDB (list_cosine_similarity=1.0) on the value; float representation/ULP may differ. Doris live; Trino from prior evidence.",
+        areas = listOf("array", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [145] trino: 'cosine_distance' | doris: 'cosine_distance'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Doris live: cosine_distance([1,2,3],[4,5,6])=0.02536809 vs DuckDB/Trino list_cosine_distance=0.025368153802923787 — same value, differs only in the last ULP digits / render precision (Doris ~8 sig figs). Float ULP diff -> conditionally-equivalent. Doris live; Trino from prior evidence.",
+        areas = listOf("array", "numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
+    // [146] trino: 'cardinality_map' | doris: 'cardinality'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Map cardinality maps by name: Doris cardinality(map) and Trino cardinality(map) both return the entry count (matches DuckDB cardinality(MAP)=2). Only the ARRAY overload of cardinality needs the array_size rename (see the cardinality/array_size pair). Doris live; Trino from prior evidence.",
+        areas = listOf("map"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"),
 )
 
-/** trino->doris lookup: 125 keys (Trino-side names) over 125 entries. */
+/** trino->doris lookup: 147 keys (Trino-side names) over 147 entries. */
 internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
     put("ANY_VALUE", TRINO_DORIS_HAZARD_ENTRIES[73])
+    put("ARRAYS_OVERLAP", TRINO_DORIS_HAZARD_ENTRIES[134])
     put("ARRAY_AGG", TRINO_DORIS_HAZARD_ENTRIES[89])
+    put("ARRAY_DISTINCT", TRINO_DORIS_HAZARD_ENTRIES[125])
+    put("ARRAY_EXCEPT", TRINO_DORIS_HAZARD_ENTRIES[131])
+    put("ARRAY_FIRST", TRINO_DORIS_HAZARD_ENTRIES[126])
+    put("ARRAY_INTERSECT", TRINO_DORIS_HAZARD_ENTRIES[128])
+    put("ARRAY_JOIN", TRINO_DORIS_HAZARD_ENTRIES[138])
+    put("ARRAY_LAST", TRINO_DORIS_HAZARD_ENTRIES[127])
+    put("ARRAY_MAX", TRINO_DORIS_HAZARD_ENTRIES[139])
+    put("ARRAY_MIN", TRINO_DORIS_HAZARD_ENTRIES[140])
+    put("ARRAY_POSITION", TRINO_DORIS_HAZARD_ENTRIES[129])
+    put("ARRAY_REMOVE", TRINO_DORIS_HAZARD_ENTRIES[132])
+    put("ARRAY_SORT", TRINO_DORIS_HAZARD_ENTRIES[130])
+    put("ARRAY_UNION", TRINO_DORIS_HAZARD_ENTRIES[133])
     put("ASCII", TRINO_DORIS_HAZARD_ENTRIES[8])
     put("ASIN", TRINO_DORIS_HAZARD_ENTRIES[22])
     put("ATAN", TRINO_DORIS_HAZARD_ENTRIES[30])
@@ -639,15 +762,20 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("BIT_COUNT", TRINO_DORIS_HAZARD_ENTRIES[12])
     put("BOOL_AND", TRINO_DORIS_HAZARD_ENTRIES[71])
     put("BOOL_OR", TRINO_DORIS_HAZARD_ENTRIES[72])
+    put("CARDINALITY", TRINO_DORIS_HAZARD_ENTRIES[135])
+    put("CARDINALITY_MAP", TRINO_DORIS_HAZARD_ENTRIES[146])
     put("CBRT", TRINO_DORIS_HAZARD_ENTRIES[29])
     put("CEIL", TRINO_DORIS_HAZARD_ENTRIES[38])
     put("CEILING", TRINO_DORIS_HAZARD_ENTRIES[39])
     put("COALESCE", TRINO_DORIS_HAZARD_ENTRIES[18])
     put("CONCAT", TRINO_DORIS_HAZARD_ENTRIES[2])
     put("CONCAT_WS", TRINO_DORIS_HAZARD_ENTRIES[64])
+    put("CONTAINS", TRINO_DORIS_HAZARD_ENTRIES[137])
     put("CORR", TRINO_DORIS_HAZARD_ENTRIES[76])
     put("COS", TRINO_DORIS_HAZARD_ENTRIES[32])
     put("COSH", TRINO_DORIS_HAZARD_ENTRIES[33])
+    put("COSINE_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[145])
+    put("COSINE_SIMILARITY", TRINO_DORIS_HAZARD_ENTRIES[144])
     put("COUNT", TRINO_DORIS_HAZARD_ENTRIES[68])
     put("COVAR_POP", TRINO_DORIS_HAZARD_ENTRIES[77])
     put("COVAR_SAMP", TRINO_DORIS_HAZARD_ENTRIES[78])
@@ -662,6 +790,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("DENSE_RANK", TRINO_DORIS_HAZARD_ENTRIES[94])
     put("DOW", TRINO_DORIS_HAZARD_ENTRIES[115])
     put("DOY", TRINO_DORIS_HAZARD_ENTRIES[116])
+    put("ELEMENT_AT", TRINO_DORIS_HAZARD_ENTRIES[136])
     put("EXP", TRINO_DORIS_HAZARD_ENTRIES[28])
     put("FIRST_VALUE", TRINO_DORIS_HAZARD_ENTRIES[98])
     put("FLOOR", TRINO_DORIS_HAZARD_ENTRIES[40])
@@ -721,12 +850,15 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("RPAD", TRINO_DORIS_HAZARD_ENTRIES[60])
     put("RTRIM", TRINO_DORIS_HAZARD_ENTRIES[11])
     put("SECOND", TRINO_DORIS_HAZARD_ENTRIES[113])
+    put("SEQUENCE", TRINO_DORIS_HAZARD_ENTRIES[143])
     put("SHA1", TRINO_DORIS_HAZARD_ENTRIES[52])
+    put("SHUFFLE", TRINO_DORIS_HAZARD_ENTRIES[142])
     put("SIGN", TRINO_DORIS_HAZARD_ENTRIES[44])
     put("SIN", TRINO_DORIS_HAZARD_ENTRIES[34])
     put("SINH", TRINO_DORIS_HAZARD_ENTRIES[35])
     put("SKEWNESS", TRINO_DORIS_HAZARD_ENTRIES[85])
     put("SOUNDEX", TRINO_DORIS_HAZARD_ENTRIES[56])
+    put("SPLIT", TRINO_DORIS_HAZARD_ENTRIES[141])
     put("SPLIT_PART", TRINO_DORIS_HAZARD_ENTRIES[5])
     put("SQRT", TRINO_DORIS_HAZARD_ENTRIES[24])
     put("STARTS_WITH", TRINO_DORIS_HAZARD_ENTRIES[51])
@@ -754,12 +886,27 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("YOW", TRINO_DORIS_HAZARD_ENTRIES[117])
 }
 
-/** doris->trino lookup: 125 keys (Doris-side names) over 125 entries. */
+/** doris->trino lookup: 147 keys (Doris-side names) over 147 entries. */
 internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
     put("ANY_VALUE", TRINO_DORIS_HAZARD_ENTRIES[73])
+    put("ARRAYS_OVERLAP", TRINO_DORIS_HAZARD_ENTRIES[134])
     put("ARRAY_AGG", TRINO_DORIS_HAZARD_ENTRIES[89])
+    put("ARRAY_CONTAINS", TRINO_DORIS_HAZARD_ENTRIES[137])
+    put("ARRAY_DISTINCT", TRINO_DORIS_HAZARD_ENTRIES[125])
+    put("ARRAY_EXCEPT", TRINO_DORIS_HAZARD_ENTRIES[131])
+    put("ARRAY_FIRST", TRINO_DORIS_HAZARD_ENTRIES[126])
+    put("ARRAY_INTERSECT", TRINO_DORIS_HAZARD_ENTRIES[128])
+    put("ARRAY_JOIN", TRINO_DORIS_HAZARD_ENTRIES[138])
+    put("ARRAY_LAST", TRINO_DORIS_HAZARD_ENTRIES[127])
+    put("ARRAY_MAX", TRINO_DORIS_HAZARD_ENTRIES[139])
+    put("ARRAY_MIN", TRINO_DORIS_HAZARD_ENTRIES[140])
+    put("ARRAY_POSITION", TRINO_DORIS_HAZARD_ENTRIES[129])
+    put("ARRAY_REMOVE", TRINO_DORIS_HAZARD_ENTRIES[132])
+    put("ARRAY_SIZE", TRINO_DORIS_HAZARD_ENTRIES[135])
+    put("ARRAY_SORT", TRINO_DORIS_HAZARD_ENTRIES[130])
+    put("ARRAY_UNION", TRINO_DORIS_HAZARD_ENTRIES[133])
     put("ASCII", TRINO_DORIS_HAZARD_ENTRIES[8])
     put("ASIN", TRINO_DORIS_HAZARD_ENTRIES[22])
     put("ATAN", TRINO_DORIS_HAZARD_ENTRIES[30])
@@ -768,6 +915,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("BIT_COUNT", TRINO_DORIS_HAZARD_ENTRIES[12])
     put("BOOL_AND", TRINO_DORIS_HAZARD_ENTRIES[71])
     put("BOOL_OR", TRINO_DORIS_HAZARD_ENTRIES[72])
+    put("CARDINALITY", TRINO_DORIS_HAZARD_ENTRIES[146])
     put("CBRT", TRINO_DORIS_HAZARD_ENTRIES[29])
     put("CEIL", TRINO_DORIS_HAZARD_ENTRIES[38])
     put("CEILING", TRINO_DORIS_HAZARD_ENTRIES[39])
@@ -777,6 +925,8 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("CORR", TRINO_DORIS_HAZARD_ENTRIES[76])
     put("COS", TRINO_DORIS_HAZARD_ENTRIES[32])
     put("COSH", TRINO_DORIS_HAZARD_ENTRIES[33])
+    put("COSINE_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[145])
+    put("COSINE_SIMILARITY", TRINO_DORIS_HAZARD_ENTRIES[144])
     put("COUNT", TRINO_DORIS_HAZARD_ENTRIES[68])
     put("COVAR_POP", TRINO_DORIS_HAZARD_ENTRIES[77])
     put("COVAR_SAMP", TRINO_DORIS_HAZARD_ENTRIES[78])
@@ -791,6 +941,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("DAYOFYEAR", TRINO_DORIS_HAZARD_ENTRIES[116])
     put("DEGREES", TRINO_DORIS_HAZARD_ENTRIES[41])
     put("DENSE_RANK", TRINO_DORIS_HAZARD_ENTRIES[94])
+    put("ELEMENT_AT", TRINO_DORIS_HAZARD_ENTRIES[136])
     put("EXP", TRINO_DORIS_HAZARD_ENTRIES[28])
     put("FIRST_VALUE", TRINO_DORIS_HAZARD_ENTRIES[98])
     put("FLOOR", TRINO_DORIS_HAZARD_ENTRIES[40])
@@ -850,12 +1001,15 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("RPAD", TRINO_DORIS_HAZARD_ENTRIES[60])
     put("RTRIM", TRINO_DORIS_HAZARD_ENTRIES[11])
     put("SECOND", TRINO_DORIS_HAZARD_ENTRIES[113])
+    put("SEQUENCE", TRINO_DORIS_HAZARD_ENTRIES[143])
     put("SHA1", TRINO_DORIS_HAZARD_ENTRIES[52])
+    put("SHUFFLE", TRINO_DORIS_HAZARD_ENTRIES[142])
     put("SIGN", TRINO_DORIS_HAZARD_ENTRIES[44])
     put("SIN", TRINO_DORIS_HAZARD_ENTRIES[34])
     put("SINH", TRINO_DORIS_HAZARD_ENTRIES[35])
     put("SKEWNESS", TRINO_DORIS_HAZARD_ENTRIES[85])
     put("SOUNDEX", TRINO_DORIS_HAZARD_ENTRIES[56])
+    put("SPLIT_BY_STRING", TRINO_DORIS_HAZARD_ENTRIES[141])
     put("SPLIT_PART", TRINO_DORIS_HAZARD_ENTRIES[5])
     put("SQRT", TRINO_DORIS_HAZARD_ENTRIES[24])
     put("STARTS_WITH", TRINO_DORIS_HAZARD_ENTRIES[51])
