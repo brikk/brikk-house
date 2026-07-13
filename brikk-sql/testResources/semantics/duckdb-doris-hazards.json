@@ -1,5 +1,2677 @@
 {
   "source_project": "brikk live-probe program",
-  "extracted": null,
-  "pairs": []
+  "extracted": "2026-07-13",
+  "pairs": [
+    {
+      "duckdb": "lower",
+      "doris": "lower",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): Turkish 'İ' (U+0130) -> DuckDB simple fold 'i' (U+0069); Doris full fold 'i' + combining dot (U+0069 U+0307). ASCII and most non-ASCII aligned; case-folding of special uppercase forms diverges.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#lower"
+    },
+    {
+      "duckdb": "upper",
+      "doris": "upper",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): German 'ß' (U+00DF) -> DuckDB 'ẞ' (U+1E9E) vs Doris 'SS' (length-changing full fold). ASCII aligned.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#upper"
+    },
+    {
+      "duckdb": "concat",
+      "doris": "concat",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): NULL handling. DuckDB SKIPS NULL args (concat('a',NULL,'c')='ac', concat(NULL,NULL)=''); Doris PROPAGATES NULL (both -> NULL). Never translate by name when any arg may be NULL.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#concat"
+    },
+    {
+      "duckdb": "greatest",
+      "doris": "greatest",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): DuckDB SKIPS NULLs (greatest(1,NULL,2)=2); Doris returns NULL if ANY arg is NULL. Never translate by name when args may be NULL.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#greatest-least"
+    },
+    {
+      "duckdb": "least",
+      "doris": "least",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): DuckDB SKIPS NULLs (least(1,NULL,2)=1); Doris returns NULL if ANY arg is NULL. Never translate by name when args may be NULL.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#greatest-least"
+    },
+    {
+      "duckdb": "split_part",
+      "doris": "split_part",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): out-of-bounds index -> DuckDB returns empty string ''; Doris returns NULL. In-bounds aligned. Do not translate by name without a NULLIF/coalesce wrap.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#split-part"
+    },
+    {
+      "duckdb": "reverse",
+      "doris": "reverse",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): DuckDB reverse is GRAPHEME-cluster-aware (decomposed 'e'+U+0301 stays together); Doris reverses CODE POINTS (combining mark floats to front). Precomposed and ASCII aligned.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#reverse"
+    },
+    {
+      "duckdb": "ascii",
+      "doris": "ascii",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): ascii('É' U+00C9) -> DuckDB 201 (Unicode codepoint of first char); Doris 195 (first UTF-8 byte, 0xC3). Diverges for any non-ASCII first char. ASCII aligned.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#ascii"
+    },
+    {
+      "duckdb": "regexp_replace",
+      "doris": "regexp_replace",
+      "verdict": "divergent",
+      "hazard": "Probe-verified (DuckDB↔Doris live): DuckDB replaces the FIRST match without a 'g' flag (regexp_replace('aaa','a','b')='baa'); Doris replaces ALL matches ('bbb'). A parity translation must force global replace.",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#regexp-replace"
+    },
+    {
+      "duckdb": "trim",
+      "doris": "trim",
+      "verdict": "divergent",
+      "hazard": "DuckDB default trim strips space + EM SPACE (U+2003) + NBSP (U+00A0); Doris strips ASCII space only (keeps tab/EM/NBSP). Probe-verified live.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "ltrim",
+      "doris": "ltrim",
+      "verdict": "divergent",
+      "hazard": "Same whitespace-set divergence as trim (Doris ASCII-space-only vs DuckDB space+EM+NBSP).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "rtrim",
+      "doris": "rtrim",
+      "verdict": "divergent",
+      "hazard": "Same whitespace-set divergence as trim.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "bit_count",
+      "doris": "bit_count",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: bit_count(-1) -> DuckDB 32 (INT32 width), Doris 8. Bit-width inference differs by operand type.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "fmod",
+      "doris": "fmod",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: fmod(-5.3,2) -> DuckDB 0.70 vs Doris -1.30 (sign/definition differ for negative operands).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "regexp_extract_all",
+      "doris": "regexp_extract_all",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: DuckDB returns the match array (['1','2','3']); Doris returned empty — signature/empty-match handling differs. Verify group-index semantics before translating.",
+      "areas": [
+        "regex"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "length",
+      "doris": "length",
+      "verdict": "divergent",
+      "hazard": "Probe-verified: Doris length() counts BYTES (length('世界')=6, length('héllo')=6); DuckDB counts CHARACTERS (2, 5). Use char_length for parity. Diverges from both engines.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "abs",
+      "doris": "abs",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "mod",
+      "doris": "mod",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "coalesce",
+      "doris": "coalesce",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "nullif",
+      "doris": "nullif",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "md5",
+      "doris": "md5",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "hash"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch2"
+    },
+    {
+      "duckdb": "acos",
+      "doris": "acos",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: out-of-domain acos(2) -> DuckDB THROWS 'ACOS is undefined outside [-1,1]'; Doris returns NULL. In-domain agrees to ~15 sig digits (acos(0.5) last-ULP float-formatting differs). Never push without matching the error-vs-NULL contract.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "asin",
+      "doris": "asin",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: asin(2) (outside [-1,1]) -> DuckDB THROWS; Doris returns NULL.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "atanh",
+      "doris": "atanh",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: atanh(2) (outside [-1,1]) -> DuckDB THROWS; Doris returns NULL. In-domain agrees.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "acosh",
+      "doris": "acosh",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: acosh(0.5) (<1) -> DuckDB returns NaN; Doris returns NULL. In-domain agrees to ~15 sig digits (last-ULP).",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "ln",
+      "doris": "ln",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: ln(0) and ln(-1) -> DuckDB THROWS 'Out of Range'; Doris returns NULL. In-domain agrees to last-ULP (ln(3) final digit differs). (Prior Trino evidence had NaN for x<=0.)",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "log2",
+      "doris": "log2",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: log2(0) -> DuckDB THROWS; Doris returns NULL. In-domain agrees (log2(3) matched).",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "log10",
+      "doris": "log10",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: log10(-1) -> DuckDB THROWS; Doris returns NULL. In-domain agrees to last-ULP. Related name trap: single-arg log() differs (see log).",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "sqrt",
+      "doris": "sqrt",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: sqrt(-1) -> DuckDB THROWS 'Out of Range: cannot take square root of a negative number'; Doris returns NULL. (Prior Trino evidence had NaN on negative.)",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "factorial",
+      "doris": "factorial",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: factorial(-1) -> DuckDB THROWS 'Out of Range'; Doris returns NULL. In-range agrees (factorial(0)=1, factorial(20) matched).",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "cot",
+      "doris": "cot",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: cot(0) -> DuckDB THROWS 'Out of Range'; Doris returns Infinity.",
+      "areas": [
+        "numeric",
+        "domain"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "log",
+      "doris": "log",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: single-arg semantics DIFFER — DuckDB log(x)=log10 (log(10)=1.0, PostgreSQL convention); Doris log(x)=natural log (log(10)=2.302585). Two-arg log(b,x) agrees (to last-ULP). Never map single-arg log by name.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "signbit",
+      "doris": "signbit",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value semantics align but return TYPE differs — DuckDB returns BOOLEAN (true/false); Doris returns TINYINT (0/1). DuckDB also reports signbit(-0.0)=false. Boolean type mapping required (Doris renders BOOLEAN as 0/1 over MySQL protocol).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "asinh",
+      "doris": "asinh",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: agrees to ~15 sig digits; last-ULP float-representation differs (asinh(1)=0.881373587019543 DuckDB vs 0.8813735870195429 Doris). Safe only under float-tolerant comparison.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "cbrt",
+      "doris": "cbrt",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: cbrt(-8)=-2.0 matched but cbrt(27)=3.0000000000000004 (DuckDB) vs 3.0 (Doris) — last-ULP float-representation differs. Safe only under float-tolerant comparison.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "exp",
+      "doris": "exp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: exp(1) matched but exp(0.5)=1.6487212707001282 (DuckDB) vs 1.648721270700128 (Doris) — last-ULP float-representation differs. Safe only under float-tolerant comparison.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "sin",
+      "doris": "sin",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "cos",
+      "doris": "cos",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "tan",
+      "doris": "tan",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "cosh",
+      "doris": "cosh",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "sinh",
+      "doris": "sinh",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "tanh",
+      "doris": "tanh",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "atan",
+      "doris": "atan",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "atan2",
+      "doris": "atan2",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "degrees",
+      "doris": "degrees",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "radians",
+      "doris": "radians",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "ceil",
+      "doris": "ceil",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "floor",
+      "doris": "floor",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "sign",
+      "doris": "sign",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "pi",
+      "doris": "pi",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "even",
+      "doris": "even",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "bin",
+      "doris": "bin",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "pow",
+      "doris": "pow",
+      "verdict": "identical",
+      "hazard": "Probe-verified live: pow(0,0)=1.0 and pow(-2,0.5)=NaN both aligned (neither throws).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "power",
+      "doris": "power",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+    },
+    {
+      "duckdb": "left",
+      "doris": "left",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: negative count differs — left('héllo',-1): DuckDB returns 'héll' (all but last |n| chars); Doris returns '' (empty). Positive counts and unicode code-point counting align.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "url_encode",
+      "doris": "url_encode",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: space encoding differs — url_encode('a b&c'): DuckDB 'a%20b%26c' (percent-encodes space); Doris 'a+b%26c' (form-encodes space as '+'). '&' aligned.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "octet_length",
+      "doris": "octet_length",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Byte-count semantics align (octet_length(encode('héllo'))=6 DuckDB == octet_length('héllo')=6 Doris) but DuckDB has NO bare-VARCHAR overload — errors 'Could not choose a best candidate function', needs a BLOB arg; Doris accepts VARCHAR directly.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "starts_with",
+      "doris": "starts_with",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value semantics identical (prefix match, code-point aligned) but Doris returns TINYINT 0/1 while DuckDB returns BOOLEAN true/false — boolean type mapping required (Doris renders BOOLEAN as 0/1 over the MySQL protocol).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "bit_length",
+      "doris": "bit_length",
+      "verdict": "identical",
+      "hazard": "Byte-based: bit_length('héllo')=48, bit_length('世界')=48 in both (BYTES*8, not chars*8).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "hex",
+      "doris": "hex",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "unhex",
+      "doris": "unhex",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "from_base64",
+      "doris": "from_base64",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "to_base64",
+      "doris": "to_base64",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "levenshtein",
+      "doris": "levenshtein",
+      "verdict": "identical",
+      "hazard": "levenshtein('kitten','sitting')=3 both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "lpad",
+      "doris": "lpad",
+      "verdict": "identical",
+      "hazard": "Probe-verified live: pad, unicode pad, and over-length truncation (lpad('abcdef',3)='abc') all align.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "rpad",
+      "doris": "rpad",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "repeat",
+      "doris": "repeat",
+      "verdict": "identical",
+      "hazard": "repeat('x',0)='' both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "replace",
+      "doris": "replace",
+      "verdict": "identical",
+      "hazard": "replace('aaa','a','b')='bbb'; no-match returns input unchanged in both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "translate",
+      "doris": "translate",
+      "verdict": "identical",
+      "hazard": "Extra from-chars deleted in both (translate('abcabc','abc','x')='xx').",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "url_decode",
+      "doris": "url_decode",
+      "verdict": "identical",
+      "hazard": "url_decode('a%20b')='a b' both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "right",
+      "doris": "right",
+      "verdict": "identical",
+      "hazard": "Positive count aligned; negative-count untested (cf. left divergence).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "instr",
+      "doris": "instr",
+      "verdict": "identical",
+      "hazard": "instr('héllo','l')=3 (1-based code-point position) both.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "concat_ws",
+      "doris": "concat_ws",
+      "verdict": "identical",
+      "hazard": "NULL element skipped (concat_ws(',','a',NULL,'c')='a,c'); NULL separator -> NULL in both.",
+      "areas": [
+        "string",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "sha1",
+      "doris": "sha1",
+      "verdict": "identical",
+      "hazard": "sha1('abc') hex digest matches; returns hex VARCHAR in both.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "char_length",
+      "doris": "char_length",
+      "verdict": "identical",
+      "hazard": "char_length('héllo')=5 (code-point count) both — the parity target for the divergent byte-based length().",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+    },
+    {
+      "duckdb": "avg",
+      "doris": "avg",
+      "verdict": "identical",
+      "hazard": "Probe-verified live: avg over {1,2,3,NULL}=2.0 both (NULLs skipped); empty input -> NULL both.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "sum",
+      "doris": "sum",
+      "verdict": "identical",
+      "hazard": "sum over {1,2,NULL}=3 both; empty input -> NULL both (not 0).",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "count",
+      "doris": "count",
+      "verdict": "identical",
+      "hazard": "count(x) skips NULL (=2 over {1,NULL,3}); count(*) counts rows (=3). Both match.",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "max",
+      "doris": "max",
+      "verdict": "identical",
+      "hazard": "max over {1,3,NULL}=3 both (NULL ignored).",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "min",
+      "doris": "min",
+      "verdict": "identical",
+      "hazard": "min over {1,3,NULL}=1 both (NULL ignored).",
+      "areas": [
+        "aggregate",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "median",
+      "doris": "median",
+      "verdict": "identical",
+      "hazard": "median over {1,2,3,4}=2.5 both (interpolated).",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "bool_and",
+      "doris": "bool_and",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value semantics identical (bool_and{true,false,NULL}=false, all-true=true) but Doris renders BOOLEAN as TINYINT 0/1 over MySQL protocol vs DuckDB true/false — boolean type mapping required.",
+      "areas": [
+        "aggregate",
+        "boolean"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "bool_or",
+      "doris": "bool_or",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value semantics identical (bool_or{true,false,NULL}=true, all-false=false) but Doris renders BOOLEAN as TINYINT 0/1 vs DuckDB true/false — boolean type mapping required.",
+      "areas": [
+        "aggregate",
+        "boolean"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "any_value",
+      "doris": "any_value",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Order-sensitive/nondeterministic: returns an arbitrary group value. Matched on this probe (both 'a') but not guaranteed under different input ordering/parallelism.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "max_by",
+      "doris": "max_by",
+      "verdict": "conditionally-equivalent",
+      "hazard": "arg_max semantics matched (max_by(y,x) picks y at max x = 'c') but tie-breaking is nondeterministic across engines — conditionally-equivalent on ties.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "approx_count_distinct",
+      "doris": "approx_count_distinct",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Exact match on small input (=3) but HLL sketch states are not interchangeable and estimates diverge at scale — approximate by contract.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "corr",
+      "doris": "corr",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: last-ULP float diff (DuckDB 0.9999008674099173 vs Doris ...172) from accumulation order — value-equivalent.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "covar_pop",
+      "doris": "covar_pop",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff (DuckDB 1.3666666666666665 vs Doris 1.366666666666665) — value-equivalent.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "covar_samp",
+      "doris": "covar_samp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff (DuckDB 2.05 vs Doris 2.049999999999999) — value-equivalent; sample (N-1) normalization matches.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "stddev_pop",
+      "doris": "stddev_pop",
+      "verdict": "identical",
+      "hazard": "stddev_pop over {1,2,4}=1.247219128924647 exact match both.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "stddev_samp",
+      "doris": "stddev_samp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff (DuckDB 1.5275252316519468 vs Doris 1.527525231651947) — value-equivalent; sample (N-1) normalization matches.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "var_pop",
+      "doris": "var_pop",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff (DuckDB 1.5555555555555556 vs Doris 1.555555555555556) — value-equivalent.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "var_samp",
+      "doris": "var_samp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff (DuckDB 2.3333333333333335 vs Doris 2.333333333333333) — value-equivalent; sample (N-1) normalization matches.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "skewness",
+      "doris": "skewness",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: NOT ULP — different formula. Over {1,2,4,8}: DuckDB 1.1376243669576889 (sample/bias-corrected) vs Doris 0.6568077344996993 (population moment). Values are far apart; sample-vs-population default divergence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "kurtosis",
+      "doris": "kurtosis",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: NOT ULP — different formula/default. Over {1,2,4,8}: DuckDB 0.7576559546313808 (sample excess kurtosis, bias-corrected) vs Doris -1.098979206049149 (population excess). Sign and magnitude differ; sample-vs-population divergence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "regr_intercept",
+      "doris": "regr_intercept",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff (DuckDB -0.06666666666666643 vs Doris -0.06666666666666583) — value-equivalent.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "regr_slope",
+      "doris": "regr_slope",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Last-ULP float diff (DuckDB 2.05 vs Doris 2.049999999999999) — value-equivalent.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "regr_avgx",
+      "doris": "regr_avgx",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR at execution (reproduced on 2- and 3-row inputs, same query shape that works for regr_intercept/regr_slope) while DuckDB returns 2.0/1.5. regr_avgx is unusable on this Doris FE build.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "regr_avgy",
+      "doris": "regr_avgy",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR at execution while DuckDB returns 4.033333333333333. regr_avgy unusable on this Doris FE build.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "regr_count",
+      "doris": "regr_count",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR (reproduced on both null-bearing and clean inputs) while DuckDB returns the pair count (2). regr_count unusable on this Doris FE build.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "regr_r2",
+      "doris": "regr_r2",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR while DuckDB returns 0.9998017446471051. regr_r2 unusable on this Doris FE build.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "regr_sxx",
+      "doris": "regr_sxx",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR while DuckDB returns 2.0. regr_sxx unusable on this Doris FE build.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "regr_sxy",
+      "doris": "regr_sxy",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR while DuckDB returns 4.1. regr_sxy unusable on this Doris FE build.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "regr_syy",
+      "doris": "regr_syy",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: Doris throws errCode=2 INTERNAL_ERROR while DuckDB returns 8.406666666666666. regr_syy unusable on this Doris FE build.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "sem",
+      "doris": "sem",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: over {1,2,4} DuckDB sem=0.7200822998230956 (standard error of mean = stddev_samp/sqrt(N) = 1.5275/sqrt(3)) vs Doris sem=0.8819171036881968. Doris's sem does not match DuckDB's standard-error-of-mean definition — semantic divergence.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "histogram",
+      "doris": "histogram",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: incompatible return types/semantics. DuckDB histogram returns a MAP of value->count ({1=2, 2=1}); Doris histogram returns an approximate-quantile bucket JSON string ({\"num_buckets\":2,\"buckets\":[{\"lower\"...\"count\":2...}]}). Not interchangeable by name.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "cardinality",
+      "doris": "cardinality",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: DuckDB cardinality operates ONLY on MAP ('Binder Error: Cardinality can only operate on MAPs' for a list) — use len/array_length for lists; Doris cardinality(array(1,2,3))=3 works on arrays. Different domain: map-only (DuckDB) vs array (Doris).",
+      "areas": [
+        "aggregate",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "row_number",
+      "doris": "row_number",
+      "verdict": "identical",
+      "hazard": "row_number() OVER(ORDER BY x) = 1,2,3 both.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "rank",
+      "doris": "rank",
+      "verdict": "identical",
+      "hazard": "rank() with a tie = 1,1,3 both (gap after tie).",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "dense_rank",
+      "doris": "dense_rank",
+      "verdict": "identical",
+      "hazard": "dense_rank() with a tie = 1,1,2 both (no gap).",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "ntile",
+      "doris": "ntile",
+      "verdict": "identical",
+      "hazard": "ntile(2) over 3 rows = 1,1,2 both.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "lag",
+      "doris": "lag",
+      "verdict": "identical",
+      "hazard": "lag(x) OVER(ORDER BY x) = NULL,1,2 -> concat '1,2' (leading NULL dropped by group_concat) both.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "lead",
+      "doris": "lead",
+      "verdict": "identical",
+      "hazard": "lead(x) OVER(ORDER BY x) = 2,3,NULL -> '2,3' both.",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "first_value",
+      "doris": "first_value",
+      "verdict": "identical",
+      "hazard": "first_value(x) OVER(ORDER BY x) = 1,1,1 both.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "last_value",
+      "doris": "last_value",
+      "verdict": "identical",
+      "hazard": "last_value(x) OVER(ORDER BY x) = 1,2,3 both (default frame RANGE UNBOUNDED PRECEDING..CURRENT ROW, so last_value = current). Both engines agree on the default frame.",
+      "areas": [
+        "window"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "nth_value",
+      "doris": "nth_value",
+      "verdict": "identical",
+      "hazard": "nth_value(x,2) OVER(ORDER BY x) = NULL,2,2 -> '2,2' both (NULL until 2nd row reached in default frame).",
+      "areas": [
+        "window",
+        "null"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "percent_rank",
+      "doris": "percent_rank",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Values identical (0,0.5,1) but Doris renders integral doubles as '0'/'1' while DuckDB renders '0.0'/'1.0' — numeric string rendering only.",
+      "areas": [
+        "window",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "cume_dist",
+      "doris": "cume_dist",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Values identical (0.333..,0.666..,1) but Doris renders the trailing 1.0 as '1' vs DuckDB '1.0' — numeric string rendering only.",
+      "areas": [
+        "window",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch5-agg"
+    },
+    {
+      "duckdb": "date_add",
+      "doris": "date_add",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: date_add(DATE '2024-01-01', INTERVAL 1 DAY) computes the same instant on both (2024-01-02), and both accept the bare-integer form date_add(date,1). But return TYPE/rendering differs: DuckDB returns TIMESTAMP '2024-01-02 00:00:00.0'; Doris returns DATE '2024-01-02'. Value-equivalent, type/format cast required.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "date_sub",
+      "doris": "date_sub",
+      "verdict": "divergent",
+      "hazard": "INCOMPATIBLE SIGNATURE: DuckDB has NO date_sub(date, INTERVAL) — its date_sub is date_sub(VARCHAR unit, DATE, DATE)->BIGINT (a date-DIFF, e.g. date_sub('day', '2024-02-01','2024-03-01')=29). Doris date_sub(DATE '2024-03-01', INTERVAL 1 DAY)='2024-02-29' SUBTRACTS an interval. Same name, opposite meaning — divergent, never push by name.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "datediff",
+      "doris": "datediff",
+      "verdict": "divergent",
+      "hazard": "Probe-verified live: DuckDB has NO datediff(DATE,DATE) 2-arg form — signature is datediff(VARCHAR unit, DATE start, DATE end)->end-start (datediff('day','2024-02-01','2024-03-01')=29; arg reversed gives -29). Doris datediff(DATE '2024-03-01', DATE '2024-02-01')=29 is 2-arg (first-second, days only). Arg order AND arity differ — divergent.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "dayname",
+      "doris": "dayname",
+      "verdict": "identical",
+      "hazard": "dayname(DATE '2024-01-07')='Sunday' both (full English weekday name).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "dayofmonth",
+      "doris": "dayofmonth",
+      "verdict": "identical",
+      "hazard": "dayofmonth(DATE '2024-02-29')=29 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "dayofweek",
+      "doris": "dayofweek",
+      "verdict": "divergent",
+      "hazard": "NUMBERING BASE DIFFERS: pinned on Sunday '2024-01-07' — DuckDB dayofweek=0 (Sunday=0..Saturday=6); Doris dayofweek=1 (Sunday=1..Saturday=7, MySQL ODBC style). Monday '2024-01-08': DuckDB=1, Doris=2. Off-by-one — divergent.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "dayofyear",
+      "doris": "dayofyear",
+      "verdict": "identical",
+      "hazard": "dayofyear(DATE '2024-02-29')=60 both (leap-day pinned).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "day",
+      "doris": "day",
+      "verdict": "identical",
+      "hazard": "day(DATE '2024-02-29')=29 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "month",
+      "doris": "month",
+      "verdict": "identical",
+      "hazard": "month(DATE '2024-02-29')=2 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "year",
+      "doris": "year",
+      "verdict": "identical",
+      "hazard": "year(DATE '2024-02-29')=2024 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "quarter",
+      "doris": "quarter",
+      "verdict": "identical",
+      "hazard": "quarter(DATE '2024-02-29')=1 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "week",
+      "doris": "week",
+      "verdict": "divergent",
+      "hazard": "WEEK-NUMBERING MODE DIFFERS: pinned ISO-edge '2023-01-01' (a Sunday) — DuckDB week=52 (ISO-8601, week belongs to prior year); Doris week=1 (default mode 0, Sunday-start, week 1 = first week containing a Sunday). Also '2024-01-01' DuckDB=1 vs Doris=0. Divergent unless Doris week mode is fixed to ISO (week(date,3)).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "weekday",
+      "doris": "weekday",
+      "verdict": "divergent",
+      "hazard": "NUMBERING DIFFERS: DuckDB weekday alias returns dow (Sunday=0); Doris weekday is ISO Monday=0..Sunday=6. Sunday '2024-01-07': DuckDB=0, Doris=6. Monday '2024-01-08': DuckDB=1, Doris=0. Divergent.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "weekofyear",
+      "doris": "weekofyear",
+      "verdict": "identical",
+      "hazard": "weekofyear(DATE '2023-01-01')=52 both (ISO-8601 week-of-year; the ISO parity target that the mode-0 'week' fn diverges from).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "yearweek",
+      "doris": "yearweek",
+      "verdict": "divergent",
+      "hazard": "WEEK-MODE DIFFERS: '2023-01-01' — DuckDB yearweek=202252 (ISO: year 2022, week 52); Doris yearweek=202301 (default mode 0: year 2023, week 01). Divergent; pin the week mode to reconcile.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "hour",
+      "doris": "hour",
+      "verdict": "identical",
+      "hazard": "hour(TIMESTAMP '2024-01-02 03:04:05')=3 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "minute",
+      "doris": "minute",
+      "verdict": "identical",
+      "hazard": "minute(...)=4 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "second",
+      "doris": "second",
+      "verdict": "identical",
+      "hazard": "second(...)=5 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "microsecond",
+      "doris": "microsecond",
+      "verdict": "divergent",
+      "hazard": "SEMANTIC DIFFERS: microsecond(TIMESTAMP '2024-01-02 03:04:05.123456') — DuckDB=5123456 (INCLUDES the seconds field: seconds*1e6 + micros); Doris=123456 (fractional sub-second only). Divergent by ~seconds*1e6.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "monthname",
+      "doris": "monthname",
+      "verdict": "identical",
+      "hazard": "monthname(DATE '2024-02-29')='February' both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "last_day",
+      "doris": "last_day",
+      "verdict": "identical",
+      "hazard": "last_day(DATE '2024-02-15')='2024-02-29' both (leap-Feb month-end).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "to_days",
+      "doris": "to_days",
+      "verdict": "divergent",
+      "hazard": "DIFFERENT DOMAIN/DIRECTION: DuckDB to_days is an INTERVAL constructor — to_days(INTEGER)->INTERVAL (to_days(DATE) is a Binder Error, no such overload). Doris to_days(DATE '2024-01-01')=739251 returns day-count since year 0. Not the same function — divergent.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "to_seconds",
+      "doris": "to_seconds",
+      "verdict": "divergent",
+      "hazard": "DIFFERENT DOMAIN/DIRECTION: DuckDB to_seconds is an INTERVAL constructor — to_seconds(DOUBLE)->INTERVAL (to_seconds(DATE) is a Binder Error). Doris to_seconds(DATE '2024-01-01')=63871286400 returns seconds since year 0. Divergent, never push by name.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "century",
+      "doris": "century",
+      "verdict": "identical",
+      "hazard": "century(DATE '2024-02-29')=21 both.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "date_trunc",
+      "doris": "date_trunc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Values align for month/year/day/quarter (date_trunc('month','2024-02-29 03:04:05')='2024-02-01 00:00:00' both; quarter->'2024-01-01' both) but rendering differs: DuckDB emits fractional '...00:00:00.0', Doris '...00:00:00'. Also 'week' unit uses Monday-start on both but Doris unit set differs; conditionally-equivalent for the intersection unit set (day..year).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "current_date",
+      "doris": "current_date",
+      "verdict": "conditionally-equivalent",
+      "hazard": "current_date() rendered identically live (both '2026-07-13') but is SESSION-ZONE dependent — the harness cannot pre-SET the zone, so equivalence holds only when both engines resolve to the same session time zone.",
+      "areas": [
+        "datetime",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "current_database",
+      "doris": "current_database",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both exist and return the active database/schema name, but the value is connection-context dependent (in-memory DuckDB 'memory' vs the Doris FE default db) — not a value hazard, environment-dependent.",
+      "areas": [
+        "metadata",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "current_catalog",
+      "doris": "current_catalog",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Catalog-name accessor exists on both; returned value is connection/context dependent (DuckDB 'memory' vs Doris 'internal'). Semantic role equivalent, value environment-dependent.",
+      "areas": [
+        "metadata",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "current_user",
+      "doris": "current_user",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both return the authenticated user; value is connection/auth-context dependent (Doris renders 'user'@'host'), not a portable literal. Semantic role equivalent.",
+      "areas": [
+        "metadata",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "session_user",
+      "doris": "session_user",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Session-user accessor exists on both; value is auth-context dependent. Semantic role equivalent, value environment-dependent.",
+      "areas": [
+        "metadata",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "user",
+      "doris": "user",
+      "verdict": "conditionally-equivalent",
+      "hazard": "'user' user-accessor exists on both (Doris 'user()' returns 'user'@'host'); auth-context dependent value.",
+      "areas": [
+        "metadata",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "now",
+      "doris": "now",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both return the current instant but RENDERING and zone differ: DuckDB now() -> ISO '2026-07-13T07:38:31.612504Z' (TZ-aware, 'Z' suffix, microseconds); Doris now() -> '2026-07-13 07:38:31' (space sep, second precision, session-zone). Session-zone dependent; value-equivalent instant, format/precision differs.",
+      "areas": [
+        "datetime",
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch6-datetime"
+    },
+    {
+      "duckdb": "array_append",
+      "doris": "array_append",
+      "verdict": "identical",
+      "hazard": "Probe-verified live: array_append([1,2],3) -> [1,2,3] on both (element-wise e[1]=1,e[3]=3 SAME). Same fn name works on both. NOTE the length-accessor name trap: Doris has NO array_length (errors 'Can not found function array_length'), use array_size; DuckDB has array_length but NO array_size — this affects the wrapper, not array_append itself.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "duckdb": "array_cross_product",
+      "doris": "array_cross_product",
+      "verdict": "identical",
+      "hazard": "Probe-verified live: this is the 3-D VECTOR cross product, NOT a cartesian product — array_cross_product([1,2,3],[4,5,6]) = [-3,6,-3] element-wise SAME on both (e1=-3,e2=6,e3=-3, size=3). Same fn name works on both engines.",
+      "areas": [
+        "array",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch7-array"
+    },
+    {
+      "duckdb": "json_extract",
+      "doris": "json_extract",
+      "verdict": "identical",
+      "hazard": "Probe-verified live element-by-element: json_extract('{...}', '$.a')='1', $.b='[10,20]', $.b[0]='10', $.c.d='\"x\"' (nested), missing path $.z=NULL — Doris matches DuckDB exactly on every node. BOTH return a JSON value with QUOTES RETAINED on strings (json_extract('{\"a\":\"x\"}','$.a')='\"x\"' on both). JSONPath dialect ($.a, $.b[0], $.c.d) parses identically. Use json_extract_string to strip quotes.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "duckdb": "json_extract_string",
+      "doris": "json_extract_string",
+      "verdict": "identical",
+      "hazard": "Probe-verified live: json_extract_string('{\"a\":\"x\"}','$.a')='x' (UNQUOTED) both; numeric scalar $.a='1' both; nested $.c.d='x' both; missing path $.z=NULL both. DuckDB json_extract_string maps 1:1 to Doris json_extract_string (the unquoting counterpart of json_extract). Doris get_json_string is a live synonym.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "duckdb": "json_array",
+      "doris": "json_array",
+      "verdict": "identical",
+      "hazard": "json_array(1,2,3)='[1,2,3]' rendered identically on both (compact, no spaces).",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "duckdb": "json_object",
+      "doris": "json_object",
+      "verdict": "identical",
+      "hazard": "json_object('k',1,'m',2)='{\"k\":1,\"m\":2}' rendered identically on both (key-insertion order preserved, compact).",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "duckdb": "json_quote",
+      "doris": "json_quote",
+      "verdict": "identical",
+      "hazard": "json_quote('x')='\"x\"' and json_quote('hello')='\"hello\"' both — wraps a string as a JSON string literal (adds double quotes) identically.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "duckdb": "json_contains",
+      "doris": "json_contains",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: SAME boolean truth on both — json_contains('[1,2,3]','2')=true(DuckDB)/1(Doris); json_contains('{\"a\":1}','5')=false/0. Value-equivalent membership test; the only divergence is BOOLEAN RENDERING: DuckDB emits true/false, Doris emits 1/0 (type mapping). Note arg-2 candidate is a JSON-text scalar on both.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "duckdb": "json_valid",
+      "doris": "json_valid",
+      "verdict": "divergent",
+      "hazard": "REAL SEMANTIC DIVERGENCE probe-verified live: json_valid('not json') — DuckDB=false; Doris=1 (TRUE!). Doris json_valid('not json')=1 does NOT validate as strict JSON the way DuckDB does — it returns true for the invalid input. Well-formed input json_valid('{...}') is true(DuckDB)/1(Doris) as expected, but the whole point of json_valid (detecting invalid JSON) DIVERGES: Doris fails to flag 'not json' as invalid. Divergent — do not rely on Doris json_valid to reject malformed input.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "duckdb": "json_keys",
+      "doris": "json_keys",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: same key SET/order on both for json_keys('{\"a\":1,\"b\":[..],\"c\":{..}}') = a,b,c. Divergence is RENDERING of the returned array: DuckDB getString -> '[a, b, c]' (unquoted elements); Doris -> '[\"a\", \"b\", \"c\"]' (JSON-quoted elements). Same logical keys, different string form — element-wise equivalent, cast/parse required.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "duckdb": "json_type",
+      "doris": "json_type",
+      "verdict": "divergent",
+      "hazard": "TWO independent divergences probe-verified live. (1) VOCABULARY: DuckDB json_type returns storage-typed tokens — OBJECT, ARRAY, VARCHAR (for a JSON string), UBIGINT (for a positive int), BOOLEAN, NULL — whereas the JSON-standard vocabulary Doris would use is object/array/string/int/.../null. DuckDB '1'->UBIGINT and '\"x\"'->VARCHAR are DuckDB-storage names, not JSON-type names. (2) AVAILABILITY: on this live Doris FE build json_type (and jsonb_type) do NOT resolve at all — FE errors 'Can not found function json_type' for VARCHAR, cast-as-json, and cast-as-jsonb inputs. Divergent on both counts.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+    },
+    {
+      "duckdb": "json_each",
+      "doris": "json_each",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Resolved via a table-function row-set probe (LATERAL VIEW EXPLODE_JSON_OBJECT): DuckDB json_each('{\"a\":1,\"b\":2}') and Doris explode_json_object/json_each yield the same key/value pairs (a=1,b=2); differs only in output row/column shape (Doris rows are struct-shaped (key,value)). Not a scalar rename — needs a LATERAL VIEW rewrite.",
+      "areas": [
+        "json",
+        "table-function"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears"
+    },
+    {
+      "duckdb": "format",
+      "doris": "format",
+      "verdict": "identical",
+      "hazard": "Doris format == DuckDB format (fmt/printf brace-style). Probe-verified live: format('{} and {}','a','b')='a and b' both; format('{:d}',42)='42' both; format('{:05d}',42)='00042' both; format('{:.2f}',3.14159)='3.14' both; and printf-style format('%d and %s',42,'x') returns the LITERAL '%d and %s' on BOTH (brace-only interpolation, % not a spec). NOTE: this is the fmt/printf dialect, NOT Trino's Java-Formatter %-dialect.",
+      "areas": [
+        "string",
+        "format"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "version",
+      "doris": "version",
+      "verdict": "divergent",
+      "hazard": "Both are zero-arg scalars returning a version string but the VALUES differ by design: DuckDB version()='v1.5.4' (DuckDB engine version), Doris version()='5.7.99' (the MySQL-protocol compatibility version the Doris FE reports, not the Doris release). Same function name, incomparable semantics — do not treat as equivalent.",
+      "areas": [
+        "metadata"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "xor",
+      "doris": "xor",
+      "verdict": "no-equivalent",
+      "hazard": "DuckDB xor(a,b) is a bitwise integer XOR scalar (xor(5,3)=6; DuckDB has NO boolean xor — xor(true,false) is a Binder Error). On this live Doris FE build xor() does NOT resolve for integer args (FE errCode=2, function not found). Doris uses the bitxor()/bitmap or the # operator instead; no direct xor scalar. No-equivalent on Doris.",
+      "areas": [
+        "bitwise"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "isinf",
+      "doris": "isinf",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same infinity detection semantics, only boolean render differs (type mapping): isinf(inf) DuckDB=true / Doris=1; isinf(1.0) DuckDB=false / Doris=0. Values agree; treat Doris 1/0 as boolean.",
+      "areas": [
+        "math",
+        "float"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "isnan",
+      "doris": "isnan",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same NaN detection, only boolean render differs (type mapping): isnan(nan) DuckDB=true / Doris=1; isnan(1.0) DuckDB=false / Doris=0. Values agree.",
+      "areas": [
+        "math",
+        "float"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "uuid",
+      "doris": "uuid",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both produce a 36-char canonical UUID string (length(cast(uuid() as varchar))=36 both). Non-deterministic — same shape but NEVER pushable/comparable value-for-value.",
+      "areas": [
+        "random",
+        "nondeterministic"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "random",
+      "doris": "random",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both return a double in [0,1) (probe cast(random()>=0 and random()<1 as int)=1 both). Non-deterministic — never pushable/comparable value-for-value.",
+      "areas": [
+        "random",
+        "nondeterministic"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "to_json",
+      "doris": "to_json",
+      "verdict": "identical",
+      "hazard": "to_json([1,2,3])='[1,2,3]' on both (compact JSON serialization). Aligned for the array case.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "regexp_extract",
+      "doris": "regexp_extract",
+      "verdict": "divergent",
+      "hazard": "SIGNATURE divergence, probe-verified. The 2-arg whole-match form regexp_extract('abc123','[0-9]+') works in DuckDB (='123') but ERRORS on Doris (FE 'Can not found function regexp_extract' for that arity). The 3-arg explicit-group form is aligned: regexp_extract('abc123','([0-9]+)',0)='123' both, and ('([a-z]+)([0-9]+)',2)='123' both. Doris REQUIRES the group-index argument; group 0 = whole match on both. Divergent on the 2-arg form.",
+      "areas": [
+        "string",
+        "regex"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map",
+      "doris": "map",
+      "verdict": "divergent",
+      "hazard": "CONSTRUCTOR SIGNATURE differs. DuckDB map([k1,k2],[v1,v2]) takes two parallel LIST args; Doris map(k1,v1,k2,v2) takes flattened alternating key/value scalars. Probe-verified: feeding DuckDB syntax map([1,2],['a','b']) to Doris does NOT build the same map — Doris map_keys(map([1,2],['a','b']))=[[1, 2]] (the array became a single key), vs DuckDB=[1, 2]. Not portable by name; must translate the constructor.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map_keys",
+      "doris": "map_keys",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same semantics once the map is built with each engine's own constructor. Doris map_keys(map(1,'a',2,'b'))='[1, 2]' matches DuckDB map_keys(map([1,2],['a','b']))=[1, 2]; array_size=2; element [1]=1 both. Conditionally-equivalent because it depends on the divergent map() constructor and on array render.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map_values",
+      "doris": "map_values",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same value set; only render differs. Doris map_values(map(1,'a',2,'b'))='[\"a\", \"b\"]' (JSON-quoted elements) vs DuckDB=['a', 'b'] (unquoted via getString). Element-wise equal; parse required; also depends on divergent map() constructor.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map_entries",
+      "doris": "map_entries",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Element STRUCT shape aligns: Doris map_entries(map(1,'a',2,'b'))='[{\"key\":1, \"value\":\"a\"}, {\"key\":2, \"value\":\"b\"}]' — same key/value field names as DuckDB's struct(key,value) {'key':1,'value':'a'}. Only render (JSON-quoting) and the divergent map() constructor differ; element type row/struct is compatible.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map_contains_entry",
+      "doris": "map_contains_entry",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both test key+value pair membership. Doris map_contains_entry(map(1,'a',2,'b'),1,'a')=1 (Doris takes flattened key,value args); DuckDB map_contains_entry(map([1],['a']),1,'a')=true. Same truth, boolean render 1 vs true, plus divergent map() constructor.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "map_contains_value",
+      "doris": "map_contains_value",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both test value membership. Doris map_contains_value(map(1,'a',2,'b'),'a')=1; DuckDB map_contains_value(map([1],['a']),'a')=true. Same truth, boolean render 1 vs true, plus divergent map() constructor.",
+      "areas": [
+        "map",
+        "collection"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "st_astext",
+      "doris": "st_astext",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both render WKT identically: st_astext(st_point(1,2))='POINT (1 2)' on Doris; DuckDB (spatial extension) also 'POINT (1 2)' (verified via python-duckdb with LOAD spatial). Conditionally-equivalent: DuckDB requires the spatial extension (not present in the plain JDBC harness connection, which errors), Doris ST_* are native — same WKT text once available.",
+      "areas": [
+        "geo",
+        "spatial"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "duckdb": "st_geomfromwkb",
+      "doris": "st_geomfromwkb",
+      "verdict": "conditionally-equivalent",
+      "hazard": "WKB->geometry round-trips to the same WKT on Doris: st_astext(st_geomfromwkb(st_asbinary(st_point(1,2))))='POINT (1 2)' (Doris also accepts st_geometryfromwkb, same result). DuckDB provides st_geomfromwkb via the spatial extension (verified via python-duckdb). Conditionally-equivalent for the same DuckDB-extension caveat.",
+      "areas": [
+        "geo",
+        "spatial"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"
+    },
+    {
+      "doris": "query",
+      "verdict": "unclear",
+      "hazard": "Both engines register a QUERY table function but with DIFFERENT semantics: DuckDB query('SELECT ...') executes a SQL string against the current DB; Doris QUERY (TVF, since 2.1) is JDBC catalog federation query('catalog','sql'). A row-set comparison needs an external JDBC catalog — out of scope for the literal-only harness.",
+      "areas": [
+        "table-function"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
+      "duckdb": "query"
+    },
+    {
+      "doris": "parquet_bloom_probe",
+      "verdict": "unclear",
+      "hazard": "TABLE_VALUED parquet-introspection fn registered on both engines; a row-set comparison needs a real Parquet file readable by the distributed Doris BE. Per repo AGENTS.md we do NOT stage temp Parquet on shared storage, so this cannot be resolved in the literal-only harness.",
+      "areas": [
+        "table-function",
+        "parquet"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
+      "duckdb": "parquet_bloom_probe"
+    },
+    {
+      "doris": "parquet_file_metadata",
+      "verdict": "unclear",
+      "hazard": "TABLE_VALUED parquet-introspection fn (both engines); needs a real BE-readable Parquet file — AGENTS.md forbids staging temp Parquet on shared storage. Not resolvable in this harness.",
+      "areas": [
+        "table-function",
+        "parquet"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
+      "duckdb": "parquet_file_metadata"
+    },
+    {
+      "doris": "parquet_kv_metadata",
+      "verdict": "unclear",
+      "hazard": "TABLE_VALUED parquet-introspection fn (both engines); needs a real BE-readable Parquet file — AGENTS.md forbids staging temp Parquet on shared storage. Not resolvable in this harness.",
+      "areas": [
+        "table-function",
+        "parquet"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
+      "duckdb": "parquet_kv_metadata"
+    },
+    {
+      "doris": "unnest",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Resolved via a table-function row-set probe: DuckDB unnest([1,2,3]) and Doris LATERAL VIEW EXPLODE(array(1,2,3)) produce the identical ordered row-set (1,2,3). Not a scalar rename — requires a structural LATERAL VIEW EXPLODE rewrite the scalar transpile path does not perform.",
+      "areas": [
+        "table-function"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
+      "duckdb": "unnest"
+    },
+    {
+      "duckdb": "round",
+      "doris": "round",
+      "verdict": "identical",
+      "hazard": "Probe-verified live across .5 boundaries: both half-away-from-zero and decimal-aware (round(2.5)=3, round(3.5)=4, round(1.25,1)=1.3, round(1.35,1)=1.4, round(0.15,1)=0.2, round(-1.25,1)=-1.3, round(1.005,2)=1.01, round(12345,-2)=12300). Resolves the prior UNCLEAR for DuckDB<->Doris.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"
+    },
+    {
+      "duckdb": "substring",
+      "doris": "substring",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Probe-verified live: aligned for start>=1, negative start (counts from end: substring('héllo',-2)='lo'), 2-arg form, and over-length. DIVERGES at start=0: DuckDB substring('héllo',0,2)='h' (includes leading), Doris returns '' (MySQL pos=0 rule). Normalize start=0 before pushing.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch10-round-substring"
+    },
+    {
+      "duckdb": "chr",
+      "doris": "char",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "isodow",
+      "doris": "weekday",
+      "verdict": "identical",
+      "hazard": "Generator renders isodow(d) as (WEEKDAY(d) + 1); WEEKDAY is Mon=0..Sun=6 so +1 gives ISO Mon=1..Sun=7 — matches DuckDB isodow live (2024-03-15 -> 5).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "json",
+      "doris": "json",
+      "verdict": "identical",
+      "hazard": "DuckDB json(x) parses to identity passthrough (renders the arg verbatim); Doris receives the raw JSON string — value-identical for the probed literal.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "json_extract_path",
+      "doris": "json_extract",
+      "verdict": "identical",
+      "hazard": "Single-path form: json_extract_path(doc,'a') -> JSON_EXTRACT(doc,'$.a'); matched live ({\"b\":2}). Multi-key varargs form is a binder error in DuckDB 1.5.4 too, so not a live divergence.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "json_extract_path_text",
+      "doris": "json_extract",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "json"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "sha256",
+      "doris": "sha2",
+      "verdict": "identical",
+      "hazard": "sha256(x) -> SHA2(x, 256); hex digest matched live.",
+      "areas": [
+        "string",
+        "hash"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "make_time",
+      "doris": "maketime",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "date_diff",
+      "doris": "datediff",
+      "verdict": "identical",
+      "hazard": "date_diff('day',start,end) -> DATEDIFF(end,start) (arg reorder, part dropped for day unit); day-count matched live (60). NOTE: only the 'day' unit maps — other units (month/year/hour) are NOT covered by this rename and would silently drop the unit; probe per-unit before trusting non-day.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "today",
+      "doris": "current_date",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "range",
+      "doris": "array_range",
+      "verdict": "identical",
+      "hazard": "Scalar list form range(5) -> ARRAY_RANGE(0,5) = [0,1,2,3,4] both (end-exclusive).",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "array_to_string",
+      "doris": "array_join",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "array",
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_append",
+      "doris": "array_append",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_concat",
+      "doris": "array_concat",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_filter",
+      "doris": "array_filter",
+      "verdict": "identical",
+      "hazard": "Lambda reordered (ARRAY_FILTER(lambda, arr)); [1,2,3,4] filter >2 -> [3,4] both.",
+      "areas": [
+        "array",
+        "lambda"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_max",
+      "doris": "array_max",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_min",
+      "doris": "array_min",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_prepend",
+      "doris": "array_pushfront",
+      "verdict": "identical",
+      "hazard": "list_prepend(0,arr) -> ARRAY_PUSHFRONT(arr,0) (arg reorder); [0,1,2] both.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_reverse_sort",
+      "doris": "array_reverse_sort",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_sort",
+      "doris": "array_sort",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_transform",
+      "doris": "array_map",
+      "verdict": "identical",
+      "hazard": "list_transform(arr,lambda) -> ARRAY_MAP(lambda, arr) (lambda reorder); [10,20,30] both.",
+      "areas": [
+        "array",
+        "lambda"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_value",
+      "doris": "array",
+      "verdict": "identical",
+      "hazard": null,
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "bit_and",
+      "doris": "group_bit_and",
+      "verdict": "identical",
+      "hazard": "Aggregate bit_and -> GROUP_BIT_AND (gap-report renderedSql BIT_AND was stale); {6,3,5} -> 0 both.",
+      "areas": [
+        "numeric",
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "bit_or",
+      "doris": "group_bit_or",
+      "verdict": "identical",
+      "hazard": "{6,3,5} -> 7 both.",
+      "areas": [
+        "numeric",
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "bit_xor",
+      "doris": "group_bit_xor",
+      "verdict": "identical",
+      "hazard": "{6,3,5} -> 0 both.",
+      "areas": [
+        "numeric",
+        "aggregate"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "current_localtimestamp",
+      "doris": "localtimestamp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both are wall-clock now(); DuckDB renders microseconds, Doris seconds — precision/rendering only.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "get_current_time",
+      "doris": "current_time",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Both current time-of-day; DuckDB renders microseconds + 'Z' (TIME WITH TZ), Doris seconds — precision/tz-rendering only.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "current_schema",
+      "doris": "schema",
+      "verdict": "conditionally-equivalent",
+      "hazard": "current_schema() -> SCHEMA(); value depends on the session's current database (DuckDB 'main' default vs Doris empty when no db USEd) — session-catalog-dependent, not a semantic divergence.",
+      "areas": [
+        "session"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "trunc",
+      "doris": "truncate",
+      "verdict": "conditionally-equivalent",
+      "hazard": "trunc(3.7)=3 (DuckDB) vs TRUNCATE(3.7)=3.0 (Doris) — value equal, DuckDB returns integral, Doris keeps decimal type/rendering.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "datetrunc",
+      "doris": "date_trunc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "datetrunc('month',ts) -> DATE_TRUNC(ts,'MONTH') (arg reorder, unit quoted); value equal, DuckDB renders trailing .0 fractional seconds.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "epoch",
+      "doris": "unix_timestamp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "epoch(ts) -> UNIX_TIMESTAMP(ts); value equal (1710506096) but DuckDB returns DOUBLE (1.710506096E9), Doris integral — type/rendering.",
+      "areas": [
+        "datetime",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "strptime",
+      "doris": "str_to_date",
+      "verdict": "conditionally-equivalent",
+      "hazard": "strptime('2024-03-15','%Y-%m-%d') returns TIMESTAMP (2024-03-15 00:00:00) in DuckDB; Doris STR_TO_DATE with a date-only format returns DATE (2024-03-15). Same instant, result TYPE differs (TIMESTAMP vs DATE).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "to_timestamp",
+      "doris": "from_unixtime",
+      "verdict": "conditionally-equivalent",
+      "hazard": "to_timestamp(epoch) -> FROM_UNIXTIME(epoch); DuckDB returns TIMESTAMPTZ (UTC, '...Z'), Doris returns session-zone DATETIME string. Wall-clock matched under UTC session; value diverges under a non-UTC session zone (session-zone-dependent + tz-type).",
+      "areas": [
+        "datetime",
+        "timezone"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list",
+      "doris": "collect_list",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Aggregate list(x) -> COLLECT_LIST(x); element multiset equal but collection ORDER is not guaranteed on either engine without ORDER BY (live: DuckDB [2,1,3] vs Doris [1,2,3]).",
+      "areas": [
+        "array",
+        "aggregate",
+        "order"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_contains",
+      "doris": "array_contains",
+      "verdict": "conditionally-equivalent",
+      "hazard": "DuckDB returns BOOLEAN true, Doris returns TINYINT 1 over the MySQL wire — boolean type mapping only.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_cosine_distance",
+      "doris": "cosine_distance",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Value agrees to float32 precision (DuckDB 0.025368153802923787 float64 vs Doris 0.02536809 float32) — precision only.",
+      "areas": [
+        "array",
+        "numeric",
+        "float"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_distance",
+      "doris": "l2_distance",
+      "verdict": "conditionally-equivalent",
+      "hazard": "L2 distance agrees to float32 precision (5.196152422706632 vs 5.196152) — precision only.",
+      "areas": [
+        "array",
+        "numeric",
+        "float"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_distinct",
+      "doris": "array_distinct",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Distinct element set equal but ORDER differs (DuckDB [3,2,1] vs Doris [1,2,3] for input [1,1,2,3]) — neither guarantees ordering.",
+      "areas": [
+        "array",
+        "order"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "string_split",
+      "doris": "split_by_string",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Same element list ['a','b','c']; differs only in getString rendering (DuckDB [a, b, c] vs Doris quoted [\"a\", \"b\", \"c\"]).",
+      "areas": [
+        "string",
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "arg_max",
+      "doris": "max_by",
+      "verdict": "conditionally-equivalent",
+      "hazard": "arg_max(y,x) -> MAX_BY(y,x); agrees when the max key is unique, but tie-breaking is nondeterministic and may differ between engines.",
+      "areas": [
+        "aggregate",
+        "order"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "arg_min",
+      "doris": "min_by",
+      "verdict": "conditionally-equivalent",
+      "hazard": "arg_min(y,x) -> MIN_BY(y,x); tie-breaking nondeterministic.",
+      "areas": [
+        "aggregate",
+        "order"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "quantile_cont",
+      "doris": "percentile_cont",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Linear-interpolated quantile; median matched (2.0) but interpolation at fractional ranks / even counts not exhaustively probed across engines.",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "string_agg",
+      "doris": "group_concat",
+      "verdict": "conditionally-equivalent",
+      "hazard": "string_agg(y,',') -> GROUP_CONCAT(y,','); concatenated value matched but concatenation ORDER is not guaranteed without ORDER BY.",
+      "areas": [
+        "aggregate",
+        "string",
+        "order"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "regexp_matches",
+      "doris": "regexp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "regexp_matches(s,p) partial-match -> s REGEXP p; DuckDB BOOLEAN true/false vs Doris TINYINT 1/0 — boolean type mapping only, same match semantics.",
+      "areas": [
+        "string",
+        "regex"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "strftime",
+      "doris": "date_format",
+      "verdict": "conditionally-equivalent",
+      "hazard": "strftime(ts,'%Y-%m-%d') is semantically DATE_FORMAT(ts,fmt) and matched live ('2024-03-15'). BUT the doris generator currently leaks an internal TS_OR_DS_TO_TIMESTAMP node (UNMAPPABLE_FUNCTION) so certify REFUSES it — GENERATOR BUG (see REPORT). Format-spec dialects may still diverge for non-overlapping codes.",
+      "areas": [
+        "datetime",
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "list_has_any",
+      "doris": "arrays_overlap",
+      "verdict": "divergent",
+      "hazard": "GENERATOR BUG (confident, certify ok=true): list_has_any(a,b) is emitted as `a && b`, but Doris `&&` is logical-AND and cannot cast arrays to boolean (runtime error 'can not cast from origin type Array to Boolean'). Correct mapping is ARRAYS_OVERLAP(a,b) (verified live = 1). Filed as brikk-sql generator mapping bug.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "epoch_ms",
+      "doris": "from_unixtime",
+      "verdict": "divergent",
+      "hazard": "GENERATOR BUG (confident, certify ok=true): epoch_ms(ms) -> FROM_UNIXTIME(ms, 3). Two errors: (1) Doris from_unixtime expects SECONDS not ms, so ms overflows (INVALID_ARGUMENT); (2) from_unixtime's 2nd arg is a FORMAT STRING, not a fractional-second precision, so the literal 3 is misinterpreted (from_unixtime(1710506096,3) -> '3'). DuckDB epoch_ms(1710506096000) = 2024-03-15 12:34:56. Filed as generator bug.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "string_split_regex",
+      "doris": "split_by_string",
+      "verdict": "divergent",
+      "hazard": "GENERATOR BUG (confident, certify ok=true): string_split_regex(s,pat) (REGEX split) is mapped to SPLIT_BY_STRING(s,pat) which treats pat as a LITERAL delimiter. string_split_regex('a1b2c','[0-9]') = ['a','b','c'] (DuckDB) vs ['a1b2c'] (Doris, no split). Needs a regex-splitting Doris function. Filed as generator bug.",
+      "areas": [
+        "string",
+        "regex",
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "struct_pack",
+      "doris": "struct",
+      "verdict": "divergent",
+      "hazard": "GENERATOR BUG (confident, certify ok=true): struct_pack(a:=1,b:='x') -> STRUCT(1 AS a, 'x' AS b). Doris STRUCT does not accept `expr AS name` alias syntax (runtime error); bare STRUCT(1,'x') loses field names ({\"col1\":1,...}). Correct mapping is NAMED_STRUCT('a',1,'b','x') (verified live {\"a\":1,\"b\":\"x\"}). Filed as generator bug.",
+      "areas": [
+        "struct"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "get_bit",
+      "doris": "getbit",
+      "verdict": "no-equivalent",
+      "hazard": "Generator emits GETBIT which Doris does not register ('Can not found function getbit'); certify correctly REFUSES (UNMAPPABLE_FUNCTION). No live Doris bit-extract equivalent found.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "jaro_winkler_similarity",
+      "doris": "jarowinkler_similarity",
+      "verdict": "no-equivalent",
+      "hazard": "Generator emits JAROWINKLER_SIMILARITY; Doris has neither that nor jaro_winkler/jaro_winkler_distance ('Can not found function'). certify REFUSES (UNMAPPABLE_FUNCTION).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "unicode",
+      "doris": "ord",
+      "verdict": "no-equivalent",
+      "hazard": "Generator emits ORD(CONVERT(x USING utf32)); Doris has no ORD ('Can not found function ord'). ascii() exists but is byte-oriented (not a codepoint equivalent). certify REFUSES (UNMAPPABLE_FUNCTION).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "make_date",
+      "doris": "date_from_parts",
+      "verdict": "no-equivalent",
+      "hazard": "Generator emits DATE_FROM_PARTS (unregistered in Doris); certify REFUSES. Doris MAKEDATE(year,dayofyear) exists but has different semantics (day-of-year, not (y,m,d)), so it is not a drop-in equivalent.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "make_timestamp",
+      "doris": "timestamp_from_parts",
+      "verdict": "no-equivalent",
+      "hazard": "Generator emits TIMESTAMP_FROM_PARTS (unregistered in Doris); certify REFUSES (UNMAPPABLE_FUNCTION).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "time_bucket",
+      "doris": "date_bin",
+      "verdict": "no-equivalent",
+      "hazard": "Generator emits DATE_BIN (unregistered in Doris, 'Can not found function date_bin'); certify REFUSES (UNMAPPABLE_FUNCTION).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "quantile_disc",
+      "doris": "percentile_disc",
+      "verdict": "no-equivalent",
+      "hazard": "Generator emits PERCENTILE_DISC (unregistered in Doris, 'Can not found function percentile_disc'); certify REFUSES. Doris has percentile/percentile_approx (different).",
+      "areas": [
+        "aggregate",
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "array_length",
+      "doris": "array_length",
+      "verdict": "divergent",
+      "hazard": "CONFIDENT-BUT-WRONG / CATALOG BUG (certify ok=true): array_length is emitted verbatim and the brikk-sql-metadata Doris catalog lists ARRAY_LENGTH, so certify passes it — but the live Doris FE errors 'Can not found function ARRAY_LENGTH'. Correct Doris fn is ARRAY_SIZE / SIZE (live = 3, identical). Filed: remove array_length from the Doris function catalog and/or map array_length->array_size.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "map_extract",
+      "doris": "element_at",
+      "verdict": "divergent",
+      "hazard": "DuckDB map_extract(m,k) returns a LIST wrapping the value ([1]); Doris ELEMENT_AT(m,k) returns the scalar value (1). Different result shape (list vs scalar). Generator currently REFUSES map_extract (emits MAP_EXTRACT, unmappable; also mismaps the MAP() constructor to ARRAY_MAP).",
+      "areas": [
+        "map"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "datesub",
+      "doris": "days_sub",
+      "verdict": "no-equivalent",
+      "hazard": "datesub is NOT a DuckDB function (binder error 'No function matches datesub'); it is a ClickHouse-ism the gap-report parsed under the clickhouse dialect. Not a valid duckdb->doris transpile path. Generator refuses (DATESUB unmappable).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "unbin",
+      "doris": "from_binary",
+      "verdict": "no-equivalent",
+      "hazard": "DuckDB unbin('1010') parses a binary-digit string to a BLOB (b'\\n'). Generator refuses (UNBIN unmappable); no confirmed Doris equivalent (from_base64 is base64, not binary-digit decode).",
+      "areas": [
+        "binary",
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "greatest_common_divisor",
+      "doris": "gcd",
+      "verdict": "identical",
+      "hazard": "MISSING MAPPING (generator refuses, GREATEST_COMMON_DIVISOR unmappable): Doris GCD(12,18)=6 matches DuckDB — a greatest_common_divisor->gcd mapping would be identical. Fail-loud today.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "least_common_multiple",
+      "doris": "lcm",
+      "verdict": "identical",
+      "hazard": "MISSING MAPPING (generator refuses, LEAST_COMMON_MULTIPLE unmappable): Doris LCM(4,6)=12 matches DuckDB — least_common_multiple->lcm would be identical. Fail-loud today.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "list_position",
+      "doris": "array_position",
+      "verdict": "identical",
+      "hazard": "MISSING MAPPING (generator refuses, LIST_POSITION unmappable): Doris ARRAY_POSITION([10,20,30],20)=2 matches DuckDB — list_position->array_position would be identical. Fail-loud today.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "list_intersect",
+      "doris": "array_intersect",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, LIST_INTERSECT unmappable): Doris ARRAY_INTERSECT([1,2,3],[2,3,4]) result set = [2,3] matches, but intersection element ORDER is not guaranteed equal across engines. Fail-loud today.",
+      "areas": [
+        "array",
+        "order"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "list_slice",
+      "doris": "array_slice",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, LIST_SLICE unmappable): ARG SEMANTICS DIFFER — DuckDB list_slice(a,begin,END) uses an end index, Doris ARRAY_SLICE(a,start,LENGTH) uses a length. list_slice(a,2,4)=[2,3,4] equals array_slice(a,2,3) only after converting end->length. A naive rename WITHOUT arg conversion would diverge.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "list_zip",
+      "doris": "array_zip",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, LIST_ZIP unmappable): Doris ARRAY_ZIP([1,2],[3,4]) = [{col1:1,col2:3},{col1:2,col2:4}] (array of structs) matches DuckDB structurally; differs in struct field naming/rendering. Fail-loud today.",
+      "areas": [
+        "array",
+        "struct"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "row",
+      "doris": "named_struct",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator emits ROW, unmappable/refuses): DuckDB row(1,'x') is a positional struct; Doris has no ROW, NAMED_STRUCT('c1',1,'c2','x') is the nearest equivalent but requires synthesized field names, and STRUCT loses names. Field-naming divergence.",
+      "areas": [
+        "struct"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "suffix",
+      "doris": "ends_with",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, SUFFIX unmappable): DuckDB suffix is an ends_with alias; Doris ENDS_WITH('hello','lo')=1 vs DuckDB true — boolean type mapping only. suffix->ends_with would be safe. Fail-loud today.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "st_aswkb",
+      "doris": "st_asbinary",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, ST_ASWKB unmappable): Doris ST_ASBINARY(ST_POINT(1,2)) returns the WKB bytes; both are WKB but differ in binary getString rendering. Geo; fail-loud today.",
+      "areas": [
+        "geo",
+        "binary"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "get_current_timestamp",
+      "doris": "now",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, GET_CURRENT_TIMESTAMP unmappable): Doris NOW() is the equivalent (wall-clock now); differs in precision/session-zone. get_current_timestamp->now would be safe. Fail-loud today.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    }
+  ]
 }
