@@ -130,13 +130,15 @@ data class FunctionOverload(
  * normalize to SCALAR/TABLE_VALUED but keep their native kind here). Null when the
  * engine kind maps directly.
  *
- * [sinceVersion] is the first engine version that ships the function (for
- * version-gated completion in external tooling). Currently null for ALL catalogs:
- * no vendored source carries version metadata yet — Doris's per-function docs (the
- * only known source of "since" info) live in the separate apache/doris-website
- * repo, not in the engine repo the generators run against. The field is declared
- * now so its JSON shape ("since_version", absent-as-null) is stable for consumers
- * before population. See vendor/README.md ("Doris function signatures").
+ * [sinceVersion] is intended as "the first engine version that ships the function" (for
+ * version-gated completion in external tooling), but for Doris it is honestly only "the
+ * first apache/doris-website version tier that DOCUMENTS the function" — no engine or
+ * docs source carries a true introduced-in fact (see
+ * tools/extract_doris_since_versions.py and vendor/README.md for the extraction method
+ * and its limitations). Null when doris-website has no matching doc at the pinned clone
+ * (undocumented/legacy function) or when its only doc lives in the unreleased/dev tree
+ * (not yet in a shipped version). Always null for DuckDB/Trino: neither exposes any
+ * version-introduced metadata the generators can read.
  *
  * [profile] carries per-engine semantic facts (see [SemanticProfile]); null when the
  * engine exposes none for this function (all Trino/DuckDB defs currently; Doris defs

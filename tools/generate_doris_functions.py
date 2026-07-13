@@ -21,6 +21,12 @@ and type-rendering rules). When the JSON is present, FunctionDef.overloads is fi
 joining registry class name -> extracted signatures; names whose class exposes no
 static SIGNATURES keep empty overloads (counted in the run report).
 
+since_version: vendor/data/doris-since-versions.json (produced by
+tools/extract_doris_since_versions.py from a local apache/doris-website clone) carries a
+PRIMARY_NAME -> "first documented in" version string map, joined by name onto
+FunctionDef.sinceVersion when present. See that script's header for the extraction
+method and its honesty caveats ("first documented in", not "introduced in").
+
 Semantic profiles: the same JSON carries each class's ComputeNullable marker
 ("nullable_mode", see the extractor's header), mapped onto FunctionDef.profile:
   PropagateNullable  -> NullPropagation.STRICT
@@ -55,6 +61,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 VENDORED_REGISTRY = ROOT / "vendor" / "data" / "doris-registry"
 SIGNATURES_JSON = ROOT / "vendor" / "data" / "doris-signatures.json"
+SINCE_VERSIONS_JSON = ROOT / "vendor" / "data" / "doris-since-versions.json"
 # Pin of the vendored registry copy (update when refreshing vendor/data/doris-registry/):
 VENDORED_VERSION = "v0.8.2-31011-gd8fd23f7f38"
 OUT = ROOT / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata" / "GeneratedDorisFunctionCatalog.kt"
@@ -118,6 +125,18 @@ def load_signatures() -> tuple[dict[str, list[dict]], dict[str, str], str | None
     return sigs, modes, data.get("doris_version")
 
 
+def load_since_versions() -> dict[str, str]:
+    """PRIMARY_NAME -> "first documented in" version string, from
+    vendor/data/doris-since-versions.json (tools/extract_doris_since_versions.py against a
+    local apache/doris-website clone). Keyed by the same PRIMARY_NAME the registry emits
+    (see that script's "method_notes" for what the value honestly means and its
+    limitations). Absent file -> empty map -> every FunctionDef.sinceVersion stays null."""
+    if not SINCE_VERSIONS_JSON.exists():
+        return {}
+    data = json.loads(SINCE_VERSIONS_JSON.read_text(encoding="utf-8"))
+    return data.get("versions", {})
+
+
 # nullable_mode -> Kotlin SemanticProfile expression (None = no profile; see module docstring).
 def profile_expr(mode: str | None) -> str | None:
     if mode is None:
@@ -151,6 +170,7 @@ def main() -> None:
         print(f"warning: doris-signatures.json is from {sig_version} but registry is {version} "
               "— re-run tools/extract_doris_signatures.py against the same checkout",
               file=sys.stderr)
+    since_versions = load_since_versions()
     total_defs = sum(len(v) for v in by_kind.values())
     total_names = sum(1 + len(a) for v in by_kind.values() for (_, _, a) in v)
 
@@ -165,6 +185,11 @@ def main() -> None:
         "// PropagateNullable->STRICT, AlwaysNullable->ALWAYS_NULLABLE,",
         "// AlwaysNotNullable->NEVER_NULL, custom nullable() override->UNKNOWN+notes;",
         "// table-valued/-generating defs carry no profile (row-set producers).",
+        "// sinceVersion (when present) is the OLDEST apache/doris-website versioned_docs",
+        "// tier documenting the function (\"first documented in\", not \"introduced in\" —",
+        "// see tools/extract_doris_since_versions.py's header and vendor/README.md for the",
+        "// honesty caveats), from vendor/data/doris-since-versions.json; absent for",
+        "// functions that JSON has no entry for (undocumented or unmatched at that pin).",
         "// Apache Doris is Apache-2.0 licensed. See ATTRIBUTIONS.md and vendor/README.md.",
         "package dev.brikk.house.sql.metadata",
     ]
@@ -183,14 +208,16 @@ def main() -> None:
             profile = profile_expr(mode)
             profile_counts[mode or "(none)"] = profile_counts.get(mode or "(none)", 0) + 1
             profile_arg = f", profile = {profile}" if profile else ""
-            cost = 1 + (1 if profile else 0)
+            since = since_versions.get(name)
+            since_arg = f', sinceVersion = "{since}"' if since else ""
+            cost = 1 + (1 if profile else 0) + (1 if since else 0)
             ctor = f'    FunctionDef("{name}", FunctionKind.{kind}'
             if aliases:
                 alias_list = ", ".join(f'"{a}"' for a in aliases)
                 ctor += f", listOf({alias_list})"
             if not overloads:
                 defs_without_overloads += 1
-                blocks.append(([ctor + profile_arg + "),"], cost))
+                blocks.append(([ctor + since_arg + profile_arg + "),"], cost))
                 continue
             defs_with_overloads += 1
             total_overloads += len(overloads)
@@ -200,7 +227,7 @@ def main() -> None:
                 ret = sig["return"]
                 variadic = ", variadic = true" if sig["variadic"] else ""
                 block.append(f'        FunctionOverload(listOf({args}), "{ret}"{variadic}),')
-            block.append(f"    ){profile_arg}),")
+            block.append(f"    ){since_arg}{profile_arg}),")
             blocks.append((block, cost + len(overloads)))
 
     CHUNK_BUDGET = 400  # constructors per chunk function (JVM method-size headroom)
@@ -226,6 +253,13 @@ def main() -> None:
         lines.append(")")
     OUT.write_text("\n".join(lines) + "\n")
     print(f"wrote {total_defs} defs / {total_names} names from Doris {version} -> {OUT}")
+    if since_versions:
+        matched = sum(1 for v in by_kind.values() for (_, name, _) in v if name in since_versions)
+        print(f"sinceVersion: {matched}/{total_defs} defs from vendor/data/doris-since-versions.json "
+              f"(method: first-documented-in)")
+    else:
+        print("sinceVersion: vendor/data/doris-since-versions.json not found — all sinceVersion null "
+              "(run tools/extract_doris_since_versions.py against a doris-website clone)")
     if signatures_by_class:
         print(f"overloads: {defs_with_overloads} defs with {total_overloads} overloads; "
               f"{defs_without_overloads} defs without signatures (no static SIGNATURES on class)")

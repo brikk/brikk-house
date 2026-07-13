@@ -327,22 +327,53 @@ class FunctionCatalogTest {
     }
 
     @Test
-    fun sinceVersionIsNullUntilADocsSourceIsVendored() {
-        // The field is declared for serialization stability (doris-intellij's
-        // version-gated completion) but no vendored source carries version metadata
-        // yet — see vendor/README.md. Absent-as-null must round-trip.
-        assertTrue(DORIS_FUNCTION_CATALOG.functions.all { it.sinceVersion == null })
-        assertNull(DORIS_FUNCTION_CATALOG["abs"]!!.sinceVersion)
+    fun dorisSinceVersionIsPinnedAgainstTheDocsSiteClone() {
+        // vendor/data/doris-since-versions.json ("first documented in", extracted by
+        // tools/extract_doris_since_versions.py from a pinned apache/doris-website
+        // clone — see vendor/README.md for the method and its honesty caveats).
+        // ABS: documented since the oldest tracked version tier.
+        assertEquals("1.2", DORIS_FUNCTION_CATALOG["abs"]!!.sinceVersion)
+        // AI_CLASSIFY: an AI function, only documented from the 4.x tier onward.
+        assertEquals("4.x", DORIS_FUNCTION_CATALOG["ai_classify"]!!.sinceVersion)
+        // SLEEP: registered by the engine but absent from doris-website entirely at
+        // the pinned clone (debug/admin function, never documented) — honest null,
+        // not a guess.
+        assertNull(DORIS_FUNCTION_CATALOG["sleep"]!!.sinceVersion)
+    }
+
+    @Test
+    fun dorisSinceVersionCoverageIsPinned() {
+        // Coverage at the pinned doris-website clone SHA (vendor/README.md): 650 of
+        // 728 defs matched to a version tier; the rest have no doc anywhere at that
+        // clone (mostly internal/legacy/undocumented functions) or are documented
+        // only in the live/unreleased tree (not yet in a shipped version tier — see
+        // extract_doris_since_versions.py). A regeneration against a newer clone is
+        // EXPECTED to move this — update deliberately.
+        val withVersion = DORIS_FUNCTION_CATALOG.functions.count { it.sinceVersion != null }
+        assertEquals(650, withVersion)
+        assertEquals(728, DORIS_FUNCTION_CATALOG.size)
+    }
+
+    @Test
+    fun sinceVersionRoundTripsThroughTheWireName() {
+        // Doris catalog values round-trip.
         val decoded = Json.decodeFromString(
             ListSerializer(FunctionDef.serializer()),
             DORIS_FUNCTION_CATALOG.toJson(),
         )
-        assertNull(decoded.first { it.name == "ABS" }.sinceVersion)
-        // And a populated value round-trips through the wire name "since_version".
+        assertEquals("1.2", decoded.first { it.name == "ABS" }.sinceVersion)
+        assertNull(decoded.first { it.name == "SLEEP" }.sinceVersion)
+        // Wire shape is pinned: snake_case key.
         val def = FunctionDef("F", FunctionKind.SCALAR, sinceVersion = "2.1")
         val json = Json.encodeToString(FunctionDef.serializer(), def)
         assertTrue("\"since_version\":\"2.1\"" in json)
         assertEquals(def, Json.decodeFromString(FunctionDef.serializer(), json))
+        // Pre-since_version JSON (field absent) still decodes: defaults null.
+        val legacy = Json.decodeFromString(
+            FunctionDef.serializer(),
+            """{"name":"F","kind":"SCALAR"}""",
+        )
+        assertNull(legacy.sinceVersion)
     }
 
     @Test

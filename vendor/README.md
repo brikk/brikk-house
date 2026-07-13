@@ -104,17 +104,41 @@ PropagateNullable, 149 AlwaysNullable, 116 AlwaysNotNullable, 68 custom, 53 none
 | License | Apache License 2.0 (extracted registry data; see ATTRIBUTIONS.md) |
 | Refresh | `python3 tools/extract_doris_signatures.py <doris-checkout>` then `python3 tools/generate_doris_functions.py` (keep the pin in sync with `data/doris-registry/`) |
 
-### `since_version` (not yet populated)
+### `data/doris-since-versions.json` — Doris function "since" versions
 
-`FunctionDef.sinceVersion` exists in the metadata model (serialized `"since_version"`,
-null default) for the doris-intellij plugin's version-gated completion, but is **null for
-every entry**: the engine repo carries no per-function version metadata (`docs/` in the
-current checkout is localized README stubs only; no `@since` annotations in the function
-sources). The known source is the per-function docs in the separate
-**apache/doris-website** repo (frontmatter/version tables), which is not vendored or
-cloned locally. To populate: clone doris-website, extract first-shipped-version per
-function name into `data/doris-signatures.json` (e.g. a `"since"` field per class), and
-join it in `tools/generate_doris_functions.py`. No network scraping from the generators.
+`FunctionDef.sinceVersion` (serialized `"since_version"`) is populated from
+`vendor/data/doris-since-versions.json`, produced by
+`tools/extract_doris_since_versions.py` against a local `git clone --depth 1
+https://github.com/apache/doris-website` (gitignored under `reference/`, not vendored —
+the JSON extracted from it is what's committed). **What was actually investigated**: the
+Doris engine repo carries no per-function version metadata at all (confirmed: no
+`@since` annotations anywhere in the function sources). doris-website's per-function docs
+(`docs/sql-manual/sql-functions/**/*.md`, sampled broadly across ~700 files) also carry
+**no explicit version field** — frontmatter is only `{title, language, description}`
+(occasionally `+ sidebar_label`); a handful of doc bodies mention a version in prose but
+only for *removal*/behavior-change notes (e.g. `struct-element.md`: "removed since
+version 4.1.3"), not a systematic introduction fact.
+
+**Method used instead: `first-documented-in`** (honestly labeled — this is NOT
+"introduced in"). doris-website keeps historical per-release doc snapshots under
+`versioned_docs/version-<X>/sql-manual/sql-functions/`; for each registry function
+(primary name or any alias), the extractor takes the **oldest** version tier whose docs
+contain a matching frontmatter title. At the pinned clone this yields tiers `1.2 < 2.0 <
+2.1 < 3.x < 4.x` (whatever `versioned_docs/version-*` exists in the clone — not
+hardcoded). Honesty caveats (also in the script's header and the JSON's `method_notes`):
+doc lag/reorganization can push the reported version **later** than a function actually
+shipped (never earlier); only the canonical English trees (`docs/`, `versioned_docs/`)
+are consulted, not `i18n/zh-CN` or `ja-source` (a function documented only in a
+translated tree reads as unmatched, e.g. `NTH_VALUE` at the pinned SHA).
+
+| | |
+|---|---|
+| Source | apache/doris-website — `docs/sql-manual/sql-functions/`, `versioned_docs/version-*/sql-manual/sql-functions/` |
+| Clone SHA | recorded as `clone_sha` inside the JSON |
+| Method | `first-documented-in` (see above); recorded as `method` inside the JSON |
+| License | Apache License 2.0 (extracted registry data; see ATTRIBUTIONS.md) |
+| Coverage | 650 of 728 defs matched; 1 documented only in the live/unreleased tree (`undocumented_in_release`, no shipped version yet); 77 unmatched anywhere (mostly internal/legacy/undocumented functions — MySQL interval-literal helpers, internal aggregate-rewrite targets, debug/admin functions) |
+| Refresh | `git clone --depth 1 https://github.com/apache/doris-website <path>` then `python3 tools/extract_doris_since_versions.py <path>` then `python3 tools/generate_doris_functions.py` |
 
 ## DuckDB function registry (extracted data, not a binary)
 
