@@ -154,6 +154,20 @@ All three placeholder forms tokenize/parse/generate across dialects: positional 
 (`Placeholder`), named `:name` (`Placeholder(this="name")`), and `@name` (`Parameter`).
 These are the anchor points for brikk's binding and (future) table-valued fragment slots.
 
+## Semantic layer
+
+### Certified transpilation
+
+`transpileTo()` is best-effort by design. `SqlFragment.certify(target)` rolls every
+diagnostic channel into one `TranspileReport`: unmappable functions (Class-3 capability
+holes), generator `unsupported` flags, raw-passthrough statements (Command/Pragma), and
+probe-verified semantic hazards (`HazardRegistry` in brikk-sql-metadata; trino↔duckdb
+today). Hazards mitigated by a gate-verified dedicated renderer are skipped; divergent/
+unclear verdicts are refusals, conditionally-equivalent ones warnings. Machine mode
+("must work or error"): `transpileStrict(target)` / `report.orThrow()`. Human mode
+("warn me, I'll hand-edit"): read `report.findings`, ship `report.result.sql` anyway.
+For full belt-and-braces, follow with a brikk-sql-verify grammar check of the output.
+
 ## Errors
 
 - `ParseError` — structured (message, line, col, context highlight)
