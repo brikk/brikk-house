@@ -69,3 +69,57 @@ dependencies {
 
 Release versions (non-`-SNAPSHOT`) are published to **Maven Central** and resolve from
 `mavenCentral()` with no extra repository configuration. Latest release: **`0.1.0`**.
+
+## Publishing (maintainers)
+
+The version and all publishing config live in [`publish.module-template.yaml`](publish.module-template.yaml)
+(shared by every module). Credentials come from a gitignored `.env` (regular repos) and,
+for Central releases, the `KOTLIN_TOOLCHAIN_*` environment variables / org secrets.
+
+### Snapshots
+
+Snapshots publish automatically: **any push to `main`** runs
+[`.github/workflows/snapshot.yml`](.github/workflows/snapshot.yml), which builds and publishes
+the current `-SNAPSHOT` to the Central snapshots repo.
+
+To **bump the snapshot version** (e.g. after a release):
+
+1. Edit `settings.publishing.version` in `publish.module-template.yaml` — keep the `-SNAPSHOT`
+   suffix (e.g. `0.3.0-SNAPSHOT`).
+2. Update the version in the consumer snippets above in this README.
+3. Commit and push to `main` — the workflow publishes the new snapshot.
+
+Publish a snapshot manually (needs `brikk.mavencentral.user`/`brikk.mavencentral.pass` in `.env`):
+
+```bash
+./kotlin publish centralSnapshots   # Central snapshots
+./kotlin publish brikkPublic        # GitHub Packages (alternative)
+./kotlin publish mavenLocal         # local ~/.m2 (smoke test)
+```
+
+### Releases
+
+A release is cut from a branch named **`release/<version>`** (non-`-SNAPSHOT`):
+
+1. Push a branch `release/<version>` (e.g. `release/0.2.0`). This runs
+   [`.github/workflows/release.yml`](.github/workflows/release.yml), which sets the version from
+   the branch suffix and publishes all modules to Maven Central via
+   [`publish-release.sh`](publish-release.sh). (The committed template stays on `-SNAPSHOT`; the
+   script sets the release version temporarily and restores the file afterward.)
+2. Central runs in **manual** mode: finish (or drop) each deployment at
+   <https://central.sonatype.com/publishing/deployments>.
+3. Bump `main` to the next snapshot version (see above).
+
+Requires these org secrets (also usable locally as env vars): `KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME`,
+`KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD`, `KOTLIN_TOOLCHAIN_SIGNING_KEY`,
+`KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE`.
+
+Release locally instead of via CI:
+
+```bash
+export KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME=...   # Central Portal token user
+export KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD=...   # Central Portal token password
+export KOTLIN_TOOLCHAIN_SIGNING_KEY="$(cat signing-key.asc)"   # ASCII-armored private key
+export KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE=...   # if the key is encrypted
+./publish-release.sh 0.2.0
+```
