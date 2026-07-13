@@ -292,11 +292,11 @@
       "trino": "log",
       "doris": "log",
       "verdict": "unclear",
-      "hazard": "Doris single-arg log(x) = natural log (log(10)=2.302585), not log10; two-arg log(b,x) agrees to last-ULP. Trino single-arg log semantics not re-probed this session — verify before mapping. Doris live.",
+      "hazard": "Doris single-arg log(x) = natural log (confirmed live), two-arg log(b,x) agrees; but Trino single-arg log semantics were NOT re-probed live this session (no live Trino in the doris-focus project). Needs a live-Trino re-probe in the trino project before mapping single-arg log.",
       "areas": [
         "numeric"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears"
     },
     {
       "trino": "exp",
@@ -523,11 +523,11 @@
       "trino": "url_encode",
       "doris": "url_encode",
       "verdict": "unclear",
-      "hazard": "Doris url_encode('a b&c')='a+b%26c' (space -> '+'). Trino url_encode space-handling not re-probed this session (prior trino==duckdb 'identical' verdict did not test space; DuckDB uses %20) — verify Trino before mapping. Doris live.",
+      "hazard": "Doris url_encode encodes space as '+' (confirmed live); Trino url_encode space-handling was NOT re-probed live this session (no live Trino here). Needs a live-Trino re-probe in the trino project.",
       "areas": [
         "string"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears"
     },
     {
       "trino": "starts_with",
@@ -1734,12 +1734,12 @@
     },
     {
       "doris": "unnest",
-      "verdict": "unclear",
-      "hazard": "table function (row-generating), not scalar-probeable through the shared-expr harness; needs a table-function harness for a row-set/ordering comparison.",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Resolved via a table-function row-set probe: Trino UNNEST(ARRAY[1,2,3]) and Doris LATERAL VIEW EXPLODE(array(1,2,3)) produce the identical ordered row-set (1,2,3). Requires a structural LATERAL VIEW EXPLODE rewrite, not a scalar rename. Doris live; Trino from prior evidence.",
       "areas": [
         "table-function"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
       "trino": "unnest"
     },
     {
@@ -2114,6 +2114,28 @@
         "binary"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"
+    },
+    {
+      "trino": "filter",
+      "doris": "array_filter",
+      "verdict": "identical",
+      "hazard": "filter(arr,lambda) -> ARRAY_FILTER(lambda, arr) (lambda reordered); [1,2,3,4] filter >2 -> [3,4] both. Doris live; Trino from prior evidence.",
+      "areas": [
+        "array",
+        "lambda"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "trino": "is_nan",
+      "doris": "isnan",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING: generator emits IS_NAN (and NAN) which Doris does not register (certify REFUSES) — the live Doris fn is ISNAN (is_nan(cast('nan' as double))=1). is_nan->isnan would be safe modulo boolean type mapping (Trino BOOLEAN vs Doris TINYINT 1/0). Doris live; Trino from prior evidence.",
+      "areas": [
+        "numeric",
+        "float"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
     }
   ]
 }

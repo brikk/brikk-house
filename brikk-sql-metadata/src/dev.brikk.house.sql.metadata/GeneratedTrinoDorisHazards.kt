@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 201 probe-verified (trino, doris) pair verdicts, in JSON order. */
+/** The 203 probe-verified (trino, doris) pair verdicts, in JSON order. */
 internal val TRINO_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -148,9 +148,9 @@ private fun hazardsChunk0(): List<FunctionHazard> = listOf(
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
     // [27] trino: 'log' | doris: 'log'
     FunctionHazard(HazardVerdict.UNCLEAR,
-        hazard = "Doris single-arg log(x) = natural log (log(10)=2.302585), not log10; two-arg log(b,x) agrees to last-ULP. Trino single-arg log semantics not re-probed this session — verify before mapping. Doris live.",
+        hazard = "Doris single-arg log(x) = natural log (confirmed live), two-arg log(b,x) agrees; but Trino single-arg log semantics were NOT re-probed live this session (no live Trino in the doris-focus project). Needs a live-Trino re-probe in the trino project before mapping single-arg log.",
         areas = listOf("numeric"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch3-numeric"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears"),
     // [28] trino: 'exp' | doris: 'exp'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "In-domain agrees to ~15 sig digits but last-ULP differs (exp(0.5): DuckDB/Trino 1.6487212707001282 vs Doris 1.648721270700128). Safe under float-tolerant comparison. Doris live; Trino via live-DuckDB bridge (prior identical).",
@@ -249,9 +249,9 @@ private fun hazardsChunk1(): List<FunctionHazard> = listOf(
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"),
     // [50] trino: 'url_encode' | doris: 'url_encode'
     FunctionHazard(HazardVerdict.UNCLEAR,
-        hazard = "Doris url_encode('a b&c')='a+b%26c' (space -> '+'). Trino url_encode space-handling not re-probed this session (prior trino==duckdb 'identical' verdict did not test space; DuckDB uses %20) — verify Trino before mapping. Doris live.",
+        hazard = "Doris url_encode encodes space as '+' (confirmed live); Trino url_encode space-handling was NOT re-probed live this session (no live Trino here). Needs a live-Trino re-probe in the trino project.",
         areas = listOf("string"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch4-string"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears"),
     // [51] trino: 'starts_with' | doris: 'starts_with'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Value semantics identical but Doris returns TINYINT 0/1 vs Trino BOOLEAN — boolean type mapping required (Doris renders BOOLEAN as 0/1 over MySQL protocol).",
@@ -829,10 +829,10 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         areas = listOf("map", "collection"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
     // [165] trino: 'unnest' | doris: 'unnest'
-    FunctionHazard(HazardVerdict.UNCLEAR,
-        hazard = "table function (row-generating), not scalar-probeable through the shared-expr harness; needs a table-function harness for a row-set/ordering comparison.",
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Resolved via a table-function row-set probe: Trino UNNEST(ARRAY[1,2,3]) and Doris LATERAL VIEW EXPLODE(array(1,2,3)) produce the identical ordered row-set (1,2,3). Requires a structural LATERAL VIEW EXPLODE rewrite, not a scalar rename. Doris live; Trino from prior evidence.",
         areas = listOf("table-function"),
-        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears"),
     // [166] trino: 'round' | doris: 'round'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Doris round is half-away-from-zero and decimal-aware, verified matching live DuckDB across .5 boundaries incl negatives and d>0/d<0. Trino round (Java HALF_UP = away-from-zero) is likely aligned, but the prior corpus verdict was UNCLEAR and Trino was not re-probed live this session — verify negative .5 boundaries before pushing. Doris live; Trino from prior evidence.",
@@ -1011,9 +1011,19 @@ private fun hazardsChunk5(): List<FunctionHazard> = listOf(
         hazard = "Generator emits ENCODE(s,'utf-8') which Doris does not register (UNMAPPABLE_FUNCTION); certify REFUSES. No matching Doris string->utf8-varbinary equivalent (hex() returns a hex string, not raw bytes). Doris live; Trino from prior evidence.",
         areas = listOf("string", "binary"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch12-bucketb-trino"),
+    // [201] trino: 'filter' | doris: 'array_filter'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "filter(arr,lambda) -> ARRAY_FILTER(lambda, arr) (lambda reordered); [1,2,3,4] filter >2 -> [3,4] both. Doris live; Trino from prior evidence.",
+        areas = listOf("array", "lambda"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
+    // [202] trino: 'is_nan' | doris: 'isnan'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "MISSING MAPPING: generator emits IS_NAN (and NAN) which Doris does not register (certify REFUSES) — the live Doris fn is ISNAN (is_nan(cast('nan' as double))=1). is_nan->isnan would be safe modulo boolean type mapping (Trino BOOLEAN vs Doris TINYINT 1/0). Doris live; Trino from prior evidence.",
+        areas = listOf("numeric", "float"),
+        provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
 )
 
-/** trino->doris lookup: 201 keys (Trino-side names) over 201 entries. */
+/** trino->doris lookup: 203 keys (Trino-side names) over 203 entries. */
 internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", TRINO_DORIS_HAZARD_ENTRIES[21])
@@ -1089,6 +1099,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ELEMENT_AT", TRINO_DORIS_HAZARD_ENTRIES[136])
     put("EUCLIDEAN_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[187])
     put("EXP", TRINO_DORIS_HAZARD_ENTRIES[28])
+    put("FILTER", TRINO_DORIS_HAZARD_ENTRIES[201])
     put("FIRST_VALUE", TRINO_DORIS_HAZARD_ENTRIES[98])
     put("FLOOR", TRINO_DORIS_HAZARD_ENTRIES[40])
     put("FMOD", TRINO_DORIS_HAZARD_ENTRIES[13])
@@ -1104,6 +1115,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("HAMMING_DISTANCE", TRINO_DORIS_HAZARD_ENTRIES[55])
     put("HISTOGRAM", TRINO_DORIS_HAZARD_ENTRIES[91])
     put("HOUR", TRINO_DORIS_HAZARD_ENTRIES[114])
+    put("IS_NAN", TRINO_DORIS_HAZARD_ENTRIES[202])
     put("JSON_ARRAY_CONTAINS", TRINO_DORIS_HAZARD_ENTRIES[196])
     put("JSON_EXTRACT", TRINO_DORIS_HAZARD_ENTRIES[147])
     put("JSON_EXTRACT_SCALAR", TRINO_DORIS_HAZARD_ENTRIES[197])
@@ -1218,7 +1230,7 @@ internal val TRINO_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("YOW", TRINO_DORIS_HAZARD_ENTRIES[117])
 }
 
-/** doris->trino lookup: 195 keys (Doris-side names) over 201 entries. */
+/** doris->trino lookup: 197 keys (Doris-side names) over 203 entries. */
 internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("&", TRINO_DORIS_HAZARD_ENTRIES[168])
     put("ABS", TRINO_DORIS_HAZARD_ENTRIES[16])
@@ -1230,6 +1242,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ARRAY_CONTAINS", TRINO_DORIS_HAZARD_ENTRIES[137])
     put("ARRAY_DISTINCT", TRINO_DORIS_HAZARD_ENTRIES[125])
     put("ARRAY_EXCEPT", TRINO_DORIS_HAZARD_ENTRIES[131])
+    put("ARRAY_FILTER", TRINO_DORIS_HAZARD_ENTRIES[201])
     put("ARRAY_FIRST", TRINO_DORIS_HAZARD_ENTRIES[126])
     put("ARRAY_INTERSECT", TRINO_DORIS_HAZARD_ENTRIES[128])
     put("ARRAY_JOIN", TRINO_DORIS_HAZARD_ENTRIES[138])
@@ -1302,6 +1315,7 @@ internal val DORIS_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("HEX", TRINO_DORIS_HAZARD_ENTRIES[47])
     put("HISTOGRAM", TRINO_DORIS_HAZARD_ENTRIES[91])
     put("HOUR", TRINO_DORIS_HAZARD_ENTRIES[114])
+    put("ISNAN", TRINO_DORIS_HAZARD_ENTRIES[202])
     put("JSON_EXTRACT", TRINO_DORIS_HAZARD_ENTRIES[197])
     put("JSON_FORMAT", TRINO_DORIS_HAZARD_ENTRIES[149])
     put("JSON_PARSE", TRINO_DORIS_HAZARD_ENTRIES[148])

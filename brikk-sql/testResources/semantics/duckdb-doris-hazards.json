@@ -1685,13 +1685,13 @@
     {
       "duckdb": "json_each",
       "doris": "json_each",
-      "verdict": "unclear",
-      "hazard": "json_each is a TABLE function in DuckDB (Binder Error: 'json_each is a table function but was used as a scalar function; must be in a FROM clause'), so it is not probeable through the scalar shared-expr harness. Doris exposes json_each / json_each_text as table functions too, but a row-set/ordering comparison was not performed. Marked unclear — needs a table-function harness, not a scalar probe.",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Resolved via a table-function row-set probe (LATERAL VIEW EXPLODE_JSON_OBJECT): DuckDB json_each('{\"a\":1,\"b\":2}') and Doris explode_json_object/json_each yield the same key/value pairs (a=1,b=2); differs only in output row/column shape (Doris rows are struct-shaped (key,value)). Not a scalar rename — needs a LATERAL VIEW rewrite.",
       "areas": [
         "json",
         "table-function"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch8-json"
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears"
     },
     {
       "duckdb": "format",
@@ -1880,54 +1880,54 @@
     {
       "doris": "query",
       "verdict": "unclear",
-      "hazard": "table function, not scalar-probeable — cannot be evaluated through the scalar shared-expr harness; needs a table-function harness for a row-set/ordering comparison.",
+      "hazard": "Both engines register a QUERY table function but with DIFFERENT semantics: DuckDB query('SELECT ...') executes a SQL string against the current DB; Doris QUERY (TVF, since 2.1) is JDBC catalog federation query('catalog','sql'). A row-set comparison needs an external JDBC catalog — out of scope for the literal-only harness.",
       "areas": [
         "table-function"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
       "duckdb": "query"
     },
     {
       "doris": "parquet_bloom_probe",
       "verdict": "unclear",
-      "hazard": "table function, not scalar-probeable — needs a table-function harness.",
+      "hazard": "TABLE_VALUED parquet-introspection fn registered on both engines; a row-set comparison needs a real Parquet file readable by the distributed Doris BE. Per repo AGENTS.md we do NOT stage temp Parquet on shared storage, so this cannot be resolved in the literal-only harness.",
       "areas": [
         "table-function",
         "parquet"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
       "duckdb": "parquet_bloom_probe"
     },
     {
       "doris": "parquet_file_metadata",
       "verdict": "unclear",
-      "hazard": "table function, not scalar-probeable — needs a table-function harness.",
+      "hazard": "TABLE_VALUED parquet-introspection fn (both engines); needs a real BE-readable Parquet file — AGENTS.md forbids staging temp Parquet on shared storage. Not resolvable in this harness.",
       "areas": [
         "table-function",
         "parquet"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
       "duckdb": "parquet_file_metadata"
     },
     {
       "doris": "parquet_kv_metadata",
       "verdict": "unclear",
-      "hazard": "table function, not scalar-probeable — needs a table-function harness.",
+      "hazard": "TABLE_VALUED parquet-introspection fn (both engines); needs a real BE-readable Parquet file — AGENTS.md forbids staging temp Parquet on shared storage. Not resolvable in this harness.",
       "areas": [
         "table-function",
         "parquet"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
       "duckdb": "parquet_kv_metadata"
     },
     {
       "doris": "unnest",
-      "verdict": "unclear",
-      "hazard": "table function (row-generating), not scalar-probeable through the shared-expr harness; needs a table-function harness for a row-set/ordering comparison.",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Resolved via a table-function row-set probe: DuckDB unnest([1,2,3]) and Doris LATERAL VIEW EXPLODE(array(1,2,3)) produce the identical ordered row-set (1,2,3). Not a scalar rename — requires a structural LATERAL VIEW EXPLODE rewrite the scalar transpile path does not perform.",
       "areas": [
         "table-function"
       ],
-      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch9-misc",
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch14-unclears",
       "duckdb": "unnest"
     },
     {
@@ -2528,6 +2528,150 @@
         "numeric"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch11-bucketb-duckdb"
+    },
+    {
+      "duckdb": "array_length",
+      "doris": "array_length",
+      "verdict": "divergent",
+      "hazard": "CONFIDENT-BUT-WRONG / CATALOG BUG (certify ok=true): array_length is emitted verbatim and the brikk-sql-metadata Doris catalog lists ARRAY_LENGTH, so certify passes it — but the live Doris FE errors 'Can not found function ARRAY_LENGTH'. Correct Doris fn is ARRAY_SIZE / SIZE (live = 3, identical). Filed: remove array_length from the Doris function catalog and/or map array_length->array_size.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "map_extract",
+      "doris": "element_at",
+      "verdict": "divergent",
+      "hazard": "DuckDB map_extract(m,k) returns a LIST wrapping the value ([1]); Doris ELEMENT_AT(m,k) returns the scalar value (1). Different result shape (list vs scalar). Generator currently REFUSES map_extract (emits MAP_EXTRACT, unmappable; also mismaps the MAP() constructor to ARRAY_MAP).",
+      "areas": [
+        "map"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "datesub",
+      "doris": "days_sub",
+      "verdict": "no-equivalent",
+      "hazard": "datesub is NOT a DuckDB function (binder error 'No function matches datesub'); it is a ClickHouse-ism the gap-report parsed under the clickhouse dialect. Not a valid duckdb->doris transpile path. Generator refuses (DATESUB unmappable).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "unbin",
+      "doris": "from_binary",
+      "verdict": "no-equivalent",
+      "hazard": "DuckDB unbin('1010') parses a binary-digit string to a BLOB (b'\\n'). Generator refuses (UNBIN unmappable); no confirmed Doris equivalent (from_base64 is base64, not binary-digit decode).",
+      "areas": [
+        "binary",
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "greatest_common_divisor",
+      "doris": "gcd",
+      "verdict": "identical",
+      "hazard": "MISSING MAPPING (generator refuses, GREATEST_COMMON_DIVISOR unmappable): Doris GCD(12,18)=6 matches DuckDB — a greatest_common_divisor->gcd mapping would be identical. Fail-loud today.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "least_common_multiple",
+      "doris": "lcm",
+      "verdict": "identical",
+      "hazard": "MISSING MAPPING (generator refuses, LEAST_COMMON_MULTIPLE unmappable): Doris LCM(4,6)=12 matches DuckDB — least_common_multiple->lcm would be identical. Fail-loud today.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "list_position",
+      "doris": "array_position",
+      "verdict": "identical",
+      "hazard": "MISSING MAPPING (generator refuses, LIST_POSITION unmappable): Doris ARRAY_POSITION([10,20,30],20)=2 matches DuckDB — list_position->array_position would be identical. Fail-loud today.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "list_intersect",
+      "doris": "array_intersect",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, LIST_INTERSECT unmappable): Doris ARRAY_INTERSECT([1,2,3],[2,3,4]) result set = [2,3] matches, but intersection element ORDER is not guaranteed equal across engines. Fail-loud today.",
+      "areas": [
+        "array",
+        "order"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "list_slice",
+      "doris": "array_slice",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, LIST_SLICE unmappable): ARG SEMANTICS DIFFER — DuckDB list_slice(a,begin,END) uses an end index, Doris ARRAY_SLICE(a,start,LENGTH) uses a length. list_slice(a,2,4)=[2,3,4] equals array_slice(a,2,3) only after converting end->length. A naive rename WITHOUT arg conversion would diverge.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "list_zip",
+      "doris": "array_zip",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, LIST_ZIP unmappable): Doris ARRAY_ZIP([1,2],[3,4]) = [{col1:1,col2:3},{col1:2,col2:4}] (array of structs) matches DuckDB structurally; differs in struct field naming/rendering. Fail-loud today.",
+      "areas": [
+        "array",
+        "struct"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "row",
+      "doris": "named_struct",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator emits ROW, unmappable/refuses): DuckDB row(1,'x') is a positional struct; Doris has no ROW, NAMED_STRUCT('c1',1,'c2','x') is the nearest equivalent but requires synthesized field names, and STRUCT loses names. Field-naming divergence.",
+      "areas": [
+        "struct"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "suffix",
+      "doris": "ends_with",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, SUFFIX unmappable): DuckDB suffix is an ends_with alias; Doris ENDS_WITH('hello','lo')=1 vs DuckDB true — boolean type mapping only. suffix->ends_with would be safe. Fail-loud today.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "st_aswkb",
+      "doris": "st_asbinary",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, ST_ASWKB unmappable): Doris ST_ASBINARY(ST_POINT(1,2)) returns the WKB bytes; both are WKB but differ in binary getString rendering. Geo; fail-loud today.",
+      "areas": [
+        "geo",
+        "binary"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "get_current_timestamp",
+      "doris": "now",
+      "verdict": "conditionally-equivalent",
+      "hazard": "MISSING MAPPING (generator refuses, GET_CURRENT_TIMESTAMP unmappable): Doris NOW() is the equivalent (wall-clock now); differs in precision/session-zone. get_current_timestamp->now would be safe. Fail-loud today.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
     }
   ]
 }

@@ -543,6 +543,47 @@ evidence"). Split: **17 identical, 13 conditionally-equivalent, 4 divergent,
   map/type render (`split_to_map`, `to_unixtime`, `date_parse`, `from_iso8601_timestamp`),
   float precision (`euclidean_distance`).
 
+## Batch 13 (2026-07-13) — Bucket C-real (14 duckdb + 2 trino) {#batch13-bucketc}
+
+The gap-report bucket-C `c1/c2` candidates turned out to be **hints the generator does
+NOT actually implement**: transpiling each, all but `array_length`/`filter`/`is_nan`
+emit the source name VERBATIM and `certify` REFUSES them (UNMAPPABLE). So most are
+**missing mappings** (fail-loud), even though Doris *does* register an equivalent. Each
+was probed DuckDB-`f` vs the Doris candidate `g` to record what the mapping WOULD be.
+
+- **CONFIDENT-BUT-WRONG (certify ok=true) — CATALOG BUG:** `array_length` → emitted
+  verbatim `ARRAY_LENGTH`; the brikk-sql-metadata Doris catalog lists it so certify
+  passes, but the **live FE errors 'Can not found function ARRAY_LENGTH'**. Correct is
+  `ARRAY_SIZE`/`SIZE` (live = 3). Marked `divergent`; filed (drop `array_length` from the
+  Doris catalog and/or map → `array_size`).
+- **Real semantic divergence:** `map_extract(m,k)` returns a **LIST** `[1]` in DuckDB vs
+  Doris `element_at` scalar `1` — different result shape (`divergent`).
+- **Missing-mapping opportunities (fail-loud; a mapping would be safe):** `gcd`, `lcm`,
+  `list_position`→`array_position` (identical); `list_intersect`→`array_intersect`
+  (set equal, order not guaranteed); `list_slice`→`array_slice` (**arg semantics differ:
+  DuckDB end-index vs Doris length — naive rename diverges**); `list_zip`→`array_zip`,
+  `row`→`named_struct` (struct field naming), `suffix`→`ends_with` (bool), `st_aswkb`→
+  `st_asbinary` (binary), `get_current_timestamp`→`now`; trino `is_nan`→`isnan`
+  (Doris fn is `isnan`, not `is_nan`). trino `filter`→`array_filter` (identical, lambda).
+- **no-equivalent:** `datesub` (not a DuckDB function — ClickHouse-ism, binder error),
+  `unbin` (binary-digit→blob; no Doris equivalent).
+
+## Batch 14 (2026-07-13) — Residual unclears resolved / firmed {#batch14-unclears}
+
+Nine `unclear` verdicts from batch A were revisited.
+- **Resolved to conditionally-equivalent (table-function row-set probe via the scalar
+  harness, wrapping the TVF in an aggregation subquery):** `unnest` (duckdb + trino) —
+  DuckDB/Trino `unnest` == Doris `LATERAL VIEW EXPLODE`, identical ordered row-set
+  (1,2,3); `json_each` (duckdb) — == Doris `EXPLODE_JSON_OBJECT`, same key/value pairs
+  (a=1,b=2). Both need a structural LATERAL VIEW rewrite, not a scalar rename.
+- **Remain `unclear`, now with firm specific reasons (cannot be resolved live here):**
+  `query` (both register a QUERY TVF but with different semantics — DuckDB executes a SQL
+  string, Doris is JDBC catalog federation; needs an external catalog);
+  `parquet_bloom_probe`/`parquet_file_metadata`/`parquet_kv_metadata` (need a real
+  Parquet file readable by the distributed Doris BE — repo AGENTS.md forbids staging temp
+  Parquet on shared storage); trino `log` & `url_encode` (Doris side confirmed live, but
+  the Trino side needs a live-Trino re-probe in the trino project — no live Trino here).
+
 ## Worklist status / continuation — COMPLETE
 
 The bucket-A worklist is **fully probed** (batches 1–10). Final registry:
