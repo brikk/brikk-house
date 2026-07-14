@@ -1,5 +1,17 @@
 # HANDOFF — reverse-direction rename fixes: clickhouse → doris / trino
 
+## ✅ DONE (2026-07-14) — Part 1 (agent) + Part 2 (brikk-sql agent), commit `e9b304f`
+Part 1 live-verified 35 candidates on Doris + Trino 481 (results in
+`probe-runs/reverse-doris-trino.results.tsv`). Part 2 shipped the verified renames in
+`DorisGenerator` (25 + `splitByRegexp` arg-swap) and `TrinoGenerator` (7), pinned in
+`ClickhouseRenameFixesTest`, `./kotlin test` green (578). The probe also surfaced an
+honesty correction: Doris `xxhash_64` ≠ ClickHouse `xxHash64` in VALUE → the forward
+emit was removed and both flipped to divergent (re-probe `xxhash_32` directly to confirm).
+The original brief follows for reference.
+
+---
+
+
 Fresh work remaining after the forward direction + `clickhouse→duckdb` reverse were
 completed (see the STATUS block in `HANDOFF-generator-rename-fixes.md`, commits `1f313ab`
 … `dc23638`). Two parts:

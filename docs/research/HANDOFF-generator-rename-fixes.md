@@ -31,14 +31,24 @@ DuckDB 1.5.4; new regression pins in `ClickhouseRenameFixesTest`. Hazard notes r
     a number, not a name string). These join the pre-existing source-aware backlog
     (`lower`/`upper`/`week`, `round`/`bin`/`age`/`to_days` — see the SPIKE doc).
 
-### REMAINING (this is the fresh work → see `HANDOFF-reverse-doris-trino.md`)
-- **REVERSE clickhouse→doris** and **clickhouse→trino** (mirror maps in `DorisGenerator`/
-  `TrinoGenerator`), which need **live Doris + Trino** to confirm the emitted names run and
-  are value-equal — hand a batch to the doris-ducklake agent.
-- **Live re-verification** of the Doris/Trino FORWARD fixes: the ClickHouse target names +
-  values were live-checked (chdb), and the Doris/Trino source values were taken from the
-  recorded mass-probe evidence (not re-run this pass). The agent should re-run the flipped
-  entries on live Doris/Trino for belt-and-braces before any of them gate certify.
+### REVERSE clickhouse→doris / clickhouse→trino — DONE (`e9b304f`)
+Implemented after the doris-ducklake agent live-verified the candidates (Doris + Trino 481
+vs ClickHouse 26.5.1.1; `docs/research/probe-runs/reverse-doris-trino.results.tsv`):
+`DorisGenerator` (25 renames + `splitByRegexp` arg-swap) and `TrinoGenerator` (7 renames),
+same `anonymousSql` + `REVERSE_CLICKHOUSE_RENAMES` mechanism as the DuckDB reverse. Round-
+trip safe (camelCase keys never fire on native snake_case input). Excluded where live probe
+showed no clean rename: Doris `arrayUniq`/`jaroSimilarity`, Trino `splitByRegexp→regexp_split`.
+
+**HONESTY CORRECTION from the reverse probe:** Doris `xxhash_32`/`xxhash_64` are a DIFFERENT
+hash value than ClickHouse `xxHash32`/`xxHash64` (not just type/signedness) — flipped to
+divergent and REMOVED from the forward emit (was in chunk 3). `xxhash_32` inferred from the
+`xxhash_64` live finding; **re-probe `xxhash_32` directly** to confirm the exact value.
+
+### REMAINING
+- Direct re-probe of Doris `xxhash_32` (flagged above).
+- The DEFERRED source-aware backlog (`translate`, `split_by_string`, `sequence`/`range`,
+  `format`, `dayname`, and the pre-existing `lower`/`upper`/`week`, `round`/`bin`/`age`/
+  `to_days`) — all need source-aware generation (SPIKE doc), still certify-guarded.
 
 ---
 
