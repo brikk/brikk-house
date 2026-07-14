@@ -6,6 +6,7 @@ import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.SourceMap
 import dev.brikk.house.sql.generator.SourcePos
+import dev.brikk.house.sql.parser.PipeStageSplitter
 import dev.brikk.house.sql.parser.parseOne
 import dev.brikk.house.sql.shape.Shape
 import dev.brikk.house.sql.shape.ShapeCatalog
@@ -250,18 +251,30 @@ class SourceMapTest {
         )
         val shapes = fragment.stageShapes(catalog)
 
-        // One shape per stage (WHERE, AGGREGATE, ORDER BY).
-        assertEquals(fragment.stages.size, shapes.size)
-        assertEquals(3, shapes.size)
+        // 1:1 with the user-visible stage model: FROM, WHERE, AGGREGATE, ORDER BY.
+        val splitterStages = PipeStageSplitter.split(source, "bigquery").stages
+        assertEquals(splitterStages.size, shapes.size)
+        assertEquals(4, shapes.size)
+        assertEquals("FROM", splitterStages[0].operator) // element 0 is the FROM head
+        assertEquals(fragment.stages.size + 1, shapes.size) // stages[] excludes the head
 
-        // WHERE is shape-preserving: still the source columns.
+        // Stage 0 = after FROM: the base relation columns.
         assertEquals(listOf("g", "flagged"), shapes[0].columns.map { it.name })
-        // AGGREGATE reshapes to the grouped projection — the alias `c` enters scope HERE,
-        // not before (the over-offer bug fix): it is absent from shapes[0].
-        assertEquals(listOf("g", "c"), shapes[1].columns.map { it.name })
-        assertFalse(shapes[0].columns.any { it.name == "c" }, "alias c not in scope before AGGREGATE")
-        // ORDER BY is shape-preserving: carries the aggregate shape forward.
+        // Stage 1 = after WHERE (shape-preserving): still the source columns.
+        assertEquals(listOf("g", "flagged"), shapes[1].columns.map { it.name })
+        // Stage 2 = after AGGREGATE: the alias `c` enters scope HERE, not before (the
+        // over-offer fix) — it is absent from every earlier stage's shape.
         assertEquals(listOf("g", "c"), shapes[2].columns.map { it.name })
+        assertFalse(shapes[0].columns.any { it.name == "c" }, "c not in scope after FROM")
+        assertFalse(shapes[1].columns.any { it.name == "c" }, "c not in scope after WHERE")
+        // Stage 3 = after ORDER BY (shape-preserving): carries the aggregate shape forward.
+        assertEquals(listOf("g", "c"), shapes[3].columns.map { it.name })
+
+        // Last element == outputShape() (full pipeline).
+        assertEquals(
+            fragment.outputShape(catalog).columns.map { it.name },
+            shapes.last().columns.map { it.name },
+        )
     }
 
     @Test

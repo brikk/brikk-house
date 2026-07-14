@@ -330,12 +330,25 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         outputShapeOf(ast, inputs)
 
     /**
-     * Output shape after EACH pipe stage, one [Shape] per stage in [stages] order
-     * (empty when not [isPipe]). Element `n` is the fragment's scope *after* stage `n`
-     * has been applied; completion at stage `n` consumes element `n - 1` (its input
-     * scope), with stage 0's input being the catalog base ([inputs], i.e. "element -1"
-     * by convention). The same list drives per-stage lineage ("column c first exists at
-     * stage 3").
+     * Output shape after EACH user-visible pipe stage, INCLUDING the `FROM` head as
+     * stage 0. The list aligns 1:1 with `PipeStageSplitter.split(sql).stages` — the
+     * user-visible stage model that also drives caret->stage mapping and run-to-stage
+     * UI ("stage 2/5"). Empty when not [isPipe].
+     *
+     * Reference list & indexing (the single convention both APIs share):
+     *  - `stageShapes().size == PipeStageSplitter.split(sql).stages.size`;
+     *  - element 0 = the base relation (the `FROM` head, catalog-resolved; an unbound
+     *    source survives as a single `"*"` column);
+     *  - element `n` = the fragment's scope AFTER splitter stage `n`;
+     *  - completion at stage `n` consumes element `n - 1` (its input scope); at stage 0
+     *    that input is the catalog base itself.
+     *
+     * The same list powers per-stage lineage ("column c first exists at stage 2").
+     *
+     * NOTE: [stages] is the raw AST accessor and intentionally EXCLUDES the head (the
+     * head lives in `PipeQuery.this`, not `PipeQuery.expressions`), so
+     * `stageShapes().size == stages.size + 1`. Index editor state against
+     * `PipeStageSplitter.stages` / `stageShapes`, never against [stages].
      *
      * Each shape is resolved exactly like [outputShape] (desugar -> qualify ->
      * annotate) on the pipeline truncated after stage `n`, so an alias enters scope at
@@ -349,11 +362,13 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         val pipe = ast as? PipeQuery ?: return emptyList()
         val head = pipe.thisArg as Expression
         val allStages = stages
-        return List(allStages.size) { n ->
+        // n == 0 truncates to the bare head (scope after FROM); n == allStages.size is
+        // the full pipeline (== outputShape()). One element per user-visible stage.
+        return List(allStages.size + 1) { n ->
             val truncated = PipeQuery(
                 args(
                     "this" to head.copy(),
-                    "expressions" to allStages.subList(0, n + 1)
+                    "expressions" to allStages.subList(0, n)
                         .map { it.copy() }
                         .toMutableList(),
                 )
