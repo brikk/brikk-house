@@ -1150,7 +1150,7 @@
       "trino": "bitwise_left_shift",
       "clickhouse": "bitShiftLeft",
       "verdict": "identical",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftLeft (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftLeft (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1161,7 +1161,7 @@
       "trino": "bitwise_right_shift",
       "clickhouse": "bitShiftRight",
       "verdict": "identical",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftRight (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftRight (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1212,7 +1212,7 @@
       "trino": "day_of_month",
       "clickhouse": "toDayOfMonth",
       "verdict": "identical",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfMonth (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfMonth (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1223,7 +1223,7 @@
       "trino": "day_of_week",
       "clickhouse": "toDayOfWeek",
       "verdict": "identical",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfWeek (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfWeek (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1234,7 +1234,7 @@
       "trino": "day_of_year",
       "clickhouse": "toDayOfYear",
       "verdict": "identical",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfYear (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfYear (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1245,7 +1245,7 @@
       "trino": "dot_product",
       "clickhouse": "dotProduct",
       "verdict": "identical",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is dotProduct (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is dotProduct (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1276,7 +1276,7 @@
       "trino": "is_finite",
       "clickhouse": "isFinite",
       "verdict": "identical",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isFinite (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isFinite (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1287,7 +1287,7 @@
       "trino": "is_infinite",
       "clickhouse": "isInfinite",
       "verdict": "identical",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isInfinite (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isInfinite (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1328,7 +1328,7 @@
       "trino": "sequence",
       "clickhouse": "range",
       "verdict": "divergent",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values diverge (trino='[5]' vs ch='[]'). ClickHouse name is range (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values diverge (trino='[5]' vs ch='[]'). ClickHouse name is range (rename). DEFERRED: sequence->range is divergent (Trino sequence is inclusive of the end, ClickHouse range is half-open; trino=[5] vs ch=[]) and reaches us via the GenerateSeries node needing bounds rewriting — kept divergent + guarded.",
       "areas": [
         "auto",
         "rename"
@@ -1379,7 +1379,7 @@
       "trino": "translate",
       "clickhouse": "translate",
       "verdict": "identical",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is translate (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is translate (rename). DEFERRED: ClickHouse parses translate to the shared Translate node, so a rewrite would corrupt native ClickHouse translate — needs source-aware generation.",
       "areas": [
         "auto",
         "rename"

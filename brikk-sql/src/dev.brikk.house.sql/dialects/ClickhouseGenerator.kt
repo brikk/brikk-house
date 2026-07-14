@@ -851,6 +851,12 @@ open class ClickhouseGenerator(
             "round_bankers" to "roundBankers",
             "xxhash_32" to "xxHash32", // conditionally-equivalent (type/signedness)
             "xxhash_64" to "xxHash64", // conditionally-equivalent (type/signedness)
+            // -- Trino source --
+            "bitwise_left_shift" to "bitShiftLeft",
+            "bitwise_right_shift" to "bitShiftRight",
+            "is_finite" to "isFinite",
+            "is_infinite" to "isInfinite",
+            "xxhash64" to "xxHash64", // conditionally-equivalent (type/signedness)
         )
 
 
@@ -1034,6 +1040,14 @@ open class ClickhouseGenerator(
             reg(Cosh::class) { e -> func("cosh", (e as Cosh).thisArg) }
             reg(Sinh::class) { e -> func("sinh", (e as Sinh).thisArg) }
             reg(BitwiseCount::class) { e -> func("bitCount", (e as BitwiseCount).thisArg) }
+            // Trino source: day_of_week parses to DayOfWeekIso (ISO Mon=1..Sun=7) ==
+            // ClickHouse toDayOfWeek (also ISO); dot_product -> ClickHouse dotProduct. Base
+            // rendered DAYOFWEEK_ISO / DOT_PRODUCT, which ClickHouse rejects. Probe-verified
+            // (chdb 26.5.1.1). Round-trip safe (ClickHouse parses its names to Anonymous).
+            reg(DayOfWeekIso::class) { e -> func("toDayOfWeek", (e as DayOfWeekIso).thisArg) }
+            reg(DotProduct::class) { e ->
+                func("dotProduct", (e as DotProduct).thisArg, e.args["expression"])
+            }
             // BUGS-clickhouse-generator-mappings row 11 (P2): the leaked internal node name
             // TIME_TO_UNIX does not exist in ClickHouse. toUnixTimestamp is the real name.
             reg(TimeToUnix::class) { e -> func("toUnixTimestamp", e.thisArg) }

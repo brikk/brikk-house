@@ -135,6 +135,24 @@ class ClickhouseRenameFixesTest {
         assertEquals("SELECT xxHash64(x)", ch("SELECT xxhash_64(x)", "doris"))
     }
 
+    // -- Group 4a: trino -> clickhouse forward completion --------------------------
+
+    @Test
+    fun trino_forwardRenames() {
+        assertEquals("SELECT bitShiftLeft(a, b)", ch("SELECT bitwise_left_shift(a, b)", "trino"))
+        assertEquals("SELECT bitShiftRight(a, b)", ch("SELECT bitwise_right_shift(a, b)", "trino"))
+        assertEquals("SELECT toDayOfMonth(d)", ch("SELECT day_of_month(d)", "trino"))
+        assertEquals("SELECT toDayOfWeek(d)", ch("SELECT day_of_week(d)", "trino"))
+        assertEquals("SELECT toDayOfYear(d)", ch("SELECT day_of_year(d)", "trino"))
+        assertEquals("SELECT dotProduct(a, b)", ch("SELECT dot_product(a, b)", "trino"))
+        assertEquals("SELECT isFinite(x)", ch("SELECT is_finite(x)", "trino"))
+        assertEquals("SELECT isInfinite(x)", ch("SELECT is_infinite(x)", "trino"))
+        assertEquals("SELECT xxHash64(x)", ch("SELECT xxhash64(x)", "trino"))
+        // math shared nodes also cover trino
+        assertEquals("SELECT cbrt(x)", ch("SELECT cbrt(x)", "trino"))
+        assertEquals("SELECT sinh(x)", ch("SELECT sinh(x)", "trino"))
+    }
+
     // -- Deferred (documented): source-aware / arg-order / wrong-type blocked ------
 
     @Test
@@ -184,5 +202,9 @@ class ClickhouseRenameFixesTest {
         assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "gamma")?.verdict)
         assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("doris", "clickhouse", "l1_distance")?.verdict)
         assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("doris", "clickhouse", "bit_shift_left")?.verdict)
+        // trino
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("trino", "clickhouse", "bitwise_left_shift")?.verdict)
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("trino", "clickhouse", "day_of_week")?.verdict)
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("trino", "clickhouse", "dot_product")?.verdict)
     }
 }

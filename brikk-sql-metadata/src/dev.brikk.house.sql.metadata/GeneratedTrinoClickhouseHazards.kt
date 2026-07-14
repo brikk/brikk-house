@@ -574,12 +574,12 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
     // [110] trino: 'bitwise_left_shift' | clickhouse: 'bitShiftLeft'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftLeft (rename; brikk may not yet emit it — certify's unmappable check guards).",
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftLeft (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [111] trino: 'bitwise_right_shift' | clickhouse: 'bitShiftRight'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftRight (rename; brikk may not yet emit it — certify's unmappable check guards).",
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftRight (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [112] trino: 'bitwise_xor' | clickhouse: 'bitXor'
@@ -604,22 +604,22 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [116] trino: 'day_of_month' | clickhouse: 'toDayOfMonth'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfMonth (rename; brikk may not yet emit it — certify's unmappable check guards).",
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfMonth (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [117] trino: 'day_of_week' | clickhouse: 'toDayOfWeek'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfWeek (rename; brikk may not yet emit it — certify's unmappable check guards).",
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfWeek (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [118] trino: 'day_of_year' | clickhouse: 'toDayOfYear'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfYear (rename; brikk may not yet emit it — certify's unmappable check guards).",
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfYear (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [119] trino: 'dot_product' | clickhouse: 'dotProduct'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is dotProduct (rename; brikk may not yet emit it — certify's unmappable check guards).",
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is dotProduct (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
 )
@@ -637,12 +637,12 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [122] trino: 'is_finite' | clickhouse: 'isFinite'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isFinite (rename; brikk may not yet emit it — certify's unmappable check guards).",
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isFinite (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [123] trino: 'is_infinite' | clickhouse: 'isInfinite'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isInfinite (rename; brikk may not yet emit it — certify's unmappable check guards).",
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isInfinite (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [124] trino: 'is_nan' | clickhouse: 'isNaN'
@@ -662,7 +662,7 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [127] trino: 'sequence' | clickhouse: 'range'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "Auto-probed Trino vs ClickHouse. Values diverge (trino='[5]' vs ch='[]'). ClickHouse name is range (rename; brikk may not yet emit it — certify's unmappable check guards).",
+        hazard = "Auto-probed Trino vs ClickHouse. Values diverge (trino='[5]' vs ch='[]'). ClickHouse name is range (rename). DEFERRED: sequence->range is divergent (Trino sequence is inclusive of the end, ClickHouse range is half-open; trino=[5] vs ch=[]) and reaches us via the GenerateSeries node needing bounds rewriting — kept divergent + guarded.",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [128] trino: 'split' | clickhouse: 'splitByString'
@@ -687,7 +687,7 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [132] trino: 'translate' | clickhouse: 'translate'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is translate (rename; brikk may not yet emit it — certify's unmappable check guards).",
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is translate (rename). DEFERRED: ClickHouse parses translate to the shared Translate node, so a rewrite would corrupt native ClickHouse translate — needs source-aware generation.",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
     // [133] trino: 'week_of_year' | clickhouse: 'toISOWeek'
