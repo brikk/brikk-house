@@ -819,6 +819,38 @@ open class ClickhouseGenerator(
             // -- temporal (Doris/DuckDB) -> ClickHouse to<Part> --
             "to_monday" to "toMonday",
             "weekday" to "toDayOfWeek", // divergent (Sun=0/6 vs ISO Mon=1..Sun=7) — hazard kept
+            // -- math / bit (DuckDB) --
+            "bit_count" to "bitCount",
+            "gamma" to "tgamma",
+            "greatest_common_divisor" to "gcd",
+            "isfinite" to "isFinite",
+            "jaro_similarity" to "jaroSimilarity",
+            "least_common_multiple" to "lcm",
+            // -- bit (Doris) --
+            "bit_shift_left" to "bitShiftLeft",
+            "bit_shift_right" to "bitShiftRight",
+            "bit_test" to "bitTest",
+            // -- string / url (Doris) --
+            "count_substrings" to "countSubstrings",
+            "split_by_regexp" to "splitByRegexp",
+            "cut_to_first_significant_subdomain" to "cutToFirstSignificantSubdomain", // divergent
+            "domain_without_www" to "domainWithoutWWW", // divergent
+            "extract_url_parameter" to "extractURLParameter", // divergent
+            "first_significant_subdomain" to "firstSignificantSubdomain", // divergent
+            "top_level_domain" to "topLevelDomain", // divergent
+            // -- ip (Doris) --
+            "ipv4_num_to_string" to "IPv4NumToString",
+            "ipv4_string_to_num_or_default" to "IPv4StringToNumOrDefault",
+            "ipv6_string_to_num_or_default" to "IPv6StringToNumOrDefault",
+            "is_ipv4_string" to "isIPv4String",
+            "is_ipv6_string" to "isIPv6String",
+            "to_ipv4_or_default" to "toIPv4OrDefault",
+            "to_ipv6_or_default" to "toIPv6OrDefault",
+            // -- distance / hash / rounding (Doris) --
+            "l1_distance" to "L1Distance",
+            "round_bankers" to "roundBankers",
+            "xxhash_32" to "xxHash32", // conditionally-equivalent (type/signedness)
+            "xxhash_64" to "xxHash64", // conditionally-equivalent (type/signedness)
         )
 
 
@@ -990,6 +1022,18 @@ open class ClickhouseGenerator(
             // names parse to Anonymous, not these nodes. See CLICKHOUSE-rename-map.md.
             reg(DayOfMonth::class) { e -> func("toDayOfMonth", e.thisArg) }
             reg(DayOfYear::class) { e -> func("toDayOfYear", e.thisArg) }
+            // Math/bit nodes rendered their uppercase base name (ACOSH, CBRT, ...), which
+            // case-sensitive ClickHouse rejects. ClickHouse spells them lowercase; every
+            // source dialect (DuckDB/Doris/Trino) maps to the SAME lowercase name so there
+            // is no source-unaware conflict. bit_count parses to BitwiseCount in Doris ->
+            // ClickHouse bitCount. Probe-verified (chdb 26.5.1.1). Round-trip safe: these
+            // ClickHouse names parse to Anonymous, not these nodes.
+            reg(Acosh::class) { e -> func("acosh", (e as Acosh).thisArg) }
+            reg(Asinh::class) { e -> func("asinh", (e as Asinh).thisArg) }
+            reg(Cbrt::class) { e -> func("cbrt", (e as Cbrt).thisArg) }
+            reg(Cosh::class) { e -> func("cosh", (e as Cosh).thisArg) }
+            reg(Sinh::class) { e -> func("sinh", (e as Sinh).thisArg) }
+            reg(BitwiseCount::class) { e -> func("bitCount", (e as BitwiseCount).thisArg) }
             // BUGS-clickhouse-generator-mappings row 11 (P2): the leaked internal node name
             // TIME_TO_UNIX does not exist in ClickHouse. toUnixTimestamp is the real name.
             reg(TimeToUnix::class) { e -> func("toUnixTimestamp", e.thisArg) }

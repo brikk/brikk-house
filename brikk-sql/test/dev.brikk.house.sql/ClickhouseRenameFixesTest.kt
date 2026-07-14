@@ -81,6 +81,71 @@ class ClickhouseRenameFixesTest {
         assertEquals("SELECT toDayOfWeek(d)", ch("SELECT weekday(d)", "doris"))
     }
 
+    // -- Group 3: math nodes + snake/camel + ip/url/hash ---------------------------
+
+    @Test
+    fun math_lowercaseNames() {
+        // Base emitted ACOSH/CBRT/... (uppercase); ClickHouse is case-sensitive.
+        for ((src) in listOf("duckdb", "doris", "trino").map { it to it }) {
+            assertEquals("SELECT acosh(x)", ch("SELECT acosh(x)", src))
+            assertEquals("SELECT cbrt(x)", ch("SELECT cbrt(x)", src))
+            assertEquals("SELECT sinh(x)", ch("SELECT sinh(x)", src))
+            assertEquals("SELECT cosh(x)", ch("SELECT cosh(x)", src))
+        }
+        assertEquals("SELECT asinh(x)", ch("SELECT asinh(x)", "duckdb"))
+    }
+
+    @Test
+    fun duckdb_mathMisc() {
+        assertEquals("SELECT bitCount(x)", ch("SELECT bit_count(x)", "duckdb"))
+        assertEquals("SELECT tgamma(x)", ch("SELECT gamma(x)", "duckdb"))
+        assertEquals("SELECT gcd(a, b)", ch("SELECT greatest_common_divisor(a, b)", "duckdb"))
+        assertEquals("SELECT isFinite(x)", ch("SELECT isfinite(x)", "duckdb"))
+        assertEquals("SELECT jaroSimilarity(a, b)", ch("SELECT jaro_similarity(a, b)", "duckdb"))
+        assertEquals("SELECT lcm(a, b)", ch("SELECT least_common_multiple(a, b)", "duckdb"))
+    }
+
+    @Test
+    fun doris_snakeCamelIpUrlHash() {
+        // bit ops (BitwiseCount node + Anonymous)
+        assertEquals("SELECT bitCount(x)", ch("SELECT bit_count(x)", "doris"))
+        assertEquals("SELECT bitShiftLeft(a, b)", ch("SELECT bit_shift_left(a, b)", "doris"))
+        assertEquals("SELECT bitShiftRight(a, b)", ch("SELECT bit_shift_right(a, b)", "doris"))
+        assertEquals("SELECT bitTest(a, b)", ch("SELECT bit_test(a, b)", "doris"))
+        // string / url
+        assertEquals("SELECT countSubstrings(s, p)", ch("SELECT count_substrings(s, p)", "doris"))
+        assertEquals("SELECT splitByRegexp(s, p)", ch("SELECT split_by_regexp(s, p)", "doris"))
+        assertEquals("SELECT cutToFirstSignificantSubdomain(s)", ch("SELECT cut_to_first_significant_subdomain(s)", "doris"))
+        assertEquals("SELECT domainWithoutWWW(s)", ch("SELECT domain_without_www(s)", "doris"))
+        assertEquals("SELECT extractURLParameter(s, p)", ch("SELECT extract_url_parameter(s, p)", "doris"))
+        assertEquals("SELECT firstSignificantSubdomain(s)", ch("SELECT first_significant_subdomain(s)", "doris"))
+        assertEquals("SELECT topLevelDomain(s)", ch("SELECT top_level_domain(s)", "doris"))
+        // ip
+        assertEquals("SELECT IPv4NumToString(x)", ch("SELECT ipv4_num_to_string(x)", "doris"))
+        assertEquals("SELECT IPv4StringToNumOrDefault(x)", ch("SELECT ipv4_string_to_num_or_default(x)", "doris"))
+        assertEquals("SELECT IPv6StringToNumOrDefault(x)", ch("SELECT ipv6_string_to_num_or_default(x)", "doris"))
+        assertEquals("SELECT isIPv4String(x)", ch("SELECT is_ipv4_string(x)", "doris"))
+        assertEquals("SELECT isIPv6String(x)", ch("SELECT is_ipv6_string(x)", "doris"))
+        assertEquals("SELECT toIPv4OrDefault(x)", ch("SELECT to_ipv4_or_default(x)", "doris"))
+        assertEquals("SELECT toIPv6OrDefault(x)", ch("SELECT to_ipv6_or_default(x)", "doris"))
+        // distance / hash / rounding
+        assertEquals("SELECT L1Distance(a, b)", ch("SELECT l1_distance(a, b)", "doris"))
+        assertEquals("SELECT roundBankers(x)", ch("SELECT round_bankers(x)", "doris"))
+        assertEquals("SELECT xxHash32(x)", ch("SELECT xxhash_32(x)", "doris"))
+        assertEquals("SELECT xxHash64(x)", ch("SELECT xxhash_64(x)", "doris"))
+    }
+
+    // -- Deferred (documented): source-aware / arg-order / wrong-type blocked ------
+
+    @Test
+    fun deferred_notRewritten() {
+        // translate reaches the shared Translate node which ClickHouse itself parses to,
+        // so a node rewrite would corrupt native ClickHouse translate — see the hazard notes.
+        // (No safe generator rename this pass.)
+        assertEquals("SELECT translateUTF8(x, f, t)",
+            transpile("SELECT translateUTF8(x, f, t)", read = "clickhouse", write = "clickhouse"))
+    }
+
     // -- Round-trip safety: ClickHouse native names are unchanged ------------------
 
     @Test
@@ -90,6 +155,9 @@ class ClickhouseRenameFixesTest {
             "arrayCompact(a)", "arrayExcept(a, b)", "hasAll(a, b)", "hasAny(a, b)",
             "arrayElement(a, i)", "arrayDotProduct(a, b)",
             "toDayOfMonth(d)", "toDayOfYear(d)", "toDayOfWeek(d)",
+            "acosh(x)", "cbrt(x)", "sinh(x)", "cosh(x)", "asinh(x)", "bitCount(x)",
+            "tgamma(x)", "gcd(a, b)", "lcm(a, b)", "isFinite(x)", "L1Distance(a, b)",
+            "roundBankers(x)", "xxHash64(x)", "IPv4NumToString(x)", "translate(s, f, t)",
         )) {
             assertEquals("SELECT $call", transpile("SELECT $call", read = "clickhouse", write = "clickhouse"))
         }
@@ -111,5 +179,10 @@ class ClickhouseRenameFixesTest {
         assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("doris", "clickhouse", "to_monday")?.verdict)
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "weekday")?.verdict)
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("doris", "clickhouse", "weekday")?.verdict)
+        // chunk 3 identical renames stay identical
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "bit_count")?.verdict)
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "gamma")?.verdict)
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("doris", "clickhouse", "l1_distance")?.verdict)
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("doris", "clickhouse", "bit_shift_left")?.verdict)
     }
 }

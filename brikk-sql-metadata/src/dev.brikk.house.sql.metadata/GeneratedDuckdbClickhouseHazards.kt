@@ -160,7 +160,7 @@ private fun hazardsChunk0(): List<FunctionHazard> = listOf(
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
     // [28] duckdb: 'translate' | clickhouse: 'translate'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Code-point-wise substitution; ASCII probe aligned.",
+        hazard = "Code-point-wise substitution; ASCII probe aligned. DEFERRED (generator): DuckDB translate is code-point-wise == ClickHouse translateUTF8, but ClickHouse parses `translate` to the shared Translate node so a node rewrite would corrupt native ClickHouse byte-level translate — needs source-aware generation (brikk still emits the invalid TRANSLATE meanwhile).",
         areas = listOf("string"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
     // [29] duckdb: 'format' | clickhouse: 'format'
@@ -1007,7 +1007,7 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
     // [195] duckdb: 'least_common_multiple' | clickhouse: 'lcm'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "DuckDB least_common_multiple == ClickHouse lcm (rename). Values agree (duck=5). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        hazard = "DuckDB least_common_multiple == ClickHouse lcm (rename). Values agree (duck=5). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
     // [196] duckdb: 'list_has_all' | clickhouse: 'hasAll'
@@ -1060,17 +1060,17 @@ private fun hazardsChunk5(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
     // [205] duckdb: 'dayname' | clickhouse: 'toDayOfWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "DuckDB dayname == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=Sunday vs ch=7). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        hazard = "DuckDB dayname == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=Sunday vs ch=7). DEFERRED: ClickHouse has no day-name function; the closest toDayOfWeek returns a NUMBER, not a name string (wrong-type rename) — kept divergent + certify-guarded.",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
     // [206] duckdb: 'gamma' | clickhouse: 'tgamma'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "DuckDB gamma == ClickHouse tgamma (rename). Values agree (duck=1.32934038817913). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        hazard = "DuckDB gamma == ClickHouse tgamma (rename). Values agree (duck=1.32934038817913). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
     // [207] duckdb: 'bit_count' | clickhouse: 'bitCount'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "DuckDB bit_count == ClickHouse bitCount (rename). Values agree (duck=2). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        hazard = "DuckDB bit_count == ClickHouse bitCount (rename). Values agree (duck=2). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
     // [208] duckdb: 'array_intersect' | clickhouse: 'arrayIntersect'
@@ -1090,12 +1090,12 @@ private fun hazardsChunk5(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
     // [211] duckdb: 'greatest_common_divisor' | clickhouse: 'gcd'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "DuckDB greatest_common_divisor == ClickHouse gcd (rename). Values agree (duck=5). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        hazard = "DuckDB greatest_common_divisor == ClickHouse gcd (rename). Values agree (duck=5). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
     // [212] duckdb: 'jaro_similarity' | clickhouse: 'jaroSimilarity'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "DuckDB jaro_similarity == ClickHouse jaroSimilarity (rename). Values agree (duck=1.0). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        hazard = "DuckDB jaro_similarity == ClickHouse jaroSimilarity (rename). Values agree (duck=1.0). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
 )

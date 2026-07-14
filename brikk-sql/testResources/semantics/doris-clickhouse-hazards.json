@@ -930,7 +930,7 @@
       "doris": "acosh",
       "clickhouse": "acosh",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name acosh (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name acosh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1168,7 +1168,7 @@
       "doris": "asinh",
       "clickhouse": "asinh",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name asinh (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name asinh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1199,7 +1199,7 @@
       "doris": "bit_count",
       "clickhouse": "bitCount",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitCount (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitCount (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1210,7 +1210,7 @@
       "doris": "bit_shift_left",
       "clickhouse": "bitShiftLeft",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftLeft (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftLeft (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1221,7 +1221,7 @@
       "doris": "bit_shift_right",
       "clickhouse": "bitShiftRight",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftRight (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftRight (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1232,7 +1232,7 @@
       "doris": "bit_test",
       "clickhouse": "bitTest",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitTest (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitTest (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1273,7 +1273,7 @@
       "doris": "cosh",
       "clickhouse": "cosh",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name cosh (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name cosh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1294,7 +1294,7 @@
       "doris": "count_substrings",
       "clickhouse": "countSubstrings",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name countSubstrings (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name countSubstrings (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1305,7 +1305,7 @@
       "doris": "cut_to_first_significant_subdomain",
       "clickhouse": "cutToFirstSignificantSubdomain",
       "verdict": "divergent",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name cutToFirstSignificantSubdomain (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name cutToFirstSignificantSubdomain (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1336,7 +1336,7 @@
       "doris": "dayname",
       "clickhouse": "toDayOfWeek",
       "verdict": "divergent",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='Sunday' vs ch='7'). ClickHouse name toDayOfWeek (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='Sunday' vs ch='7'). ClickHouse name toDayOfWeek (rename; DEFERRED: same as duckdb — toDayOfWeek is a number, not a day-name string; kept divergent + certify-guarded.",
       "areas": [
         "auto",
         "rename"
@@ -1367,7 +1367,7 @@
       "doris": "domain_without_www",
       "clickhouse": "domainWithoutWWW",
       "verdict": "divergent",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name domainWithoutWWW (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name domainWithoutWWW (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1378,7 +1378,7 @@
       "doris": "extract_url_parameter",
       "clickhouse": "extractURLParameter",
       "verdict": "divergent",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name extractURLParameter (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name extractURLParameter (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1399,7 +1399,7 @@
       "doris": "first_significant_subdomain",
       "clickhouse": "firstSignificantSubdomain",
       "verdict": "divergent",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name firstSignificantSubdomain (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name firstSignificantSubdomain (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1410,7 +1410,7 @@
       "doris": "format",
       "clickhouse": "format",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name format (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name format (rename; DEFERRED: Doris format here is number-formatting (parses to NumberToStr); ClickHouse format is positional-placeholder templating — incompatible, no safe rename.",
       "areas": [
         "auto",
         "rename"
@@ -1431,7 +1431,7 @@
       "doris": "ipv4_num_to_string",
       "clickhouse": "IPv4NumToString",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4NumToString (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4NumToString (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1442,7 +1442,7 @@
       "doris": "ipv4_string_to_num_or_default",
       "clickhouse": "IPv4StringToNumOrDefault",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4StringToNumOrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4StringToNumOrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1453,7 +1453,7 @@
       "doris": "ipv6_string_to_num_or_default",
       "clickhouse": "IPv6StringToNumOrDefault",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv6StringToNumOrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv6StringToNumOrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1474,7 +1474,7 @@
       "doris": "is_ipv4_string",
       "clickhouse": "isIPv4String",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv4String (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv4String (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1485,7 +1485,7 @@
       "doris": "is_ipv6_string",
       "clickhouse": "isIPv6String",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv6String (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv6String (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1496,7 +1496,7 @@
       "doris": "l1_distance",
       "clickhouse": "L1Distance",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name L1Distance (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name L1Distance (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1587,7 +1587,7 @@
       "doris": "round_bankers",
       "clickhouse": "roundBankers",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name roundBankers (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name roundBankers (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1608,7 +1608,7 @@
       "doris": "sinh",
       "clickhouse": "sinh",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name sinh (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name sinh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1629,7 +1629,7 @@
       "doris": "split_by_regexp",
       "clickhouse": "splitByRegexp",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByRegexp (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByRegexp (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1640,7 +1640,7 @@
       "doris": "split_by_string",
       "clickhouse": "splitByString",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByString (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByString (rename; DEFERRED: maps to the StringToArray node whose (string, delimiter) arg order differs from ClickHouse splitByString(separator, string); needs an arg-swap that would also affect Postgres string_to_array — not a source-unaware-safe pure rename.",
       "areas": [
         "auto",
         "rename"
@@ -1691,7 +1691,7 @@
       "doris": "top_level_domain",
       "clickhouse": "topLevelDomain",
       "verdict": "divergent",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name topLevelDomain (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name topLevelDomain (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1712,7 +1712,7 @@
       "doris": "to_ipv4_or_default",
       "clickhouse": "toIPv4OrDefault",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv4OrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv4OrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1723,7 +1723,7 @@
       "doris": "to_ipv6_or_default",
       "clickhouse": "toIPv6OrDefault",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv6OrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv6OrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1745,7 +1745,7 @@
       "doris": "translate",
       "clickhouse": "translate",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name translate (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name translate (rename; DEFERRED: ClickHouse parses translate to the shared Translate node, so a node rewrite to translateUTF8 would corrupt NATIVE ClickHouse translate (byte->codepoint). DuckDB needs translateUTF8 (codepoint) while ClickHouse translate is byte-level — needs source-aware generation.",
       "areas": [
         "auto",
         "rename"
@@ -1787,7 +1787,7 @@
       "doris": "xxhash_32",
       "clickhouse": "xxHash32",
       "verdict": "conditionally-equivalent",
-      "hazard": "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs. ClickHouse name xxHash32 (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs. ClickHouse name xxHash32 (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1798,7 +1798,7 @@
       "doris": "xxhash_64",
       "clickhouse": "xxHash64",
       "verdict": "conditionally-equivalent",
-      "hazard": "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs. ClickHouse name xxHash64 (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs. ClickHouse name xxHash64 (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"

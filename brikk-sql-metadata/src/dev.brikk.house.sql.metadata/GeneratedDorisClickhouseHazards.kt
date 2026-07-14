@@ -468,7 +468,7 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
     // [94] doris: 'acosh' | clickhouse: 'acosh'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name acosh (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name acosh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [95] doris: 'array_avg' | clickhouse: 'arrayAvg'
@@ -578,7 +578,7 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [116] doris: 'asinh' | clickhouse: 'asinh'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name asinh (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name asinh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [117] doris: 'atan' | clickhouse: 'ATAN'
@@ -593,7 +593,7 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [119] doris: 'bit_count' | clickhouse: 'bitCount'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitCount (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitCount (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
 )
@@ -601,17 +601,17 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
 private fun hazardsChunk3(): List<FunctionHazard> = listOf(
     // [120] doris: 'bit_shift_left' | clickhouse: 'bitShiftLeft'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftLeft (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftLeft (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [121] doris: 'bit_shift_right' | clickhouse: 'bitShiftRight'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftRight (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftRight (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [122] doris: 'bit_test' | clickhouse: 'bitTest'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitTest (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitTest (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [123] doris: 'concat_ws' | clickhouse: 'CONCAT_WS'
@@ -631,7 +631,7 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [126] doris: 'cosh' | clickhouse: 'cosh'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name cosh (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name cosh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [127] doris: 'cosine_distance' | clickhouse: 'cosineDistance'
@@ -641,12 +641,12 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [128] doris: 'count_substrings' | clickhouse: 'countSubstrings'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name countSubstrings (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name countSubstrings (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [129] doris: 'cut_to_first_significant_subdomain' | clickhouse: 'cutToFirstSignificantSubdomain'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name cutToFirstSignificantSubdomain (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name cutToFirstSignificantSubdomain (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [130] doris: 'date' | clickhouse: 'CAST'
@@ -661,7 +661,7 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [132] doris: 'dayname' | clickhouse: 'toDayOfWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='Sunday' vs ch='7'). ClickHouse name toDayOfWeek (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='Sunday' vs ch='7'). ClickHouse name toDayOfWeek (rename; DEFERRED: same as duckdb — toDayOfWeek is a number, not a day-name string; kept divergent + certify-guarded.",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [133] doris: 'degrees' | clickhouse: 'DEGREES'
@@ -676,12 +676,12 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [135] doris: 'domain_without_www' | clickhouse: 'domainWithoutWWW'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name domainWithoutWWW (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name domainWithoutWWW (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [136] doris: 'extract_url_parameter' | clickhouse: 'extractURLParameter'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name extractURLParameter (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name extractURLParameter (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [137] doris: 'factorial' | clickhouse: 'FACTORIAL'
@@ -691,12 +691,12 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [138] doris: 'first_significant_subdomain' | clickhouse: 'firstSignificantSubdomain'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name firstSignificantSubdomain (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name firstSignificantSubdomain (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [139] doris: 'format' | clickhouse: 'format'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name format (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name format (rename; DEFERRED: Doris format here is number-formatting (parses to NumberToStr); ClickHouse format is positional-placeholder templating — incompatible, no safe rename.",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [140] doris: 'from_days' | clickhouse: 'from_days'
@@ -706,17 +706,17 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [141] doris: 'ipv4_num_to_string' | clickhouse: 'IPv4NumToString'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4NumToString (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4NumToString (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [142] doris: 'ipv4_string_to_num_or_default' | clickhouse: 'IPv4StringToNumOrDefault'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4StringToNumOrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4StringToNumOrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [143] doris: 'ipv6_string_to_num_or_default' | clickhouse: 'IPv6StringToNumOrDefault'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv6StringToNumOrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv6StringToNumOrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [144] doris: 'isnan' | clickhouse: 'isNaN'
@@ -726,17 +726,17 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [145] doris: 'is_ipv4_string' | clickhouse: 'isIPv4String'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv4String (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv4String (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [146] doris: 'is_ipv6_string' | clickhouse: 'isIPv6String'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv6String (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv6String (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [147] doris: 'l1_distance' | clickhouse: 'L1Distance'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name L1Distance (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name L1Distance (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [148] doris: 'l2_distance' | clickhouse: 'L2Distance'
@@ -781,7 +781,7 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [156] doris: 'round_bankers' | clickhouse: 'roundBankers'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name roundBankers (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name roundBankers (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [157] doris: 'sin' | clickhouse: 'SIN'
@@ -791,7 +791,7 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [158] doris: 'sinh' | clickhouse: 'sinh'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name sinh (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name sinh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [159] doris: 'soundex' | clickhouse: 'SOUNDEX'
@@ -804,12 +804,12 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
 private fun hazardsChunk4(): List<FunctionHazard> = listOf(
     // [160] doris: 'split_by_regexp' | clickhouse: 'splitByRegexp'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByRegexp (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByRegexp (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [161] doris: 'split_by_string' | clickhouse: 'splitByString'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByString (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByString (rename; DEFERRED: maps to the StringToArray node whose (string, delimiter) arg order differs from ClickHouse splitByString(separator, string); needs an arg-swap that would also affect Postgres string_to_array — not a source-unaware-safe pure rename.",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [162] doris: 'str_to_map' | clickhouse: 'STR_TO_MAP'
@@ -834,7 +834,7 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [166] doris: 'top_level_domain' | clickhouse: 'topLevelDomain'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name topLevelDomain (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name topLevelDomain (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [167] doris: 'to_base64' | clickhouse: 'TO_BASE64'
@@ -844,12 +844,12 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [168] doris: 'to_ipv4_or_default' | clickhouse: 'toIPv4OrDefault'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv4OrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv4OrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [169] doris: 'to_ipv6_or_default' | clickhouse: 'toIPv6OrDefault'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv6OrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv6OrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [170] doris: 'to_monday' | clickhouse: 'toMonday'
@@ -859,7 +859,7 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [171] doris: 'translate' | clickhouse: 'translate'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name translate (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name translate (rename; DEFERRED: ClickHouse parses translate to the shared Translate node, so a node rewrite to translateUTF8 would corrupt NATIVE ClickHouse translate (byte->codepoint). DuckDB needs translateUTF8 (codepoint) while ClickHouse translate is byte-level — needs source-aware generation.",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [172] doris: 'ucase' | clickhouse: 'UPPER'
@@ -879,12 +879,12 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [175] doris: 'xxhash_32' | clickhouse: 'xxHash32'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
-        hazard = "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs. ClickHouse name xxHash32 (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs. ClickHouse name xxHash32 (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [176] doris: 'xxhash_64' | clickhouse: 'xxHash64'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
-        hazard = "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs. ClickHouse name xxHash64 (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs. ClickHouse name xxHash64 (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
 )
