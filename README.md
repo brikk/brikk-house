@@ -34,7 +34,7 @@ Snapshots are **published** to the Central Portal snapshots repository:
 https://central.sonatype.com/repository/maven-snapshots/
 ```
 
-Current snapshot version: **`0.5.0-SNAPSHOT`**
+Current snapshot version: **`0.6.0-SNAPSHOT`**
 
 <details>
 <summary>Gradle (Kotlin DSL)</summary>
@@ -48,9 +48,9 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.brikk.house:brikk-sql-jvm:0.5.0-SNAPSHOT")
-    // implementation("dev.brikk.house:brikk-sql-metadata-jvm:0.5.0-SNAPSHOT") // transitive via brikk-sql-jvm
-    // implementation("dev.brikk.house:brikk-sql-verify:0.5.0-SNAPSHOT")
+    implementation("dev.brikk.house:brikk-sql-jvm:0.6.0-SNAPSHOT")
+    // implementation("dev.brikk.house:brikk-sql-metadata-jvm:0.6.0-SNAPSHOT") // transitive via brikk-sql-jvm
+    // implementation("dev.brikk.house:brikk-sql-verify:0.6.0-SNAPSHOT")
 }
 ```
 </details>
@@ -71,7 +71,7 @@ dependencies {
 <dependency>
   <groupId>dev.brikk.house</groupId>
   <artifactId>brikk-sql-jvm</artifactId>
-  <version>0.5.0-SNAPSHOT</version>
+  <version>0.6.0-SNAPSHOT</version>
 </dependency>
 ```
 </details>
@@ -79,7 +79,7 @@ dependencies {
 ### Releases
 
 Release versions (non-`-SNAPSHOT`) are published to **Maven Central** and resolve from
-`mavenCentral()` with no extra repository configuration. Latest release: **`0.4.0`**.
+`mavenCentral()` with no extra repository configuration. Latest release: **`0.5.0`**.
 
 ## Publishing (maintainers)
 
@@ -96,7 +96,7 @@ the current `-SNAPSHOT` to the Central snapshots repo.
 To **bump the snapshot version** (e.g. after a release):
 
 1. Edit `settings.publishing.version` in `publish.module-template.yaml` — keep the `-SNAPSHOT`
-   suffix (e.g. `0.5.0-SNAPSHOT`).
+   suffix (e.g. `0.6.0-SNAPSHOT`).
 2. Update the version in the consumer snippets above in this README.
 3. Commit and push to `main` — the workflow publishes the new snapshot.
 
