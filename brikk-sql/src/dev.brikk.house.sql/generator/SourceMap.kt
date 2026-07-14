@@ -8,11 +8,29 @@ import dev.brikk.house.sql.ast.Expression
 // Expression.updatePositions) back to line/col/start/end in the ORIGINAL source.
 
 /**
- * A position in the original source text, as recorded by the parser into node meta
- * (sqlglot token semantics: [line]/[col] are 1-based and refer to the token's END
- * position; [start]/[end] are absolute char offsets, [end] inclusive).
+ * A position in the original source text, as recorded by the parser into node meta.
+ *
+ * Coordinate systems (all 1-based columns/lines are 1-based; char offsets are 0-based):
+ *  - [line]/[col] (sqlglot token semantics): 1-based, refer to the token's END.
+ *  - [start]/[end]: absolute char offsets into the source, [end] inclusive.
+ *  - [lineStart]/[colStart] (brikk-native): 1-based line/col of the token's START,
+ *    so a caller can underline from where the token begins without counting newlines.
+ *
+ * [lineEnd]/[colEnd] are provided as unambiguous aliases of [line]/[col]; use the
+ * start/end pairs (never the bare [col]) when driving error markers so a 0-based
+ * engine start-position is never mixed with the end-anchored [col].
  */
-data class SourcePos(val line: Int, val col: Int, val start: Int, val end: Int)
+data class SourcePos(
+    val line: Int,
+    val col: Int,
+    val start: Int,
+    val end: Int,
+    val lineStart: Int = line,
+    val colStart: Int = col - (end - start),
+) {
+    val lineEnd: Int get() = line
+    val colEnd: Int get() = col
+}
 
 /**
  * Emit-span map for one generated output string.
@@ -79,12 +97,17 @@ class SourceMap(
      * BEFORE the offset (the "error is just after this token" reading), then to the
      * nearest one after.
      */
-    fun sourcePosition(outputOffset: Int): SourcePos? {
+    fun sourcePosition(outputOffset: Int, exact: Boolean = false): SourcePos? {
         var node = nodeAt(outputOffset)
         while (node != null) {
             sourcePosOf(node)?.let { return it }
             node = node.parent
         }
+
+        // With [exact], refuse to guess: a position is returned only when a positioned
+        // node (or a positioned ancestor) actually covers the offset. Editors prefer a
+        // null here (degrade to statement-level) over a confidently-wrong neighbor span.
+        if (exact) return null
 
         // Fallback: nearest positioned span preceding (then following) the offset.
         var before: Entry? = null
@@ -103,8 +126,8 @@ class SourceMap(
     }
 
     /** [sourcePosition] with a 1-based (line, col) position in the OUTPUT. */
-    fun sourcePosition(line: Int, col: Int): SourcePos? =
-        offsetOf(line, col)?.let { sourcePosition(it) }
+    fun sourcePosition(line: Int, col: Int, exact: Boolean = false): SourcePos? =
+        offsetOf(line, col)?.let { sourcePosition(it, exact) }
 
     /** Serializable projection of the span list (offsets + node kind). */
     fun describeEntries(): List<Triple<Int, Int, String>> =
@@ -118,7 +141,12 @@ class SourceMap(
             val col = (meta["col"] as? Number)?.toInt() ?: return null
             val start = (meta["start"] as? Number)?.toInt() ?: return null
             val end = (meta["end"] as? Number)?.toInt() ?: return null
-            return SourcePos(line, col, start, end)
+            // brikk-native start-anchored line/col (Token.updatePositions). Absent on
+            // synthesized nodes / older serialized ASTs: fall back to the single-line
+            // derivation (exact unless the token straddles a newline).
+            val lineStart = (meta["line_start"] as? Number)?.toInt() ?: line
+            val colStart = (meta["col_start"] as? Number)?.toInt() ?: (col - (end - start))
+            return SourcePos(line, col, start, end, lineStart, colStart)
         }
     }
 }

@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -33,9 +34,15 @@ class ErrorSourceMappingTest {
         val col = assertNotNull(vr.col, "Doris FE reports an error column")
 
         // The verifier position points into the OUTPUT sql; map it back to the source.
-        val pos = assertNotNull(
+        // This error sits PAST the last positioned token (end-of-statement), so it needs
+        // the lenient nearest-token fallback — the default (exact) contract returns null.
+        assertNull(
             result.mapErrorToSource(line, col),
-            "error position ($line, $col) in '${result.sql}' should map back to source",
+            "exact mapping refuses an end-of-statement position with no covering token",
+        )
+        val pos = assertNotNull(
+            result.mapErrorToSource(line, col, exact = false),
+            "lenient mapping maps ($line, $col) in '${result.sql}' back to the nearest token",
         )
         assertEquals(1, pos.line)
         // The error is at the end of the statement; the nearest positioned token is

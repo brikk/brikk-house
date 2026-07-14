@@ -163,6 +163,14 @@ class Tokenizer(private val config: TokenizerConfig = TokenizerConfig.BASE) {
 
         val tokenText = text ?: sql.substring(start, current)
 
+        // brikk-native: start-anchored line/col (the tracked line/col are the END).
+        // colStart is 1-based: distance from the char after the preceding newline.
+        // lineStart backs out the newlines the token itself spans (multi-line strings).
+        var newlinesInToken = 0
+        for (i in start until current) if (sql[i] == '\n') newlinesInToken++
+        val lineStart = line - newlinesInToken
+        val colStart = start - sql.lastIndexOf('\n', start - 1)
+
         tokens.add(
             Token(
                 tokenType,
@@ -172,6 +180,8 @@ class Tokenizer(private val config: TokenizerConfig = TokenizerConfig.BASE) {
                 start = start,
                 end = current - 1,
                 comments = comments,
+                lineStart = lineStart,
+                colStart = colStart,
             )
         )
         comments = mutableListOf()

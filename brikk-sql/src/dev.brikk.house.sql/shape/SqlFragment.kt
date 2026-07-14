@@ -129,6 +129,31 @@ class SqlFragment(val sql: String, val dialect: String = "") {
     }
 
     /**
+     * One-call "give me the executable SQL and a source map that corresponds to it".
+     *
+     * Real engines don't speak pipe syntax, so this ALWAYS desugars pipe fragments
+     * ([isPipe]) to the standard CTE-chain form before generating, and it tracks the
+     * source map by default. The returned [TranspileResult.sql] and
+     * [TranspileResult.sourceMap] come from the SAME single generator pass over the
+     * SAME (desugared) tree — they can never be from different renderings, so mapped
+     * positions never lie. See the identity invariant `sourceMap.output === sql`.
+     *
+     * This is the contract editor/plugin callers want; it is a thin, intent-revealing
+     * wrapper over [transpileTo] with `desugarPipes = true`.
+     */
+    fun toExecutable(
+        target: String,
+        pretty: Boolean = false,
+        trackSourceMap: Boolean = true,
+    ): TranspileResult =
+        transpileTo(
+            target = target,
+            pretty = pretty,
+            trackSourceMap = trackSourceMap,
+            desugarPipes = true,
+        )
+
+    /**
      * Class-3 capability check: function names that would land in [target] SQL even
      * though the target engine does not register them (silent-passthrough holes like
      * duckdb's `read_parquet(...)` transpiled to Doris).
@@ -301,8 +326,44 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * true/false/null (null = unknown, never guessed). Each projection's verdict is read
      * off the (possibly aliased) projection expression.
      */
-    fun outputShape(inputs: ShapeCatalog = ShapeCatalog.EMPTY): Shape {
-        val prepared = prepareTree(inputs)
+    fun outputShape(inputs: ShapeCatalog = ShapeCatalog.EMPTY): Shape =
+        outputShapeOf(ast, inputs)
+
+    /**
+     * Output shape after EACH pipe stage, one [Shape] per stage in [stages] order
+     * (empty when not [isPipe]). Element `n` is the fragment's scope *after* stage `n`
+     * has been applied; completion at stage `n` consumes element `n - 1` (its input
+     * scope), with stage 0's input being the catalog base ([inputs], i.e. "element -1"
+     * by convention). The same list drives per-stage lineage ("column c first exists at
+     * stage 3").
+     *
+     * Each shape is resolved exactly like [outputShape] (desugar -> qualify ->
+     * annotate) on the pipeline truncated after stage `n`, so an alias enters scope at
+     * precisely the stage that projects it — no alias is offered before it exists.
+     *
+     * Cost is O(stages) qualify passes over growing trees; fine for editor-scale
+     * pipelines. When exact per-stage columns matter, bind a [ShapeCatalog] so stars
+     * resolve (an unbound star survives as a single "*" column, same as [outputShape]).
+     */
+    fun stageShapes(inputs: ShapeCatalog = ShapeCatalog.EMPTY): List<Shape> {
+        val pipe = ast as? PipeQuery ?: return emptyList()
+        val head = pipe.thisArg as Expression
+        val allStages = stages
+        return List(allStages.size) { n ->
+            val truncated = PipeQuery(
+                args(
+                    "this" to head.copy(),
+                    "expressions" to allStages.subList(0, n + 1)
+                        .map { it.copy() }
+                        .toMutableList(),
+                )
+            )
+            outputShapeOf(truncated, inputs)
+        }
+    }
+
+    private fun outputShapeOf(tree: Expression, inputs: ShapeCatalog): Shape {
+        val prepared = prepareTree(tree, inputs)
         val schema = buildSchema(inputs)
         val qualified = qualify(
             prepared,
@@ -341,7 +402,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         column: String? = null,
         inputs: ShapeCatalog = ShapeCatalog.EMPTY,
     ): Map<String, Set<String>> {
-        val prepared = prepareTree(inputs)
+        val prepared = prepareTree(ast, inputs)
         val schema = buildSchema(inputs)
         val nodes: Map<String, Node> = if (column == null) {
             lineageAll(prepared, schema = schema, dialect = dialectObj)
@@ -413,10 +474,10 @@ class SqlFragment(val sql: String, val dialect: String = "") {
     // ------------------------------------------------------------------ internals
 
     /** Copy + desugar pipes + rewrite bound slots into plain table references. */
-    private fun prepareTree(inputs: ShapeCatalog): Expression {
-        var tree = ast.copy()
-        if (isPipe) tree = desugarPipes(tree, copy = false)
-        return bindSlots(tree, inputs)
+    private fun prepareTree(tree: Expression, inputs: ShapeCatalog): Expression {
+        var t = tree.copy()
+        if (t is PipeQuery) t = desugarPipes(t, copy = false)
+        return bindSlots(t, inputs)
     }
 
     /**
@@ -547,12 +608,25 @@ data class TranspileResult(
 ) {
     /**
      * brikk-native payoff API: maps a 1-based (line, col) position in the OUTPUT
-     * [sql] (e.g. a verifier error position) back to a position in the ORIGINAL
-     * source the fragment was parsed from. Null when no source map was tracked or
-     * no positioned node covers the location.
+     * [sql] (e.g. an engine error position) back to a position in the ORIGINAL source
+     * the fragment was parsed from. The returned [dev.brikk.house.sql.generator.SourcePos]
+     * carries the full token range (lineStart/lineEnd/colStart/colEnd) so an editor can
+     * span the whole offending token.
+     *
+     * Column convention: [col] is 1-based. Engines that report 0-based columns (e.g.
+     * Doris/ANTLR `pos`) must add 1 before calling — that normalization is the caller's.
+     *
+     * Contract: null when no source map was tracked, or (default [exact]) when no
+     * positioned node covers the location — a deliberate "no squiggle beats a wrong
+     * squiggle". Pass `exact = false` to opt into the lenient nearest-positioned-token
+     * fallback (useful for end-of-statement errors that sit past the last token).
      */
-    fun mapErrorToSource(line: Int, col: Int): dev.brikk.house.sql.generator.SourcePos? =
-        sourceMap?.sourcePosition(line, col)
+    fun mapErrorToSource(
+        line: Int,
+        col: Int,
+        exact: Boolean = true,
+    ): dev.brikk.house.sql.generator.SourcePos? =
+        sourceMap?.sourcePosition(line, col, exact)
 }
 
 /** Serializable, statically-derivable summary of a fragment (compiler-plugin seed). */

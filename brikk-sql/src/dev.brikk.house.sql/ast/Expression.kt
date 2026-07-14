@@ -25,6 +25,12 @@ private var nextObjectId: Long = 0L
 // sqlglot: expressions/core.py POSITION_META_KEYS
 val POSITION_META_KEYS: kotlin.Array<String> = arrayOf("line", "col", "start", "end")
 
+// brikk-native: POSITION_META_KEYS plus the start-anchored keys written by
+// Token.updatePositions ("line_start"/"col_start"), so copying positions between
+// nodes (updatePositions(other)) carries the start anchor too.
+internal val BRIKK_POSITION_META_KEYS: kotlin.Array<String> =
+    POSITION_META_KEYS + arrayOf("line_start", "col_start")
+
 /** Convenience builder for argTypes tables. */
 internal fun argTypesOf(vararg pairs: Pair<String, kotlin.Boolean>): Map<String, kotlin.Boolean> =
     linkedMapOf(*pairs)
@@ -273,7 +279,7 @@ abstract class Expression(initArgs: Args = emptyMap()) {
         val otherMeta = other.metaOrNull
         if (!otherMeta.isNullOrEmpty()) {
             val m = meta
-            for (k in POSITION_META_KEYS) {
+            for (k in BRIKK_POSITION_META_KEYS) {
                 if (otherMeta.containsKey(k)) m[k] = otherMeta[k]
             }
         }

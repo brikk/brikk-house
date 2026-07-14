@@ -198,7 +198,15 @@ object Serde {
                     val comments = node.comments
                     if (!comments.isNullOrEmpty()) payload[COMMENTS] = JsonArray(comments.map { JsonPrimitive(it) })
                     val meta = node.metaOrNull
-                    if (meta != null) payload[META] = JsonObject(meta.mapValues { (_, v) -> scalarToJson(v) })
+                    // brikk-native "line_start"/"col_start" are excluded from the dump:
+                    // they have no sqlglot counterpart and would break AST-parity gates
+                    // (ParserIdentityCorpusTest compares meta UNSTRIPPED against sqlglot).
+                    // They are re-derivable and only consumed off freshly-parsed in-memory
+                    // trees (generator/SourceMap), never off deserialized ones.
+                    if (meta != null) payload[META] = JsonObject(
+                        meta.filterKeys { it != "line_start" && it != "col_start" }
+                            .mapValues { (_, v) -> scalarToJson(v) },
+                    )
 
                     for ((k, vs) in node.args.entries.reversed()) {
                         if (vs is List<*>) {

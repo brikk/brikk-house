@@ -13,6 +13,11 @@ fun <E : Expression> E.updatePositions(token: Token): E {
     m["col"] = token.col
     m["start"] = token.start
     m["end"] = token.end
+    // brikk-native (no sqlglot counterpart): start-anchored line/col so callers can
+    // point at where a token BEGINS without re-deriving it from char offsets. The
+    // sqlglot-parity "line"/"col" above are the token's END position.
+    m["line_start"] = token.lineStart
+    m["col_start"] = token.colStart
     return this
 }
 
@@ -23,6 +28,11 @@ fun <E : Expression> E.updatePositions(token: Token): E {
  * [start]/[end] are absolute char offsets into the source ([end] inclusive),
  * [line]/[col] are 1-based and refer to the token's end position,
  * [comments] holds comment texts attached to this token.
+ *
+ * brikk-native additions (no sqlglot counterpart): [lineStart]/[colStart] are the
+ * 1-based line/column of the token's START (the sqlglot [line]/[col] are its END).
+ * These make the start-anchored position available without counting newlines, and
+ * stay correct for tokens that straddle a line break (multi-line string literals).
  */
 class Token(
     val tokenType: TokenType,
@@ -32,10 +42,13 @@ class Token(
     val start: Int = 0,
     val end: Int = 0,
     val comments: MutableList<String> = mutableListOf(),
+    val lineStart: Int = line,
+    val colStart: Int = col,
 ) {
     override fun toString(): String =
         "<Token token_type: TokenType.$tokenType, text: $text, line: $line, col: $col, " +
-            "start: $start, end: $end, comments: $comments>"
+            "start: $start, end: $end, lineStart: $lineStart, colStart: $colStart, " +
+            "comments: $comments>"
 
     companion object {
         /** sqlglot: Token.number */

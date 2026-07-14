@@ -7,9 +7,12 @@ import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.SourceMap
 import dev.brikk.house.sql.generator.SourcePos
 import dev.brikk.house.sql.parser.parseOne
+import dev.brikk.house.sql.shape.Shape
+import dev.brikk.house.sql.shape.ShapeCatalog
 import dev.brikk.house.sql.shape.SqlFragment
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -37,6 +40,38 @@ class SourceMapTest {
             SourcePos(line = 1, col = 21, start = 18, end = 20),
             SourceMap.sourcePosOf(tbl),
         )
+    }
+
+    @Test
+    fun positionsCarryStartAndEndAnchors() {
+        // brikk-native: SourcePos exposes both anchors, all 1-based. `col`/`colEnd`
+        // are the token END; `colStart` is where it BEGINS (no line-counting needed).
+        val ast = parseOne(
+            "FROM t\n" +
+                "    |> WHERE event_axt >= 1",
+        )
+        val col = ast.findAll(Identifier::class).first { it.name == "event_axt" }
+        val p = assertNotNull(SourceMap.sourcePosOf(col))
+        // `    |> WHERE event_axt` — begins at col 14, ends at col 22, on line 2.
+        assertEquals(2, p.lineStart)
+        assertEquals(14, p.colStart)
+        assertEquals(2, p.lineEnd)
+        assertEquals(22, p.colEnd)
+        assertEquals(p.col, p.colEnd)
+        assertEquals(p.line, p.lineEnd)
+    }
+
+    @Test
+    fun multiLineTokenAnchorsSpanTheLineBreak() {
+        // A token that straddles a newline: the single-line derivation would be wrong,
+        // so the start anchor comes from the tokenizer, not from `col - (end - start)`.
+        val ast = parseOne("SELECT 'ab\ncd' AS x")
+        val lit = ast.findAll(dev.brikk.house.sql.ast.Literal::class).first()
+        val p = assertNotNull(SourceMap.sourcePosOf(lit))
+        assertEquals(1, p.lineStart)
+        assertEquals(8, p.colStart) // the opening quote on line 1
+        assertEquals(2, p.lineEnd)
+        assertEquals(3, p.colEnd) // the closing quote on line 2
     }
 
     @Test
@@ -144,6 +179,16 @@ class SourceMapTest {
         assertEquals(7, pos.start)
     }
 
+    @Test
+    fun exactModeReturnsNullWhenNoPositionedNodeCovers() {
+        val (out, map) = mapped("SELECT alpha FROM tbl")
+        // Same FROM-keyword offset, but exact: refuse to guess (no covering token).
+        assertNull(map.sourcePosition(out.indexOf("FROM"), exact = true))
+        // Directly on the token, exact still resolves.
+        val onAlpha = assertNotNull(map.sourcePosition(out.indexOf("alpha"), exact = true))
+        assertEquals(7, onAlpha.start)
+    }
+
     // -- shape API ------------------------------------------------------------------------
 
     @Test
@@ -163,5 +208,64 @@ class SourceMapTest {
         // mapErrorToSource: 1-based output (line, col) form
         val errPos = assertNotNull(tracked.mapErrorToSource(1, tracked.sql.indexOf("bar") + 1))
         assertEquals(source.indexOf("bar"), errPos.start)
+    }
+
+    @Test
+    fun toExecutableDesugarsPipesAndKeepsSqlAndMapInLockstep() {
+        val source =
+            "FROM events\n" +
+                "    |> WHERE event_axt >= '2026-05-01'\n" +
+                "    |> AGGREGATE count(*) AS c GROUP BY g"
+        val result = SqlFragment(source, "bigquery").toExecutable("doris", pretty = true)
+
+        // Pipes are flattened to the executable CTE-chain form.
+        assertTrue(result.sql.contains("WITH __tmp1"), "expected desugared output: ${result.sql}")
+        assertFalse(result.sql.contains("|>"), "no pipe operator survives")
+
+        // The invariant the plugin relies on: the SQL and the map are the SAME string
+        // (identity, not just equals) — they came from one generator pass, so positions
+        // can never be measured against a different rendering.
+        val map = assertNotNull(result.sourceMap)
+        assertTrue(result.sql === map.output, "sql and sourceMap.output must be the same instance")
+
+        // And a mapped position still points at the original pipe-syntax source.
+        val axtOut = result.sql.indexOf("event_axt")
+        val pos = assertNotNull(map.sourcePosition(axtOut, exact = true))
+        assertEquals(2, pos.lineStart)
+        assertEquals(source.indexOf("event_axt"), pos.start)
+    }
+
+    @Test
+    fun stageShapesGivesOnePerStageWithScopeEvolution() {
+        val source =
+            "FROM events\n" +
+                "    |> WHERE flagged\n" +
+                "    |> AGGREGATE count(*) AS c GROUP BY g\n" +
+                "    |> ORDER BY c DESC"
+        val fragment = SqlFragment(source, "bigquery")
+        val catalog = ShapeCatalog(
+            tables = mapOf(
+                "events" to Shape.of("g" to "INT", "flagged" to "BOOLEAN"),
+            ),
+        )
+        val shapes = fragment.stageShapes(catalog)
+
+        // One shape per stage (WHERE, AGGREGATE, ORDER BY).
+        assertEquals(fragment.stages.size, shapes.size)
+        assertEquals(3, shapes.size)
+
+        // WHERE is shape-preserving: still the source columns.
+        assertEquals(listOf("g", "flagged"), shapes[0].columns.map { it.name })
+        // AGGREGATE reshapes to the grouped projection — the alias `c` enters scope HERE,
+        // not before (the over-offer bug fix): it is absent from shapes[0].
+        assertEquals(listOf("g", "c"), shapes[1].columns.map { it.name })
+        assertFalse(shapes[0].columns.any { it.name == "c" }, "alias c not in scope before AGGREGATE")
+        // ORDER BY is shape-preserving: carries the aggregate shape forward.
+        assertEquals(listOf("g", "c"), shapes[2].columns.map { it.name })
+    }
+
+    @Test
+    fun stageShapesEmptyForNonPipe() {
+        assertTrue(SqlFragment("SELECT 1 AS a", "duckdb").stageShapes().isEmpty())
     }
 }
