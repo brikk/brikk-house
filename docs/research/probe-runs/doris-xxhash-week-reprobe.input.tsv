@@ -1,0 +1,7 @@
+fn	clickhouse_call	clickhouse_value	doris_call
+xxhash_32	xxHash32('abc')	852579327	xxhash_32('abc')
+xxhash_32_empty	xxHash32('')	46947589	xxhash_32('')
+xxhash_64	xxHash64('abc')	4952883123889572249	xxhash_64('abc')
+week_iso_boundary	toISOWeek(toDate('2023-01-01'))	52	week('2023-01-01')
+week_mode0	week(toDate('2023-01-01'))	1	week('2023-01-01')
+week_mid	toISOWeek(toDate('2023-06-15'))	24	week('2023-06-15')
