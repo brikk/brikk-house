@@ -128,6 +128,19 @@ class ClickhouseSourceAwareTransformsTest {
                 "SELECT week(d)" to "SELECT WEEK(d)",
                 "SELECT translate(a, b, c)" to "SELECT TRANSLATE(a, b, c)",
             ),
+            // Doris/Trino cross-dialect renames target ClickHouse; their OWN generators must
+            // still render these faithfully same-dialect (regression net — no local engine).
+            "doris" to mapOf(
+                "SELECT lower(x)" to "SELECT LOWER(x)",
+                "SELECT round(x, 2)" to "SELECT ROUND(x, 2)",
+                "SELECT week(d)" to "SELECT WEEK(d)",
+                "SELECT translate(a, b, c)" to "SELECT TRANSLATE(a, b, c)",
+            ),
+            "trino" to mapOf(
+                "SELECT lower(x)" to "SELECT LOWER(x)",
+                "SELECT round(x, 2)" to "SELECT ROUND(x, 2)",
+                "SELECT translate(a, b, c)" to "SELECT TRANSLATE(a, b, c)",
+            ),
         )
         for ((dialect, cases) in checks) {
             for ((input, expected) in cases) {

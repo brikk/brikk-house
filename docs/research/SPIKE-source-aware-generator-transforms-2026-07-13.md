@@ -33,8 +33,18 @@ Golden pins in `ClickhouseSourceAwareTransformsTest` incl. the **pipe-desugar re
   the Length node keeps byte-`length` vs codepoint-`CHAR_LENGTH`), so the §3 "Length→CHAR_LENGTH
   CORRUPT" concern does NOT manifest on CH→CH — pinned by the golden test.
 
-Still open: `age`/`to_days` (genuinely unmappable), the direct Doris `xxhash_32`/`week`
-re-probes (need live Doris), and extending the golden audit to the remaining dialects.
+### §1 mechanical differential audit RESULT (2026-07-14)
+
+Ran the spike's recommended audit on the local engines: 40 native semantic-sensitive calls
+(concrete args) round-tripped X→X through brikk, then executed BOTH the input and the
+round-tripped output on the engine and diffed. **clickhouse (chdb 26.5.1.1) + duckdb 1.5.4:
+40 probed, 0 semantic changes.** The source-aware-gated functions (lower/upper/week/translate/
+round/bin) all stay faithful same-dialect, and no other transform corrupts a same-dialect
+round-trip. The golden test now also pins Doris/Trino same-dialect faithfulness (string-level;
+those engines aren't local). Trino/Doris engine-level audit remains for the doris-ducklake agent.
+
+Still open: `age`/`to_days` (genuinely unmappable) and the direct Doris `xxhash_32`/`week`
+re-probes (need live Doris).
 
 ---
 
