@@ -435,12 +435,12 @@
     {
       "duckdb": "round",
       "clickhouse": "round",
-      "verdict": "divergent",
-      "hazard": "ClickHouse round() uses banker's rounding (round-half-to-EVEN): round(2.5)=2, round(-2.5)=-2; DuckDB rounds half-AWAY-from-zero: 3 and -3. roundBankers matches ClickHouse round.",
+      "verdict": "identical",
+      "hazard": "DuckDB round() is half-away-from-zero; ClickHouse round() is banker's (half-even). The SOURCE-AWARE generator now emits an explicit half-away shim for duckdb->clickhouse (sign(x)*floor(abs(x)*pow(10,d)+0.5)/pow(10,d)) — live-verified equal to DuckDB on 2.5/0.5/-2.5/2.345@2dp/3.5; ClickHouse->ClickHouse stays faithful banker's round. Reconciled identical (generator fix 2026-07-14). NOTE: datetime operands still inherit the 1970 floor caveat (separate).",
       "areas": [
         "numeric"
       ],
-      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers"
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers | source-aware shim 2026-07-14"
     },
     {
       "duckdb": "roundbankers",
@@ -625,13 +625,13 @@
     {
       "duckdb": "bin",
       "clickhouse": "bin",
-      "verdict": "divergent",
-      "hazard": "ClickHouse bin(5)='00000101' (zero-padded to a full byte); DuckDB bin(5)='101' (no leading zeros).",
+      "verdict": "identical",
+      "hazard": "DuckDB bin(x) has no leading zeros; ClickHouse bin(x) zero-pads to a full byte. The SOURCE-AWARE generator now strips leading zeros for duckdb->clickhouse (if(x=0,'0',substring(bin(x),position(bin(x),'1')))) — live-verified equal to DuckDB on 5/0/255/1; ClickHouse->ClickHouse keeps the padded native bin. Reconciled identical (generator fix 2026-07-14).",
       "areas": [
         "numeric",
         "string"
       ],
-      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#bin-padding"
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#bin-padding | source-aware shim 2026-07-14"
     },
     {
       "duckdb": "hex",

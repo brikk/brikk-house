@@ -18,9 +18,33 @@ and doris/trino `translate` → identical; `lower`/`upper` stay divergent (İ/ß
 Golden pins in `ClickhouseSourceAwareTransformsTest` incl. the **pipe-desugar regression**
 (`FROM t |> SELECT lower(x)` now stays `lower`, not `lowerUTF8`). `./kotlin test` green (584).
 
-NOT done (documented backlog): the full per-dialect audit of §3 (e.g. `Length`→`CHAR_LENGTH`
-pre-existing), and the `round`/`bin` half-away/strip-zero shims (need arg-threading, not pure
-renames). The plumbing is now in place for those to be gated the same way.
+### Backlog follow-up (2026-07-14, same day) — round/bin shims + golden test DONE
+
+- **round/bin shims landed** behind the source-aware gate: `Round` half-away shim
+  (`sign(x)*floor(abs(x)*pow(10,d)+0.5)/pow(10,d)`) for `HALF_AWAY_ROUND_SOURCES={duckdb}`,
+  and the `bin` strip-leading-zeros shim for duckdb→clickhouse; both faithful native
+  round/bin on ClickHouse→ClickHouse and on non-half-away sources (MySQL/Trino half-up
+  excluded). Live-verified equal to DuckDB (2.5→3, 0.5→1, -2.5→-3, 3.5→4, 2.345@2dp→2.35;
+  bin 5→'101', 0→'0', 255→'11111111'). Reconciled duckdb `round`/`bin` → identical.
+- **Golden X→X round-trip test added** (`ClickhouseSourceAwareTransformsTest.
+  golden_sameDialectRoundTripFaithful`) — the spike's stated gap: same-dialect round-trip must
+  never apply a semantic-changing rename. Also audited `length`→`LENGTH` /
+  `char_length`→`CHAR_LENGTH`: ClickHouse renders these FAITHFULLY (the `binary=true` flag on
+  the Length node keeps byte-`length` vs codepoint-`CHAR_LENGTH`), so the §3 "Length→CHAR_LENGTH
+  CORRUPT" concern does NOT manifest on CH→CH — pinned by the golden test.
+
+### §1 mechanical differential audit RESULT (2026-07-14)
+
+Ran the spike's recommended audit on the local engines: 40 native semantic-sensitive calls
+(concrete args) round-tripped X→X through brikk, then executed BOTH the input and the
+round-tripped output on the engine and diffed. **clickhouse (chdb 26.5.1.1) + duckdb 1.5.4:
+40 probed, 0 semantic changes.** The source-aware-gated functions (lower/upper/week/translate/
+round/bin) all stay faithful same-dialect, and no other transform corrupts a same-dialect
+round-trip. The golden test now also pins Doris/Trino same-dialect faithfulness (string-level;
+those engines aren't local). Trino/Doris engine-level audit remains for the doris-ducklake agent.
+
+Still open: `age`/`to_days` (genuinely unmappable) and the direct Doris `xxhash_32`/`week`
+re-probes (need live Doris).
 
 ---
 

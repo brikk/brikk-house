@@ -1,0 +1,13 @@
+# doris-xxhash-week-reprobe.results.tsv — live Doris re-probe (FE doris-0.0.0/pr62767-local, BE 4.1.2)
+# columns: fn  doris_value  matches_clickhouse   (diffed vs precomputed clickhouse_value in input)
+# FINDINGS for brikk-sql reconcile:
+#  xxhash_32: 852579327 & 46947589 BOTH match CH xxHash32 -> RE-LAND xxhash_32->xxHash32 rename, flip hazard to conditionally-equivalent.
+#  xxhash_64: 8696274497037089104 != CH 4952883123889572249 -> stays DIVERGENT (confirmed).
+#  week: Doris week('2023-01-01')=1 == CH mode-0 (NOT ISO 52) -> Doris week() is mode-0/Sunday-based == ClickHouse default. KEEP faithful 'week' emit; do NOT add doris to ISO_WEEK_SOURCES.
+fn	doris_value	matches_clickhouse
+xxhash_32	852579327	yes
+xxhash_32_empty	46947589	yes
+xxhash_64	8696274497037089104	no
+week_iso_boundary	1	no
+week_mode0	1	yes
+week_mid	24	yes
