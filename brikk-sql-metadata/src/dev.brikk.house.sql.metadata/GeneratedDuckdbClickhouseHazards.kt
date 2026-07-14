@@ -1055,7 +1055,7 @@ private fun hazardsChunk5(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
     // [204] duckdb: 'weekday' | clickhouse: 'toDayOfWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "DuckDB weekday == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=0 vs ch=7). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        hazard = "DuckDB weekday == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=0 vs ch=7). brikk's ClickHouse generator now emits the toDayOfWeek rename (temporal generator fix 2026-07-14); the numbering divergence remains (kept divergent).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
     // [205] duckdb: 'dayname' | clickhouse: 'toDayOfWeek'

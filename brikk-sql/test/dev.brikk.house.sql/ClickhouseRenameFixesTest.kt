@@ -68,6 +68,19 @@ class ClickhouseRenameFixesTest {
         assertEquals("SELECT arrayUnion(a, b)", ch("SELECT array_union(a, b)", "doris"))
     }
 
+    // -- Group 2: temporal to<Part> (DuckDB + Doris) -------------------------------
+
+    @Test
+    fun temporal_toPart() {
+        // Base emitted DAY_OF_MONTH / DAY_OF_YEAR (underscore forms ClickHouse rejects).
+        assertEquals("SELECT toDayOfMonth(d)", ch("SELECT dayofmonth(d)", "duckdb"))
+        assertEquals("SELECT toDayOfYear(d)", ch("SELECT dayofyear(d)", "duckdb"))
+        assertEquals("SELECT toMonday(d)", ch("SELECT to_monday(d)", "doris"))
+        // weekday: valid name emitted, numbering divergence (Sun=0/6 vs ISO) stays a hazard.
+        assertEquals("SELECT toDayOfWeek(d)", ch("SELECT weekday(d)", "duckdb"))
+        assertEquals("SELECT toDayOfWeek(d)", ch("SELECT weekday(d)", "doris"))
+    }
+
     // -- Round-trip safety: ClickHouse native names are unchanged ------------------
 
     @Test
@@ -76,6 +89,7 @@ class ClickhouseRenameFixesTest {
             "arraySort(a)", "arrayReverseSort(a)", "arrayIntersect(a, b)", "arrayUniq(a)",
             "arrayCompact(a)", "arrayExcept(a, b)", "hasAll(a, b)", "hasAny(a, b)",
             "arrayElement(a, i)", "arrayDotProduct(a, b)",
+            "toDayOfMonth(d)", "toDayOfYear(d)", "toDayOfWeek(d)",
         )) {
             assertEquals("SELECT $call", transpile("SELECT $call", read = "clickhouse", write = "clickhouse"))
         }
@@ -92,5 +106,10 @@ class ClickhouseRenameFixesTest {
         // divergent renames keep guarding despite the valid emitted name
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "list_element")?.verdict)
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("doris", "clickhouse", "array_union")?.verdict)
+        // temporal
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "dayofmonth")?.verdict)
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("doris", "clickhouse", "to_monday")?.verdict)
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "weekday")?.verdict)
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("doris", "clickhouse", "weekday")?.verdict)
     }
 }

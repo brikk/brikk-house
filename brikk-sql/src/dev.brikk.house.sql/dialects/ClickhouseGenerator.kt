@@ -816,6 +816,9 @@ open class ClickhouseGenerator(
             "array_reverse_sort" to "arrayReverseSort",
             "array_shuffle" to "arrayShuffle", // divergent (non-determinism) — hazard kept
             "array_union" to "arrayUnion", // divergent — hazard kept
+            // -- temporal (Doris/DuckDB) -> ClickHouse to<Part> --
+            "to_monday" to "toMonday",
+            "weekday" to "toDayOfWeek", // divergent (Sun=0/6 vs ISO Mon=1..Sun=7) — hazard kept
         )
 
 
@@ -980,6 +983,13 @@ open class ClickhouseGenerator(
             // so the rename preserves ClickHouse semantics; a residual numbering divergence
             // vs DuckDB (Sunday=0) remains and is kept as a hazard for the cross-dialect case.
             reg(DayOfWeek::class) { e -> func("toDayOfWeek", e.thisArg) }
+            // Temporal to<Part> renames (DuckDB/Doris/Trino source -> ClickHouse). The base
+            // rendered these canonical nodes as DAY_OF_MONTH / DAY_OF_YEAR, which ClickHouse
+            // rejects (no underscore form). toDayOfMonth/toDayOfYear are the real names
+            // (probe-verified equal, chdb 26.5.1.1 + DuckDB 1.5.4). SAFE for CH->CH: those
+            // names parse to Anonymous, not these nodes. See CLICKHOUSE-rename-map.md.
+            reg(DayOfMonth::class) { e -> func("toDayOfMonth", e.thisArg) }
+            reg(DayOfYear::class) { e -> func("toDayOfYear", e.thisArg) }
             // BUGS-clickhouse-generator-mappings row 11 (P2): the leaked internal node name
             // TIME_TO_UNIX does not exist in ClickHouse. toUnixTimestamp is the real name.
             reg(TimeToUnix::class) { e -> func("toUnixTimestamp", e.thisArg) }

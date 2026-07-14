@@ -1734,7 +1734,7 @@
       "doris": "to_monday",
       "clickhouse": "toMonday",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toMonday (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toMonday (rename). brikk's ClickHouse generator now emits toMonday (temporal generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -1766,7 +1766,7 @@
       "doris": "weekday",
       "clickhouse": "toDayOfWeek",
       "verdict": "divergent",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='6' vs ch='7'). ClickHouse name toDayOfWeek (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='6' vs ch='7'). ClickHouse name toDayOfWeek (rename). brikk's ClickHouse generator now emits toDayOfWeek (temporal generator fix 2026-07-14); the numbering divergence remains (kept divergent).",
       "areas": [
         "auto",
         "rename"

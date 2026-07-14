@@ -854,7 +854,7 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [170] doris: 'to_monday' | clickhouse: 'toMonday'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toMonday (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toMonday (rename). brikk's ClickHouse generator now emits toMonday (temporal generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [171] doris: 'translate' | clickhouse: 'translate'
@@ -869,7 +869,7 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [173] doris: 'weekday' | clickhouse: 'toDayOfWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='6' vs ch='7'). ClickHouse name toDayOfWeek (rename; brikk may not yet emit it — certify unmappable check guards).",
+        hazard = "Auto-probed Doris vs ClickHouse. Values diverge (doris='6' vs ch='7'). ClickHouse name toDayOfWeek (rename). brikk's ClickHouse generator now emits toDayOfWeek (temporal generator fix 2026-07-14); the numbering divergence remains (kept divergent).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [174] doris: 'weekofyear' | clickhouse: 'toISOWeek'

@@ -2112,7 +2112,7 @@
       "duckdb": "weekday",
       "clickhouse": "toDayOfWeek",
       "verdict": "divergent",
-      "hazard": "DuckDB weekday == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=0 vs ch=7). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB weekday == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=0 vs ch=7). brikk's ClickHouse generator now emits the toDayOfWeek rename (temporal generator fix 2026-07-14); the numbering divergence remains (kept divergent).",
       "areas": [
         "auto",
         "rename"
