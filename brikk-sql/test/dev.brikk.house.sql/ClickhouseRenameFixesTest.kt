@@ -164,6 +164,38 @@ class ClickhouseRenameFixesTest {
             transpile("SELECT translateUTF8(x, f, t)", read = "clickhouse", write = "clickhouse"))
     }
 
+    // -- Group 4b: clickhouse -> duckdb reverse direction --------------------------
+
+    private fun dk(sql: String): String = transpile(sql, read = "clickhouse", write = "duckdb")
+
+    @Test
+    fun clickhouseToDuckdb_reverse() {
+        // ClickHouse camelCase array/bit names parse to Anonymous; DuckDB has no such name.
+        // Emit the DuckDB spelling (uppercase = DuckDB is case-insensitive, all run).
+        assertEquals("SELECT ARRAY_SORT(a)", dk("SELECT arraySort(a)"))
+        assertEquals("SELECT ARRAY_REVERSE_SORT(a)", dk("SELECT arrayReverseSort(a)"))
+        assertEquals("SELECT LIST_UNIQUE(a)", dk("SELECT arrayUniq(a)"))
+        assertEquals("SELECT ARRAY_INTERSECT(a, b)", dk("SELECT arrayIntersect(a, b)"))
+        assertEquals("SELECT LIST_DOT_PRODUCT(a, b)", dk("SELECT arrayDotProduct(a, b)"))
+        assertEquals("SELECT LIST_HAS_ALL(a, b)", dk("SELECT hasAll(a, b)"))
+        assertEquals("SELECT LIST_HAS_ANY(a, b)", dk("SELECT hasAny(a, b)"))
+        assertEquals("SELECT LIST_ELEMENT(a, i)", dk("SELECT arrayElement(a, i)")) // divergent
+        assertEquals("SELECT BIT_COUNT(x)", dk("SELECT bitCount(x)"))
+        assertEquals("SELECT GAMMA(x)", dk("SELECT tgamma(x)"))
+        assertEquals("SELECT JARO_SIMILARITY(a, b)", dk("SELECT jaroSimilarity(a, b)"))
+        assertEquals("SELECT DAYOFMONTH(d)", dk("SELECT toDayOfMonth(d)"))
+        assertEquals("SELECT DAYOFYEAR(d)", dk("SELECT toDayOfYear(d)"))
+    }
+
+    @Test
+    fun duckdb_roundTripUnchanged() {
+        // The reverse-map keys are ClickHouse camelCase names DuckDB never emits, so native
+        // DuckDB generation is untouched.
+        assertEquals("SELECT BIT_COUNT(x)", transpile("SELECT bit_count(x)", read = "duckdb", write = "duckdb"))
+        assertEquals("SELECT GAMMA(x)", transpile("SELECT gamma(x)", read = "duckdb", write = "duckdb"))
+        assertEquals("SELECT LIST_ELEMENT(a, i)", transpile("SELECT list_element(a, i)", read = "duckdb", write = "duckdb"))
+    }
+
     // -- Round-trip safety: ClickHouse native names are unchanged ------------------
 
     @Test

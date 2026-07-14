@@ -132,6 +132,20 @@ open class DuckdbGenerator(
         return func(name, *flattened.toTypedArray())
     }
 
+    // Cross-dialect function RENAMES that reach the DuckDB generator as an unmapped
+    // Anonymous call (chiefly ClickHouse->DuckDB: ClickHouse's camelCase array/bit names
+    // parse to Anonymous, and DuckDB has no such name). Rewrite to the DuckDB spelling.
+    // SAFE for DuckDB->DuckDB: the keys are ClickHouse camelCase names that DuckDB neither
+    // parses nor accepts (verified vs DuckDB 1.5.4), so they never fire on native DuckDB
+    // input. Reverse of ClickhouseGenerator.ANON_FUNC_RENAMES; probe-verified value-equal
+    // (chdb 26.5.1.1 + DuckDB 1.5.4). See CLICKHOUSE-rename-map.md.
+    override fun anonymousSql(expression: Anonymous): String {
+        ANON_FUNC_RENAMES[expression.name]?.let { target ->
+            return func(target, *expression.expressionsArg.toTypedArray())
+        }
+        return super.anonymousSql(expression)
+    }
+
     // ------------------------------------------------------------------
     // Methods (sqlglot: DuckDBGenerator methods)
     // ------------------------------------------------------------------
@@ -1572,6 +1586,27 @@ open class DuckdbGenerator(
     // sqlglot: DuckDBGenerator TRANSFORMS via companion (see below)
 
     companion object {
+
+        // Reverse-direction (ClickHouse -> DuckDB) function-name renames applied to unmapped
+        // Anonymous calls. Key = the ClickHouse spelling (as it parses to Anonymous), value
+        // = the DuckDB name. Only names DuckDB does NOT already accept are listed (gcd/lcm/
+        // isFinite work verbatim in DuckDB and are omitted). All value-equal live-probed
+        // (chdb 26.5.1.1 + DuckDB 1.5.4); arrayElement stays a divergent hazard (indexing).
+        val ANON_FUNC_RENAMES: Map<String, String> = mapOf(
+            "arraySort" to "array_sort",
+            "arrayReverseSort" to "array_reverse_sort",
+            "arrayUniq" to "list_unique",
+            "arrayIntersect" to "array_intersect",
+            "arrayDotProduct" to "list_dot_product",
+            "hasAll" to "list_has_all",
+            "hasAny" to "list_has_any",
+            "arrayElement" to "list_element", // divergent (indexing edges) — hazard kept
+            "bitCount" to "bit_count",
+            "tgamma" to "gamma",
+            "jaroSimilarity" to "jaro_similarity",
+            "toDayOfMonth" to "dayofmonth",
+            "toDayOfYear" to "dayofyear",
+        )
 
         // sqlglot: expressions.datatypes.DataType type groups (the members needed here)
         val INTEGER_TYPES: Set<DType> = setOf(
