@@ -130,7 +130,7 @@ class HazardRegistryTest {
         // differential-probe-2026-07-13; ClickHouse 26.5.1.1 via chdb vs DuckDB 1.5.4);
         // counts pinned to the ingested registries.
         assertEquals(213, DUCKDB_CLICKHOUSE_HAZARD_ENTRIES.size)
-        assertEquals(110, TRINO_CLICKHOUSE_HAZARD_ENTRIES.size)
+        assertEquals(134, TRINO_CLICKHOUSE_HAZARD_ENTRIES.size)
         assertTrue(DUCKDB_TO_CLICKHOUSE_HAZARDS.isNotEmpty())
         assertTrue(CLICKHOUSE_TO_DUCKDB_HAZARDS.isNotEmpty())
         assertTrue(TRINO_TO_CLICKHOUSE_HAZARDS.isNotEmpty())

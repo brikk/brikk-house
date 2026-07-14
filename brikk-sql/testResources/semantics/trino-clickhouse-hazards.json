@@ -1145,6 +1145,256 @@
         "aggregate"
       ],
       "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "trino": "bitwise_left_shift",
+      "clickhouse": "bitShiftLeft",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftLeft (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "bitwise_right_shift",
+      "clickhouse": "bitShiftRight",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftRight (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "bitwise_xor",
+      "clickhouse": "bitXor",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "ceil",
+      "clickhouse": "CEIL",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "ceiling",
+      "clickhouse": "CEIL",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "cosine_distance",
+      "clickhouse": "cosineDistance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "day_of_month",
+      "clickhouse": "toDayOfMonth",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfMonth (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "day_of_week",
+      "clickhouse": "toDayOfWeek",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfWeek (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "day_of_year",
+      "clickhouse": "toDayOfYear",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfYear (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "dot_product",
+      "clickhouse": "dotProduct",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is dotProduct (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "euclidean_distance",
+      "clickhouse": "L2Distance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "floor",
+      "clickhouse": "FLOOR",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "is_finite",
+      "clickhouse": "isFinite",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isFinite (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "is_infinite",
+      "clickhouse": "isInfinite",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isInfinite (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "is_nan",
+      "clickhouse": "isNaN",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "last_day_of_month",
+      "clickhouse": "LAST_DAY",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "levenshtein_distance",
+      "clickhouse": "editDistance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "sequence",
+      "clickhouse": "range",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values diverge (trino='[5]' vs ch='[]'). ClickHouse name is range (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "split",
+      "clickhouse": "splitByString",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "starts_with",
+      "clickhouse": "startsWith",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "strpos",
+      "clickhouse": "POSITION",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "to_hex",
+      "clickhouse": "HEX",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Auto-probed Trino vs ClickHouse. Digest/bytes agree, representation differs.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "translate",
+      "clickhouse": "translate",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is translate (rename; brikk may not yet emit it — certify's unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+    },
+    {
+      "trino": "week_of_year",
+      "clickhouse": "toISOWeek",
+      "verdict": "identical",
+      "hazard": "Auto-probed Trino vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
     }
   ]
 }
