@@ -54,3 +54,10 @@ settings:
       freeJvmArgs: ["--enable-native-access=ALL-UNNAMED"]
   kotlin:
     serialization: json
+  internal:
+    # excludeDependencies is per-module in Amper/Toolchain 0.11 (it does not propagate
+    # through the exported brikk-sql-verify dep), so re-declare the ShardingSphere Groovy
+    # exclusion here too — otherwise this module (and the packaged artifact) re-pulls the
+    # ~7.2 MB org.apache.groovy:groovy that only the unused inline-expression engine needs.
+    excludeDependencies:
+      - org.apache.groovy:groovy

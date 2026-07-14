@@ -55,3 +55,11 @@ settings:
       version: 25
   kotlin:
     serialization: json
+  internal:
+    # ShardingSphere pulls org.apache.groovy:groovy (~7.2 MB) solely for its inline
+    # sharding-expression engine (InlineExpressionParser), which the SQL grammar/parse path
+    # used by ShardingSphereVerifier never touches. Exclude it — the advisory verifier's
+    # accept/reject suite stays green without it. (settings.internal.excludeDependencies:
+    # temporary Amper/Toolchain 0.11 mechanism for transitive exclusions, "<group>:<artifact>".)
+    excludeDependencies:
+      - org.apache.groovy:groovy
