@@ -80,6 +80,63 @@ class ClickhouseSourceAwareTransformsTest {
         )
     }
 
+    // -- source-aware shims: round (half-away) + bin (strip zero-pad) --------------
+
+    @Test
+    fun roundBin_shims_duckdbOnly() {
+        // DuckDB round is half-away-from-zero, bin has no leading zeros; emit shims (live-
+        // verified equal to DuckDB). ClickHouse stays faithful native round/bin. MySQL/Trino
+        // round is half-up (differs on negatives) so it is NOT shimmed — faithful passthrough.
+        assertEquals(
+            "SELECT sign(x) * floor(abs(x) * pow(10, 0) + 0.5) / pow(10, 0)",
+            toCh("SELECT round(x)", "duckdb"),
+        )
+        assertEquals(
+            "SELECT sign(x) * floor(abs(x) * pow(10, 2) + 0.5) / pow(10, 2)",
+            toCh("SELECT round(x, 2)", "duckdb"),
+        )
+        assertEquals(
+            "SELECT if(x = 0, '0', substring(bin(x), position(bin(x), '1')))",
+            toCh("SELECT bin(x)", "duckdb"),
+        )
+        // faithful CH + non-half-away sources
+        assertEquals("SELECT round(x)", toCh("SELECT round(x)", "clickhouse"))
+        assertEquals("SELECT bin(x)", toCh("SELECT bin(x)", "clickhouse"))
+    }
+
+    // -- GOLDEN: X->X round-trip must be faithful for semantic-sensitive functions --
+    // (The spike's stated gap: no X->X identity tests, which let the pipe-desugar bug in.
+    //  A same-dialect round-trip must NEVER apply a semantic-changing rename.)
+
+    @Test
+    fun golden_sameDialectRoundTripFaithful() {
+        val checks = mapOf(
+            "clickhouse" to mapOf(
+                "SELECT lower(x)" to "SELECT lower(x)",
+                "SELECT upper(x)" to "SELECT upper(x)",
+                "SELECT length(x)" to "SELECT LENGTH(x)",
+                "SELECT char_length(x)" to "SELECT CHAR_LENGTH(x)",
+                "SELECT round(x, 2)" to "SELECT round(x, 2)",
+                "SELECT bin(x)" to "SELECT bin(x)",
+                "SELECT week(d)" to "SELECT week(d)",
+                "SELECT translate(a, b, c)" to "SELECT translate(a, b, c)",
+            ),
+            "duckdb" to mapOf(
+                "SELECT round(x, 2)" to "SELECT ROUND(x, 2)",
+                "SELECT bin(x)" to "SELECT BIN(x)",
+                "SELECT lower(x)" to "SELECT LOWER(x)",
+                "SELECT week(d)" to "SELECT WEEK(d)",
+                "SELECT translate(a, b, c)" to "SELECT TRANSLATE(a, b, c)",
+            ),
+        )
+        for ((dialect, cases) in checks) {
+            for ((input, expected) in cases) {
+                assertEquals(expected, transpile(input, read = dialect, write = dialect),
+                    "same-dialect round-trip changed semantics for $dialect: $input")
+            }
+        }
+    }
+
     // -- hazard reconciliation ------------------------------------------------------
 
     @Test

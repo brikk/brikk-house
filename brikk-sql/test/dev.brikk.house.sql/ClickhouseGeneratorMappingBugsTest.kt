@@ -129,15 +129,19 @@ class ClickhouseGeneratorMappingBugsTest {
     // -- Deferred (documented in the BUGS file) -------------------------------------
 
     @Test
+    fun sourceAwareShims_round_bin() {
+        // round / bin (P1): now LANDED behind source-aware gating (the policy call the BUGS
+        // file deferred). duckdb->clickhouse emits the live-verified half-away / strip-zeros
+        // shims; ClickHouse->ClickHouse stays faithful native round/bin. See
+        // ClickhouseSourceAwareTransformsTest for the round-trip + engine-value pins.
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "round")?.verdict)
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "bin")?.verdict)
+    }
+
+    @Test
     fun deferred_stayGuarded() {
-        // round / bin (P1): verified half-away / strip-leading-zeros shims EXIST (recorded
-        // in the BUGS file), but `round` and `bin` are ClickHouse-NATIVE names, so a
-        // source-unaware generator rewrite would regress ClickHouse->ClickHouse numeric/
-        // binary results -- deferred pending that policy call. age (return-type mismatch:
-        // DuckDB interval vs ClickHouse scalar) and to_days (parser-level source ambiguity)
-        // are genuinely unmappable here. All stay divergent-and-guarded.
-        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "round")?.verdict)
-        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "bin")?.verdict)
+        // age (return-type mismatch: DuckDB interval vs ClickHouse scalar) and to_days
+        // (parser-level source ambiguity) are genuinely unmappable here — stay guarded.
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "age")?.verdict)
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "to_days")?.verdict)
     }

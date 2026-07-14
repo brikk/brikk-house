@@ -743,6 +743,17 @@ open class ClickhouseGenerator(
                 return "(${func("toSecond", t)} * 1000 + ${func("toMillisecond", t)})"
             }
         }
+        // SOURCE-AWARE bin shim: DuckDB bin(5)='101' (no leading zeros); ClickHouse
+        // bin(5)='00000101' (zero-padded to a full byte). For duckdb->clickhouse strip the
+        // leading zeros (live-verified equal to DuckDB on 5/0/255/1); ClickHouse->ClickHouse
+        // keeps the padded native bin.
+        if (expression.name.equals("bin", ignoreCase = true) &&
+            isCrossDialectFrom("clickhouse") &&
+            expression.expressionsArg.size == 1
+        ) {
+            val xs = sql(expression.expressionsArg[0])
+            return "if($xs = 0, '0', substring(bin($xs), position(bin($xs), '1')))"
+        }
         // Cross-dialect function RENAMES that reach the ClickHouse generator as an
         // unmapped Anonymous call (the source parser has no canonical node for them).
         // ClickHouse has the SAME function under a different spelling (camelCase / IP-cased);
@@ -774,6 +785,23 @@ open class ClickhouseGenerator(
         return func(fn, expression.thisArg, expression.args["expression"], expression.args["replacement"])
     }
 
+    // SOURCE-AWARE round shim: DuckDB round() is half-away-from-zero (round(2.5)=3);
+    // ClickHouse round() is banker's/half-even (round(2.5)=2). For duckdb->clickhouse emit an
+    // explicit half-away expression (live-verified equal to DuckDB on 2.5/0.5/-2.5/2dp/3.5);
+    // ClickHouse->ClickHouse (and other sources) stay faithful banker's round. Only sources
+    // whose round is half-away-from-zero are listed (HALF_AWAY_ROUND_SOURCES); MySQL/Trino
+    // half-up would differ on negatives, so they are NOT rewritten.
+    open fun clickhouseRoundSql(expression: Round): String {
+        val truncate = expression.args["truncate"] == true
+        if (!truncate && sourceDialect?.lowercase() in HALF_AWAY_ROUND_SOURCES) {
+            val xSql = sql(expression.thisArg)
+            val decimals = expression.args["decimals"] as? Expression
+            val dSql = if (decimals != null) sql(decimals) else "0"
+            return "sign($xSql) * floor(abs($xSql) * pow(10, $dSql) + 0.5) / pow(10, $dSql)"
+        }
+        return functionFallbackSql(expression as Func)
+    }
+
     // DuckDB list_sort/array_sort/list_reverse_sort/array_reverse_sort parse to the
     // SortArray node (this, asc). ClickHouse renders ascending as arraySort and descending
     // as arrayReverseSort (probe-verified equal to DuckDB, chdb + DuckDB 1.5.4). SAFE for
@@ -794,6 +822,11 @@ open class ClickhouseGenerator(
         // toISOWeek, not the Sunday-based default week/toWeek). MySQL-family week() is mode 0
         // and matches ClickHouse's default, so it is NOT listed (stays faithful `week`).
         private val ISO_WEEK_SOURCES: Set<String> = setOf("duckdb")
+
+        // Source dialects whose round() is half-away-from-zero (round(2.5)=3), so the
+        // ClickHouse target needs an explicit half-away shim instead of native banker's
+        // rounding. MySQL/Trino half-up differ on negatives and are intentionally excluded.
+        private val HALF_AWAY_ROUND_SOURCES: Set<String> = setOf("duckdb")
 
         // Cross-dialect function-name RENAMES applied to unmapped Anonymous calls when
         // targeting ClickHouse. Key = lowercased SOURCE function name (DuckDB / Doris /
@@ -1031,6 +1064,7 @@ open class ClickhouseGenerator(
                 val name = if (ch().isCrossDialectFrom("clickhouse")) "translateUTF8" else "translate"
                 func(name, e.thisArg, e.args["from_"], e.args["to"])
             }
+            reg(Round::class) { e -> ch().clickhouseRoundSql(e as Round) }
             // BUGS-clickhouse-generator-mappings rows 3/12 (P1/P2): natural-log collision
             // + invalid 2-arg LOG. See clickhouseLogSql.
             reg(Log::class) { e -> ch().clickhouseLogSql(e as Log) }

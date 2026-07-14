@@ -138,7 +138,8 @@ class HazardRegistryTest {
         // Live-probed verdict spot checks:
         // ClickHouse length() counts bytes; lower() is ASCII-only.
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "length")?.verdict)
-        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "round")?.verdict)
+        // duckdb round reconciled to identical: source-aware half-away shim (2026-07-14).
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "round")?.verdict)
         // ClickHouse regexp_replace = replace-all, matching Trino (differs from DuckDB).
         assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("trino", "clickhouse", "regexp_replace")?.verdict)
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("trino", "clickhouse", "date_format")?.verdict)
