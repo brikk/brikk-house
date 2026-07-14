@@ -800,6 +800,9 @@ open class MysqlGenerator(
             reg(BitwiseOrAgg::class) { e -> mg().renameFuncSql("BIT_OR", e) }
             reg(BitwiseXorAgg::class) { e -> mg().renameFuncSql("BIT_XOR", e) }
             reg(BitwiseCount::class) { e -> mg().renameFuncSql("BIT_COUNT", e) }
+            // MySQL/Doris reject a bare COUNT(); normalize zero-arg count() -> COUNT(*)
+            // (e.g. transpiling ClickHouse count()). Inherited by DorisGenerator.
+            reg(Count::class) { e -> countStarSql(e as Count) }
             reg(Chr::class) { e -> chrSql(e as Chr, "CHAR") }
             reg(CurrentDate::class) { e -> mg().noParenCurrentDateSql(e as CurrentDate) }
             reg(CurrentVersion::class) { e -> mg().renameFuncSql("VERSION", e) }

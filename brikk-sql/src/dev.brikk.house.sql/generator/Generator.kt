@@ -4946,6 +4946,21 @@ open class Generator(
     }
 
     // sqlglot: Generator.function_fallback_sql
+    /**
+     * Renderer for [Count] that normalizes the zero-arg form `count()` to `COUNT(*)`.
+     * ClickHouse allows a bare `count()` (== count all rows); most engines (MySQL/Doris,
+     * Trino/Presto, the SQL standard) REJECT `COUNT()` and require `COUNT(*)` or an argument.
+     * Registered in the TRANSFORMS of the generators that need it (Mysql/Presto and thus
+     * Doris/Trino); ClickHouse and DuckDB keep their native bare form. Any `this`/argument
+     * (including `*`, an expression, or DISTINCT ...) falls through to the normal fallback.
+     */
+    open fun countStarSql(expression: Count): String {
+        if (expression.args["this"] == null && expression.expressionsArg.isEmpty()) {
+            return "COUNT(*)"
+        }
+        return functionFallbackSql(expression)
+    }
+
     open fun functionFallbackSql(expression: Func): String {
         val node = expression as Expression
         val args = mutableListOf<kotlin.Any?>()
