@@ -1128,6 +1128,9 @@ open class PrestoGenerator(
             fun Generator.pg(): PrestoGenerator = this as PrestoGenerator
 
             reg(AnyValue::class) { e -> pg().renameFuncSql("ARBITRARY", e) }
+            // Trino/Presto reject a bare COUNT(); normalize zero-arg count() -> COUNT(*)
+            // (e.g. transpiling ClickHouse count()). Inherited by TrinoGenerator.
+            reg(Count::class) { e -> countStarSql(e as Count) }
             reg(ApproxQuantile::class) { e ->
                 func(
                     "APPROX_PERCENTILE",
