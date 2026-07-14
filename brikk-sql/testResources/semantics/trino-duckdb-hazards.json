@@ -2517,6 +2517,46 @@
         "null"
       ],
       "provenance": "RESEARCH-function-mapping.md#string-functions"
+    },
+    {
+      "trino": "stddev",
+      "duckdb": "stddev",
+      "verdict": "identical",
+      "hazard": "Bare stddev() DEFAULT differs: Doris is POPULATION (n); DuckDB/Trino/ClickHouse are SAMPLE (n-1). Same input -> 1.356466 vs 1.516575. Use stddev_pop/stddev_samp explicitly to be safe.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "trino": "variance",
+      "duckdb": "variance",
+      "verdict": "identical",
+      "hazard": "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "trino": "stddev_samp",
+      "duckdb": "stddev_samp",
+      "verdict": "identical",
+      "hazard": "Explicit sample stddev agrees.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "trino": "stddev_pop",
+      "duckdb": "stddev_pop",
+      "verdict": "identical",
+      "hazard": "Explicit population stddev agrees.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
     }
   ]
 }

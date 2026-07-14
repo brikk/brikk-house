@@ -1727,6 +1727,16 @@
         "datetime"
       ],
       "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "variance",
+      "clickhouse": "varSamp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
     }
   ]
 }

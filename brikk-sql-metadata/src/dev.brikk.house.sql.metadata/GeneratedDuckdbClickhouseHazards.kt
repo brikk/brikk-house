@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 167 probe-verified (duckdb, clickhouse) pair verdicts, in JSON order. */
+/** The 168 probe-verified (duckdb, clickhouse) pair verdicts, in JSON order. */
 internal val DUCKDB_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -864,9 +864,14 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         hazard = "EXTRACT(part FROM d) agrees for year.",
         areas = listOf("datetime"),
         provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+    // [167] duckdb: 'variance' | clickhouse: 'varSamp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
 )
 
-/** duckdb->clickhouse lookup: 167 keys (DuckDB-side names) over 167 entries. */
+/** duckdb->clickhouse lookup: 168 keys (DuckDB-side names) over 168 entries. */
 internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("ACOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[66])
@@ -1028,6 +1033,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("UNHEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[62])
     put("UPPER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[1])
     put("UUID", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[150])
+    put("VARIANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[167])
     put("VAR_POP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[120])
     put("VAR_SAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[121])
     put("VERSION", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[147])
@@ -1037,7 +1043,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("YEARWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[95])
 }
 
-/** clickhouse->duckdb lookup: 152 keys (ClickHouse-side names) over 167 entries. */
+/** clickhouse->duckdb lookup: 152 keys (ClickHouse-side names) over 168 entries. */
 internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("ACOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[66])
@@ -1189,6 +1195,6 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("UNHEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[62])
     put("UPPER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[1])
     put("VARPOP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[120])
-    put("VARSAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[121])
+    put("VARSAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[167])
     put("VERSION", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[147])
 }

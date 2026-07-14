@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 242 probe-verified (trino, duckdb) pair verdicts, in JSON order. */
+/** The 246 probe-verified (trino, duckdb) pair verdicts, in JSON order. */
 internal val TRINO_DUCKDB_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -1191,9 +1191,29 @@ private fun hazardsChunk6(): List<FunctionHazard> = listOf(
     FunctionHazard(HazardVerdict.IDENTICAL,
         areas = listOf("string", "null"),
         provenance = "RESEARCH-function-mapping.md#string-functions"),
+    // [242] trino: 'stddev' | duckdb: 'stddev'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Bare stddev() DEFAULT differs: Doris is POPULATION (n); DuckDB/Trino/ClickHouse are SAMPLE (n-1). Same input -> 1.356466 vs 1.516575. Use stddev_pop/stddev_samp explicitly to be safe.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [243] trino: 'variance' | duckdb: 'variance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [244] trino: 'stddev_samp' | duckdb: 'stddev_samp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Explicit sample stddev agrees.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [245] trino: 'stddev_pop' | duckdb: 'stddev_pop'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Explicit population stddev agrees.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
 )
 
-/** trino->duckdb lookup: 386 keys (Trino-side names) over 242 entries. */
+/** trino->duckdb lookup: 386 keys (Trino-side names) over 246 entries. */
 internal val TRINO_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("(NO TRINO EQUIVALENT)", TRINO_DUCKDB_HAZARD_ENTRIES[0])
     put("= <> < <= > >= (COMPARISON)", TRINO_DUCKDB_HAZARD_ENTRIES[1])
@@ -1583,7 +1603,7 @@ internal val TRINO_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("|| (CONCAT OPERATOR)", TRINO_DUCKDB_HAZARD_ENTRIES[241])
 }
 
-/** duckdb->trino lookup: 307 keys (DuckDB-side names) over 242 entries. */
+/** duckdb->trino lookup: 309 keys (DuckDB-side names) over 246 entries. */
 internal val DUCKDB_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("% / MOD", TRINO_DUCKDB_HAZARD_ENTRIES[141])
     put("& OPERATOR", TRINO_DUCKDB_HAZARD_ENTRIES[27])
@@ -1838,6 +1858,7 @@ internal val DUCKDB_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("SPLIT_PART", TRINO_DUCKDB_HAZARD_ENTRIES[188])
     put("SQRT", TRINO_DUCKDB_HAZARD_ENTRIES[190])
     put("STARTS_WITH", TRINO_DUCKDB_HAZARD_ENTRIES[191])
+    put("STDDEV", TRINO_DUCKDB_HAZARD_ENTRIES[242])
     put("STDDEV_POP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
     put("STDDEV_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
     put("STRFTIME", TRINO_DUCKDB_HAZARD_ENTRIES[65])
@@ -1878,6 +1899,7 @@ internal val DUCKDB_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("UUID", TRINO_DUCKDB_HAZARD_ENTRIES[229])
     put("UUID / UUIDV4 / GEN_RANDOM_UUID", TRINO_DUCKDB_HAZARD_ENTRIES[229])
     put("UUIDV4", TRINO_DUCKDB_HAZARD_ENTRIES[229])
+    put("VARIANCE", TRINO_DUCKDB_HAZARD_ENTRIES[243])
     put("VAR_POP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
     put("VAR_POP / VAR_SAMP / STDDEV_POP / STDDEV_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[230])
     put("VAR_SAMP", TRINO_DUCKDB_HAZARD_ENTRIES[230])

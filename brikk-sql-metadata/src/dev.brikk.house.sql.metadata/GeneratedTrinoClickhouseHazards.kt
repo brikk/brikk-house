@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 107 probe-verified (trino, clickhouse) pair verdicts, in JSON order. */
+/** The 110 probe-verified (trino, clickhouse) pair verdicts, in JSON order. */
 internal val TRINO_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2()
@@ -556,13 +556,29 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         hazard = "ClickHouse timezone() -> session zone name; not a Trino-comparable scalar. Session-only.",
         areas = listOf("datetime", "timezone"),
         provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+    // [107] trino: 'variance' | clickhouse: 'varSamp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [108] trino: 'listagg' | clickhouse: 'arrayStringConcat'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "String aggregation agrees ONLY with an explicit ORDER BY (a,a,b,c, NULLs skipped); default ordering is unspecified and separator/function name differ per engine (string_agg/group_concat/listagg/arrayStringConcat).",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [109] trino: 'approx_percentile' | clickhouse: 'median'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Median/50th-percentile agree on simple data but methods differ (exact vs interpolation vs approximate — Trino has only approx_percentile); may diverge on other inputs.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
 )
 
-/** trino->clickhouse lookup: 107 keys (Trino-side names) over 107 entries. */
+/** trino->clickhouse lookup: 110 keys (Trino-side names) over 110 entries. */
 internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[25])
     put("ACOS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[41])
     put("ANY_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[90])
+    put("APPROX_PERCENTILE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[109])
     put("APPROX_TOP_K", TRINO_CLICKHOUSE_HAZARD_ENTRIES[91])
     put("ARRAY_AGG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[89])
     put("ARRAY_REMOVE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[70])
@@ -602,6 +618,7 @@ internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("LAST_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[97])
     put("LEAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[101])
     put("LENGTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[2])
+    put("LISTAGG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[108])
     put("LN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[29])
     put("LOG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[30])
     put("LOG10", TRINO_CLICKHOUSE_HAZARD_ENTRIES[31])
@@ -661,6 +678,7 @@ internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[4])
     put("TRUNCATE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[28])
     put("UPPER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[1])
+    put("VARIANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[107])
     put("VAR_POP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[83])
     put("VAR_SAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[84])
     put("WEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[62])
@@ -669,7 +687,7 @@ internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("YEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[54])
 }
 
-/** clickhouse->trino lookup: 104 keys (ClickHouse-side names) over 107 entries. */
+/** clickhouse->trino lookup: 106 keys (ClickHouse-side names) over 110 entries. */
 internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[25])
     put("ACOS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[41])
@@ -677,6 +695,7 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("ARRAYFILTER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[70])
     put("ARRAYFLATTEN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[71])
     put("ARRAYMAP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[72])
+    put("ARRAYSTRINGCONCAT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[108])
     put("ASIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[42])
     put("ATAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[43])
     put("ATAN2", TRINO_CLICKHOUSE_HAZARD_ENTRIES[44])
@@ -717,6 +736,7 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("MAP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[74])
     put("MAX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[79])
     put("MD5", TRINO_CLICKHOUSE_HAZARD_ENTRIES[19])
+    put("MEDIAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[109])
     put("MIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[78])
     put("MODULO", TRINO_CLICKHOUSE_HAZARD_ENTRIES[26])
     put("NGRAMS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[73])
@@ -772,7 +792,7 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TRUNC", TRINO_CLICKHOUSE_HAZARD_ENTRIES[28])
     put("UPPER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[1])
     put("VARPOP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[83])
-    put("VARSAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[84])
+    put("VARSAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[107])
     put("WIDTHBUCKET", TRINO_CLICKHOUSE_HAZARD_ENTRIES[53])
     put("XXHASH64", TRINO_CLICKHOUSE_HAZARD_ENTRIES[24])
 }

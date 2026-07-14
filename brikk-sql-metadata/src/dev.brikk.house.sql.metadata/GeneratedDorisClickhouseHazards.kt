@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 87 probe-verified (doris, clickhouse) pair verdicts, in JSON order. */
+/** The 94 probe-verified (doris, clickhouse) pair verdicts, in JSON order. */
 internal val DORIS_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2()
@@ -429,11 +429,47 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         hazard = "Doris sha1(x) equals ClickHouse lower(hex(SHA1(x))).",
         areas = listOf("hash"),
         provenance = "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"),
+    // [87] doris: 'stddev' | clickhouse: 'stddev'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Bare stddev() DEFAULT differs: Doris is POPULATION (n); DuckDB/Trino/ClickHouse are SAMPLE (n-1). Same input -> 1.356466 vs 1.516575. Use stddev_pop/stddev_samp explicitly to be safe.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [88] doris: 'variance' | clickhouse: 'varSamp'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [89] doris: 'stddev_samp' | clickhouse: 'stddevSamp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Explicit sample stddev agrees.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [90] doris: 'stddev_pop' | clickhouse: 'stddevPop'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Explicit population stddev agrees.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [91] doris: 'group_concat' | clickhouse: 'arrayStringConcat'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "String aggregation agrees ONLY with an explicit ORDER BY (a,a,b,c, NULLs skipped); default ordering is unspecified and separator/function name differ per engine (string_agg/group_concat/listagg/arrayStringConcat).",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [92] doris: 'array_agg' | clickhouse: 'groupArray'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Array aggregation: elements agree, but NULL inclusion/position and rendering differ (e.g. Doris keeps NULL first, Trino NULL last); not portable without explicit ORDER BY + NULL handling.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [93] doris: 'percentile' | clickhouse: 'median'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Median/50th-percentile agree on simple data but methods differ (exact vs interpolation vs approximate — Trino has only approx_percentile); may diverge on other inputs.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
 )
 
-/** doris->clickhouse lookup: 87 keys (Doris-side names) over 87 entries. */
+/** doris->clickhouse lookup: 94 keys (Doris-side names) over 94 entries. */
 internal val DORIS_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[33])
+    put("ARRAY_AGG", DORIS_CLICKHOUSE_HAZARD_ENTRIES[92])
     put("ARRAY_CONTAINS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[77])
     put("ARRAY_DISTINCT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[81])
     put("ARRAY_JOIN", DORIS_CLICKHOUSE_HAZARD_ENTRIES[79])
@@ -467,6 +503,7 @@ internal val DORIS_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("GCD", DORIS_CLICKHOUSE_HAZARD_ENTRIES[65])
     put("GET_JSON_STRING", DORIS_CLICKHOUSE_HAZARD_ENTRIES[82])
     put("GREATEST", DORIS_CLICKHOUSE_HAZARD_ENTRIES[6])
+    put("GROUP_CONCAT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[91])
     put("HEX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[45])
     put("HOUR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("IF", DORIS_CLICKHOUSE_HAZARD_ENTRIES[43])
@@ -491,6 +528,7 @@ internal val DORIS_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("MONTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[35])
     put("NULLIF", DORIS_CLICKHOUSE_HAZARD_ENTRIES[42])
     put("NVL", DORIS_CLICKHOUSE_HAZARD_ENTRIES[84])
+    put("PERCENTILE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[93])
     put("POW", DORIS_CLICKHOUSE_HAZARD_ENTRIES[29])
     put("POWER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[66])
     put("QUARTER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[70])
@@ -511,6 +549,9 @@ internal val DORIS_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("SPLIT_PART", DORIS_CLICKHOUSE_HAZARD_ENTRIES[20])
     put("SQRT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[59])
     put("STARTS_WITH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[53])
+    put("STDDEV", DORIS_CLICKHOUSE_HAZARD_ENTRIES[87])
+    put("STDDEV_POP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[90])
+    put("STDDEV_SAMP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[89])
     put("SUBSTRING", DORIS_CLICKHOUSE_HAZARD_ENTRIES[12])
     put("TO_DATE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[72])
     put("TRIM", DORIS_CLICKHOUSE_HAZARD_ENTRIES[14])
@@ -518,18 +559,19 @@ internal val DORIS_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("UNHEX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[85])
     put("UNIX_TIMESTAMP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[39])
     put("UPPER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[1])
+    put("VARIANCE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[88])
     put("WEEK", DORIS_CLICKHOUSE_HAZARD_ENTRIES[5])
     put("YEAR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[34])
 }
 
-/** clickhouse->doris lookup: 84 keys (ClickHouse-side names) over 87 entries. */
+/** clickhouse->doris lookup: 90 keys (ClickHouse-side names) over 94 entries. */
 internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[33])
     put("ADDDAYS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[73])
     put("ARRAYDISTINCT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[81])
     put("ARRAYELEMENT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[78])
     put("ARRAYMAX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[80])
-    put("ARRAYSTRINGCONCAT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[79])
+    put("ARRAYSTRINGCONCAT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[91])
     put("ASCII", DORIS_CLICKHOUSE_HAZARD_ENTRIES[11])
     put("BITAND", DORIS_CLICKHOUSE_HAZARD_ENTRIES[62])
     put("BITOR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[63])
@@ -551,6 +593,7 @@ internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("FROMUNIXTIMESTAMP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[40])
     put("GCD", DORIS_CLICKHOUSE_HAZARD_ENTRIES[65])
     put("GREATEST", DORIS_CLICKHOUSE_HAZARD_ENTRIES[6])
+    put("GROUPARRAY", DORIS_CLICKHOUSE_HAZARD_ENTRIES[92])
     put("HAS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[77])
     put("HEX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[45])
     put("IF", DORIS_CLICKHOUSE_HAZARD_ENTRIES[43])
@@ -569,6 +612,7 @@ internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("LOWER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[0])
     put("MATCH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[58])
     put("MD5", DORIS_CLICKHOUSE_HAZARD_ENTRIES[44])
+    put("MEDIAN", DORIS_CLICKHOUSE_HAZARD_ENTRIES[93])
     put("MODULO", DORIS_CLICKHOUSE_HAZARD_ENTRIES[28])
     put("NULLIF", DORIS_CLICKHOUSE_HAZARD_ENTRIES[42])
     put("POSITION", DORIS_CLICKHOUSE_HAZARD_ENTRIES[13])
@@ -587,6 +631,9 @@ internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("SPLITBYCHAR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[20])
     put("SQRT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[59])
     put("STARTSWITH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[53])
+    put("STDDEV", DORIS_CLICKHOUSE_HAZARD_ENTRIES[87])
+    put("STDDEVPOP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[90])
+    put("STDDEVSAMP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[89])
     put("SUBSTRING", DORIS_CLICKHOUSE_HAZARD_ENTRIES[12])
     put("SUBTRACTMONTHS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[74])
     put("TODATE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[72])
@@ -608,4 +655,5 @@ internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TRUNCATE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[23])
     put("UNHEX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[85])
     put("UPPER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[1])
+    put("VARSAMP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[88])
 }

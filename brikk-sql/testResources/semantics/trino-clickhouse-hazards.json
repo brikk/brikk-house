@@ -1115,6 +1115,36 @@
         "timezone"
       ],
       "provenance": "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"
+    },
+    {
+      "trino": "variance",
+      "clickhouse": "varSamp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "trino": "listagg",
+      "clickhouse": "arrayStringConcat",
+      "verdict": "conditionally-equivalent",
+      "hazard": "String aggregation agrees ONLY with an explicit ORDER BY (a,a,b,c, NULLs skipped); default ordering is unspecified and separator/function name differ per engine (string_agg/group_concat/listagg/arrayStringConcat).",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "trino": "approx_percentile",
+      "clickhouse": "median",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Median/50th-percentile agree on simple data but methods differ (exact vs interpolation vs approximate — Trino has only approx_percentile); may diverge on other inputs.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
     }
   ]
 }

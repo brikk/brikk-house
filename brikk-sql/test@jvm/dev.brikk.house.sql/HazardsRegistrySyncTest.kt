@@ -81,7 +81,7 @@ class HazardsRegistrySyncTest {
     @Test
     fun everyJsonPairIsRetrievableInBothDirections() {
         val pairs = loadTrinoDuckdbPairs()
-        assertEquals(242, pairs.size, "hazards JSON pair count changed — regenerate the registry")
+        assertEquals(246, pairs.size, "hazards JSON pair count changed — regenerate the registry")
         for (pair in pairs) {
             val fwd = HazardRegistry.lookup("trino", "duckdb", pair.trino)
             assertNotNull(fwd, "trino->duckdb lookup missing for ${pair.trino}")
@@ -132,7 +132,7 @@ class HazardsRegistrySyncTest {
     fun dorisJsonsCarryLiveProbePairs() {
         // Populated by the doris live-probe program; counts must match the generated
         // registries (see HazardRegistryTest pins).
-        assertEquals(255, loadPairCount("semantics/duckdb-doris-hazards.json"))
+        assertEquals(258, loadPairCount("semantics/duckdb-doris-hazards.json"))
         assertEquals(216, loadPairCount("semantics/trino-doris-hazards.json"))
         assertNotNull(HazardRegistry.lookup("duckdb", "doris", "lower"))
         assertNotNull(HazardRegistry.lookup("trino", "doris", "ascii"))
@@ -142,8 +142,8 @@ class HazardsRegistrySyncTest {
     fun clickhouseJsonsCarryLiveProbePairs() {
         // Populated by the clickhouse differential-probe program; counts must match the
         // generated registries (see HazardRegistryTest pins).
-        assertEquals(167, loadPairCount("semantics/duckdb-clickhouse-hazards.json"))
-        assertEquals(107, loadPairCount("semantics/trino-clickhouse-hazards.json"))
+        assertEquals(168, loadPairCount("semantics/duckdb-clickhouse-hazards.json"))
+        assertEquals(110, loadPairCount("semantics/trino-clickhouse-hazards.json"))
         assertNotNull(HazardRegistry.lookup("duckdb", "clickhouse", "length"))
         assertNotNull(HazardRegistry.lookup("trino", "clickhouse", "date_format"))
     }
@@ -151,7 +151,7 @@ class HazardsRegistrySyncTest {
     @Test
     fun dorisClickhouseJsonCarriesLiveProbePairs() {
         // The last core pair, filled by the doris<->clickhouse live differential probe.
-        assertEquals(87, loadPairCount("semantics/doris-clickhouse-hazards.json"))
+        assertEquals(94, loadPairCount("semantics/doris-clickhouse-hazards.json"))
         assertNotNull(HazardRegistry.lookup("doris", "clickhouse", "round"))
         assertNotNull(HazardRegistry.lookup("clickhouse", "doris", "length"))
     }
