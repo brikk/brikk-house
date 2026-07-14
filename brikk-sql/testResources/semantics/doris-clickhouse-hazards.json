@@ -1786,13 +1786,13 @@
     {
       "doris": "xxhash_32",
       "clickhouse": "xxHash32",
-      "verdict": "divergent",
-      "hazard": "CORRECTION (2026-07-14): inferred DIVERGENT from the live xxhash_64 finding (Doris xxhash family uses a different impl/seed than ClickHouse xxHash* — xxhash_64 probed 8696274497037089104 vs CH 4952883123889572249). Doris xxhash_32 was not re-probed directly but is the same family; brikk does NOT emit the xxHash32 rename. Re-probe to confirm exact value. Kept divergent (certify refuses).",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Doris xxhash_32 == ClickHouse xxHash32 (direct live re-probe 2026-07-14: 'abc'->852579327, ''->46947589 both match exactly). brikk emits the xxHash32 rename. Conditionally-equivalent for the UInt32 vs Doris return-type/width representation. (Contrast xxhash_64, which is a genuinely different hash and stays divergent.) See probe-runs/doris-xxhash-week-reprobe.results.tsv.",
       "areas": [
         "auto",
         "rename"
       ],
-      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.* | corrected divergent 2026-07-14 (inferred from xxhash_64 live probe; re-probe xxhash_32)"
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.* | corrected divergent 2026-07-14 (inferred from xxhash_64 live probe; re-probe xxhash_32) | direct re-probe 2026-07-14: matches xxHash32, re-landed rename"
     },
     {
       "doris": "xxhash_64",

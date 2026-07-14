@@ -878,10 +878,10 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         areas = listOf("auto"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
     // [175] doris: 'xxhash_32' | clickhouse: 'xxHash32'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "CORRECTION (2026-07-14): inferred DIVERGENT from the live xxhash_64 finding (Doris xxhash family uses a different impl/seed than ClickHouse xxHash* — xxhash_64 probed 8696274497037089104 vs CH 4952883123889572249). Doris xxhash_32 was not re-probed directly but is the same family; brikk does NOT emit the xxHash32 rename. Re-probe to confirm exact value. Kept divergent (certify refuses).",
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Doris xxhash_32 == ClickHouse xxHash32 (direct live re-probe 2026-07-14: 'abc'->852579327, ''->46947589 both match exactly). brikk emits the xxHash32 rename. Conditionally-equivalent for the UInt32 vs Doris return-type/width representation. (Contrast xxhash_64, which is a genuinely different hash and stays divergent.) See probe-runs/doris-xxhash-week-reprobe.results.tsv.",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.* | corrected divergent 2026-07-14 (inferred from xxhash_64 live probe; re-probe xxhash_32)"),
+        provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.* | corrected divergent 2026-07-14 (inferred from xxhash_64 live probe; re-probe xxhash_32) | direct re-probe 2026-07-14: matches xxHash32, re-landed rename"),
     // [176] doris: 'xxhash_64' | clickhouse: 'xxHash64'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "CORRECTION (live reverse probe 2026-07-14, doris-ducklake agent): Doris xxhash_64('abc') = 8696274497037089104 vs ClickHouse xxHash64('abc') = 4952883123889572249 — a DIFFERENT hash value (impl/seed differ), NOT the same digest. The earlier auto-probe 'digest agrees' verdict was wrong. brikk does NOT emit the xxHash64 rename (would silently produce a wrong hash); kept divergent so certify refuses. See probe-runs/reverse-doris-trino.results.tsv.",

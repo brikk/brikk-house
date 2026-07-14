@@ -131,8 +131,13 @@ class ClickhouseRenameFixesTest {
         // distance / rounding
         assertEquals("SELECT L1Distance(a, b)", ch("SELECT l1_distance(a, b)", "doris"))
         assertEquals("SELECT roundBankers(x)", ch("SELECT round_bankers(x)", "doris"))
-        // xxhash_32/64 are NOT renamed: live reverse probe found Doris xxhash_* is a
-        // different hash value than ClickHouse xxHash* — stays a divergent (unmapped) hazard.
+        // xxhash_32 IS ClickHouse xxHash32 (direct re-probe: values match) -> renamed,
+        // conditionally-equivalent. xxhash_64 is a DIFFERENT hash -> NOT renamed, divergent.
+        assertEquals("SELECT xxHash32(x)", ch("SELECT xxhash_32(x)", "doris"))
+        assertEquals(
+            HazardVerdict.CONDITIONALLY_EQUIVALENT,
+            HazardRegistry.lookup("doris", "clickhouse", "xxhash_32")?.verdict,
+        )
         assertEquals("SELECT xxhash_64(x)", ch("SELECT xxhash_64(x)", "doris"))
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("doris", "clickhouse", "xxhash_64")?.verdict)
     }
