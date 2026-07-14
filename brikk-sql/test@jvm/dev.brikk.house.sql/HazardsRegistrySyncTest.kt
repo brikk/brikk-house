@@ -151,7 +151,7 @@ class HazardsRegistrySyncTest {
     @Test
     fun dorisClickhouseJsonCarriesLiveProbePairs() {
         // The last core pair, filled by the doris<->clickhouse live differential probe.
-        assertEquals(94, loadPairCount("semantics/doris-clickhouse-hazards.json"))
+        assertEquals(177, loadPairCount("semantics/doris-clickhouse-hazards.json"))
         assertNotNull(HazardRegistry.lookup("doris", "clickhouse", "round"))
         assertNotNull(HazardRegistry.lookup("clickhouse", "doris", "length"))
     }

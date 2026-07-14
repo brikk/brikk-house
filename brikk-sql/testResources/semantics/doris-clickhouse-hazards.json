@@ -925,6 +925,885 @@
         "aggregate"
       ],
       "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "doris": "acosh",
+      "clickhouse": "acosh",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name acosh (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_avg",
+      "clickhouse": "arrayAvg",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayAvg (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_compact",
+      "clickhouse": "arrayCompact",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayCompact (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_concat",
+      "clickhouse": "arrayConcat",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_count",
+      "clickhouse": "arrayCount",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayCount (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_cum_sum",
+      "clickhouse": "arrayCumSum",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayCumSum (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_difference",
+      "clickhouse": "arrayDifference",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayDifference (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_enumerate",
+      "clickhouse": "arrayEnumerate",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayEnumerate (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_enumerate_uniq",
+      "clickhouse": "arrayEnumerateUniq",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayEnumerateUniq (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_except",
+      "clickhouse": "arrayExcept",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayExcept (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_exists",
+      "clickhouse": "arrayExists",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='[1, 1, 1]' vs ch='1'). ClickHouse name arrayExists (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_intersect",
+      "clickhouse": "arrayIntersect",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='[2, 1, 3]' vs ch='[1,2,3]'). ClickHouse name arrayIntersect (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_min",
+      "clickhouse": "arrayMin",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_popback",
+      "clickhouse": "arrayPopBack",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayPopBack (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_popfront",
+      "clickhouse": "arrayPopFront",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayPopFront (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_product",
+      "clickhouse": "arrayProduct",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayProduct (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_reverse_sort",
+      "clickhouse": "arrayReverseSort",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayReverseSort (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_shuffle",
+      "clickhouse": "arrayShuffle",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='[3, 1, 2]' vs ch='[2,1,3]'). ClickHouse name arrayShuffle (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_slice",
+      "clickhouse": "arraySlice",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_sort",
+      "clickhouse": "arraySort",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arraySort (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_sum",
+      "clickhouse": "arraySum",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_union",
+      "clickhouse": "arrayUnion",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='[2, 1, 3]' vs ch='[3,2,1]'). ClickHouse name arrayUnion (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "asinh",
+      "clickhouse": "asinh",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name asinh (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "atan",
+      "clickhouse": "ATAN",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "atan2",
+      "clickhouse": "ATAN2",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "bit_count",
+      "clickhouse": "bitCount",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitCount (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "bit_shift_left",
+      "clickhouse": "bitShiftLeft",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftLeft (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "bit_shift_right",
+      "clickhouse": "bitShiftRight",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftRight (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "bit_test",
+      "clickhouse": "bitTest",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitTest (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "concat_ws",
+      "clickhouse": "CONCAT_WS",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='1aBc2aBc3' vs ch='[1,2,3]').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "conv",
+      "clickhouse": "conv",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "cos",
+      "clickhouse": "COS",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "cosh",
+      "clickhouse": "cosh",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name cosh (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "cosine_distance",
+      "clickhouse": "cosineDistance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "count_substrings",
+      "clickhouse": "countSubstrings",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name countSubstrings (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "cut_to_first_significant_subdomain",
+      "clickhouse": "cutToFirstSignificantSubdomain",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name cutToFirstSignificantSubdomain (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "date",
+      "clickhouse": "CAST",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "day",
+      "clickhouse": "DAY",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "dayname",
+      "clickhouse": "toDayOfWeek",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='Sunday' vs ch='7'). ClickHouse name toDayOfWeek (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "degrees",
+      "clickhouse": "DEGREES",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "domain",
+      "clickhouse": "domain",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "domain_without_www",
+      "clickhouse": "domainWithoutWWW",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name domainWithoutWWW (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "extract_url_parameter",
+      "clickhouse": "extractURLParameter",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name extractURLParameter (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "factorial",
+      "clickhouse": "FACTORIAL",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "first_significant_subdomain",
+      "clickhouse": "firstSignificantSubdomain",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name firstSignificantSubdomain (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "format",
+      "clickhouse": "format",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name format (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "from_days",
+      "clickhouse": "from_days",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='0000-01-05' vs ch='1973-10-05').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "ipv4_num_to_string",
+      "clickhouse": "IPv4NumToString",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4NumToString (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "ipv4_string_to_num_or_default",
+      "clickhouse": "IPv4StringToNumOrDefault",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4StringToNumOrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "ipv6_string_to_num_or_default",
+      "clickhouse": "IPv6StringToNumOrDefault",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv6StringToNumOrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "isnan",
+      "clickhouse": "isNaN",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "is_ipv4_string",
+      "clickhouse": "isIPv4String",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv4String (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "is_ipv6_string",
+      "clickhouse": "isIPv6String",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv6String (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "l1_distance",
+      "clickhouse": "L1Distance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name L1Distance (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "l2_distance",
+      "clickhouse": "L2Distance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "lcase",
+      "clickhouse": "LOWER",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "lcm",
+      "clickhouse": "lcm",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "levenshtein",
+      "clickhouse": "editDistance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "like",
+      "clickhouse": "'aBc' LIKE 'aBc'",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "position",
+      "clickhouse": "POSITION",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "protocol",
+      "clickhouse": "protocol",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "radians",
+      "clickhouse": "RADIANS",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "round_bankers",
+      "clickhouse": "roundBankers",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name roundBankers (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "sin",
+      "clickhouse": "SIN",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "sinh",
+      "clickhouse": "sinh",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name sinh (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "soundex",
+      "clickhouse": "SOUNDEX",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "split_by_regexp",
+      "clickhouse": "splitByRegexp",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByRegexp (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "split_by_string",
+      "clickhouse": "splitByString",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByString (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "str_to_map",
+      "clickhouse": "STR_TO_MAP",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='{\"aBc\":null}' vs ch='{}').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "substr",
+      "clickhouse": "SUBSTRING",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "tan",
+      "clickhouse": "TAN",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "tanh",
+      "clickhouse": "TANH",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "top_level_domain",
+      "clickhouse": "topLevelDomain",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name topLevelDomain (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "to_base64",
+      "clickhouse": "TO_BASE64",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "to_ipv4_or_default",
+      "clickhouse": "toIPv4OrDefault",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv4OrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "to_ipv6_or_default",
+      "clickhouse": "toIPv6OrDefault",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv6OrDefault (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "to_monday",
+      "clickhouse": "toMonday",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toMonday (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "translate",
+      "clickhouse": "translate",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name translate (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "ucase",
+      "clickhouse": "UPPER",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "weekday",
+      "clickhouse": "toDayOfWeek",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='6' vs ch='7'). ClickHouse name toDayOfWeek (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "weekofyear",
+      "clickhouse": "toISOWeek",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "xxhash_32",
+      "clickhouse": "xxHash32",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs. ClickHouse name xxHash32 (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "xxhash_64",
+      "clickhouse": "xxHash64",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs. ClickHouse name xxHash64 (rename; brikk may not yet emit it — certify unmappable check guards).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
     }
   ]
 }

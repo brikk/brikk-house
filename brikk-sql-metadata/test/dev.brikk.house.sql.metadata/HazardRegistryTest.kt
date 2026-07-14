@@ -148,7 +148,7 @@ class HazardRegistryTest {
     fun dorisClickhousePairIsPopulatedByLiveProbes() {
         // Populated by the doris<->clickhouse live differential probe (Doris FE pr62767-local
         // / BE 4.1.2 vs ClickHouse 26.5.1.1 via chdb; docs/research/probe-runs/doris-clickhouse.*).
-        assertEquals(94, DORIS_CLICKHOUSE_HAZARD_ENTRIES.size)
+        assertEquals(177, DORIS_CLICKHOUSE_HAZARD_ENTRIES.size)
         assertTrue(DORIS_TO_CLICKHOUSE_HAZARDS.isNotEmpty())
         assertTrue(CLICKHOUSE_TO_DORIS_HAZARDS.isNotEmpty())
         // Live-probed spot checks: both round half-away vs banker's; both single-arg log is
