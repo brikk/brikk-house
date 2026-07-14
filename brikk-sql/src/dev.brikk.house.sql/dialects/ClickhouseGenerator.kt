@@ -4,6 +4,7 @@ package dev.brikk.house.sql.dialects
 import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.ast.Any as AnyNode
 import dev.brikk.house.sql.ast.Array as ArrayNode
+import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.ast.Map as MapNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
@@ -740,6 +741,18 @@ open class ClickhouseGenerator(
                 return "(${func("toSecond", t)} * 1000 + ${func("toMillisecond", t)})"
             }
         }
+        // Cross-dialect function RENAMES that reach the ClickHouse generator as an
+        // unmapped Anonymous call (the source parser has no canonical node for them).
+        // ClickHouse has the SAME function under a different spelling (camelCase / IP-cased);
+        // rewrite the name. SAFE for ClickHouse->ClickHouse round-trips: ClickHouse's own
+        // catalog uses the target spelling (which parses back to an Anonymous of THAT name),
+        // so the source snake_case keys here never fire on native ClickHouse input.
+        // Probe-verified vs ClickHouse 26.5.1.1 (chdb); see CLICKHOUSE-rename-map.md and the
+        // per-pair generator-gap reports. Divergent renames keep their hazard (the name is
+        // valid, the semantics divergence is certify-guarded).
+        ANON_FUNC_RENAMES[expression.name.lowercase()]?.let { target ->
+            return func(target, *expression.expressionsArg.toTypedArray())
+        }
         return super.anonymousSql(expression)
     }
 
@@ -759,7 +772,52 @@ open class ClickhouseGenerator(
         return func(fn, expression.thisArg, expression.args["expression"], expression.args["replacement"])
     }
 
+    // DuckDB list_sort/array_sort/list_reverse_sort/array_reverse_sort parse to the
+    // SortArray node (this, asc). ClickHouse renders ascending as arraySort and descending
+    // as arrayReverseSort (probe-verified equal to DuckDB, chdb + DuckDB 1.5.4). SAFE for
+    // ClickHouse->ClickHouse: ClickHouse arraySort/arrayReverseSort parse to Anonymous, not
+    // SortArray, so this only fires cross-dialect.
+    open fun clickhouseSortArraySql(expression: SortArray): String {
+        val asc = expression.args["asc"]
+        return if (asc is BooleanNode && asc.thisArg == false) {
+            func("arrayReverseSort", expression.thisArg)
+        } else {
+            func("arraySort", expression.thisArg)
+        }
+    }
+
     companion object {
+
+        // Cross-dialect function-name RENAMES applied to unmapped Anonymous calls when
+        // targeting ClickHouse. Key = lowercased SOURCE function name (DuckDB / Doris /
+        // Trino), value = the ClickHouse spelling. All probe-verified live vs ClickHouse
+        // 26.5.1.1 (chdb); see docs/research/CLICKHOUSE-rename-map.md. Entries whose recorded
+        // verdict is `divergent`/`conditionally-equivalent` are still listed: the NAME is a
+        // correct rename (the emitted SQL runs), the residual semantic divergence is kept as
+        // a hazard and surfaced by certify.
+        val ANON_FUNC_RENAMES: Map<String, String> = mapOf(
+            // -- array family (DuckDB list_*/array_* + Doris array_*) -> ClickHouse array* --
+            "list_dot_product" to "arrayDotProduct",
+            "list_element" to "arrayElement", // divergent (indexing edges) — hazard kept
+            "list_extract" to "arrayElement", // divergent (indexing edges) — hazard kept
+            "list_has_all" to "hasAll",
+            "list_intersect" to "arrayIntersect",
+            "list_unique" to "arrayUniq",
+            "array_avg" to "arrayAvg",
+            "array_count" to "arrayCount",
+            "array_cum_sum" to "arrayCumSum",
+            "array_difference" to "arrayDifference",
+            "array_enumerate" to "arrayEnumerate",
+            "array_enumerate_uniq" to "arrayEnumerateUniq",
+            "array_exists" to "arrayExists", // divergent — hazard kept
+            "array_popback" to "arrayPopBack",
+            "array_popfront" to "arrayPopFront",
+            "array_product" to "arrayProduct",
+            "array_reverse_sort" to "arrayReverseSort",
+            "array_shuffle" to "arrayShuffle", // divergent (non-determinism) — hazard kept
+            "array_union" to "arrayUnion", // divergent — hazard kept
+        )
+
 
         // sqlglot: ClickHouse.ESCAPED_SEQUENCES (MySQL's map + the \0 unescape)
         val ESCAPED_SEQUENCES: Map<String, String> =
@@ -946,6 +1004,26 @@ open class ClickhouseGenerator(
             reg(ArrayDistinct::class) { e -> ch().renameFuncSql("arrayDistinct", e) }
             reg(ArrayConcat::class) { e -> ch().renameFuncSql("arrayConcat", e) }
             reg(ArrayContains::class) { e -> ch().renameFuncSql("has", e) }
+            // Array-family renames (DuckDB/Doris source -> ClickHouse). Each of these
+            // canonical nodes rendered its uppercase/base name (e.g. ARRAY_SORT,
+            // ARRAY_INTERSECT), which ClickHouse — being CASE-SENSITIVE — rejects. Emit the
+            // real ClickHouse names. Probe-verified (chdb 26.5.1.1 + DuckDB 1.5.4). SAFE for
+            // ClickHouse->ClickHouse: ClickHouse parses arraySort/arrayIntersect/... to
+            // Anonymous (not these nodes), so the fixes only fire cross-dialect.
+            // See CLICKHOUSE-rename-map.md (array_*->array*, list_*->array*).
+            reg(SortArray::class) { e -> ch().clickhouseSortArraySql(e as SortArray) }
+            reg(ArraySort::class) { e -> func("arraySort", (e as ArraySort).thisArg) }
+            reg(ArrayIntersect::class) { e -> ch().renameFuncSql("arrayIntersect", e) }
+            reg(ArrayCompact::class) { e -> ch().renameFuncSql("arrayCompact", e) }
+            reg(ArrayExcept::class) { e ->
+                func("arrayExcept", (e as ArrayExcept).thisArg, e.args["expression"])
+            }
+            // DuckDB list_has_any parses to ArrayOverlaps, which the base rendered as the
+            // `a && b` operator (ClickHouse has no such array operator). hasAny is the
+            // ClickHouse equivalent.
+            reg(ArrayOverlaps::class) { e ->
+                func("hasAny", (e as ArrayOverlaps).thisArg, e.args["expression"])
+            }
             reg(ArrayFilter::class) { e ->
                 func("arrayFilter", e.args["expression"], e.thisArg)
             }

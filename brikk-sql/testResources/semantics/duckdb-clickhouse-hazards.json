@@ -2002,7 +2002,7 @@
       "duckdb": "list_unique",
       "clickhouse": "arrayUniq",
       "verdict": "identical",
-      "hazard": "DuckDB list_unique == ClickHouse arrayUniq (rename). Values agree (duck=1). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB list_unique == ClickHouse arrayUniq (rename). Values agree (duck=1). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2024,7 +2024,7 @@
       "duckdb": "list_has_all",
       "clickhouse": "hasAll",
       "verdict": "identical",
-      "hazard": "DuckDB list_has_all == ClickHouse hasAll (rename). Values agree (duck=True). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB list_has_all == ClickHouse hasAll (rename). Values agree (duck=True). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2035,7 +2035,7 @@
       "duckdb": "list_has_any",
       "clickhouse": "hasAny",
       "verdict": "identical",
-      "hazard": "DuckDB list_has_any == ClickHouse hasAny (rename). Values agree (duck=True). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB list_has_any == ClickHouse hasAny (rename). Values agree (duck=True). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2046,7 +2046,7 @@
       "duckdb": "list_intersect",
       "clickhouse": "arrayIntersect",
       "verdict": "identical",
-      "hazard": "DuckDB list_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB list_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2057,7 +2057,7 @@
       "duckdb": "list_reverse_sort",
       "clickhouse": "arrayReverseSort",
       "verdict": "identical",
-      "hazard": "DuckDB list_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB list_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2068,7 +2068,7 @@
       "duckdb": "list_sort",
       "clickhouse": "arraySort",
       "verdict": "identical",
-      "hazard": "DuckDB list_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB list_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2079,7 +2079,7 @@
       "duckdb": "list_extract",
       "clickhouse": "arrayElement",
       "verdict": "divergent",
-      "hazard": "DuckDB list_extract == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB list_extract == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2090,7 +2090,7 @@
       "duckdb": "list_element",
       "clickhouse": "arrayElement",
       "verdict": "divergent",
-      "hazard": "DuckDB list_element == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB list_element == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2101,7 +2101,7 @@
       "duckdb": "list_dot_product",
       "clickhouse": "arrayDotProduct",
       "verdict": "identical",
-      "hazard": "DuckDB list_dot_product == ClickHouse arrayDotProduct (rename). Values agree (duck=6.25). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB list_dot_product == ClickHouse arrayDotProduct (rename). Values agree (duck=6.25). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2156,7 +2156,7 @@
       "duckdb": "array_intersect",
       "clickhouse": "arrayIntersect",
       "verdict": "identical",
-      "hazard": "DuckDB array_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB array_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2167,7 +2167,7 @@
       "duckdb": "array_reverse_sort",
       "clickhouse": "arrayReverseSort",
       "verdict": "identical",
-      "hazard": "DuckDB array_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB array_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
@@ -2178,7 +2178,7 @@
       "duckdb": "array_sort",
       "clickhouse": "arraySort",
       "verdict": "identical",
-      "hazard": "DuckDB array_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+      "hazard": "DuckDB array_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
