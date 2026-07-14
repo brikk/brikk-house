@@ -9,12 +9,13 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 168 probe-verified (duckdb, clickhouse) pair verdicts, in JSON order. */
+/** The 213 probe-verified (duckdb, clickhouse) pair verdicts, in JSON order. */
 internal val DUCKDB_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
     hazardsChunk3() +
-    hazardsChunk4()
+    hazardsChunk4() +
+    hazardsChunk5()
 
 private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     // [0] duckdb: 'lower' | clickhouse: 'lower'
@@ -869,9 +870,237 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
         areas = listOf("aggregate"),
         provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [168] duckdb: 'mismatches' | clickhouse: 'mismatches'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [169] duckdb: 'make_timestamp' | clickhouse: 'fromUnixTimestamp64Micro'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [170] duckdb: 'len' | clickhouse: 'CHAR_LENGTH'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [171] duckdb: 'levenshtein' | clickhouse: 'editDistance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [172] duckdb: 'list_distinct' | clickhouse: 'arrayDistinct'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [173] duckdb: 'list_distance' | clickhouse: 'L2Distance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [174] duckdb: 'list_cosine_distance' | clickhouse: 'cosineDistance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [175] duckdb: 'suffix' | clickhouse: 'endsWith'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [176] duckdb: 'to_hex' | clickhouse: 'HEX'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [177] duckdb: 'weekofyear' | clickhouse: 'toISOWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [178] duckdb: 'str_split' | clickhouse: 'splitByString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [179] duckdb: 'str_split_regex' | clickhouse: 'splitByRegexp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [180] duckdb: 'string_split_regex' | clickhouse: 'splitByRegexp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [181] duckdb: 'split' | clickhouse: 'splitByString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [182] duckdb: 'strftime' | clickhouse: 'formatDateTime'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [183] duckdb: 'string_split' | clickhouse: 'splitByString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [184] duckdb: 'string_to_array' | clickhouse: 'splitByString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [185] duckdb: 'strpos' | clickhouse: 'POSITION'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [186] duckdb: 'editdist3' | clickhouse: 'editDistance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [187] duckdb: 'formatReadableDecimalSize' | clickhouse: 'formatReadableDecimalSize'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [188] duckdb: 'formatReadableSize' | clickhouse: 'formatReadableSize'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [189] duckdb: 'format_bytes' | clickhouse: 'format_bytes'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [190] duckdb: 'jaro_winkler_similarity' | clickhouse: 'jaroWinklerSimilarity'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [191] duckdb: 'epoch' | clickhouse: 'toUnixTimestamp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [192] duckdb: 'array_distinct' | clickhouse: 'arrayDistinct'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [193] duckdb: 'array_length' | clickhouse: 'LENGTH'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+    // [194] duckdb: 'list_unique' | clickhouse: 'arrayUniq'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_unique == ClickHouse arrayUniq (rename). Values agree (duck=1). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [195] duckdb: 'least_common_multiple' | clickhouse: 'lcm'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB least_common_multiple == ClickHouse lcm (rename). Values agree (duck=5). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [196] duckdb: 'list_has_all' | clickhouse: 'hasAll'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_has_all == ClickHouse hasAll (rename). Values agree (duck=True). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [197] duckdb: 'list_has_any' | clickhouse: 'hasAny'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_has_any == ClickHouse hasAny (rename). Values agree (duck=True). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [198] duckdb: 'list_intersect' | clickhouse: 'arrayIntersect'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [199] duckdb: 'list_reverse_sort' | clickhouse: 'arrayReverseSort'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
 )
 
-/** duckdb->clickhouse lookup: 168 keys (DuckDB-side names) over 168 entries. */
+private fun hazardsChunk5(): List<FunctionHazard> = listOf(
+    // [200] duckdb: 'list_sort' | clickhouse: 'arraySort'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [201] duckdb: 'list_extract' | clickhouse: 'arrayElement'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DuckDB list_extract == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [202] duckdb: 'list_element' | clickhouse: 'arrayElement'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DuckDB list_element == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [203] duckdb: 'list_dot_product' | clickhouse: 'arrayDotProduct'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_dot_product == ClickHouse arrayDotProduct (rename). Values agree (duck=6.25). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [204] duckdb: 'weekday' | clickhouse: 'toDayOfWeek'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DuckDB weekday == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=0 vs ch=7). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [205] duckdb: 'dayname' | clickhouse: 'toDayOfWeek'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DuckDB dayname == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=Sunday vs ch=7). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [206] duckdb: 'gamma' | clickhouse: 'tgamma'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB gamma == ClickHouse tgamma (rename). Values agree (duck=1.32934038817913). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [207] duckdb: 'bit_count' | clickhouse: 'bitCount'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB bit_count == ClickHouse bitCount (rename). Values agree (duck=2). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [208] duckdb: 'array_intersect' | clickhouse: 'arrayIntersect'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB array_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [209] duckdb: 'array_reverse_sort' | clickhouse: 'arrayReverseSort'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB array_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [210] duckdb: 'array_sort' | clickhouse: 'arraySort'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB array_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [211] duckdb: 'greatest_common_divisor' | clickhouse: 'gcd'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB greatest_common_divisor == ClickHouse gcd (rename). Values agree (duck=5). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+    // [212] duckdb: 'jaro_similarity' | clickhouse: 'jaroSimilarity'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB jaro_similarity == ClickHouse jaroSimilarity (rename). Values agree (duck=1.0). brikk's clickhouse generator may not yet emit this rename — see the generator-gap report; certify's unmappable check guards the gap meanwhile.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+)
+
+/** duckdb->clickhouse lookup: 213 keys (DuckDB-side names) over 213 entries. */
 internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("ACOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[66])
@@ -881,6 +1110,11 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("ARGMAX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[128])
     put("ARGMIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[129])
     put("ARRAY_AGG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[111])
+    put("ARRAY_DISTINCT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[192])
+    put("ARRAY_INTERSECT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[208])
+    put("ARRAY_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[193])
+    put("ARRAY_REVERSE_SORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[209])
+    put("ARRAY_SORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[210])
     put("ARRAY_TO_STRING", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[109])
     put("ASCII", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[24])
     put("ASIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[67])
@@ -892,6 +1126,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("BIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[60])
     put("BITWISE_AND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[164])
     put("BITWISE_OR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[165])
+    put("BIT_COUNT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[207])
     put("CARDINALITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[110])
     put("CBRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[79])
     put("CEIL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[45])
@@ -918,14 +1153,17 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("DATE_DIFF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[98])
     put("DATE_TRUNC", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[96])
     put("DAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[85])
+    put("DAYNAME", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[205])
     put("DAYOFMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[86])
     put("DAYOFWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[91])
     put("DAYOFYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[92])
     put("DEGREES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[80])
     put("DENSE_RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[136])
     put("DIVIDE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[38])
+    put("EDITDIST3", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[186])
     put("ENDS_WITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[159])
     put("ENTROPY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[133])
+    put("EPOCH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[191])
     put("EXP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[65])
     put("EXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[166])
     put("FACTORIAL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[52])
@@ -933,9 +1171,14 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("FLATTEN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[108])
     put("FLOOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[44])
     put("FORMAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[29])
+    put("FORMATREADABLEDECIMALSIZE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[187])
+    put("FORMATREADABLESIZE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[188])
+    put("FORMAT_BYTES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[189])
     put("FROM_BASE64", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[33])
+    put("GAMMA", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[206])
     put("GCD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[58])
     put("GREATEST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[156])
+    put("GREATEST_COMMON_DIVISOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[211])
     put("GROUP_CONCAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[132])
     put("HEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[61])
     put("HISTOGRAM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[130])
@@ -945,6 +1188,8 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("INSTR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[17])
     put("ISFINITE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[57])
     put("ISNAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[56])
+    put("JARO_SIMILARITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[212])
+    put("JARO_WINKLER_SIMILARITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[190])
     put("LAG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[142])
     put("LAST_DAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[100])
     put("LAST_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[139])
@@ -952,9 +1197,24 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("LCM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[59])
     put("LEAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[143])
     put("LEAST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[157])
+    put("LEAST_COMMON_MULTIPLE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[195])
     put("LEFT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[25])
+    put("LEN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[170])
     put("LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[4])
+    put("LEVENSHTEIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[171])
     put("LGAMMA", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[82])
+    put("LIST_COSINE_DISTANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[174])
+    put("LIST_DISTANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[173])
+    put("LIST_DISTINCT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[172])
+    put("LIST_DOT_PRODUCT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[203])
+    put("LIST_ELEMENT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[202])
+    put("LIST_EXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[201])
+    put("LIST_HAS_ALL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[196])
+    put("LIST_HAS_ANY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[197])
+    put("LIST_INTERSECT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[198])
+    put("LIST_REVERSE_SORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[199])
+    put("LIST_SORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[200])
+    put("LIST_UNIQUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[194])
     put("LN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[48])
     put("LOG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[49])
     put("LOG10", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[50])
@@ -962,6 +1222,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("LOWER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[0])
     put("LPAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[22])
     put("LTRIM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[10])
+    put("MAKE_TIMESTAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[169])
     put("MAP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[151])
     put("MAX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[116])
     put("MD5", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[34])
@@ -969,6 +1230,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("MILLISECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[90])
     put("MIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[115])
     put("MINUTE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[88])
+    put("MISMATCHES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[168])
     put("MOD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[40])
     put("MONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[84])
     put("MONTHNAME", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[101])
@@ -1010,15 +1272,24 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("SIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[73])
     put("SINH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[76])
     put("SOUNDEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[31])
+    put("SPLIT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[181])
     put("SPLIT_PART", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[160])
     put("SQRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[47])
     put("STARTS_WITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[158])
     put("STDDEV", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[119])
     put("STDDEV_POP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[117])
     put("STDDEV_SAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[118])
+    put("STRFTIME", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[182])
     put("STRING_AGG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[131])
+    put("STRING_SPLIT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[183])
+    put("STRING_SPLIT_REGEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[180])
+    put("STRING_TO_ARRAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[184])
+    put("STRPOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[185])
+    put("STR_SPLIT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[178])
+    put("STR_SPLIT_REGEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[179])
     put("SUBSTR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[14])
     put("SUBSTRING", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[15])
+    put("SUFFIX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[175])
     put("SUM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[112])
     put("TAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[75])
     put("TANH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[78])
@@ -1026,6 +1297,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("TODAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[146])
     put("TO_BASE64", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[32])
     put("TO_DAYS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[104])
+    put("TO_HEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[176])
     put("TRANSLATE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[28])
     put("TRIM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[9])
     put("TRUNC", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[43])
@@ -1038,12 +1310,14 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("VAR_SAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[121])
     put("VERSION", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[147])
     put("WEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[94])
+    put("WEEKDAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[204])
+    put("WEEKOFYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[177])
     put("XOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[63])
     put("YEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[83])
     put("YEARWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[95])
 }
 
-/** clickhouse->duckdb lookup: 152 keys (ClickHouse-side names) over 168 entries. */
+/** clickhouse->duckdb lookup: 178 keys (ClickHouse-side names) over 213 entries. */
 internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("ACOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[66])
@@ -1052,8 +1326,15 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("ANY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[127])
     put("ARGMAX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[128])
     put("ARGMIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[129])
+    put("ARRAYDISTINCT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[172])
+    put("ARRAYDOTPRODUCT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[203])
+    put("ARRAYELEMENT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[201])
     put("ARRAYFLATTEN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[108])
+    put("ARRAYINTERSECT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[198])
+    put("ARRAYREVERSESORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[199])
+    put("ARRAYSORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[200])
     put("ARRAYSTRINGCONCAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[131])
+    put("ARRAYUNIQ", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[194])
     put("ASCII", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[24])
     put("ASIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[67])
     put("ASINH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[72])
@@ -1065,6 +1346,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("BASE64ENCODE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[32])
     put("BIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[60])
     put("BITAND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[164])
+    put("BITCOUNT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[207])
     put("BITOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[165])
     put("BITXOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[63])
     put("CBRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[79])
@@ -1077,6 +1359,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("CORR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[122])
     put("COS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[74])
     put("COSH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[77])
+    put("COSINEDISTANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[174])
     put("COUNT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[114])
     put("COVARPOP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[123])
     put("COVARSAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[124])
@@ -1088,6 +1371,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("DEGREES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[80])
     put("DENSE_RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[136])
     put("DIVIDE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[38])
+    put("EDITDISTANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[171])
     put("ENDSWITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[159])
     put("ENTROPY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[133])
     put("EXP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[65])
@@ -1096,10 +1380,17 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("FIRST_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[138])
     put("FLOOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[44])
     put("FORMAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[29])
+    put("FORMATDATETIME", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[182])
+    put("FORMATREADABLEDECIMALSIZE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[187])
+    put("FORMATREADABLESIZE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[188])
+    put("FORMAT_BYTES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[189])
+    put("FROMUNIXTIMESTAMP64MICRO", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[169])
     put("GCD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[58])
     put("GENERATEUUIDV4", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[150])
     put("GREATEST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[156])
     put("GROUPARRAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[111])
+    put("HASALL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[196])
+    put("HASANY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[197])
     put("HEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[61])
     put("HISTOGRAM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[130])
     put("IF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[154])
@@ -1107,6 +1398,9 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("INSTR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[17])
     put("ISFINITE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[57])
     put("ISNAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[56])
+    put("JAROSIMILARITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[212])
+    put("JAROWINKLERSIMILARITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[190])
+    put("L2DISTANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[173])
     put("LAG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[142])
     put("LAST_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[139])
     put("LCM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[59])
@@ -1126,6 +1420,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("MD5", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[34])
     put("MEDIAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[125])
     put("MIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[115])
+    put("MISMATCHES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[168])
     put("MODULO", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[40])
     put("MONTHNAME", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[101])
     put("MULTIPLY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[39])
@@ -1162,6 +1457,8 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("SINH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[76])
     put("SOUNDEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[31])
     put("SPLITBYCHAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[160])
+    put("SPLITBYREGEXP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[179])
+    put("SPLITBYSTRING", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[178])
     put("SQRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[47])
     put("STARTSWITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[158])
     put("STDDEV", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[119])
@@ -1171,12 +1468,14 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("SUM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[112])
     put("TAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[75])
     put("TANH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[78])
+    put("TGAMMA", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[206])
     put("TIMEZONE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[106])
     put("TODAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[103])
     put("TODAYOFMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[85])
     put("TODAYOFWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[91])
     put("TODAYOFYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[92])
     put("TOHOUR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[87])
+    put("TOISOWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[177])
     put("TOLASTDAYOFMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[100])
     put("TOMINUTE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[88])
     put("TOMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[84])
@@ -1184,6 +1483,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("TORELATIVEDAYNUM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[104])
     put("TOSECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[89])
     put("TOSECOND*1000 + TOMILLISECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[90])
+    put("TOUNIXTIMESTAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[191])
     put("TOWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[94])
     put("TOYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[83])
     put("TOYEARWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[95])
