@@ -26,15 +26,15 @@ class ClickhouseGeneratorMappingBugsTest {
     // -- P1 ships-wrong: fixed at the generator source ------------------------------
 
     @Test
-    fun p1_lowerUpper_renderedFaithfully_notTransformed() {
-        // BUGS row 1: lowerUTF8/upperUTF8 would be correct for DuckDB/Trino->ClickHouse, but
-        // this generator is SOURCE-UNAWARE and the same rewrite corrupts native ClickHouse
-        // lower/upper on ClickHouse->ClickHouse (pipe desugaring). So we render faithfully
-        // (matching upstream sqlglot) and leave the cross-dialect divergence to the hazard.
-        // The source-aware auto-fix is a tracked follow-up (SPIKE doc).
-        assertEquals("SELECT LOWER(x)", ch("SELECT lower(x)", "duckdb"))
-        assertEquals("SELECT UPPER(x)", ch("SELECT upper(x)", "trino"))
-        // The divergent hazard still guards the cross-dialect (ASCII vs unicode) case.
+    fun p1_lowerUpper_sourceAwareUtf8() {
+        // BUGS row 1, now SOURCE-AWARE (Generator.sourceDialect / isCrossDialectFrom):
+        // cross-dialect (DuckDB/Trino -> ClickHouse) folds full Unicode, so emit
+        // lowerUTF8/upperUTF8; same-dialect ClickHouse stays faithful ASCII lower/upper
+        // (verified NOT to corrupt pipe desugaring — see ClickhouseSourceAwareTransformsTest).
+        assertEquals("SELECT lowerUTF8(x)", ch("SELECT lower(x)", "duckdb"))
+        assertEquals("SELECT upperUTF8(x)", ch("SELECT upper(x)", "trino"))
+        assertEquals("SELECT lower(x)", ch("SELECT lower(x)", "clickhouse"))
+        // Residual İ/ß full-case-folding edge remains -> hazard stays divergent (WARNING).
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "lower")?.verdict)
     }
 
@@ -62,16 +62,18 @@ class ClickhouseGeneratorMappingBugsTest {
     }
 
     @Test
-    fun p1_week_isoWeek_trinoOnly() {
+    fun p1_week_isoWeek_sourceAware() {
         // DuckDB / Trino week are ISO-8601; ClickHouse WEEK/toWeek default is Sunday-based.
-        // Trino `week` parses to the WeekOfYear node (which ClickHouse NEVER emits), so it is
-        // SAFE to transform -> toISOWeek (result-identical, hazard reconciled).
+        // Trino `week` parses to the WeekOfYear node (ClickHouse never emits it) -> always
+        // toISOWeek. DuckDB `week` parses to the shared Week node (ClickHouse parses its own
+        // week to it too), so it is now SOURCE-AWARE: toISOWeek cross-dialect, faithful `week`
+        // on ClickHouse->ClickHouse. Both reconciled identical (toISOWeek==ISO week, verified
+        // 52==52; faithful CH week=1 confirms the gate is required).
         assertEquals("SELECT toISOWeek(d)", ch("SELECT week(d)", "trino"))
         assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("trino", "clickhouse", "week")?.verdict)
-        // DuckDB `week` parses to the Week node, which ClickHouse ALSO parses its own week to,
-        // so a rewrite would corrupt CH->CH. Rendered faithfully (WEEK); divergent hazard kept.
-        assertEquals("SELECT WEEK(d)", ch("SELECT week(d)", "duckdb"))
-        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("duckdb", "clickhouse", "week")?.verdict)
+        assertEquals("SELECT toISOWeek(d)", ch("SELECT week(d)", "duckdb"))
+        assertEquals("SELECT week(d)", ch("SELECT week(d)", "clickhouse"))
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("duckdb", "clickhouse", "week")?.verdict)
     }
 
     // -- P2 invalid-name: emitted name did not exist in ClickHouse ------------------

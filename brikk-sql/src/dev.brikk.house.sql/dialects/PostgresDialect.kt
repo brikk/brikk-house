@@ -37,8 +37,8 @@ open class PostgresDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         PostgresParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        PostgresGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        PostgresGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     companion object {
         // sqlglot: Postgres.TIME_MAPPING

@@ -685,11 +685,11 @@ private fun hazardsChunk3(): List<FunctionHazard> = listOf(
         hazard = "Auto-probed Trino vs ClickHouse. Digest/bytes agree, representation differs.",
         areas = listOf("auto"),
         provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
-    // [132] trino: 'translate' | clickhouse: 'translate'
+    // [132] trino: 'translate' | clickhouse: 'translateUTF8'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is translate (rename). DEFERRED: ClickHouse parses translate to the shared Translate node, so a rewrite would corrupt native ClickHouse translate — needs source-aware generation.",
+        hazard = "Trino translate is code-point-wise == ClickHouse translateUTF8. Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on CH->CH). Reconciled identical (generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.* | source-aware fix 2026-07-14"),
     // [133] trino: 'week_of_year' | clickhouse: 'toISOWeek'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
@@ -954,7 +954,7 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TOSECOND*1000 + TOMILLISECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[60])
     put("TOUNIXTIMESTAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[67])
     put("TOYEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[54])
-    put("TRANSLATE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[132])
+    put("TRANSLATEUTF8", TRINO_CLICKHOUSE_HAZARD_ENTRIES[132])
     put("TRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[4])
     put("TRIMLEFT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[5])
     put("TRIMRIGHT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[6])

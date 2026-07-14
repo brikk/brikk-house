@@ -158,11 +158,11 @@ private fun hazardsChunk0(): List<FunctionHazard> = listOf(
         hazard = "repeat(s,0)='' and negative count -> '' in both.",
         areas = listOf("string"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
-    // [28] duckdb: 'translate' | clickhouse: 'translate'
+    // [28] duckdb: 'translate' | clickhouse: 'translateUTF8'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Code-point-wise substitution; ASCII probe aligned. DEFERRED (generator): DuckDB translate is code-point-wise == ClickHouse translateUTF8, but ClickHouse parses `translate` to the shared Translate node so a node rewrite would corrupt native ClickHouse byte-level translate — needs source-aware generation (brikk still emits the invalid TRANSLATE meanwhile).",
+        hazard = "DuckDB translate is code-point-wise == ClickHouse translateUTF8 (café/é->e verified). Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on ClickHouse->ClickHouse). Reconciled identical (generator fix 2026-07-14).",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline | source-aware fix 2026-07-14"),
     // [29] duckdb: 'format' | clickhouse: 'format'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse format uses positional {0},{1} placeholders (Python/.NET style); DuckDB format uses fmt/printf %-style. Incompatible spec dialects — never map by name. (ClickHouse printf() matches DuckDB printf.)",
@@ -494,11 +494,11 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         hazard = "Aligned.",
         areas = listOf("datetime"),
         provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
-    // [94] duckdb: 'week' | clickhouse: 'toWeek'
-    FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "ClickHouse toWeek default mode 0 is Sunday-based (2023-01-01 -> 1); DuckDB week is ISO-8601 (-> 52). The generator renders DuckDB week faithfully as WEEK/toWeek (NOT toISOWeek) because the same rewrite would corrupt native ClickHouse week on ClickHouse->ClickHouse (pipe desugaring) — the correct source-aware fix is deferred (see SPIKE-source-aware-generator-transforms). Map to toISOWeek for ISO parity when transpiling.",
+    // [94] duckdb: 'week' | clickhouse: 'toISOWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB week is ISO-8601 == ClickHouse toISOWeek (52==52 verified). Now emitted via SOURCE-AWARE generation: duckdb->clickhouse renders toISOWeek; ClickHouse->ClickHouse stays faithful `week` (mode 0). Reconciled identical (generator fix 2026-07-14, source-aware).",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | source-aware fix 2026-07-14"),
     // [95] duckdb: 'yearweek' | clickhouse: 'toYearWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse toYearWeek default mode 0 (Sunday weeks, calendar year): 2024-12-30 -> 202452; DuckDB yearweek is ISO (-> 202501). Numbering AND year differ at boundaries.",
@@ -1317,7 +1317,7 @@ internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("YEARWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[95])
 }
 
-/** clickhouse->duckdb lookup: 178 keys (ClickHouse-side names) over 213 entries. */
+/** clickhouse->duckdb lookup: 177 keys (ClickHouse-side names) over 213 entries. */
 internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("ACOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[66])
@@ -1475,7 +1475,7 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("TODAYOFWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[91])
     put("TODAYOFYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[92])
     put("TOHOUR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[87])
-    put("TOISOWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[177])
+    put("TOISOWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[94])
     put("TOLASTDAYOFMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[100])
     put("TOMINUTE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[88])
     put("TOMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[84])
@@ -1484,10 +1484,9 @@ internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMa
     put("TOSECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[89])
     put("TOSECOND*1000 + TOMILLISECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[90])
     put("TOUNIXTIMESTAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[191])
-    put("TOWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[94])
     put("TOYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[83])
     put("TOYEARWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[95])
-    put("TRANSLATE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[28])
+    put("TRANSLATEUTF8", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[28])
     put("TRIM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[9])
     put("TRIMLEFT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[10])
     put("TRIMRIGHT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[11])

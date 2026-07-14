@@ -30,8 +30,8 @@ class MysqlDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         MysqlParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        MysqlGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        MysqlGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     companion object {
         // sqlglot: MySQL.TIME_MAPPING

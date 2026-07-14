@@ -27,12 +27,14 @@ open class TrinoGenerator(
     identify: kotlin.Any = false,
     comments: Boolean = true,
     tokenizerConfig: TokenizerConfig = TrinoTokenizerTables.CONFIG,
+    sourceDialect: String? = null,
 ) : PrestoGenerator(
     pretty = pretty,
     identify = identify,
     comments = comments,
     tokenizerConfig = tokenizerConfig,
     overrides = TRANSFORMS,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths

@@ -27,8 +27,8 @@ open class Spark2Dialect : HiveDialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         Spark2Parser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        Spark2Generator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        Spark2Generator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     companion object {
         // sqlglot: Spark2.INITCAP_DEFAULT_DELIMITER_CHARS = " "

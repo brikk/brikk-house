@@ -55,6 +55,7 @@ open class DatafusionGenerator(
     normalizeFunctions: kotlin.Any = "lower",
     tokenizerConfig: TokenizerConfig = TokenizerConfig.BASE,
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    sourceDialect: String? = null,
 ) : Generator(
     pretty = pretty,
     identify = identify,
@@ -62,6 +63,7 @@ open class DatafusionGenerator(
     normalizeFunctions = normalizeFunctions,
     tokenizerConfig = tokenizerConfig,
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
+    sourceDialect = sourceDialect,
 ) {
 
     // brikk: dialect back-reference for annotate_types-driven paths (falls back to BASE)

@@ -30,6 +30,6 @@ open class SparkDialect : Spark2Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         SparkParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        SparkGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        SparkGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 }

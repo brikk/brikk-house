@@ -44,11 +44,21 @@ hash value than ClickHouse `xxHash32`/`xxHash64` (not just type/signedness) — 
 divergent and REMOVED from the forward emit (was in chunk 3). `xxhash_32` inferred from the
 `xxhash_64` live finding; **re-probe `xxhash_32` directly** to confirm the exact value.
 
+### SOURCE-AWARE generation — IMPLEMENTED (`SPIKE` doc → done 2026-07-14)
+Option A shipped: `Generator.sourceDialect`/`isCrossDialectFrom` threaded through all
+generation entry points. Re-landed the gated ClickHouse rewrites `lower`→`lowerUTF8`,
+`upper`→`upperUTF8`, `translate`→`translateUTF8`, and `week`→`toISOWeek` (DuckDB only — Doris
+week is mode-0, stays faithful). Pipe desugaring no longer corrupts native ClickHouse
+functions. Reconciled duckdb `week`/`translate` + doris/trino `translate` → identical.
+`ClickhouseSourceAwareTransformsTest` pins it; `./kotlin test` green (584).
+
 ### REMAINING
-- Direct re-probe of Doris `xxhash_32` (flagged above).
-- The DEFERRED source-aware backlog (`translate`, `split_by_string`, `sequence`/`range`,
-  `format`, `dayname`, and the pre-existing `lower`/`upper`/`week`, `round`/`bin`/`age`/
-  `to_days`) — all need source-aware generation (SPIKE doc), still certify-guarded.
+- Direct re-probe of Doris `xxhash_32` (flagged above) and live re-verify Doris `week`
+  (now emits faithful `week`; likely identical on mode-0, unconfirmed on edge weeks).
+- Still-deferred (not source-aware issues): `split_by_string` (arg order), `sequence`/`range`
+  (bounds), `format` (spec), `dayname` (wrong type).
+- Backlog now UNBLOCKED by the source-aware plumbing (need per-function work): the §3 audit
+  (`Length`→`CHAR_LENGTH` etc.) and the `round`/`bin` shims.
 
 ---
 

@@ -52,12 +52,14 @@ open class Spark2Generator(
     comments: Boolean = true,
     tokenizerConfig: TokenizerConfig = Spark2TokenizerTables.CONFIG,
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    sourceDialect: String? = null,
 ) : HiveGenerator(
     pretty = pretty,
     identify = identify,
     comments = comments,
     tokenizerConfig = tokenizerConfig,
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths

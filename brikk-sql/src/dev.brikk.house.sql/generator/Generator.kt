@@ -58,6 +58,13 @@ open class Generator(
     val comments: Boolean = true,
     val tokenizerConfig: TokenizerConfig = TokenizerConfig.BASE,
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    // Source-aware generation (SPIKE-source-aware-generator-transforms): the dialect the AST
+    // was parsed FROM, when known. Lets a semantic-changing TRANSFORMS entry fire only on
+    // genuine cross-dialect transpilation and stay faithful on same-dialect generation
+    // (`toStandardSql`/pipe desugaring, or transpile read==write). null = unknown; treated
+    // as faithful/native (preserves the behavior of direct Expression.sql(...) call sites).
+    // Set by transpile(read,write) and SqlFragment paths. See [isCrossDialectFrom].
+    val sourceDialect: String? = null,
 ) {
     // ------------------------------------------------------------------
     // 1. Options / state
@@ -65,6 +72,16 @@ open class Generator(
 
     var identify: kotlin.Any = identify
         protected set
+
+    /**
+     * True iff we KNOW the AST came from a dialect other than [nativeDialect] — i.e. this is
+     * a genuine cross-dialect transpile into [nativeDialect]. A semantic-changing rewrite
+     * (e.g. `lower`→`lowerUTF8` when targeting ClickHouse) should gate on this so it does
+     * NOT fire on same-dialect generation (pipe desugaring / `toStandardSql`, transpile
+     * read==write) or on source-unknown direct `Expression.sql(...)` (both stay faithful).
+     */
+    fun isCrossDialectFrom(nativeDialect: String): Boolean =
+        sourceDialect != null && !sourceDialect.equals(nativeDialect, ignoreCase = true)
 
     private val indentWidth: Int = indent
 

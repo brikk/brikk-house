@@ -87,6 +87,7 @@ open class ClickhouseGenerator(
     tokenizerConfig: TokenizerConfig = ClickhouseTokenizerTables.CONFIG,
     // extra dispatch overlay for subclasses (sqlglot: further TRANSFORMS merges)
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    sourceDialect: String? = null,
 ) : Generator(
     pretty = pretty,
     identify = identify,
@@ -94,6 +95,7 @@ open class ClickhouseGenerator(
     normalizeFunctions = normalizeFunctions,
     tokenizerConfig = tokenizerConfig,
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
@@ -788,6 +790,11 @@ open class ClickhouseGenerator(
 
     companion object {
 
+        // Source dialects whose bare week() is ISO-8601 (so ClickHouse target must be
+        // toISOWeek, not the Sunday-based default week/toWeek). MySQL-family week() is mode 0
+        // and matches ClickHouse's default, so it is NOT listed (stays faithful `week`).
+        private val ISO_WEEK_SOURCES: Set<String> = setOf("duckdb")
+
         // Cross-dialect function-name RENAMES applied to unmapped Anonymous calls when
         // targeting ClickHouse. Key = lowercased SOURCE function name (DuckDB / Doris /
         // Trino), value = the ClickHouse spelling. All probe-verified live vs ClickHouse
@@ -990,18 +997,40 @@ open class ClickhouseGenerator(
 
             reg(AnyValue::class) { e -> ch().renameFuncSql("any", e) }
             reg(ApproxDistinct::class) { e -> ch().renameFuncSql("uniq", e) }
-            // BUGS-clickhouse-generator-mappings rows 1 (lower/upper) and 5 (duckdb week):
-            // INTENTIONALLY NOT transformed here. lowerUTF8/upperUTF8/toISOWeek would be
-            // correct for cross-dialect (DuckDB/Trino->ClickHouse) but this generator is
-            // SOURCE-UNAWARE, so the same rewrite fires on ClickHouse->ClickHouse (which
-            // pipe desugaring / toStandardSql uses) and CORRUPTS a native ClickHouse
-            // `lower`/`upper`/`week` (ASCII->unicode, Sunday->ISO). Upstream sqlglot renders
-            // them faithfully for the same reason. The cross-dialect divergence is left to
-            // the divergent hazard (certify surfaces it). The correct auto-fix needs
-            // source-aware generation — see docs/research/SPIKE-source-aware-generator-
-            // transforms-2026-07-13.md.
-            // (Trino `week` parses to WeekOfYear, a node ClickHouse never emits, so that one
-            // IS safe to transform below.)
+            // SOURCE-AWARE rewrites (SPIKE-source-aware-generator-transforms, now implemented
+            // via Generator.sourceDialect / isCrossDialectFrom). These rewrites are CORRECT
+            // for cross-dialect (DuckDB/Trino/Doris -> ClickHouse) but would CORRUPT a native
+            // ClickHouse function on same-dialect generation (pipe desugaring / toStandardSql,
+            // transpile read==write), so they fire ONLY when the source is known to be a
+            // non-ClickHouse dialect. Same-dialect / source-unknown stays faithful.
+            //   lower/upper: ClickHouse LOWER/UPPER are ASCII-only; the source folds full
+            //     Unicode -> lowerUTF8/upperUTF8 (residual İ/ß edge stays a divergent hazard).
+            //   week (DuckDB Week node): DuckDB/others week is ISO-8601 -> toISOWeek (CH WEEK
+            //     default mode 0 is Sunday-based). (Trino week parses to WeekOfYear, handled
+            //     unconditionally below since ClickHouse never emits that node.)
+            //   translate: source translate is code-point-wise -> translateUTF8 (CH translate
+            //     is byte-level and errors on multibyte). Faithful CH keeps byte `translate`.
+            reg(Lower::class) { e ->
+                if (ch().isCrossDialectFrom("clickhouse")) func("lowerUTF8", e.thisArg)
+                else func("lower", e.thisArg)
+            }
+            reg(Upper::class) { e ->
+                if (ch().isCrossDialectFrom("clickhouse")) func("upperUTF8", e.thisArg)
+                else func("upper", e.thisArg)
+            }
+            // week() semantics are SOURCE-SPECIFIC (not uniformly cross-dialect): DuckDB
+            // week is ISO-8601 -> toISOWeek, but MySQL-family (Doris/MySQL) week defaults to
+            // mode 0 (Sunday-based) == ClickHouse's own week default, so those stay faithful
+            // `week`. Only rewrite for sources whose Week node is ISO. (Trino week parses to
+            // WeekOfYear, handled unconditionally below.)
+            reg(Week::class) { e ->
+                if (ch().sourceDialect?.lowercase() in ISO_WEEK_SOURCES) func("toISOWeek", e.thisArg)
+                else func("week", e.thisArg)
+            }
+            reg(Translate::class) { e ->
+                val name = if (ch().isCrossDialectFrom("clickhouse")) "translateUTF8" else "translate"
+                func(name, e.thisArg, e.args["from_"], e.args["to"])
+            }
             // BUGS-clickhouse-generator-mappings rows 3/12 (P1/P2): natural-log collision
             // + invalid 2-arg LOG. See clickhouseLogSql.
             reg(Log::class) { e -> ch().clickhouseLogSql(e as Log) }

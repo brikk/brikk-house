@@ -52,6 +52,6 @@ open class DatafusionDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         DatafusionParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        DatafusionGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        DatafusionGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 }

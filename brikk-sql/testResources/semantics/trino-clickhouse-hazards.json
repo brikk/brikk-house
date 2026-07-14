@@ -1377,14 +1377,14 @@
     },
     {
       "trino": "translate",
-      "clickhouse": "translate",
+      "clickhouse": "translateUTF8",
       "verdict": "identical",
-      "hazard": "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is translate (rename). DEFERRED: ClickHouse parses translate to the shared Translate node, so a rewrite would corrupt native ClickHouse translate — needs source-aware generation.",
+      "hazard": "Trino translate is code-point-wise == ClickHouse translateUTF8. Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on CH->CH). Reconciled identical (generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
       ],
-      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"
+      "provenance": "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.* | source-aware fix 2026-07-14"
     },
     {
       "trino": "week_of_year",

@@ -39,12 +39,14 @@ open class DorisGenerator(
     identify: kotlin.Any = false,
     comments: Boolean = true,
     tokenizerConfig: TokenizerConfig = DorisTokenizerTables.CONFIG,
+    sourceDialect: String? = null,
 ) : MysqlGenerator(
     pretty = pretty,
     identify = identify,
     comments = comments,
     tokenizerConfig = tokenizerConfig,
     overrides = TRANSFORMS,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths

@@ -27,6 +27,6 @@ class TrinoDialect : PrestoDialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         TrinoParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        TrinoGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        TrinoGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 }

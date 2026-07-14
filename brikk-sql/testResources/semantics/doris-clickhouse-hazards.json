@@ -57,13 +57,13 @@
     },
     {
       "doris": "week",
-      "clickhouse": "toISOWeek",
+      "clickhouse": "week",
       "verdict": "divergent",
-      "hazard": "Doris week() default mode is not ISO (2023-01-01 -> 1); ClickHouse toISOWeek is ISO-8601 (2023-01-01 -> 52, belongs to prior year's week).",
+      "hazard": "Doris week() defaults to mode 0 (Sunday-based) == ClickHouse week() default mode 0; the SOURCE-AWARE generator now emits faithful `week` for doris->clickhouse (NOT toISOWeek, which would be wrong — Doris week is not ISO). Likely identical on mode-0 inputs; kept divergent pending direct live Doris re-verification of edge weeks. (generator fix 2026-07-14)",
       "areas": [
         "datetime"
       ],
-      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv | source-aware fix 2026-07-14 (faithful week; re-verify)"
     },
     {
       "doris": "greatest",
@@ -1743,14 +1743,14 @@
     },
     {
       "doris": "translate",
-      "clickhouse": "translate",
+      "clickhouse": "translateUTF8",
       "verdict": "identical",
-      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name translate (rename; DEFERRED: ClickHouse parses translate to the shared Translate node, so a node rewrite to translateUTF8 would corrupt NATIVE ClickHouse translate (byte->codepoint). DuckDB needs translateUTF8 (codepoint) while ClickHouse translate is byte-level — needs source-aware generation.",
+      "hazard": "Doris translate is code-point-wise == ClickHouse translateUTF8. Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on CH->CH). Reconciled identical (generator fix 2026-07-14).",
       "areas": [
         "auto",
         "rename"
       ],
-      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.* | source-aware fix 2026-07-14"
     },
     {
       "doris": "ucase",

@@ -110,7 +110,8 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         trackSourceMap: Boolean = false,
         desugarPipes: Boolean = false,
     ): TranspileResult {
-        val generator = Dialects.forName(target).generator(pretty = pretty)
+        val generator = Dialects.forName(target)
+            .generator(pretty = pretty, sourceDialect = dialect.ifBlank { null })
         // brikk-native: emit-span tracking (generator/SourceMap.kt) — off by default
         generator.trackSpans = trackSourceMap
         // Qualified call: the boolean param shadows the imported desugarPipes function.
@@ -372,7 +373,10 @@ class SqlFragment(val sql: String, val dialect: String = "") {
             tree = bindSlots(tree, inputs)
             tree = expandStarModifiers(tree, buildSchema(inputs), dialectObj)
         }
-        return Dialects.forName(target).generate(tree)
+        // Source-aware: pass this fragment's dialect so same-dialect desugaring (the common
+        // toStandardSql case, target defaults to `dialect`) stays faithful and never rewrites
+        // native functions (e.g. ClickHouse lower stays LOWER, not lowerUTF8).
+        return Dialects.forName(target).generate(tree, sourceDialect = dialect.ifBlank { null })
     }
 
     /**

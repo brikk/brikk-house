@@ -38,12 +38,14 @@ open class SparkGenerator(
     identify: kotlin.Any = false,
     comments: Boolean = true,
     tokenizerConfig: TokenizerConfig = SparkTokenizerTables.CONFIG,
+    sourceDialect: String? = null,
 ) : Spark2Generator(
     pretty = pretty,
     identify = identify,
     comments = comments,
     tokenizerConfig = tokenizerConfig,
     overrides = TRANSFORMS,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths

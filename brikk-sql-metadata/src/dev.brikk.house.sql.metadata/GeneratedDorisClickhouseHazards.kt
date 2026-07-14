@@ -42,11 +42,11 @@ private fun hazardsChunk0(): List<FunctionHazard> = listOf(
         hazard = "Numbering differs: Doris dayofweek() is Sun=1..Sat=7 (MySQL); ClickHouse toDayOfWeek is ISO Mon=1..Sun=7. Sunday: Doris 1 vs ClickHouse 7; Monday: 2 vs 1.",
         areas = listOf("datetime"),
         provenance = "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"),
-    // [5] doris: 'week' | clickhouse: 'toISOWeek'
+    // [5] doris: 'week' | clickhouse: 'week'
     FunctionHazard(HazardVerdict.DIVERGENT,
-        hazard = "Doris week() default mode is not ISO (2023-01-01 -> 1); ClickHouse toISOWeek is ISO-8601 (2023-01-01 -> 52, belongs to prior year's week).",
+        hazard = "Doris week() defaults to mode 0 (Sunday-based) == ClickHouse week() default mode 0; the SOURCE-AWARE generator now emits faithful `week` for doris->clickhouse (NOT toISOWeek, which would be wrong — Doris week is not ISO). Likely identical on mode-0 inputs; kept divergent pending direct live Doris re-verification of edge weeks. (generator fix 2026-07-14)",
         areas = listOf("datetime"),
-        provenance = "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"),
+        provenance = "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv | source-aware fix 2026-07-14 (faithful week; re-verify)"),
     // [6] doris: 'greatest' | clickhouse: 'greatest'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "NULL handling: Doris greatest(1,NULL,3) propagates -> NULL; ClickHouse greatest(1,NULL,3) skips NULL -> 3.",
@@ -857,11 +857,11 @@ private fun hazardsChunk4(): List<FunctionHazard> = listOf(
         hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toMonday (rename). brikk's ClickHouse generator now emits toMonday (temporal generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
         provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
-    // [171] doris: 'translate' | clickhouse: 'translate'
+    // [171] doris: 'translate' | clickhouse: 'translateUTF8'
     FunctionHazard(HazardVerdict.IDENTICAL,
-        hazard = "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name translate (rename; DEFERRED: ClickHouse parses translate to the shared Translate node, so a node rewrite to translateUTF8 would corrupt NATIVE ClickHouse translate (byte->codepoint). DuckDB needs translateUTF8 (codepoint) while ClickHouse translate is byte-level — needs source-aware generation.",
+        hazard = "Doris translate is code-point-wise == ClickHouse translateUTF8. Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on CH->CH). Reconciled identical (generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"),
+        provenance = "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.* | source-aware fix 2026-07-14"),
     // [172] doris: 'ucase' | clickhouse: 'UPPER'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Doris vs ClickHouse. Values agree.",
@@ -1070,7 +1070,7 @@ internal val DORIS_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("YEAR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[34])
 }
 
-/** clickhouse->doris lookup: 166 keys (ClickHouse-side names) over 177 entries. */
+/** clickhouse->doris lookup: 167 keys (ClickHouse-side names) over 177 entries. */
 internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("'ABC' LIKE 'ABC'", DORIS_CLICKHOUSE_HAZARD_ENTRIES[152])
     put("ABS", DORIS_CLICKHOUSE_HAZARD_ENTRIES[33])
@@ -1217,7 +1217,7 @@ internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TOHOUR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[37])
     put("TOIPV4ORDEFAULT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[168])
     put("TOIPV6ORDEFAULT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[169])
-    put("TOISOWEEK", DORIS_CLICKHOUSE_HAZARD_ENTRIES[5])
+    put("TOISOWEEK", DORIS_CLICKHOUSE_HAZARD_ENTRIES[174])
     put("TOLASTDAYOFMONTH", DORIS_CLICKHOUSE_HAZARD_ENTRIES[71])
     put("TOMINUTE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[67])
     put("TOMONDAY", DORIS_CLICKHOUSE_HAZARD_ENTRIES[170])
@@ -1228,7 +1228,7 @@ internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TOUNIXTIMESTAMP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[39])
     put("TOYEAR", DORIS_CLICKHOUSE_HAZARD_ENTRIES[34])
     put("TO_BASE64", DORIS_CLICKHOUSE_HAZARD_ENTRIES[167])
-    put("TRANSLATE", DORIS_CLICKHOUSE_HAZARD_ENTRIES[171])
+    put("TRANSLATEUTF8", DORIS_CLICKHOUSE_HAZARD_ENTRIES[171])
     put("TRIM", DORIS_CLICKHOUSE_HAZARD_ENTRIES[14])
     put("TRIMLEFT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[15])
     put("TRIMRIGHT", DORIS_CLICKHOUSE_HAZARD_ENTRIES[48])
@@ -1236,6 +1236,7 @@ internal val CLICKHOUSE_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("UNHEX", DORIS_CLICKHOUSE_HAZARD_ENTRIES[85])
     put("UPPER", DORIS_CLICKHOUSE_HAZARD_ENTRIES[1])
     put("VARSAMP", DORIS_CLICKHOUSE_HAZARD_ENTRIES[88])
+    put("WEEK", DORIS_CLICKHOUSE_HAZARD_ENTRIES[5])
     put("XXHASH32", DORIS_CLICKHOUSE_HAZARD_ENTRIES[175])
     put("XXHASH64", DORIS_CLICKHOUSE_HAZARD_ENTRIES[176])
 }
