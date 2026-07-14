@@ -27,12 +27,14 @@ open class TrinoGenerator(
     identify: kotlin.Any = false,
     comments: Boolean = true,
     tokenizerConfig: TokenizerConfig = TrinoTokenizerTables.CONFIG,
+    sourceDialect: String? = null,
 ) : PrestoGenerator(
     pretty = pretty,
     identify = identify,
     comments = comments,
     tokenizerConfig = tokenizerConfig,
     overrides = TRANSFORMS,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
@@ -54,6 +56,20 @@ open class TrinoGenerator(
     // sqlglot: Generator.log_sql (LOG_BASE_FIRST True restores the base behavior)
     override fun logSql(expression: Log): String =
         func("LOG", expression.thisArg, expression.args["expression"])
+
+    // Reverse direction (ClickHouse -> Trino): ClickHouse camelCase names that reach the
+    // generator as an unmapped Anonymous, rewritten to the Trino spelling. Key = ClickHouse
+    // name UPPERCASED, value = Trino name. Live-verified value-equal on Trino 481 +
+    // ClickHouse 26.5.1.1 (doris-ducklake agent, reverse-doris-trino.results.tsv).
+    // Round-trip safe: keys are camelCase (no underscores) that Trino neither parses to a
+    // node nor accepts, so native Trino generation is untouched. arrayElement->element_at
+    // is value-equal here but stays a divergent hazard (negative-index semantics).
+    override fun anonymousSql(expression: Anonymous): String {
+        REVERSE_CLICKHOUSE_RENAMES[expression.name.uppercase()]?.let { target ->
+            return func(target, *expression.expressionsArg.toTypedArray())
+        }
+        return super.anonymousSql(expression)
+    }
 
     // sqlglot: dialect.trim_sql (Trino TRANSFORMS[exp.Trim])
     open fun trinoTrimSql(expression: Trim): String {
@@ -220,6 +236,20 @@ open class TrinoGenerator(
     }
 
     companion object {
+
+        // Reverse direction (ClickHouse -> Trino) function-name renames; see anonymousSql.
+        // Live-verified value-equal (Trino 481 + ClickHouse 26.5.1.1). EXCLUDED:
+        // splitByRegexp->regexp_split (Trino treats the CH backslash literally, so '\\d'
+        // does not split — a real regex-escape divergence, not a clean rename).
+        private val REVERSE_CLICKHOUSE_RENAMES: Map<String, String> = mapOf(
+            "ARRAYSORT" to "ARRAY_SORT",
+            "ARRAYINTERSECT" to "ARRAY_INTERSECT",
+            "ARRAYELEMENT" to "ELEMENT_AT", // divergent (negative-index) — hazard kept
+            "BITSHIFTLEFT" to "BITWISE_LEFT_SHIFT",
+            "BITSHIFTRIGHT" to "BITWISE_RIGHT_SHIFT",
+            "DOTPRODUCT" to "DOT_PRODUCT",
+            "ISINFINITE" to "IS_INFINITE",
+        )
 
         // sqlglot: TrinoGenerator.PROPERTIES_LOCATION
         val TRINO_PROPERTIES_LOCATION: Map<KClass<out Expression>, GeneratorTables.PropLocation> =

@@ -48,6 +48,7 @@ open class BigqueryGenerator(
     comments: Boolean = true,
     tokenizerConfig: TokenizerConfig = BigqueryTokenizerTables.CONFIG,
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    sourceDialect: String? = null,
 ) : Generator(
     pretty = pretty,
     identify = identify,
@@ -56,6 +57,7 @@ open class BigqueryGenerator(
     normalizeFunctions = false,
     tokenizerConfig = tokenizerConfig,
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
+    sourceDialect = sourceDialect,
 ) {
 
     override val dialect: Dialect get() = Dialects.BIGQUERY

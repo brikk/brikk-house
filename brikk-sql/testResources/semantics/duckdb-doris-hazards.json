@@ -2672,6 +2672,36 @@
         "datetime"
       ],
       "provenance": "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"
+    },
+    {
+      "duckdb": "stddev",
+      "doris": "stddev",
+      "verdict": "divergent",
+      "hazard": "Bare stddev() DEFAULT differs: Doris is POPULATION (n); DuckDB/Trino/ClickHouse are SAMPLE (n-1). Same input -> 1.356466 vs 1.516575. Use stddev_pop/stddev_samp explicitly to be safe.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "duckdb": "variance",
+      "doris": "variance",
+      "verdict": "divergent",
+      "hazard": "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "duckdb": "array_agg",
+      "doris": "array_agg",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Array aggregation: elements agree, but NULL inclusion/position and rendering differ (e.g. Doris keeps NULL first, Trino NULL last); not portable without explicit ORDER BY + NULL handling.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
     }
   ]
 }

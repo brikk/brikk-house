@@ -1,0 +1,17 @@
+count_star	6
+count_x	5
+count_distinct	4
+sum	13
+avg	2.6
+min	1
+max	5
+stddev_default	1.516575
+stddev_samp	1.516575
+stddev_pop	1.356466
+var_default	2.3
+var_pop	1.84
+median	2.0
+sum_allnull	None
+string_agg	a,a,b,c
+array_agg	['a', 'a', 'b', 'c', None]
+bool_or	True

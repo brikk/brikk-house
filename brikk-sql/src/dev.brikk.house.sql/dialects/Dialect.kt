@@ -148,8 +148,10 @@ open class Dialect {
         Parser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
     // sqlglot: Dialect.generator
-    open fun generator(pretty: Boolean = false): Generator =
-        Generator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    // sourceDialect: the dialect the AST was parsed from (source-aware generation). null =
+    // unknown/native (faithful). See Generator.isCrossDialectFrom.
+    open fun generator(pretty: Boolean = false, sourceDialect: String? = null): Generator =
+        Generator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     // sqlglot: Dialect.tokenize
     fun tokenize(sql: String): List<Token> = Tokenizer(tokenizerConfig).tokenize(sql)
@@ -162,8 +164,13 @@ open class Dialect {
         parse(sql).firstOrNull() ?: throw ParseError("No expression was parsed from '$sql'")
 
     // sqlglot: Dialect.generate
-    fun generate(expression: Expression, pretty: Boolean = false, copy: Boolean = true): String =
-        generator(pretty = pretty).generate(expression, copy = copy)
+    fun generate(
+        expression: Expression,
+        pretty: Boolean = false,
+        copy: Boolean = true,
+        sourceDialect: String? = null,
+    ): String =
+        generator(pretty = pretty, sourceDialect = sourceDialect).generate(expression, copy = copy)
 
     /**
      * sqlglot: Dialect.normalize_identifier — transforms an identifier in a way that
@@ -296,7 +303,13 @@ object Dialects {
  * Single-statement convenience (Python returns a list over all statements).
  */
 fun transpile(sql: String, read: String = "", write: String = "", pretty: Boolean = false): String =
-    Dialects.forName(write).generate(Dialects.forName(read).parseOne(sql), pretty = pretty)
+    Dialects.forName(write).generate(
+        Dialects.forName(read).parseOne(sql),
+        pretty = pretty,
+        // source-aware generation: tell the target generator which dialect we parsed from so
+        // semantic-changing cross-dialect rewrites fire (and same-dialect stays faithful).
+        sourceDialect = read.ifBlank { null },
+    )
 
 /** sqlglot: Expression.sql(dialect=...) convenience. */
 fun Expression.sql(dialect: String = "", pretty: Boolean = false): String =

@@ -91,9 +91,9 @@ class HazardRegistryTest {
     fun entryAndVerdictCountsArePinned() {
         // Pinned to trino-duckdb-hazards.json (242 probe-verified pairs); the sync test
         // in brikk-sql test@jvm cross-checks content against the JSON itself.
-        assertEquals(242, TRINO_DUCKDB_HAZARD_ENTRIES.size)
+        assertEquals(246, TRINO_DUCKDB_HAZARD_ENTRIES.size)
         val counts = TRINO_DUCKDB_HAZARD_ENTRIES.groupingBy { it.verdict }.eachCount()
-        assertEquals(102, counts[HazardVerdict.IDENTICAL])
+        assertEquals(106, counts[HazardVerdict.IDENTICAL])
         assertEquals(38, counts[HazardVerdict.DIVERGENT])
         assertEquals(52, counts[HazardVerdict.CONDITIONALLY_EQUIVALENT])
         assertEquals(44, counts[HazardVerdict.NO_EQUIVALENT])
@@ -103,7 +103,7 @@ class HazardRegistryTest {
     @Test
     fun keyCountsPerDirectionArePinned() {
         assertEquals(386, TRINO_TO_DUCKDB_HAZARDS.size)
-        assertEquals(307, DUCKDB_TO_TRINO_HAZARDS.size)
+        assertEquals(309, DUCKDB_TO_TRINO_HAZARDS.size)
         // Every keyed value is one of the shared entries (no copies).
         assertTrue(TRINO_TO_DUCKDB_HAZARDS.values.all { it in TRINO_DUCKDB_HAZARD_ENTRIES })
         assertTrue(DUCKDB_TO_TRINO_HAZARDS.values.all { it in TRINO_DUCKDB_HAZARD_ENTRIES })
@@ -113,8 +113,8 @@ class HazardRegistryTest {
     fun dorisPairsArePopulatedByLiveProbes() {
         // Populated by the doris live-probe program (REPORT-doris-differential-probe-
         // 2026-07-13); counts pinned to the ingested registries.
-        assertEquals(255, DUCKDB_DORIS_HAZARD_ENTRIES.size)
-        assertEquals(203, TRINO_DORIS_HAZARD_ENTRIES.size)
+        assertEquals(258, DUCKDB_DORIS_HAZARD_ENTRIES.size)
+        assertEquals(216, TRINO_DORIS_HAZARD_ENTRIES.size)
         assertTrue(DUCKDB_TO_DORIS_HAZARDS.isNotEmpty())
         assertTrue(DORIS_TO_DUCKDB_HAZARDS.isNotEmpty())
         assertTrue(TRINO_TO_DORIS_HAZARDS.isNotEmpty())
@@ -129,8 +129,8 @@ class HazardRegistryTest {
         // Populated by the clickhouse differential-probe program (REPORT-clickhouse-
         // differential-probe-2026-07-13; ClickHouse 26.5.1.1 via chdb vs DuckDB 1.5.4);
         // counts pinned to the ingested registries.
-        assertEquals(152, DUCKDB_CLICKHOUSE_HAZARD_ENTRIES.size)
-        assertEquals(107, TRINO_CLICKHOUSE_HAZARD_ENTRIES.size)
+        assertEquals(213, DUCKDB_CLICKHOUSE_HAZARD_ENTRIES.size)
+        assertEquals(134, TRINO_CLICKHOUSE_HAZARD_ENTRIES.size)
         assertTrue(DUCKDB_TO_CLICKHOUSE_HAZARDS.isNotEmpty())
         assertTrue(CLICKHOUSE_TO_DUCKDB_HAZARDS.isNotEmpty())
         assertTrue(TRINO_TO_CLICKHOUSE_HAZARDS.isNotEmpty())
@@ -142,6 +142,21 @@ class HazardRegistryTest {
         // ClickHouse regexp_replace = replace-all, matching Trino (differs from DuckDB).
         assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("trino", "clickhouse", "regexp_replace")?.verdict)
         assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("trino", "clickhouse", "date_format")?.verdict)
+    }
+
+    @Test
+    fun dorisClickhousePairIsPopulatedByLiveProbes() {
+        // Populated by the doris<->clickhouse live differential probe (Doris FE pr62767-local
+        // / BE 4.1.2 vs ClickHouse 26.5.1.1 via chdb; docs/research/probe-runs/doris-clickhouse.*).
+        assertEquals(177, DORIS_CLICKHOUSE_HAZARD_ENTRIES.size)
+        assertTrue(DORIS_TO_CLICKHOUSE_HAZARDS.isNotEmpty())
+        assertTrue(CLICKHOUSE_TO_DORIS_HAZARDS.isNotEmpty())
+        // Live-probed spot checks: both round half-away vs banker's; both single-arg log is
+        // NATURAL (identical — resolves what the conservative composition marked divergent).
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("doris", "clickhouse", "round")?.verdict)
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("doris", "clickhouse", "dayofweek")?.verdict)
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("doris", "clickhouse", "log")?.verdict)
+        assertEquals(HazardVerdict.IDENTICAL, HazardRegistry.lookup("clickhouse", "doris", "length")?.verdict)
     }
 
 }

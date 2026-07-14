@@ -1,0 +1,1809 @@
+{
+  "source_project": "doris<->clickhouse live differential probe",
+  "extracted": "2026-07-13",
+  "pairs": [
+    {
+      "doris": "lower",
+      "clickhouse": "lower",
+      "verdict": "divergent",
+      "hazard": "Doris lower() folds full Unicode ('İ'->'i̇'); ClickHouse lower() is ASCII-only ('İ' unchanged). Use ClickHouse lowerUTF8 for parity (still an İ/ß edge).",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "upper",
+      "clickhouse": "upper",
+      "verdict": "divergent",
+      "hazard": "Doris upper() folds full Unicode ('ß'->'SS'); ClickHouse upper() is ASCII-only ('ß' unchanged). ClickHouse upperUTF8 approaches Doris but 'ß'->'SS' is length-changing.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "reverse",
+      "clickhouse": "reverse",
+      "verdict": "divergent",
+      "hazard": "Doris reverse() is code-point-wise ('中文x'->'x文中'); ClickHouse reverse() is BYTE-wise (mojibake on multibyte). ClickHouse reverseUTF8 matches Doris.",
+      "areas": [
+        "string",
+        "unicode"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "round",
+      "clickhouse": "round",
+      "verdict": "divergent",
+      "hazard": "Doris round() is half-away-from-zero (round(2.5)=3, round(-2.5)=-3); ClickHouse round() is banker's/half-even (2 and -2). round(0.5): Doris 1 vs ClickHouse 0.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "dayofweek",
+      "clickhouse": "toDayOfWeek",
+      "verdict": "divergent",
+      "hazard": "Numbering differs: Doris dayofweek() is Sun=1..Sat=7 (MySQL); ClickHouse toDayOfWeek is ISO Mon=1..Sun=7. Sunday: Doris 1 vs ClickHouse 7; Monday: 2 vs 1.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "week",
+      "clickhouse": "week",
+      "verdict": "divergent",
+      "hazard": "Doris week() defaults to mode 0 (Sunday-based) == ClickHouse week() default mode 0; the SOURCE-AWARE generator now emits faithful `week` for doris->clickhouse (NOT toISOWeek, which would be wrong — Doris week is not ISO). Likely identical on mode-0 inputs; kept divergent pending direct live Doris re-verification of edge weeks. (generator fix 2026-07-14)",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv | source-aware fix 2026-07-14 (faithful week; re-verify)"
+    },
+    {
+      "doris": "greatest",
+      "clickhouse": "greatest",
+      "verdict": "divergent",
+      "hazard": "NULL handling: Doris greatest(1,NULL,3) propagates -> NULL; ClickHouse greatest(1,NULL,3) skips NULL -> 3.",
+      "areas": [
+        "null",
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "least",
+      "clickhouse": "least",
+      "verdict": "divergent",
+      "hazard": "NULL handling: Doris least(1,NULL,3) propagates -> NULL; ClickHouse least(1,NULL,3) skips NULL -> 1.",
+      "areas": [
+        "null",
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "date_trunc",
+      "clickhouse": "dateTrunc",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Truncation value agrees at the requested granularity, but return TYPE/precision can differ (Doris date_trunc keeps DATETIME '2024-06-01 00:00:00'; ClickHouse toStartOfMonth returns DATE '2024-06-01'). Re-check downstream type sensitivity.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "length",
+      "clickhouse": "length",
+      "verdict": "identical",
+      "hazard": "Both count BYTES ('中文'->6).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "char_length",
+      "clickhouse": "char_length",
+      "verdict": "identical",
+      "hazard": "Both count code points ('中文'->2). Doris aliases character_length; ClickHouse CHAR_LENGTH/lengthUTF8.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "ascii",
+      "clickhouse": "ascii",
+      "verdict": "identical",
+      "hazard": "Both return the first UTF-8 byte of the argument ('中'->228).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "substring",
+      "clickhouse": "substring",
+      "verdict": "identical",
+      "hazard": "Agrees incl. negative start (substring('brikk',-2,2)->'kk').",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "locate",
+      "clickhouse": "position",
+      "verdict": "identical",
+      "hazard": "Same 1-based first-occurrence index; only the argument order differs (locate(needle,hay) vs position(hay,needle)), which the generator handles.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "trim",
+      "clickhouse": "trim",
+      "verdict": "identical",
+      "hazard": "TRIM with an explicit character set agrees.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "ltrim",
+      "clickhouse": "trimLeft",
+      "verdict": "identical",
+      "hazard": "Left-trim of a character set agrees.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "concat",
+      "clickhouse": "concat",
+      "verdict": "identical",
+      "hazard": "Both propagate NULL (concat('a',NULL,'b')->NULL); note this differs from DuckDB, but Doris and ClickHouse agree.",
+      "areas": [
+        "null",
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "lpad",
+      "clickhouse": "leftPad",
+      "verdict": "identical",
+      "hazard": "Left-pad agrees (lpad('7',3,'0')->'007').",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "repeat",
+      "clickhouse": "repeat",
+      "verdict": "identical",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "replace",
+      "clickhouse": "replaceAll",
+      "verdict": "identical",
+      "hazard": "Literal replace-all agrees.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "split_part",
+      "clickhouse": "splitByChar",
+      "verdict": "identical",
+      "hazard": "1-based part selection agrees (split_part('a,b,c',',',2)->'b').",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "regexp_replace",
+      "clickhouse": "replaceRegexpAll",
+      "verdict": "identical",
+      "hazard": "Doris regexp_replace is ALWAYS global; equals ClickHouse replaceRegexpAll (= ClickHouse regexp_replace). NOT ClickHouse replaceRegexpOne (first-only).",
+      "areas": [
+        "regex",
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "regexp_extract",
+      "clickhouse": "extract",
+      "verdict": "identical",
+      "hazard": "First-match extraction agrees ('abc123','[0-9]+'->'123').",
+      "areas": [
+        "regex",
+        "string"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "truncate",
+      "clickhouse": "truncate",
+      "verdict": "identical",
+      "hazard": "Decimal truncation agrees (truncate(2.678,1)->2.6).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "log",
+      "clickhouse": "log",
+      "verdict": "identical",
+      "hazard": "Both single-arg log() are NATURAL log (log(100)=4.60517). (Upgrades the conservative composition, which marked this divergent because both differ from DuckDB's base-10 log.)",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "ln",
+      "clickhouse": "ln",
+      "verdict": "identical",
+      "hazard": "Natural log agrees.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "log10",
+      "clickhouse": "log10",
+      "verdict": "identical",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "log2",
+      "clickhouse": "log2",
+      "verdict": "identical",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "mod",
+      "clickhouse": "modulo",
+      "verdict": "identical",
+      "hazard": "Sign of negative modulo agrees (mod(-7,3)->-1).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "pow",
+      "clickhouse": "pow",
+      "verdict": "identical",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "floor",
+      "clickhouse": "floor",
+      "verdict": "identical",
+      "hazard": "floor(-1.5)->-2 in both.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "ceil",
+      "clickhouse": "ceil",
+      "verdict": "identical",
+      "hazard": "ceil(-1.5)->-1 in both.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "sign",
+      "clickhouse": "sign",
+      "verdict": "identical",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "abs",
+      "clickhouse": "abs",
+      "verdict": "identical",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "year",
+      "clickhouse": "toYear",
+      "verdict": "identical",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "month",
+      "clickhouse": "toMonth",
+      "verdict": "identical",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "dayofmonth",
+      "clickhouse": "toDayOfMonth",
+      "verdict": "identical",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "hour",
+      "clickhouse": "toHour",
+      "verdict": "identical",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "datediff",
+      "clickhouse": "dateDiff",
+      "verdict": "identical",
+      "hazard": "Day-granularity difference agrees (60 days); argument order differs (Doris datediff(end,start) vs ClickHouse dateDiff('day',start,end)), handled by the generator.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "unix_timestamp",
+      "clickhouse": "toUnixTimestamp",
+      "verdict": "identical",
+      "hazard": "Epoch seconds agree.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "from_unixtime",
+      "clickhouse": "fromUnixTimestamp",
+      "verdict": "identical",
+      "hazard": "Epoch-to-datetime agrees.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "coalesce",
+      "clickhouse": "coalesce",
+      "verdict": "identical",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "nullif",
+      "clickhouse": "nullIf",
+      "verdict": "identical",
+      "hazard": "nullif(5,5)->NULL in both.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "if",
+      "clickhouse": "if",
+      "verdict": "identical",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "md5",
+      "clickhouse": "MD5",
+      "verdict": "identical",
+      "hazard": "Doris md5(x) equals ClickHouse lower(hex(MD5(x))) — same 32-char lowercase hex digest.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "hex",
+      "clickhouse": "hex",
+      "verdict": "identical",
+      "hazard": "hex(255)->'FF' in both.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "crc32",
+      "clickhouse": "CRC32",
+      "verdict": "identical",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "live differential probe 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse.{clickhouse,doris}.tsv"
+    },
+    {
+      "doris": "date_format",
+      "clickhouse": "formatDateTime",
+      "verdict": "divergent",
+      "hazard": "Format-specifier vocabularies differ: ClickHouse formatDateTime %M = full month name, minutes = %i is NOT ClickHouse (it uses %M/%i differently) — Doris/MySQL %i = minutes, %M = month name. A shared format string renders differently (e.g. '%H:%M:%S' -> ClickHouse '13:June:07' vs Doris '13:45:07'). Not portable without format-string translation.",
+      "areas": [
+        "datetime",
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "rtrim",
+      "clickhouse": "trimRight",
+      "verdict": "identical",
+      "hazard": "Right-trim of a character set agrees.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "rpad",
+      "clickhouse": "rightPad",
+      "verdict": "identical",
+      "hazard": "Right-pad agrees.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "left",
+      "clickhouse": "left",
+      "verdict": "identical",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "right",
+      "clickhouse": "right",
+      "verdict": "identical",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "chr",
+      "clickhouse": "char",
+      "verdict": "identical",
+      "hazard": "chr(65)->'A' in both.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "starts_with",
+      "clickhouse": "startsWith",
+      "verdict": "identical",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "ends_with",
+      "clickhouse": "endsWith",
+      "verdict": "identical",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "instr",
+      "clickhouse": "position",
+      "verdict": "identical",
+      "hazard": "1-based first-occurrence index agrees; argument order differs (instr(hay,needle) vs position(hay,needle)).",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "initcap",
+      "clickhouse": "initcap",
+      "verdict": "identical",
+      "hazard": "Title-casing agrees ('hello world'->'Hello World').",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "space",
+      "clickhouse": "space",
+      "verdict": "identical",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "regexp",
+      "clickhouse": "match",
+      "verdict": "identical",
+      "hazard": "Regex search (boolean) agrees; Doris regexp(s,p) ~ ClickHouse match(s,p).",
+      "areas": [
+        "regex",
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "sqrt",
+      "clickhouse": "sqrt",
+      "verdict": "identical",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "exp",
+      "clickhouse": "exp",
+      "verdict": "identical",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "cbrt",
+      "clickhouse": "cbrt",
+      "verdict": "identical",
+      "hazard": "cbrt(27)->3 (modulo float epsilon).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "bitand",
+      "clickhouse": "bitAnd",
+      "verdict": "identical",
+      "hazard": "12&10->8.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "bitor",
+      "clickhouse": "bitOr",
+      "verdict": "identical",
+      "hazard": "12|10->14.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "bitxor",
+      "clickhouse": "bitXor",
+      "verdict": "identical",
+      "hazard": "12^10->6.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "gcd",
+      "clickhouse": "gcd",
+      "verdict": "identical",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "power",
+      "clickhouse": "power",
+      "verdict": "identical",
+      "hazard": "power(2,10)->1024.",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "minute",
+      "clickhouse": "toMinute",
+      "verdict": "identical",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "second",
+      "clickhouse": "toSecond",
+      "verdict": "identical",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "dayofyear",
+      "clickhouse": "toDayOfYear",
+      "verdict": "identical",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "quarter",
+      "clickhouse": "toQuarter",
+      "verdict": "identical",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "last_day",
+      "clickhouse": "toLastDayOfMonth",
+      "verdict": "identical",
+      "hazard": "End-of-month agrees incl. leap year (2024-02 -> 2024-02-29).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "to_date",
+      "clickhouse": "toDate",
+      "verdict": "identical",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "date_add",
+      "clickhouse": "addDays",
+      "verdict": "identical",
+      "hazard": "Day-add agrees (2024-01-31 +1d -> 2024-02-01); ClickHouse per-unit addDays/addMonths/... vs Doris date_add(d, INTERVAL n unit).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "date_sub",
+      "clickhouse": "subtractMonths",
+      "verdict": "identical",
+      "hazard": "Month-sub agrees incl. end-of-month clamp (2024-03-31 -1mo -> 2024-02-29).",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "extract",
+      "clickhouse": "extract",
+      "verdict": "identical",
+      "hazard": "EXTRACT(part FROM d) agrees.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "array_size",
+      "clickhouse": "length",
+      "verdict": "identical",
+      "hazard": "Array length agrees; ClickHouse uses length() on arrays.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "array_contains",
+      "clickhouse": "has",
+      "verdict": "identical",
+      "hazard": "Membership agrees.",
+      "areas": [
+        "array"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "element_at",
+      "clickhouse": "arrayElement",
+      "verdict": "identical",
+      "hazard": "1-based element access agrees (Doris element_at(a,i) ~ ClickHouse a[i]/arrayElement).",
+      "areas": [
+        "array"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "array_join",
+      "clickhouse": "arrayStringConcat",
+      "verdict": "identical",
+      "hazard": "Join-with-separator agrees.",
+      "areas": [
+        "array",
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "array_max",
+      "clickhouse": "arrayMax",
+      "verdict": "identical",
+      "areas": [
+        "array"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "array_distinct",
+      "clickhouse": "arrayDistinct",
+      "verdict": "identical",
+      "hazard": "Distinct elements agree (rendering-only difference: Doris prints '[1, 2, 3]' with spaces vs ClickHouse '[1,2,3]').",
+      "areas": [
+        "array"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "get_json_string",
+      "clickhouse": "JSONExtractString",
+      "verdict": "identical",
+      "hazard": "Scalar JSON string extraction agrees (Doris get_json_string($.a) ~ ClickHouse JSONExtractString(json,'a')).",
+      "areas": [
+        "json"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "json_length",
+      "clickhouse": "JSONLength",
+      "verdict": "identical",
+      "hazard": "JSON array length agrees.",
+      "areas": [
+        "json"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "nvl",
+      "clickhouse": "ifNull",
+      "verdict": "identical",
+      "hazard": "nvl(NULL,7)->7 in both.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "unhex",
+      "clickhouse": "unhex",
+      "verdict": "identical",
+      "hazard": "unhex('FF') -> single 0xFF byte in both.",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "sha1",
+      "clickhouse": "SHA1",
+      "verdict": "identical",
+      "hazard": "Doris sha1(x) equals ClickHouse lower(hex(SHA1(x))).",
+      "areas": [
+        "hash"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: Doris (FE pr62767-local / BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-round2.*"
+    },
+    {
+      "doris": "stddev",
+      "clickhouse": "stddev",
+      "verdict": "divergent",
+      "hazard": "Bare stddev() DEFAULT differs: Doris is POPULATION (n); DuckDB/Trino/ClickHouse are SAMPLE (n-1). Same input -> 1.356466 vs 1.516575. Use stddev_pop/stddev_samp explicitly to be safe.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "doris": "variance",
+      "clickhouse": "varSamp",
+      "verdict": "divergent",
+      "hazard": "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "doris": "stddev_samp",
+      "clickhouse": "stddevSamp",
+      "verdict": "identical",
+      "hazard": "Explicit sample stddev agrees.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "doris": "stddev_pop",
+      "clickhouse": "stddevPop",
+      "verdict": "identical",
+      "hazard": "Explicit population stddev agrees.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "doris": "group_concat",
+      "clickhouse": "arrayStringConcat",
+      "verdict": "conditionally-equivalent",
+      "hazard": "String aggregation agrees ONLY with an explicit ORDER BY (a,a,b,c, NULLs skipped); default ordering is unspecified and separator/function name differ per engine (string_agg/group_concat/listagg/arrayStringConcat).",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "doris": "array_agg",
+      "clickhouse": "groupArray",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Array aggregation: elements agree, but NULL inclusion/position and rendering differ (e.g. Doris keeps NULL first, Trino NULL last); not portable without explicit ORDER BY + NULL handling.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "doris": "percentile",
+      "clickhouse": "median",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Median/50th-percentile agree on simple data but methods differ (exact vs interpolation vs approximate — Trino has only approx_percentile); may diverge on other inputs.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "doris": "acosh",
+      "clickhouse": "acosh",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name acosh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_avg",
+      "clickhouse": "arrayAvg",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayAvg (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_compact",
+      "clickhouse": "arrayCompact",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayCompact (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_concat",
+      "clickhouse": "arrayConcat",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_count",
+      "clickhouse": "arrayCount",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayCount (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_cum_sum",
+      "clickhouse": "arrayCumSum",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayCumSum (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_difference",
+      "clickhouse": "arrayDifference",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayDifference (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_enumerate",
+      "clickhouse": "arrayEnumerate",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayEnumerate (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_enumerate_uniq",
+      "clickhouse": "arrayEnumerateUniq",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayEnumerateUniq (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_except",
+      "clickhouse": "arrayExcept",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayExcept (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_exists",
+      "clickhouse": "arrayExists",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='[1, 1, 1]' vs ch='1'). ClickHouse name arrayExists (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_intersect",
+      "clickhouse": "arrayIntersect",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='[2, 1, 3]' vs ch='[1,2,3]'). ClickHouse name arrayIntersect (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_min",
+      "clickhouse": "arrayMin",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_popback",
+      "clickhouse": "arrayPopBack",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayPopBack (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_popfront",
+      "clickhouse": "arrayPopFront",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayPopFront (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_product",
+      "clickhouse": "arrayProduct",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayProduct (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_reverse_sort",
+      "clickhouse": "arrayReverseSort",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arrayReverseSort (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_shuffle",
+      "clickhouse": "arrayShuffle",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='[3, 1, 2]' vs ch='[2,1,3]'). ClickHouse name arrayShuffle (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_slice",
+      "clickhouse": "arraySlice",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_sort",
+      "clickhouse": "arraySort",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name arraySort (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_sum",
+      "clickhouse": "arraySum",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "array_union",
+      "clickhouse": "arrayUnion",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='[2, 1, 3]' vs ch='[3,2,1]'). ClickHouse name arrayUnion (rename). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "asinh",
+      "clickhouse": "asinh",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name asinh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "atan",
+      "clickhouse": "ATAN",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "atan2",
+      "clickhouse": "ATAN2",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "bit_count",
+      "clickhouse": "bitCount",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitCount (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "bit_shift_left",
+      "clickhouse": "bitShiftLeft",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftLeft (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "bit_shift_right",
+      "clickhouse": "bitShiftRight",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitShiftRight (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "bit_test",
+      "clickhouse": "bitTest",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name bitTest (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "concat_ws",
+      "clickhouse": "CONCAT_WS",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='1aBc2aBc3' vs ch='[1,2,3]').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "conv",
+      "clickhouse": "conv",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "cos",
+      "clickhouse": "COS",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "cosh",
+      "clickhouse": "cosh",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name cosh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "cosine_distance",
+      "clickhouse": "cosineDistance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "count_substrings",
+      "clickhouse": "countSubstrings",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name countSubstrings (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "cut_to_first_significant_subdomain",
+      "clickhouse": "cutToFirstSignificantSubdomain",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name cutToFirstSignificantSubdomain (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "date",
+      "clickhouse": "CAST",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "day",
+      "clickhouse": "DAY",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "dayname",
+      "clickhouse": "toDayOfWeek",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='Sunday' vs ch='7'). ClickHouse name toDayOfWeek (rename; DEFERRED: same as duckdb — toDayOfWeek is a number, not a day-name string; kept divergent + certify-guarded.",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "degrees",
+      "clickhouse": "DEGREES",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "domain",
+      "clickhouse": "domain",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "domain_without_www",
+      "clickhouse": "domainWithoutWWW",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name domainWithoutWWW (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "extract_url_parameter",
+      "clickhouse": "extractURLParameter",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name extractURLParameter (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "factorial",
+      "clickhouse": "FACTORIAL",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "first_significant_subdomain",
+      "clickhouse": "firstSignificantSubdomain",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name firstSignificantSubdomain (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "format",
+      "clickhouse": "format",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name format (rename; DEFERRED: Doris format here is number-formatting (parses to NumberToStr); ClickHouse format is positional-placeholder templating — incompatible, no safe rename.",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "from_days",
+      "clickhouse": "from_days",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='0000-01-05' vs ch='1973-10-05').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "ipv4_num_to_string",
+      "clickhouse": "IPv4NumToString",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4NumToString (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "ipv4_string_to_num_or_default",
+      "clickhouse": "IPv4StringToNumOrDefault",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv4StringToNumOrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "ipv6_string_to_num_or_default",
+      "clickhouse": "IPv6StringToNumOrDefault",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name IPv6StringToNumOrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "isnan",
+      "clickhouse": "isNaN",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "is_ipv4_string",
+      "clickhouse": "isIPv4String",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv4String (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "is_ipv6_string",
+      "clickhouse": "isIPv6String",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name isIPv6String (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "l1_distance",
+      "clickhouse": "L1Distance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name L1Distance (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "l2_distance",
+      "clickhouse": "L2Distance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "lcase",
+      "clickhouse": "LOWER",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "lcm",
+      "clickhouse": "lcm",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "levenshtein",
+      "clickhouse": "editDistance",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "like",
+      "clickhouse": "'aBc' LIKE 'aBc'",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "position",
+      "clickhouse": "POSITION",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "protocol",
+      "clickhouse": "protocol",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "radians",
+      "clickhouse": "RADIANS",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "round_bankers",
+      "clickhouse": "roundBankers",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name roundBankers (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "sin",
+      "clickhouse": "SIN",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "sinh",
+      "clickhouse": "sinh",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name sinh (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "soundex",
+      "clickhouse": "SOUNDEX",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "split_by_regexp",
+      "clickhouse": "splitByRegexp",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByRegexp (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "split_by_string",
+      "clickhouse": "splitByString",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name splitByString (rename; DEFERRED: maps to the StringToArray node whose (string, delimiter) arg order differs from ClickHouse splitByString(separator, string); needs an arg-swap that would also affect Postgres string_to_array — not a source-unaware-safe pure rename.",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "str_to_map",
+      "clickhouse": "STR_TO_MAP",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='{\"aBc\":null}' vs ch='{}').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "substr",
+      "clickhouse": "SUBSTRING",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL').",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "tan",
+      "clickhouse": "TAN",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "tanh",
+      "clickhouse": "TANH",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "top_level_domain",
+      "clickhouse": "topLevelDomain",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='' vs ch='NULL'). ClickHouse name topLevelDomain (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "to_base64",
+      "clickhouse": "TO_BASE64",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Digest/bytes agree, representation differs.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "to_ipv4_or_default",
+      "clickhouse": "toIPv4OrDefault",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv4OrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "to_ipv6_or_default",
+      "clickhouse": "toIPv6OrDefault",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toIPv6OrDefault (rename). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "to_monday",
+      "clickhouse": "toMonday",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree. ClickHouse name toMonday (rename). brikk's ClickHouse generator now emits toMonday (temporal generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "translate",
+      "clickhouse": "translateUTF8",
+      "verdict": "identical",
+      "hazard": "Doris translate is code-point-wise == ClickHouse translateUTF8. Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on CH->CH). Reconciled identical (generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.* | source-aware fix 2026-07-14"
+    },
+    {
+      "doris": "ucase",
+      "clickhouse": "UPPER",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "weekday",
+      "clickhouse": "toDayOfWeek",
+      "verdict": "divergent",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values diverge (doris='6' vs ch='7'). ClickHouse name toDayOfWeek (rename). brikk's ClickHouse generator now emits toDayOfWeek (temporal generator fix 2026-07-14); the numbering divergence remains (kept divergent).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "weekofyear",
+      "clickhouse": "toISOWeek",
+      "verdict": "identical",
+      "hazard": "Auto-probed Doris vs ClickHouse. Values agree.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.*"
+    },
+    {
+      "doris": "xxhash_32",
+      "clickhouse": "xxHash32",
+      "verdict": "divergent",
+      "hazard": "CORRECTION (2026-07-14): inferred DIVERGENT from the live xxhash_64 finding (Doris xxhash family uses a different impl/seed than ClickHouse xxHash* — xxhash_64 probed 8696274497037089104 vs CH 4952883123889572249). Doris xxhash_32 was not re-probed directly but is the same family; brikk does NOT emit the xxHash32 rename. Re-probe to confirm exact value. Kept divergent (certify refuses).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.* | corrected divergent 2026-07-14 (inferred from xxhash_64 live probe; re-probe xxhash_32)"
+    },
+    {
+      "doris": "xxhash_64",
+      "clickhouse": "xxHash64",
+      "verdict": "divergent",
+      "hazard": "CORRECTION (live reverse probe 2026-07-14, doris-ducklake agent): Doris xxhash_64('abc') = 8696274497037089104 vs ClickHouse xxHash64('abc') = 4952883123889572249 — a DIFFERENT hash value (impl/seed differ), NOT the same digest. The earlier auto-probe 'digest agrees' verdict was wrong. brikk does NOT emit the xxHash64 rename (would silently produce a wrong hash); kept divergent so certify refuses. See probe-runs/reverse-doris-trino.results.tsv.",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (doris mass round) 2026-07-13: Doris (FE pr62767-local/BE 4.1.2) vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/doris-clickhouse-mass.* | corrected divergent 2026-07-14 (live reverse probe)"
+    }
+  ]
+}

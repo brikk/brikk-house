@@ -303,13 +303,13 @@
     },
     {
       "duckdb": "translate",
-      "clickhouse": "translate",
+      "clickhouse": "translateUTF8",
       "verdict": "identical",
-      "hazard": "Code-point-wise substitution; ASCII probe aligned.",
+      "hazard": "DuckDB translate is code-point-wise == ClickHouse translateUTF8 (café/é->e verified). Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on ClickHouse->ClickHouse). Reconciled identical (generator fix 2026-07-14).",
       "areas": [
         "string"
       ],
-      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline | source-aware fix 2026-07-14"
     },
     {
       "duckdb": "format",
@@ -966,13 +966,13 @@
     },
     {
       "duckdb": "week",
-      "clickhouse": "toWeek",
-      "verdict": "divergent",
-      "hazard": "ClickHouse toWeek default mode 0 is Sunday-based (2023-01-01 -> 1); DuckDB week is ISO-8601 (-> 52). The generator renders DuckDB week faithfully as WEEK/toWeek (NOT toISOWeek) because the same rewrite would corrupt native ClickHouse week on ClickHouse->ClickHouse (pipe desugaring) — the correct source-aware fix is deferred (see SPIKE-source-aware-generator-transforms). Map to toISOWeek for ISO parity when transpiling.",
+      "clickhouse": "toISOWeek",
+      "verdict": "identical",
+      "hazard": "DuckDB week is ISO-8601 == ClickHouse toISOWeek (52==52 verified). Now emitted via SOURCE-AWARE generation: duckdb->clickhouse renders toISOWeek; ClickHouse->ClickHouse stays faithful `week` (mode 0). Reconciled identical (generator fix 2026-07-14, source-aware).",
       "areas": [
         "datetime"
       ],
-      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode"
+      "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | source-aware fix 2026-07-14"
     },
     {
       "duckdb": "yearweek",
@@ -1574,6 +1574,638 @@
         "map"
       ],
       "provenance": "REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape"
+    },
+    {
+      "duckdb": "coalesce",
+      "clickhouse": "coalesce",
+      "verdict": "identical",
+      "hazard": "First non-NULL agrees.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "nullif",
+      "clickhouse": "nullIf",
+      "verdict": "identical",
+      "hazard": "nullif(5,5)->NULL in both.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "if",
+      "clickhouse": "if",
+      "verdict": "identical",
+      "hazard": "if(cond,a,b) agrees.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "ifnull",
+      "clickhouse": "ifNull",
+      "verdict": "identical",
+      "hazard": "ifnull(NULL,7)->7 in both.",
+      "areas": [
+        "null"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "greatest",
+      "clickhouse": "greatest",
+      "verdict": "identical",
+      "hazard": "Both SKIP NULL (greatest(1,NULL,3)->3). NB: differs from Doris, which propagates NULL.",
+      "areas": [
+        "null",
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "least",
+      "clickhouse": "least",
+      "verdict": "identical",
+      "hazard": "Both SKIP NULL (least(1,NULL,3)->1). NB: differs from Doris, which propagates NULL.",
+      "areas": [
+        "null",
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "starts_with",
+      "clickhouse": "startsWith",
+      "verdict": "identical",
+      "hazard": "Prefix test agrees.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "ends_with",
+      "clickhouse": "endsWith",
+      "verdict": "identical",
+      "hazard": "Suffix test agrees.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "split_part",
+      "clickhouse": "splitByChar",
+      "verdict": "identical",
+      "hazard": "1-based part selection agrees; ClickHouse form is splitByChar(delim,str)[n].",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "chr",
+      "clickhouse": "char",
+      "verdict": "identical",
+      "hazard": "Code-point to char agrees (chr(65)->'A').",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "contains",
+      "clickhouse": "position",
+      "verdict": "identical",
+      "hazard": "Substring containment agrees; ClickHouse form is position(hay,needle)>0.",
+      "areas": [
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "regexp_full_match",
+      "clickhouse": "match",
+      "verdict": "identical",
+      "hazard": "Full-string regex match agrees; ClickHouse match uses ^...$ anchoring.",
+      "areas": [
+        "regex",
+        "string"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "bitwise_and",
+      "clickhouse": "bitAnd",
+      "verdict": "identical",
+      "hazard": "Bitwise AND agrees (12&10->8).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "bitwise_or",
+      "clickhouse": "bitOr",
+      "verdict": "identical",
+      "hazard": "Bitwise OR agrees (12|10->14).",
+      "areas": [
+        "numeric"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "extract",
+      "clickhouse": "extract",
+      "verdict": "identical",
+      "hazard": "EXTRACT(part FROM d) agrees for year.",
+      "areas": [
+        "datetime"
+      ],
+      "provenance": "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"
+    },
+    {
+      "duckdb": "variance",
+      "clickhouse": "varSamp",
+      "verdict": "conditionally-equivalent",
+      "hazard": "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+      "areas": [
+        "aggregate"
+      ],
+      "provenance": "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"
+    },
+    {
+      "duckdb": "mismatches",
+      "clickhouse": "mismatches",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "make_timestamp",
+      "clickhouse": "fromUnixTimestamp64Micro",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "len",
+      "clickhouse": "CHAR_LENGTH",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "levenshtein",
+      "clickhouse": "editDistance",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "list_distinct",
+      "clickhouse": "arrayDistinct",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "list_distance",
+      "clickhouse": "L2Distance",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "list_cosine_distance",
+      "clickhouse": "cosineDistance",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "suffix",
+      "clickhouse": "endsWith",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "to_hex",
+      "clickhouse": "HEX",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "weekofyear",
+      "clickhouse": "toISOWeek",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "str_split",
+      "clickhouse": "splitByString",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "str_split_regex",
+      "clickhouse": "splitByRegexp",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "string_split_regex",
+      "clickhouse": "splitByRegexp",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "split",
+      "clickhouse": "splitByString",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "strftime",
+      "clickhouse": "formatDateTime",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "string_split",
+      "clickhouse": "splitByString",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "string_to_array",
+      "clickhouse": "splitByString",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "strpos",
+      "clickhouse": "POSITION",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "editdist3",
+      "clickhouse": "editDistance",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "formatReadableDecimalSize",
+      "clickhouse": "formatReadableDecimalSize",
+      "verdict": "divergent",
+      "hazard": "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "formatReadableSize",
+      "clickhouse": "formatReadableSize",
+      "verdict": "divergent",
+      "hazard": "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "format_bytes",
+      "clickhouse": "format_bytes",
+      "verdict": "divergent",
+      "hazard": "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "jaro_winkler_similarity",
+      "clickhouse": "jaroWinklerSimilarity",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "epoch",
+      "clickhouse": "toUnixTimestamp",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "array_distinct",
+      "clickhouse": "arrayDistinct",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "array_length",
+      "clickhouse": "LENGTH",
+      "verdict": "identical",
+      "hazard": "Auto-probed single-input equal (basic scalar).",
+      "areas": [
+        "auto"
+      ],
+      "provenance": "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"
+    },
+    {
+      "duckdb": "list_unique",
+      "clickhouse": "arrayUniq",
+      "verdict": "identical",
+      "hazard": "DuckDB list_unique == ClickHouse arrayUniq (rename). Values agree (duck=1). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "least_common_multiple",
+      "clickhouse": "lcm",
+      "verdict": "identical",
+      "hazard": "DuckDB least_common_multiple == ClickHouse lcm (rename). Values agree (duck=5). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "list_has_all",
+      "clickhouse": "hasAll",
+      "verdict": "identical",
+      "hazard": "DuckDB list_has_all == ClickHouse hasAll (rename). Values agree (duck=True). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "list_has_any",
+      "clickhouse": "hasAny",
+      "verdict": "identical",
+      "hazard": "DuckDB list_has_any == ClickHouse hasAny (rename). Values agree (duck=True). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "list_intersect",
+      "clickhouse": "arrayIntersect",
+      "verdict": "identical",
+      "hazard": "DuckDB list_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "list_reverse_sort",
+      "clickhouse": "arrayReverseSort",
+      "verdict": "identical",
+      "hazard": "DuckDB list_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "list_sort",
+      "clickhouse": "arraySort",
+      "verdict": "identical",
+      "hazard": "DuckDB list_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "list_extract",
+      "clickhouse": "arrayElement",
+      "verdict": "divergent",
+      "hazard": "DuckDB list_extract == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "list_element",
+      "clickhouse": "arrayElement",
+      "verdict": "divergent",
+      "hazard": "DuckDB list_element == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "list_dot_product",
+      "clickhouse": "arrayDotProduct",
+      "verdict": "identical",
+      "hazard": "DuckDB list_dot_product == ClickHouse arrayDotProduct (rename). Values agree (duck=6.25). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "weekday",
+      "clickhouse": "toDayOfWeek",
+      "verdict": "divergent",
+      "hazard": "DuckDB weekday == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=0 vs ch=7). brikk's ClickHouse generator now emits the toDayOfWeek rename (temporal generator fix 2026-07-14); the numbering divergence remains (kept divergent).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "dayname",
+      "clickhouse": "toDayOfWeek",
+      "verdict": "divergent",
+      "hazard": "DuckDB dayname == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=Sunday vs ch=7). DEFERRED: ClickHouse has no day-name function; the closest toDayOfWeek returns a NUMBER, not a name string (wrong-type rename) — kept divergent + certify-guarded.",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "gamma",
+      "clickhouse": "tgamma",
+      "verdict": "identical",
+      "hazard": "DuckDB gamma == ClickHouse tgamma (rename). Values agree (duck=1.32934038817913). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "bit_count",
+      "clickhouse": "bitCount",
+      "verdict": "identical",
+      "hazard": "DuckDB bit_count == ClickHouse bitCount (rename). Values agree (duck=2). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "array_intersect",
+      "clickhouse": "arrayIntersect",
+      "verdict": "identical",
+      "hazard": "DuckDB array_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "array_reverse_sort",
+      "clickhouse": "arrayReverseSort",
+      "verdict": "identical",
+      "hazard": "DuckDB array_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "array_sort",
+      "clickhouse": "arraySort",
+      "verdict": "identical",
+      "hazard": "DuckDB array_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "greatest_common_divisor",
+      "clickhouse": "gcd",
+      "verdict": "identical",
+      "hazard": "DuckDB greatest_common_divisor == ClickHouse gcd (rename). Values agree (duck=5). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
+    },
+    {
+      "duckdb": "jaro_similarity",
+      "clickhouse": "jaroSimilarity",
+      "verdict": "identical",
+      "hazard": "DuckDB jaro_similarity == ClickHouse jaroSimilarity (rename). Values agree (duck=1.0). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+      "areas": [
+        "auto",
+        "rename"
+      ],
+      "provenance": "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"
     }
   ]
 }

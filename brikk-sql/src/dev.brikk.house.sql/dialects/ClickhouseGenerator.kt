@@ -4,6 +4,7 @@ package dev.brikk.house.sql.dialects
 import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.ast.Any as AnyNode
 import dev.brikk.house.sql.ast.Array as ArrayNode
+import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.ast.Map as MapNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
@@ -86,6 +87,7 @@ open class ClickhouseGenerator(
     tokenizerConfig: TokenizerConfig = ClickhouseTokenizerTables.CONFIG,
     // extra dispatch overlay for subclasses (sqlglot: further TRANSFORMS merges)
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    sourceDialect: String? = null,
 ) : Generator(
     pretty = pretty,
     identify = identify,
@@ -93,6 +95,7 @@ open class ClickhouseGenerator(
     normalizeFunctions = normalizeFunctions,
     tokenizerConfig = tokenizerConfig,
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
@@ -740,6 +743,18 @@ open class ClickhouseGenerator(
                 return "(${func("toSecond", t)} * 1000 + ${func("toMillisecond", t)})"
             }
         }
+        // Cross-dialect function RENAMES that reach the ClickHouse generator as an
+        // unmapped Anonymous call (the source parser has no canonical node for them).
+        // ClickHouse has the SAME function under a different spelling (camelCase / IP-cased);
+        // rewrite the name. SAFE for ClickHouse->ClickHouse round-trips: ClickHouse's own
+        // catalog uses the target spelling (which parses back to an Anonymous of THAT name),
+        // so the source snake_case keys here never fire on native ClickHouse input.
+        // Probe-verified vs ClickHouse 26.5.1.1 (chdb); see CLICKHOUSE-rename-map.md and the
+        // per-pair generator-gap reports. Divergent renames keep their hazard (the name is
+        // valid, the semantics divergence is certify-guarded).
+        ANON_FUNC_RENAMES[expression.name.lowercase()]?.let { target ->
+            return func(target, *expression.expressionsArg.toTypedArray())
+        }
         return super.anonymousSql(expression)
     }
 
@@ -759,7 +774,102 @@ open class ClickhouseGenerator(
         return func(fn, expression.thisArg, expression.args["expression"], expression.args["replacement"])
     }
 
+    // DuckDB list_sort/array_sort/list_reverse_sort/array_reverse_sort parse to the
+    // SortArray node (this, asc). ClickHouse renders ascending as arraySort and descending
+    // as arrayReverseSort (probe-verified equal to DuckDB, chdb + DuckDB 1.5.4). SAFE for
+    // ClickHouse->ClickHouse: ClickHouse arraySort/arrayReverseSort parse to Anonymous, not
+    // SortArray, so this only fires cross-dialect.
+    open fun clickhouseSortArraySql(expression: SortArray): String {
+        val asc = expression.args["asc"]
+        return if (asc is BooleanNode && asc.thisArg == false) {
+            func("arrayReverseSort", expression.thisArg)
+        } else {
+            func("arraySort", expression.thisArg)
+        }
+    }
+
     companion object {
+
+        // Source dialects whose bare week() is ISO-8601 (so ClickHouse target must be
+        // toISOWeek, not the Sunday-based default week/toWeek). MySQL-family week() is mode 0
+        // and matches ClickHouse's default, so it is NOT listed (stays faithful `week`).
+        private val ISO_WEEK_SOURCES: Set<String> = setOf("duckdb")
+
+        // Cross-dialect function-name RENAMES applied to unmapped Anonymous calls when
+        // targeting ClickHouse. Key = lowercased SOURCE function name (DuckDB / Doris /
+        // Trino), value = the ClickHouse spelling. All probe-verified live vs ClickHouse
+        // 26.5.1.1 (chdb); see docs/research/CLICKHOUSE-rename-map.md. Entries whose recorded
+        // verdict is `divergent`/`conditionally-equivalent` are still listed: the NAME is a
+        // correct rename (the emitted SQL runs), the residual semantic divergence is kept as
+        // a hazard and surfaced by certify.
+        val ANON_FUNC_RENAMES: Map<String, String> = mapOf(
+            // -- array family (DuckDB list_*/array_* + Doris array_*) -> ClickHouse array* --
+            "list_dot_product" to "arrayDotProduct",
+            "list_element" to "arrayElement", // divergent (indexing edges) — hazard kept
+            "list_extract" to "arrayElement", // divergent (indexing edges) — hazard kept
+            "list_has_all" to "hasAll",
+            "list_intersect" to "arrayIntersect",
+            "list_unique" to "arrayUniq",
+            "array_avg" to "arrayAvg",
+            "array_count" to "arrayCount",
+            "array_cum_sum" to "arrayCumSum",
+            "array_difference" to "arrayDifference",
+            "array_enumerate" to "arrayEnumerate",
+            "array_enumerate_uniq" to "arrayEnumerateUniq",
+            "array_exists" to "arrayExists", // divergent — hazard kept
+            "array_popback" to "arrayPopBack",
+            "array_popfront" to "arrayPopFront",
+            "array_product" to "arrayProduct",
+            "array_reverse_sort" to "arrayReverseSort",
+            "array_shuffle" to "arrayShuffle", // divergent (non-determinism) — hazard kept
+            "array_union" to "arrayUnion", // divergent — hazard kept
+            // -- temporal (Doris/DuckDB) -> ClickHouse to<Part> --
+            "to_monday" to "toMonday",
+            "weekday" to "toDayOfWeek", // divergent (Sun=0/6 vs ISO Mon=1..Sun=7) — hazard kept
+            // -- math / bit (DuckDB) --
+            "bit_count" to "bitCount",
+            "gamma" to "tgamma",
+            "greatest_common_divisor" to "gcd",
+            "isfinite" to "isFinite",
+            "jaro_similarity" to "jaroSimilarity",
+            "least_common_multiple" to "lcm",
+            // -- bit (Doris) --
+            "bit_shift_left" to "bitShiftLeft",
+            "bit_shift_right" to "bitShiftRight",
+            "bit_test" to "bitTest",
+            // -- string / url (Doris) --
+            "count_substrings" to "countSubstrings",
+            "split_by_regexp" to "splitByRegexp",
+            "cut_to_first_significant_subdomain" to "cutToFirstSignificantSubdomain", // divergent
+            "domain_without_www" to "domainWithoutWWW", // divergent
+            "extract_url_parameter" to "extractURLParameter", // divergent
+            "first_significant_subdomain" to "firstSignificantSubdomain", // divergent
+            "top_level_domain" to "topLevelDomain", // divergent
+            // -- ip (Doris) --
+            "ipv4_num_to_string" to "IPv4NumToString",
+            "ipv4_string_to_num_or_default" to "IPv4StringToNumOrDefault",
+            "ipv6_string_to_num_or_default" to "IPv6StringToNumOrDefault",
+            "is_ipv4_string" to "isIPv4String",
+            "is_ipv6_string" to "isIPv6String",
+            "to_ipv4_or_default" to "toIPv4OrDefault",
+            "to_ipv6_or_default" to "toIPv6OrDefault",
+            // -- distance / hash / rounding (Doris) --
+            "l1_distance" to "L1Distance",
+            "round_bankers" to "roundBankers",
+            // NOTE: Doris xxhash_32/xxhash_64 are intentionally NOT mapped. Live reverse
+            // probe (doris-ducklake agent, 2026-07-14) found Doris xxhash_64('abc') =
+            // 8696274497037089104 vs ClickHouse xxHash64('abc') = 4952883123889572249 —
+            // a DIFFERENT hash (impl/seed), not just type/signedness. Emitting xxHash* would
+            // silently produce a wrong hash, so it stays a divergent (unmapped) hazard that
+            // certify refuses. See docs/research/probe-runs/reverse-doris-trino.results.tsv.
+            // -- Trino source --
+            "bitwise_left_shift" to "bitShiftLeft",
+            "bitwise_right_shift" to "bitShiftRight",
+            "is_finite" to "isFinite",
+            "is_infinite" to "isInfinite",
+            "xxhash64" to "xxHash64", // conditionally-equivalent (type/signedness)
+        )
+
 
         // sqlglot: ClickHouse.ESCAPED_SEQUENCES (MySQL's map + the \0 unescape)
         val ESCAPED_SEQUENCES: Map<String, String> =
@@ -887,18 +997,40 @@ open class ClickhouseGenerator(
 
             reg(AnyValue::class) { e -> ch().renameFuncSql("any", e) }
             reg(ApproxDistinct::class) { e -> ch().renameFuncSql("uniq", e) }
-            // BUGS-clickhouse-generator-mappings rows 1 (lower/upper) and 5 (duckdb week):
-            // INTENTIONALLY NOT transformed here. lowerUTF8/upperUTF8/toISOWeek would be
-            // correct for cross-dialect (DuckDB/Trino->ClickHouse) but this generator is
-            // SOURCE-UNAWARE, so the same rewrite fires on ClickHouse->ClickHouse (which
-            // pipe desugaring / toStandardSql uses) and CORRUPTS a native ClickHouse
-            // `lower`/`upper`/`week` (ASCII->unicode, Sunday->ISO). Upstream sqlglot renders
-            // them faithfully for the same reason. The cross-dialect divergence is left to
-            // the divergent hazard (certify surfaces it). The correct auto-fix needs
-            // source-aware generation — see docs/research/SPIKE-source-aware-generator-
-            // transforms-2026-07-13.md.
-            // (Trino `week` parses to WeekOfYear, a node ClickHouse never emits, so that one
-            // IS safe to transform below.)
+            // SOURCE-AWARE rewrites (SPIKE-source-aware-generator-transforms, now implemented
+            // via Generator.sourceDialect / isCrossDialectFrom). These rewrites are CORRECT
+            // for cross-dialect (DuckDB/Trino/Doris -> ClickHouse) but would CORRUPT a native
+            // ClickHouse function on same-dialect generation (pipe desugaring / toStandardSql,
+            // transpile read==write), so they fire ONLY when the source is known to be a
+            // non-ClickHouse dialect. Same-dialect / source-unknown stays faithful.
+            //   lower/upper: ClickHouse LOWER/UPPER are ASCII-only; the source folds full
+            //     Unicode -> lowerUTF8/upperUTF8 (residual İ/ß edge stays a divergent hazard).
+            //   week (DuckDB Week node): DuckDB/others week is ISO-8601 -> toISOWeek (CH WEEK
+            //     default mode 0 is Sunday-based). (Trino week parses to WeekOfYear, handled
+            //     unconditionally below since ClickHouse never emits that node.)
+            //   translate: source translate is code-point-wise -> translateUTF8 (CH translate
+            //     is byte-level and errors on multibyte). Faithful CH keeps byte `translate`.
+            reg(Lower::class) { e ->
+                if (ch().isCrossDialectFrom("clickhouse")) func("lowerUTF8", e.thisArg)
+                else func("lower", e.thisArg)
+            }
+            reg(Upper::class) { e ->
+                if (ch().isCrossDialectFrom("clickhouse")) func("upperUTF8", e.thisArg)
+                else func("upper", e.thisArg)
+            }
+            // week() semantics are SOURCE-SPECIFIC (not uniformly cross-dialect): DuckDB
+            // week is ISO-8601 -> toISOWeek, but MySQL-family (Doris/MySQL) week defaults to
+            // mode 0 (Sunday-based) == ClickHouse's own week default, so those stay faithful
+            // `week`. Only rewrite for sources whose Week node is ISO. (Trino week parses to
+            // WeekOfYear, handled unconditionally below.)
+            reg(Week::class) { e ->
+                if (ch().sourceDialect?.lowercase() in ISO_WEEK_SOURCES) func("toISOWeek", e.thisArg)
+                else func("week", e.thisArg)
+            }
+            reg(Translate::class) { e ->
+                val name = if (ch().isCrossDialectFrom("clickhouse")) "translateUTF8" else "translate"
+                func(name, e.thisArg, e.args["from_"], e.args["to"])
+            }
             // BUGS-clickhouse-generator-mappings rows 3/12 (P1/P2): natural-log collision
             // + invalid 2-arg LOG. See clickhouseLogSql.
             reg(Log::class) { e -> ch().clickhouseLogSql(e as Log) }
@@ -922,6 +1054,33 @@ open class ClickhouseGenerator(
             // so the rename preserves ClickHouse semantics; a residual numbering divergence
             // vs DuckDB (Sunday=0) remains and is kept as a hazard for the cross-dialect case.
             reg(DayOfWeek::class) { e -> func("toDayOfWeek", e.thisArg) }
+            // Temporal to<Part> renames (DuckDB/Doris/Trino source -> ClickHouse). The base
+            // rendered these canonical nodes as DAY_OF_MONTH / DAY_OF_YEAR, which ClickHouse
+            // rejects (no underscore form). toDayOfMonth/toDayOfYear are the real names
+            // (probe-verified equal, chdb 26.5.1.1 + DuckDB 1.5.4). SAFE for CH->CH: those
+            // names parse to Anonymous, not these nodes. See CLICKHOUSE-rename-map.md.
+            reg(DayOfMonth::class) { e -> func("toDayOfMonth", e.thisArg) }
+            reg(DayOfYear::class) { e -> func("toDayOfYear", e.thisArg) }
+            // Math/bit nodes rendered their uppercase base name (ACOSH, CBRT, ...), which
+            // case-sensitive ClickHouse rejects. ClickHouse spells them lowercase; every
+            // source dialect (DuckDB/Doris/Trino) maps to the SAME lowercase name so there
+            // is no source-unaware conflict. bit_count parses to BitwiseCount in Doris ->
+            // ClickHouse bitCount. Probe-verified (chdb 26.5.1.1). Round-trip safe: these
+            // ClickHouse names parse to Anonymous, not these nodes.
+            reg(Acosh::class) { e -> func("acosh", (e as Acosh).thisArg) }
+            reg(Asinh::class) { e -> func("asinh", (e as Asinh).thisArg) }
+            reg(Cbrt::class) { e -> func("cbrt", (e as Cbrt).thisArg) }
+            reg(Cosh::class) { e -> func("cosh", (e as Cosh).thisArg) }
+            reg(Sinh::class) { e -> func("sinh", (e as Sinh).thisArg) }
+            reg(BitwiseCount::class) { e -> func("bitCount", (e as BitwiseCount).thisArg) }
+            // Trino source: day_of_week parses to DayOfWeekIso (ISO Mon=1..Sun=7) ==
+            // ClickHouse toDayOfWeek (also ISO); dot_product -> ClickHouse dotProduct. Base
+            // rendered DAYOFWEEK_ISO / DOT_PRODUCT, which ClickHouse rejects. Probe-verified
+            // (chdb 26.5.1.1). Round-trip safe (ClickHouse parses its names to Anonymous).
+            reg(DayOfWeekIso::class) { e -> func("toDayOfWeek", (e as DayOfWeekIso).thisArg) }
+            reg(DotProduct::class) { e ->
+                func("dotProduct", (e as DotProduct).thisArg, e.args["expression"])
+            }
             // BUGS-clickhouse-generator-mappings row 11 (P2): the leaked internal node name
             // TIME_TO_UNIX does not exist in ClickHouse. toUnixTimestamp is the real name.
             reg(TimeToUnix::class) { e -> func("toUnixTimestamp", e.thisArg) }
@@ -946,6 +1105,26 @@ open class ClickhouseGenerator(
             reg(ArrayDistinct::class) { e -> ch().renameFuncSql("arrayDistinct", e) }
             reg(ArrayConcat::class) { e -> ch().renameFuncSql("arrayConcat", e) }
             reg(ArrayContains::class) { e -> ch().renameFuncSql("has", e) }
+            // Array-family renames (DuckDB/Doris source -> ClickHouse). Each of these
+            // canonical nodes rendered its uppercase/base name (e.g. ARRAY_SORT,
+            // ARRAY_INTERSECT), which ClickHouse — being CASE-SENSITIVE — rejects. Emit the
+            // real ClickHouse names. Probe-verified (chdb 26.5.1.1 + DuckDB 1.5.4). SAFE for
+            // ClickHouse->ClickHouse: ClickHouse parses arraySort/arrayIntersect/... to
+            // Anonymous (not these nodes), so the fixes only fire cross-dialect.
+            // See CLICKHOUSE-rename-map.md (array_*->array*, list_*->array*).
+            reg(SortArray::class) { e -> ch().clickhouseSortArraySql(e as SortArray) }
+            reg(ArraySort::class) { e -> func("arraySort", (e as ArraySort).thisArg) }
+            reg(ArrayIntersect::class) { e -> ch().renameFuncSql("arrayIntersect", e) }
+            reg(ArrayCompact::class) { e -> ch().renameFuncSql("arrayCompact", e) }
+            reg(ArrayExcept::class) { e ->
+                func("arrayExcept", (e as ArrayExcept).thisArg, e.args["expression"])
+            }
+            // DuckDB list_has_any parses to ArrayOverlaps, which the base rendered as the
+            // `a && b` operator (ClickHouse has no such array operator). hasAny is the
+            // ClickHouse equivalent.
+            reg(ArrayOverlaps::class) { e ->
+                func("hasAny", (e as ArrayOverlaps).thisArg, e.args["expression"])
+            }
             reg(ArrayFilter::class) { e ->
                 func("arrayFilter", e.args["expression"], e.thisArg)
             }

@@ -40,8 +40,8 @@ open class HiveDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         HiveParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        HiveGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        HiveGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     companion object {
         // sqlglot: Hive.DATE_FORMAT / DATEINT_FORMAT / TIME_FORMAT

@@ -1,0 +1,44 @@
+rtrim	abc
+rpad	700
+left	bri
+right	kk
+chr	A
+starts_with	1
+ends_with	1
+instr	3
+initcap	Hello World
+space	[   ]
+regexp_like	1
+sqrt	4
+exp	1
+cbrt	3
+bitand	8
+bitor	14
+bitxor	6
+gcd	6
+power	1024
+minute	45
+second	7
+dayofyear	61
+quarter	2
+last_day	2024-02-29
+to_date	2024-06-16
+date_add_day	2024-02-01
+date_sub_mon	2024-02-29
+date_format	2024-06-16 13:45:07
+extract_month	6
+abs	7
+floor	-2
+ceil	-1
+array_size	3
+array_contains	1
+element_at	20
+array_join	a-b-c
+array_max	3
+array_distinct	[1, 2, 3]
+json_extract	x
+json_len	3
+nvl	7
+hex	FF
+unhex	ÿ
+sha1	a9993e364706816aba3e25717850c26c9cd0d89d

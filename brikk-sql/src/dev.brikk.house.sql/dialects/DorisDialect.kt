@@ -35,8 +35,8 @@ class DorisDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         DorisParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        DorisGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        DorisGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     companion object {
         // sqlglot: Doris.DATE_FORMAT / DATEINT_FORMAT / TIME_FORMAT

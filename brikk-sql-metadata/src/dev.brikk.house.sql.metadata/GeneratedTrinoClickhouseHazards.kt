@@ -9,10 +9,11 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 107 probe-verified (trino, clickhouse) pair verdicts, in JSON order. */
+/** The 134 probe-verified (trino, clickhouse) pair verdicts, in JSON order. */
 internal val TRINO_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
-    hazardsChunk2()
+    hazardsChunk2() +
+    hazardsChunk3()
 
 private fun hazardsChunk0(): List<FunctionHazard> = listOf(
     // [0] trino: 'lower' | clickhouse: 'lower'
@@ -556,13 +557,152 @@ private fun hazardsChunk2(): List<FunctionHazard> = listOf(
         hazard = "ClickHouse timezone() -> session zone name; not a Trino-comparable scalar. Session-only.",
         areas = listOf("datetime", "timezone"),
         provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+    // [107] trino: 'variance' | clickhouse: 'varSamp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [108] trino: 'listagg' | clickhouse: 'arrayStringConcat'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "String aggregation agrees ONLY with an explicit ORDER BY (a,a,b,c, NULLs skipped); default ordering is unspecified and separator/function name differ per engine (string_agg/group_concat/listagg/arrayStringConcat).",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [109] trino: 'approx_percentile' | clickhouse: 'median'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Median/50th-percentile agree on simple data but methods differ (exact vs interpolation vs approximate — Trino has only approx_percentile); may diverge on other inputs.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [110] trino: 'bitwise_left_shift' | clickhouse: 'bitShiftLeft'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftLeft (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [111] trino: 'bitwise_right_shift' | clickhouse: 'bitShiftRight'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftRight (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [112] trino: 'bitwise_xor' | clickhouse: 'bitXor'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [113] trino: 'ceil' | clickhouse: 'CEIL'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [114] trino: 'ceiling' | clickhouse: 'CEIL'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [115] trino: 'cosine_distance' | clickhouse: 'cosineDistance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [116] trino: 'day_of_month' | clickhouse: 'toDayOfMonth'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfMonth (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [117] trino: 'day_of_week' | clickhouse: 'toDayOfWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfWeek (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [118] trino: 'day_of_year' | clickhouse: 'toDayOfYear'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfYear (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [119] trino: 'dot_product' | clickhouse: 'dotProduct'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is dotProduct (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
 )
 
-/** trino->clickhouse lookup: 107 keys (Trino-side names) over 107 entries. */
+private fun hazardsChunk3(): List<FunctionHazard> = listOf(
+    // [120] trino: 'euclidean_distance' | clickhouse: 'L2Distance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [121] trino: 'floor' | clickhouse: 'FLOOR'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [122] trino: 'is_finite' | clickhouse: 'isFinite'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isFinite (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [123] trino: 'is_infinite' | clickhouse: 'isInfinite'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isInfinite (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [124] trino: 'is_nan' | clickhouse: 'isNaN'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [125] trino: 'last_day_of_month' | clickhouse: 'LAST_DAY'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [126] trino: 'levenshtein_distance' | clickhouse: 'editDistance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [127] trino: 'sequence' | clickhouse: 'range'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Auto-probed Trino vs ClickHouse. Values diverge (trino='[5]' vs ch='[]'). ClickHouse name is range (rename). DEFERRED: sequence->range is divergent (Trino sequence is inclusive of the end, ClickHouse range is half-open; trino=[5] vs ch=[]) and reaches us via the GenerateSeries node needing bounds rewriting — kept divergent + guarded.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [128] trino: 'split' | clickhouse: 'splitByString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [129] trino: 'starts_with' | clickhouse: 'startsWith'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [130] trino: 'strpos' | clickhouse: 'POSITION'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [131] trino: 'to_hex' | clickhouse: 'HEX'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Auto-probed Trino vs ClickHouse. Digest/bytes agree, representation differs.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+    // [132] trino: 'translate' | clickhouse: 'translateUTF8'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Trino translate is code-point-wise == ClickHouse translateUTF8. Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on CH->CH). Reconciled identical (generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.* | source-aware fix 2026-07-14"),
+    // [133] trino: 'week_of_year' | clickhouse: 'toISOWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+)
+
+/** trino->clickhouse lookup: 134 keys (Trino-side names) over 134 entries. */
 internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[25])
     put("ACOS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[41])
     put("ANY_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[90])
+    put("APPROX_PERCENTILE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[109])
     put("APPROX_TOP_K", TRINO_CLICKHOUSE_HAZARD_ENTRIES[91])
     put("ARRAY_AGG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[89])
     put("ARRAY_REMOVE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[70])
@@ -570,13 +710,19 @@ internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("ATAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[43])
     put("ATAN2", TRINO_CLICKHOUSE_HAZARD_ENTRIES[44])
     put("AVG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[76])
+    put("BITWISE_LEFT_SHIFT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[110])
+    put("BITWISE_RIGHT_SHIFT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[111])
+    put("BITWISE_XOR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[112])
     put("CARDINALITY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[69])
     put("CBRT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[40])
+    put("CEIL", TRINO_CLICKHOUSE_HAZARD_ENTRIES[113])
+    put("CEILING", TRINO_CLICKHOUSE_HAZARD_ENTRIES[114])
     put("CONCAT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[7])
     put("CONCAT_WS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[8])
     put("CORR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[85])
     put("COS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[46])
     put("COSH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[49])
+    put("COSINE_DISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[115])
     put("COUNT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[77])
     put("COVAR_POP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[86])
     put("COVAR_SAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[87])
@@ -588,20 +734,32 @@ internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("DATE_FORMAT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[65])
     put("DATE_TRUNC", TRINO_CLICKHOUSE_HAZARD_ENTRIES[63])
     put("DAY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[56])
+    put("DAY_OF_MONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[116])
+    put("DAY_OF_WEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[117])
+    put("DAY_OF_YEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[118])
     put("DEGREES", TRINO_CLICKHOUSE_HAZARD_ENTRIES[51])
     put("DENSE_RANK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[94])
+    put("DOT_PRODUCT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[119])
     put("E", TRINO_CLICKHOUSE_HAZARD_ENTRIES[37])
+    put("EUCLIDEAN_DISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[120])
     put("EXP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[39])
     put("FIRST_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[96])
     put("FLATTEN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[71])
+    put("FLOOR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[121])
     put("FROM_BASE64", TRINO_CLICKHOUSE_HAZARD_ENTRIES[18])
     put("FROM_UNIXTIME", TRINO_CLICKHOUSE_HAZARD_ENTRIES[66])
     put("HISTOGRAM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[88])
     put("HOUR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[57])
+    put("IS_FINITE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[122])
+    put("IS_INFINITE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[123])
+    put("IS_NAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[124])
     put("LAG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[100])
+    put("LAST_DAY_OF_MONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[125])
     put("LAST_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[97])
     put("LEAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[101])
     put("LENGTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[2])
+    put("LEVENSHTEIN_DISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[126])
+    put("LISTAGG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[108])
     put("LN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[29])
     put("LOG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[30])
     put("LOG10", TRINO_CLICKHOUSE_HAZARD_ENTRIES[31])
@@ -638,6 +796,7 @@ internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("RPAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[15])
     put("RTRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[6])
     put("SECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[59])
+    put("SEQUENCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[127])
     put("SHA1", TRINO_CLICKHOUSE_HAZARD_ENTRIES[20])
     put("SHA256", TRINO_CLICKHOUSE_HAZARD_ENTRIES[21])
     put("SHA512", TRINO_CLICKHOUSE_HAZARD_ENTRIES[22])
@@ -645,10 +804,13 @@ internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("SIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[45])
     put("SINH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[48])
     put("SOUNDEX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[16])
+    put("SPLIT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[128])
     put("SQRT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[35])
+    put("STARTS_WITH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[129])
     put("STDDEV", TRINO_CLICKHOUSE_HAZARD_ENTRIES[80])
     put("STDDEV_POP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[81])
     put("STDDEV_SAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[82])
+    put("STRPOS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[130])
     put("SUBSTR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[9])
     put("SUBSTRING", TRINO_CLICKHOUSE_HAZARD_ENTRIES[10])
     put("SUM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[75])
@@ -656,20 +818,24 @@ internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TANH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[50])
     put("TIMEZONE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[106])
     put("TO_BASE64", TRINO_CLICKHOUSE_HAZARD_ENTRIES[17])
+    put("TO_HEX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[131])
     put("TO_UNIXTIME", TRINO_CLICKHOUSE_HAZARD_ENTRIES[67])
     put("TRANSFORM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[72])
+    put("TRANSLATE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[132])
     put("TRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[4])
     put("TRUNCATE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[28])
     put("UPPER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[1])
+    put("VARIANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[107])
     put("VAR_POP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[83])
     put("VAR_SAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[84])
     put("WEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[62])
+    put("WEEK_OF_YEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[133])
     put("WIDTH_BUCKET", TRINO_CLICKHOUSE_HAZARD_ENTRIES[53])
     put("XXHASH64", TRINO_CLICKHOUSE_HAZARD_ENTRIES[24])
     put("YEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[54])
 }
 
-/** clickhouse->trino lookup: 104 keys (ClickHouse-side names) over 107 entries. */
+/** clickhouse->trino lookup: 127 keys (ClickHouse-side names) over 134 entries. */
 internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[25])
     put("ACOS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[41])
@@ -677,18 +843,24 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("ARRAYFILTER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[70])
     put("ARRAYFLATTEN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[71])
     put("ARRAYMAP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[72])
+    put("ARRAYSTRINGCONCAT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[108])
     put("ASIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[42])
     put("ATAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[43])
     put("ATAN2", TRINO_CLICKHOUSE_HAZARD_ENTRIES[44])
     put("AVG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[76])
     put("BASE64DECODE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[18])
     put("BASE64ENCODE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[17])
+    put("BITSHIFTLEFT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[110])
+    put("BITSHIFTRIGHT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[111])
+    put("BITXOR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[112])
     put("CBRT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[40])
+    put("CEIL", TRINO_CLICKHOUSE_HAZARD_ENTRIES[113])
     put("CONCAT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[7])
     put("CONCAT_WS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[8])
     put("CORR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[85])
     put("COS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[46])
     put("COSH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[49])
+    put("COSINEDISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[115])
     put("COUNT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[77])
     put("COVARPOP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[86])
     put("COVARSAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[87])
@@ -698,14 +870,23 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("DATETRUNC", TRINO_CLICKHOUSE_HAZARD_ENTRIES[63])
     put("DEGREES", TRINO_CLICKHOUSE_HAZARD_ENTRIES[51])
     put("DENSE_RANK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[94])
+    put("DOTPRODUCT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[119])
     put("E", TRINO_CLICKHOUSE_HAZARD_ENTRIES[37])
+    put("EDITDISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[126])
     put("EXP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[39])
     put("FIRST_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[96])
+    put("FLOOR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[121])
     put("FORMATDATETIME", TRINO_CLICKHOUSE_HAZARD_ENTRIES[65])
     put("FROMUNIXTIMESTAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[66])
     put("GROUPARRAY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[89])
+    put("HEX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[131])
     put("HISTOGRAM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[88])
+    put("ISFINITE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[122])
+    put("ISINFINITE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[123])
+    put("ISNAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[124])
+    put("L2DISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[120])
     put("LAG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[100])
+    put("LAST_DAY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[125])
     put("LAST_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[97])
     put("LEAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[101])
     put("LEFTPAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[14])
@@ -717,6 +898,7 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("MAP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[74])
     put("MAX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[79])
     put("MD5", TRINO_CLICKHOUSE_HAZARD_ENTRIES[19])
+    put("MEDIAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[109])
     put("MIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[78])
     put("MODULO", TRINO_CLICKHOUSE_HAZARD_ENTRIES[26])
     put("NGRAMS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[73])
@@ -725,10 +907,12 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("NTILE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[95])
     put("PERCENT_RANK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[98])
     put("PI", TRINO_CLICKHOUSE_HAZARD_ENTRIES[38])
+    put("POSITION", TRINO_CLICKHOUSE_HAZARD_ENTRIES[130])
     put("POW", TRINO_CLICKHOUSE_HAZARD_ENTRIES[33])
     put("POWER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[34])
     put("RADIANS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[52])
     put("RAND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[103])
+    put("RANGE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[127])
     put("RANK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[93])
     put("REGEXPEXTRACT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[13])
     put("REPLACEALL", TRINO_CLICKHOUSE_HAZARD_ENTRIES[11])
@@ -744,7 +928,9 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("SIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[45])
     put("SINH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[48])
     put("SOUNDEX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[16])
+    put("SPLITBYSTRING", TRINO_CLICKHOUSE_HAZARD_ENTRIES[128])
     put("SQRT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[35])
+    put("STARTSWITH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[129])
     put("STDDEV", TRINO_CLICKHOUSE_HAZARD_ENTRIES[80])
     put("STDDEVPOP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[81])
     put("STDDEVSAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[82])
@@ -756,6 +942,8 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TODATE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[68])
     put("TODAY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[105])
     put("TODAYOFMONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[56])
+    put("TODAYOFWEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[117])
+    put("TODAYOFYEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[118])
     put("TOHOUR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[57])
     put("TOISOWEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[62])
     put("TOMINUTE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[58])
@@ -766,13 +954,14 @@ internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap
     put("TOSECOND*1000 + TOMILLISECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[60])
     put("TOUNIXTIMESTAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[67])
     put("TOYEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[54])
+    put("TRANSLATEUTF8", TRINO_CLICKHOUSE_HAZARD_ENTRIES[132])
     put("TRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[4])
     put("TRIMLEFT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[5])
     put("TRIMRIGHT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[6])
     put("TRUNC", TRINO_CLICKHOUSE_HAZARD_ENTRIES[28])
     put("UPPER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[1])
     put("VARPOP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[83])
-    put("VARSAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[84])
+    put("VARSAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[107])
     put("WIDTHBUCKET", TRINO_CLICKHOUSE_HAZARD_ENTRIES[53])
     put("XXHASH64", TRINO_CLICKHOUSE_HAZARD_ENTRIES[24])
 }

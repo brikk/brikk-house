@@ -9,7 +9,7 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 255 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
+/** The 258 probe-verified (duckdb, doris) pair verdicts, in JSON order. */
 internal val DUCKDB_DORIS_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
     hazardsChunk1() +
     hazardsChunk2() +
@@ -1273,9 +1273,24 @@ private fun hazardsChunk6(): List<FunctionHazard> = listOf(
         hazard = "MAPPING ADDED (BUGS-doris-generator-mappings-2026-07-13 enhancement): get_current_timestamp now parses to CurrentTimestamp and emits NOW(). Doris NOW() is the wall-clock-now equivalent; differs only in precision/session-zone.",
         areas = listOf("datetime"),
         provenance = "REPORT-doris-differential-probe-2026-07-13.md#batch13-bucketc"),
+    // [255] duckdb: 'stddev' | doris: 'stddev'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Bare stddev() DEFAULT differs: Doris is POPULATION (n); DuckDB/Trino/ClickHouse are SAMPLE (n-1). Same input -> 1.356466 vs 1.516575. Use stddev_pop/stddev_samp explicitly to be safe.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [256] duckdb: 'variance' | doris: 'variance'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+    // [257] duckdb: 'array_agg' | doris: 'array_agg'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Array aggregation: elements agree, but NULL inclusion/position and rendering differ (e.g. Doris keeps NULL first, Trino NULL last); not portable without explicit ORDER BY + NULL handling.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
 )
 
-/** duckdb->doris lookup: 255 keys (DuckDB-side names) over 255 entries. */
+/** duckdb->doris lookup: 258 keys (DuckDB-side names) over 258 entries. */
 internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -1284,6 +1299,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("APPROX_COUNT_DISTINCT", DUCKDB_DORIS_HAZARD_ENTRIES[85])
     put("ARG_MAX", DUCKDB_DORIS_HAZARD_ENTRIES[224])
     put("ARG_MIN", DUCKDB_DORIS_HAZARD_ENTRIES[225])
+    put("ARRAY_AGG", DUCKDB_DORIS_HAZARD_ENTRIES[257])
     put("ARRAY_APPEND", DUCKDB_DORIS_HAZARD_ENTRIES[150])
     put("ARRAY_CROSS_PRODUCT", DUCKDB_DORIS_HAZARD_ENTRIES[151])
     put("ARRAY_LENGTH", DUCKDB_DORIS_HAZARD_ENTRIES[241])
@@ -1488,6 +1504,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("SPLIT_PART", DUCKDB_DORIS_HAZARD_ENTRIES[5])
     put("SQRT", DUCKDB_DORIS_HAZARD_ENTRIES[28])
     put("STARTS_WITH", DUCKDB_DORIS_HAZARD_ENTRIES[57])
+    put("STDDEV", DUCKDB_DORIS_HAZARD_ENTRIES[255])
     put("STDDEV_POP", DUCKDB_DORIS_HAZARD_ENTRIES[89])
     put("STDDEV_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[90])
     put("STRFTIME", DUCKDB_DORIS_HAZARD_ENTRIES[229])
@@ -1523,6 +1540,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("URL_ENCODE", DUCKDB_DORIS_HAZARD_ENTRIES[55])
     put("USER", DUCKDB_DORIS_HAZARD_ENTRIES[148])
     put("UUID", DUCKDB_DORIS_HAZARD_ENTRIES[167])
+    put("VARIANCE", DUCKDB_DORIS_HAZARD_ENTRIES[256])
     put("VAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[91])
     put("VAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[92])
     put("VERSION", DUCKDB_DORIS_HAZARD_ENTRIES[163])
@@ -1534,7 +1552,7 @@ internal val DUCKDB_TO_DORIS_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("YEARWEEK", DUCKDB_DORIS_HAZARD_ENTRIES[132])
 }
 
-/** doris->duckdb lookup: 245 keys (Doris-side names) over 255 entries. */
+/** doris->duckdb lookup: 248 keys (Doris-side names) over 258 entries. */
 internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("ABS", DUCKDB_DORIS_HAZARD_ENTRIES[16])
     put("ACOS", DUCKDB_DORIS_HAZARD_ENTRIES[21])
@@ -1543,6 +1561,7 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("APPROX_COUNT_DISTINCT", DUCKDB_DORIS_HAZARD_ENTRIES[85])
     put("ARRAY", DUCKDB_DORIS_HAZARD_ENTRIES[206])
     put("ARRAYS_OVERLAP", DUCKDB_DORIS_HAZARD_ENTRIES[230])
+    put("ARRAY_AGG", DUCKDB_DORIS_HAZARD_ENTRIES[257])
     put("ARRAY_APPEND", DUCKDB_DORIS_HAZARD_ENTRIES[150])
     put("ARRAY_CONCAT", DUCKDB_DORIS_HAZARD_ENTRIES[198])
     put("ARRAY_CONTAINS", DUCKDB_DORIS_HAZARD_ENTRIES[219])
@@ -1746,6 +1765,7 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("SPLIT_PART", DUCKDB_DORIS_HAZARD_ENTRIES[5])
     put("SQRT", DUCKDB_DORIS_HAZARD_ENTRIES[28])
     put("STARTS_WITH", DUCKDB_DORIS_HAZARD_ENTRIES[57])
+    put("STDDEV", DUCKDB_DORIS_HAZARD_ENTRIES[255])
     put("STDDEV_POP", DUCKDB_DORIS_HAZARD_ENTRIES[89])
     put("STDDEV_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[90])
     put("STR_TO_DATE", DUCKDB_DORIS_HAZARD_ENTRIES[216])
@@ -1772,6 +1792,7 @@ internal val DORIS_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
     put("URL_ENCODE", DUCKDB_DORIS_HAZARD_ENTRIES[55])
     put("USER", DUCKDB_DORIS_HAZARD_ENTRIES[148])
     put("UUID", DUCKDB_DORIS_HAZARD_ENTRIES[167])
+    put("VARIANCE", DUCKDB_DORIS_HAZARD_ENTRIES[256])
     put("VAR_POP", DUCKDB_DORIS_HAZARD_ENTRIES[91])
     put("VAR_SAMP", DUCKDB_DORIS_HAZARD_ENTRIES[92])
     put("VERSION", DUCKDB_DORIS_HAZARD_ENTRIES[163])

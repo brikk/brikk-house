@@ -1,0 +1,21 @@
+# aggregates-round.doris.tsv — live Doris outputs for the 17-row cross-engine aggregate probe
+# engine=Doris (FE doris-0.0.0/P-series pr62767-local, BE apache/doris:be-4.1.2)
+# rendered=raw; NULL->NULL; errors-><ERR:...>; booleans un-normalized; no rows errored
+# NOTE: bare stddev/variance are POPULATION in Doris (stddev==stddev_pop, variance==var_pop) — verified
+count_star	6
+count_x	5
+count_distinct	4
+sum	13
+avg	2.6
+min	1
+max	5
+stddev_default	1.356466
+stddev_samp	1.516575
+stddev_pop	1.356466
+var_default	1.84
+var_pop	1.84
+median	2
+sum_allnull	NULL
+string_agg	a,a,b,c
+array_agg	[null, "a", "a", "b", "c"]
+bool_or	1

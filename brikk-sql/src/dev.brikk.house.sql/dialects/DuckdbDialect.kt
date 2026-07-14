@@ -36,6 +36,6 @@ open class DuckdbDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         DuckdbParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        DuckdbGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        DuckdbGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 }

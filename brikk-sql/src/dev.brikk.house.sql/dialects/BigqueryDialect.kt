@@ -81,8 +81,8 @@ open class BigqueryDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         BigqueryParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        BigqueryGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        BigqueryGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     /**
      * sqlglot: BigQuery.normalize_identifier — CTEs are case-insensitive, but UDF and

@@ -1,5 +1,30 @@
 # SPIKE: source-aware generator transforms (2026-07-13)
 
+## ✅ IMPLEMENTED (2026-07-14) — Option A shipped
+
+Threaded `sourceDialect: String?` through generation: `Generator` ctor +
+`Generator.isCrossDialectFrom(nativeDialect)`, all 12 `Dialect.generator(...)` overrides and
+generator ctors, `Dialect.generate(...)`, `transpile(read,write)` (passes `read`), and
+`SqlFragment.transpileTo`/`toStandardSql` (pass the fragment's own dialect). Policy: `null`
+(source unknown) = faithful/native (preserves direct `Expression.sql(...)`); rewrite fires
+only when the source is a KNOWN non-target dialect.
+
+Re-landed the gated ClickHouse rewrites: `lower`→`lowerUTF8`, `upper`→`upperUTF8`,
+`translate`→`translateUTF8` (cross-dialect; faithful native on CH→CH), and `Week`→`toISOWeek`
+gated on ISO-week sources only (`ISO_WEEK_SOURCES={duckdb}`; **Doris/MySQL week is mode-0 ==
+ClickHouse default, so it stays faithful `week`** — a source-SPECIFIC nuance a plain
+cross-dialect boolean would have gotten wrong). Reconciled hazards: duckdb `week`/`translate`
+and doris/trino `translate` → identical; `lower`/`upper` stay divergent (İ/ß edge → WARNING).
+Golden pins in `ClickhouseSourceAwareTransformsTest` incl. the **pipe-desugar regression**
+(`FROM t |> SELECT lower(x)` now stays `lower`, not `lowerUTF8`). `./kotlin test` green (584).
+
+NOT done (documented backlog): the full per-dialect audit of §3 (e.g. `Length`→`CHAR_LENGTH`
+pre-existing), and the `round`/`bin` half-away/strip-zero shims (need arg-threading, not pure
+renames). The plumbing is now in place for those to be gated the same way.
+
+---
+
+
 Research spike (no production code) assessing **Option 2** from the ClickHouse
 generator-bug work: make the dialect generators aware of the SOURCE dialect so that
 semantic-changing function rewrites fire only on genuine cross-dialect transpilation, not

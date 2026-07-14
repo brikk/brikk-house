@@ -1,0 +1,182 @@
+abs	5
+acos	nan
+asin	nan
+at_timezone	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+atan	1.1902899496825319
+atan2	0.7853981633974483
+bar	<CH_ERR:Code: 42. DB::Exception: Function bar require>
+beta_cdf	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+bit_count	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+bitwise_and	<CH_ERR:Code: 62. DB::Exception: Unrecognized token: >
+bitwise_left_shift	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+bitwise_not	<CH_ERR:Code: 62. DB::Exception: Unrecognized token: >
+bitwise_or	<CH_ERR:Code: 62. DB::Exception: Syntax error: failed>
+bitwise_right_shift	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+bitwise_right_shift_arithmetic	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+bitwise_xor	0
+cbrt	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+ceil	5
+ceiling	5
+chr	
+codepoint	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+color	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+concat	\xaa\xbb
+concat_ws	[\'aBc\']
+cos	-0.8011436155469337
+cosh	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+cosine_distance	0
+cosine_similarity	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+crc32	1233267864
+create_hll	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+custom_add	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+date	2024-06-16
+date_add	<CH_ERR:Code: 47. DB::Exception: Unknown expression o>
+date_diff	<CH_ERR:Code: 47. DB::Exception: Unknown expression o>
+date_format	aBc
+date_parse	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+date_trunc	<CH_ERR:Code: 36. DB::Exception: abc doesn't look lik>
+day	16
+day_of_month	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+day_of_week	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+day_of_year	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+degrees	143.2394487827058
+dot_product	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+dow	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+doy	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+euclidean_distance	0
+exp	12.182493960703473
+floor	5
+format_datetime	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+format_number	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+from_base	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+from_base32	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+from_base64	<CH_ERR:'utf-8' codec can't decode byte 0xaa in posit>
+from_base64url	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+from_big_endian_32	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+from_big_endian_64	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+from_hex	\xef
+from_ieee754_32	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+from_ieee754_64	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+from_iso8601_date	\N
+from_iso8601_timestamp	\N
+from_iso8601_timestamp_nanos	\N
+from_unixtime	1970-01-01 00:00:02
+from_unixtime_nanos	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+from_utf8	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+hamming_distance	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+hmac_md5	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+hmac_sha1	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+hmac_sha256	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+hmac_sha512	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+hour	13
+human_readable_seconds	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+inverse_beta_cdf	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+inverse_normal_cdf	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+is_finite	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+is_infinite	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+is_json_scalar	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+is_nan	0
+json_array_contains	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+json_array_get	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+json_array_length	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+json_format	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+json_parse	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+last_day_of_month	2024-06-30
+length	3
+levenshtein_distance	0
+ln	0.9162907318741551
+log	1
+log10	0.3979400086720376
+log2	1.3219280948873624
+lower	abc
+lpad	\xaa\xbb\xaa\xaa\xbb
+ltrim	aBc
+luhn_check	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+md5	XΡ\xf6\xb2\xb0e a>\t\xaf\x90\xdcG
+millisecond	7000
+minute	45
+mod	0
+month	6
+murmur3	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+normal_cdf	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+normalize	<TRANSPILE_ERR>
+parse_data_size	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+parse_datetime	1970-01-01 00:00:00
+parse_duration	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+parse_presto_data_size	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+pow	9.882117688026186
+power	9.882117688026186
+quarter	2
+radians	0.04363323129985824
+rand	0.12837067660159004
+random	0.9976165555481125
+render	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+replace	NULL
+reverse	cBa
+rgb	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+round	5
+rpad	\xaa\xbb\xaa\xbb\xaa
+rtrim	aBc
+second	7
+sequence	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+sha1	e\xb1\xe3Q\xa6\xcb\xfe\xb4\x92r"\xbc\x9e\xf5:\xad3\x96\xb0
+sha256	ט\xd1\xfaƽK\xb1\xc1P1\'`57\x9a\n\xb6\xf0\xa8\xc0\xaf\x8aPk\x96\xb2RZ
+sha512	\x86\x8ef\xe1\f\x88%\xbe T\xb8\xfaV\xfa\xf0i8\xa2Ƨ\xe8\xe3\x83\f\'Gw\xb0C^\0h\x85\xc5\xc3u\x8e\x86\xad?\xfe\xe8\x81`a\xb1\xa2o\xb0\fZ<\x88\'\xf2o
+sign	1
+sin	0.5984721441039565
+sinh	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+soundex	A120
+split	['','']
+split_part	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+split_to_map	<CH_ERR:Code: 36. DB::Exception: Control character ar>
+split_to_multimap	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+spooky_hash_v2_32	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+spooky_hash_v2_64	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+sqrt	1.5811388300841898
+starts_with	1
+strpos	1
+substr	NULL
+substring	NULL
+t_cdf	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+t_pdf	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+tan	-0.7470222972386603
+tanh	0.9866142981514305
+timezone	<CH_ERR:Code: 42. DB::Exception: Number of arguments >
+timezone_hour	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+timezone_minute	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+to_base	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+to_base32	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+to_base64	qrs=
+to_base64url	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+to_big_endian_32	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+to_big_endian_64	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+to_hex	AABB
+to_ieee754_32	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+to_ieee754_64	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+to_iso8601	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+to_unixtime	1718545507
+to_utf8	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+translate	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+trim	aBc
+truncate	2
+upper	ABC
+url_decode	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+url_encode	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+url_extract_fragment	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+url_extract_host	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+url_extract_parameter	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+url_extract_path	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+url_extract_port	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+url_extract_protocol	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+url_extract_query	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+week	24
+week_of_year	24
+width_bucket	<CH_ERR:Code: 42. DB::Exception: Number of arguments >
+wilson_interval_lower	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+wilson_interval_upper	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+with_timezone	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+word_stem	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+xxhash64	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+year	2024
+year_of_week	<CH_ERR:Code: 46. DB::Exception: Function with name `>
+yow	<CH_ERR:Code: 46. DB::Exception: Function with name `>
