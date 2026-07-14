@@ -128,11 +128,13 @@ class ClickhouseRenameFixesTest {
         assertEquals("SELECT isIPv6String(x)", ch("SELECT is_ipv6_string(x)", "doris"))
         assertEquals("SELECT toIPv4OrDefault(x)", ch("SELECT to_ipv4_or_default(x)", "doris"))
         assertEquals("SELECT toIPv6OrDefault(x)", ch("SELECT to_ipv6_or_default(x)", "doris"))
-        // distance / hash / rounding
+        // distance / rounding
         assertEquals("SELECT L1Distance(a, b)", ch("SELECT l1_distance(a, b)", "doris"))
         assertEquals("SELECT roundBankers(x)", ch("SELECT round_bankers(x)", "doris"))
-        assertEquals("SELECT xxHash32(x)", ch("SELECT xxhash_32(x)", "doris"))
-        assertEquals("SELECT xxHash64(x)", ch("SELECT xxhash_64(x)", "doris"))
+        // xxhash_32/64 are NOT renamed: live reverse probe found Doris xxhash_* is a
+        // different hash value than ClickHouse xxHash* — stays a divergent (unmapped) hazard.
+        assertEquals("SELECT xxhash_64(x)", ch("SELECT xxhash_64(x)", "doris"))
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("doris", "clickhouse", "xxhash_64")?.verdict)
     }
 
     // -- Group 4a: trino -> clickhouse forward completion --------------------------
@@ -185,6 +187,56 @@ class ClickhouseRenameFixesTest {
         assertEquals("SELECT JARO_SIMILARITY(a, b)", dk("SELECT jaroSimilarity(a, b)"))
         assertEquals("SELECT DAYOFMONTH(d)", dk("SELECT toDayOfMonth(d)"))
         assertEquals("SELECT DAYOFYEAR(d)", dk("SELECT toDayOfYear(d)"))
+    }
+
+    // -- Group 4c: clickhouse -> doris / trino reverse (agent live-verified) -------
+
+    private fun toDoris(sql: String): String = transpile(sql, read = "clickhouse", write = "doris")
+    private fun toTrino(sql: String): String = transpile(sql, read = "clickhouse", write = "trino")
+
+    @Test
+    fun clickhouseToDoris_reverse() {
+        assertEquals("SELECT ARRAY_SORT(a)", toDoris("SELECT arraySort(a)"))
+        assertEquals("SELECT ARRAY_REVERSE_SORT(a)", toDoris("SELECT arrayReverseSort(a)"))
+        assertEquals("SELECT ARRAY_INTERSECT(a, b)", toDoris("SELECT arrayIntersect(a, b)"))
+        assertEquals("SELECT ARRAY_AVG(a)", toDoris("SELECT arrayAvg(a)"))
+        assertEquals("SELECT ARRAY_CUM_SUM(a)", toDoris("SELECT arrayCumSum(a)"))
+        assertEquals("SELECT ARRAY_ENUMERATE_UNIQ(a)", toDoris("SELECT arrayEnumerateUniq(a)"))
+        assertEquals("SELECT ARRAY_EXCEPT(a, b)", toDoris("SELECT arrayExcept(a, b)"))
+        assertEquals("SELECT ARRAY_POPBACK(a)", toDoris("SELECT arrayPopBack(a)"))
+        assertEquals("SELECT ELEMENT_AT(a, i)", toDoris("SELECT arrayElement(a, i)")) // divergent
+        assertEquals("SELECT BIT_COUNT(x)", toDoris("SELECT bitCount(x)"))
+        assertEquals("SELECT BIT_SHIFT_LEFT(a, b)", toDoris("SELECT bitShiftLeft(a, b)"))
+        assertEquals("SELECT COUNT_SUBSTRINGS(s, p)", toDoris("SELECT countSubstrings(s, p)"))
+        assertEquals("SELECT L1_DISTANCE(a, b)", toDoris("SELECT L1Distance(a, b)"))
+        assertEquals("SELECT ROUND_BANKERS(x)", toDoris("SELECT roundBankers(x)"))
+        assertEquals("SELECT IPV4_NUM_TO_STRING(x)", toDoris("SELECT IPv4NumToString(x)"))
+        assertEquals("SELECT IS_IPV4_STRING(x)", toDoris("SELECT isIPv4String(x)"))
+        assertEquals("SELECT TO_IPV4_OR_DEFAULT(x)", toDoris("SELECT toIPv4OrDefault(x)"))
+        // splitByRegexp(pattern, str) -> Doris split_by_regexp(str, pattern) (args swapped)
+        assertEquals("SELECT SPLIT_BY_REGEXP(s, p)", toDoris("SELECT splitByRegexp(p, s)"))
+        // NOT renamed (no Doris equivalent): arrayUniq, jaroSimilarity stay passthrough
+        assertEquals("SELECT ARRAYUNIQ(a)", toDoris("SELECT arrayUniq(a)"))
+    }
+
+    @Test
+    fun clickhouseToTrino_reverse() {
+        assertEquals("SELECT ARRAY_SORT(a)", toTrino("SELECT arraySort(a)"))
+        assertEquals("SELECT ARRAY_INTERSECT(a, b)", toTrino("SELECT arrayIntersect(a, b)"))
+        assertEquals("SELECT ELEMENT_AT(a, i)", toTrino("SELECT arrayElement(a, i)")) // divergent
+        assertEquals("SELECT BITWISE_LEFT_SHIFT(a, b)", toTrino("SELECT bitShiftLeft(a, b)"))
+        assertEquals("SELECT BITWISE_RIGHT_SHIFT(a, b)", toTrino("SELECT bitShiftRight(a, b)"))
+        assertEquals("SELECT DOT_PRODUCT(a, b)", toTrino("SELECT dotProduct(a, b)"))
+        assertEquals("SELECT IS_INFINITE(x)", toTrino("SELECT isInfinite(x)"))
+    }
+
+    @Test
+    fun dorisAndTrino_roundTripUnchanged() {
+        // camelCase reverse-map keys never fire on native snake_case doris/trino input.
+        assertEquals("SELECT ARRAY_SORT(a)", transpile("SELECT array_sort(a)", read = "doris", write = "doris"))
+        assertEquals("SELECT BIT_COUNT(x)", transpile("SELECT bit_count(x)", read = "doris", write = "doris"))
+        assertEquals("SELECT SPLIT_BY_REGEXP(s, p)", transpile("SELECT split_by_regexp(s, p)", read = "doris", write = "doris"))
+        assertEquals("SELECT DOT_PRODUCT(a, b)", transpile("SELECT dot_product(a, b)", read = "trino", write = "trino"))
     }
 
     @Test

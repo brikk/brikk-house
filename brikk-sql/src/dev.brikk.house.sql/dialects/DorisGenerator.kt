@@ -357,9 +357,16 @@ open class DorisGenerator(
         "GREATEST_COMMON_DIVISOR" to "GCD",
         "LEAST_COMMON_MULTIPLE" to "LCM",
         "ST_ASWKB" to "ST_ASBINARY",
-    )
+    ) + REVERSE_CLICKHOUSE_RENAMES
 
     override fun anonymousSql(expression: Anonymous): String {
+        // Reverse direction (ClickHouse -> Doris): ClickHouse's splitByRegexp(pattern, str)
+        // maps to Doris split_by_regexp(str, pattern) — SAME function, ARGS SWAPPED (live
+        // value-equal, doris-ducklake agent 2026-07-14). Handle before the plain-name map.
+        if (expression.name.equals("splitByRegexp", ignoreCase = true)) {
+            val a = expression.expressionsArg
+            if (a.size == 2) return func("SPLIT_BY_REGEXP", a[1], a[0])
+        }
         val renamed = anonymousRenames[expression.name.uppercase()]
         if (renamed != null) {
             return func(renamed, *expression.expressionsArg.toTypedArray())
@@ -531,6 +538,45 @@ open class DorisGenerator(
     }
 
     companion object {
+
+        // Reverse direction (ClickHouse -> Doris) function-name renames for unmapped
+        // Anonymous calls. Key = ClickHouse spelling UPPERCASED (matched via
+        // expression.name.uppercase()); value = the Doris name. Every entry LIVE-verified
+        // value-equal on Doris + ClickHouse 26.5.1.1 by the doris-ducklake agent
+        // (docs/research/probe-runs/reverse-doris-trino.results.tsv). Round-trip safe: the
+        // keys are ClickHouse camelCase names (no underscores) that Doris neither parses to
+        // a node nor accepts, so native Doris generation is untouched.
+        // Deliberately EXCLUDED: arrayUniq (Doris has no array_unique), jaroSimilarity (no
+        // Doris jaro fn), xxHash32/64 (Doris xxhash_* is a DIFFERENT hash value), and
+        // splitByRegexp (handled with an arg-swap in anonymousSql). arrayElement->element_at
+        // is value-equal here but stays a divergent hazard (negative-index semantics).
+        private val REVERSE_CLICKHOUSE_RENAMES: Map<String, String> = mapOf(
+            "ARRAYSORT" to "ARRAY_SORT",
+            "ARRAYREVERSESORT" to "ARRAY_REVERSE_SORT",
+            "ARRAYINTERSECT" to "ARRAY_INTERSECT",
+            "ARRAYAVG" to "ARRAY_AVG",
+            "ARRAYCOMPACT" to "ARRAY_COMPACT",
+            "ARRAYCOUNT" to "ARRAY_COUNT",
+            "ARRAYCUMSUM" to "ARRAY_CUM_SUM",
+            "ARRAYDIFFERENCE" to "ARRAY_DIFFERENCE",
+            "ARRAYENUMERATE" to "ARRAY_ENUMERATE",
+            "ARRAYENUMERATEUNIQ" to "ARRAY_ENUMERATE_UNIQ",
+            "ARRAYEXCEPT" to "ARRAY_EXCEPT",
+            "ARRAYPOPBACK" to "ARRAY_POPBACK",
+            "ARRAYPOPFRONT" to "ARRAY_POPFRONT",
+            "ARRAYPRODUCT" to "ARRAY_PRODUCT",
+            "ARRAYELEMENT" to "ELEMENT_AT", // divergent (negative-index) — hazard kept
+            "BITCOUNT" to "BIT_COUNT",
+            "BITSHIFTLEFT" to "BIT_SHIFT_LEFT",
+            "BITSHIFTRIGHT" to "BIT_SHIFT_RIGHT",
+            "BITTEST" to "BIT_TEST",
+            "COUNTSUBSTRINGS" to "COUNT_SUBSTRINGS",
+            "L1DISTANCE" to "L1_DISTANCE",
+            "ROUNDBANKERS" to "ROUND_BANKERS",
+            "IPV4NUMTOSTRING" to "IPV4_NUM_TO_STRING",
+            "ISIPV4STRING" to "IS_IPV4_STRING",
+            "TOIPV4ORDEFAULT" to "TO_IPV4_OR_DEFAULT",
+        )
 
         // sqlglot: DorisGenerator.TYPE_MAPPING
         val TYPE_MAPPING: Map<DType, String> = MysqlGenerator.TYPE_MAPPING + mapOf(

@@ -1,0 +1,36 @@
+fn	doris_output	trino_output	doris_matches	trino_matches
+arraySort	[1, 2, 3]	[1, 2, 3]	yes	yes
+arrayReverseSort	[3, 2, 1]		yes	
+arrayUniq	<ERR:Can not found function 'array_unique'>		ERR	
+arrayIntersect	[2, 3]	[2, 3]	yes	yes
+arrayAvg	2		yes	
+arrayCompact	[1, 2, 1]		yes	
+arrayCount	2		yes	
+arrayCumSum	[1, 3, 6]		yes	
+arrayDifference	[0, 2, 3]		yes	
+arrayEnumerate	[1, 2, 3]		yes	
+arrayEnumerateUniq	[1, 2, 1]		yes	
+arrayExcept	[1, 3]		yes	
+arrayPopBack	[1, 2]		yes	
+arrayPopFront	[2, 3]		yes	
+arrayProduct	24		yes	
+arrayDotProduct				
+hasAll				
+hasAny				
+arrayElement	20	20	yes	yes
+bitCount	3		yes	
+bitShiftLeft	8	8	yes	yes
+bitShiftRight	2	2	yes	yes
+bitTest	1		yes	
+tgamma				
+jaroSimilarity	<ERR:Can not found function 'jaro_similarity'>		ERR	
+countSubstrings	3		yes	
+splitByRegexp	["a", "b", "c"]	[a1b2c]	yes	no
+L1Distance	7		yes	
+roundBankers	2		yes	
+xxHash64	8696274497037089104		no	
+dotProduct		11.0		yes
+isInfinite		false		yes
+IPv4NumToString	192.168.0.1		yes	
+isIPv4String	1		yes	
+toIPv4OrDefault	1.2.3.4		yes	

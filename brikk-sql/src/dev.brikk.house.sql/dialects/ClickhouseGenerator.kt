@@ -849,8 +849,12 @@ open class ClickhouseGenerator(
             // -- distance / hash / rounding (Doris) --
             "l1_distance" to "L1Distance",
             "round_bankers" to "roundBankers",
-            "xxhash_32" to "xxHash32", // conditionally-equivalent (type/signedness)
-            "xxhash_64" to "xxHash64", // conditionally-equivalent (type/signedness)
+            // NOTE: Doris xxhash_32/xxhash_64 are intentionally NOT mapped. Live reverse
+            // probe (doris-ducklake agent, 2026-07-14) found Doris xxhash_64('abc') =
+            // 8696274497037089104 vs ClickHouse xxHash64('abc') = 4952883123889572249 —
+            // a DIFFERENT hash (impl/seed), not just type/signedness. Emitting xxHash* would
+            // silently produce a wrong hash, so it stays a divergent (unmapped) hazard that
+            // certify refuses. See docs/research/probe-runs/reverse-doris-trino.results.tsv.
             // -- Trino source --
             "bitwise_left_shift" to "bitShiftLeft",
             "bitwise_right_shift" to "bitShiftRight",
