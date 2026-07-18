@@ -153,29 +153,41 @@ the python module version at generation time (currently **v1.5.4**; the generato
 run if module and engine versions disagree). Refresh: bump the python `duckdb` module,
 re-run the script. DuckDB is MIT licensed (see ATTRIBUTIONS.md).
 
-## `data/trino-functions-481.tsv`
+## `data/trino-functions-483.tsv`
 
-Trino **481**'s complete built-in function registry (`SHOW FUNCTIONS`), one row per
+Trino **483**'s complete built-in function registry (`SHOW FUNCTIONS`), one row per
 overload, 6 tab-separated columns: name, return type, argument types, function type,
-deterministic, description. 746 rows / 319 distinct names (597 scalar, 129 aggregate,
-16 window, 4 table).
+deterministic, description. 900 rows / 441 distinct names (via generator: 442 defs /
+808 overloads — 372 scalar, 57 aggregate, 11 window, 2 table).
 
 | | |
 |---|---|
 | Source | Trino — https://github.com/trinodb/trino |
-| Version | 481 (Maven Central `io.trino:trino-main:481`) |
+| Version | 483 (official `trinodb/trino:483` container image) |
 | License | Apache License 2.0 (extracted registry data; see ATTRIBUTIONS.md) |
 
 ### Generation method
 
-Method B of trino-ducklake's `GENERATE-TRINO-FUNCTION-CATALOG.md` recipe: a throwaway
-Gradle project with `io.trino:trino-main:481` + `io.trino:trino-testing:481` + JUnit 5 on
-the test classpath (JDK 25; JVM flags `--add-modules jdk.incubator.vector` plus the usual
-`--add-opens`), booting an in-JVM `DistributedQueryRunner` (session catalog `system`,
-schema `runtime`) and dumping `SHOW FUNCTIONS` to TSV. Version-pinned and reproducible —
-no external Trino server involved. Refresh on a version bump: re-run the harness against
-the new pin, save as `data/trino-functions-<version>.tsv`, then re-run
-`tools/generate_trino_functions.py` (TSV -> `GeneratedTrinoFunctionCatalog.kt`).
+**Method A (container dump)** — the official `trinodb/trino:483` server image bundles the
+geospatial *and* ML plugins, so `SHOW FUNCTIONS` on a stock container lists their functions
+(`ST_*`, `bing_tile*`, `geometry_*`, `great_circle_distance`, `convex_hull_agg`,
+`learn_*`, `regress`, `classify`, …). This is why the 483 dump has ~100 more names than the
+old 481 dump, which used the in-JVM harness (Method B) that never loaded those plugins.
+
+```bash
+docker run -d --name trino-dump trinodb/trino:483
+# wait until `docker exec trino-dump trino --execute "SELECT 1"` succeeds, then:
+docker exec trino-dump trino --execute "SHOW FUNCTIONS" --output-format=TSV \
+    > vendor/data/trino-functions-483.tsv
+docker rm -f trino-dump
+```
+
+Refresh on a version bump: dump from the new `trinodb/trino:<version>` image, save as
+`data/trino-functions-<version>.tsv`, then re-run `tools/generate_trino_functions.py`
+(TSV -> `GeneratedTrinoFunctionCatalog.kt`). The output is version-pinned and reproducible.
+
+The previous `data/trino-functions-481.tsv` (Method B, 746 rows, no geospatial/ML) has been
+superseded and removed.
 
 Known caveats (carried into the generated Kotlin header): `SHOW FUNCTIONS` does not flag
 variadics (arity is a lower bound), parametric types / type variables appear literally

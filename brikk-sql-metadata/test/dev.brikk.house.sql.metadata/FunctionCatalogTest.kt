@@ -240,9 +240,10 @@ class FunctionCatalogTest {
 
     @Test
     fun trinoCatalogLoadsWithExpectedSurface() {
-        // Pinned to vendor/data/trino-functions-481.tsv (Trino 481 SHOW FUNCTIONS:
-        // 746 rows -> 654 distinct signatures over 320 (name, kind) defs).
-        assertEquals(320, TRINO_FUNCTION_CATALOG.size)
+        // Pinned to vendor/data/trino-functions-483.tsv (Trino 483 SHOW FUNCTIONS from
+        // the stock trinodb/trino:483 container, incl. geospatial + ML plugins:
+        // 900 rows -> 808 distinct signatures over 442 (name, kind) defs).
+        assertEquals(442, TRINO_FUNCTION_CATALOG.size)
         assertTrue("approx_percentile" in TRINO_FUNCTION_CATALOG)
         // TSV-verified overload count for approx_percentile.
         assertEquals(15, TRINO_FUNCTION_CATALOG["approx_percentile"]!!.overloads.size)
@@ -279,7 +280,7 @@ class FunctionCatalogTest {
         assertTrue(TRINO_FUNCTION_CATALOG.isKnown("abs")) // registry hit
         assertTrue(!TRINO_FUNCTION_CATALOG.isKnown("read_parquet")) // real hole stays
 
-        // Grammar rules whose names ARE registered at 481 stay out of the grammar set
+        // Grammar rules whose names ARE registered at 483 stay out of the grammar set
         // (TRIM, SUBSTRING, NORMALIZE, LISTAGG, CURRENT_DATE) — registry clears them.
         assertTrue("trim" in TRINO_FUNCTION_CATALOG)
         assertTrue("TRIM" !in TRINO_FUNCTION_CATALOG.grammarBuiltins)

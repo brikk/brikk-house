@@ -7,14 +7,14 @@ abs	real	real	scalar	true	Absolute value
 abs	smallint	smallint	scalar	true	Absolute value
 abs	tinyint	tinyint	scalar	true	Absolute value
 acos	double	double	scalar	true	Arc cosine
-all_match	boolean	array(t), function(t,boolean)	scalar	true	Returns true if all elements of the array match the given predicate
-any_match	boolean	array(t), function(t,boolean)	scalar	true	Returns true if the array contains one or more elements that match the given predicate
-any_value	t	t	aggregate	true	Return an arbitrary non-null input value
-any_value	t	t	aggregate	true	Return an arbitrary non-null input value
+all_match	boolean	array(T), function(T,boolean)	scalar	true	Returns true if all elements of the array match the given predicate
+any_match	boolean	array(T), function(T,boolean)	scalar	true	Returns true if the array contains one or more elements that match the given predicate
+any_value	T	T	aggregate	true	Return an arbitrary non-null input value
+any_value	T	T	aggregate	true	Return an arbitrary non-null input value
+approx_distinct	bigint	T	aggregate	true	
+approx_distinct	bigint	T, double	aggregate	true	
 approx_distinct	bigint	boolean	aggregate	true	
 approx_distinct	bigint	boolean, double	aggregate	true	
-approx_distinct	bigint	t	aggregate	true	
-approx_distinct	bigint	t, double	aggregate	true	
 approx_distinct	bigint	unknown	aggregate	true	
 approx_distinct	bigint	unknown, double	aggregate	true	
 approx_most_frequent	map(bigint,bigint)	bigint, bigint, bigint	aggregate	true	
@@ -37,26 +37,26 @@ approx_percentile	real	real, double, double, double	aggregate	true
 approx_set	hyperloglog	bigint	aggregate	true	
 approx_set	hyperloglog	double	aggregate	true	
 approx_set	hyperloglog	varchar(x)	aggregate	true	
-arbitrary	t	t	aggregate	true	Return an arbitrary non-null input value
-arbitrary	t	t	aggregate	true	Return an arbitrary non-null input value
-array_agg	array(t)	t	aggregate	true	return an array of values
-array_distinct	array(e)	array(e)	scalar	true	Remove duplicate values from the given array
-array_except	array(e)	array(e), array(e)	scalar	true	Returns an array of elements that are in the first array but not the second, without duplicates.
-array_first	e	array(e)	scalar	true	Get the first element of an array
-array_first	e	array(e), function(e,boolean)	scalar	true	Get the first element of an array matching the given predicate
-array_histogram	map(t,bigint)	array(t)	scalar	true	Return a map containing the counts of the elements in the array
-array_intersect	array(e)	array(e), array(e)	scalar	true	Intersects elements of the two given arrays
-array_join	varchar	array(e), varchar	scalar	true	Concatenates the elements of the given array using a delimiter and an optional string to replace nulls
-array_join	varchar	array(e), varchar, varchar	scalar	true	Concatenates the elements of the given array using a delimiter and an optional string to replace nulls
-array_last	e	array(e)	scalar	true	Get the last element of an array
-array_max	t	array(t)	scalar	true	Get maximum value of array
-array_min	t	array(t)	scalar	true	Get minimum value of array
-array_position	bigint	array(t), t	scalar	true	Returns the position of the first occurrence of the given value in array (or 0 if not found)
-array_remove	array(e)	array(e), e	scalar	true	Remove specified values from the given array
-array_sort	array(e)	array(e)	scalar	true	Sorts the given array in ascending order according to the natural ordering of its elements.
-array_sort	array(t)	array(t), function(t,t,integer)	scalar	true	Sorts the given array with a lambda comparator.
-array_union	array(e)	array(e), array(e)	scalar	true	Union elements of the two given arrays
-arrays_overlap	boolean	array(e), array(e)	scalar	true	Returns true if arrays have common elements
+arbitrary	T	T	aggregate	true	Return an arbitrary non-null input value
+arbitrary	T	T	aggregate	true	Return an arbitrary non-null input value
+array_agg	array(T)	T	aggregate	true	return an array of values
+array_distinct	array(E)	array(E)	scalar	true	Remove duplicate values from the given array
+array_except	array(E)	array(E), array(E)	scalar	true	Returns an array of elements that are in the first array but not the second, without duplicates.
+array_first	E	array(E)	scalar	true	Get the first element of an array
+array_first	E	array(E), function(E,boolean)	scalar	true	Get the first element of an array matching the given predicate
+array_histogram	map(T,bigint)	array(T)	scalar	true	Return a map containing the counts of the elements in the array
+array_intersect	array(E)	array(E), array(E)	scalar	true	Intersects elements of the two given arrays
+array_join	varchar	array(E), varchar	scalar	true	Concatenates the elements of the given array using a delimiter and an optional string to replace nulls
+array_join	varchar	array(E), varchar, varchar	scalar	true	Concatenates the elements of the given array using a delimiter and an optional string to replace nulls
+array_last	E	array(E)	scalar	true	Get the last element of an array
+array_max	T	array(T)	scalar	true	Get maximum value of array
+array_min	T	array(T)	scalar	true	Get minimum value of array
+array_position	bigint	array(T), T	scalar	true	Returns the position of the first occurrence of the given value in array (or 0 if not found)
+array_remove	array(E)	array(E), E	scalar	true	Remove specified values from the given array
+array_sort	array(E)	array(E)	scalar	true	Sorts the given array in ascending order according to the natural ordering of its elements.
+array_sort	array(T)	array(T), function(T,T,integer)	scalar	true	Sorts the given array with a lambda comparator.
+array_union	array(E)	array(E), array(E)	scalar	true	Union elements of the two given arrays
+arrays_overlap	boolean	array(E), array(E)	scalar	true	Returns true if arrays have common elements
 asin	double	double	scalar	true	Arc sine
 at_timezone	timestamp(p) with time zone	timestamp(p) with time zone, varchar(x)	scalar	true	
 atan	double	double	scalar	true	Arc tangent
@@ -71,6 +71,15 @@ avg	real	real	aggregate	true	Returns the average value of the argument
 bar	varchar	double, bigint	scalar	true	
 bar	varchar	double, bigint, color, color	scalar	true	
 beta_cdf	double	double, double, double	scalar	true	Beta cdf given the a, b parameters and value
+bing_tile	bingtile	integer, integer, integer	scalar	true	Creates a Bing tile from XY coordinates and zoom level
+bing_tile	bingtile	varchar	scalar	true	Creates a Bing tile from a QuadKey
+bing_tile_at	bingtile	double, double, integer	scalar	true	Given a (latitude, longitude) point, returns the containing Bing tile at the specified zoom level
+bing_tile_coordinates	row("x" integer,"y" integer)	bingtile	scalar	true	Given a Bing tile, returns XY coordinates of the tile
+bing_tile_polygon	geometry	bingtile	scalar	true	Given a Bing tile, returns the polygon representation of the tile
+bing_tile_quadkey	varchar	bingtile	scalar	true	Given a Bing tile, returns its QuadKey
+bing_tile_zoom_level	tinyint	bingtile	scalar	true	Given a Bing tile, returns zoom level of the tile
+bing_tiles_around	array(bingtile)	double, double, integer	scalar	true	Given a (longitude, latitude) point, returns the surrounding Bing tiles at the specified zoom level
+bing_tiles_around	array(bingtile)	double, double, integer, double	scalar	true	Given a (latitude, longitude) point, a radius in kilometers and a zoom level, returns a minimum set of Bing tiles at specified zoom level that cover a circle of specified radius around the specified point.
 bit_count	bigint	bigint, bigint	scalar	true	Count number of set bits in 2's complement representation
 bitwise_and	bigint	bigint, bigint	scalar	true	Bitwise AND in 2's complement arithmetic
 bitwise_and_agg	bigint	bigint	aggregate	true	
@@ -94,9 +103,9 @@ bitwise_xor_agg	bigint	bigint	aggregate	true
 bool_and	boolean	boolean	aggregate	true	
 bool_and	boolean	boolean	aggregate	true	
 bool_or	boolean	boolean	aggregate	true	
-cardinality	bigint	array(e)	scalar	true	Returns the cardinality (length) of the array
+cardinality	bigint	array(E)	scalar	true	Returns the cardinality (length) of the array
 cardinality	bigint	hyperloglog	scalar	true	Compute the cardinality of a HyperLogLog instance
-cardinality	bigint	map(k,v)	scalar	true	Returns the cardinality (the number of key-value pairs) of the map
+cardinality	bigint	map(K,V)	scalar	true	Returns the cardinality (the number of key-value pairs) of the map
 cardinality	bigint	setdigest	scalar	true	
 cbrt	double	double	scalar	true	Cube root
 ceil	bigint	bigint	scalar	true	Round up to nearest integer
@@ -131,13 +140,16 @@ ceiling	smallint	smallint	scalar	true	Round up to nearest integer
 ceiling	smallint	smallint	scalar	true	Round up to nearest integer
 ceiling	tinyint	tinyint	scalar	true	Round up to nearest integer
 ceiling	tinyint	tinyint	scalar	true	Round up to nearest integer
-checksum	varbinary	t	aggregate	true	Checksum of the given values
+char2hexint	varchar	varchar	scalar	true	Returns the hexadecimal representation of the UTF-16BE encoding of the argument
+checksum	varbinary	T	aggregate	true	Checksum of the given values
 chr	varchar(1)	bigint	scalar	true	Convert Unicode code point to a string
+classify	bigint	map(bigint,double), classifier(bigint)	scalar	true	
+classify	varchar	map(bigint,double), classifier(varchar)	scalar	true	
 codepoint	integer	varchar(1)	scalar	true	Returns Unicode code point of a single character string
 color	color	double, color, color	scalar	true	
 color	color	double, double, double, color, color	scalar	true	
 color	color	varchar(x)	scalar	true	
-combinations	array(array(t))	array(t), integer	scalar	true	Return n-element subsets from array
+combinations	array(array(T))	array(T), integer	scalar	true	Return n-element subsets from array
 concat	array(E)	E, array(E)	scalar	true	Concatenates an element to an array
 concat	array(E)	array(E)	scalar	true	Concatenates given arrays
 concat	array(E)	array(E), E	scalar	true	Concatenates an array to an element
@@ -146,9 +158,10 @@ concat	varbinary	varbinary	scalar	true	concatenates given varbinary values
 concat	varchar	varchar	scalar	true	Concatenates given strings
 concat_ws	varchar	varchar, array(varchar)	scalar	true	
 concat_ws	varchar	varchar, varchar	scalar	true	Concatenates elements using separator
-contains	boolean	array(t), t	scalar	true	Determines whether given value exists in the array
+contains	boolean	array(T), T	scalar	true	Determines whether given value exists in the array
 contains	boolean	varchar, ipaddress	scalar	true	Determines whether given IP address exists in the CIDR
-contains_sequence	boolean	array(t), array(t)	scalar	true	Determines whether an array contains a sequence, with the values in the exact order
+contains_sequence	boolean	array(T), array(T)	scalar	true	Determines whether an array contains a sequence, with the values in the exact order
+convex_hull_agg	geometry	geometry	aggregate	true	Returns a geometry that is the convex hull of all the geometries in the set.
 corr	double	double, double	aggregate	true	
 corr	real	real, real	aggregate	true	
 cos	double	double	scalar	true	Cosine
@@ -158,21 +171,17 @@ cosine_distance	double	map(varchar,double), map(varchar,double)	scalar	true	Calc
 cosine_similarity	double	array(double), array(double)	scalar	true	Calculates the cosine similarity between two vectors
 cosine_similarity	double	map(varchar,double), map(varchar,double)	scalar	true	Cosine similarity between the given sparse vectors
 count	bigint		aggregate	true	
-count	bigint	t	aggregate	true	Counts the non-null values
+count	bigint	T	aggregate	true	Counts the non-null values
 count_if	bigint	boolean	aggregate	true	
 covar_pop	double	double, double	aggregate	true	
 covar_pop	real	real, real	aggregate	true	
 covar_samp	double	double, double	aggregate	true	
 covar_samp	real	real, real	aggregate	true	
 crc32	bigint	varbinary	scalar	true	Compute CRC-32
-create_hll	hyperloglog	bigint	scalar	true	
 cume_dist	double		window	true	
 current_date	date		scalar	true	Current date
 current_groups	array(varchar)		scalar	true	Current groups of current user
 current_timezone	varchar		scalar	true	Current time zone
-custom_add	bigint	bigint, bigint	scalar	true	
-custom_rank	bigint		window	true	
-custom_sum	bigint	bigint	aggregate	true	
 date	date	timestamp(p)	scalar	true	
 date	date	timestamp(p) with time zone	scalar	true	
 date	date	varchar(x)	scalar	true	
@@ -238,17 +247,30 @@ doy	bigint	timestamp(p)	scalar	true	Day of the year of the given timestamp
 doy	bigint	timestamp(p) with time zone	scalar	true	Day of the year of the given timestamp
 doy	bigint	timestamp(p) with time zone	scalar	true	Day of the year of the given timestamp
 e	double		scalar	true	Euler's number
+element_at	E	array(E), bigint	scalar	true	Get element of array at given index
 element_at	V	map(K,V), K	scalar	true	Get value for the given key, or null if it does not exist
-element_at	e	array(e), bigint	scalar	true	Get element of array at given index
 empty_approx_set	hyperloglog		scalar	true	An empty HyperLogLog instance
+ends_with	boolean	varchar(x), varchar(y)	scalar	true	Determine whether source ends with suffix or not
 euclidean_distance	double	array(double), array(double)	scalar	true	Calculates the euclidean distance between two vectors
+evaluate_classifier_predictions	varchar	bigint, bigint	aggregate	true	
+evaluate_classifier_predictions	varchar	varchar(x), varchar(y)	aggregate	true	
 every	boolean	boolean	aggregate	true	
 every	boolean	boolean	aggregate	true	
 exclude_columns	unknown	unknown, unknown	table	false	
 exclude_columns	unknown	unknown, unknown	table	false	
 exp	double	double	scalar	true	Euler's number raised to the given power
-filter	array(t)	array(t), function(t,boolean)	scalar	true	Return array containing elements that match the given predicate
-first_value	t	t	window	true	
+features	map(bigint,double)	double	scalar	true	
+features	map(bigint,double)	double, double	scalar	true	
+features	map(bigint,double)	double, double, double	scalar	true	
+features	map(bigint,double)	double, double, double, double	scalar	true	
+features	map(bigint,double)	double, double, double, double, double	scalar	true	
+features	map(bigint,double)	double, double, double, double, double, double	scalar	true	
+features	map(bigint,double)	double, double, double, double, double, double, double	scalar	true	
+features	map(bigint,double)	double, double, double, double, double, double, double, double	scalar	true	
+features	map(bigint,double)	double, double, double, double, double, double, double, double, double	scalar	true	
+features	map(bigint,double)	double, double, double, double, double, double, double, double, double, double	scalar	true	
+filter	array(T)	array(T), function(T,boolean)	scalar	true	Return array containing elements that match the given predicate
+first_value	T	T	window	true	
 flatten	array(E)	array(array(E))	scalar	true	Flattens the given array
 floor	bigint	bigint	scalar	true	Round down to nearest integer
 floor	decimal(rp,0)	decimal(p,s)	scalar	true	Round down to nearest integer
@@ -271,6 +293,8 @@ from_base64url	varbinary	varbinary	scalar	true	Decode URL safe base64 encoded bi
 from_base64url	varbinary	varchar(x)	scalar	true	Decode URL safe base64 encoded binary data
 from_big_endian_32	integer	varbinary	scalar	true	Decode bigint value from a 32-bit 2's complement big endian varbinary
 from_big_endian_64	bigint	varbinary	scalar	true	Decode bigint value from a 64-bit 2's complement big endian varbinary
+from_encoded_polyline	geometry	varchar	scalar	true	Decodes a polyline to a linestring
+from_geojson_geometry	sphericalgeography	varchar	scalar	true	Returns a spherical geography from a GeoJSON string
 from_hex	varbinary	varbinary	scalar	true	Decode hex encoded binary data
 from_hex	varbinary	varchar(x)	scalar	true	Decode hex encoded binary data
 from_ieee754_32	real	varbinary	scalar	true	Decode the 32-bit big-endian binary in IEEE 754 single-precision floating-point format
@@ -289,10 +313,18 @@ from_utf8	varchar	varbinary, varchar(x)	scalar	true	Decodes the UTF-8 encoded st
 geometric_mean	double	bigint	aggregate	true	
 geometric_mean	double	double	aggregate	true	
 geometric_mean	real	real	aggregate	true	
+geometry_collect_agg	geometry	geometry	aggregate	true	Returns a geometry collection containing the input geometries.
+geometry_from_hadoop_shape	geometry	varbinary	scalar	true	Returns a Geometry type object from Spatial Framework for Hadoop representation
+geometry_invalid_reason	varchar	geometry	scalar	true	Returns the reason for why the input geometry is not valid. Returns null if the input is valid.
+geometry_nearest_points	row(geometry,geometry)	geometry, geometry	scalar	true	Return the closest points on the two geometries
+geometry_to_bing_tiles	array(bingtile)	geometry, integer	scalar	true	Given a geometry and a zoom level, returns the minimum set of Bing tiles that fully covers that geometry
+geometry_union	geometry	array(geometry)	scalar	true	Returns a geometry that represents the point set union of the input geometries.
+geometry_union_agg	geometry	geometry	aggregate	true	Returns a geometry that represents the point set union of the input geometries.
+great_circle_distance	double	double, double, double, double	scalar	true	Calculates the great-circle distance between two points on the Earth's surface in kilometers
 greatest	E	E	scalar	true	Get the largest of the given values
 hamming_distance	bigint	varchar(x), varchar(y)	scalar	true	Computes Hamming distance between two strings
 hash_counts	map(bigint,smallint)	setdigest	scalar	true	
-histogram	map(t,bigint)	t	aggregate	true	Count the number of times each value occurs
+histogram	map(T,bigint)	T	aggregate	true	Count the number of times each value occurs
 hmac_md5	varbinary	varbinary, varbinary	scalar	true	Compute HMAC with MD5
 hmac_sha1	varbinary	varbinary, varbinary	scalar	true	Compute HMAC with SHA1
 hmac_sha256	varbinary	varbinary, varbinary	scalar	true	Compute HMAC with SHA256
@@ -303,6 +335,7 @@ hour	bigint	time(p) with time zone	scalar	true	Hour of the day of the given time
 hour	bigint	timestamp(p)	scalar	true	Hour of the day of the given timestamp
 hour	bigint	timestamp(p) with time zone	scalar	true	Hour of the day of the given timestamp
 human_readable_seconds	varchar	double	scalar	true	
+index	bigint	varchar, varchar	scalar	true	Returns index of first occurrence of a substring (or 0 if not found)
 infinity	double		scalar	true	Infinity
 intersection_cardinality	bigint	setdigest, setdigest	scalar	true	
 inverse_beta_cdf	double	double, double, double	scalar	true	Inverse of Beta cdf given a, b parameters and probability
@@ -340,21 +373,34 @@ json_size	bigint	json, jsonpath	scalar	true
 json_size	bigint	varchar(x), jsonpath	scalar	true	
 kurtosis	double	bigint	aggregate	true	Returns the (excess) kurtosis of the argument
 kurtosis	double	double	aggregate	true	Returns the (excess) kurtosis of the argument
-lag	t	t	window	true	
-lag	t	t, bigint	window	true	
-lag	t	t, bigint, t	window	true	
+lag	T	T	window	true	
+lag	T	T, bigint	window	true	
+lag	T	T, bigint, T	window	true	
 last_day_of_month	date	date	scalar	true	Last day of the month of the given date
 last_day_of_month	date	timestamp(p)	scalar	true	Last day of the month of the given timestamp
 last_day_of_month	date	timestamp(p) with time zone	scalar	true	Last day of the month of the given timestamp
-last_value	t	t	window	true	
-lead	t	t	window	true	
-lead	t	t, bigint	window	true	
-lead	t	t, bigint, t	window	true	
+last_value	T	T	window	true	
+lead	T	T	window	true	
+lead	T	T, bigint	window	true	
+lead	T	T, bigint, T	window	true	
+learn_classifier	classifier(bigint)	bigint, map(bigint,double)	aggregate	true	
+learn_classifier	classifier(bigint)	double, map(bigint,double)	aggregate	true	
+learn_classifier	classifier(varchar)	varchar, map(bigint,double)	aggregate	true	
+learn_libsvm_classifier	classifier(bigint)	bigint, map(bigint,double), varchar(x)	aggregate	true	
+learn_libsvm_classifier	classifier(bigint)	double, map(bigint,double), varchar	aggregate	true	
+learn_libsvm_classifier	classifier(varchar)	varchar, map(bigint,double), varchar	aggregate	true	
+learn_libsvm_regressor	regressor	bigint, map(bigint,double), varchar	aggregate	true	
+learn_libsvm_regressor	regressor	double, map(bigint,double), varchar	aggregate	true	
+learn_regressor	regressor	bigint, map(bigint,double)	aggregate	true	
+learn_regressor	regressor	double, map(bigint,double)	aggregate	true	
 least	E	E	scalar	true	Get the smallest of the given values
 length	bigint	char(x)	scalar	true	Count of code points of the given string
 length	bigint	varbinary	scalar	true	Length of the given binary
 length	bigint	varchar(x)	scalar	true	Count of code points of the given string
 levenshtein_distance	bigint	varchar(x), varchar(y)	scalar	true	Computes Levenshtein distance between two strings
+line_interpolate_point	geometry	geometry, double	scalar	true	Returns a Point interpolated along a LineString at the fraction given.
+line_interpolate_points	array(geometry)	geometry, double	scalar	true	Returns an array of Points interpolated along a LineString.
+line_locate_point	double	geometry, geometry	scalar	true	Returns a float between 0 and 1 representing the location of the closest point on the LineString to the given Point, as a fraction of total 2d line length.
 listagg	varchar	varchar, varchar, boolean, varchar, boolean	aggregate	true	concatenates the input values with the specified separator
 ln	double	double	scalar	true	Natural logarithm
 log	double	double, double	scalar	true	Logarithm to given base
@@ -370,25 +416,25 @@ ltrim	varchar(x)	char(x), codepoints	scalar	true	Remove the longest string conta
 ltrim	varchar(x)	varchar(x)	scalar	true	Removes whitespace from the beginning of a string
 ltrim	varchar(x)	varchar(x), codepoints	scalar	true	Remove the longest string containing only given characters from the beginning of a string
 luhn_check	boolean	varchar	scalar	true	Checks that a string of digits is valid according to the Luhn algorithm
-make_set_digest	setdigest	t	aggregate	true	
+make_set_digest	setdigest	T	aggregate	true	
 map	map(K,V)	array(K), array(V)	scalar	true	Constructs a map from the given key/value arrays
 map	map(unknown,unknown)		scalar	true	Creates an empty map
-map_agg	map(k,v)	k, v	aggregate	true	Aggregates all the rows (key/value pairs) into a single map
+map_agg	map(K,V)	K, V	aggregate	true	Aggregates all the rows (key/value pairs) into a single map
 map_concat	map(K,V)	map(K,V)	scalar	true	Concatenates given maps
-map_entries	array(row(k,v))	map(k,v)	scalar	true	Construct an array of entries from a given map
+map_entries	array(row(K,V))	map(K,V)	scalar	true	Construct an array of entries from a given map
 map_filter	map(K,V)	map(K,V), function(K,V,boolean)	scalar	true	return map containing entries that match the given predicate
-map_from_entries	map(k,v)	array(row(k,v))	scalar	true	Construct a map from an array of entries
-map_keys	array(k)	map(k,v)	scalar	true	Returns the keys of the given map(K,V) as an array
-map_union	map(k,v)	map(k,v)	aggregate	true	Aggregate all the maps into a single map
-map_values	array(v)	map(k,v)	scalar	true	Returns the values of the given map(K,V) as an array
+map_from_entries	map(K,V)	array(row(K,V))	scalar	true	Construct a map from an array of entries
+map_keys	array(K)	map(K,V)	scalar	true	Returns the keys of the given map(K,V) as an array
+map_union	map(K,V)	map(K,V)	aggregate	true	Aggregate all the maps into a single map
+map_values	array(V)	map(K,V)	scalar	true	Returns the values of the given map(K,V) as an array
 map_zip_with	map(K,V3)	map(K,V1), map(K,V2), function(K,V1,V2,V3)	scalar	true	Merge two maps into a single map by applying the lambda function to the pair of values with the same key
-max	array(e)	e, bigint	aggregate	true	Returns the maximum values of the argument
-max	t	t	aggregate	true	Returns the maximum value of the argument
-max_by	array(v)	v, k, bigint	aggregate	true	Returns the values of the first argument associated with the maximum values of the second argument
-max_by	v	v, k	aggregate	true	Returns the value of the first argument, associated with the maximum value of the second argument
+max	T	T	aggregate	true	Returns the maximum value of the argument
+max	array(E)	E, bigint	aggregate	true	Returns the maximum values of the argument
+max_by	V	V, K	aggregate	true	Returns the value of the first argument, associated with the maximum value of the second argument
+max_by	array(V)	V, K, bigint	aggregate	true	Returns the values of the first argument associated with the maximum values of the second argument
 md5	varbinary	varbinary	scalar	true	Compute md5 hash
 merge	hyperloglog	hyperloglog	aggregate	true	
-merge	qdigest(v)	qdigest(v)	aggregate	true	Merges the input quantile digests into a single quantile digest
+merge	qdigest(V)	qdigest(V)	aggregate	true	Merges the input quantile digests into a single quantile digest
 merge	tdigest	tdigest	aggregate	true	
 merge_set_digest	setdigest	setdigest	aggregate	true	
 millisecond	bigint	interval day to second	scalar	true	Millisecond of the second of the given interval
@@ -396,10 +442,10 @@ millisecond	bigint	time(p)	scalar	true	Millisecond of the second of the given ti
 millisecond	bigint	time(p) with time zone	scalar	true	Millisecond of the second of the given time
 millisecond	bigint	timestamp(p)	scalar	true	Millisecond of the second of the given timestamp
 millisecond	bigint	timestamp(p) with time zone	scalar	true	Millisecond of the second of the given timestamp
-min	array(e)	e, bigint	aggregate	true	Returns the minimum values of the argument
-min	t	t	aggregate	true	Returns the minimum value of the argument
-min_by	array(v)	v, k, bigint	aggregate	true	Returns the values of the first argument associated with the minimum values of the second argument
-min_by	v	v, k	aggregate	true	Returns the value of the first argument, associated with the minimum value of the second argument
+min	T	T	aggregate	true	Returns the minimum value of the argument
+min	array(E)	E, bigint	aggregate	true	Returns the minimum values of the argument
+min_by	V	V, K	aggregate	true	Returns the value of the first argument, associated with the minimum value of the second argument
+min_by	array(V)	V, K, bigint	aggregate	true	Returns the values of the first argument associated with the minimum values of the second argument
 minute	bigint	interval day to second	scalar	true	Minute of the hour of the given interval
 minute	bigint	time(p)	scalar	true	Minute of the hour of the given time
 minute	bigint	time(p) with time zone	scalar	true	Minute of the hour of the given time
@@ -417,21 +463,24 @@ month	bigint	date	scalar	true	Month of the year of the given date
 month	bigint	interval year to month	scalar	true	Month of the year of the given interval
 month	bigint	timestamp(p)	scalar	true	Month of the year of the given timestamp
 month	bigint	timestamp(p) with time zone	scalar	true	Month of the year of the given timestamp
-multimap_agg	map(k,array(v))	k, v	aggregate	true	Aggregates all the rows (key/value pairs) into a single multimap
-multimap_from_entries	map(k,array(v))	array(row(k,v))	scalar	true	Construct a multimap from an array of entries
+multimap_agg	map(K,array(V))	K, V	aggregate	true	Aggregates all the rows (key/value pairs) into a single multimap
+multimap_from_entries	map(K,array(V))	array(row(K,V))	scalar	true	Construct a multimap from an array of entries
 murmur3	varbinary	varbinary	scalar	true	Compute murmur3 hash
 nan	double		scalar	true	Constant representing not-a-number
-ngrams	array(array(t))	array(t), integer	scalar	true	Return N-grams for the input
-none_match	boolean	array(t), function(t,boolean)	scalar	true	Returns true if all elements of the array don't match the given predicate
+ngrams	array(array(T))	array(T), integer	scalar	true	Return N-grams for the input
+none_match	boolean	array(T), function(T,boolean)	scalar	true	Returns true if all elements of the array don't match the given predicate
 normal_cdf	double	double, double, double	scalar	true	Normal cdf given a mean, standard deviation, and value
 normalize	varchar	varchar(x), varchar(y)	scalar	true	Transforms the string to normalized form
 now	timestamp(3) with time zone		scalar	true	Current timestamp with time zone
-nth_value	t	t, bigint	window	true	
+nth_value	T	T, bigint	window	true	
 ntile	bigint	bigint	window	true	
 numeric_histogram	map(double,double)	bigint, double	aggregate	true	
 numeric_histogram	map(double,double)	bigint, double, double	aggregate	true	
 numeric_histogram	map(real,real)	bigint, real	aggregate	true	
 numeric_histogram	map(real,real)	bigint, real, double	aggregate	true	
+objectid	objectid		scalar	false	Mongodb ObjectId
+objectid	objectid	varchar	scalar	true	Mongodb ObjectId from the given string
+objectid_timestamp	timestamp(3) with time zone	objectid	scalar	true	Timestamp from the given Mongodb ObjectId
 parse_data_size	decimal(38,0)	varchar(x)	scalar	true	Converts data size string to bytes
 parse_data_size	decimal(38,0)	varchar(x)	scalar	true	Converts data size string to bytes
 parse_datetime	timestamp(3) with time zone	varchar(x), varchar(y)	scalar	true	Parses the specified date/time by the given format
@@ -516,14 +565,15 @@ regr_intercept	double	double, double	aggregate	true
 regr_intercept	real	real, real	aggregate	true	
 regr_slope	double	double, double	aggregate	true	
 regr_slope	real	real, real	aggregate	true	
+regress	double	map(bigint,double), regressor	scalar	true	
 render	varchar(16)	boolean	scalar	true	
 render	varchar(35)	bigint, color	scalar	true	
 render	varchar(41)	double, color	scalar	true	
 render	varchar(y)	varchar(x), color	scalar	true	
-repeat	array(t)	t, bigint	scalar	true	Repeat an element for a given number of times
+repeat	array(T)	T, bigint	scalar	true	Repeat an element for a given number of times
 replace	varchar(u)	varchar(x), varchar(y), varchar(z)	scalar	true	Greedily replaces occurrences of a pattern with a string
 replace	varchar(x)	varchar(x), varchar(y)	scalar	true	Greedily removes occurrences of a pattern in a string
-reverse	array(e)	array(e)	scalar	true	Returns an array which has the reversed order of the given array.
+reverse	array(E)	array(E)	scalar	true	Returns an array which has the reversed order of the given array.
 reverse	char(x)	char(x)	scalar	true	Reverse all code points in a given string
 reverse	varbinary	varbinary	scalar	true	Reverse a given varbinary
 reverse	varchar(x)	varchar(x)	scalar	true	Reverse all code points in a given string
@@ -563,12 +613,12 @@ sequence	array(date)	date, date, interval day to second	scalar	true
 sequence	array(date)	date, date, interval year to month	scalar	true	
 sequence	array(timestamp(p))	timestamp(p), timestamp(p), interval day to second	scalar	true	
 sequence	array(timestamp(p))	timestamp(p), timestamp(p), interval year to month	scalar	true	
-sequence	unknown	bigint, bigint, bigint	table	false	
-sequence	unknown	bigint, bigint, bigint	table	false	
+sequence	unknown	bigint, bigint, bigint	table	false	Sequence function to generate synthetic tables
+sequence	unknown	bigint, bigint, bigint	table	false	Sequence function to generate synthetic tables
 sha1	varbinary	varbinary	scalar	true	Compute sha1 hash
 sha256	varbinary	varbinary	scalar	true	Compute sha256 hash
 sha512	varbinary	varbinary	scalar	true	Compute sha512 hash
-shuffle	array(e)	array(e)	scalar	false	Generates a random permutation of the given array.
+shuffle	array(E)	array(E)	scalar	false	Generates a random permutation of the given array.
 sign	bigint	bigint	scalar	true	
 sign	decimal(1,0)	decimal(p,s)	scalar	true	Signum
 sign	double	double	scalar	true	Signum
@@ -577,12 +627,16 @@ sign	number	number	scalar	true	Signum
 sign	real	real	scalar	true	Signum
 sign	smallint	smallint	scalar	true	Signum
 sign	tinyint	tinyint	scalar	true	Signum
+simplify_geometry	geometry	geometry, double	scalar	true	Returns a "simplified" version of the given geometry
 sin	double	double	scalar	true	Sine
 sinh	double	double	scalar	true	Hyperbolic sine
 skewness	double	bigint	aggregate	true	Returns the skewness of the argument
 skewness	double	double	aggregate	true	Returns the skewness of the argument
-slice	array(e)	array(e), bigint, bigint	scalar	true	Subsets an array given an offset (1-indexed) and length
+slice	array(E)	array(E), bigint, bigint	scalar	true	Subsets an array given an offset (1-indexed) and length
 soundex	varchar(4)	varchar	scalar	true	Encodes a string into a Soundex value
+spatial_partitioning	varchar	geometry	aggregate	true	
+spatial_partitions	array(integer)	kdbtree, geometry	scalar	true	Returns an array of spatial partition IDs for a given geometry
+spatial_partitions	array(integer)	kdbtree, geometry, double	scalar	true	Returns an array of spatial partition IDs for a geometry representing a set of points within specified distance from the input geometry
 split	array(varchar(x))	varchar(x), varchar(y)	scalar	true	
 split	array(varchar(x))	varchar(x), varchar(y), bigint	scalar	true	
 split_part	varchar(x)	varchar(x), varchar(y), bigint	scalar	true	Splits a string by a delimiter and returns the specified field (counting from one)
@@ -591,6 +645,95 @@ split_to_multimap	map(varchar,array(varchar))	varchar, varchar, varchar	scalar	t
 spooky_hash_v2_32	varbinary	varbinary	scalar	true	Compute SpookyHashV2 32-bit hash
 spooky_hash_v2_64	varbinary	varbinary	scalar	true	Compute SpookyHashV2 64-bit hash
 sqrt	double	double	scalar	true	Square root
+ST_Area	double	geometry	scalar	true	Returns the 2D Euclidean area of a geometry
+ST_Area	double	sphericalgeography	scalar	true	Returns the area of a geometry on the Earth's surface using spherical model
+ST_AsBinary	varbinary	geometry	scalar	true	Returns the Well-Known Binary (WKB) representation of the geometry
+ST_AsEWKB	varbinary	geometry	scalar	true	Returns the Extended Well-Known Binary (EWKB) representation of the geometry
+ST_AsEWKT	varchar	geometry	scalar	true	Returns the Extended Well-Known Text (EWKT) representation of the geometry, including SRID
+ST_AsText	varchar	geometry	scalar	true	Returns the Well-Known Text (WKT) representation of the geometry
+ST_Boundary	geometry	geometry	scalar	true	Returns the closure of the combinatorial boundary of this Geometry
+ST_Buffer	geometry	geometry, double	scalar	true	Returns the geometry that represents all points whose distance from the specified geometry is less than or equal to the specified distance
+ST_Centroid	geometry	geometry	scalar	true	Returns the Point value that is the mathematical centroid of a Geometry
+ST_Collect	geometry	array(geometry)	scalar	true	Returns a Geometry collection from an array of geometries
+ST_Contains	boolean	geometry, geometry	scalar	true	Returns TRUE if and only if no points of right lie in the exterior of left, and at least one point of the interior of left lies in the interior of right
+ST_ConvexHull	geometry	geometry	scalar	true	Returns the minimum convex geometry that encloses all input geometries
+ST_CoordDim	tinyint	geometry	scalar	true	Return the coordinate dimension of the Geometry
+ST_Crosses	boolean	geometry, geometry	scalar	true	Returns TRUE if the supplied geometries have some, but not all, interior points in common
+ST_Difference	geometry	geometry, geometry	scalar	true	Returns the Geometry value that represents the point set difference of two geometries
+ST_Dimension	tinyint	geometry	scalar	true	Returns the inherent dimension of this Geometry object, which must be less than or equal to the coordinate dimension
+ST_Disjoint	boolean	geometry, geometry	scalar	true	Returns TRUE if the Geometries do not spatially intersect - if they do not share any space together
+ST_Distance	double	geometry, geometry	scalar	true	Returns the 2-dimensional cartesian minimum distance (based on spatial ref) between two geometries in projected units
+ST_Distance	double	sphericalgeography, sphericalgeography	scalar	true	Returns the great-circle distance in meters between two SphericalGeography points.
+ST_EndPoint	geometry	geometry	scalar	true	Returns the last point of a LINESTRING geometry as a Point
+ST_Envelope	geometry	geometry	scalar	true	Returns the bounding rectangular polygon of a Geometry
+ST_EnvelopeAsPts	array(geometry)	geometry	scalar	true	Returns the lower left and upper right corners of bounding rectangular polygon of a Geometry
+ST_Equals	boolean	geometry, geometry	scalar	true	Returns TRUE if the given geometries represent the same geometry
+ST_ExteriorRing	geometry	geometry	scalar	true	Returns a line string representing the exterior ring of the POLYGON
+ST_Force2D	geometry	geometry	scalar	true	Returns a Geometry with Z coordinates removed
+ST_Force3D	geometry	geometry	scalar	true	Returns a Geometry with missing Z coordinates set to zero
+ST_Force3D	geometry	geometry, double	scalar	true	Returns a Geometry with missing Z coordinates set to the specified value
+ST_Geometries	array(geometry)	geometry	scalar	true	Returns an array of geometries in the specified collection
+ST_GeometryFromText	geometry	varchar	scalar	true	Returns a Geometry type object from Well-Known Text representation (WKT)
+ST_GeometryN	geometry	geometry, integer	scalar	true	Returns the geometry element at the specified index (indices started with 1)
+ST_GeometryType	varchar	geometry	scalar	true	Returns the type of the geometry
+ST_GeomFromBinary	geometry	varbinary	scalar	true	Returns a Geometry type object from Well-Known Binary representation (WKB or EWKB)
+ST_GeomFromEWKT	geometry	varchar	scalar	true	Returns a Geometry type object from Extended Well-Known Text representation (EWKT)
+ST_GeomFromKML	geometry	varchar	scalar	true	Returns a Geometry type object from OGC KML representation
+ST_InteriorRingN	geometry	geometry, integer	scalar	true	Returns the interior ring element at the specified index (indices start at 1)
+ST_InteriorRings	array(geometry)	geometry	scalar	true	Returns an array of interior rings of a polygon
+ST_Intersection	geometry	geometry, geometry	scalar	true	Returns the Geometry value that represents the point set intersection of two Geometries
+ST_Intersects	boolean	geometry, geometry	scalar	true	Returns TRUE if the Geometries spatially intersect in 2D - (share any portion of space) and FALSE if they don't (they are Disjoint)
+ST_IsClosed	boolean	geometry	scalar	true	Returns TRUE if the LineString or Multi-LineString's start and end points are coincident
+ST_IsEmpty	boolean	geometry	scalar	true	Returns TRUE if this Geometry is an empty geometrycollection, polygon, point etc
+ST_IsRing	boolean	geometry	scalar	true	Returns TRUE if and only if the line is closed and simple
+ST_IsSimple	boolean	geometry	scalar	true	Returns TRUE if this Geometry has no anomalous geometric points, such as self intersection or self tangency
+ST_IsValid	boolean	geometry	scalar	true	Returns true if the input geometry is well formed
+ST_Length	double	geometry	scalar	true	Returns the length of a LineString or Multi-LineString using Euclidean measurement on a 2D plane (based on spatial ref) in projected units
+ST_Length	double	sphericalgeography	scalar	true	Returns the great-circle length in meters of a linestring or multi-linestring on Earth's surface
+ST_LineFromText	geometry	varchar	scalar	true	Returns a Geometry type LineString object from Well-Known Text representation (WKT)
+ST_LineMerge	geometry	geometry	scalar	true	Returns merged LineStrings from the input geometry
+ST_LineString	geometry	array(geometry)	scalar	true	Returns a LineString from an array of points
+ST_MakeLine	geometry	array(geometry)	scalar	true	Returns a LineString formed from an array of points or linestrings
+ST_MakePolygon	geometry	geometry	scalar	true	Returns a Polygon formed from a shell LineString
+ST_MakePolygon	geometry	geometry, array(geometry)	scalar	true	Returns a Polygon formed from a shell LineString and an array of hole LineStrings
+ST_MinimumBoundingCircle	geometry	geometry	scalar	true	Returns the minimum bounding circle enclosing the geometry
+ST_Multi	geometry	geometry	scalar	true	Returns a multi-geometry for Point, LineString, or Polygon inputs
+ST_MultiPoint	geometry	array(geometry)	scalar	true	Returns a multi-point geometry formed from input points
+ST_Normalize	geometry	geometry	scalar	true	Returns the normalized form of the input geometry
+ST_NumGeometries	integer	geometry	scalar	true	Returns the cardinality of the geometry collection
+ST_NumInteriorRing	bigint	geometry	scalar	true	Returns the cardinality of the collection of interior rings of a polygon
+ST_NumPoints	bigint	geometry	scalar	true	Returns the number of points in a Geometry
+ST_OrientedEnvelope	geometry	geometry	scalar	true	Returns the minimum-area rotated rectangle enclosing the geometry
+ST_Overlaps	boolean	geometry, geometry	scalar	true	Returns TRUE if the Geometries share space, are of the same dimension, but are not completely contained by each other
+ST_Point	geometry	double, double	scalar	true	Returns a Geometry type Point object with the given coordinate values
+ST_Point	geometry	double, double, double	scalar	true	Returns a Geometry type Point object with the given X, Y, and Z coordinate values
+ST_Point	geometry	double, double, double, integer	scalar	true	Returns a Geometry type Point object with the given X, Y, and Z coordinate values and SRID
+ST_Point	geometry	double, double, integer	scalar	true	Returns a Geometry type Point object with the given coordinate values and SRID
+ST_PointN	geometry	geometry, integer	scalar	true	Returns the vertex of a linestring at the specified index (indices started with 1) 
+ST_PointOnSurface	geometry	geometry	scalar	true	Returns a point guaranteed to lie on the surface of the geometry
+ST_Points	array(geometry)	geometry	scalar	true	Returns an array of points in a geometry
+ST_Polygon	geometry	varchar	scalar	true	Returns a Geometry type Polygon object from Well-Known Text representation (WKT)
+ST_Polygonize	geometry	array(geometry)	scalar	true	Returns polygons formed from the input linework
+ST_ReducePrecision	geometry	geometry, double	scalar	true	Returns a geometry with coordinates rounded to the specified grid size
+ST_Relate	boolean	geometry, geometry, varchar	scalar	true	Returns TRUE if this Geometry is spatially related to another Geometry
+ST_SetSRID	geometry	geometry, integer	scalar	true	Sets the spatial reference identifier for the geometry
+ST_SRID	integer	geometry	scalar	true	Returns the spatial reference identifier for the geometry
+ST_StartPoint	geometry	geometry	scalar	true	Returns the first point of a LINESTRING geometry as a Point
+ST_SymDifference	geometry	geometry, geometry	scalar	true	Returns the Geometry value that represents the point set symmetric difference of two Geometries
+ST_Touches	boolean	geometry, geometry	scalar	true	Returns TRUE if the geometries have at least one point in common, but their interiors do not intersect
+ST_Transform	geometry	geometry, integer	scalar	true	Transforms a geometry from its source SRID to the target SRID
+ST_TransformXY	geometry	geometry, integer	scalar	true	Transforms the X and Y coordinates of a geometry while preserving Z unchanged
+ST_Union	geometry	geometry, geometry	scalar	true	Returns a geometry that represents the point set union of the input geometries.
+ST_VoronoiPolygons	geometry	geometry	scalar	true	Returns Voronoi polygons from the vertices of the input geometry
+ST_VoronoiPolygons	geometry	geometry, double	scalar	true	Returns Voronoi polygons from the vertices of the input geometry using the specified tolerance
+ST_Within	boolean	geometry, geometry	scalar	true	Returns TRUE if the geometry A is completely inside geometry B
+ST_X	double	geometry	scalar	true	Return the X coordinate of the point
+ST_XMax	double	geometry	scalar	true	Returns X maxima of a bounding box of a Geometry
+ST_XMin	double	geometry	scalar	true	Returns X minima of a bounding box of a Geometry
+ST_Y	double	geometry	scalar	true	Return the Y coordinate of the point
+ST_YMax	double	geometry	scalar	true	Returns Y maxima of a bounding box of a Geometry
+ST_YMin	double	geometry	scalar	true	Returns Y minima of a bounding box of a Geometry
+ST_Z	double	geometry	scalar	true	Return the Z coordinate of the point
 starts_with	boolean	varchar(x), varchar(y)	scalar	true	Determine whether source starts with prefix or not
 stddev	double	bigint	aggregate	true	Returns the sample standard deviation of the argument
 stddev	double	bigint	aggregate	true	Returns the sample standard deviation of the argument
@@ -635,18 +778,27 @@ tan	double	double	scalar	true	Tangent
 tanh	double	double	scalar	true	Hyperbolic tangent
 tdigest_agg	tdigest	double	aggregate	true	
 tdigest_agg	tdigest	double, double	aggregate	true	
+timestamp_objectid	objectid	timestamp(0) with time zone	scalar	true	Mongodb ObjectId from the given timestamp
 timezone	varchar	time(p) with time zone	scalar	true	Time zone of the given time
 timezone	varchar	timestamp(p) with time zone	scalar	true	Time zone of the given timestamp
 timezone_hour	bigint	time(p) with time zone	scalar	true	Time zone hour of the given time
 timezone_hour	bigint	timestamp(p) with time zone	scalar	true	Time zone hour of the given timestamp
 timezone_minute	bigint	time(p) with time zone	scalar	true	Time zone minute of the given time
 timezone_minute	bigint	timestamp(p) with time zone	scalar	true	Time zone minute of the given timestamp
+title_case	char(x)	char(x)	scalar	true	Converts the string to title case
+title_case	varchar(x)	varchar(x)	scalar	true	Converts the string to title case
 to_base	varchar(64)	bigint, bigint	scalar	true	Convert a number to a string in the given base
 to_base32	varchar	varbinary	scalar	true	Encode binary data as base32
 to_base64	varchar	varbinary	scalar	true	Encode binary data as base64
 to_base64url	varchar	varbinary	scalar	true	Encode binary data as base64 using the URL safe alphabet
 to_big_endian_32	varbinary	integer	scalar	true	Encode value as a 32-bit 2's complement big endian varbinary
 to_big_endian_64	varbinary	bigint	scalar	true	Encode value as a 64-bit 2's complement big endian varbinary
+to_char	varchar	timestamp(p) with time zone, varchar	scalar	true	Formats a timestamp
+to_date	date	varchar, varchar	scalar	true	Converts a string to a DATE data type
+to_encoded_polyline	varchar	geometry	scalar	true	Encodes a linestring or multipoint geometry to a polyline
+to_geojson_geometry	varchar	geometry	scalar	true	Returns GeoJSON string based on the input geometry
+to_geojson_geometry	varchar	sphericalgeography	scalar	true	Returns GeoJSON string based on the input spherical geography
+to_geometry	geometry	sphericalgeography	scalar	true	Converts a SphericalGeography object to a Geometry object.
 to_hex	varchar	varbinary	scalar	true	Encode binary data as hex
 to_ieee754_32	varbinary	real	scalar	true	Encode value as a big endian varbinary according to IEEE 754 single-precision floating-point format
 to_ieee754_64	varbinary	double	scalar	true	Encode value as a big endian varbinary according to IEEE 754 double-precision floating-point format
@@ -654,6 +806,8 @@ to_iso8601	varchar(16)	date	scalar	true
 to_iso8601	varchar(n)	timestamp(p)	scalar	true	
 to_iso8601	varchar(n)	timestamp(p) with time zone	scalar	true	
 to_milliseconds	bigint	interval day to second	scalar	true	
+to_spherical_geography	sphericalgeography	geometry	scalar	true	Converts a Geometry object to a SphericalGeography object
+to_timestamp	timestamp(3)	varchar, varchar	scalar	true	Converts a string to a TIMESTAMP data type
 to_unixtime	double	timestamp(p) with time zone	scalar	true	
 to_utf8	varbinary	char(x)	scalar	true	Encodes the string to UTF-8
 to_utf8	varbinary	varchar(x)	scalar	true	Encodes the string to UTF-8
@@ -665,13 +819,13 @@ trim	varchar(x)	char(x)	scalar	true	Removes whitespace from the beginning and en
 trim	varchar(x)	char(x), codepoints	scalar	true	Remove the longest string containing only given characters from the beginning and end of a string
 trim	varchar(x)	varchar(x)	scalar	true	Removes whitespace from the beginning and end of a string
 trim	varchar(x)	varchar(x), codepoints	scalar	true	Remove the longest string containing only given characters from the beginning and end of a string
-trim_array	array(e)	array(e), bigint	scalar	true	Remove elements from the end of array
+trim_array	array(E)	array(E), bigint	scalar	true	Remove elements from the end of array
 truncate	decimal(p,s)	decimal(p,s), integer	scalar	true	Round to integer by dropping given number of digits after decimal point
 truncate	decimal(rp,0)	decimal(p,s)	scalar	true	Round to integer by dropping digits after decimal point
 truncate	double	double	scalar	true	Round to integer by dropping digits after decimal point
 truncate	number	number	scalar	true	Round to integer by dropping digits after decimal point
 truncate	real	real	scalar	true	Round to integer by dropping digits after decimal point
-typeof	varchar	t	scalar	true	Textual representation of expression type
+typeof	varchar	T	scalar	true	Textual representation of expression type
 upper	char(x)	char(x)	scalar	true	Converts the string to upper case
 upper	varchar(x)	varchar(x)	scalar	true	Converts the string to upper case
 url_decode	varchar(x)	varchar(x)	scalar	true	Unescape a URL-encoded string

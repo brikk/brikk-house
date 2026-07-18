@@ -21,9 +21,9 @@ dependencies:
   - org.apache.shardingsphere:shardingsphere-parser-sql-clickhouse:5.5.2
   # Needed for Hive's database-type SPI to load (without it the Hive parser can't resolve).
   - org.apache.shardingsphere:shardingsphere-infra-database-hive:5.5.2
-  # Trino's own SQL parser. 481 matches the vendored function catalog (vendor/data/trino-functions-481.tsv).
-  # NOTE: trino-parser 481 ships class-file 69 => requires a JDK 25 runtime (see settings.jvm.jdk below).
-  - io.trino:trino-parser:481
+  # Trino's own SQL parser. 483 matches the vendored function catalog (vendor/data/trino-functions-483.tsv).
+  # NOTE: trino-parser ships class-file 69 => requires a JDK 25 runtime (see settings.jvm.jdk below).
+  - io.trino:trino-parser:483
   # Embedded DuckDB (pinned to engine 1.5.4 = jdbc artifact 1.5.4.0, matching the generated
   # DuckDB function catalog).
   - org.duckdb:duckdb_jdbc:1.5.4.0

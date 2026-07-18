@@ -2,12 +2,18 @@ package dev.brikk.house.sql.metadata
 
 /*
  * HANDWRITTEN (not generated): engine-GRAMMAR knowledge for Trino, curated by reading
- * the pinned Trino 481 sources — it cannot be derived from the `SHOW FUNCTIONS` dump
+ * the pinned Trino 483 sources — it cannot be derived from the `SHOW FUNCTIONS` dump
  * that generates GeneratedTrinoFunctionCatalog.kt, precisely because these names are
  * absent from the registry. tools/generate_trino_functions.py wires this set into the
  * generated FunctionCatalog constructor (grammarBuiltins = TRINO_GRAMMAR_BUILTINS).
  *
- * Sources (verify on refresh, both in reference/trino at the 481 pin):
+ * NOTE (483 grammar, not yet modeled): SqlBase.g4 also has the function-shaped
+ * `NEAREST '(' ... MATCH booleanExpression ')'` (#nearest) relation primary. It is
+ * intentionally NOT listed here yet — the parser does not handle the `NEAREST` join
+ * clause at all, so listing it would mask a real parse failure rather than clear a
+ * false positive. Add it together with parser support (see the 476–483 grammar gaps).
+ *
+ * Sources (verify on refresh, both in reference/trino at the 483 pin):
  *  - core/trino-grammar/src/main/antlr4/io/trino/grammar/sql/SqlBase.g4 — dedicated
  *    grammar alternatives (rule labels cited per name below).
  *  - core/trino-parser/src/main/java/io/trino/sql/parser/AstBuilder.java

@@ -5,8 +5,8 @@ import io.trino.sql.parser.SqlParser
 
 /**
  * Verifies SQL against Trino's own parser (`io.trino:trino-parser`), the exact ANTLR
- * grammar the Trino engine runs. Pinned to Trino 481, matching the vendored function
- * catalog (vendor/data/trino-functions-481.tsv).
+ * grammar the Trino engine runs. Pinned to Trino 483, matching the vendored function
+ * catalog (vendor/data/trino-functions-483.tsv).
  *
  * Cold start is just parser class loading (milliseconds); instances are cheap and
  * thread-safe ([SqlParser] is stateless across calls).
