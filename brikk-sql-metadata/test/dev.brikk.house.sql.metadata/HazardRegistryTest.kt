@@ -25,6 +25,23 @@ class HazardRegistryTest {
     }
 
     @Test
+    fun sourceAndTargetNamesAreOrientedToLookupDirection() {
+        // trino->doris 'contains' maps to Doris 'array_contains' (divergent).
+        val fwd = HazardRegistry.lookup("trino", "doris", "contains")
+        assertNotNull(fwd)
+        assertEquals(HazardVerdict.DIVERGENT, fwd.verdict)
+        assertEquals("contains", fwd.sourceName)
+        assertEquals("array_contains", fwd.targetName)
+
+        // Same entry, reverse direction: names must swap (the shipped-artifact bug the
+        // per-direction orientation prevents).
+        val rev = HazardRegistry.lookup("doris", "trino", "array_contains")
+        assertNotNull(rev)
+        assertEquals("array_contains", rev.sourceName)
+        assertEquals("contains", rev.targetName)
+    }
+
+    @Test
     fun directionalKeysUseTheSourceSideName() {
         // 'day_of_week / dow' (trino) | 'isodow' (duckdb): each direction keys by its
         // own side's names.
@@ -91,8 +108,8 @@ class HazardRegistryTest {
     fun entryAndVerdictCountsArePinned() {
         // Pinned to trino-duckdb-hazards.json (242 probe-verified pairs); the sync test
         // in brikk-sql test@jvm cross-checks content against the JSON itself.
-        assertEquals(246, TRINO_DUCKDB_HAZARD_ENTRIES.size)
-        val counts = TRINO_DUCKDB_HAZARD_ENTRIES.groupingBy { it.verdict }.eachCount()
+        assertEquals(246, TRINO_TO_DUCKDB_HAZARD_ENTRIES.size)
+        val counts = TRINO_TO_DUCKDB_HAZARD_ENTRIES.groupingBy { it.verdict }.eachCount()
         assertEquals(106, counts[HazardVerdict.IDENTICAL])
         assertEquals(38, counts[HazardVerdict.DIVERGENT])
         assertEquals(52, counts[HazardVerdict.CONDITIONALLY_EQUIVALENT])
@@ -104,17 +121,18 @@ class HazardRegistryTest {
     fun keyCountsPerDirectionArePinned() {
         assertEquals(386, TRINO_TO_DUCKDB_HAZARDS.size)
         assertEquals(309, DUCKDB_TO_TRINO_HAZARDS.size)
-        // Every keyed value is one of the shared entries (no copies).
-        assertTrue(TRINO_TO_DUCKDB_HAZARDS.values.all { it in TRINO_DUCKDB_HAZARD_ENTRIES })
-        assertTrue(DUCKDB_TO_TRINO_HAZARDS.values.all { it in TRINO_DUCKDB_HAZARD_ENTRIES })
+        // Every keyed value comes from that direction's oriented entries list (each
+        // direction has its own list so sourceName/targetName are correctly oriented).
+        assertTrue(TRINO_TO_DUCKDB_HAZARDS.values.all { it in TRINO_TO_DUCKDB_HAZARD_ENTRIES })
+        assertTrue(DUCKDB_TO_TRINO_HAZARDS.values.all { it in DUCKDB_TO_TRINO_HAZARD_ENTRIES })
     }
 
     @Test
     fun dorisPairsArePopulatedByLiveProbes() {
         // Populated by the doris live-probe program (REPORT-doris-differential-probe-
         // 2026-07-13); counts pinned to the ingested registries.
-        assertEquals(258, DUCKDB_DORIS_HAZARD_ENTRIES.size)
-        assertEquals(216, TRINO_DORIS_HAZARD_ENTRIES.size)
+        assertEquals(258, DUCKDB_TO_DORIS_HAZARD_ENTRIES.size)
+        assertEquals(216, TRINO_TO_DORIS_HAZARD_ENTRIES.size)
         assertTrue(DUCKDB_TO_DORIS_HAZARDS.isNotEmpty())
         assertTrue(DORIS_TO_DUCKDB_HAZARDS.isNotEmpty())
         assertTrue(TRINO_TO_DORIS_HAZARDS.isNotEmpty())
@@ -129,8 +147,8 @@ class HazardRegistryTest {
         // Populated by the clickhouse differential-probe program (REPORT-clickhouse-
         // differential-probe-2026-07-13; ClickHouse 26.5.1.1 via chdb vs DuckDB 1.5.4);
         // counts pinned to the ingested registries.
-        assertEquals(213, DUCKDB_CLICKHOUSE_HAZARD_ENTRIES.size)
-        assertEquals(134, TRINO_CLICKHOUSE_HAZARD_ENTRIES.size)
+        assertEquals(213, DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES.size)
+        assertEquals(134, TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES.size)
         assertTrue(DUCKDB_TO_CLICKHOUSE_HAZARDS.isNotEmpty())
         assertTrue(CLICKHOUSE_TO_DUCKDB_HAZARDS.isNotEmpty())
         assertTrue(TRINO_TO_CLICKHOUSE_HAZARDS.isNotEmpty())
@@ -149,7 +167,7 @@ class HazardRegistryTest {
     fun dorisClickhousePairIsPopulatedByLiveProbes() {
         // Populated by the doris<->clickhouse live differential probe (Doris FE pr62767-local
         // / BE 4.1.2 vs ClickHouse 26.5.1.1 via chdb; docs/research/probe-runs/doris-clickhouse.*).
-        assertEquals(177, DORIS_CLICKHOUSE_HAZARD_ENTRIES.size)
+        assertEquals(177, DORIS_TO_CLICKHOUSE_HAZARD_ENTRIES.size)
         assertTrue(DORIS_TO_CLICKHOUSE_HAZARDS.isNotEmpty())
         assertTrue(CLICKHOUSE_TO_DORIS_HAZARDS.isNotEmpty())
         // Live-probed spot checks: both round half-away vs banker's; both single-arg log is

@@ -9,959 +9,2185 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 134 probe-verified (trino, clickhouse) pair verdicts, in JSON order. */
-internal val TRINO_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
-    hazardsChunk1() +
-    hazardsChunk2() +
-    hazardsChunk3()
+/** The 134 probe-verified (trino->clickhouse) verdicts, in JSON order. */
+internal val TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = trinoClickhouseChunk0() +
+    trinoClickhouseChunk1() +
+    trinoClickhouseChunk2() +
+    trinoClickhouseChunk3()
 
-private fun hazardsChunk0(): List<FunctionHazard> = listOf(
+private fun trinoClickhouseChunk0(): List<FunctionHazard> = listOf(
     // [0] trino: 'lower' | clickhouse: 'lower'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse lower() is ASCII-only (İ/ß unchanged); Trino lower() does full Unicode lower with locale folding (İ->i+U+0307). Neither matches; use lowerUTF8 to approach Trino.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "lower",
+        targetName = "lower"),
     // [1] trino: 'upper' | clickhouse: 'upper'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse upper() ASCII-only; Trino upper() full folding (ß->SS). upperUTF8 gives ß->SS (matches Trino) but is still ASCII-passthrough for the plain upper name.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "upper",
+        targetName = "upper"),
     // [2] trino: 'length' | clickhouse: 'length'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse length()=BYTE count; Trino length() = code-point count. Use lengthUTF8/char_length for parity.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes",
+        sourceName = "length",
+        targetName = "length"),
     // [3] trino: 'reverse' | clickhouse: 'reverse'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse reverse()=byte reverse (mangles UTF-8); Trino reverse is code-point-aware. reverseUTF8 approaches Trino (code points) but not grapheme clusters.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#reverse-byte-vs-grapheme"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#reverse-byte-vs-grapheme",
+        sourceName = "reverse",
+        targetName = "reverse"),
     // [4] trino: 'trim' | clickhouse: 'trim'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse trim strips only ASCII space; Trino trim (Java Character.isWhitespace) strips tab/LF/CR/FF/VT too. Different whitespace set.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "trim",
+        targetName = "trim"),
     // [5] trino: 'ltrim' | clickhouse: 'trimLeft'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Same whitespace-set divergence as trim.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "ltrim",
+        targetName = "trimLeft"),
     // [6] trino: 'rtrim' | clickhouse: 'trimRight'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Same whitespace-set divergence as trim.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "rtrim",
+        targetName = "trimRight"),
     // [7] trino: 'concat' | clickhouse: 'concat'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse concat PROPAGATES NULL -> NULL (matches Trino's NULL propagation). This pair is ALIGNED on NULL — unlike DuckDB. Verdict divergent only for the string-vs-array concat overload shape; NULL algebra matches Trino.",
         areas = listOf("string", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation",
+        sourceName = "concat",
+        targetName = "concat"),
     // [8] trino: 'concat_ws' | clickhouse: 'concat_ws'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse concat_ws propagates NULL element -> NULL; Trino concat_ws SKIPS NULL elements. Divergent on NULL elements; separator-NULL -> NULL in both.",
         areas = listOf("string", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation",
+        sourceName = "concat_ws",
+        targetName = "concat_ws"),
     // [9] trino: 'substr' | clickhouse: 'substring'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse substring is BYTE-indexed and start=0 -> ''; Trino substring is code-point-indexed, 1-based. substringUTF8 fixes multibyte only.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0",
+        sourceName = "substr",
+        targetName = "substring"),
     // [10] trino: 'substring' | clickhouse: 'substring'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "See substr: byte indexing + start=0 differ from Trino code-point semantics.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0",
+        sourceName = "substring",
+        targetName = "substring"),
     // [11] trino: 'replace' | clickhouse: 'replaceAll'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "ClickHouse replace == replaceAll (all occurrences); Trino replace(s,from,to) also replaces all. Aligned.",
         areas = listOf("string"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all",
+        sourceName = "replace",
+        targetName = "replaceAll"),
     // [12] trino: 'regexp_replace' | clickhouse: 'replaceRegexpAll'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "ClickHouse regexp_replace = replaceRegexpAll (ALL matches); Trino regexp_replace also replaces ALL by default. Aligned (both differ from DuckDB's first-only). RE2 in both.",
         areas = listOf("regex", "string"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all",
+        sourceName = "regexp_replace",
+        targetName = "replaceRegexpAll"),
     // [13] trino: 'regexp_extract' | clickhouse: 'regexpExtract'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Group 0 = whole match in both; RE2 engine in both.",
         areas = listOf("regex"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#regexp-extract-groups"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#regexp-extract-groups",
+        sourceName = "regexp_extract",
+        targetName = "regexpExtract"),
     // [14] trino: 'lpad' | clickhouse: 'leftPad'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse leftPad pads by BYTES; Trino lpad pads by code points. leftPadUTF8 for parity.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes",
+        sourceName = "lpad",
+        targetName = "leftPad"),
     // [15] trino: 'rpad' | clickhouse: 'rightPad'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse rightPad pads by BYTES; Trino rpad by code points. rightPadUTF8 for parity.",
         areas = listOf("string", "unicode"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes",
+        sourceName = "rpad",
+        targetName = "rightPad"),
     // [16] trino: 'soundex' | clickhouse: 'soundex'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "ClickHouse soundex('Robert')='R163'; Trino soundex same American Soundex. Aligned.",
         areas = listOf("string"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "soundex",
+        targetName = "soundex"),
     // [17] trino: 'to_base64' | clickhouse: 'base64Encode'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Standard alphabet in both.",
         areas = listOf("string"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "to_base64",
+        targetName = "base64Encode"),
     // [18] trino: 'from_base64' | clickhouse: 'base64Decode'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned decode.",
         areas = listOf("string"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "from_base64",
+        targetName = "base64Decode"),
     // [19] trino: 'md5' | clickhouse: 'MD5'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same digest; ClickHouse MD5 -> raw bytes (FixedString), Trino md5 -> VARBINARY. Both binary (unlike DuckDB hex) but distinct types; hex() to compare.",
         areas = listOf("hash"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "md5",
+        targetName = "MD5"),
     // [20] trino: 'sha1' | clickhouse: 'SHA1'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same digest; ClickHouse raw bytes vs Trino VARBINARY.",
         areas = listOf("hash"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "sha1",
+        targetName = "SHA1"),
     // [21] trino: 'sha256' | clickhouse: 'SHA256'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same digest; raw-bytes vs VARBINARY return.",
         areas = listOf("hash"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "sha256",
+        targetName = "SHA256"),
     // [22] trino: 'sha512' | clickhouse: 'SHA512'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse SHA512 present; same digest as Trino sha512; raw-bytes vs VARBINARY.",
         areas = listOf("hash"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "sha512",
+        targetName = "SHA512"),
     // [23] trino: 'crc32' | clickhouse: 'CRC32'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "ClickHouse CRC32('abc')=891568578; Trino crc32 returns the same CRC-32 (bigint). (DuckDB has no crc32.)",
         areas = listOf("hash"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "crc32",
+        targetName = "CRC32"),
     // [24] trino: 'xxhash64' | clickhouse: 'xxHash64'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Both compute XXH64; ClickHouse returns UInt64, Trino xxhash64 returns VARBINARY(8) — same bits, different type/signedness. (DuckDB has no xxhash64.)",
         areas = listOf("hash"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "xxhash64",
+        targetName = "xxHash64"),
     // [25] trino: 'abs' | clickhouse: 'abs'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "abs(INT_MIN): ClickHouse widens to a positive value; Trino throws on the overflow.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-overflow"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-overflow",
+        sourceName = "abs",
+        targetName = "abs"),
     // [26] trino: 'mod' | clickhouse: 'modulo'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "modulo by zero: ClickHouse throws; Trino also throws (division_by_zero). Non-zero aligned — this pair is actually aligned on error behavior; divergent flag reserved for the wrap/promotion axis.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero",
+        sourceName = "mod",
+        targetName = "modulo"),
     // [27] trino: 'round' | clickhouse: 'round'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse round() = banker's (half-even); Trino round() = half-UP (round half away from zero for positives). round(2.5)=2 vs 3.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers",
+        sourceName = "round",
+        targetName = "round"),
     // [28] trino: 'truncate' | clickhouse: 'trunc'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse truncate/trunc(x,n) truncates toward zero; Trino truncate(x,n) same intent. Aligned on the probe (2.678,2 -> 2.67).",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "truncate",
+        targetName = "trunc"),
     // [29] trino: 'ln' | clickhouse: 'log'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse log(x)=natural log (== Trino ln). Value-correct rename, but domain: ln(0)/ln(-1) -> ClickHouse NULL vs Trino error/NaN.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision",
+        sourceName = "ln",
+        targetName = "log"),
     // [30] trino: 'log' | clickhouse: 'log'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse single-arg log = natural log; Trino log(b,x) is base-b (two-arg). Signature + base collision.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision",
+        sourceName = "log",
+        targetName = "log"),
     // [31] trino: 'log10' | clickhouse: 'log10'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Base-10 log aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision",
+        sourceName = "log10",
+        targetName = "log10"),
     // [32] trino: 'log2' | clickhouse: 'log2'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "log2(8)=3 aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "log2",
+        targetName = "log2"),
     // [33] trino: 'pow' | clickhouse: 'pow'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "pow(-8,0.5): ClickHouse NULL; Trino NaN. Finite real cases aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "pow",
+        targetName = "pow"),
     // [34] trino: 'power' | clickhouse: 'power'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "See pow: complex result NULL vs NaN; finite aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "power",
+        targetName = "power"),
     // [35] trino: 'sqrt' | clickhouse: 'sqrt'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "sqrt(-1): ClickHouse NULL; Trino NaN.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "sqrt",
+        targetName = "sqrt"),
     // [36] trino: 'sign' | clickhouse: 'sign'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned on integer/zero probes.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sign",
+        targetName = "sign"),
     // [37] trino: 'e' | clickhouse: 'e'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "ClickHouse e()=2.718281828459045; Trino e() same constant.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "e",
+        targetName = "e"),
     // [38] trino: 'pi' | clickhouse: 'pi'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned constant.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "pi",
+        targetName = "pi"),
     // [39] trino: 'exp' | clickhouse: 'exp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "exp",
+        targetName = "exp"),
 )
 
-private fun hazardsChunk1(): List<FunctionHazard> = listOf(
+private fun trinoClickhouseChunk1(): List<FunctionHazard> = listOf(
     // [40] trino: 'cbrt' | clickhouse: 'cbrt'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "cbrt(27)=3 aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cbrt",
+        targetName = "cbrt"),
     // [41] trino: 'acos' | clickhouse: 'acos'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "acos(2) out of domain: ClickHouse NULL; Trino throws/NaN. In-domain aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "acos",
+        targetName = "acos"),
     // [42] trino: 'asin' | clickhouse: 'asin'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "asin(2) out of domain: ClickHouse NULL; Trino throws/NaN. In-domain aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "asin",
+        targetName = "asin"),
     // [43] trino: 'atan' | clickhouse: 'atan'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "atan",
+        targetName = "atan"),
     // [44] trino: 'atan2' | clickhouse: 'atan2'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "atan2",
+        targetName = "atan2"),
     // [45] trino: 'sin' | clickhouse: 'sin'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sin",
+        targetName = "sin"),
     // [46] trino: 'cos' | clickhouse: 'cos'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cos",
+        targetName = "cos"),
     // [47] trino: 'tan' | clickhouse: 'tan'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "tan",
+        targetName = "tan"),
     // [48] trino: 'sinh' | clickhouse: 'sinh'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sinh",
+        targetName = "sinh"),
     // [49] trino: 'cosh' | clickhouse: 'cosh'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cosh",
+        targetName = "cosh"),
     // [50] trino: 'tanh' | clickhouse: 'tanh'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "tanh",
+        targetName = "tanh"),
     // [51] trino: 'degrees' | clickhouse: 'degrees'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "degrees",
+        targetName = "degrees"),
     // [52] trino: 'radians' | clickhouse: 'radians'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "radians",
+        targetName = "radians"),
     // [53] trino: 'width_bucket' | clickhouse: 'widthBucket'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse widthBucket present and matched the probe (5 over [0,10]/5 bins -> 3); Trino width_bucket same intent. camelCase name is case-sensitive. (DuckDB lacked width_bucket in this build.)",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#case-sensitivity"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#case-sensitivity",
+        sourceName = "width_bucket",
+        targetName = "widthBucket"),
     // [54] trino: 'year' | clickhouse: 'toYear'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "1970+ aligned; ClickHouse Date/DateTime floors at 1970 so pre-1970 timestamps that Trino handles will clamp.",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970",
+        sourceName = "year",
+        targetName = "toYear"),
     // [55] trino: 'month' | clickhouse: 'toMonth'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned for representable dates.",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "month",
+        targetName = "toMonth"),
     // [56] trino: 'day' | clickhouse: 'toDayOfMonth'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned for representable dates.",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "day",
+        targetName = "toDayOfMonth"),
     // [57] trino: 'hour' | clickhouse: 'toHour'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Aligned with matched session zones; ClickHouse DateTime is timezone-typed vs Trino's timestamp-with/without-zone distinction.",
         areas = listOf("datetime", "timezone"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "hour",
+        targetName = "toHour"),
     // [58] trino: 'minute' | clickhouse: 'toMinute'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "minute",
+        targetName = "toMinute"),
     // [59] trino: 'second' | clickhouse: 'toSecond'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "second",
+        targetName = "toSecond"),
     // [60] trino: 'millisecond' | clickhouse: 'toSecond*1000 + toMillisecond'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB/Trino millisecond(t) = seconds-within-minute*1000 + ms; the generator now emits (toSecond(t)*1000 + toMillisecond(t)), result-identical (ClickHouse toMillisecond alone is the sub-second component only). Verified: 30123/0/5789/56001 all match.",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond | generator mapping fixed 2026-07-13 (BUGS row 6), live-differential-verified vs ClickHouse 26.5.1.1 + DuckDB 1.5.4"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond | generator mapping fixed 2026-07-13 (BUGS row 6), live-differential-verified vs ClickHouse 26.5.1.1 + DuckDB 1.5.4",
+        sourceName = "millisecond",
+        targetName = "toSecond*1000 + toMillisecond"),
     // [61] trino: 'quarter' | clickhouse: 'toQuarter'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "quarter",
+        targetName = "toQuarter"),
     // [62] trino: 'week' | clickhouse: 'toISOWeek'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Trino week (week_of_year) is ISO-8601; the generator now emits toISOWeek, result-identical (not toWeek mode 0).",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE",
+        sourceName = "week",
+        targetName = "toISOWeek"),
     // [63] trino: 'date_trunc' | clickhouse: 'dateTrunc'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Aligned on the intersecting unit set with matched zones; ClickHouse unit is a string first-arg and DateTime is tz-typed; 1970 floor applies.",
         areas = listOf("datetime", "timezone"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type",
+        sourceName = "date_trunc",
+        targetName = "dateTrunc"),
     // [64] trino: 'date_diff' | clickhouse: 'dateDiff'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Both take (unit, a, b); aligned on day diff. ClickHouse tz-typed operands; 1970 floor.",
         areas = listOf("datetime", "timezone"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "date_diff",
+        targetName = "dateDiff"),
     // [65] trino: 'date_format' | clickhouse: 'formatDateTime'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "SPEC DIALECT + name: Trino date_format uses Joda/MySQL patterns; ClickHouse formatDateTime uses MySQL-style %-codes where %M is the MONTH NAME (probe: '%M' -> 'March') — colliding with strftime %M=minute. Never map format strings by passthrough.",
         areas = listOf("datetime", "string"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#date-format-spec"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#date-format-spec",
+        sourceName = "date_format",
+        targetName = "formatDateTime"),
     // [66] trino: 'from_unixtime' | clickhouse: 'fromUnixTimestamp'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Both epoch-seconds -> timestamp; ClickHouse returns a timezone-typed DateTime (session zone) and Trino from_unixtime(double) returns timestamp(3) with zone. Zone/precision-sensitive.",
         areas = listOf("datetime", "timezone"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "from_unixtime",
+        targetName = "fromUnixTimestamp"),
     // [67] trino: 'to_unixtime' | clickhouse: 'toUnixTimestamp'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse toUnixTimestamp(dt) -> UInt32 seconds (session zone); Trino to_unixtime -> double seconds. Value aligned when zones match; type differs.",
         areas = listOf("datetime", "timezone"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "to_unixtime",
+        targetName = "toUnixTimestamp"),
     // [68] trino: 'date' | clickhouse: 'toDate'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Cast-to-date aligned for 1970+ (2024-06-15); ClickHouse Date floors at 1970.",
         areas = listOf("datetime"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970",
+        sourceName = "date",
+        targetName = "toDate"),
     // [69] trino: 'cardinality' | clickhouse: 'length'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino cardinality(array) = element count; ClickHouse length(array) same. (ClickHouse also has cardinality as an alias.) Aligned for arrays; Trino cardinality(map) also -> ClickHouse length(map).",
         areas = listOf("array"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob",
+        sourceName = "cardinality",
+        targetName = "length"),
     // [70] trino: 'array_remove' | clickhouse: 'arrayFilter'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "No direct ClickHouse array_remove; idiom is arrayFilter(x->x!=v, arr). NULL-element handling and the lambda shape differ from Trino's element-equality remove.",
         areas = listOf("array", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob",
+        sourceName = "array_remove",
+        targetName = "arrayFilter"),
     // [71] trino: 'flatten' | clickhouse: 'arrayFlatten'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "One-level flatten aligned.",
         areas = listOf("array"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "flatten",
+        targetName = "arrayFlatten"),
     // [72] trino: 'transform' | clickhouse: 'arrayMap'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "NAME COLLISION: Trino transform(array, lambda) maps a lambda over elements; ClickHouse transform(x, from_array, to_array, default) is a scalar VALUE-REMAP (CASE-like) — completely different function. ClickHouse's lambda map is arrayMap.",
         areas = listOf("array"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#transform-collision"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#transform-collision",
+        sourceName = "transform",
+        targetName = "arrayMap"),
     // [73] trino: 'ngrams' | clickhouse: 'ngrams'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Trino ngrams(array, n) returns an array of n-element sub-arrays; ClickHouse ngrams(string,n) returns overlapping byte/char substrings of a STRING. Different input/output shape.",
         areas = listOf("array", "string"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#transform-collision"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#transform-collision",
+        sourceName = "ngrams",
+        targetName = "ngrams"),
     // [74] trino: 'map' | clickhouse: 'map'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino map(array_k, array_v) matches ClickHouse map(k1,v1,...) in intent but the constructor SHAPE differs (two arrays vs flat kv list).",
         areas = listOf("map"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape",
+        sourceName = "map",
+        targetName = "map"),
     // [75] trino: 'sum' | clickhouse: 'sum'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Empty group -> 0 (ClickHouse) vs Trino NULL; ClickHouse sum overflow-wraps fixed-width ints where Trino throws/decimals. All-NULL -> NULL in both.",
         areas = listOf("aggregate", "null", "numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "sum",
+        targetName = "sum"),
     // [76] trino: 'avg' | clickhouse: 'avg'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Empty group -> nan (ClickHouse) vs Trino NULL.",
         areas = listOf("aggregate", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "avg",
+        targetName = "avg"),
     // [77] trino: 'count' | clickhouse: 'count'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "count(expr) skips NULL; count() empty -> 0 in both.",
         areas = listOf("aggregate", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "count",
+        targetName = "count"),
     // [78] trino: 'min' | clickhouse: 'min'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Empty group -> type default (ClickHouse) vs Trino NULL.",
         areas = listOf("aggregate", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "min",
+        targetName = "min"),
     // [79] trino: 'max' | clickhouse: 'max'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Empty group -> type default (ClickHouse) vs Trino NULL.",
         areas = listOf("aggregate", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "max",
+        targetName = "max"),
 )
 
-private fun hazardsChunk2(): List<FunctionHazard> = listOf(
+private fun trinoClickhouseChunk2(): List<FunctionHazard> = listOf(
     // [80] trino: 'stddev' | clickhouse: 'stddev'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Bare stddev = sample in both.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddev",
+        targetName = "stddev"),
     // [81] trino: 'stddev_pop' | clickhouse: 'stddevPop'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Population stddev aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddev_pop",
+        targetName = "stddevPop"),
     // [82] trino: 'stddev_samp' | clickhouse: 'stddevSamp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Sample stddev aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddev_samp",
+        targetName = "stddevSamp"),
     // [83] trino: 'var_pop' | clickhouse: 'varPop'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Population variance aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "var_pop",
+        targetName = "varPop"),
     // [84] trino: 'var_samp' | clickhouse: 'varSamp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Sample variance aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "var_samp",
+        targetName = "varSamp"),
     // [85] trino: 'corr' | clickhouse: 'corr'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Pearson correlation aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "corr",
+        targetName = "corr"),
     // [86] trino: 'covar_pop' | clickhouse: 'covarPop'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Population covariance aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "covar_pop",
+        targetName = "covarPop"),
     // [87] trino: 'covar_samp' | clickhouse: 'covarSamp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Sample covariance aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "covar_samp",
+        targetName = "covarSamp"),
     // [88] trino: 'histogram' | clickhouse: 'histogram'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino histogram = exact value->count map; ClickHouse histogram(bins)(x) = approximate adaptive bins. Different shape.",
         areas = listOf("aggregate"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "histogram",
+        targetName = "histogram"),
     // [89] trino: 'array_agg' | clickhouse: 'groupArray'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Trino array_agg -> ClickHouse groupArray; ordering undefined without ORDER BY; groupArray drops NULLs.",
         areas = listOf("aggregate", "array", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "array_agg",
+        targetName = "groupArray"),
     // [90] trino: 'any_value' | clickhouse: 'any'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Order-dependent/nondeterministic without ORDER BY in both.",
         areas = listOf("aggregate"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "any_value",
+        targetName = "any"),
     // [91] trino: 'approx_top_k' | clickhouse: 'topK'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Both approximate top-k; ClickHouse topK(k)(x) parametric signature and sketch differ from Trino approx_top_k — only the top-value set is comparable, not internal state.",
         areas = listOf("aggregate"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "approx_top_k",
+        targetName = "topK"),
     // [92] trino: 'row_number' | clickhouse: 'row_number'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("window"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "row_number",
+        targetName = "row_number"),
     // [93] trino: 'rank' | clickhouse: 'rank'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("window"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "rank",
+        targetName = "rank"),
     // [94] trino: 'dense_rank' | clickhouse: 'dense_rank'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("window"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "dense_rank",
+        targetName = "dense_rank"),
     // [95] trino: 'ntile' | clickhouse: 'ntile'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("window"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "ntile",
+        targetName = "ntile"),
     // [96] trino: 'first_value' | clickhouse: 'first_value'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned on default frame.",
         areas = listOf("window"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "first_value",
+        targetName = "first_value"),
     // [97] trino: 'last_value' | clickhouse: 'last_value'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned on default running frame.",
         areas = listOf("window"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "last_value",
+        targetName = "last_value"),
     // [98] trino: 'percent_rank' | clickhouse: 'percent_rank'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "0,0.5,1 aligned.",
         areas = listOf("window"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "percent_rank",
+        targetName = "percent_rank"),
     // [99] trino: 'cume_dist' | clickhouse: 'cume_dist'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("window"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cume_dist",
+        targetName = "cume_dist"),
     // [100] trino: 'lag' | clickhouse: 'lag'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse lag fills the type default (0) out of partition; Trino lag returns NULL (default) unless a default is supplied.",
         areas = listOf("window", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "lag",
+        targetName = "lag"),
     // [101] trino: 'lead' | clickhouse: 'lead'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse lead fills type default (0) past the end; Trino returns NULL.",
         areas = listOf("window", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "lead",
+        targetName = "lead"),
     // [102] trino: 'nth_value' | clickhouse: 'nth_value'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse returns type default before the Nth row; Trino returns NULL.",
         areas = listOf("window", "null"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "nth_value",
+        targetName = "nth_value"),
     // [103] trino: 'rand' | clickhouse: 'rand'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Non-deterministic; ClickHouse rand() -> UInt32, Trino rand() -> double [0,1). Never pushable.",
         areas = listOf("numeric"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "rand",
+        targetName = "rand"),
     // [104] trino: 'now' | clickhouse: 'now'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Query-stable; ClickHouse now() DateTime (sec, tz-typed) vs Trino now() timestamp(3) with zone.",
         areas = listOf("datetime", "timezone"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "now",
+        targetName = "now"),
     // [105] trino: 'current_date' | clickhouse: 'today'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Session/zone-dependent; ClickHouse Date (1970 floor).",
         areas = listOf("datetime", "timezone"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "current_date",
+        targetName = "today"),
     // [106] trino: 'timezone' | clickhouse: 'timezone'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse timezone() -> session zone name; not a Trino-comparable scalar. Session-only.",
         areas = listOf("datetime", "timezone"),
-        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "timezone",
+        targetName = "timezone"),
     // [107] trino: 'variance' | clickhouse: 'varSamp'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
         areas = listOf("aggregate"),
-        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*",
+        sourceName = "variance",
+        targetName = "varSamp"),
     // [108] trino: 'listagg' | clickhouse: 'arrayStringConcat'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "String aggregation agrees ONLY with an explicit ORDER BY (a,a,b,c, NULLs skipped); default ordering is unspecified and separator/function name differ per engine (string_agg/group_concat/listagg/arrayStringConcat).",
         areas = listOf("aggregate"),
-        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*",
+        sourceName = "listagg",
+        targetName = "arrayStringConcat"),
     // [109] trino: 'approx_percentile' | clickhouse: 'median'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Median/50th-percentile agree on simple data but methods differ (exact vs interpolation vs approximate — Trino has only approx_percentile); may diverge on other inputs.",
         areas = listOf("aggregate"),
-        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*",
+        sourceName = "approx_percentile",
+        targetName = "median"),
     // [110] trino: 'bitwise_left_shift' | clickhouse: 'bitShiftLeft'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftLeft (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "bitwise_left_shift",
+        targetName = "bitShiftLeft"),
     // [111] trino: 'bitwise_right_shift' | clickhouse: 'bitShiftRight'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftRight (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "bitwise_right_shift",
+        targetName = "bitShiftRight"),
     // [112] trino: 'bitwise_xor' | clickhouse: 'bitXor'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "bitwise_xor",
+        targetName = "bitXor"),
     // [113] trino: 'ceil' | clickhouse: 'CEIL'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "ceil",
+        targetName = "CEIL"),
     // [114] trino: 'ceiling' | clickhouse: 'CEIL'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "ceiling",
+        targetName = "CEIL"),
     // [115] trino: 'cosine_distance' | clickhouse: 'cosineDistance'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "cosine_distance",
+        targetName = "cosineDistance"),
     // [116] trino: 'day_of_month' | clickhouse: 'toDayOfMonth'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfMonth (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "day_of_month",
+        targetName = "toDayOfMonth"),
     // [117] trino: 'day_of_week' | clickhouse: 'toDayOfWeek'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfWeek (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "day_of_week",
+        targetName = "toDayOfWeek"),
     // [118] trino: 'day_of_year' | clickhouse: 'toDayOfYear'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfYear (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "day_of_year",
+        targetName = "toDayOfYear"),
     // [119] trino: 'dot_product' | clickhouse: 'dotProduct'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is dotProduct (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "dot_product",
+        targetName = "dotProduct"),
 )
 
-private fun hazardsChunk3(): List<FunctionHazard> = listOf(
+private fun trinoClickhouseChunk3(): List<FunctionHazard> = listOf(
     // [120] trino: 'euclidean_distance' | clickhouse: 'L2Distance'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "euclidean_distance",
+        targetName = "L2Distance"),
     // [121] trino: 'floor' | clickhouse: 'FLOOR'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "floor",
+        targetName = "FLOOR"),
     // [122] trino: 'is_finite' | clickhouse: 'isFinite'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isFinite (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "is_finite",
+        targetName = "isFinite"),
     // [123] trino: 'is_infinite' | clickhouse: 'isInfinite'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isInfinite (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "is_infinite",
+        targetName = "isInfinite"),
     // [124] trino: 'is_nan' | clickhouse: 'isNaN'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "is_nan",
+        targetName = "isNaN"),
     // [125] trino: 'last_day_of_month' | clickhouse: 'LAST_DAY'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "last_day_of_month",
+        targetName = "LAST_DAY"),
     // [126] trino: 'levenshtein_distance' | clickhouse: 'editDistance'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "levenshtein_distance",
+        targetName = "editDistance"),
     // [127] trino: 'sequence' | clickhouse: 'range'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Auto-probed Trino vs ClickHouse. Values diverge (trino='[5]' vs ch='[]'). ClickHouse name is range (rename). DEFERRED: sequence->range is divergent (Trino sequence is inclusive of the end, ClickHouse range is half-open; trino=[5] vs ch=[]) and reaches us via the GenerateSeries node needing bounds rewriting — kept divergent + guarded.",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "sequence",
+        targetName = "range"),
     // [128] trino: 'split' | clickhouse: 'splitByString'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "split",
+        targetName = "splitByString"),
     // [129] trino: 'starts_with' | clickhouse: 'startsWith'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "starts_with",
+        targetName = "startsWith"),
     // [130] trino: 'strpos' | clickhouse: 'POSITION'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "strpos",
+        targetName = "POSITION"),
     // [131] trino: 'to_hex' | clickhouse: 'HEX'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Auto-probed Trino vs ClickHouse. Digest/bytes agree, representation differs.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "to_hex",
+        targetName = "HEX"),
     // [132] trino: 'translate' | clickhouse: 'translateUTF8'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Trino translate is code-point-wise == ClickHouse translateUTF8. Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on CH->CH). Reconciled identical (generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.* | source-aware fix 2026-07-14"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.* | source-aware fix 2026-07-14",
+        sourceName = "translate",
+        targetName = "translateUTF8"),
     // [133] trino: 'week_of_year' | clickhouse: 'toISOWeek'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "week_of_year",
+        targetName = "toISOWeek"),
 )
+
+
+/** The 134 probe-verified (clickhouse->trino) verdicts, in JSON order. */
+internal val CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES: List<FunctionHazard> = clickhouseTrinoChunk0() +
+    clickhouseTrinoChunk1() +
+    clickhouseTrinoChunk2() +
+    clickhouseTrinoChunk3()
+
+private fun clickhouseTrinoChunk0(): List<FunctionHazard> = listOf(
+    // [0] trino: 'lower' | clickhouse: 'lower'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse lower() is ASCII-only (İ/ß unchanged); Trino lower() does full Unicode lower with locale folding (İ->i+U+0307). Neither matches; use lowerUTF8 to approach Trino.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "lower",
+        targetName = "lower"),
+    // [1] trino: 'upper' | clickhouse: 'upper'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse upper() ASCII-only; Trino upper() full folding (ß->SS). upperUTF8 gives ß->SS (matches Trino) but is still ASCII-passthrough for the plain upper name.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "upper",
+        targetName = "upper"),
+    // [2] trino: 'length' | clickhouse: 'length'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse length()=BYTE count; Trino length() = code-point count. Use lengthUTF8/char_length for parity.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes",
+        sourceName = "length",
+        targetName = "length"),
+    // [3] trino: 'reverse' | clickhouse: 'reverse'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse reverse()=byte reverse (mangles UTF-8); Trino reverse is code-point-aware. reverseUTF8 approaches Trino (code points) but not grapheme clusters.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#reverse-byte-vs-grapheme",
+        sourceName = "reverse",
+        targetName = "reverse"),
+    // [4] trino: 'trim' | clickhouse: 'trim'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse trim strips only ASCII space; Trino trim (Java Character.isWhitespace) strips tab/LF/CR/FF/VT too. Different whitespace set.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "trim",
+        targetName = "trim"),
+    // [5] trino: 'ltrim' | clickhouse: 'trimLeft'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Same whitespace-set divergence as trim.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "trimLeft",
+        targetName = "ltrim"),
+    // [6] trino: 'rtrim' | clickhouse: 'trimRight'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Same whitespace-set divergence as trim.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "trimRight",
+        targetName = "rtrim"),
+    // [7] trino: 'concat' | clickhouse: 'concat'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse concat PROPAGATES NULL -> NULL (matches Trino's NULL propagation). This pair is ALIGNED on NULL — unlike DuckDB. Verdict divergent only for the string-vs-array concat overload shape; NULL algebra matches Trino.",
+        areas = listOf("string", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation",
+        sourceName = "concat",
+        targetName = "concat"),
+    // [8] trino: 'concat_ws' | clickhouse: 'concat_ws'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse concat_ws propagates NULL element -> NULL; Trino concat_ws SKIPS NULL elements. Divergent on NULL elements; separator-NULL -> NULL in both.",
+        areas = listOf("string", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation",
+        sourceName = "concat_ws",
+        targetName = "concat_ws"),
+    // [9] trino: 'substr' | clickhouse: 'substring'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse substring is BYTE-indexed and start=0 -> ''; Trino substring is code-point-indexed, 1-based. substringUTF8 fixes multibyte only.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0",
+        sourceName = "substring",
+        targetName = "substr"),
+    // [10] trino: 'substring' | clickhouse: 'substring'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "See substr: byte indexing + start=0 differ from Trino code-point semantics.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0",
+        sourceName = "substring",
+        targetName = "substring"),
+    // [11] trino: 'replace' | clickhouse: 'replaceAll'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ClickHouse replace == replaceAll (all occurrences); Trino replace(s,from,to) also replaces all. Aligned.",
+        areas = listOf("string"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all",
+        sourceName = "replaceAll",
+        targetName = "replace"),
+    // [12] trino: 'regexp_replace' | clickhouse: 'replaceRegexpAll'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ClickHouse regexp_replace = replaceRegexpAll (ALL matches); Trino regexp_replace also replaces ALL by default. Aligned (both differ from DuckDB's first-only). RE2 in both.",
+        areas = listOf("regex", "string"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all",
+        sourceName = "replaceRegexpAll",
+        targetName = "regexp_replace"),
+    // [13] trino: 'regexp_extract' | clickhouse: 'regexpExtract'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Group 0 = whole match in both; RE2 engine in both.",
+        areas = listOf("regex"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#regexp-extract-groups",
+        sourceName = "regexpExtract",
+        targetName = "regexp_extract"),
+    // [14] trino: 'lpad' | clickhouse: 'leftPad'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse leftPad pads by BYTES; Trino lpad pads by code points. leftPadUTF8 for parity.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes",
+        sourceName = "leftPad",
+        targetName = "lpad"),
+    // [15] trino: 'rpad' | clickhouse: 'rightPad'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse rightPad pads by BYTES; Trino rpad by code points. rightPadUTF8 for parity.",
+        areas = listOf("string", "unicode"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes",
+        sourceName = "rightPad",
+        targetName = "rpad"),
+    // [16] trino: 'soundex' | clickhouse: 'soundex'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ClickHouse soundex('Robert')='R163'; Trino soundex same American Soundex. Aligned.",
+        areas = listOf("string"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "soundex",
+        targetName = "soundex"),
+    // [17] trino: 'to_base64' | clickhouse: 'base64Encode'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Standard alphabet in both.",
+        areas = listOf("string"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "base64Encode",
+        targetName = "to_base64"),
+    // [18] trino: 'from_base64' | clickhouse: 'base64Decode'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned decode.",
+        areas = listOf("string"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "base64Decode",
+        targetName = "from_base64"),
+    // [19] trino: 'md5' | clickhouse: 'MD5'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same digest; ClickHouse MD5 -> raw bytes (FixedString), Trino md5 -> VARBINARY. Both binary (unlike DuckDB hex) but distinct types; hex() to compare.",
+        areas = listOf("hash"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "MD5",
+        targetName = "md5"),
+    // [20] trino: 'sha1' | clickhouse: 'SHA1'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same digest; ClickHouse raw bytes vs Trino VARBINARY.",
+        areas = listOf("hash"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "SHA1",
+        targetName = "sha1"),
+    // [21] trino: 'sha256' | clickhouse: 'SHA256'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same digest; raw-bytes vs VARBINARY return.",
+        areas = listOf("hash"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "SHA256",
+        targetName = "sha256"),
+    // [22] trino: 'sha512' | clickhouse: 'SHA512'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse SHA512 present; same digest as Trino sha512; raw-bytes vs VARBINARY.",
+        areas = listOf("hash"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "SHA512",
+        targetName = "sha512"),
+    // [23] trino: 'crc32' | clickhouse: 'CRC32'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ClickHouse CRC32('abc')=891568578; Trino crc32 returns the same CRC-32 (bigint). (DuckDB has no crc32.)",
+        areas = listOf("hash"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "CRC32",
+        targetName = "crc32"),
+    // [24] trino: 'xxhash64' | clickhouse: 'xxHash64'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both compute XXH64; ClickHouse returns UInt64, Trino xxhash64 returns VARBINARY(8) — same bits, different type/signedness. (DuckDB has no xxhash64.)",
+        areas = listOf("hash"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "xxHash64",
+        targetName = "xxhash64"),
+    // [25] trino: 'abs' | clickhouse: 'abs'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "abs(INT_MIN): ClickHouse widens to a positive value; Trino throws on the overflow.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-overflow",
+        sourceName = "abs",
+        targetName = "abs"),
+    // [26] trino: 'mod' | clickhouse: 'modulo'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "modulo by zero: ClickHouse throws; Trino also throws (division_by_zero). Non-zero aligned — this pair is actually aligned on error behavior; divergent flag reserved for the wrap/promotion axis.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero",
+        sourceName = "modulo",
+        targetName = "mod"),
+    // [27] trino: 'round' | clickhouse: 'round'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse round() = banker's (half-even); Trino round() = half-UP (round half away from zero for positives). round(2.5)=2 vs 3.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers",
+        sourceName = "round",
+        targetName = "round"),
+    // [28] trino: 'truncate' | clickhouse: 'trunc'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse truncate/trunc(x,n) truncates toward zero; Trino truncate(x,n) same intent. Aligned on the probe (2.678,2 -> 2.67).",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "trunc",
+        targetName = "truncate"),
+    // [29] trino: 'ln' | clickhouse: 'log'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse log(x)=natural log (== Trino ln). Value-correct rename, but domain: ln(0)/ln(-1) -> ClickHouse NULL vs Trino error/NaN.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision",
+        sourceName = "log",
+        targetName = "ln"),
+    // [30] trino: 'log' | clickhouse: 'log'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse single-arg log = natural log; Trino log(b,x) is base-b (two-arg). Signature + base collision.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision",
+        sourceName = "log",
+        targetName = "log"),
+    // [31] trino: 'log10' | clickhouse: 'log10'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Base-10 log aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision",
+        sourceName = "log10",
+        targetName = "log10"),
+    // [32] trino: 'log2' | clickhouse: 'log2'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "log2(8)=3 aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "log2",
+        targetName = "log2"),
+    // [33] trino: 'pow' | clickhouse: 'pow'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "pow(-8,0.5): ClickHouse NULL; Trino NaN. Finite real cases aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "pow",
+        targetName = "pow"),
+    // [34] trino: 'power' | clickhouse: 'power'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "See pow: complex result NULL vs NaN; finite aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "power",
+        targetName = "power"),
+    // [35] trino: 'sqrt' | clickhouse: 'sqrt'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "sqrt(-1): ClickHouse NULL; Trino NaN.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "sqrt",
+        targetName = "sqrt"),
+    // [36] trino: 'sign' | clickhouse: 'sign'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned on integer/zero probes.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sign",
+        targetName = "sign"),
+    // [37] trino: 'e' | clickhouse: 'e'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ClickHouse e()=2.718281828459045; Trino e() same constant.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "e",
+        targetName = "e"),
+    // [38] trino: 'pi' | clickhouse: 'pi'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned constant.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "pi",
+        targetName = "pi"),
+    // [39] trino: 'exp' | clickhouse: 'exp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "exp",
+        targetName = "exp"),
+)
+
+private fun clickhouseTrinoChunk1(): List<FunctionHazard> = listOf(
+    // [40] trino: 'cbrt' | clickhouse: 'cbrt'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "cbrt(27)=3 aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cbrt",
+        targetName = "cbrt"),
+    // [41] trino: 'acos' | clickhouse: 'acos'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "acos(2) out of domain: ClickHouse NULL; Trino throws/NaN. In-domain aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "acos",
+        targetName = "acos"),
+    // [42] trino: 'asin' | clickhouse: 'asin'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "asin(2) out of domain: ClickHouse NULL; Trino throws/NaN. In-domain aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "asin",
+        targetName = "asin"),
+    // [43] trino: 'atan' | clickhouse: 'atan'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "atan",
+        targetName = "atan"),
+    // [44] trino: 'atan2' | clickhouse: 'atan2'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "atan2",
+        targetName = "atan2"),
+    // [45] trino: 'sin' | clickhouse: 'sin'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sin",
+        targetName = "sin"),
+    // [46] trino: 'cos' | clickhouse: 'cos'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cos",
+        targetName = "cos"),
+    // [47] trino: 'tan' | clickhouse: 'tan'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "tan",
+        targetName = "tan"),
+    // [48] trino: 'sinh' | clickhouse: 'sinh'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sinh",
+        targetName = "sinh"),
+    // [49] trino: 'cosh' | clickhouse: 'cosh'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cosh",
+        targetName = "cosh"),
+    // [50] trino: 'tanh' | clickhouse: 'tanh'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "tanh",
+        targetName = "tanh"),
+    // [51] trino: 'degrees' | clickhouse: 'degrees'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "degrees",
+        targetName = "degrees"),
+    // [52] trino: 'radians' | clickhouse: 'radians'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "radians",
+        targetName = "radians"),
+    // [53] trino: 'width_bucket' | clickhouse: 'widthBucket'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse widthBucket present and matched the probe (5 over [0,10]/5 bins -> 3); Trino width_bucket same intent. camelCase name is case-sensitive. (DuckDB lacked width_bucket in this build.)",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#case-sensitivity",
+        sourceName = "widthBucket",
+        targetName = "width_bucket"),
+    // [54] trino: 'year' | clickhouse: 'toYear'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "1970+ aligned; ClickHouse Date/DateTime floors at 1970 so pre-1970 timestamps that Trino handles will clamp.",
+        areas = listOf("datetime"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970",
+        sourceName = "toYear",
+        targetName = "year"),
+    // [55] trino: 'month' | clickhouse: 'toMonth'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned for representable dates.",
+        areas = listOf("datetime"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toMonth",
+        targetName = "month"),
+    // [56] trino: 'day' | clickhouse: 'toDayOfMonth'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned for representable dates.",
+        areas = listOf("datetime"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toDayOfMonth",
+        targetName = "day"),
+    // [57] trino: 'hour' | clickhouse: 'toHour'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Aligned with matched session zones; ClickHouse DateTime is timezone-typed vs Trino's timestamp-with/without-zone distinction.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "toHour",
+        targetName = "hour"),
+    // [58] trino: 'minute' | clickhouse: 'toMinute'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("datetime"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toMinute",
+        targetName = "minute"),
+    // [59] trino: 'second' | clickhouse: 'toSecond'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("datetime"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toSecond",
+        targetName = "second"),
+    // [60] trino: 'millisecond' | clickhouse: 'toSecond*1000 + toMillisecond'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB/Trino millisecond(t) = seconds-within-minute*1000 + ms; the generator now emits (toSecond(t)*1000 + toMillisecond(t)), result-identical (ClickHouse toMillisecond alone is the sub-second component only). Verified: 30123/0/5789/56001 all match.",
+        areas = listOf("datetime"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond | generator mapping fixed 2026-07-13 (BUGS row 6), live-differential-verified vs ClickHouse 26.5.1.1 + DuckDB 1.5.4",
+        sourceName = "toSecond*1000 + toMillisecond",
+        targetName = "millisecond"),
+    // [61] trino: 'quarter' | clickhouse: 'toQuarter'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("datetime"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toQuarter",
+        targetName = "quarter"),
+    // [62] trino: 'week' | clickhouse: 'toISOWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Trino week (week_of_year) is ISO-8601; the generator now emits toISOWeek, result-identical (not toWeek mode 0).",
+        areas = listOf("datetime"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE",
+        sourceName = "toISOWeek",
+        targetName = "week"),
+    // [63] trino: 'date_trunc' | clickhouse: 'dateTrunc'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Aligned on the intersecting unit set with matched zones; ClickHouse unit is a string first-arg and DateTime is tz-typed; 1970 floor applies.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type",
+        sourceName = "dateTrunc",
+        targetName = "date_trunc"),
+    // [64] trino: 'date_diff' | clickhouse: 'dateDiff'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both take (unit, a, b); aligned on day diff. ClickHouse tz-typed operands; 1970 floor.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "dateDiff",
+        targetName = "date_diff"),
+    // [65] trino: 'date_format' | clickhouse: 'formatDateTime'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "SPEC DIALECT + name: Trino date_format uses Joda/MySQL patterns; ClickHouse formatDateTime uses MySQL-style %-codes where %M is the MONTH NAME (probe: '%M' -> 'March') — colliding with strftime %M=minute. Never map format strings by passthrough.",
+        areas = listOf("datetime", "string"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#date-format-spec",
+        sourceName = "formatDateTime",
+        targetName = "date_format"),
+    // [66] trino: 'from_unixtime' | clickhouse: 'fromUnixTimestamp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both epoch-seconds -> timestamp; ClickHouse returns a timezone-typed DateTime (session zone) and Trino from_unixtime(double) returns timestamp(3) with zone. Zone/precision-sensitive.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "fromUnixTimestamp",
+        targetName = "from_unixtime"),
+    // [67] trino: 'to_unixtime' | clickhouse: 'toUnixTimestamp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse toUnixTimestamp(dt) -> UInt32 seconds (session zone); Trino to_unixtime -> double seconds. Value aligned when zones match; type differs.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "toUnixTimestamp",
+        targetName = "to_unixtime"),
+    // [68] trino: 'date' | clickhouse: 'toDate'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Cast-to-date aligned for 1970+ (2024-06-15); ClickHouse Date floors at 1970.",
+        areas = listOf("datetime"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970",
+        sourceName = "toDate",
+        targetName = "date"),
+    // [69] trino: 'cardinality' | clickhouse: 'length'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Trino cardinality(array) = element count; ClickHouse length(array) same. (ClickHouse also has cardinality as an alias.) Aligned for arrays; Trino cardinality(map) also -> ClickHouse length(map).",
+        areas = listOf("array"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob",
+        sourceName = "length",
+        targetName = "cardinality"),
+    // [70] trino: 'array_remove' | clickhouse: 'arrayFilter'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "No direct ClickHouse array_remove; idiom is arrayFilter(x->x!=v, arr). NULL-element handling and the lambda shape differ from Trino's element-equality remove.",
+        areas = listOf("array", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob",
+        sourceName = "arrayFilter",
+        targetName = "array_remove"),
+    // [71] trino: 'flatten' | clickhouse: 'arrayFlatten'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "One-level flatten aligned.",
+        areas = listOf("array"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "arrayFlatten",
+        targetName = "flatten"),
+    // [72] trino: 'transform' | clickhouse: 'arrayMap'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "NAME COLLISION: Trino transform(array, lambda) maps a lambda over elements; ClickHouse transform(x, from_array, to_array, default) is a scalar VALUE-REMAP (CASE-like) — completely different function. ClickHouse's lambda map is arrayMap.",
+        areas = listOf("array"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#transform-collision",
+        sourceName = "arrayMap",
+        targetName = "transform"),
+    // [73] trino: 'ngrams' | clickhouse: 'ngrams'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Trino ngrams(array, n) returns an array of n-element sub-arrays; ClickHouse ngrams(string,n) returns overlapping byte/char substrings of a STRING. Different input/output shape.",
+        areas = listOf("array", "string"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#transform-collision",
+        sourceName = "ngrams",
+        targetName = "ngrams"),
+    // [74] trino: 'map' | clickhouse: 'map'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Trino map(array_k, array_v) matches ClickHouse map(k1,v1,...) in intent but the constructor SHAPE differs (two arrays vs flat kv list).",
+        areas = listOf("map"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape",
+        sourceName = "map",
+        targetName = "map"),
+    // [75] trino: 'sum' | clickhouse: 'sum'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Empty group -> 0 (ClickHouse) vs Trino NULL; ClickHouse sum overflow-wraps fixed-width ints where Trino throws/decimals. All-NULL -> NULL in both.",
+        areas = listOf("aggregate", "null", "numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "sum",
+        targetName = "sum"),
+    // [76] trino: 'avg' | clickhouse: 'avg'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Empty group -> nan (ClickHouse) vs Trino NULL.",
+        areas = listOf("aggregate", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "avg",
+        targetName = "avg"),
+    // [77] trino: 'count' | clickhouse: 'count'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "count(expr) skips NULL; count() empty -> 0 in both.",
+        areas = listOf("aggregate", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "count",
+        targetName = "count"),
+    // [78] trino: 'min' | clickhouse: 'min'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Empty group -> type default (ClickHouse) vs Trino NULL.",
+        areas = listOf("aggregate", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "min",
+        targetName = "min"),
+    // [79] trino: 'max' | clickhouse: 'max'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Empty group -> type default (ClickHouse) vs Trino NULL.",
+        areas = listOf("aggregate", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "max",
+        targetName = "max"),
+)
+
+private fun clickhouseTrinoChunk2(): List<FunctionHazard> = listOf(
+    // [80] trino: 'stddev' | clickhouse: 'stddev'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Bare stddev = sample in both.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddev",
+        targetName = "stddev"),
+    // [81] trino: 'stddev_pop' | clickhouse: 'stddevPop'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Population stddev aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddevPop",
+        targetName = "stddev_pop"),
+    // [82] trino: 'stddev_samp' | clickhouse: 'stddevSamp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Sample stddev aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddevSamp",
+        targetName = "stddev_samp"),
+    // [83] trino: 'var_pop' | clickhouse: 'varPop'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Population variance aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "varPop",
+        targetName = "var_pop"),
+    // [84] trino: 'var_samp' | clickhouse: 'varSamp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Sample variance aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "varSamp",
+        targetName = "var_samp"),
+    // [85] trino: 'corr' | clickhouse: 'corr'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Pearson correlation aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "corr",
+        targetName = "corr"),
+    // [86] trino: 'covar_pop' | clickhouse: 'covarPop'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Population covariance aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "covarPop",
+        targetName = "covar_pop"),
+    // [87] trino: 'covar_samp' | clickhouse: 'covarSamp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Sample covariance aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "covarSamp",
+        targetName = "covar_samp"),
+    // [88] trino: 'histogram' | clickhouse: 'histogram'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Trino histogram = exact value->count map; ClickHouse histogram(bins)(x) = approximate adaptive bins. Different shape.",
+        areas = listOf("aggregate"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "histogram",
+        targetName = "histogram"),
+    // [89] trino: 'array_agg' | clickhouse: 'groupArray'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Trino array_agg -> ClickHouse groupArray; ordering undefined without ORDER BY; groupArray drops NULLs.",
+        areas = listOf("aggregate", "array", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "groupArray",
+        targetName = "array_agg"),
+    // [90] trino: 'any_value' | clickhouse: 'any'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Order-dependent/nondeterministic without ORDER BY in both.",
+        areas = listOf("aggregate"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "any",
+        targetName = "any_value"),
+    // [91] trino: 'approx_top_k' | clickhouse: 'topK'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both approximate top-k; ClickHouse topK(k)(x) parametric signature and sketch differ from Trino approx_top_k — only the top-value set is comparable, not internal state.",
+        areas = listOf("aggregate"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "topK",
+        targetName = "approx_top_k"),
+    // [92] trino: 'row_number' | clickhouse: 'row_number'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("window"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "row_number",
+        targetName = "row_number"),
+    // [93] trino: 'rank' | clickhouse: 'rank'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("window"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "rank",
+        targetName = "rank"),
+    // [94] trino: 'dense_rank' | clickhouse: 'dense_rank'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("window"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "dense_rank",
+        targetName = "dense_rank"),
+    // [95] trino: 'ntile' | clickhouse: 'ntile'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("window"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "ntile",
+        targetName = "ntile"),
+    // [96] trino: 'first_value' | clickhouse: 'first_value'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned on default frame.",
+        areas = listOf("window"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "first_value",
+        targetName = "first_value"),
+    // [97] trino: 'last_value' | clickhouse: 'last_value'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned on default running frame.",
+        areas = listOf("window"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "last_value",
+        targetName = "last_value"),
+    // [98] trino: 'percent_rank' | clickhouse: 'percent_rank'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "0,0.5,1 aligned.",
+        areas = listOf("window"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "percent_rank",
+        targetName = "percent_rank"),
+    // [99] trino: 'cume_dist' | clickhouse: 'cume_dist'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("window"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cume_dist",
+        targetName = "cume_dist"),
+    // [100] trino: 'lag' | clickhouse: 'lag'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse lag fills the type default (0) out of partition; Trino lag returns NULL (default) unless a default is supplied.",
+        areas = listOf("window", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "lag",
+        targetName = "lag"),
+    // [101] trino: 'lead' | clickhouse: 'lead'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse lead fills type default (0) past the end; Trino returns NULL.",
+        areas = listOf("window", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "lead",
+        targetName = "lead"),
+    // [102] trino: 'nth_value' | clickhouse: 'nth_value'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse returns type default before the Nth row; Trino returns NULL.",
+        areas = listOf("window", "null"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "nth_value",
+        targetName = "nth_value"),
+    // [103] trino: 'rand' | clickhouse: 'rand'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Non-deterministic; ClickHouse rand() -> UInt32, Trino rand() -> double [0,1). Never pushable.",
+        areas = listOf("numeric"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "rand",
+        targetName = "rand"),
+    // [104] trino: 'now' | clickhouse: 'now'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Query-stable; ClickHouse now() DateTime (sec, tz-typed) vs Trino now() timestamp(3) with zone.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "now",
+        targetName = "now"),
+    // [105] trino: 'current_date' | clickhouse: 'today'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Session/zone-dependent; ClickHouse Date (1970 floor).",
+        areas = listOf("datetime", "timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "today",
+        targetName = "current_date"),
+    // [106] trino: 'timezone' | clickhouse: 'timezone'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse timezone() -> session zone name; not a Trino-comparable scalar. Session-only.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "composed: clickhouse-live + trino-duckdb-hazards | REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "timezone",
+        targetName = "timezone"),
+    // [107] trino: 'variance' | clickhouse: 'varSamp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*",
+        sourceName = "varSamp",
+        targetName = "variance"),
+    // [108] trino: 'listagg' | clickhouse: 'arrayStringConcat'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "String aggregation agrees ONLY with an explicit ORDER BY (a,a,b,c, NULLs skipped); default ordering is unspecified and separator/function name differ per engine (string_agg/group_concat/listagg/arrayStringConcat).",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*",
+        sourceName = "arrayStringConcat",
+        targetName = "listagg"),
+    // [109] trino: 'approx_percentile' | clickhouse: 'median'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Median/50th-percentile agree on simple data but methods differ (exact vs interpolation vs approximate — Trino has only approx_percentile); may diverge on other inputs.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*",
+        sourceName = "median",
+        targetName = "approx_percentile"),
+    // [110] trino: 'bitwise_left_shift' | clickhouse: 'bitShiftLeft'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftLeft (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "bitShiftLeft",
+        targetName = "bitwise_left_shift"),
+    // [111] trino: 'bitwise_right_shift' | clickhouse: 'bitShiftRight'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is bitShiftRight (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "bitShiftRight",
+        targetName = "bitwise_right_shift"),
+    // [112] trino: 'bitwise_xor' | clickhouse: 'bitXor'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "bitXor",
+        targetName = "bitwise_xor"),
+    // [113] trino: 'ceil' | clickhouse: 'CEIL'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "CEIL",
+        targetName = "ceil"),
+    // [114] trino: 'ceiling' | clickhouse: 'CEIL'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "CEIL",
+        targetName = "ceiling"),
+    // [115] trino: 'cosine_distance' | clickhouse: 'cosineDistance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "cosineDistance",
+        targetName = "cosine_distance"),
+    // [116] trino: 'day_of_month' | clickhouse: 'toDayOfMonth'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfMonth (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "toDayOfMonth",
+        targetName = "day_of_month"),
+    // [117] trino: 'day_of_week' | clickhouse: 'toDayOfWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfWeek (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "toDayOfWeek",
+        targetName = "day_of_week"),
+    // [118] trino: 'day_of_year' | clickhouse: 'toDayOfYear'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is toDayOfYear (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "toDayOfYear",
+        targetName = "day_of_year"),
+    // [119] trino: 'dot_product' | clickhouse: 'dotProduct'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is dotProduct (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "dotProduct",
+        targetName = "dot_product"),
+)
+
+private fun clickhouseTrinoChunk3(): List<FunctionHazard> = listOf(
+    // [120] trino: 'euclidean_distance' | clickhouse: 'L2Distance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "L2Distance",
+        targetName = "euclidean_distance"),
+    // [121] trino: 'floor' | clickhouse: 'FLOOR'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "FLOOR",
+        targetName = "floor"),
+    // [122] trino: 'is_finite' | clickhouse: 'isFinite'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isFinite (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "isFinite",
+        targetName = "is_finite"),
+    // [123] trino: 'is_infinite' | clickhouse: 'isInfinite'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree. ClickHouse name is isInfinite (rename). brikk's ClickHouse generator now emits this rename (trino-side generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "isInfinite",
+        targetName = "is_infinite"),
+    // [124] trino: 'is_nan' | clickhouse: 'isNaN'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "isNaN",
+        targetName = "is_nan"),
+    // [125] trino: 'last_day_of_month' | clickhouse: 'LAST_DAY'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "LAST_DAY",
+        targetName = "last_day_of_month"),
+    // [126] trino: 'levenshtein_distance' | clickhouse: 'editDistance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "editDistance",
+        targetName = "levenshtein_distance"),
+    // [127] trino: 'sequence' | clickhouse: 'range'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Auto-probed Trino vs ClickHouse. Values diverge (trino='[5]' vs ch='[]'). ClickHouse name is range (rename). DEFERRED: sequence->range is divergent (Trino sequence is inclusive of the end, ClickHouse range is half-open; trino=[5] vs ch=[]) and reaches us via the GenerateSeries node needing bounds rewriting — kept divergent + guarded.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "range",
+        targetName = "sequence"),
+    // [128] trino: 'split' | clickhouse: 'splitByString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "splitByString",
+        targetName = "split"),
+    // [129] trino: 'starts_with' | clickhouse: 'startsWith'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "startsWith",
+        targetName = "starts_with"),
+    // [130] trino: 'strpos' | clickhouse: 'POSITION'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "POSITION",
+        targetName = "strpos"),
+    // [131] trino: 'to_hex' | clickhouse: 'HEX'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Auto-probed Trino vs ClickHouse. Digest/bytes agree, representation differs.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "HEX",
+        targetName = "to_hex"),
+    // [132] trino: 'translate' | clickhouse: 'translateUTF8'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Trino translate is code-point-wise == ClickHouse translateUTF8. Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on CH->CH). Reconciled identical (generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.* | source-aware fix 2026-07-14",
+        sourceName = "translateUTF8",
+        targetName = "translate"),
+    // [133] trino: 'week_of_year' | clickhouse: 'toISOWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed Trino vs ClickHouse. Values agree.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (trino mass round) 2026-07-13: Trino 481 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/trino-clickhouse-mass.*",
+        sourceName = "toISOWeek",
+        targetName = "week_of_year"),
+)
+
 
 /** trino->clickhouse lookup: 134 keys (Trino-side names) over 134 entries. */
 internal val TRINO_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap {
-    put("ABS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[25])
-    put("ACOS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[41])
-    put("ANY_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[90])
-    put("APPROX_PERCENTILE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[109])
-    put("APPROX_TOP_K", TRINO_CLICKHOUSE_HAZARD_ENTRIES[91])
-    put("ARRAY_AGG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[89])
-    put("ARRAY_REMOVE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[70])
-    put("ASIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[42])
-    put("ATAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[43])
-    put("ATAN2", TRINO_CLICKHOUSE_HAZARD_ENTRIES[44])
-    put("AVG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[76])
-    put("BITWISE_LEFT_SHIFT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[110])
-    put("BITWISE_RIGHT_SHIFT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[111])
-    put("BITWISE_XOR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[112])
-    put("CARDINALITY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[69])
-    put("CBRT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[40])
-    put("CEIL", TRINO_CLICKHOUSE_HAZARD_ENTRIES[113])
-    put("CEILING", TRINO_CLICKHOUSE_HAZARD_ENTRIES[114])
-    put("CONCAT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[7])
-    put("CONCAT_WS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[8])
-    put("CORR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[85])
-    put("COS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[46])
-    put("COSH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[49])
-    put("COSINE_DISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[115])
-    put("COUNT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[77])
-    put("COVAR_POP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[86])
-    put("COVAR_SAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[87])
-    put("CRC32", TRINO_CLICKHOUSE_HAZARD_ENTRIES[23])
-    put("CUME_DIST", TRINO_CLICKHOUSE_HAZARD_ENTRIES[99])
-    put("CURRENT_DATE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[105])
-    put("DATE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[68])
-    put("DATE_DIFF", TRINO_CLICKHOUSE_HAZARD_ENTRIES[64])
-    put("DATE_FORMAT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[65])
-    put("DATE_TRUNC", TRINO_CLICKHOUSE_HAZARD_ENTRIES[63])
-    put("DAY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[56])
-    put("DAY_OF_MONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[116])
-    put("DAY_OF_WEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[117])
-    put("DAY_OF_YEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[118])
-    put("DEGREES", TRINO_CLICKHOUSE_HAZARD_ENTRIES[51])
-    put("DENSE_RANK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[94])
-    put("DOT_PRODUCT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[119])
-    put("E", TRINO_CLICKHOUSE_HAZARD_ENTRIES[37])
-    put("EUCLIDEAN_DISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[120])
-    put("EXP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[39])
-    put("FIRST_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[96])
-    put("FLATTEN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[71])
-    put("FLOOR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[121])
-    put("FROM_BASE64", TRINO_CLICKHOUSE_HAZARD_ENTRIES[18])
-    put("FROM_UNIXTIME", TRINO_CLICKHOUSE_HAZARD_ENTRIES[66])
-    put("HISTOGRAM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[88])
-    put("HOUR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[57])
-    put("IS_FINITE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[122])
-    put("IS_INFINITE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[123])
-    put("IS_NAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[124])
-    put("LAG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[100])
-    put("LAST_DAY_OF_MONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[125])
-    put("LAST_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[97])
-    put("LEAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[101])
-    put("LENGTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[2])
-    put("LEVENSHTEIN_DISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[126])
-    put("LISTAGG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[108])
-    put("LN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[29])
-    put("LOG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[30])
-    put("LOG10", TRINO_CLICKHOUSE_HAZARD_ENTRIES[31])
-    put("LOG2", TRINO_CLICKHOUSE_HAZARD_ENTRIES[32])
-    put("LOWER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[0])
-    put("LPAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[14])
-    put("LTRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[5])
-    put("MAP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[74])
-    put("MAX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[79])
-    put("MD5", TRINO_CLICKHOUSE_HAZARD_ENTRIES[19])
-    put("MILLISECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[60])
-    put("MIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[78])
-    put("MINUTE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[58])
-    put("MOD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[26])
-    put("MONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[55])
-    put("NGRAMS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[73])
-    put("NOW", TRINO_CLICKHOUSE_HAZARD_ENTRIES[104])
-    put("NTH_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[102])
-    put("NTILE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[95])
-    put("PERCENT_RANK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[98])
-    put("PI", TRINO_CLICKHOUSE_HAZARD_ENTRIES[38])
-    put("POW", TRINO_CLICKHOUSE_HAZARD_ENTRIES[33])
-    put("POWER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[34])
-    put("QUARTER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[61])
-    put("RADIANS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[52])
-    put("RAND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[103])
-    put("RANK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[93])
-    put("REGEXP_EXTRACT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[13])
-    put("REGEXP_REPLACE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[12])
-    put("REPLACE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[11])
-    put("REVERSE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[3])
-    put("ROUND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[27])
-    put("ROW_NUMBER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[92])
-    put("RPAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[15])
-    put("RTRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[6])
-    put("SECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[59])
-    put("SEQUENCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[127])
-    put("SHA1", TRINO_CLICKHOUSE_HAZARD_ENTRIES[20])
-    put("SHA256", TRINO_CLICKHOUSE_HAZARD_ENTRIES[21])
-    put("SHA512", TRINO_CLICKHOUSE_HAZARD_ENTRIES[22])
-    put("SIGN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[36])
-    put("SIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[45])
-    put("SINH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[48])
-    put("SOUNDEX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[16])
-    put("SPLIT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[128])
-    put("SQRT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[35])
-    put("STARTS_WITH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[129])
-    put("STDDEV", TRINO_CLICKHOUSE_HAZARD_ENTRIES[80])
-    put("STDDEV_POP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[81])
-    put("STDDEV_SAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[82])
-    put("STRPOS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[130])
-    put("SUBSTR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[9])
-    put("SUBSTRING", TRINO_CLICKHOUSE_HAZARD_ENTRIES[10])
-    put("SUM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[75])
-    put("TAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[47])
-    put("TANH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[50])
-    put("TIMEZONE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[106])
-    put("TO_BASE64", TRINO_CLICKHOUSE_HAZARD_ENTRIES[17])
-    put("TO_HEX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[131])
-    put("TO_UNIXTIME", TRINO_CLICKHOUSE_HAZARD_ENTRIES[67])
-    put("TRANSFORM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[72])
-    put("TRANSLATE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[132])
-    put("TRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[4])
-    put("TRUNCATE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[28])
-    put("UPPER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[1])
-    put("VARIANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[107])
-    put("VAR_POP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[83])
-    put("VAR_SAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[84])
-    put("WEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[62])
-    put("WEEK_OF_YEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[133])
-    put("WIDTH_BUCKET", TRINO_CLICKHOUSE_HAZARD_ENTRIES[53])
-    put("XXHASH64", TRINO_CLICKHOUSE_HAZARD_ENTRIES[24])
-    put("YEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[54])
+    put("ABS", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[25])
+    put("ACOS", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[41])
+    put("ANY_VALUE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[90])
+    put("APPROX_PERCENTILE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[109])
+    put("APPROX_TOP_K", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[91])
+    put("ARRAY_AGG", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[89])
+    put("ARRAY_REMOVE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[70])
+    put("ASIN", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[42])
+    put("ATAN", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[43])
+    put("ATAN2", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[44])
+    put("AVG", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[76])
+    put("BITWISE_LEFT_SHIFT", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[110])
+    put("BITWISE_RIGHT_SHIFT", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[111])
+    put("BITWISE_XOR", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[112])
+    put("CARDINALITY", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[69])
+    put("CBRT", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[40])
+    put("CEIL", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[113])
+    put("CEILING", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[114])
+    put("CONCAT", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[7])
+    put("CONCAT_WS", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[8])
+    put("CORR", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[85])
+    put("COS", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[46])
+    put("COSH", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[49])
+    put("COSINE_DISTANCE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[115])
+    put("COUNT", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[77])
+    put("COVAR_POP", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[86])
+    put("COVAR_SAMP", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[87])
+    put("CRC32", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[23])
+    put("CUME_DIST", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[99])
+    put("CURRENT_DATE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[105])
+    put("DATE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[68])
+    put("DATE_DIFF", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[64])
+    put("DATE_FORMAT", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[65])
+    put("DATE_TRUNC", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[63])
+    put("DAY", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[56])
+    put("DAY_OF_MONTH", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[116])
+    put("DAY_OF_WEEK", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[117])
+    put("DAY_OF_YEAR", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[118])
+    put("DEGREES", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[51])
+    put("DENSE_RANK", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[94])
+    put("DOT_PRODUCT", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[119])
+    put("E", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[37])
+    put("EUCLIDEAN_DISTANCE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[120])
+    put("EXP", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[39])
+    put("FIRST_VALUE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[96])
+    put("FLATTEN", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[71])
+    put("FLOOR", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[121])
+    put("FROM_BASE64", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[18])
+    put("FROM_UNIXTIME", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[66])
+    put("HISTOGRAM", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[88])
+    put("HOUR", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[57])
+    put("IS_FINITE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[122])
+    put("IS_INFINITE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[123])
+    put("IS_NAN", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[124])
+    put("LAG", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[100])
+    put("LAST_DAY_OF_MONTH", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[125])
+    put("LAST_VALUE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[97])
+    put("LEAD", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[101])
+    put("LENGTH", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[2])
+    put("LEVENSHTEIN_DISTANCE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[126])
+    put("LISTAGG", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[108])
+    put("LN", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[29])
+    put("LOG", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[30])
+    put("LOG10", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[31])
+    put("LOG2", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[32])
+    put("LOWER", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[0])
+    put("LPAD", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[14])
+    put("LTRIM", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[5])
+    put("MAP", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[74])
+    put("MAX", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[79])
+    put("MD5", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[19])
+    put("MILLISECOND", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[60])
+    put("MIN", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[78])
+    put("MINUTE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[58])
+    put("MOD", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[26])
+    put("MONTH", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[55])
+    put("NGRAMS", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[73])
+    put("NOW", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[104])
+    put("NTH_VALUE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[102])
+    put("NTILE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[95])
+    put("PERCENT_RANK", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[98])
+    put("PI", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[38])
+    put("POW", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[33])
+    put("POWER", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[34])
+    put("QUARTER", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[61])
+    put("RADIANS", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[52])
+    put("RAND", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[103])
+    put("RANK", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[93])
+    put("REGEXP_EXTRACT", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[13])
+    put("REGEXP_REPLACE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[12])
+    put("REPLACE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[11])
+    put("REVERSE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[3])
+    put("ROUND", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[27])
+    put("ROW_NUMBER", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[92])
+    put("RPAD", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[15])
+    put("RTRIM", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[6])
+    put("SECOND", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[59])
+    put("SEQUENCE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[127])
+    put("SHA1", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[20])
+    put("SHA256", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[21])
+    put("SHA512", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[22])
+    put("SIGN", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[36])
+    put("SIN", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[45])
+    put("SINH", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[48])
+    put("SOUNDEX", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[16])
+    put("SPLIT", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[128])
+    put("SQRT", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[35])
+    put("STARTS_WITH", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[129])
+    put("STDDEV", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[80])
+    put("STDDEV_POP", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[81])
+    put("STDDEV_SAMP", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[82])
+    put("STRPOS", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[130])
+    put("SUBSTR", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[9])
+    put("SUBSTRING", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[10])
+    put("SUM", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[75])
+    put("TAN", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[47])
+    put("TANH", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[50])
+    put("TIMEZONE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[106])
+    put("TO_BASE64", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[17])
+    put("TO_HEX", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[131])
+    put("TO_UNIXTIME", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[67])
+    put("TRANSFORM", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[72])
+    put("TRANSLATE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[132])
+    put("TRIM", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[4])
+    put("TRUNCATE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[28])
+    put("UPPER", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[1])
+    put("VARIANCE", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[107])
+    put("VAR_POP", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[83])
+    put("VAR_SAMP", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[84])
+    put("WEEK", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[62])
+    put("WEEK_OF_YEAR", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[133])
+    put("WIDTH_BUCKET", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[53])
+    put("XXHASH64", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[24])
+    put("YEAR", TRINO_TO_CLICKHOUSE_HAZARD_ENTRIES[54])
 }
 
 /** clickhouse->trino lookup: 127 keys (ClickHouse-side names) over 134 entries. */
 internal val CLICKHOUSE_TO_TRINO_HAZARDS: Map<String, FunctionHazard> = buildMap {
-    put("ABS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[25])
-    put("ACOS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[41])
-    put("ANY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[90])
-    put("ARRAYFILTER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[70])
-    put("ARRAYFLATTEN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[71])
-    put("ARRAYMAP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[72])
-    put("ARRAYSTRINGCONCAT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[108])
-    put("ASIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[42])
-    put("ATAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[43])
-    put("ATAN2", TRINO_CLICKHOUSE_HAZARD_ENTRIES[44])
-    put("AVG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[76])
-    put("BASE64DECODE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[18])
-    put("BASE64ENCODE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[17])
-    put("BITSHIFTLEFT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[110])
-    put("BITSHIFTRIGHT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[111])
-    put("BITXOR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[112])
-    put("CBRT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[40])
-    put("CEIL", TRINO_CLICKHOUSE_HAZARD_ENTRIES[113])
-    put("CONCAT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[7])
-    put("CONCAT_WS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[8])
-    put("CORR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[85])
-    put("COS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[46])
-    put("COSH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[49])
-    put("COSINEDISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[115])
-    put("COUNT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[77])
-    put("COVARPOP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[86])
-    put("COVARSAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[87])
-    put("CRC32", TRINO_CLICKHOUSE_HAZARD_ENTRIES[23])
-    put("CUME_DIST", TRINO_CLICKHOUSE_HAZARD_ENTRIES[99])
-    put("DATEDIFF", TRINO_CLICKHOUSE_HAZARD_ENTRIES[64])
-    put("DATETRUNC", TRINO_CLICKHOUSE_HAZARD_ENTRIES[63])
-    put("DEGREES", TRINO_CLICKHOUSE_HAZARD_ENTRIES[51])
-    put("DENSE_RANK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[94])
-    put("DOTPRODUCT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[119])
-    put("E", TRINO_CLICKHOUSE_HAZARD_ENTRIES[37])
-    put("EDITDISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[126])
-    put("EXP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[39])
-    put("FIRST_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[96])
-    put("FLOOR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[121])
-    put("FORMATDATETIME", TRINO_CLICKHOUSE_HAZARD_ENTRIES[65])
-    put("FROMUNIXTIMESTAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[66])
-    put("GROUPARRAY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[89])
-    put("HEX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[131])
-    put("HISTOGRAM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[88])
-    put("ISFINITE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[122])
-    put("ISINFINITE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[123])
-    put("ISNAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[124])
-    put("L2DISTANCE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[120])
-    put("LAG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[100])
-    put("LAST_DAY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[125])
-    put("LAST_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[97])
-    put("LEAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[101])
-    put("LEFTPAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[14])
-    put("LENGTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[2])
-    put("LOG", TRINO_CLICKHOUSE_HAZARD_ENTRIES[29])
-    put("LOG10", TRINO_CLICKHOUSE_HAZARD_ENTRIES[31])
-    put("LOG2", TRINO_CLICKHOUSE_HAZARD_ENTRIES[32])
-    put("LOWER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[0])
-    put("MAP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[74])
-    put("MAX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[79])
-    put("MD5", TRINO_CLICKHOUSE_HAZARD_ENTRIES[19])
-    put("MEDIAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[109])
-    put("MIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[78])
-    put("MODULO", TRINO_CLICKHOUSE_HAZARD_ENTRIES[26])
-    put("NGRAMS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[73])
-    put("NOW", TRINO_CLICKHOUSE_HAZARD_ENTRIES[104])
-    put("NTH_VALUE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[102])
-    put("NTILE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[95])
-    put("PERCENT_RANK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[98])
-    put("PI", TRINO_CLICKHOUSE_HAZARD_ENTRIES[38])
-    put("POSITION", TRINO_CLICKHOUSE_HAZARD_ENTRIES[130])
-    put("POW", TRINO_CLICKHOUSE_HAZARD_ENTRIES[33])
-    put("POWER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[34])
-    put("RADIANS", TRINO_CLICKHOUSE_HAZARD_ENTRIES[52])
-    put("RAND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[103])
-    put("RANGE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[127])
-    put("RANK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[93])
-    put("REGEXPEXTRACT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[13])
-    put("REPLACEALL", TRINO_CLICKHOUSE_HAZARD_ENTRIES[11])
-    put("REPLACEREGEXPALL", TRINO_CLICKHOUSE_HAZARD_ENTRIES[12])
-    put("REVERSE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[3])
-    put("RIGHTPAD", TRINO_CLICKHOUSE_HAZARD_ENTRIES[15])
-    put("ROUND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[27])
-    put("ROW_NUMBER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[92])
-    put("SHA1", TRINO_CLICKHOUSE_HAZARD_ENTRIES[20])
-    put("SHA256", TRINO_CLICKHOUSE_HAZARD_ENTRIES[21])
-    put("SHA512", TRINO_CLICKHOUSE_HAZARD_ENTRIES[22])
-    put("SIGN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[36])
-    put("SIN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[45])
-    put("SINH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[48])
-    put("SOUNDEX", TRINO_CLICKHOUSE_HAZARD_ENTRIES[16])
-    put("SPLITBYSTRING", TRINO_CLICKHOUSE_HAZARD_ENTRIES[128])
-    put("SQRT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[35])
-    put("STARTSWITH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[129])
-    put("STDDEV", TRINO_CLICKHOUSE_HAZARD_ENTRIES[80])
-    put("STDDEVPOP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[81])
-    put("STDDEVSAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[82])
-    put("SUBSTRING", TRINO_CLICKHOUSE_HAZARD_ENTRIES[9])
-    put("SUM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[75])
-    put("TAN", TRINO_CLICKHOUSE_HAZARD_ENTRIES[47])
-    put("TANH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[50])
-    put("TIMEZONE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[106])
-    put("TODATE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[68])
-    put("TODAY", TRINO_CLICKHOUSE_HAZARD_ENTRIES[105])
-    put("TODAYOFMONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[56])
-    put("TODAYOFWEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[117])
-    put("TODAYOFYEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[118])
-    put("TOHOUR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[57])
-    put("TOISOWEEK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[62])
-    put("TOMINUTE", TRINO_CLICKHOUSE_HAZARD_ENTRIES[58])
-    put("TOMONTH", TRINO_CLICKHOUSE_HAZARD_ENTRIES[55])
-    put("TOPK", TRINO_CLICKHOUSE_HAZARD_ENTRIES[91])
-    put("TOQUARTER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[61])
-    put("TOSECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[59])
-    put("TOSECOND*1000 + TOMILLISECOND", TRINO_CLICKHOUSE_HAZARD_ENTRIES[60])
-    put("TOUNIXTIMESTAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[67])
-    put("TOYEAR", TRINO_CLICKHOUSE_HAZARD_ENTRIES[54])
-    put("TRANSLATEUTF8", TRINO_CLICKHOUSE_HAZARD_ENTRIES[132])
-    put("TRIM", TRINO_CLICKHOUSE_HAZARD_ENTRIES[4])
-    put("TRIMLEFT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[5])
-    put("TRIMRIGHT", TRINO_CLICKHOUSE_HAZARD_ENTRIES[6])
-    put("TRUNC", TRINO_CLICKHOUSE_HAZARD_ENTRIES[28])
-    put("UPPER", TRINO_CLICKHOUSE_HAZARD_ENTRIES[1])
-    put("VARPOP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[83])
-    put("VARSAMP", TRINO_CLICKHOUSE_HAZARD_ENTRIES[107])
-    put("WIDTHBUCKET", TRINO_CLICKHOUSE_HAZARD_ENTRIES[53])
-    put("XXHASH64", TRINO_CLICKHOUSE_HAZARD_ENTRIES[24])
+    put("ABS", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[25])
+    put("ACOS", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[41])
+    put("ANY", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[90])
+    put("ARRAYFILTER", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[70])
+    put("ARRAYFLATTEN", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[71])
+    put("ARRAYMAP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[72])
+    put("ARRAYSTRINGCONCAT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[108])
+    put("ASIN", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[42])
+    put("ATAN", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[43])
+    put("ATAN2", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[44])
+    put("AVG", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[76])
+    put("BASE64DECODE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[18])
+    put("BASE64ENCODE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[17])
+    put("BITSHIFTLEFT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[110])
+    put("BITSHIFTRIGHT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[111])
+    put("BITXOR", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[112])
+    put("CBRT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[40])
+    put("CEIL", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[113])
+    put("CONCAT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[7])
+    put("CONCAT_WS", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[8])
+    put("CORR", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[85])
+    put("COS", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[46])
+    put("COSH", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[49])
+    put("COSINEDISTANCE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[115])
+    put("COUNT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[77])
+    put("COVARPOP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[86])
+    put("COVARSAMP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[87])
+    put("CRC32", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[23])
+    put("CUME_DIST", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[99])
+    put("DATEDIFF", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[64])
+    put("DATETRUNC", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[63])
+    put("DEGREES", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[51])
+    put("DENSE_RANK", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[94])
+    put("DOTPRODUCT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[119])
+    put("E", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[37])
+    put("EDITDISTANCE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[126])
+    put("EXP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[39])
+    put("FIRST_VALUE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[96])
+    put("FLOOR", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[121])
+    put("FORMATDATETIME", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[65])
+    put("FROMUNIXTIMESTAMP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[66])
+    put("GROUPARRAY", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[89])
+    put("HEX", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[131])
+    put("HISTOGRAM", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[88])
+    put("ISFINITE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[122])
+    put("ISINFINITE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[123])
+    put("ISNAN", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[124])
+    put("L2DISTANCE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[120])
+    put("LAG", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[100])
+    put("LAST_DAY", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[125])
+    put("LAST_VALUE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[97])
+    put("LEAD", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[101])
+    put("LEFTPAD", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[14])
+    put("LENGTH", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[2])
+    put("LOG", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[29])
+    put("LOG10", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[31])
+    put("LOG2", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[32])
+    put("LOWER", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[0])
+    put("MAP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[74])
+    put("MAX", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[79])
+    put("MD5", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[19])
+    put("MEDIAN", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[109])
+    put("MIN", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[78])
+    put("MODULO", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[26])
+    put("NGRAMS", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[73])
+    put("NOW", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[104])
+    put("NTH_VALUE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[102])
+    put("NTILE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[95])
+    put("PERCENT_RANK", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[98])
+    put("PI", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[38])
+    put("POSITION", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[130])
+    put("POW", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[33])
+    put("POWER", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[34])
+    put("RADIANS", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[52])
+    put("RAND", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[103])
+    put("RANGE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[127])
+    put("RANK", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[93])
+    put("REGEXPEXTRACT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[13])
+    put("REPLACEALL", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[11])
+    put("REPLACEREGEXPALL", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[12])
+    put("REVERSE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[3])
+    put("RIGHTPAD", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[15])
+    put("ROUND", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[27])
+    put("ROW_NUMBER", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[92])
+    put("SHA1", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[20])
+    put("SHA256", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[21])
+    put("SHA512", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[22])
+    put("SIGN", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[36])
+    put("SIN", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[45])
+    put("SINH", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[48])
+    put("SOUNDEX", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[16])
+    put("SPLITBYSTRING", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[128])
+    put("SQRT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[35])
+    put("STARTSWITH", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[129])
+    put("STDDEV", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[80])
+    put("STDDEVPOP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[81])
+    put("STDDEVSAMP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[82])
+    put("SUBSTRING", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[9])
+    put("SUM", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[75])
+    put("TAN", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[47])
+    put("TANH", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[50])
+    put("TIMEZONE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[106])
+    put("TODATE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[68])
+    put("TODAY", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[105])
+    put("TODAYOFMONTH", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[56])
+    put("TODAYOFWEEK", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[117])
+    put("TODAYOFYEAR", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[118])
+    put("TOHOUR", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[57])
+    put("TOISOWEEK", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[62])
+    put("TOMINUTE", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[58])
+    put("TOMONTH", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[55])
+    put("TOPK", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[91])
+    put("TOQUARTER", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[61])
+    put("TOSECOND", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[59])
+    put("TOSECOND*1000 + TOMILLISECOND", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[60])
+    put("TOUNIXTIMESTAMP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[67])
+    put("TOYEAR", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[54])
+    put("TRANSLATEUTF8", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[132])
+    put("TRIM", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[4])
+    put("TRIMLEFT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[5])
+    put("TRIMRIGHT", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[6])
+    put("TRUNC", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[28])
+    put("UPPER", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[1])
+    put("VARPOP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[83])
+    put("VARSAMP", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[107])
+    put("WIDTHBUCKET", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[53])
+    put("XXHASH64", CLICKHOUSE_TO_TRINO_HAZARD_ENTRIES[24])
 }

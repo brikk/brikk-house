@@ -44,6 +44,12 @@ enum class HazardVerdict {
  * (null for verdicts that need no explanation), [areas] the semantic areas involved
  * (null-handling, unicode, timezone, ...), [provenance] the pointer into the research
  * report that pinned the verdict.
+ *
+ * [sourceName] / [targetName] carry the two dialect-side function names from the hazards
+ * JSON, oriented to the lookup direction: for a `lookup(source, target, ...)` hit,
+ * [sourceName] is the name under the source dialect and [targetName] the name under the
+ * target dialect (e.g. trino->doris `contains` -> `array_contains`). Both default to null
+ * and are additive — existing call-sites and serialized data are unaffected.
  */
 @Serializable
 data class FunctionHazard(
@@ -51,6 +57,8 @@ data class FunctionHazard(
     val hazard: String? = null,
     val areas: List<String> = emptyList(),
     val provenance: String,
+    val sourceName: String? = null,
+    val targetName: String? = null,
 )
 
 /**

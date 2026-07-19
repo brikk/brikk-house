@@ -9,1491 +9,3436 @@
 // verdict, ties keep JSON order).
 package dev.brikk.house.sql.metadata
 
-/** The 213 probe-verified (duckdb, clickhouse) pair verdicts, in JSON order. */
-internal val DUCKDB_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = hazardsChunk0() +
-    hazardsChunk1() +
-    hazardsChunk2() +
-    hazardsChunk3() +
-    hazardsChunk4() +
-    hazardsChunk5()
+/** The 213 probe-verified (duckdb->clickhouse) verdicts, in JSON order. */
+internal val DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES: List<FunctionHazard> = duckdbClickhouseChunk0() +
+    duckdbClickhouseChunk1() +
+    duckdbClickhouseChunk2() +
+    duckdbClickhouseChunk3() +
+    duckdbClickhouseChunk4() +
+    duckdbClickhouseChunk5()
 
-private fun hazardsChunk0(): List<FunctionHazard> = listOf(
+private fun duckdbClickhouseChunk0(): List<FunctionHazard> = listOf(
     // [0] duckdb: 'lower' | clickhouse: 'lower'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse lower() is ASCII-only: 'İ'/'ß'/'É' pass through unchanged; DuckDB lowercases full Unicode. Parity needs ClickHouse lowerUTF8 — and even that diverges (İ->i+U+0307).",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "lower",
+        targetName = "lower"),
     // [1] duckdb: 'upper' | clickhouse: 'upper'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse upper() is ASCII-only (ß/É unchanged) vs DuckDB full-Unicode (ß->ẞ). upperUTF8 folds but ß->'SS' (length-changing), still != DuckDB ẞ.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "upper",
+        targetName = "upper"),
     // [2] duckdb: 'lcase' | clickhouse: 'lower'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "lcase is an alias of ASCII-only lower(); 'İ' unchanged vs DuckDB 'i'.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "lcase",
+        targetName = "lower"),
     // [3] duckdb: 'ucase' | clickhouse: 'upper'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ucase is an alias of ASCII-only upper(); non-ASCII unchanged vs DuckDB folding.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "ucase",
+        targetName = "upper"),
     // [4] duckdb: 'length' | clickhouse: 'length'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse length() counts BYTES (😀->4, 中文->6, ZWJ family->18); DuckDB length() counts code points. Use lengthUTF8/char_length for code-point parity.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes",
+        sourceName = "length",
+        targetName = "length"),
     // [5] duckdb: 'char_length' | clickhouse: 'char_length'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Both count code points (😀->1); ClickHouse char_length == lengthUTF8.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes",
+        sourceName = "char_length",
+        targetName = "char_length"),
     // [6] duckdb: 'character_length' | clickhouse: 'char_length'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Alias of char_length; code-point count in both.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes",
+        sourceName = "character_length",
+        targetName = "char_length"),
     // [7] duckdb: 'octet_length' | clickhouse: 'octet_length'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse octet_length(varchar)=byte count; DuckDB octet_length has no bare-VARCHAR overload (requires BLOB) and errors.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes",
+        sourceName = "octet_length",
+        targetName = "octet_length"),
     // [8] duckdb: 'reverse' | clickhouse: 'reverse'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse reverse() reverses BYTES (mangles multi-byte UTF-8 into U+FFFD); DuckDB reverse is grapheme-aware. reverseUTF8 is code-point-aware but still splits combining marks vs DuckDB graphemes.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#reverse-byte-vs-grapheme"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#reverse-byte-vs-grapheme",
+        sourceName = "reverse",
+        targetName = "reverse"),
     // [9] duckdb: 'trim' | clickhouse: 'trim'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse trim strips ONLY the ASCII space (0x20): NBSP/EM-SPACE left intact; DuckDB additionally strips NBSP and EM SPACE. Neither strips tab/newline.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "trim",
+        targetName = "trim"),
     // [10] duckdb: 'ltrim' | clickhouse: 'trimLeft'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Same whitespace-set divergence as trim (ASCII space only in ClickHouse).",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "ltrim",
+        targetName = "trimLeft"),
     // [11] duckdb: 'rtrim' | clickhouse: 'trimRight'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Same whitespace-set divergence as trim (ASCII space only in ClickHouse).",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "rtrim",
+        targetName = "trimRight"),
     // [12] duckdb: 'concat' | clickhouse: 'concat'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse concat PROPAGATES NULL (any NULL arg -> NULL); DuckDB SKIPS NULLs (concat('a',NULL,'c')='ac', concat(NULL,NULL)='').",
         areas = listOf("string", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation",
+        sourceName = "concat",
+        targetName = "concat"),
     // [13] duckdb: 'concat_ws' | clickhouse: 'concat_ws'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse concat_ws propagates NULL from any element -> NULL; DuckDB skips NULL elements. NULL separator -> NULL in both.",
         areas = listOf("string", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation",
+        sourceName = "concat_ws",
+        targetName = "concat_ws"),
     // [14] duckdb: 'substr' | clickhouse: 'substring'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse substring is BYTE-indexed (splits multi-byte chars -> U+FFFD) and start=0 returns '' (not treated as 1); DuckDB is code-point-indexed and clamps start=0 to 1. Negative length also differs. substringUTF8 fixes the multibyte axis only.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0",
+        sourceName = "substr",
+        targetName = "substring"),
     // [15] duckdb: 'substring' | clickhouse: 'substring'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "See substr: byte indexing + start=0 empty + negative-length semantics differ; substringUTF8 needed for code-point parity.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0",
+        sourceName = "substring",
+        targetName = "substring"),
     // [16] duckdb: 'position' | clickhouse: 'position'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse position(haystack, needle) is 1-based like DuckDB, but argument ORDER and the comma form differ from DuckDB's position(needle IN haystack); DuckDB's comma form is strpos(str,search).",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr",
+        sourceName = "position",
+        targetName = "position"),
     // [17] duckdb: 'instr' | clickhouse: 'instr'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse instr is an alias of positionCaseInsensitive — CASE-INSENSITIVE search; DuckDB instr is case-sensitive (instr('Hello','h')=1 in CH vs 0 in DuckDB).",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr",
+        sourceName = "instr",
+        targetName = "instr"),
     // [18] duckdb: 'replace' | clickhouse: 'replaceAll'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "ClickHouse replace == replaceAll: replaces ALL occurrences, same as DuckDB replace.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all",
+        sourceName = "replace",
+        targetName = "replaceAll"),
     // [19] duckdb: 'regexp_replace' | clickhouse: 'replaceRegexpOne'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "DuckDB regexp_replace(s,p,r) replaces only the FIRST match (no 'g' flag); the generator now emits replaceRegexpOne (first-only), result-identical for the common case. RESIDUAL divergence: empty-pattern behavior differs (ClickHouse no-op vs DuckDB inserts at every position) and RE2-vs-RE2 flag handling — hence conditionally-equivalent, not identical. The 'g'/Trino all-form maps to replaceRegexpAll.",
         areas = listOf("regex", "string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE",
+        sourceName = "regexp_replace",
+        targetName = "replaceRegexpOne"),
     // [20] duckdb: 'regexp_extract' | clickhouse: 'regexpExtract'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Group semantics aligned: group 0 = whole match, group N = Nth capture; probed backslash-free to avoid the literal-escaping confound.",
         areas = listOf("regex"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#regexp-extract-groups"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#regexp-extract-groups",
+        sourceName = "regexp_extract",
+        targetName = "regexpExtract"),
     // [21] duckdb: 'regexp_matches' | clickhouse: 'match'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse match() is a partial (unanchored) RE2 search returning UInt8 0/1; DuckDB regexp_matches returns BOOLEAN. Same match set for equivalent patterns; return type differs (0/1 vs true/false).",
         areas = listOf("regex"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering",
+        sourceName = "regexp_matches",
+        targetName = "match"),
     // [22] duckdb: 'lpad' | clickhouse: 'leftPad'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse leftPad pads by BYTES; DuckDB lpad pads by code points. leftPadUTF8 is the code-point variant. ASCII aligned.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes",
+        sourceName = "lpad",
+        targetName = "leftPad"),
     // [23] duckdb: 'rpad' | clickhouse: 'rightPad'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse rightPad pads by BYTES; DuckDB rpad by code points. rightPadUTF8 for parity. ASCII aligned.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes",
+        sourceName = "rpad",
+        targetName = "rightPad"),
     // [24] duckdb: 'ascii' | clickhouse: 'ascii'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse ascii returns the first BYTE (emoji->240); DuckDB returns the first code point (emoji->128512). ASCII inputs aligned.",
         areas = listOf("string", "unicode"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr",
+        sourceName = "ascii",
+        targetName = "ascii"),
     // [25] duckdb: 'left' | clickhouse: 'left'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned incl. negative n (all-but-last-|n|). Probe-verified on ASCII.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "left",
+        targetName = "left"),
     // [26] duckdb: 'right' | clickhouse: 'right'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned on ASCII probes.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "right",
+        targetName = "right"),
     // [27] duckdb: 'repeat' | clickhouse: 'repeat'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "repeat(s,0)='' and negative count -> '' in both.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "repeat",
+        targetName = "repeat"),
     // [28] duckdb: 'translate' | clickhouse: 'translateUTF8'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB translate is code-point-wise == ClickHouse translateUTF8 (café/é->e verified). Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on ClickHouse->ClickHouse). Reconciled identical (generator fix 2026-07-14).",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline | source-aware fix 2026-07-14"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline | source-aware fix 2026-07-14",
+        sourceName = "translate",
+        targetName = "translateUTF8"),
     // [29] duckdb: 'format' | clickhouse: 'format'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse format uses positional {0},{1} placeholders (Python/.NET style); DuckDB format uses fmt/printf %-style. Incompatible spec dialects — never map by name. (ClickHouse printf() matches DuckDB printf.)",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#format-spec"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#format-spec",
+        sourceName = "format",
+        targetName = "format"),
     // [30] duckdb: 'printf' | clickhouse: 'printf'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Both use C printf %-specifiers; probe 'x=5' aligned.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "printf",
+        targetName = "printf"),
     // [31] duckdb: 'soundex' | clickhouse: 'soundex'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "ClickHouse soundex('Robert')='R163' matches DuckDB (which needs no extension here); rename only.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "soundex",
+        targetName = "soundex"),
     // [32] duckdb: 'to_base64' | clickhouse: 'base64Encode'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Standard alphabet; 'abc'->'YWJj' in both.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "to_base64",
+        targetName = "base64Encode"),
     // [33] duckdb: 'from_base64' | clickhouse: 'base64Decode'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "'YWJj'->'abc' in both.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "from_base64",
+        targetName = "base64Decode"),
     // [34] duckdb: 'md5' | clickhouse: 'MD5'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same digest but return SHAPE differs: ClickHouse MD5 returns FixedString(16) raw bytes; DuckDB md5 returns a lowercase hex VARCHAR. Wrap ClickHouse in lower(hex(...)) to compare. NULL-propagates in both.",
         areas = listOf("hash", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "md5",
+        targetName = "MD5"),
     // [35] duckdb: 'sha1' | clickhouse: 'SHA1'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same digest; ClickHouse SHA1 returns raw bytes (FixedString), DuckDB sha1 returns hex VARCHAR — hex() wrap required.",
         areas = listOf("hash"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "sha1",
+        targetName = "SHA1"),
     // [36] duckdb: 'sha256' | clickhouse: 'SHA256'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same digest; ClickHouse returns raw bytes vs DuckDB hex VARCHAR — hex() wrap required.",
         areas = listOf("hash"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "sha256",
+        targetName = "SHA256"),
     // [37] duckdb: 'abs' | clickhouse: 'abs'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "abs(-2147483648) (INT32 min): ClickHouse widens the result and returns 2147483648; DuckDB THROWS an overflow error.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-overflow"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-overflow",
+        sourceName = "abs",
+        targetName = "abs"),
     // [38] duckdb: 'divide' | clickhouse: 'divide'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Float division by zero: ClickHouse returns NULL; DuckDB returns +inf.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero",
+        sourceName = "divide",
+        targetName = "divide"),
     // [39] duckdb: 'multiply' | clickhouse: 'multiply'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Plain multiplication aligned; overflow follows the promotion/wrap axis noted for integer ops.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "multiply",
+        targetName = "multiply"),
 )
 
-private fun hazardsChunk1(): List<FunctionHazard> = listOf(
+private fun duckdbClickhouseChunk1(): List<FunctionHazard> = listOf(
     // [40] duckdb: 'mod' | clickhouse: 'modulo'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "modulo by zero: ClickHouse THROWS (Division by zero, code 153); DuckDB returns NULL. Non-zero modulo (incl. negative operands) aligned.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero",
+        sourceName = "mod",
+        targetName = "modulo"),
     // [41] duckdb: 'round' | clickhouse: 'round'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB round() is half-away-from-zero; ClickHouse round() is banker's (half-even). The SOURCE-AWARE generator now emits an explicit half-away shim for duckdb->clickhouse (sign(x)*floor(abs(x)*pow(10,d)+0.5)/pow(10,d)) — live-verified equal to DuckDB on 2.5/0.5/-2.5/2.345@2dp/3.5; ClickHouse->ClickHouse stays faithful banker's round. Reconciled identical (generator fix 2026-07-14). NOTE: datetime operands still inherit the 1970 floor caveat (separate).",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers | source-aware shim 2026-07-14"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers | source-aware shim 2026-07-14",
+        sourceName = "round",
+        targetName = "round"),
     // [42] duckdb: 'roundbankers' | clickhouse: 'roundBankers'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse roundBankers == its default round (half-even); equals DuckDB only when DuckDB round is forced to banker's, which it is not by default.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers",
+        sourceName = "roundbankers",
+        targetName = "roundBankers"),
     // [43] duckdb: 'trunc' | clickhouse: 'trunc'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Truncation toward zero aligned incl. negatives.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "trunc",
+        targetName = "trunc"),
     // [44] duckdb: 'floor' | clickhouse: 'floor'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned incl. negatives (floor(-2.5)=-3).",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "floor",
+        targetName = "floor"),
     // [45] duckdb: 'ceil' | clickhouse: 'ceil'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned incl. negatives (ceil(-2.5)=-2).",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "ceil",
+        targetName = "ceil"),
     // [46] duckdb: 'ceiling' | clickhouse: 'ceil'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Alias of ceil; aligned.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "ceiling",
+        targetName = "ceil"),
     // [47] duckdb: 'sqrt' | clickhouse: 'sqrt'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "sqrt(-1): ClickHouse returns NULL (nan absorbed to NULL); DuckDB THROWS 'cannot take square root of a negative'.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "sqrt",
+        targetName = "sqrt"),
     // [48] duckdb: 'ln' | clickhouse: 'log'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "NAME COLLISION + domain: ClickHouse log(x) is NATURAL log (== ln), so mapping DuckDB ln->log is value-correct, but ln(0)/ln(-1): ClickHouse returns NULL, DuckDB THROWS.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision",
+        sourceName = "ln",
+        targetName = "log"),
     // [49] duckdb: 'log' | clickhouse: 'log10'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB single-arg log(x) is base-10; the generator now emits log10(x), result-identical (never ClickHouse log, which is natural log).",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE",
+        sourceName = "log",
+        targetName = "log10"),
     // [50] duckdb: 'log10' | clickhouse: 'log10'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Base-10 log; log10(1000)=3 in both (map DuckDB log10 to ClickHouse log10, never to log).",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision",
+        sourceName = "log10",
+        targetName = "log10"),
     // [51] duckdb: 'log2' | clickhouse: 'log2'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "log2(8)=3 in both.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "log2",
+        targetName = "log2"),
     // [52] duckdb: 'factorial' | clickhouse: 'factorial'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "factorial(-1): ClickHouse returns 1; DuckDB THROWS.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "factorial",
+        targetName = "factorial"),
     // [53] duckdb: 'pow' | clickhouse: 'pow'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "pow(-8,0.5) (complex result): ClickHouse returns NULL; DuckDB returns nan. Finite real cases aligned.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "pow",
+        targetName = "pow"),
     // [54] duckdb: 'power' | clickhouse: 'power'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "See pow: pow(-8,0.5) NULL vs nan; finite cases aligned.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "power",
+        targetName = "power"),
     // [55] duckdb: 'sign' | clickhouse: 'sign'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "sign of negative/zero aligned; float NaN not re-probed here.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sign",
+        targetName = "sign"),
     // [56] duckdb: 'isnan' | clickhouse: 'isNaN'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same predicate; ClickHouse returns UInt8 0/1, DuckDB BOOLEAN true/false.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering",
+        sourceName = "isnan",
+        targetName = "isNaN"),
     // [57] duckdb: 'isfinite' | clickhouse: 'isFinite'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same predicate; 0/1 vs true/false return type.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering",
+        sourceName = "isfinite",
+        targetName = "isFinite"),
     // [58] duckdb: 'gcd' | clickhouse: 'gcd'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "gcd(0,5): ClickHouse THROWS (Division by zero); DuckDB returns 5. Non-zero pairs aligned.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero",
+        sourceName = "gcd",
+        targetName = "gcd"),
     // [59] duckdb: 'lcm' | clickhouse: 'lcm'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "lcm(4,6)=12 aligned for non-zero args.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "lcm",
+        targetName = "lcm"),
     // [60] duckdb: 'bin' | clickhouse: 'bin'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB bin(x) has no leading zeros; ClickHouse bin(x) zero-pads to a full byte. The SOURCE-AWARE generator now strips leading zeros for duckdb->clickhouse (if(x=0,'0',substring(bin(x),position(bin(x),'1')))) — live-verified equal to DuckDB on 5/0/255/1; ClickHouse->ClickHouse keeps the padded native bin. Reconciled identical (generator fix 2026-07-14).",
         areas = listOf("numeric", "string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#bin-padding | source-aware shim 2026-07-14"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#bin-padding | source-aware shim 2026-07-14",
+        sourceName = "bin",
+        targetName = "bin"),
     // [61] duckdb: 'hex' | clickhouse: 'hex'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "hex(255)='FF', hex('A')='41' in both.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "hex",
+        targetName = "hex"),
     // [62] duckdb: 'unhex' | clickhouse: 'unhex'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Rename/behaviour aligned on hex decode; ClickHouse returns String, DuckDB BLOB (type-layer).",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "unhex",
+        targetName = "unhex"),
     // [63] duckdb: 'xor' | clickhouse: 'bitXor'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB xor is bitwise; the generator now emits bitXor(a,b), result-identical (not ClickHouse logical xor, and not the invalid `^` operator).",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#xor-logical-vs-bitwise | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#xor-logical-vs-bitwise | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE",
+        sourceName = "xor",
+        targetName = "bitXor"),
     // [64] duckdb: 'pi' | clickhouse: 'pi'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "3.141592653589793 in both.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "pi",
+        targetName = "pi"),
     // [65] duckdb: 'exp' | clickhouse: 'exp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "exp(1)/exp(2) agree to full double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "exp",
+        targetName = "exp"),
     // [66] duckdb: 'acos' | clickhouse: 'acos'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "acos(2) (out of domain): ClickHouse NULL; DuckDB THROWS. In-domain values aligned.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "acos",
+        targetName = "acos"),
     // [67] duckdb: 'asin' | clickhouse: 'asin'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "asin(2) out of domain: ClickHouse NULL; DuckDB THROWS. In-domain aligned.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "asin",
+        targetName = "asin"),
     // [68] duckdb: 'acosh' | clickhouse: 'acosh'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "In-domain aligned to ~double precision; out-of-domain follows the NULL-vs-throw contract (acosh(0)).",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "acosh",
+        targetName = "acosh"),
     // [69] duckdb: 'atanh' | clickhouse: 'atanh'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "In-domain aligned; |x|>=1 follows NULL-vs-throw contract.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "atanh",
+        targetName = "atanh"),
     // [70] duckdb: 'atan' | clickhouse: 'atan'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "atan",
+        targetName = "atan"),
     // [71] duckdb: 'atan2' | clickhouse: 'atan2'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "atan2",
+        targetName = "atan2"),
     // [72] duckdb: 'asinh' | clickhouse: 'asinh'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "asinh",
+        targetName = "asinh"),
     // [73] duckdb: 'sin' | clickhouse: 'sin'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sin",
+        targetName = "sin"),
     // [74] duckdb: 'cos' | clickhouse: 'cos'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cos",
+        targetName = "cos"),
     // [75] duckdb: 'tan' | clickhouse: 'tan'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "tan",
+        targetName = "tan"),
     // [76] duckdb: 'sinh' | clickhouse: 'sinh'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sinh",
+        targetName = "sinh"),
     // [77] duckdb: 'cosh' | clickhouse: 'cosh'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cosh",
+        targetName = "cosh"),
     // [78] duckdb: 'tanh' | clickhouse: 'tanh'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "tanh",
+        targetName = "tanh"),
     // [79] duckdb: 'cbrt' | clickhouse: 'cbrt'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "cbrt(27)=3 aligned.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cbrt",
+        targetName = "cbrt"),
 )
 
-private fun hazardsChunk2(): List<FunctionHazard> = listOf(
+private fun duckdbClickhouseChunk2(): List<FunctionHazard> = listOf(
     // [80] duckdb: 'degrees' | clickhouse: 'degrees'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "degrees",
+        targetName = "degrees"),
     // [81] duckdb: 'radians' | clickhouse: 'radians'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned to double precision.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "radians",
+        targetName = "radians"),
     // [82] duckdb: 'lgamma' | clickhouse: 'lgamma'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "lgamma(5)=3.178054 aligned.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "lgamma",
+        targetName = "lgamma"),
     // [83] duckdb: 'year' | clickhouse: 'toYear'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Value-correct for 1970+, but ClickHouse Date/DateTime cannot represent pre-1970: toDate('1969-12-31') clamps and year() returns 1970. DuckDB handles the full proleptic range.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970",
+        sourceName = "year",
+        targetName = "toYear"),
     // [84] duckdb: 'month' | clickhouse: 'toMonth'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned for representable (>=1970) dates.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "month",
+        targetName = "toMonth"),
     // [85] duckdb: 'day' | clickhouse: 'toDayOfMonth'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned for representable dates.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "day",
+        targetName = "toDayOfMonth"),
     // [86] duckdb: 'dayofmonth' | clickhouse: 'toDayOfMonth'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned for representable dates.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "dayofmonth",
+        targetName = "toDayOfMonth"),
     // [87] duckdb: 'hour' | clickhouse: 'toHour'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Aligned when session timezones match; ClickHouse DateTime is timezone-typed (DateTime('tz') / session_timezone) so an unpinned zone silently shifts results.",
         areas = listOf("datetime", "timezone"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "hour",
+        targetName = "toHour"),
     // [88] duckdb: 'minute' | clickhouse: 'toMinute'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "minute",
+        targetName = "toMinute"),
     // [89] duckdb: 'second' | clickhouse: 'toSecond'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "second",
+        targetName = "toSecond"),
     // [90] duckdb: 'millisecond' | clickhouse: 'toSecond*1000 + toMillisecond'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB/Trino millisecond(t) = seconds-within-minute*1000 + ms; the generator now emits (toSecond(t)*1000 + toMillisecond(t)), result-identical (ClickHouse toMillisecond alone is the sub-second component only). Verified: 30123/0/5789/56001 all match.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond | generator mapping fixed 2026-07-13 (BUGS row 6), live-differential-verified vs ClickHouse 26.5.1.1 + DuckDB 1.5.4"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond | generator mapping fixed 2026-07-13 (BUGS row 6), live-differential-verified vs ClickHouse 26.5.1.1 + DuckDB 1.5.4",
+        sourceName = "millisecond",
+        targetName = "toSecond*1000 + toMillisecond"),
     // [91] duckdb: 'dayofweek' | clickhouse: 'toDayOfWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse toDayOfWeek is ISO Mon=1..Sun=7; DuckDB dayofweek is Sun=0..Sat=6. Sunday: 7 vs 0.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-dayofweek-numbering"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-dayofweek-numbering",
+        sourceName = "dayofweek",
+        targetName = "toDayOfWeek"),
     // [92] duckdb: 'dayofyear' | clickhouse: 'toDayOfYear'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Leap-day pinned: 2024-02-29 -> 60 in both.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "dayofyear",
+        targetName = "toDayOfYear"),
     // [93] duckdb: 'quarter' | clickhouse: 'toQuarter'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Aligned.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "quarter",
+        targetName = "toQuarter"),
     // [94] duckdb: 'week' | clickhouse: 'toISOWeek'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB week is ISO-8601 == ClickHouse toISOWeek (52==52 verified). Now emitted via SOURCE-AWARE generation: duckdb->clickhouse renders toISOWeek; ClickHouse->ClickHouse stays faithful `week` (mode 0). Reconciled identical (generator fix 2026-07-14, source-aware).",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | source-aware fix 2026-07-14"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | source-aware fix 2026-07-14",
+        sourceName = "week",
+        targetName = "toISOWeek"),
     // [95] duckdb: 'yearweek' | clickhouse: 'toYearWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "ClickHouse toYearWeek default mode 0 (Sunday weeks, calendar year): 2024-12-30 -> 202452; DuckDB yearweek is ISO (-> 202501). Numbering AND year differ at boundaries.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-yearweek"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-yearweek",
+        sourceName = "yearweek",
+        targetName = "toYearWeek"),
     // [96] duckdb: 'date_trunc' | clickhouse: 'dateTrunc'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Aligned on the intersecting unit set for representable dates, but return type differs for some units (ClickHouse dateTrunc('month',DateTime) yielded a Date-shaped value vs DuckDB TIMESTAMP) and the 1970 floor applies.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type",
+        sourceName = "date_trunc",
+        targetName = "dateTrunc"),
     // [97] duckdb: 'datetrunc' | clickhouse: 'dateTrunc'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Alias of date_trunc; same caveats.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type",
+        sourceName = "datetrunc",
+        targetName = "dateTrunc"),
     // [98] duckdb: 'date_diff' | clickhouse: 'dateDiff'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "With an explicit unit and matched session zones the day-diff aligned (60); ClickHouse requires the unit as first arg and is timezone-typed. 1970 floor applies to operands.",
         areas = listOf("datetime", "timezone"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "date_diff",
+        targetName = "dateDiff"),
     // [99] duckdb: 'datediff' | clickhouse: 'dateDiff'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "See date_diff; ClickHouse datediff needs a unit arg.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "datediff",
+        targetName = "dateDiff"),
     // [100] duckdb: 'last_day' | clickhouse: 'toLastDayOfMonth'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Value-correct for 1970+ (2024-02 -> 29), but 1900-02-15 -> ClickHouse '1970-01-31' (Date range floor) vs DuckDB '1900-02-28'.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970",
+        sourceName = "last_day",
+        targetName = "toLastDayOfMonth"),
     // [101] duckdb: 'monthname' | clickhouse: 'monthName'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same output ('March') but ClickHouse name is the case-SENSITIVE camelCase monthName; the lowercase monthname is NOT a case-insensitive alias and will not resolve.",
         areas = listOf("datetime", "string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#case-sensitivity"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#case-sensitivity",
+        sourceName = "monthname",
+        targetName = "monthName"),
     // [102] duckdb: 'now' | clickhouse: 'now'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Both bind once per query; ClickHouse now() returns DateTime (second precision, timezone-typed) vs DuckDB TIMESTAMP WITH TIME ZONE (microsecond). Precision/type differ.",
         areas = listOf("datetime", "timezone"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "now",
+        targetName = "now"),
     // [103] duckdb: 'current_date' | clickhouse: 'today'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse current_date/today() is session-zone dependent (Date type, 1970 floor); do not push where a specific zone/range must hold.",
         areas = listOf("datetime", "timezone"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "current_date",
+        targetName = "today"),
     // [104] duckdb: 'to_days' | clickhouse: 'toRelativeDayNum'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "NAME COLLISION: DuckDB to_days(n) constructs an INTERVAL of n days; ClickHouse has no to_days — the day-number is toRelativeDayNum(date). Completely different intent.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#age-signature"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#age-signature",
+        sourceName = "to_days",
+        targetName = "toRelativeDayNum"),
     // [105] duckdb: 'age' | clickhouse: 'age'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Different signature: ClickHouse age('unit', start, end) returns an integer count in that unit; DuckDB age(ts, ts) returns an INTERVAL. Never map by name.",
         areas = listOf("datetime"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#age-signature"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#age-signature",
+        sourceName = "age",
+        targetName = "age"),
     // [106] duckdb: 'timezone' | clickhouse: 'timezone'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse timezone() returns the server/session timezone name (String); DuckDB has no zero-arg timezone() scalar (it is a shift function elsewhere) — session-only, not pushable.",
         areas = listOf("datetime", "timezone"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "timezone",
+        targetName = "timezone"),
     // [107] duckdb: 'range' | clickhouse: 'range'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "range(5)->[0..4], range(1,5)->[1..4] in both (list rendering aside).",
         areas = listOf("array"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "range",
+        targetName = "range"),
     // [108] duckdb: 'flatten' | clickhouse: 'arrayFlatten'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "One level of nesting flattened in both.",
         areas = listOf("array"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "flatten",
+        targetName = "arrayFlatten"),
     // [109] duckdb: 'array_to_string' | clickhouse: 'arrayStringConcat'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Join aligned incl. NULL elements skipped by both ('a',NULL,'c' -> 'a,c').",
         areas = listOf("array", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "array_to_string",
+        targetName = "arrayStringConcat"),
     // [110] duckdb: 'cardinality' | clickhouse: 'length'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "NAME/TYPE collision: DuckDB cardinality operates ONLY on MAP (errors on a list); ClickHouse cardinality is an alias of length (array element count). Map DuckDB list length to ClickHouse length, not via cardinality.",
         areas = listOf("array"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob",
+        sourceName = "cardinality",
+        targetName = "length"),
     // [111] duckdb: 'array_agg' | clickhouse: 'groupArray'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Both collect into an array; ordering is undefined without ORDER BY and NULL-handling of groupArray differs (groupArray drops NULLs; use groupArrayIf/arrays for NULL retention).",
         areas = listOf("aggregate", "array", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "array_agg",
+        targetName = "groupArray"),
     // [112] duckdb: 'sum' | clickhouse: 'sum'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Empty group: ClickHouse sum() -> 0; DuckDB -> NULL. Also ClickHouse sum silently OVERFLOW-WRAPS a fixed-width Int64 (max+1 -> Int64 min) where DuckDB widens. All-NULL input -> NULL in both.",
         areas = listOf("aggregate", "null", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "sum",
+        targetName = "sum"),
     // [113] duckdb: 'avg' | clickhouse: 'avg'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Empty group: ClickHouse avg() -> nan; DuckDB -> NULL. All-NULL -> NULL in both; populated groups aligned.",
         areas = listOf("aggregate", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "avg",
+        targetName = "avg"),
     // [114] duckdb: 'count' | clickhouse: 'count'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "count(expr) skips NULLs; count()/count(*) over empty -> 0 in both.",
         areas = listOf("aggregate", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "count",
+        targetName = "count"),
     // [115] duckdb: 'min' | clickhouse: 'min'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Empty group: ClickHouse min() -> type default (0); DuckDB -> NULL. All-NULL -> NULL in both.",
         areas = listOf("aggregate", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "min",
+        targetName = "min"),
     // [116] duckdb: 'max' | clickhouse: 'max'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Empty group: ClickHouse max() -> type default (0); DuckDB -> NULL. All-NULL -> NULL in both.",
         areas = listOf("aggregate", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "max",
+        targetName = "max"),
     // [117] duckdb: 'stddev_pop' | clickhouse: 'stddevPop'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "stddevPop({1,2,3})=0.8165 aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddev_pop",
+        targetName = "stddevPop"),
     // [118] duckdb: 'stddev_samp' | clickhouse: 'stddevSamp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Sample stddev aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddev_samp",
+        targetName = "stddevSamp"),
     // [119] duckdb: 'stddev' | clickhouse: 'stddev'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Bare stddev = sample in both (=1 for {1,2,3}).",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddev",
+        targetName = "stddev"),
 )
 
-private fun hazardsChunk3(): List<FunctionHazard> = listOf(
+private fun duckdbClickhouseChunk3(): List<FunctionHazard> = listOf(
     // [120] duckdb: 'var_pop' | clickhouse: 'varPop'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "varPop({1,2,3})=0.6667 aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "var_pop",
+        targetName = "varPop"),
     // [121] duckdb: 'var_samp' | clickhouse: 'varSamp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Sample variance aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "var_samp",
+        targetName = "varSamp"),
     // [122] duckdb: 'corr' | clickhouse: 'corr'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Pearson correlation aligned (0.981981).",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "corr",
+        targetName = "corr"),
     // [123] duckdb: 'covar_pop' | clickhouse: 'covarPop'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Population covariance aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "covar_pop",
+        targetName = "covarPop"),
     // [124] duckdb: 'covar_samp' | clickhouse: 'covarSamp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Sample covariance aligned.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "covar_samp",
+        targetName = "covarSamp"),
     // [125] duckdb: 'median' | clickhouse: 'median'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "median({1,2,3})=2 aligned, but ClickHouse median is an alias for the approximate quantile(0.5) (reservoir) — exact only for small/simple inputs; DuckDB median is exact.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "median",
+        targetName = "median"),
     // [126] duckdb: 'quantile' | clickhouse: 'quantile'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Value aligned on the probe, but ClickHouse quantile uses parametric syntax quantile(level)(x) and is APPROXIMATE; DuckDB quantile_cont/quantile is exact and takes level as an argument. Different call shape + exactness.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "quantile",
+        targetName = "quantile"),
     // [127] duckdb: 'any_value' | clickhouse: 'any'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "ClickHouse any(x) == any_value; order-dependent / nondeterministic without ORDER BY in both.",
         areas = listOf("aggregate"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "any_value",
+        targetName = "any"),
     // [128] duckdb: 'argmax' | clickhouse: 'argMax'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "argMax(y,x) returns y at the max x; aligned with DuckDB arg_max. Ties nondeterministic in both.",
         areas = listOf("aggregate"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "argmax",
+        targetName = "argMax"),
     // [129] duckdb: 'argmin' | clickhouse: 'argMin'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "argMin(y,x) aligned with DuckDB arg_min.",
         areas = listOf("aggregate"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "argmin",
+        targetName = "argMin"),
     // [130] duckdb: 'histogram' | clickhouse: 'histogram'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Both bucket values, but ClickHouse histogram(bins)(x) is an approximate adaptive-bin aggregate with a different signature and result shape than DuckDB histogram (exact value->count map).",
         areas = listOf("aggregate"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "histogram",
+        targetName = "histogram"),
     // [131] duckdb: 'string_agg' | clickhouse: 'arrayStringConcat'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "DuckDB string_agg(x,sep) has no single-function ClickHouse equal; the idiom is arrayStringConcat(groupArray(x),sep). Ordering undefined without ORDER BY.",
         areas = listOf("aggregate", "string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "string_agg",
+        targetName = "arrayStringConcat"),
     // [132] duckdb: 'group_concat' | clickhouse: 'arrayStringConcat'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Same as string_agg: no direct ClickHouse group_concat; compose groupArray + arrayStringConcat. Ordering undefined.",
         areas = listOf("aggregate", "string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "group_concat",
+        targetName = "arrayStringConcat"),
     // [133] duckdb: 'entropy' | clickhouse: 'entropy'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Both compute Shannon entropy of value frequencies; base and exact/approx handling not fully re-probed — verify before pushing.",
         areas = listOf("aggregate", "numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "entropy",
+        targetName = "entropy"),
     // [134] duckdb: 'row_number' | clickhouse: 'row_number'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "1,2,3 over ORDER BY in both.",
         areas = listOf("window"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "row_number",
+        targetName = "row_number"),
     // [135] duckdb: 'rank' | clickhouse: 'rank'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Standard rank aligned.",
         areas = listOf("window"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "rank",
+        targetName = "rank"),
     // [136] duckdb: 'dense_rank' | clickhouse: 'dense_rank'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Dense rank aligned.",
         areas = listOf("window"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "dense_rank",
+        targetName = "dense_rank"),
     // [137] duckdb: 'ntile' | clickhouse: 'ntile'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "ntile(2) bucketing aligned.",
         areas = listOf("window"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "ntile",
+        targetName = "ntile"),
     // [138] duckdb: 'first_value' | clickhouse: 'first_value'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "first_value over running frame aligned.",
         areas = listOf("window"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "first_value",
+        targetName = "first_value"),
     // [139] duckdb: 'last_value' | clickhouse: 'last_value'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "last_value over default running frame aligned in both.",
         areas = listOf("window"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "last_value",
+        targetName = "last_value"),
     // [140] duckdb: 'percent_rank' | clickhouse: 'percent_rank'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "0,0.5,1 in both.",
         areas = listOf("window"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "percent_rank",
+        targetName = "percent_rank"),
     // [141] duckdb: 'cume_dist' | clickhouse: 'cume_dist'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "0.333,0.667,1 in both.",
         areas = listOf("window"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cume_dist",
+        targetName = "cume_dist"),
     // [142] duckdb: 'lag' | clickhouse: 'lag'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Out-of-partition default: ClickHouse lag (lagInFrame) fills the type DEFAULT (0) for the missing first row; DuckDB lag returns NULL.",
         areas = listOf("window", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "lag",
+        targetName = "lag"),
     // [143] duckdb: 'lead' | clickhouse: 'lead'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Out-of-partition default: ClickHouse lead fills type default (0) past the last row; DuckDB returns NULL.",
         areas = listOf("window", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "lead",
+        targetName = "lead"),
     // [144] duckdb: 'nth_value' | clickhouse: 'nth_value'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Before the Nth row exists ClickHouse returns the type DEFAULT (0); DuckDB returns NULL.",
         areas = listOf("window", "null"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "nth_value",
+        targetName = "nth_value"),
     // [145] duckdb: 'rand' | clickhouse: 'rand'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Non-deterministic; never pushable/comparable. ClickHouse rand() returns UInt32 range; DuckDB random() returns [0,1) double — even the range differs.",
         areas = listOf("numeric"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "rand",
+        targetName = "rand"),
     // [146] duckdb: 'today' | clickhouse: 'today'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Session/zone-dependent current date; Date type (1970 floor) in ClickHouse. Not pushable to a fixed value.",
         areas = listOf("datetime", "timezone"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "today",
+        targetName = "today"),
     // [147] duckdb: 'version' | clickhouse: 'version'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Both return an engine version string but the values are engine-specific and never comparable/pushable.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "version",
+        targetName = "version"),
     // [148] duckdb: 'current_user' | clickhouse: 'currentUser'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Session identity string; ClickHouse currentUser()/current_user, values environment-specific, not pushable.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "current_user",
+        targetName = "currentUser"),
     // [149] duckdb: 'current_database' | clickhouse: 'currentDatabase'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Session catalog name; environment-specific, not pushable.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "current_database",
+        targetName = "currentDatabase"),
     // [150] duckdb: 'uuid' | clickhouse: 'generateUUIDv4'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Non-deterministic UUID; same distribution, never comparable/pushable.",
         areas = listOf("string"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "uuid",
+        targetName = "generateUUIDv4"),
     // [151] duckdb: 'map' | clickhouse: 'map'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Constructs a MAP in both but the CONSTRUCTOR SHAPE differs: ClickHouse map(k1,v1,k2,v2,...) (flat kv list) vs DuckDB map([keys],[values]) (two arrays). Value-equal, call-incompatible.",
         areas = listOf("map"),
-        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape",
+        sourceName = "map",
+        targetName = "map"),
     // [152] duckdb: 'coalesce' | clickhouse: 'coalesce'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "First non-NULL agrees.",
         areas = listOf("null"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "coalesce",
+        targetName = "coalesce"),
     // [153] duckdb: 'nullif' | clickhouse: 'nullIf'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "nullif(5,5)->NULL in both.",
         areas = listOf("null"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "nullif",
+        targetName = "nullIf"),
     // [154] duckdb: 'if' | clickhouse: 'if'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "if(cond,a,b) agrees.",
         areas = listOf("null"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "if",
+        targetName = "if"),
     // [155] duckdb: 'ifnull' | clickhouse: 'ifNull'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "ifnull(NULL,7)->7 in both.",
         areas = listOf("null"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "ifnull",
+        targetName = "ifNull"),
     // [156] duckdb: 'greatest' | clickhouse: 'greatest'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Both SKIP NULL (greatest(1,NULL,3)->3). NB: differs from Doris, which propagates NULL.",
         areas = listOf("null", "numeric"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "greatest",
+        targetName = "greatest"),
     // [157] duckdb: 'least' | clickhouse: 'least'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Both SKIP NULL (least(1,NULL,3)->1). NB: differs from Doris, which propagates NULL.",
         areas = listOf("null", "numeric"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "least",
+        targetName = "least"),
     // [158] duckdb: 'starts_with' | clickhouse: 'startsWith'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Prefix test agrees.",
         areas = listOf("string"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "starts_with",
+        targetName = "startsWith"),
     // [159] duckdb: 'ends_with' | clickhouse: 'endsWith'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Suffix test agrees.",
         areas = listOf("string"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "ends_with",
+        targetName = "endsWith"),
 )
 
-private fun hazardsChunk4(): List<FunctionHazard> = listOf(
+private fun duckdbClickhouseChunk4(): List<FunctionHazard> = listOf(
     // [160] duckdb: 'split_part' | clickhouse: 'splitByChar'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "1-based part selection agrees; ClickHouse form is splitByChar(delim,str)[n].",
         areas = listOf("string"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "split_part",
+        targetName = "splitByChar"),
     // [161] duckdb: 'chr' | clickhouse: 'char'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Code-point to char agrees (chr(65)->'A').",
         areas = listOf("string"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "chr",
+        targetName = "char"),
     // [162] duckdb: 'contains' | clickhouse: 'position'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Substring containment agrees; ClickHouse form is position(hay,needle)>0.",
         areas = listOf("string"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "contains",
+        targetName = "position"),
     // [163] duckdb: 'regexp_full_match' | clickhouse: 'match'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Full-string regex match agrees; ClickHouse match uses ^...\$ anchoring.",
         areas = listOf("regex", "string"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "regexp_full_match",
+        targetName = "match"),
     // [164] duckdb: 'bitwise_and' | clickhouse: 'bitAnd'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Bitwise AND agrees (12&10->8).",
         areas = listOf("numeric"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "bitwise_and",
+        targetName = "bitAnd"),
     // [165] duckdb: 'bitwise_or' | clickhouse: 'bitOr'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Bitwise OR agrees (12|10->14).",
         areas = listOf("numeric"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "bitwise_or",
+        targetName = "bitOr"),
     // [166] duckdb: 'extract' | clickhouse: 'extract'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "EXTRACT(part FROM d) agrees for year.",
         areas = listOf("datetime"),
-        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "extract",
+        targetName = "extract"),
     // [167] duckdb: 'variance' | clickhouse: 'varSamp'
     FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
         hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
         areas = listOf("aggregate"),
-        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*",
+        sourceName = "variance",
+        targetName = "varSamp"),
     // [168] duckdb: 'mismatches' | clickhouse: 'mismatches'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "mismatches",
+        targetName = "mismatches"),
     // [169] duckdb: 'make_timestamp' | clickhouse: 'fromUnixTimestamp64Micro'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "make_timestamp",
+        targetName = "fromUnixTimestamp64Micro"),
     // [170] duckdb: 'len' | clickhouse: 'CHAR_LENGTH'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "len",
+        targetName = "CHAR_LENGTH"),
     // [171] duckdb: 'levenshtein' | clickhouse: 'editDistance'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "levenshtein",
+        targetName = "editDistance"),
     // [172] duckdb: 'list_distinct' | clickhouse: 'arrayDistinct'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "list_distinct",
+        targetName = "arrayDistinct"),
     // [173] duckdb: 'list_distance' | clickhouse: 'L2Distance'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "list_distance",
+        targetName = "L2Distance"),
     // [174] duckdb: 'list_cosine_distance' | clickhouse: 'cosineDistance'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "list_cosine_distance",
+        targetName = "cosineDistance"),
     // [175] duckdb: 'suffix' | clickhouse: 'endsWith'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "suffix",
+        targetName = "endsWith"),
     // [176] duckdb: 'to_hex' | clickhouse: 'HEX'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "to_hex",
+        targetName = "HEX"),
     // [177] duckdb: 'weekofyear' | clickhouse: 'toISOWeek'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "weekofyear",
+        targetName = "toISOWeek"),
     // [178] duckdb: 'str_split' | clickhouse: 'splitByString'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "str_split",
+        targetName = "splitByString"),
     // [179] duckdb: 'str_split_regex' | clickhouse: 'splitByRegexp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "str_split_regex",
+        targetName = "splitByRegexp"),
     // [180] duckdb: 'string_split_regex' | clickhouse: 'splitByRegexp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "string_split_regex",
+        targetName = "splitByRegexp"),
     // [181] duckdb: 'split' | clickhouse: 'splitByString'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "split",
+        targetName = "splitByString"),
     // [182] duckdb: 'strftime' | clickhouse: 'formatDateTime'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "strftime",
+        targetName = "formatDateTime"),
     // [183] duckdb: 'string_split' | clickhouse: 'splitByString'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "string_split",
+        targetName = "splitByString"),
     // [184] duckdb: 'string_to_array' | clickhouse: 'splitByString'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "string_to_array",
+        targetName = "splitByString"),
     // [185] duckdb: 'strpos' | clickhouse: 'POSITION'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "strpos",
+        targetName = "POSITION"),
     // [186] duckdb: 'editdist3' | clickhouse: 'editDistance'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "editdist3",
+        targetName = "editDistance"),
     // [187] duckdb: 'formatReadableDecimalSize' | clickhouse: 'formatReadableDecimalSize'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "formatReadableDecimalSize",
+        targetName = "formatReadableDecimalSize"),
     // [188] duckdb: 'formatReadableSize' | clickhouse: 'formatReadableSize'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "formatReadableSize",
+        targetName = "formatReadableSize"),
     // [189] duckdb: 'format_bytes' | clickhouse: 'format_bytes'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "format_bytes",
+        targetName = "format_bytes"),
     // [190] duckdb: 'jaro_winkler_similarity' | clickhouse: 'jaroWinklerSimilarity'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "jaro_winkler_similarity",
+        targetName = "jaroWinklerSimilarity"),
     // [191] duckdb: 'epoch' | clickhouse: 'toUnixTimestamp'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "epoch",
+        targetName = "toUnixTimestamp"),
     // [192] duckdb: 'array_distinct' | clickhouse: 'arrayDistinct'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "array_distinct",
+        targetName = "arrayDistinct"),
     // [193] duckdb: 'array_length' | clickhouse: 'LENGTH'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "Auto-probed single-input equal (basic scalar).",
         areas = listOf("auto"),
-        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "array_length",
+        targetName = "LENGTH"),
     // [194] duckdb: 'list_unique' | clickhouse: 'arrayUniq'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB list_unique == ClickHouse arrayUniq (rename). Values agree (duck=1). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "list_unique",
+        targetName = "arrayUniq"),
     // [195] duckdb: 'least_common_multiple' | clickhouse: 'lcm'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB least_common_multiple == ClickHouse lcm (rename). Values agree (duck=5). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "least_common_multiple",
+        targetName = "lcm"),
     // [196] duckdb: 'list_has_all' | clickhouse: 'hasAll'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB list_has_all == ClickHouse hasAll (rename). Values agree (duck=True). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "list_has_all",
+        targetName = "hasAll"),
     // [197] duckdb: 'list_has_any' | clickhouse: 'hasAny'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB list_has_any == ClickHouse hasAny (rename). Values agree (duck=True). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "list_has_any",
+        targetName = "hasAny"),
     // [198] duckdb: 'list_intersect' | clickhouse: 'arrayIntersect'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB list_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "list_intersect",
+        targetName = "arrayIntersect"),
     // [199] duckdb: 'list_reverse_sort' | clickhouse: 'arrayReverseSort'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB list_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "list_reverse_sort",
+        targetName = "arrayReverseSort"),
 )
 
-private fun hazardsChunk5(): List<FunctionHazard> = listOf(
+private fun duckdbClickhouseChunk5(): List<FunctionHazard> = listOf(
     // [200] duckdb: 'list_sort' | clickhouse: 'arraySort'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB list_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "list_sort",
+        targetName = "arraySort"),
     // [201] duckdb: 'list_extract' | clickhouse: 'arrayElement'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "DuckDB list_extract == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "list_extract",
+        targetName = "arrayElement"),
     // [202] duckdb: 'list_element' | clickhouse: 'arrayElement'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "DuckDB list_element == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "list_element",
+        targetName = "arrayElement"),
     // [203] duckdb: 'list_dot_product' | clickhouse: 'arrayDotProduct'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB list_dot_product == ClickHouse arrayDotProduct (rename). Values agree (duck=6.25). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "list_dot_product",
+        targetName = "arrayDotProduct"),
     // [204] duckdb: 'weekday' | clickhouse: 'toDayOfWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "DuckDB weekday == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=0 vs ch=7). brikk's ClickHouse generator now emits the toDayOfWeek rename (temporal generator fix 2026-07-14); the numbering divergence remains (kept divergent).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "weekday",
+        targetName = "toDayOfWeek"),
     // [205] duckdb: 'dayname' | clickhouse: 'toDayOfWeek'
     FunctionHazard(HazardVerdict.DIVERGENT,
         hazard = "DuckDB dayname == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=Sunday vs ch=7). DEFERRED: ClickHouse has no day-name function; the closest toDayOfWeek returns a NUMBER, not a name string (wrong-type rename) — kept divergent + certify-guarded.",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "dayname",
+        targetName = "toDayOfWeek"),
     // [206] duckdb: 'gamma' | clickhouse: 'tgamma'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB gamma == ClickHouse tgamma (rename). Values agree (duck=1.32934038817913). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "gamma",
+        targetName = "tgamma"),
     // [207] duckdb: 'bit_count' | clickhouse: 'bitCount'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB bit_count == ClickHouse bitCount (rename). Values agree (duck=2). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "bit_count",
+        targetName = "bitCount"),
     // [208] duckdb: 'array_intersect' | clickhouse: 'arrayIntersect'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB array_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "array_intersect",
+        targetName = "arrayIntersect"),
     // [209] duckdb: 'array_reverse_sort' | clickhouse: 'arrayReverseSort'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB array_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "array_reverse_sort",
+        targetName = "arrayReverseSort"),
     // [210] duckdb: 'array_sort' | clickhouse: 'arraySort'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB array_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "array_sort",
+        targetName = "arraySort"),
     // [211] duckdb: 'greatest_common_divisor' | clickhouse: 'gcd'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB greatest_common_divisor == ClickHouse gcd (rename). Values agree (duck=5). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "greatest_common_divisor",
+        targetName = "gcd"),
     // [212] duckdb: 'jaro_similarity' | clickhouse: 'jaroSimilarity'
     FunctionHazard(HazardVerdict.IDENTICAL,
         hazard = "DuckDB jaro_similarity == ClickHouse jaroSimilarity (rename). Values agree (duck=1.0). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
         areas = listOf("auto", "rename"),
-        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "jaro_similarity",
+        targetName = "jaroSimilarity"),
 )
+
+
+/** The 213 probe-verified (clickhouse->duckdb) verdicts, in JSON order. */
+internal val CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES: List<FunctionHazard> = clickhouseDuckdbChunk0() +
+    clickhouseDuckdbChunk1() +
+    clickhouseDuckdbChunk2() +
+    clickhouseDuckdbChunk3() +
+    clickhouseDuckdbChunk4() +
+    clickhouseDuckdbChunk5()
+
+private fun clickhouseDuckdbChunk0(): List<FunctionHazard> = listOf(
+    // [0] duckdb: 'lower' | clickhouse: 'lower'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse lower() is ASCII-only: 'İ'/'ß'/'É' pass through unchanged; DuckDB lowercases full Unicode. Parity needs ClickHouse lowerUTF8 — and even that diverges (İ->i+U+0307).",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "lower",
+        targetName = "lower"),
+    // [1] duckdb: 'upper' | clickhouse: 'upper'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse upper() is ASCII-only (ß/É unchanged) vs DuckDB full-Unicode (ß->ẞ). upperUTF8 folds but ß->'SS' (length-changing), still != DuckDB ẞ.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "upper",
+        targetName = "upper"),
+    // [2] duckdb: 'lcase' | clickhouse: 'lower'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "lcase is an alias of ASCII-only lower(); 'İ' unchanged vs DuckDB 'i'.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "lower",
+        targetName = "lcase"),
+    // [3] duckdb: 'ucase' | clickhouse: 'upper'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ucase is an alias of ASCII-only upper(); non-ASCII unchanged vs DuckDB folding.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#unicode-case-folding",
+        sourceName = "upper",
+        targetName = "ucase"),
+    // [4] duckdb: 'length' | clickhouse: 'length'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse length() counts BYTES (😀->4, 中文->6, ZWJ family->18); DuckDB length() counts code points. Use lengthUTF8/char_length for code-point parity.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes",
+        sourceName = "length",
+        targetName = "length"),
+    // [5] duckdb: 'char_length' | clickhouse: 'char_length'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Both count code points (😀->1); ClickHouse char_length == lengthUTF8.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes",
+        sourceName = "char_length",
+        targetName = "char_length"),
+    // [6] duckdb: 'character_length' | clickhouse: 'char_length'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Alias of char_length; code-point count in both.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes",
+        sourceName = "char_length",
+        targetName = "character_length"),
+    // [7] duckdb: 'octet_length' | clickhouse: 'octet_length'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse octet_length(varchar)=byte count; DuckDB octet_length has no bare-VARCHAR overload (requires BLOB) and errors.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#string-length-bytes",
+        sourceName = "octet_length",
+        targetName = "octet_length"),
+    // [8] duckdb: 'reverse' | clickhouse: 'reverse'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse reverse() reverses BYTES (mangles multi-byte UTF-8 into U+FFFD); DuckDB reverse is grapheme-aware. reverseUTF8 is code-point-aware but still splits combining marks vs DuckDB graphemes.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#reverse-byte-vs-grapheme",
+        sourceName = "reverse",
+        targetName = "reverse"),
+    // [9] duckdb: 'trim' | clickhouse: 'trim'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse trim strips ONLY the ASCII space (0x20): NBSP/EM-SPACE left intact; DuckDB additionally strips NBSP and EM SPACE. Neither strips tab/newline.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "trim",
+        targetName = "trim"),
+    // [10] duckdb: 'ltrim' | clickhouse: 'trimLeft'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Same whitespace-set divergence as trim (ASCII space only in ClickHouse).",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "trimLeft",
+        targetName = "ltrim"),
+    // [11] duckdb: 'rtrim' | clickhouse: 'trimRight'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Same whitespace-set divergence as trim (ASCII space only in ClickHouse).",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#trim-whitespace-set",
+        sourceName = "trimRight",
+        targetName = "rtrim"),
+    // [12] duckdb: 'concat' | clickhouse: 'concat'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse concat PROPAGATES NULL (any NULL arg -> NULL); DuckDB SKIPS NULLs (concat('a',NULL,'c')='ac', concat(NULL,NULL)='').",
+        areas = listOf("string", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation",
+        sourceName = "concat",
+        targetName = "concat"),
+    // [13] duckdb: 'concat_ws' | clickhouse: 'concat_ws'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse concat_ws propagates NULL from any element -> NULL; DuckDB skips NULL elements. NULL separator -> NULL in both.",
+        areas = listOf("string", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#concat-null-propagation",
+        sourceName = "concat_ws",
+        targetName = "concat_ws"),
+    // [14] duckdb: 'substr' | clickhouse: 'substring'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse substring is BYTE-indexed (splits multi-byte chars -> U+FFFD) and start=0 returns '' (not treated as 1); DuckDB is code-point-indexed and clamps start=0 to 1. Negative length also differs. substringUTF8 fixes the multibyte axis only.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0",
+        sourceName = "substring",
+        targetName = "substr"),
+    // [15] duckdb: 'substring' | clickhouse: 'substring'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "See substr: byte indexing + start=0 empty + negative-length semantics differ; substringUTF8 needed for code-point parity.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#substring-byte-and-start0",
+        sourceName = "substring",
+        targetName = "substring"),
+    // [16] duckdb: 'position' | clickhouse: 'position'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse position(haystack, needle) is 1-based like DuckDB, but argument ORDER and the comma form differ from DuckDB's position(needle IN haystack); DuckDB's comma form is strpos(str,search).",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr",
+        sourceName = "position",
+        targetName = "position"),
+    // [17] duckdb: 'instr' | clickhouse: 'instr'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse instr is an alias of positionCaseInsensitive — CASE-INSENSITIVE search; DuckDB instr is case-sensitive (instr('Hello','h')=1 in CH vs 0 in DuckDB).",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr",
+        sourceName = "instr",
+        targetName = "instr"),
+    // [18] duckdb: 'replace' | clickhouse: 'replaceAll'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ClickHouse replace == replaceAll: replaces ALL occurrences, same as DuckDB replace.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all",
+        sourceName = "replaceAll",
+        targetName = "replace"),
+    // [19] duckdb: 'regexp_replace' | clickhouse: 'replaceRegexpOne'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "DuckDB regexp_replace(s,p,r) replaces only the FIRST match (no 'g' flag); the generator now emits replaceRegexpOne (first-only), result-identical for the common case. RESIDUAL divergence: empty-pattern behavior differs (ClickHouse no-op vs DuckDB inserts at every position) and RE2-vs-RE2 flag handling — hence conditionally-equivalent, not identical. The 'g'/Trino all-form maps to replaceRegexpAll.",
+        areas = listOf("regex", "string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#replace-regexp-first-vs-all | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE",
+        sourceName = "replaceRegexpOne",
+        targetName = "regexp_replace"),
+    // [20] duckdb: 'regexp_extract' | clickhouse: 'regexpExtract'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Group semantics aligned: group 0 = whole match, group N = Nth capture; probed backslash-free to avoid the literal-escaping confound.",
+        areas = listOf("regex"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#regexp-extract-groups",
+        sourceName = "regexpExtract",
+        targetName = "regexp_extract"),
+    // [21] duckdb: 'regexp_matches' | clickhouse: 'match'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse match() is a partial (unanchored) RE2 search returning UInt8 0/1; DuckDB regexp_matches returns BOOLEAN. Same match set for equivalent patterns; return type differs (0/1 vs true/false).",
+        areas = listOf("regex"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering",
+        sourceName = "match",
+        targetName = "regexp_matches"),
+    // [22] duckdb: 'lpad' | clickhouse: 'leftPad'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse leftPad pads by BYTES; DuckDB lpad pads by code points. leftPadUTF8 is the code-point variant. ASCII aligned.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes",
+        sourceName = "leftPad",
+        targetName = "lpad"),
+    // [23] duckdb: 'rpad' | clickhouse: 'rightPad'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse rightPad pads by BYTES; DuckDB rpad by code points. rightPadUTF8 for parity. ASCII aligned.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#pad-bytes",
+        sourceName = "rightPad",
+        targetName = "rpad"),
+    // [24] duckdb: 'ascii' | clickhouse: 'ascii'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse ascii returns the first BYTE (emoji->240); DuckDB returns the first code point (emoji->128512). ASCII inputs aligned.",
+        areas = listOf("string", "unicode"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#position-instr",
+        sourceName = "ascii",
+        targetName = "ascii"),
+    // [25] duckdb: 'left' | clickhouse: 'left'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned incl. negative n (all-but-last-|n|). Probe-verified on ASCII.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "left",
+        targetName = "left"),
+    // [26] duckdb: 'right' | clickhouse: 'right'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned on ASCII probes.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "right",
+        targetName = "right"),
+    // [27] duckdb: 'repeat' | clickhouse: 'repeat'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "repeat(s,0)='' and negative count -> '' in both.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "repeat",
+        targetName = "repeat"),
+    // [28] duckdb: 'translate' | clickhouse: 'translateUTF8'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB translate is code-point-wise == ClickHouse translateUTF8 (café/é->e verified). Now emitted via SOURCE-AWARE generation (translateUTF8 cross-dialect; faithful byte `translate` on ClickHouse->ClickHouse). Reconciled identical (generator fix 2026-07-14).",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline | source-aware fix 2026-07-14",
+        sourceName = "translateUTF8",
+        targetName = "translate"),
+    // [29] duckdb: 'format' | clickhouse: 'format'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse format uses positional {0},{1} placeholders (Python/.NET style); DuckDB format uses fmt/printf %-style. Incompatible spec dialects — never map by name. (ClickHouse printf() matches DuckDB printf.)",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#format-spec",
+        sourceName = "format",
+        targetName = "format"),
+    // [30] duckdb: 'printf' | clickhouse: 'printf'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Both use C printf %-specifiers; probe 'x=5' aligned.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "printf",
+        targetName = "printf"),
+    // [31] duckdb: 'soundex' | clickhouse: 'soundex'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ClickHouse soundex('Robert')='R163' matches DuckDB (which needs no extension here); rename only.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "soundex",
+        targetName = "soundex"),
+    // [32] duckdb: 'to_base64' | clickhouse: 'base64Encode'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Standard alphabet; 'abc'->'YWJj' in both.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "base64Encode",
+        targetName = "to_base64"),
+    // [33] duckdb: 'from_base64' | clickhouse: 'base64Decode'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "'YWJj'->'abc' in both.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "base64Decode",
+        targetName = "from_base64"),
+    // [34] duckdb: 'md5' | clickhouse: 'MD5'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same digest but return SHAPE differs: ClickHouse MD5 returns FixedString(16) raw bytes; DuckDB md5 returns a lowercase hex VARCHAR. Wrap ClickHouse in lower(hex(...)) to compare. NULL-propagates in both.",
+        areas = listOf("hash", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "MD5",
+        targetName = "md5"),
+    // [35] duckdb: 'sha1' | clickhouse: 'SHA1'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same digest; ClickHouse SHA1 returns raw bytes (FixedString), DuckDB sha1 returns hex VARCHAR — hex() wrap required.",
+        areas = listOf("hash"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "SHA1",
+        targetName = "sha1"),
+    // [36] duckdb: 'sha256' | clickhouse: 'SHA256'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same digest; ClickHouse returns raw bytes vs DuckDB hex VARCHAR — hex() wrap required.",
+        areas = listOf("hash"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "SHA256",
+        targetName = "sha256"),
+    // [37] duckdb: 'abs' | clickhouse: 'abs'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "abs(-2147483648) (INT32 min): ClickHouse widens the result and returns 2147483648; DuckDB THROWS an overflow error.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-overflow",
+        sourceName = "abs",
+        targetName = "abs"),
+    // [38] duckdb: 'divide' | clickhouse: 'divide'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Float division by zero: ClickHouse returns NULL; DuckDB returns +inf.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero",
+        sourceName = "divide",
+        targetName = "divide"),
+    // [39] duckdb: 'multiply' | clickhouse: 'multiply'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Plain multiplication aligned; overflow follows the promotion/wrap axis noted for integer ops.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "multiply",
+        targetName = "multiply"),
+)
+
+private fun clickhouseDuckdbChunk1(): List<FunctionHazard> = listOf(
+    // [40] duckdb: 'mod' | clickhouse: 'modulo'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "modulo by zero: ClickHouse THROWS (Division by zero, code 153); DuckDB returns NULL. Non-zero modulo (incl. negative operands) aligned.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero",
+        sourceName = "modulo",
+        targetName = "mod"),
+    // [41] duckdb: 'round' | clickhouse: 'round'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB round() is half-away-from-zero; ClickHouse round() is banker's (half-even). The SOURCE-AWARE generator now emits an explicit half-away shim for duckdb->clickhouse (sign(x)*floor(abs(x)*pow(10,d)+0.5)/pow(10,d)) — live-verified equal to DuckDB on 2.5/0.5/-2.5/2.345@2dp/3.5; ClickHouse->ClickHouse stays faithful banker's round. Reconciled identical (generator fix 2026-07-14). NOTE: datetime operands still inherit the 1970 floor caveat (separate).",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers | source-aware shim 2026-07-14",
+        sourceName = "round",
+        targetName = "round"),
+    // [42] duckdb: 'roundbankers' | clickhouse: 'roundBankers'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse roundBankers == its default round (half-even); equals DuckDB only when DuckDB round is forced to banker's, which it is not by default.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#rounding-bankers",
+        sourceName = "roundBankers",
+        targetName = "roundbankers"),
+    // [43] duckdb: 'trunc' | clickhouse: 'trunc'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Truncation toward zero aligned incl. negatives.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "trunc",
+        targetName = "trunc"),
+    // [44] duckdb: 'floor' | clickhouse: 'floor'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned incl. negatives (floor(-2.5)=-3).",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "floor",
+        targetName = "floor"),
+    // [45] duckdb: 'ceil' | clickhouse: 'ceil'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned incl. negatives (ceil(-2.5)=-2).",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "ceil",
+        targetName = "ceil"),
+    // [46] duckdb: 'ceiling' | clickhouse: 'ceil'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Alias of ceil; aligned.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "ceil",
+        targetName = "ceiling"),
+    // [47] duckdb: 'sqrt' | clickhouse: 'sqrt'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "sqrt(-1): ClickHouse returns NULL (nan absorbed to NULL); DuckDB THROWS 'cannot take square root of a negative'.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "sqrt",
+        targetName = "sqrt"),
+    // [48] duckdb: 'ln' | clickhouse: 'log'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "NAME COLLISION + domain: ClickHouse log(x) is NATURAL log (== ln), so mapping DuckDB ln->log is value-correct, but ln(0)/ln(-1): ClickHouse returns NULL, DuckDB THROWS.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision",
+        sourceName = "log",
+        targetName = "ln"),
+    // [49] duckdb: 'log' | clickhouse: 'log10'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB single-arg log(x) is base-10; the generator now emits log10(x), result-identical (never ClickHouse log, which is natural log).",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE",
+        sourceName = "log10",
+        targetName = "log"),
+    // [50] duckdb: 'log10' | clickhouse: 'log10'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Base-10 log; log10(1000)=3 in both (map DuckDB log10 to ClickHouse log10, never to log).",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#log-collision",
+        sourceName = "log10",
+        targetName = "log10"),
+    // [51] duckdb: 'log2' | clickhouse: 'log2'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "log2(8)=3 in both.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "log2",
+        targetName = "log2"),
+    // [52] duckdb: 'factorial' | clickhouse: 'factorial'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "factorial(-1): ClickHouse returns 1; DuckDB THROWS.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "factorial",
+        targetName = "factorial"),
+    // [53] duckdb: 'pow' | clickhouse: 'pow'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "pow(-8,0.5) (complex result): ClickHouse returns NULL; DuckDB returns nan. Finite real cases aligned.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "pow",
+        targetName = "pow"),
+    // [54] duckdb: 'power' | clickhouse: 'power'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "See pow: pow(-8,0.5) NULL vs nan; finite cases aligned.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "power",
+        targetName = "power"),
+    // [55] duckdb: 'sign' | clickhouse: 'sign'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "sign of negative/zero aligned; float NaN not re-probed here.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sign",
+        targetName = "sign"),
+    // [56] duckdb: 'isnan' | clickhouse: 'isNaN'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same predicate; ClickHouse returns UInt8 0/1, DuckDB BOOLEAN true/false.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering",
+        sourceName = "isNaN",
+        targetName = "isnan"),
+    // [57] duckdb: 'isfinite' | clickhouse: 'isFinite'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same predicate; 0/1 vs true/false return type.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#boolean-rendering",
+        sourceName = "isFinite",
+        targetName = "isfinite"),
+    // [58] duckdb: 'gcd' | clickhouse: 'gcd'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "gcd(0,5): ClickHouse THROWS (Division by zero); DuckDB returns 5. Non-zero pairs aligned.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-div-zero",
+        sourceName = "gcd",
+        targetName = "gcd"),
+    // [59] duckdb: 'lcm' | clickhouse: 'lcm'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "lcm(4,6)=12 aligned for non-zero args.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "lcm",
+        targetName = "lcm"),
+    // [60] duckdb: 'bin' | clickhouse: 'bin'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB bin(x) has no leading zeros; ClickHouse bin(x) zero-pads to a full byte. The SOURCE-AWARE generator now strips leading zeros for duckdb->clickhouse (if(x=0,'0',substring(bin(x),position(bin(x),'1')))) — live-verified equal to DuckDB on 5/0/255/1; ClickHouse->ClickHouse keeps the padded native bin. Reconciled identical (generator fix 2026-07-14).",
+        areas = listOf("numeric", "string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#bin-padding | source-aware shim 2026-07-14",
+        sourceName = "bin",
+        targetName = "bin"),
+    // [61] duckdb: 'hex' | clickhouse: 'hex'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "hex(255)='FF', hex('A')='41' in both.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "hex",
+        targetName = "hex"),
+    // [62] duckdb: 'unhex' | clickhouse: 'unhex'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Rename/behaviour aligned on hex decode; ClickHouse returns String, DuckDB BLOB (type-layer).",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#hash-return-shape",
+        sourceName = "unhex",
+        targetName = "unhex"),
+    // [63] duckdb: 'xor' | clickhouse: 'bitXor'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB xor is bitwise; the generator now emits bitXor(a,b), result-identical (not ClickHouse logical xor, and not the invalid `^` operator).",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#xor-logical-vs-bitwise | generator mapping fixed 2026-07-13 (BUGS-clickhouse-generator-mappings); re-verify vs live FE",
+        sourceName = "bitXor",
+        targetName = "xor"),
+    // [64] duckdb: 'pi' | clickhouse: 'pi'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "3.141592653589793 in both.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "pi",
+        targetName = "pi"),
+    // [65] duckdb: 'exp' | clickhouse: 'exp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "exp(1)/exp(2) agree to full double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "exp",
+        targetName = "exp"),
+    // [66] duckdb: 'acos' | clickhouse: 'acos'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "acos(2) (out of domain): ClickHouse NULL; DuckDB THROWS. In-domain values aligned.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "acos",
+        targetName = "acos"),
+    // [67] duckdb: 'asin' | clickhouse: 'asin'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "asin(2) out of domain: ClickHouse NULL; DuckDB THROWS. In-domain aligned.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "asin",
+        targetName = "asin"),
+    // [68] duckdb: 'acosh' | clickhouse: 'acosh'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "In-domain aligned to ~double precision; out-of-domain follows the NULL-vs-throw contract (acosh(0)).",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "acosh",
+        targetName = "acosh"),
+    // [69] duckdb: 'atanh' | clickhouse: 'atanh'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "In-domain aligned; |x|>=1 follows NULL-vs-throw contract.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#numeric-domain-null-vs-throw",
+        sourceName = "atanh",
+        targetName = "atanh"),
+    // [70] duckdb: 'atan' | clickhouse: 'atan'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "atan",
+        targetName = "atan"),
+    // [71] duckdb: 'atan2' | clickhouse: 'atan2'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "atan2",
+        targetName = "atan2"),
+    // [72] duckdb: 'asinh' | clickhouse: 'asinh'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "asinh",
+        targetName = "asinh"),
+    // [73] duckdb: 'sin' | clickhouse: 'sin'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sin",
+        targetName = "sin"),
+    // [74] duckdb: 'cos' | clickhouse: 'cos'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cos",
+        targetName = "cos"),
+    // [75] duckdb: 'tan' | clickhouse: 'tan'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "tan",
+        targetName = "tan"),
+    // [76] duckdb: 'sinh' | clickhouse: 'sinh'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "sinh",
+        targetName = "sinh"),
+    // [77] duckdb: 'cosh' | clickhouse: 'cosh'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cosh",
+        targetName = "cosh"),
+    // [78] duckdb: 'tanh' | clickhouse: 'tanh'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "tanh",
+        targetName = "tanh"),
+    // [79] duckdb: 'cbrt' | clickhouse: 'cbrt'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "cbrt(27)=3 aligned.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cbrt",
+        targetName = "cbrt"),
+)
+
+private fun clickhouseDuckdbChunk2(): List<FunctionHazard> = listOf(
+    // [80] duckdb: 'degrees' | clickhouse: 'degrees'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "degrees",
+        targetName = "degrees"),
+    // [81] duckdb: 'radians' | clickhouse: 'radians'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned to double precision.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "radians",
+        targetName = "radians"),
+    // [82] duckdb: 'lgamma' | clickhouse: 'lgamma'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "lgamma(5)=3.178054 aligned.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "lgamma",
+        targetName = "lgamma"),
+    // [83] duckdb: 'year' | clickhouse: 'toYear'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Value-correct for 1970+, but ClickHouse Date/DateTime cannot represent pre-1970: toDate('1969-12-31') clamps and year() returns 1970. DuckDB handles the full proleptic range.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970",
+        sourceName = "toYear",
+        targetName = "year"),
+    // [84] duckdb: 'month' | clickhouse: 'toMonth'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned for representable (>=1970) dates.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toMonth",
+        targetName = "month"),
+    // [85] duckdb: 'day' | clickhouse: 'toDayOfMonth'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned for representable dates.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toDayOfMonth",
+        targetName = "day"),
+    // [86] duckdb: 'dayofmonth' | clickhouse: 'toDayOfMonth'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned for representable dates.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toDayOfMonth",
+        targetName = "dayofmonth"),
+    // [87] duckdb: 'hour' | clickhouse: 'toHour'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Aligned when session timezones match; ClickHouse DateTime is timezone-typed (DateTime('tz') / session_timezone) so an unpinned zone silently shifts results.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "toHour",
+        targetName = "hour"),
+    // [88] duckdb: 'minute' | clickhouse: 'toMinute'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toMinute",
+        targetName = "minute"),
+    // [89] duckdb: 'second' | clickhouse: 'toSecond'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toSecond",
+        targetName = "second"),
+    // [90] duckdb: 'millisecond' | clickhouse: 'toSecond*1000 + toMillisecond'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB/Trino millisecond(t) = seconds-within-minute*1000 + ms; the generator now emits (toSecond(t)*1000 + toMillisecond(t)), result-identical (ClickHouse toMillisecond alone is the sub-second component only). Verified: 30123/0/5789/56001 all match.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-millisecond | generator mapping fixed 2026-07-13 (BUGS row 6), live-differential-verified vs ClickHouse 26.5.1.1 + DuckDB 1.5.4",
+        sourceName = "toSecond*1000 + toMillisecond",
+        targetName = "millisecond"),
+    // [91] duckdb: 'dayofweek' | clickhouse: 'toDayOfWeek'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse toDayOfWeek is ISO Mon=1..Sun=7; DuckDB dayofweek is Sun=0..Sat=6. Sunday: 7 vs 0.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-dayofweek-numbering",
+        sourceName = "toDayOfWeek",
+        targetName = "dayofweek"),
+    // [92] duckdb: 'dayofyear' | clickhouse: 'toDayOfYear'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Leap-day pinned: 2024-02-29 -> 60 in both.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toDayOfYear",
+        targetName = "dayofyear"),
+    // [93] duckdb: 'quarter' | clickhouse: 'toQuarter'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Aligned.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "toQuarter",
+        targetName = "quarter"),
+    // [94] duckdb: 'week' | clickhouse: 'toISOWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB week is ISO-8601 == ClickHouse toISOWeek (52==52 verified). Now emitted via SOURCE-AWARE generation: duckdb->clickhouse renders toISOWeek; ClickHouse->ClickHouse stays faithful `week` (mode 0). Reconciled identical (generator fix 2026-07-14, source-aware).",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-week-mode | source-aware fix 2026-07-14",
+        sourceName = "toISOWeek",
+        targetName = "week"),
+    // [95] duckdb: 'yearweek' | clickhouse: 'toYearWeek'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "ClickHouse toYearWeek default mode 0 (Sunday weeks, calendar year): 2024-12-30 -> 202452; DuckDB yearweek is ISO (-> 202501). Numbering AND year differ at boundaries.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-yearweek",
+        sourceName = "toYearWeek",
+        targetName = "yearweek"),
+    // [96] duckdb: 'date_trunc' | clickhouse: 'dateTrunc'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Aligned on the intersecting unit set for representable dates, but return type differs for some units (ClickHouse dateTrunc('month',DateTime) yielded a Date-shaped value vs DuckDB TIMESTAMP) and the 1970 floor applies.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type",
+        sourceName = "dateTrunc",
+        targetName = "date_trunc"),
+    // [97] duckdb: 'datetrunc' | clickhouse: 'dateTrunc'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Alias of date_trunc; same caveats.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#date-trunc-return-type",
+        sourceName = "dateTrunc",
+        targetName = "datetrunc"),
+    // [98] duckdb: 'date_diff' | clickhouse: 'dateDiff'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "With an explicit unit and matched session zones the day-diff aligned (60); ClickHouse requires the unit as first arg and is timezone-typed. 1970 floor applies to operands.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "dateDiff",
+        targetName = "date_diff"),
+    // [99] duckdb: 'datediff' | clickhouse: 'dateDiff'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "See date_diff; ClickHouse datediff needs a unit arg.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "dateDiff",
+        targetName = "datediff"),
+    // [100] duckdb: 'last_day' | clickhouse: 'toLastDayOfMonth'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Value-correct for 1970+ (2024-02 -> 29), but 1900-02-15 -> ClickHouse '1970-01-31' (Date range floor) vs DuckDB '1900-02-28'.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-range-1970",
+        sourceName = "toLastDayOfMonth",
+        targetName = "last_day"),
+    // [101] duckdb: 'monthname' | clickhouse: 'monthName'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same output ('March') but ClickHouse name is the case-SENSITIVE camelCase monthName; the lowercase monthname is NOT a case-insensitive alias and will not resolve.",
+        areas = listOf("datetime", "string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#case-sensitivity",
+        sourceName = "monthName",
+        targetName = "monthname"),
+    // [102] duckdb: 'now' | clickhouse: 'now'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both bind once per query; ClickHouse now() returns DateTime (second precision, timezone-typed) vs DuckDB TIMESTAMP WITH TIME ZONE (microsecond). Precision/type differ.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "now",
+        targetName = "now"),
+    // [103] duckdb: 'current_date' | clickhouse: 'today'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse current_date/today() is session-zone dependent (Date type, 1970 floor); do not push where a specific zone/range must hold.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "today",
+        targetName = "current_date"),
+    // [104] duckdb: 'to_days' | clickhouse: 'toRelativeDayNum'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "NAME COLLISION: DuckDB to_days(n) constructs an INTERVAL of n days; ClickHouse has no to_days — the day-number is toRelativeDayNum(date). Completely different intent.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#age-signature",
+        sourceName = "toRelativeDayNum",
+        targetName = "to_days"),
+    // [105] duckdb: 'age' | clickhouse: 'age'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Different signature: ClickHouse age('unit', start, end) returns an integer count in that unit; DuckDB age(ts, ts) returns an INTERVAL. Never map by name.",
+        areas = listOf("datetime"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#age-signature",
+        sourceName = "age",
+        targetName = "age"),
+    // [106] duckdb: 'timezone' | clickhouse: 'timezone'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse timezone() returns the server/session timezone name (String); DuckDB has no zero-arg timezone() scalar (it is a shift function elsewhere) — session-only, not pushable.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "timezone",
+        targetName = "timezone"),
+    // [107] duckdb: 'range' | clickhouse: 'range'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "range(5)->[0..4], range(1,5)->[1..4] in both (list rendering aside).",
+        areas = listOf("array"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "range",
+        targetName = "range"),
+    // [108] duckdb: 'flatten' | clickhouse: 'arrayFlatten'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "One level of nesting flattened in both.",
+        areas = listOf("array"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "arrayFlatten",
+        targetName = "flatten"),
+    // [109] duckdb: 'array_to_string' | clickhouse: 'arrayStringConcat'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Join aligned incl. NULL elements skipped by both ('a',NULL,'c' -> 'a,c').",
+        areas = listOf("array", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "arrayStringConcat",
+        targetName = "array_to_string"),
+    // [110] duckdb: 'cardinality' | clickhouse: 'length'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "NAME/TYPE collision: DuckDB cardinality operates ONLY on MAP (errors on a list); ClickHouse cardinality is an alias of length (array element count). Map DuckDB list length to ClickHouse length, not via cardinality.",
+        areas = listOf("array"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#array-indexing-oob",
+        sourceName = "length",
+        targetName = "cardinality"),
+    // [111] duckdb: 'array_agg' | clickhouse: 'groupArray'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both collect into an array; ordering is undefined without ORDER BY and NULL-handling of groupArray differs (groupArray drops NULLs; use groupArrayIf/arrays for NULL retention).",
+        areas = listOf("aggregate", "array", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "groupArray",
+        targetName = "array_agg"),
+    // [112] duckdb: 'sum' | clickhouse: 'sum'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Empty group: ClickHouse sum() -> 0; DuckDB -> NULL. Also ClickHouse sum silently OVERFLOW-WRAPS a fixed-width Int64 (max+1 -> Int64 min) where DuckDB widens. All-NULL input -> NULL in both.",
+        areas = listOf("aggregate", "null", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "sum",
+        targetName = "sum"),
+    // [113] duckdb: 'avg' | clickhouse: 'avg'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Empty group: ClickHouse avg() -> nan; DuckDB -> NULL. All-NULL -> NULL in both; populated groups aligned.",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "avg",
+        targetName = "avg"),
+    // [114] duckdb: 'count' | clickhouse: 'count'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "count(expr) skips NULLs; count()/count(*) over empty -> 0 in both.",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "count",
+        targetName = "count"),
+    // [115] duckdb: 'min' | clickhouse: 'min'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Empty group: ClickHouse min() -> type default (0); DuckDB -> NULL. All-NULL -> NULL in both.",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "min",
+        targetName = "min"),
+    // [116] duckdb: 'max' | clickhouse: 'max'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Empty group: ClickHouse max() -> type default (0); DuckDB -> NULL. All-NULL -> NULL in both.",
+        areas = listOf("aggregate", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#aggregate-empty-group",
+        sourceName = "max",
+        targetName = "max"),
+    // [117] duckdb: 'stddev_pop' | clickhouse: 'stddevPop'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "stddevPop({1,2,3})=0.8165 aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddevPop",
+        targetName = "stddev_pop"),
+    // [118] duckdb: 'stddev_samp' | clickhouse: 'stddevSamp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Sample stddev aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddevSamp",
+        targetName = "stddev_samp"),
+    // [119] duckdb: 'stddev' | clickhouse: 'stddev'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Bare stddev = sample in both (=1 for {1,2,3}).",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "stddev",
+        targetName = "stddev"),
+)
+
+private fun clickhouseDuckdbChunk3(): List<FunctionHazard> = listOf(
+    // [120] duckdb: 'var_pop' | clickhouse: 'varPop'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "varPop({1,2,3})=0.6667 aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "varPop",
+        targetName = "var_pop"),
+    // [121] duckdb: 'var_samp' | clickhouse: 'varSamp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Sample variance aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "varSamp",
+        targetName = "var_samp"),
+    // [122] duckdb: 'corr' | clickhouse: 'corr'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Pearson correlation aligned (0.981981).",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "corr",
+        targetName = "corr"),
+    // [123] duckdb: 'covar_pop' | clickhouse: 'covarPop'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Population covariance aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "covarPop",
+        targetName = "covar_pop"),
+    // [124] duckdb: 'covar_samp' | clickhouse: 'covarSamp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Sample covariance aligned.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "covarSamp",
+        targetName = "covar_samp"),
+    // [125] duckdb: 'median' | clickhouse: 'median'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "median({1,2,3})=2 aligned, but ClickHouse median is an alias for the approximate quantile(0.5) (reservoir) — exact only for small/simple inputs; DuckDB median is exact.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "median",
+        targetName = "median"),
+    // [126] duckdb: 'quantile' | clickhouse: 'quantile'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Value aligned on the probe, but ClickHouse quantile uses parametric syntax quantile(level)(x) and is APPROXIMATE; DuckDB quantile_cont/quantile is exact and takes level as an argument. Different call shape + exactness.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "quantile",
+        targetName = "quantile"),
+    // [127] duckdb: 'any_value' | clickhouse: 'any'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "ClickHouse any(x) == any_value; order-dependent / nondeterministic without ORDER BY in both.",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "any",
+        targetName = "any_value"),
+    // [128] duckdb: 'argmax' | clickhouse: 'argMax'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "argMax(y,x) returns y at the max x; aligned with DuckDB arg_max. Ties nondeterministic in both.",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "argMax",
+        targetName = "argmax"),
+    // [129] duckdb: 'argmin' | clickhouse: 'argMin'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "argMin(y,x) aligned with DuckDB arg_min.",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "argMin",
+        targetName = "argmin"),
+    // [130] duckdb: 'histogram' | clickhouse: 'histogram'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both bucket values, but ClickHouse histogram(bins)(x) is an approximate adaptive-bin aggregate with a different signature and result shape than DuckDB histogram (exact value->count map).",
+        areas = listOf("aggregate"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "histogram",
+        targetName = "histogram"),
+    // [131] duckdb: 'string_agg' | clickhouse: 'arrayStringConcat'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "DuckDB string_agg(x,sep) has no single-function ClickHouse equal; the idiom is arrayStringConcat(groupArray(x),sep). Ordering undefined without ORDER BY.",
+        areas = listOf("aggregate", "string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "arrayStringConcat",
+        targetName = "string_agg"),
+    // [132] duckdb: 'group_concat' | clickhouse: 'arrayStringConcat'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Same as string_agg: no direct ClickHouse group_concat; compose groupArray + arrayStringConcat. Ordering undefined.",
+        areas = listOf("aggregate", "string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "arrayStringConcat",
+        targetName = "group_concat"),
+    // [133] duckdb: 'entropy' | clickhouse: 'entropy'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both compute Shannon entropy of value frequencies; base and exact/approx handling not fully re-probed — verify before pushing.",
+        areas = listOf("aggregate", "numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#quantile-shape",
+        sourceName = "entropy",
+        targetName = "entropy"),
+    // [134] duckdb: 'row_number' | clickhouse: 'row_number'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "1,2,3 over ORDER BY in both.",
+        areas = listOf("window"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "row_number",
+        targetName = "row_number"),
+    // [135] duckdb: 'rank' | clickhouse: 'rank'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Standard rank aligned.",
+        areas = listOf("window"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "rank",
+        targetName = "rank"),
+    // [136] duckdb: 'dense_rank' | clickhouse: 'dense_rank'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Dense rank aligned.",
+        areas = listOf("window"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "dense_rank",
+        targetName = "dense_rank"),
+    // [137] duckdb: 'ntile' | clickhouse: 'ntile'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ntile(2) bucketing aligned.",
+        areas = listOf("window"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "ntile",
+        targetName = "ntile"),
+    // [138] duckdb: 'first_value' | clickhouse: 'first_value'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "first_value over running frame aligned.",
+        areas = listOf("window"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "first_value",
+        targetName = "first_value"),
+    // [139] duckdb: 'last_value' | clickhouse: 'last_value'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "last_value over default running frame aligned in both.",
+        areas = listOf("window"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "last_value",
+        targetName = "last_value"),
+    // [140] duckdb: 'percent_rank' | clickhouse: 'percent_rank'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "0,0.5,1 in both.",
+        areas = listOf("window"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "percent_rank",
+        targetName = "percent_rank"),
+    // [141] duckdb: 'cume_dist' | clickhouse: 'cume_dist'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "0.333,0.667,1 in both.",
+        areas = listOf("window"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#identical-baseline",
+        sourceName = "cume_dist",
+        targetName = "cume_dist"),
+    // [142] duckdb: 'lag' | clickhouse: 'lag'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Out-of-partition default: ClickHouse lag (lagInFrame) fills the type DEFAULT (0) for the missing first row; DuckDB lag returns NULL.",
+        areas = listOf("window", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "lag",
+        targetName = "lag"),
+    // [143] duckdb: 'lead' | clickhouse: 'lead'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Out-of-partition default: ClickHouse lead fills type default (0) past the last row; DuckDB returns NULL.",
+        areas = listOf("window", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "lead",
+        targetName = "lead"),
+    // [144] duckdb: 'nth_value' | clickhouse: 'nth_value'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Before the Nth row exists ClickHouse returns the type DEFAULT (0); DuckDB returns NULL.",
+        areas = listOf("window", "null"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#window-default-fill",
+        sourceName = "nth_value",
+        targetName = "nth_value"),
+    // [145] duckdb: 'rand' | clickhouse: 'rand'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Non-deterministic; never pushable/comparable. ClickHouse rand() returns UInt32 range; DuckDB random() returns [0,1) double — even the range differs.",
+        areas = listOf("numeric"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "rand",
+        targetName = "rand"),
+    // [146] duckdb: 'today' | clickhouse: 'today'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Session/zone-dependent current date; Date type (1970 floor) in ClickHouse. Not pushable to a fixed value.",
+        areas = listOf("datetime", "timezone"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#datetime-timezone",
+        sourceName = "today",
+        targetName = "today"),
+    // [147] duckdb: 'version' | clickhouse: 'version'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Both return an engine version string but the values are engine-specific and never comparable/pushable.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "version",
+        targetName = "version"),
+    // [148] duckdb: 'current_user' | clickhouse: 'currentUser'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Session identity string; ClickHouse currentUser()/current_user, values environment-specific, not pushable.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "currentUser",
+        targetName = "current_user"),
+    // [149] duckdb: 'current_database' | clickhouse: 'currentDatabase'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Session catalog name; environment-specific, not pushable.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "currentDatabase",
+        targetName = "current_database"),
+    // [150] duckdb: 'uuid' | clickhouse: 'generateUUIDv4'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Non-deterministic UUID; same distribution, never comparable/pushable.",
+        areas = listOf("string"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#nondeterministic",
+        sourceName = "generateUUIDv4",
+        targetName = "uuid"),
+    // [151] duckdb: 'map' | clickhouse: 'map'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Constructs a MAP in both but the CONSTRUCTOR SHAPE differs: ClickHouse map(k1,v1,k2,v2,...) (flat kv list) vs DuckDB map([keys],[values]) (two arrays). Value-equal, call-incompatible.",
+        areas = listOf("map"),
+        provenance = "REPORT-clickhouse-differential-probe-2026-07-13.md#map-shape",
+        sourceName = "map",
+        targetName = "map"),
+    // [152] duckdb: 'coalesce' | clickhouse: 'coalesce'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "First non-NULL agrees.",
+        areas = listOf("null"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "coalesce",
+        targetName = "coalesce"),
+    // [153] duckdb: 'nullif' | clickhouse: 'nullIf'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "nullif(5,5)->NULL in both.",
+        areas = listOf("null"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "nullIf",
+        targetName = "nullif"),
+    // [154] duckdb: 'if' | clickhouse: 'if'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "if(cond,a,b) agrees.",
+        areas = listOf("null"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "if",
+        targetName = "if"),
+    // [155] duckdb: 'ifnull' | clickhouse: 'ifNull'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "ifnull(NULL,7)->7 in both.",
+        areas = listOf("null"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "ifNull",
+        targetName = "ifnull"),
+    // [156] duckdb: 'greatest' | clickhouse: 'greatest'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Both SKIP NULL (greatest(1,NULL,3)->3). NB: differs from Doris, which propagates NULL.",
+        areas = listOf("null", "numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "greatest",
+        targetName = "greatest"),
+    // [157] duckdb: 'least' | clickhouse: 'least'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Both SKIP NULL (least(1,NULL,3)->1). NB: differs from Doris, which propagates NULL.",
+        areas = listOf("null", "numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "least",
+        targetName = "least"),
+    // [158] duckdb: 'starts_with' | clickhouse: 'startsWith'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Prefix test agrees.",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "startsWith",
+        targetName = "starts_with"),
+    // [159] duckdb: 'ends_with' | clickhouse: 'endsWith'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Suffix test agrees.",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "endsWith",
+        targetName = "ends_with"),
+)
+
+private fun clickhouseDuckdbChunk4(): List<FunctionHazard> = listOf(
+    // [160] duckdb: 'split_part' | clickhouse: 'splitByChar'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "1-based part selection agrees; ClickHouse form is splitByChar(delim,str)[n].",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "splitByChar",
+        targetName = "split_part"),
+    // [161] duckdb: 'chr' | clickhouse: 'char'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Code-point to char agrees (chr(65)->'A').",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "char",
+        targetName = "chr"),
+    // [162] duckdb: 'contains' | clickhouse: 'position'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Substring containment agrees; ClickHouse form is position(hay,needle)>0.",
+        areas = listOf("string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "position",
+        targetName = "contains"),
+    // [163] duckdb: 'regexp_full_match' | clickhouse: 'match'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Full-string regex match agrees; ClickHouse match uses ^...\$ anchoring.",
+        areas = listOf("regex", "string"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "match",
+        targetName = "regexp_full_match"),
+    // [164] duckdb: 'bitwise_and' | clickhouse: 'bitAnd'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Bitwise AND agrees (12&10->8).",
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "bitAnd",
+        targetName = "bitwise_and"),
+    // [165] duckdb: 'bitwise_or' | clickhouse: 'bitOr'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Bitwise OR agrees (12|10->14).",
+        areas = listOf("numeric"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "bitOr",
+        targetName = "bitwise_or"),
+    // [166] duckdb: 'extract' | clickhouse: 'extract'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "EXTRACT(part FROM d) agrees for year.",
+        areas = listOf("datetime"),
+        provenance = "live differential probe (round 2) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); docs/research/probe-runs/duckdb-clickhouse-round2.*",
+        sourceName = "extract",
+        targetName = "extract"),
+    // [167] duckdb: 'variance' | clickhouse: 'varSamp'
+    FunctionHazard(HazardVerdict.CONDITIONALLY_EQUIVALENT,
+        hazard = "Bare variance() DEFAULT differs: Doris is POPULATION; DuckDB/Trino SAMPLE (1.84 vs 2.3). ClickHouse has NO bare variance() (only varSamp/varPop) so it must be translated. Use var_pop/var_samp explicitly.",
+        areas = listOf("aggregate"),
+        provenance = "cross-engine aggregate probe 2026-07-13: DuckDB 1.5.4 / ClickHouse 26.5.1.1 (chdb) / Trino 481 / Doris (FE pr62767-local, BE 4.1.2); docs/research/probe-runs/aggregates-round.*",
+        sourceName = "varSamp",
+        targetName = "variance"),
+    // [168] duckdb: 'mismatches' | clickhouse: 'mismatches'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "mismatches",
+        targetName = "mismatches"),
+    // [169] duckdb: 'make_timestamp' | clickhouse: 'fromUnixTimestamp64Micro'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "fromUnixTimestamp64Micro",
+        targetName = "make_timestamp"),
+    // [170] duckdb: 'len' | clickhouse: 'CHAR_LENGTH'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "CHAR_LENGTH",
+        targetName = "len"),
+    // [171] duckdb: 'levenshtein' | clickhouse: 'editDistance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "editDistance",
+        targetName = "levenshtein"),
+    // [172] duckdb: 'list_distinct' | clickhouse: 'arrayDistinct'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "arrayDistinct",
+        targetName = "list_distinct"),
+    // [173] duckdb: 'list_distance' | clickhouse: 'L2Distance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "L2Distance",
+        targetName = "list_distance"),
+    // [174] duckdb: 'list_cosine_distance' | clickhouse: 'cosineDistance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "cosineDistance",
+        targetName = "list_cosine_distance"),
+    // [175] duckdb: 'suffix' | clickhouse: 'endsWith'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "endsWith",
+        targetName = "suffix"),
+    // [176] duckdb: 'to_hex' | clickhouse: 'HEX'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "HEX",
+        targetName = "to_hex"),
+    // [177] duckdb: 'weekofyear' | clickhouse: 'toISOWeek'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "toISOWeek",
+        targetName = "weekofyear"),
+    // [178] duckdb: 'str_split' | clickhouse: 'splitByString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "splitByString",
+        targetName = "str_split"),
+    // [179] duckdb: 'str_split_regex' | clickhouse: 'splitByRegexp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "splitByRegexp",
+        targetName = "str_split_regex"),
+    // [180] duckdb: 'string_split_regex' | clickhouse: 'splitByRegexp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "splitByRegexp",
+        targetName = "string_split_regex"),
+    // [181] duckdb: 'split' | clickhouse: 'splitByString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "splitByString",
+        targetName = "split"),
+    // [182] duckdb: 'strftime' | clickhouse: 'formatDateTime'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "formatDateTime",
+        targetName = "strftime"),
+    // [183] duckdb: 'string_split' | clickhouse: 'splitByString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "splitByString",
+        targetName = "string_split"),
+    // [184] duckdb: 'string_to_array' | clickhouse: 'splitByString'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "splitByString",
+        targetName = "string_to_array"),
+    // [185] duckdb: 'strpos' | clickhouse: 'POSITION'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "POSITION",
+        targetName = "strpos"),
+    // [186] duckdb: 'editdist3' | clickhouse: 'editDistance'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "editDistance",
+        targetName = "editdist3"),
+    // [187] duckdb: 'formatReadableDecimalSize' | clickhouse: 'formatReadableDecimalSize'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "formatReadableDecimalSize",
+        targetName = "formatReadableDecimalSize"),
+    // [188] duckdb: 'formatReadableSize' | clickhouse: 'formatReadableSize'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "formatReadableSize",
+        targetName = "formatReadableSize"),
+    // [189] duckdb: 'format_bytes' | clickhouse: 'format_bytes'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "Auto-probed value divergence: DuckDB '5 bytes' vs ClickHouse '5.00 B'.",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "format_bytes",
+        targetName = "format_bytes"),
+    // [190] duckdb: 'jaro_winkler_similarity' | clickhouse: 'jaroWinklerSimilarity'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "jaroWinklerSimilarity",
+        targetName = "jaro_winkler_similarity"),
+    // [191] duckdb: 'epoch' | clickhouse: 'toUnixTimestamp'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "toUnixTimestamp",
+        targetName = "epoch"),
+    // [192] duckdb: 'array_distinct' | clickhouse: 'arrayDistinct'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "arrayDistinct",
+        targetName = "array_distinct"),
+    // [193] duckdb: 'array_length' | clickhouse: 'LENGTH'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "Auto-probed single-input equal (basic scalar).",
+        areas = listOf("auto"),
+        provenance = "auto differential probe (mass round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb), single-input typed-literal call transpiled duckdb->clickhouse via brikk; docs/research/probe-runs/duck_ch_massdiff*",
+        sourceName = "LENGTH",
+        targetName = "array_length"),
+    // [194] duckdb: 'list_unique' | clickhouse: 'arrayUniq'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_unique == ClickHouse arrayUniq (rename). Values agree (duck=1). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "arrayUniq",
+        targetName = "list_unique"),
+    // [195] duckdb: 'least_common_multiple' | clickhouse: 'lcm'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB least_common_multiple == ClickHouse lcm (rename). Values agree (duck=5). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "lcm",
+        targetName = "least_common_multiple"),
+    // [196] duckdb: 'list_has_all' | clickhouse: 'hasAll'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_has_all == ClickHouse hasAll (rename). Values agree (duck=True). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "hasAll",
+        targetName = "list_has_all"),
+    // [197] duckdb: 'list_has_any' | clickhouse: 'hasAny'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_has_any == ClickHouse hasAny (rename). Values agree (duck=True). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "hasAny",
+        targetName = "list_has_any"),
+    // [198] duckdb: 'list_intersect' | clickhouse: 'arrayIntersect'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "arrayIntersect",
+        targetName = "list_intersect"),
+    // [199] duckdb: 'list_reverse_sort' | clickhouse: 'arrayReverseSort'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "arrayReverseSort",
+        targetName = "list_reverse_sort"),
+)
+
+private fun clickhouseDuckdbChunk5(): List<FunctionHazard> = listOf(
+    // [200] duckdb: 'list_sort' | clickhouse: 'arraySort'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "arraySort",
+        targetName = "list_sort"),
+    // [201] duckdb: 'list_extract' | clickhouse: 'arrayElement'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DuckDB list_extract == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "arrayElement",
+        targetName = "list_extract"),
+    // [202] duckdb: 'list_element' | clickhouse: 'arrayElement'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DuckDB list_element == ClickHouse arrayElement (rename). Values DIVERGE (duck=NULL vs ch=0). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "arrayElement",
+        targetName = "list_element"),
+    // [203] duckdb: 'list_dot_product' | clickhouse: 'arrayDotProduct'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB list_dot_product == ClickHouse arrayDotProduct (rename). Values agree (duck=6.25). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "arrayDotProduct",
+        targetName = "list_dot_product"),
+    // [204] duckdb: 'weekday' | clickhouse: 'toDayOfWeek'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DuckDB weekday == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=0 vs ch=7). brikk's ClickHouse generator now emits the toDayOfWeek rename (temporal generator fix 2026-07-14); the numbering divergence remains (kept divergent).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "toDayOfWeek",
+        targetName = "weekday"),
+    // [205] duckdb: 'dayname' | clickhouse: 'toDayOfWeek'
+    FunctionHazard(HazardVerdict.DIVERGENT,
+        hazard = "DuckDB dayname == ClickHouse toDayOfWeek (rename). Values DIVERGE (duck=Sunday vs ch=7). DEFERRED: ClickHouse has no day-name function; the closest toDayOfWeek returns a NUMBER, not a name string (wrong-type rename) — kept divergent + certify-guarded.",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "toDayOfWeek",
+        targetName = "dayname"),
+    // [206] duckdb: 'gamma' | clickhouse: 'tgamma'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB gamma == ClickHouse tgamma (rename). Values agree (duck=1.32934038817913). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "tgamma",
+        targetName = "gamma"),
+    // [207] duckdb: 'bit_count' | clickhouse: 'bitCount'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB bit_count == ClickHouse bitCount (rename). Values agree (duck=2). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "bitCount",
+        targetName = "bit_count"),
+    // [208] duckdb: 'array_intersect' | clickhouse: 'arrayIntersect'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB array_intersect == ClickHouse arrayIntersect (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "arrayIntersect",
+        targetName = "array_intersect"),
+    // [209] duckdb: 'array_reverse_sort' | clickhouse: 'arrayReverseSort'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB array_reverse_sort == ClickHouse arrayReverseSort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "arrayReverseSort",
+        targetName = "array_reverse_sort"),
+    // [210] duckdb: 'array_sort' | clickhouse: 'arraySort'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB array_sort == ClickHouse arraySort (rename). Values agree (duck=[1]). brikk's ClickHouse generator now emits this rename (array-family generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "arraySort",
+        targetName = "array_sort"),
+    // [211] duckdb: 'greatest_common_divisor' | clickhouse: 'gcd'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB greatest_common_divisor == ClickHouse gcd (rename). Values agree (duck=5). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "gcd",
+        targetName = "greatest_common_divisor"),
+    // [212] duckdb: 'jaro_similarity' | clickhouse: 'jaroSimilarity'
+    FunctionHazard(HazardVerdict.IDENTICAL,
+        hazard = "DuckDB jaro_similarity == ClickHouse jaroSimilarity (rename). Values agree (duck=1.0). brikk's ClickHouse generator now emits this rename (snake/camel + math/ip/url generator fix 2026-07-14).",
+        areas = listOf("auto", "rename"),
+        provenance = "auto differential probe (rename-recovery round) 2026-07-13: DuckDB 1.5.4 vs ClickHouse 26.5.1.1 (chdb); ClickHouse equivalent found under a renamed name and probed directly; docs/research/probe-runs/duckdb-clickhouse-generator-gaps.md",
+        sourceName = "jaroSimilarity",
+        targetName = "jaro_similarity"),
+)
+
 
 /** duckdb->clickhouse lookup: 213 keys (DuckDB-side names) over 213 entries. */
 internal val DUCKDB_TO_CLICKHOUSE_HAZARDS: Map<String, FunctionHazard> = buildMap {
-    put("ABS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[37])
-    put("ACOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[66])
-    put("ACOSH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[68])
-    put("AGE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[105])
-    put("ANY_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[127])
-    put("ARGMAX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[128])
-    put("ARGMIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[129])
-    put("ARRAY_AGG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[111])
-    put("ARRAY_DISTINCT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[192])
-    put("ARRAY_INTERSECT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[208])
-    put("ARRAY_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[193])
-    put("ARRAY_REVERSE_SORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[209])
-    put("ARRAY_SORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[210])
-    put("ARRAY_TO_STRING", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[109])
-    put("ASCII", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[24])
-    put("ASIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[67])
-    put("ASINH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[72])
-    put("ATAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[70])
-    put("ATAN2", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[71])
-    put("ATANH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[69])
-    put("AVG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[113])
-    put("BIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[60])
-    put("BITWISE_AND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[164])
-    put("BITWISE_OR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[165])
-    put("BIT_COUNT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[207])
-    put("CARDINALITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[110])
-    put("CBRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[79])
-    put("CEIL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[45])
-    put("CEILING", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[46])
-    put("CHARACTER_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[6])
-    put("CHAR_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[5])
-    put("CHR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[161])
-    put("COALESCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[152])
-    put("CONCAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[12])
-    put("CONCAT_WS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[13])
-    put("CONTAINS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[162])
-    put("CORR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[122])
-    put("COS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[74])
-    put("COSH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[77])
-    put("COUNT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[114])
-    put("COVAR_POP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[123])
-    put("COVAR_SAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[124])
-    put("CUME_DIST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[141])
-    put("CURRENT_DATABASE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[149])
-    put("CURRENT_DATE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[103])
-    put("CURRENT_USER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[148])
-    put("DATEDIFF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[99])
-    put("DATETRUNC", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[97])
-    put("DATE_DIFF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[98])
-    put("DATE_TRUNC", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[96])
-    put("DAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[85])
-    put("DAYNAME", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[205])
-    put("DAYOFMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[86])
-    put("DAYOFWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[91])
-    put("DAYOFYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[92])
-    put("DEGREES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[80])
-    put("DENSE_RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[136])
-    put("DIVIDE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[38])
-    put("EDITDIST3", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[186])
-    put("ENDS_WITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[159])
-    put("ENTROPY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[133])
-    put("EPOCH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[191])
-    put("EXP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[65])
-    put("EXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[166])
-    put("FACTORIAL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[52])
-    put("FIRST_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[138])
-    put("FLATTEN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[108])
-    put("FLOOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[44])
-    put("FORMAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[29])
-    put("FORMATREADABLEDECIMALSIZE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[187])
-    put("FORMATREADABLESIZE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[188])
-    put("FORMAT_BYTES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[189])
-    put("FROM_BASE64", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[33])
-    put("GAMMA", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[206])
-    put("GCD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[58])
-    put("GREATEST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[156])
-    put("GREATEST_COMMON_DIVISOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[211])
-    put("GROUP_CONCAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[132])
-    put("HEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[61])
-    put("HISTOGRAM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[130])
-    put("HOUR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[87])
-    put("IF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[154])
-    put("IFNULL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[155])
-    put("INSTR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[17])
-    put("ISFINITE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[57])
-    put("ISNAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[56])
-    put("JARO_SIMILARITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[212])
-    put("JARO_WINKLER_SIMILARITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[190])
-    put("LAG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[142])
-    put("LAST_DAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[100])
-    put("LAST_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[139])
-    put("LCASE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[2])
-    put("LCM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[59])
-    put("LEAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[143])
-    put("LEAST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[157])
-    put("LEAST_COMMON_MULTIPLE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[195])
-    put("LEFT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[25])
-    put("LEN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[170])
-    put("LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[4])
-    put("LEVENSHTEIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[171])
-    put("LGAMMA", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[82])
-    put("LIST_COSINE_DISTANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[174])
-    put("LIST_DISTANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[173])
-    put("LIST_DISTINCT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[172])
-    put("LIST_DOT_PRODUCT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[203])
-    put("LIST_ELEMENT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[202])
-    put("LIST_EXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[201])
-    put("LIST_HAS_ALL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[196])
-    put("LIST_HAS_ANY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[197])
-    put("LIST_INTERSECT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[198])
-    put("LIST_REVERSE_SORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[199])
-    put("LIST_SORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[200])
-    put("LIST_UNIQUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[194])
-    put("LN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[48])
-    put("LOG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[49])
-    put("LOG10", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[50])
-    put("LOG2", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[51])
-    put("LOWER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[0])
-    put("LPAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[22])
-    put("LTRIM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[10])
-    put("MAKE_TIMESTAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[169])
-    put("MAP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[151])
-    put("MAX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[116])
-    put("MD5", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[34])
-    put("MEDIAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[125])
-    put("MILLISECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[90])
-    put("MIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[115])
-    put("MINUTE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[88])
-    put("MISMATCHES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[168])
-    put("MOD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[40])
-    put("MONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[84])
-    put("MONTHNAME", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[101])
-    put("MULTIPLY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[39])
-    put("NOW", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[102])
-    put("NTH_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[144])
-    put("NTILE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[137])
-    put("NULLIF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[153])
-    put("OCTET_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[7])
-    put("PERCENT_RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[140])
-    put("PI", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[64])
-    put("POSITION", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[16])
-    put("POW", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[53])
-    put("POWER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[54])
-    put("PRINTF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[30])
-    put("QUANTILE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[126])
-    put("QUARTER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[93])
-    put("RADIANS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[81])
-    put("RAND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[145])
-    put("RANGE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[107])
-    put("RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[135])
-    put("REGEXP_EXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[20])
-    put("REGEXP_FULL_MATCH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[163])
-    put("REGEXP_MATCHES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[21])
-    put("REGEXP_REPLACE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[19])
-    put("REPEAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[27])
-    put("REPLACE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[18])
-    put("REVERSE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[8])
-    put("RIGHT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[26])
-    put("ROUND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[41])
-    put("ROUNDBANKERS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[42])
-    put("ROW_NUMBER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[134])
-    put("RPAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[23])
-    put("RTRIM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[11])
-    put("SECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[89])
-    put("SHA1", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[35])
-    put("SHA256", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[36])
-    put("SIGN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[55])
-    put("SIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[73])
-    put("SINH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[76])
-    put("SOUNDEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[31])
-    put("SPLIT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[181])
-    put("SPLIT_PART", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[160])
-    put("SQRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[47])
-    put("STARTS_WITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[158])
-    put("STDDEV", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[119])
-    put("STDDEV_POP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[117])
-    put("STDDEV_SAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[118])
-    put("STRFTIME", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[182])
-    put("STRING_AGG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[131])
-    put("STRING_SPLIT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[183])
-    put("STRING_SPLIT_REGEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[180])
-    put("STRING_TO_ARRAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[184])
-    put("STRPOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[185])
-    put("STR_SPLIT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[178])
-    put("STR_SPLIT_REGEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[179])
-    put("SUBSTR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[14])
-    put("SUBSTRING", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[15])
-    put("SUFFIX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[175])
-    put("SUM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[112])
-    put("TAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[75])
-    put("TANH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[78])
-    put("TIMEZONE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[106])
-    put("TODAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[146])
-    put("TO_BASE64", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[32])
-    put("TO_DAYS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[104])
-    put("TO_HEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[176])
-    put("TRANSLATE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[28])
-    put("TRIM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[9])
-    put("TRUNC", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[43])
-    put("UCASE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[3])
-    put("UNHEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[62])
-    put("UPPER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[1])
-    put("UUID", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[150])
-    put("VARIANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[167])
-    put("VAR_POP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[120])
-    put("VAR_SAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[121])
-    put("VERSION", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[147])
-    put("WEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[94])
-    put("WEEKDAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[204])
-    put("WEEKOFYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[177])
-    put("XOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[63])
-    put("YEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[83])
-    put("YEARWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[95])
+    put("ABS", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[37])
+    put("ACOS", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[66])
+    put("ACOSH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[68])
+    put("AGE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[105])
+    put("ANY_VALUE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[127])
+    put("ARGMAX", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[128])
+    put("ARGMIN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[129])
+    put("ARRAY_AGG", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[111])
+    put("ARRAY_DISTINCT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[192])
+    put("ARRAY_INTERSECT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[208])
+    put("ARRAY_LENGTH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[193])
+    put("ARRAY_REVERSE_SORT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[209])
+    put("ARRAY_SORT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[210])
+    put("ARRAY_TO_STRING", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[109])
+    put("ASCII", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[24])
+    put("ASIN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[67])
+    put("ASINH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[72])
+    put("ATAN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[70])
+    put("ATAN2", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[71])
+    put("ATANH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[69])
+    put("AVG", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[113])
+    put("BIN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[60])
+    put("BITWISE_AND", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[164])
+    put("BITWISE_OR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[165])
+    put("BIT_COUNT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[207])
+    put("CARDINALITY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[110])
+    put("CBRT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[79])
+    put("CEIL", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[45])
+    put("CEILING", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[46])
+    put("CHARACTER_LENGTH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[6])
+    put("CHAR_LENGTH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[5])
+    put("CHR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[161])
+    put("COALESCE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[152])
+    put("CONCAT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[12])
+    put("CONCAT_WS", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[13])
+    put("CONTAINS", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[162])
+    put("CORR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[122])
+    put("COS", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[74])
+    put("COSH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[77])
+    put("COUNT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[114])
+    put("COVAR_POP", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[123])
+    put("COVAR_SAMP", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[124])
+    put("CUME_DIST", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[141])
+    put("CURRENT_DATABASE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[149])
+    put("CURRENT_DATE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[103])
+    put("CURRENT_USER", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[148])
+    put("DATEDIFF", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[99])
+    put("DATETRUNC", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[97])
+    put("DATE_DIFF", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[98])
+    put("DATE_TRUNC", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[96])
+    put("DAY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[85])
+    put("DAYNAME", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[205])
+    put("DAYOFMONTH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[86])
+    put("DAYOFWEEK", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[91])
+    put("DAYOFYEAR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[92])
+    put("DEGREES", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[80])
+    put("DENSE_RANK", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[136])
+    put("DIVIDE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[38])
+    put("EDITDIST3", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[186])
+    put("ENDS_WITH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[159])
+    put("ENTROPY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[133])
+    put("EPOCH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[191])
+    put("EXP", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[65])
+    put("EXTRACT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[166])
+    put("FACTORIAL", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[52])
+    put("FIRST_VALUE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[138])
+    put("FLATTEN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[108])
+    put("FLOOR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[44])
+    put("FORMAT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[29])
+    put("FORMATREADABLEDECIMALSIZE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[187])
+    put("FORMATREADABLESIZE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[188])
+    put("FORMAT_BYTES", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[189])
+    put("FROM_BASE64", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[33])
+    put("GAMMA", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[206])
+    put("GCD", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[58])
+    put("GREATEST", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[156])
+    put("GREATEST_COMMON_DIVISOR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[211])
+    put("GROUP_CONCAT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[132])
+    put("HEX", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[61])
+    put("HISTOGRAM", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[130])
+    put("HOUR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[87])
+    put("IF", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[154])
+    put("IFNULL", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[155])
+    put("INSTR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[17])
+    put("ISFINITE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[57])
+    put("ISNAN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[56])
+    put("JARO_SIMILARITY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[212])
+    put("JARO_WINKLER_SIMILARITY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[190])
+    put("LAG", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[142])
+    put("LAST_DAY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[100])
+    put("LAST_VALUE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[139])
+    put("LCASE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[2])
+    put("LCM", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[59])
+    put("LEAD", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[143])
+    put("LEAST", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[157])
+    put("LEAST_COMMON_MULTIPLE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[195])
+    put("LEFT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[25])
+    put("LEN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[170])
+    put("LENGTH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[4])
+    put("LEVENSHTEIN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[171])
+    put("LGAMMA", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[82])
+    put("LIST_COSINE_DISTANCE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[174])
+    put("LIST_DISTANCE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[173])
+    put("LIST_DISTINCT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[172])
+    put("LIST_DOT_PRODUCT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[203])
+    put("LIST_ELEMENT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[202])
+    put("LIST_EXTRACT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[201])
+    put("LIST_HAS_ALL", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[196])
+    put("LIST_HAS_ANY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[197])
+    put("LIST_INTERSECT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[198])
+    put("LIST_REVERSE_SORT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[199])
+    put("LIST_SORT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[200])
+    put("LIST_UNIQUE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[194])
+    put("LN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[48])
+    put("LOG", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[49])
+    put("LOG10", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[50])
+    put("LOG2", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[51])
+    put("LOWER", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[0])
+    put("LPAD", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[22])
+    put("LTRIM", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[10])
+    put("MAKE_TIMESTAMP", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[169])
+    put("MAP", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[151])
+    put("MAX", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[116])
+    put("MD5", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[34])
+    put("MEDIAN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[125])
+    put("MILLISECOND", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[90])
+    put("MIN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[115])
+    put("MINUTE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[88])
+    put("MISMATCHES", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[168])
+    put("MOD", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[40])
+    put("MONTH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[84])
+    put("MONTHNAME", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[101])
+    put("MULTIPLY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[39])
+    put("NOW", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[102])
+    put("NTH_VALUE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[144])
+    put("NTILE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[137])
+    put("NULLIF", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[153])
+    put("OCTET_LENGTH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[7])
+    put("PERCENT_RANK", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[140])
+    put("PI", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[64])
+    put("POSITION", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[16])
+    put("POW", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[53])
+    put("POWER", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[54])
+    put("PRINTF", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[30])
+    put("QUANTILE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[126])
+    put("QUARTER", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[93])
+    put("RADIANS", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[81])
+    put("RAND", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[145])
+    put("RANGE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[107])
+    put("RANK", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[135])
+    put("REGEXP_EXTRACT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[20])
+    put("REGEXP_FULL_MATCH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[163])
+    put("REGEXP_MATCHES", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[21])
+    put("REGEXP_REPLACE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[19])
+    put("REPEAT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[27])
+    put("REPLACE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[18])
+    put("REVERSE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[8])
+    put("RIGHT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[26])
+    put("ROUND", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[41])
+    put("ROUNDBANKERS", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[42])
+    put("ROW_NUMBER", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[134])
+    put("RPAD", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[23])
+    put("RTRIM", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[11])
+    put("SECOND", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[89])
+    put("SHA1", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[35])
+    put("SHA256", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[36])
+    put("SIGN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[55])
+    put("SIN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[73])
+    put("SINH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[76])
+    put("SOUNDEX", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[31])
+    put("SPLIT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[181])
+    put("SPLIT_PART", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[160])
+    put("SQRT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[47])
+    put("STARTS_WITH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[158])
+    put("STDDEV", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[119])
+    put("STDDEV_POP", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[117])
+    put("STDDEV_SAMP", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[118])
+    put("STRFTIME", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[182])
+    put("STRING_AGG", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[131])
+    put("STRING_SPLIT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[183])
+    put("STRING_SPLIT_REGEX", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[180])
+    put("STRING_TO_ARRAY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[184])
+    put("STRPOS", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[185])
+    put("STR_SPLIT", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[178])
+    put("STR_SPLIT_REGEX", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[179])
+    put("SUBSTR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[14])
+    put("SUBSTRING", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[15])
+    put("SUFFIX", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[175])
+    put("SUM", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[112])
+    put("TAN", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[75])
+    put("TANH", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[78])
+    put("TIMEZONE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[106])
+    put("TODAY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[146])
+    put("TO_BASE64", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[32])
+    put("TO_DAYS", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[104])
+    put("TO_HEX", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[176])
+    put("TRANSLATE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[28])
+    put("TRIM", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[9])
+    put("TRUNC", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[43])
+    put("UCASE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[3])
+    put("UNHEX", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[62])
+    put("UPPER", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[1])
+    put("UUID", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[150])
+    put("VARIANCE", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[167])
+    put("VAR_POP", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[120])
+    put("VAR_SAMP", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[121])
+    put("VERSION", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[147])
+    put("WEEK", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[94])
+    put("WEEKDAY", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[204])
+    put("WEEKOFYEAR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[177])
+    put("XOR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[63])
+    put("YEAR", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[83])
+    put("YEARWEEK", DUCKDB_TO_CLICKHOUSE_HAZARD_ENTRIES[95])
 }
 
 /** clickhouse->duckdb lookup: 177 keys (ClickHouse-side names) over 213 entries. */
 internal val CLICKHOUSE_TO_DUCKDB_HAZARDS: Map<String, FunctionHazard> = buildMap {
-    put("ABS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[37])
-    put("ACOS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[66])
-    put("ACOSH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[68])
-    put("AGE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[105])
-    put("ANY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[127])
-    put("ARGMAX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[128])
-    put("ARGMIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[129])
-    put("ARRAYDISTINCT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[172])
-    put("ARRAYDOTPRODUCT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[203])
-    put("ARRAYELEMENT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[201])
-    put("ARRAYFLATTEN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[108])
-    put("ARRAYINTERSECT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[198])
-    put("ARRAYREVERSESORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[199])
-    put("ARRAYSORT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[200])
-    put("ARRAYSTRINGCONCAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[131])
-    put("ARRAYUNIQ", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[194])
-    put("ASCII", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[24])
-    put("ASIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[67])
-    put("ASINH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[72])
-    put("ATAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[70])
-    put("ATAN2", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[71])
-    put("ATANH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[69])
-    put("AVG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[113])
-    put("BASE64DECODE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[33])
-    put("BASE64ENCODE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[32])
-    put("BIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[60])
-    put("BITAND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[164])
-    put("BITCOUNT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[207])
-    put("BITOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[165])
-    put("BITXOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[63])
-    put("CBRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[79])
-    put("CEIL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[45])
-    put("CHAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[161])
-    put("CHAR_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[5])
-    put("COALESCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[152])
-    put("CONCAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[12])
-    put("CONCAT_WS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[13])
-    put("CORR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[122])
-    put("COS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[74])
-    put("COSH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[77])
-    put("COSINEDISTANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[174])
-    put("COUNT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[114])
-    put("COVARPOP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[123])
-    put("COVARSAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[124])
-    put("CUME_DIST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[141])
-    put("CURRENTDATABASE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[149])
-    put("CURRENTUSER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[148])
-    put("DATEDIFF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[98])
-    put("DATETRUNC", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[96])
-    put("DEGREES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[80])
-    put("DENSE_RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[136])
-    put("DIVIDE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[38])
-    put("EDITDISTANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[171])
-    put("ENDSWITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[159])
-    put("ENTROPY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[133])
-    put("EXP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[65])
-    put("EXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[166])
-    put("FACTORIAL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[52])
-    put("FIRST_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[138])
-    put("FLOOR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[44])
-    put("FORMAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[29])
-    put("FORMATDATETIME", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[182])
-    put("FORMATREADABLEDECIMALSIZE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[187])
-    put("FORMATREADABLESIZE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[188])
-    put("FORMAT_BYTES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[189])
-    put("FROMUNIXTIMESTAMP64MICRO", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[169])
-    put("GCD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[58])
-    put("GENERATEUUIDV4", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[150])
-    put("GREATEST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[156])
-    put("GROUPARRAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[111])
-    put("HASALL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[196])
-    put("HASANY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[197])
-    put("HEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[61])
-    put("HISTOGRAM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[130])
-    put("IF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[154])
-    put("IFNULL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[155])
-    put("INSTR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[17])
-    put("ISFINITE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[57])
-    put("ISNAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[56])
-    put("JAROSIMILARITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[212])
-    put("JAROWINKLERSIMILARITY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[190])
-    put("L2DISTANCE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[173])
-    put("LAG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[142])
-    put("LAST_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[139])
-    put("LCM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[59])
-    put("LEAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[143])
-    put("LEAST", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[157])
-    put("LEFT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[25])
-    put("LEFTPAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[22])
-    put("LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[4])
-    put("LGAMMA", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[82])
-    put("LOG", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[48])
-    put("LOG10", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[49])
-    put("LOG2", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[51])
-    put("LOWER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[0])
-    put("MAP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[151])
-    put("MATCH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[21])
-    put("MAX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[116])
-    put("MD5", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[34])
-    put("MEDIAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[125])
-    put("MIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[115])
-    put("MISMATCHES", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[168])
-    put("MODULO", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[40])
-    put("MONTHNAME", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[101])
-    put("MULTIPLY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[39])
-    put("NOW", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[102])
-    put("NTH_VALUE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[144])
-    put("NTILE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[137])
-    put("NULLIF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[153])
-    put("OCTET_LENGTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[7])
-    put("PERCENT_RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[140])
-    put("PI", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[64])
-    put("POSITION", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[16])
-    put("POW", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[53])
-    put("POWER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[54])
-    put("PRINTF", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[30])
-    put("QUANTILE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[126])
-    put("RADIANS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[81])
-    put("RAND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[145])
-    put("RANGE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[107])
-    put("RANK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[135])
-    put("REGEXPEXTRACT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[20])
-    put("REPEAT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[27])
-    put("REPLACEALL", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[18])
-    put("REPLACEREGEXPONE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[19])
-    put("REVERSE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[8])
-    put("RIGHT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[26])
-    put("RIGHTPAD", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[23])
-    put("ROUND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[41])
-    put("ROUNDBANKERS", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[42])
-    put("ROW_NUMBER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[134])
-    put("SHA1", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[35])
-    put("SHA256", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[36])
-    put("SIGN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[55])
-    put("SIN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[73])
-    put("SINH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[76])
-    put("SOUNDEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[31])
-    put("SPLITBYCHAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[160])
-    put("SPLITBYREGEXP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[179])
-    put("SPLITBYSTRING", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[178])
-    put("SQRT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[47])
-    put("STARTSWITH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[158])
-    put("STDDEV", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[119])
-    put("STDDEVPOP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[117])
-    put("STDDEVSAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[118])
-    put("SUBSTRING", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[14])
-    put("SUM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[112])
-    put("TAN", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[75])
-    put("TANH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[78])
-    put("TGAMMA", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[206])
-    put("TIMEZONE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[106])
-    put("TODAY", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[103])
-    put("TODAYOFMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[85])
-    put("TODAYOFWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[91])
-    put("TODAYOFYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[92])
-    put("TOHOUR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[87])
-    put("TOISOWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[94])
-    put("TOLASTDAYOFMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[100])
-    put("TOMINUTE", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[88])
-    put("TOMONTH", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[84])
-    put("TOQUARTER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[93])
-    put("TORELATIVEDAYNUM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[104])
-    put("TOSECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[89])
-    put("TOSECOND*1000 + TOMILLISECOND", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[90])
-    put("TOUNIXTIMESTAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[191])
-    put("TOYEAR", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[83])
-    put("TOYEARWEEK", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[95])
-    put("TRANSLATEUTF8", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[28])
-    put("TRIM", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[9])
-    put("TRIMLEFT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[10])
-    put("TRIMRIGHT", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[11])
-    put("TRUNC", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[43])
-    put("UNHEX", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[62])
-    put("UPPER", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[1])
-    put("VARPOP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[120])
-    put("VARSAMP", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[167])
-    put("VERSION", DUCKDB_CLICKHOUSE_HAZARD_ENTRIES[147])
+    put("ABS", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[37])
+    put("ACOS", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[66])
+    put("ACOSH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[68])
+    put("AGE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[105])
+    put("ANY", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[127])
+    put("ARGMAX", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[128])
+    put("ARGMIN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[129])
+    put("ARRAYDISTINCT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[172])
+    put("ARRAYDOTPRODUCT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[203])
+    put("ARRAYELEMENT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[201])
+    put("ARRAYFLATTEN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[108])
+    put("ARRAYINTERSECT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[198])
+    put("ARRAYREVERSESORT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[199])
+    put("ARRAYSORT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[200])
+    put("ARRAYSTRINGCONCAT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[131])
+    put("ARRAYUNIQ", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[194])
+    put("ASCII", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[24])
+    put("ASIN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[67])
+    put("ASINH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[72])
+    put("ATAN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[70])
+    put("ATAN2", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[71])
+    put("ATANH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[69])
+    put("AVG", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[113])
+    put("BASE64DECODE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[33])
+    put("BASE64ENCODE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[32])
+    put("BIN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[60])
+    put("BITAND", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[164])
+    put("BITCOUNT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[207])
+    put("BITOR", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[165])
+    put("BITXOR", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[63])
+    put("CBRT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[79])
+    put("CEIL", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[45])
+    put("CHAR", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[161])
+    put("CHAR_LENGTH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[5])
+    put("COALESCE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[152])
+    put("CONCAT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[12])
+    put("CONCAT_WS", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[13])
+    put("CORR", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[122])
+    put("COS", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[74])
+    put("COSH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[77])
+    put("COSINEDISTANCE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[174])
+    put("COUNT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[114])
+    put("COVARPOP", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[123])
+    put("COVARSAMP", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[124])
+    put("CUME_DIST", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[141])
+    put("CURRENTDATABASE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[149])
+    put("CURRENTUSER", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[148])
+    put("DATEDIFF", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[98])
+    put("DATETRUNC", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[96])
+    put("DEGREES", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[80])
+    put("DENSE_RANK", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[136])
+    put("DIVIDE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[38])
+    put("EDITDISTANCE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[171])
+    put("ENDSWITH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[159])
+    put("ENTROPY", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[133])
+    put("EXP", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[65])
+    put("EXTRACT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[166])
+    put("FACTORIAL", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[52])
+    put("FIRST_VALUE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[138])
+    put("FLOOR", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[44])
+    put("FORMAT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[29])
+    put("FORMATDATETIME", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[182])
+    put("FORMATREADABLEDECIMALSIZE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[187])
+    put("FORMATREADABLESIZE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[188])
+    put("FORMAT_BYTES", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[189])
+    put("FROMUNIXTIMESTAMP64MICRO", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[169])
+    put("GCD", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[58])
+    put("GENERATEUUIDV4", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[150])
+    put("GREATEST", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[156])
+    put("GROUPARRAY", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[111])
+    put("HASALL", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[196])
+    put("HASANY", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[197])
+    put("HEX", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[61])
+    put("HISTOGRAM", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[130])
+    put("IF", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[154])
+    put("IFNULL", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[155])
+    put("INSTR", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[17])
+    put("ISFINITE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[57])
+    put("ISNAN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[56])
+    put("JAROSIMILARITY", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[212])
+    put("JAROWINKLERSIMILARITY", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[190])
+    put("L2DISTANCE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[173])
+    put("LAG", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[142])
+    put("LAST_VALUE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[139])
+    put("LCM", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[59])
+    put("LEAD", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[143])
+    put("LEAST", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[157])
+    put("LEFT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[25])
+    put("LEFTPAD", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[22])
+    put("LENGTH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[4])
+    put("LGAMMA", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[82])
+    put("LOG", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[48])
+    put("LOG10", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[49])
+    put("LOG2", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[51])
+    put("LOWER", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[0])
+    put("MAP", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[151])
+    put("MATCH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[21])
+    put("MAX", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[116])
+    put("MD5", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[34])
+    put("MEDIAN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[125])
+    put("MIN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[115])
+    put("MISMATCHES", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[168])
+    put("MODULO", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[40])
+    put("MONTHNAME", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[101])
+    put("MULTIPLY", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[39])
+    put("NOW", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[102])
+    put("NTH_VALUE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[144])
+    put("NTILE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[137])
+    put("NULLIF", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[153])
+    put("OCTET_LENGTH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[7])
+    put("PERCENT_RANK", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[140])
+    put("PI", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[64])
+    put("POSITION", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[16])
+    put("POW", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[53])
+    put("POWER", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[54])
+    put("PRINTF", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[30])
+    put("QUANTILE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[126])
+    put("RADIANS", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[81])
+    put("RAND", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[145])
+    put("RANGE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[107])
+    put("RANK", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[135])
+    put("REGEXPEXTRACT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[20])
+    put("REPEAT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[27])
+    put("REPLACEALL", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[18])
+    put("REPLACEREGEXPONE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[19])
+    put("REVERSE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[8])
+    put("RIGHT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[26])
+    put("RIGHTPAD", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[23])
+    put("ROUND", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[41])
+    put("ROUNDBANKERS", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[42])
+    put("ROW_NUMBER", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[134])
+    put("SHA1", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[35])
+    put("SHA256", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[36])
+    put("SIGN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[55])
+    put("SIN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[73])
+    put("SINH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[76])
+    put("SOUNDEX", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[31])
+    put("SPLITBYCHAR", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[160])
+    put("SPLITBYREGEXP", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[179])
+    put("SPLITBYSTRING", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[178])
+    put("SQRT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[47])
+    put("STARTSWITH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[158])
+    put("STDDEV", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[119])
+    put("STDDEVPOP", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[117])
+    put("STDDEVSAMP", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[118])
+    put("SUBSTRING", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[14])
+    put("SUM", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[112])
+    put("TAN", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[75])
+    put("TANH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[78])
+    put("TGAMMA", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[206])
+    put("TIMEZONE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[106])
+    put("TODAY", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[103])
+    put("TODAYOFMONTH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[85])
+    put("TODAYOFWEEK", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[91])
+    put("TODAYOFYEAR", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[92])
+    put("TOHOUR", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[87])
+    put("TOISOWEEK", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[94])
+    put("TOLASTDAYOFMONTH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[100])
+    put("TOMINUTE", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[88])
+    put("TOMONTH", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[84])
+    put("TOQUARTER", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[93])
+    put("TORELATIVEDAYNUM", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[104])
+    put("TOSECOND", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[89])
+    put("TOSECOND*1000 + TOMILLISECOND", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[90])
+    put("TOUNIXTIMESTAMP", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[191])
+    put("TOYEAR", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[83])
+    put("TOYEARWEEK", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[95])
+    put("TRANSLATEUTF8", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[28])
+    put("TRIM", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[9])
+    put("TRIMLEFT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[10])
+    put("TRIMRIGHT", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[11])
+    put("TRUNC", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[43])
+    put("UNHEX", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[62])
+    put("UPPER", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[1])
+    put("VARPOP", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[120])
+    put("VARSAMP", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[167])
+    put("VERSION", CLICKHOUSE_TO_DUCKDB_HAZARD_ENTRIES[147])
 }

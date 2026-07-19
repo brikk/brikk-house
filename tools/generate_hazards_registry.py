@@ -95,7 +95,9 @@ def build_key_map(pairs: list[dict], side: str) -> dict[str, int]:
     return chosen
 
 
-def emit_entry(pair: dict) -> list[str]:
+def emit_entry(pair: dict, source_field: str, target_field: str) -> list[str]:
+    """One FunctionHazard, with sourceName/targetName oriented to the map's direction
+    (source_field/target_field are the JSON dialect keys for this direction)."""
     verdict = VERDICTS[pair["verdict"]]
     lines = [f"    FunctionHazard(HazardVerdict.{verdict},"]
     hazard = pair.get("hazard")
@@ -104,7 +106,43 @@ def emit_entry(pair: dict) -> list[str]:
     areas = pair.get("areas") or []
     if areas:
         lines.append("        areas = listOf(" + ", ".join(kstr(a) for a in areas) + "),")
-    lines.append(f"        provenance = {kstr(pair['provenance'])}),")
+    lines.append(f"        provenance = {kstr(pair['provenance'])},")
+    lines.append(f"        sourceName = {kstr(pair[source_field])},")
+    lines.append(f"        targetName = {kstr(pair[target_field])}),")
+    return lines
+
+
+def emit_entries_block(
+    entries_name: str, chunk_prefix: str, pairs: list[dict],
+    a: str, b: str, source_field: str, target_field: str,
+) -> list[str]:
+    """An oriented entries list (`entries_name`) + its chunk functions. sourceName/
+    targetName follow source_field->target_field so each lookup direction is correct."""
+    lines: list[str] = []
+    if not pairs:
+        lines.append(
+            f"/** The 0 probe-verified ({source_field}->{target_field}) verdicts. */"
+        )
+        lines.append(f"internal val {entries_name}: List<FunctionHazard> = emptyList()")
+        return lines
+    n_chunks = (len(pairs) + CHUNK - 1) // CHUNK
+    lines.append(
+        f"/** The {len(pairs)} probe-verified ({source_field}->{target_field}) "
+        f"verdicts, in JSON order. */"
+    )
+    lines.append(
+        f"internal val {entries_name}: List<FunctionHazard> = "
+        + " +\n    ".join(f"{chunk_prefix}Chunk{c}()" for c in range(n_chunks))
+    )
+    lines.append("")
+    for c in range(0, len(pairs), CHUNK):
+        chunk = pairs[c : c + CHUNK]
+        lines.append(f"private fun {chunk_prefix}Chunk{c // CHUNK}(): List<FunctionHazard> = listOf(")
+        for i, pair in enumerate(chunk):
+            lines.append(f"    // [{c + i}] {a}: {pair[a]!r} | {b}: {pair[b]!r}")
+            lines.extend(emit_entry(pair, source_field, target_field))
+        lines.append(")")
+        lines.append("")
     return lines
 
 
@@ -180,7 +218,10 @@ def generate_one(src: pathlib.Path) -> None:
     a_up, b_up = a.upper(), b.upper()
     a_pas, b_pas = pascal_dialect(a), pascal_dialect(b)
     a_disp, b_disp = display_dialect(a), display_dialect(b)
-    entries_name = f"{a_up}_{b_up}_HAZARD_ENTRIES"
+    # Two direction-oriented entry lists: sourceName/targetName follow the lookup
+    # direction, so a b->a hit reports the b-side name as sourceName (and vice versa).
+    ab_entries_name = f"{a_up}_TO_{b_up}_HAZARD_ENTRIES"
+    ba_entries_name = f"{b_up}_TO_{a_up}_HAZARD_ENTRIES"
     a_to_b_name = f"{a_up}_TO_{b_up}_HAZARDS"
     b_to_a_name = f"{b_up}_TO_{a_up}_HAZARDS"
     out = OUT_DIR / f"Generated{a_pas}{b_pas}Hazards.kt"
@@ -203,33 +244,14 @@ def generate_one(src: pathlib.Path) -> None:
         "",
     ]
 
-    if not pairs:
-        lines.append(
-            f"/** The 0 probe-verified ({a}, {b}) pair verdicts, in JSON order. */"
-        )
-        lines.append(f"internal val {entries_name}: List<FunctionHazard> = emptyList()")
-        lines.append("")
-    else:
-        n_chunks = (len(pairs) + CHUNK - 1) // CHUNK
-        lines.append(
-            f"/** The {len(pairs)} probe-verified ({a}, {b}) pair verdicts, in JSON order. */"
-        )
-        lines.append(
-            f"internal val {entries_name}: List<FunctionHazard> = "
-            + " +\n    ".join(f"hazardsChunk{c}()" for c in range(n_chunks))
-        )
-        lines.append("")
-
-        for c in range(0, len(pairs), CHUNK):
-            chunk = pairs[c : c + CHUNK]
-            lines.append(f"private fun hazardsChunk{c // CHUNK}(): List<FunctionHazard> = listOf(")
-            for i, pair in enumerate(chunk):
-                lines.append(
-                    f"    // [{c + i}] {a}: {pair[a]!r} | {b}: {pair[b]!r}"
-                )
-                lines.extend(emit_entry(pair))
-            lines.append(")")
-            lines.append("")
+    lines.extend(
+        emit_entries_block(ab_entries_name, f"{a}{b_pas}", pairs, a, b, a, b)
+    )
+    lines.append("")
+    lines.extend(
+        emit_entries_block(ba_entries_name, f"{b}{a_pas}", pairs, a, b, b, a)
+    )
+    lines.append("")
 
     lines.extend(
         emit_key_map(
@@ -237,7 +259,7 @@ def generate_one(src: pathlib.Path) -> None:
             f"{a}->{b} lookup: {len(a_keys)} keys ({a_disp}-side names) over "
             f"{len(pairs)} entries.",
             a_keys,
-            entries_name,
+            ab_entries_name,
         )
     )
     lines.append("")
@@ -247,7 +269,7 @@ def generate_one(src: pathlib.Path) -> None:
             f"{b}->{a} lookup: {len(b_keys)} keys ({b_disp}-side names) over "
             f"{len(pairs)} entries.",
             b_keys,
-            entries_name,
+            ba_entries_name,
         )
     )
 
