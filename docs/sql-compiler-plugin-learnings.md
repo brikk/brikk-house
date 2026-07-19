@@ -214,3 +214,135 @@ companion is the `ExtensionPointDescriptor`); `CallableSymbol.callableId` is nul
   consumer compilations — needs process discipline now, a toolchain plugin later.
 - The `@BrikkSql`-annotation contract, `Sql.doris(...)` shape, TVF value type, and trait syntax
   are all placeholders pending the surface-syntax exploration.
+
+## 9. Type-system direction (settled in discussion, Jul 2026)
+
+- **DataFrame for how the types work, ExoQuery for how the values work.** Disjoint layers:
+  FIR typing playbook from Kotlin DataFrame, IR value/composition plumbing from ExoQuery.
+- Shapes are **plugin-generated types** (from SQL + schema JSON) — we own the whole hierarchy.
+  Row extension = interface subtyping. Trait conformance is **materialized at generation time**
+  (`FirSupertypeGenerationExtension` adds structurally-satisfied trait interfaces as supertypes
+  of our own generated shape types). No ambient structural typing — Kotlin can't (a type
+  parameter as upper bound admits no other bounds; no denotable intersections; bounds constrain
+  but never construct).
+- Discipline: **traits live upstream of (or beside) the shapes that satisfy them.** Cross-module
+  *retroactive* conformance is impossible (sealed metadata); cross-module *use* is fine (edges
+  travel in metadata). Late/sideways traits go through an explicit, **compile-time-checked
+  `cast<T>()`** seam (checker compares both schemas field-by-field; grades: exact / widening /
+  trustMe). Stronger than DataFrame's runtime-checked cast.
+- Naming generated types: derive from enclosing declaration (`WatchEvents.Input/.Output`).
+  Constraint (load-bearing): declaration generation runs **pre-body-resolution**, so the SQL
+  literal must be *syntactically* extractable from raw FIR — const literal ± trimIndent only,
+  no indirection. Anonymous mid-expression call sites: explicit T, or the refinement tier.
+- Inference of `T` in `Sql.doris<T>(...): Shape<T>` = `FirFunctionCallRefinementExtension`
+  (DataFrame's `@Refine`, `@FirExtensionApiInternals`). Kept strictly as an **optional
+  ergonomics tier** — core path uses only stable extensions (declaration generation, supertype
+  generation, checkers). DataFrame can build on the internal API because it co-evolves in-repo;
+  we can't.
+- Pipe-shape algebra: concrete `FROM` = closed shape (schema JSON resolves `*`);
+  `WHERE/ORDER/LIMIT` shape-preserving; `SELECT`/`AGGREGATE` close; `EXTEND` = T + cols;
+  genuine `*`-openness only enters via parameterized sources → generics/traits.
+
+## 10. Surface-syntax lead: headless pipelines (source as parameter)
+
+Idea: v1 TVFs take the source as the first *Kotlin parameter*; the SQL string is only the
+pipeline (`|> WHERE … |> SELECT …`), no `FROM` line. Mechanics wins:
+
+- Defers the hardest novel seam (resolving Kotlin names *inside* SQL text): the source arrives
+  as a typed parameter; the plugin binds the parameter's shape as a synthetic input relation
+  (parse as `FROM __src |> <fragment>` against the catalog).
+- Signature-only analysis: parameter names/types are available pre-body-resolution, so shape
+  generation stays within the raw-FIR constraint.
+- **Unification**: a headless pipeline *is* a trait (`Shape<T> → Shape<f(T)>`); a FROM-ful query
+  is the same object applied to a catalog-table constant. TVFs and traits collapse into one
+  mechanical construct.
+- Joins reopen multi-source. Middle ground before full in-string resolution: allow SQL-text
+  references **restricted to parameter names** (`JOIN other ON …` where `other` is a param) —
+  still signature-only lookup, no FIR body resolution needed.
+- IDE note: IntelliJ language injection supports **prefix/suffix text** on injected fragments —
+  the same synthetic `FROM __src |>` the compiler prepends can be the injection prefix (one
+  source of truth for both). Caveat: bundled DataGrip dialects don't know pipe syntax (`|>`),
+  so real completion inside pipelines likely means our own injected language backed by
+  brikk-sql, not reuse of DataGrip's SQL PSI.
+
+## 10a. Alternative surface: SQL-only model (keep on the table)
+
+Define TVFs + traits entirely in SQL-land (own file type, GoogleSQL-flavored: `CREATE TABLE
+FUNCTION` + templated `ANY TABLE` params; pipes make trait application trivially
+`FROM someTvf(<params>) |> EXTEND …`), compile to Kotlin API via codegen — the SQLDelight
+architecture with a pipe-SQL language. Tradeoffs: zero FIR/IR instability tax, closed-world
+composition (no raw-FIR/inline/store machinery), IDE = own language plugin (needed for pipes
+anyway); but loses Kotlin-native ergonomics (typed params from Kotlin values, `val` composition,
+inference magic) and puts a codegen boundary in the middle.
+
+**Non-exclusive — the de-risking frame:** let **brikk-sql own the semantic model** (catalog,
+TVF objects, traits, shape algebra) regardless of surface. The Kotlin compiler plugin is then
+one thin frontend (binds Kotlin signatures into the catalog, hands fragments over); SQL files
+are another. If FIR churn ever becomes too expensive, the SQL-file surface still works.
+Reference: `reference/googlesql` is already in-repo — align templated-TVF/trait semantics with
+it and steal test cases.
+
+SQL-file snippets referenced from Kotlin: keep the reference graph **one-directional by
+construction** (either Kotlin hosts and SQL snippets are leaf includes that may not name TVFs,
+or SQL hosts SQLDelight-style and Kotlin only consumes). Bidirectional means two compilers
+needing each other's symbol tables mid-resolution — avoid.
+
+## 11. Horizon (not now — do not lose)
+
+- **Output sinks**: final stage handed to a different system the source DB can't reach
+  (cross-DB movement, e.g. render stage N for DB1, ship rows, continue/land in DB2). Keep the
+  final-stage boundary pluggable in the render pipeline design.
+- **In-memory execution tier**: if client-side steps ever appear, they slot in as a
+  DataFrame-like API between SQL stages — same generated shape types on both sides of the
+  boundary, but **streaming, not set-based**.
+- **Arrow streaming dataframes**: prototype learning (jayson) — only a few Kotlin DataFrame
+  interface methods fundamentally break streaming and they're rarely called; upstreaming would
+  require DataFrame to separate fixed-memory from streaming results and split those methods
+  out. Possible later collaboration/fork point.
+
+## 12. Execution modes (MVP-boundary requirement)
+
+Materialization lives ONLY at the control/input boundary, never in pipeline depth. Target:
+**"take this view: run as query / batch insert / incremental batch insert / CDC"** — four
+interpreters over one pure, shape-typed pipeline value (logical plan vs physical execution).
+
+| mode | executor action on AST | static requirement (compile-time checkable) |
+|---|---|---|
+| query | render SELECT | none |
+| batch insert | wrap `INSERT INTO target SELECT …` | output shape ⊆ target shape (schema JSON) |
+| incremental batch | inject watermark predicate at sources + state | predicate pushes down through all ops; AGGREGATE/JOIN need merge keys or append-only discipline |
+| **collapsing materialize** (first target) | recompute affected keys (`WHERE key IN (:changed)` at sources), upsert latest, sink collapses | declared collapse key (+ version col); **key-preserving lineage** source→output; key-closure recompute (joins/aggs complete within key partition); key determines row |
+| CDC / perfect IVM | evaluate over deltas (RisingWave/DBSP-style) | every operator has a delta rule (stateless free; aggregates need merge/retract; joins need two-sided state) |
+
+Collapsing mode notes: the sink does the hard half — Doris unique-key merge-on-write and
+ClickHouse ReplacingMergeTree natively implement latest-per-key. Two lowerings under identical
+static requirements: **storage-collapse** (blind upsert, sink merges) vs **compute-collapse**
+(keyed re-request + explicit upsert, for sinks without native collapse). Key-preserving lineage
+is a specialization of brikk-sql's already-ported column-level lineage — the first-target mode
+has the nearest-to-done analyzer.
+
+- Mode compatibility = per-operator classification (stateless / accumulating / non-monotonic)
+  composed up the pipeline — a **static AST analysis in brikk-sql**, surfaced as checker
+  diagnostics ("cannot run as CDC: non-monotonic AGGREGATE at stage 3 without merge key").
+- Rules: modes may *inject at edges* (watermark param, target binding), never rewrite pipeline
+  semantics; pipeline values must stay pure (enforce later: no side-effecting constructs in TVF
+  bodies — avoid the dbt disease of models embedding their own materialization).
+- Formal grounding when needed: DBSP/Feldera per-operator delta rules; DB-native lowering
+  targets: Doris async MVs, ClickHouse MVs.
+- MVP slice likely: query + batch insert implemented; **collapsing materialize next** (its
+  key-lineage analyzer is nearest to done); incremental/CDC/perfect-IVM declared-but-
+  unimplemented with honest diagnostics; classifier stubbed.
+
+## 13. Jinja/dbt-macro replacement mapping (for the MVP flow hunt)
+
+- Column-list manipulation (star-except, reorder `a, f, g, *` → `a, f, g, * EXCEPT(a,f,g)`,
+  rename-by-prefix, surrogate keys, pivots) → ordered-shape combinators, compile-time, trivial.
+- Reused SQL blocks with holes (`{% macro %}`) → headless-pipeline traits.
+- `ref()` / `source()` → TVF references + catalog entries (the composition model itself).
+- Conditional fragments (`{% if is_incremental() %}`) → const-branch if compile-time-constant
+  (dialect/env via plugin option); genuinely-runtime conditions fall to the dynamic tier and
+  forfeit static shapes on that branch — track which flows need this.
+- Materialization/orchestration (incremental strategy, snapshots, hooks) → §12 control layer,
+  NOT pipeline scope.
+- Group-by helpers: `GROUP BY ALL` precedent (BigQuery/DuckDB/Snowflake); positional variants
+  ("up to foo") are shape combinators evaluated at desugar.
