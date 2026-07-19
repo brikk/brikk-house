@@ -37,6 +37,15 @@ KDoc):
   - No claim is made below the granularity doris-website itself uses: "3.x"/"4.x" are the
     site's own labels (not exact dot releases); we do not attempt to resolve them to a
     specific minor.
+    TODO(doris-catalog-ahead-of-ga): the function catalog is generated from Doris MASTER
+    (tools/extract_doris_signatures.py pins doris_version v0.8.2-31011-gd8fd23f7f38, a
+    git-describe ahead of any GA release), so it can carry functions that no shipped Doris
+    has yet. Concrete case: is_valid_utf8 (IS_VALID_UTF8) is on master and first ships GA
+    in 4.1.3 -- we picked it up early. The doc heuristic here only tags it "4.x", which
+    reads as "available in 4.x" and hides that it's really >= 4.1.3. If a consumer needs
+    to gate by the Doris version they actually target, add a hand-curated "min GA release"
+    overrides map (name -> exact version, e.g. IS_VALID_UTF8 -> 4.1.3) layered on top of
+    the first-documented-in heuristic, seeded with these known master-ahead cases.
   - Titles are matched, not descriptions: a small number of docs use combined titles for
     multi-alias pages ("CURDATE,CURRENT_DATE", "LCASE/LOWER") or an SEO-vs-sidebar split
     ("STRUCT | Struct Functions") -- both are parsed into individual name tokens.
