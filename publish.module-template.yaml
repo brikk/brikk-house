@@ -38,7 +38,7 @@ settings:
   publishing:
     enabled: true
     group: dev.brikk.house
-    version: 0.7.0-SNAPSHOT
+    version: 0.8.0-SNAPSHOT
     publishSources: true
     # --- Central RELEASE toggle (leave disabled for normal dev/snapshot work) ---
     # `mavenCentral: enabled` turns on the Central Portal release path (`./kotlin publish
