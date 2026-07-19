@@ -41,13 +41,14 @@ settings:
     version: 0.7.0-SNAPSHOT
     publishSources: true
     # --- Central RELEASE toggle (leave disabled for normal dev/snapshot work) ---
-    # The two lines below turn on the Central Portal release path (`./kotlin publish
-    # mavenCentral`). They're validated eagerly: enabling forces `signArtifacts: true`
+    # `mavenCentral: enabled` turns on the Central Portal release path (`./kotlin publish
+    # mavenCentral`). It is validated eagerly: enabling it forces `signArtifacts: true`
     # (which is GLOBAL — then EVERY publish, incl. centralSnapshots/mavenLocal,
     # needs KOTLIN_TOOLCHAIN_SIGNING_KEY), and it REJECTS -SNAPSHOT versions.
-    # publishingMode: auto -> the deployment is validated AND published automatically (no
-    # manual click in the Central Portal UI). publish-release.sh uncomments these for a release.
-    #mavenCentral: { enabled: true, publishingMode: auto }
+    # To cut a release, uncomment the two lines below, set `version` to a release (e.g.
+    # 0.1.0), and run from CI (creds/signing from KOTLIN_TOOLCHAIN_* env vars). Toolchain
+    # 0.11 also flags a required `publishing.artifact` property here — set it at that time.
+    #mavenCentral: enabled
     #signArtifacts: true
     pom:
       url: https://github.com/brikk/brikk-house
