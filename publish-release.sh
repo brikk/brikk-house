@@ -15,9 +15,9 @@
 # (version + mavenCentral + signArtifacts) and restores the file on exit, so the committed
 # config keeps the keyless SNAPSHOT flow working.
 #
-# Central defaults to "manual" mode: this uploads + validates one deployment bundle per
-# module, then stops. Finish the release at:
-#   https://central.sonatype.com/publishing/deployments
+# Publishing mode is "auto" (see publish.module-template.yaml): each deployment bundle is
+# validated AND published to Maven Central automatically — no manual step in the Portal UI.
+# Track deployments at: https://central.sonatype.com/publishing/deployments
 #
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -65,7 +65,7 @@ trap restore EXIT INT TERM
 
 sed -i \
   -e "s|^    version: .*|    version: ${VERSION}|" \
-  -e "s|^    #mavenCentral: enabled|    mavenCentral: enabled|" \
+  -e "s|^    #mavenCentral: { enabled: true, publishingMode: auto }|    mavenCentral: { enabled: true, publishingMode: auto }|" \
   -e "s|^    #signArtifacts: true|    signArtifacts: true|" \
   "$TMPL"
 

@@ -116,9 +116,10 @@ A release is cut from a branch named **`release/<version>`** (non-`-SNAPSHOT`):
    the branch suffix and publishes all modules to Maven Central via
    [`publish-release.sh`](publish-release.sh). (The committed template stays on `-SNAPSHOT`; the
    script sets the release version temporarily and restores the file afterward.)
-2. Central runs in **manual** mode: finish (or drop) each deployment at
+ 2. Central runs in **auto** mode: each deployment is validated and published to Maven Central
+   automatically (no manual click). Track them at
    <https://central.sonatype.com/publishing/deployments>.
-3. Bump `main` to the next snapshot version (see above).
+ 3. Bump `main` to the next snapshot version (see above).
 
 Requires these org secrets: `KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME`,
 `KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD`, `KOTLIN_TOOLCHAIN_SIGNING_KEY`,
