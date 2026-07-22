@@ -24,9 +24,9 @@ dependencies:
   # Trino's own SQL parser. 483 matches the vendored function catalog (vendor/data/trino-functions-483.tsv).
   # NOTE: trino-parser ships class-file 69 => requires a JDK 25 runtime (see settings.jvm.jdk below).
   - io.trino:trino-parser:483
-  # Embedded DuckDB (pinned to engine 1.5.4 = jdbc artifact 1.5.4.0, matching the generated
+  # Embedded DuckDB (pinned to engine 1.5.5 = jdbc artifact 1.5.5.0, matching the generated
   # DuckDB function catalog).
-  - org.duckdb:duckdb_jdbc:1.5.4.0
+  - org.duckdb:duckdb_jdbc:1.5.5.0
   # ANTLR runtime for the vendored Doris FE SQL parser. The parser jar itself
   # (vendor/lib/doris-fe-sql-parser-*.jar) CANNOT be declared here: Amper 0.11 has no
   # local-jar dependency kind (schema only knows Maven/catalog/BOM/module deps) and

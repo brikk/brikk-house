@@ -63,7 +63,7 @@ enum class FunctionKind { SCALAR, AGGREGATE, WINDOW, TABLE_VALUED, TABLE_GENERAT
  *        the non-date args, so no dedicated member is added until the pin ships it.
  *      - table-valued / table-generating functions: no mode (row-set producers; Doris's
  *        TableValuedFunction.nullable() throws — scalar nullability is not applicable).
- *  - DuckDB: duckdb_functions() exposes no null-handling column (checked v1.5.4: only
+ *  - DuckDB: duckdb_functions() exposes no null-handling column (checked v1.5.5: only
  *    has_side_effects/stability, neither is null propagation) -> all [UNKNOWN].
  *  - Trino: SHOW FUNCTIONS exposes nothing -> all [UNKNOWN].
  *

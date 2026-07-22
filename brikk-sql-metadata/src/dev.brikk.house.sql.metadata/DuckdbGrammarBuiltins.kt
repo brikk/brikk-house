@@ -8,7 +8,7 @@ package dev.brikk.house.sql.metadata
  * tools/generate_duckdb_functions.py wires this set into the generated FunctionCatalog
  * constructor (grammarBuiltins = DUCKDB_GRAMMAR_BUILTINS).
  *
- * Verified against the pinned engine (v1.5.4, python duckdb module): each name below
+ * Verified against the pinned engine (v1.5.5, python duckdb module): each name below
  * parses as `NAME(args)` (grammar-accepted; GROUPING/GROUPING_ID fail only at BIND
  * time outside a grouped query) while `SELECT DISTINCT function_name FROM
  * duckdb_functions()` lacks it.

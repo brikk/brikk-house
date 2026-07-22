@@ -11,7 +11,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Verifies SQL against the real DuckDB parser via an embedded in-memory engine
- * (`org.duckdb:duckdb_jdbc`, pinned to 1.5.4 to match the generated DuckDB function catalog).
+ * (`org.duckdb:duckdb_jdbc`, pinned to 1.5.5 to match the generated DuckDB function catalog).
  *
  * Strategy (two channels, because DuckDB reports parse failures both ways):
  *  1. `SELECT json_serialize_sql(?)` — a pure parse with no binding. Crucially it does NOT

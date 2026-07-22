@@ -145,7 +145,7 @@ class FunctionCatalogTest {
 
     @Test
     fun duckdbCatalogLoadsWithExpectedSurface() {
-        // Pinned to DuckDB v1.5.4 (the python module the generator embeds).
+        // Pinned to DuckDB v1.5.5 (the python module the generator embeds).
         assertEquals(881, DUCKDB_FUNCTION_CATALOG.size)
         assertTrue("list_transform" in DUCKDB_FUNCTION_CATALOG)
         // Engine-verified overload: list_transform(ANY[], LAMBDA) -> ANY[], with the
@@ -191,7 +191,7 @@ class FunctionCatalogTest {
 
     @Test
     fun duckdbArgNamesArePinnedAgainstTheEngine() {
-        // duckdb_functions() (v1.5.4) lists round's parameters as ['x'] and
+        // duckdb_functions() (v1.5.5) lists round's parameters as ['x'] and
         // ['x', 'precision'] per numeric overload — names attach per overload, in
         // argTypes order.
         val round = DUCKDB_FUNCTION_CATALOG["round"]!!
@@ -209,7 +209,7 @@ class FunctionCatalogTest {
             setOf(listOf("x"), listOf("x", "precision")),
             round.overloads.mapNotNull { it.argNames }.toSet(),
         )
-        // Engine-wide coverage pin at v1.5.4: 2572 of 2682 overloads carry names
+        // Engine-wide coverage pin at v1.5.5: 2572 of 2682 overloads carry names
         // (the rest: duckdb lists no parameters for the row).
         val all = DUCKDB_FUNCTION_CATALOG.functions.flatMap { it.overloads }
         assertEquals(2682, all.size)
@@ -224,7 +224,7 @@ class FunctionCatalogTest {
 
     @Test
     fun duckdbProfilesStayNull() {
-        // duckdb_functions() exposes no null-handling column (v1.5.4: has_side_effects
+        // duckdb_functions() exposes no null-handling column (v1.5.5: has_side_effects
         // and stability are the only behavioral flags) — honest UNKNOWN as null.
         assertTrue(DUCKDB_FUNCTION_CATALOG.functions.all { it.profile == null })
     }

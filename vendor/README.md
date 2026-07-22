@@ -147,9 +147,9 @@ by `tools/generate_duckdb_functions.py` from the embedded engine itself: the pyt
 module's `duckdb_functions()` view — the engine's own resolved registry, with per-overload
 signatures, varargs, and parameter names (`parameters` → `FunctionOverload.argNames`,
 verbatim — the only engine catalog that exposes names) included for free. `duckdb_functions()`
-has **no null-handling column** (checked v1.5.4: `has_side_effects` and `stability` are the
+has **no null-handling column** (checked v1.5.5: `has_side_effects` and `stability` are the
 only behavioral flags), so `FunctionDef.profile` stays null for every DuckDB def. Pinned to
-the python module version at generation time (currently **v1.5.4**; the generator refuses to
+the python module version at generation time (currently **v1.5.5**; the generator refuses to
 run if module and engine versions disagree). Refresh: bump the python `duckdb` module,
 re-run the script. DuckDB is MIT licensed (see ATTRIBUTIONS.md).
 
