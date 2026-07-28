@@ -20,6 +20,13 @@ import kotlinx.serialization.json.put
  * Subclasses run their case loop, collect `failures` (case key -> reason), and call
  * [enforceLedger], which also writes `build/<name>-ledger-actual.json` in ledger format
  * so a ledger can be regenerated from an actual run.
+ *
+ * TODO(test-dedup): the one-off ledger-style gates (ParserIdentityCorpusTest,
+ * GeneratorIdentityCorpusTest, DatafusionSltParseTest, DatafusionFixtureTest,
+ * LineageCorpusTest, QualifyCorpusTest, ScopeCorpusTest) still hand-roll their own
+ * unledgered/stale diff with per-file ledger formats and summary shapes. Folding them
+ * onto this base needs case-by-case verification (differing ledger keys, extra checks,
+ * no sqlglot_version in some) — not a mechanical transform like the per-dialect gates.
  */
 abstract class LedgerGate {
 
