@@ -21,12 +21,7 @@ class SerdeIdentityCorpusTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     private fun loadCorpus(): List<Pair<String, JsonArray>> {
-        val stream = javaClass.classLoader.getResourceAsStream("ast-corpus/identity-serde.json")
-            ?: java.io.File("brikk-sql/testResources/ast-corpus/identity-serde.json")
-                .takeIf { it.exists() }
-                ?.inputStream()
-            ?: fail("corpus ast-corpus/identity-serde.json not found on classpath or filesystem")
-        val root = stream.use { json.parseToJsonElement(it.readBytes().decodeToString()) }.jsonObject
+        val root = json.parseToJsonElement(testResource("ast-corpus/identity-serde.json")).jsonObject
         check(root.getValue("skipped").jsonArray.isEmpty()) { "corpus has python-side skips" }
         return root.getValue("cases").jsonArray.map { case ->
             val obj = case.jsonObject

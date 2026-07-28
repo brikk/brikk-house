@@ -395,12 +395,7 @@ class AstCorpusDifferentialTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     private fun loadCorpus(): Map<String, JsonArray> {
-        val stream = javaClass.classLoader.getResourceAsStream("ast-corpus/handbuilt.json")
-            ?: java.io.File("brikk-sql/testResources/ast-corpus/handbuilt.json")
-                .takeIf { it.exists() }
-                ?.inputStream()
-            ?: fail("corpus ast-corpus/handbuilt.json not found on classpath or filesystem")
-        val root = stream.use { json.parseToJsonElement(it.readBytes().decodeToString()) }.jsonObject
+        val root = json.parseToJsonElement(testResource("ast-corpus/handbuilt.json")).jsonObject
         return root.getValue("cases").jsonArray.associate { case ->
             val obj = case.jsonObject
             obj.getValue("id").jsonPrimitive.content to obj.getValue("dump").jsonArray

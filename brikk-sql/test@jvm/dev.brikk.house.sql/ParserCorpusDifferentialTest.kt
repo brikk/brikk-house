@@ -22,13 +22,7 @@ class ParserCorpusDifferentialTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     private fun loadCorpus(name: String): Pair<List<Pair<String, JsonArray>>, Int> {
-        val stream = javaClass.classLoader.getResourceAsStream("parser-corpus/$name")
-            ?: java.io.File("brikk-sql/testResources/parser-corpus/$name")
-                .takeIf { it.exists() }
-                ?.inputStream()
-            ?: fail("corpus parser-corpus/$name not found on classpath or filesystem")
-
-        val root = stream.use { json.parseToJsonElement(it.readBytes().decodeToString()) }.jsonObject
+        val root = json.parseToJsonElement(testResource("parser-corpus/$name")).jsonObject
         val cases = root.getValue("cases").jsonArray.map { element ->
             val case = element.jsonObject
             case.getValue("sql").jsonPrimitive.content to case.getValue("dump").jsonArray

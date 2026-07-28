@@ -12,7 +12,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 /**
  * Pins the shipped hazard registry (brikk-sql-metadata Generated…Hazards.kt) against
@@ -32,14 +31,6 @@ class HazardsRegistrySyncTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun resource(path: String): String {
-        val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql/testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: java.io.File("testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: fail("resource $path not found on classpath or filesystem")
-        return stream.use { it.readBytes().decodeToString() }
-    }
-
     private data class JsonPair(
         val trino: String,
         val duckdb: String,
@@ -49,7 +40,7 @@ class HazardsRegistrySyncTest {
     )
 
     private fun loadTrinoDuckdbPairs(): List<JsonPair> {
-        val root = json.parseToJsonElement(resource("semantics/trino-duckdb-hazards.json")).jsonObject
+        val root = json.parseToJsonElement(testResource("semantics/trino-duckdb-hazards.json")).jsonObject
         return root.getValue("pairs").jsonArray.map { entry ->
             val obj = entry.jsonObject
             JsonPair(
@@ -65,7 +56,7 @@ class HazardsRegistrySyncTest {
     }
 
     private fun loadPairCount(path: String): Int {
-        val root = json.parseToJsonElement(resource(path)).jsonObject
+        val root = json.parseToJsonElement(testResource(path)).jsonObject
         return root.getValue("pairs").jsonArray.size
     }
 

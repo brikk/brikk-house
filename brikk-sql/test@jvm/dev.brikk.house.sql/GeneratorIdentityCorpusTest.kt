@@ -30,19 +30,10 @@ class GeneratorIdentityCorpusTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun resource(path: String): String {
-        val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql/testResources/$path")
-                .takeIf { it.exists() }
-                ?.inputStream()
-            ?: fail("resource $path not found on classpath or filesystem")
-        return stream.use { it.readBytes().decodeToString() }
-    }
-
     @Test
     fun identityCorpusMatchesPythonGeneratorModuloLedger() {
-        val corpus = json.decodeFromString(Corpus.serializer(), resource("ast-corpus/identity-serde.json"))
-        val ledger = json.decodeFromString(Ledger.serializer(), resource("generator-corpus/known-failures.json"))
+        val corpus = json.decodeFromString(Corpus.serializer(), testResource("ast-corpus/identity-serde.json"))
+        val ledger = json.decodeFromString(Ledger.serializer(), testResource("generator-corpus/known-failures.json"))
         check(corpus.cases.isNotEmpty()) { "empty identity corpus" }
 
         val ledgered = ledger.cases.associateBy { it.sql }
