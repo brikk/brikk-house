@@ -3,16 +3,12 @@ package dev.brikk.house.sql
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.generator.UnsupportedError
 import kotlin.test.Test
-import kotlin.test.fail
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.put
 
 /**
  * Shared harness for the per-dialect transpile gates.
@@ -27,38 +23,19 @@ import kotlinx.serialization.json.put
  *
  * Directions whose dialect is not registered are counted and printed as skipped (not
  * failures). Genuine failures must match dialect-corpus/<dialect>-transpile-known-failures.json
- * — no unledgered failure, no stale ledger entry.
+ * — no unledgered failure, no stale ledger entry (see [LedgerGate]).
  *
  * Each dialect gets a concrete subclass (one line) so gates stay individually addressable
  * via `--include-classes` and report per-dialect in test output.
  */
-abstract class TranspileCorpusGate(private val dialect: String) {
-
-    private val json = Json { ignoreUnknownKeys = true }
-
-    private fun resource(path: String): String {
-        val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql/testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: java.io.File("testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: fail("resource $path not found on classpath or filesystem")
-        return stream.use { it.readBytes().decodeToString() }
-    }
-
-    private fun loadLedger(): Map<String, String> {
-        val root = json.parseToJsonElement(resource("dialect-corpus/$dialect-transpile-known-failures.json")).jsonObject
-        return root.getValue("cases").jsonArray.associate { entry ->
-            val obj = entry.jsonObject
-            obj.getValue("case").jsonPrimitive.content to
-                obj.getValue("reason").jsonPrimitive.content
-        }
-    }
+abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
 
     @Test
     fun transpileCorpusModuloLedger() {
-        val root = json.parseToJsonElement(resource("dialect-corpus/$dialect.json")).jsonObject
+        val root = json.parseToJsonElement(testResource("dialect-corpus/$dialect.json")).jsonObject
         val transpile = root.getValue("transpile").jsonArray
         check(transpile.isNotEmpty()) { "empty transpile corpus" }
-        val ledger = loadLedger()
+        val ledger = loadLedger("dialect-corpus/$dialect-transpile-known-failures.json", caseKey = "case")
 
         var ran = 0
         var passedCount = 0
@@ -71,7 +48,7 @@ abstract class TranspileCorpusGate(private val dialect: String) {
             val pretty = (case["pretty"] as? JsonPrimitive)?.content == "true"
 
             // read direction: parseOne(read_sql, read_dialect).sql(dialect) == sql
-            for ((readDialect, readValue) in (case["read"] as? JsonObject).orEmpty()) {
+            for ((readDialect, readValue) in (case["read"] as? JsonObject ?: emptyMap<String, JsonElement>())) {
                 if (Dialects.forNameOrNull(readDialect) == null) {
                     skippedUnavailable += 1
                     continue
@@ -93,7 +70,7 @@ abstract class TranspileCorpusGate(private val dialect: String) {
             }
 
             // write direction: parseOne(sql, dialect) generated under write dialect
-            for ((writeDialect, writeValue) in (case["write"] as? JsonObject).orEmpty()) {
+            for ((writeDialect, writeValue) in (case["write"] as? JsonObject ?: emptyMap<String, JsonElement>())) {
                 if (Dialects.forNameOrNull(writeDialect) == null) {
                     skippedUnavailable += 1
                     continue
@@ -129,50 +106,13 @@ abstract class TranspileCorpusGate(private val dialect: String) {
             }
         }
 
-        // Always write the actual failure set in ledger format for easy regeneration.
-        val actualLedger = buildJsonObject {
-            put("cases", buildJsonArray {
-                for ((key, reason) in failures) {
-                    add(buildJsonObject {
-                        put("case", key)
-                        put("reason", reason)
-                    })
-                }
-            })
-        }
-        val outDir = java.io.File("build").takeIf { it.isDirectory } ?: java.io.File(".")
-        java.io.File(outDir, "$dialect-transpile-ledger-actual.json")
-            .writeText(Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), actualLedger))
-
-        val unledgered = failures.keys - ledger.keys
-        val stale = ledger.keys - failures.keys
-
-        println(
-            "${javaClass.simpleName}: $passedCount pass / ${failures.size} ledgered (of $ran run), " +
-                "$skippedUnavailable directions skipped (unavailable dialect)"
+        enforceLedger(
+            ledger = ledger,
+            failures = failures,
+            summary = "${javaClass.simpleName}: $passedCount pass / ${failures.size} ledgered (of $ran run), " +
+                "$skippedUnavailable directions skipped (unavailable dialect)",
+            actualLedgerName = "$dialect-transpile-ledger-actual.json",
+            caseKey = "case",
         )
-
-        val problems = mutableListOf<String>()
-        if (unledgered.isNotEmpty()) {
-            problems.add(
-                "${unledgered.size} UNLEDGERED failures (showing up to 20):\n" +
-                    unledgered.take(20).joinToString("\n") { "  $it\n    reason: ${failures[it]}" }
-            )
-        }
-        if (stale.isNotEmpty()) {
-            problems.add(
-                "${stale.size} STALE ledger entries now pass (showing up to 20):\n" +
-                    stale.take(20).joinToString("\n") { "  $it" }
-            )
-        }
-        if (problems.isNotEmpty()) {
-            fail(
-                problems.joinToString("\n\n") +
-                    "\n\nActual ledger written to ${java.io.File(outDir, "$dialect-transpile-ledger-actual.json").absolutePath}"
-            )
-        }
     }
-
-    private fun JsonObject?.orEmpty(): Map<String, kotlinx.serialization.json.JsonElement> =
-        this ?: emptyMap()
 }

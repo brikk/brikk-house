@@ -21,14 +21,8 @@ class GeneratorParserRoundTripTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun loadCorpus(name: String): Corpus {
-        val stream = javaClass.classLoader.getResourceAsStream("parser-corpus/$name")
-            ?: java.io.File("brikk-sql/testResources/parser-corpus/$name")
-                .takeIf { it.exists() }
-                ?.inputStream()
-            ?: fail("corpus parser-corpus/$name not found on classpath or filesystem")
-        return stream.use { json.decodeFromString(Corpus.serializer(), it.readBytes().decodeToString()) }
-    }
+    private fun loadCorpus(name: String): Corpus =
+        json.decodeFromString(Corpus.serializer(), testResource("parser-corpus/$name"))
 
     @Test
     fun baseCorpusRoundTripsThroughGenerator() {

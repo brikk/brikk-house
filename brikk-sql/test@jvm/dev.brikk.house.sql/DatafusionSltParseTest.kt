@@ -34,17 +34,9 @@ class DatafusionSltParseTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun resource(path: String): String {
-        val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql/testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: java.io.File("testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: fail("resource $path not found on classpath or filesystem")
-        return stream.use { it.readBytes().decodeToString() }
-    }
-
     private fun loadLedger(): Map<String, String> {
         val text = runCatching {
-            resource("dialect-corpus/datafusion-slt-parse-known-failures.json")
+            testResource("dialect-corpus/datafusion-slt-parse-known-failures.json")
         }.getOrNull() ?: return emptyMap()
         val root = json.parseToJsonElement(text).jsonObject
         return root.getValue("cases").jsonArray.associate { entry ->
@@ -56,7 +48,7 @@ class DatafusionSltParseTest {
 
     @Test
     fun sltParseAcceptanceModuloLedger() {
-        val root = json.parseToJsonElement(resource("dialect-corpus/datafusion-slt-parse.json")).jsonObject
+        val root = json.parseToJsonElement(testResource("dialect-corpus/datafusion-slt-parse.json")).jsonObject
         val cases = root.getValue("cases").jsonArray
         check(cases.isNotEmpty()) { "empty SLT corpus" }
         val ledger = loadLedger()

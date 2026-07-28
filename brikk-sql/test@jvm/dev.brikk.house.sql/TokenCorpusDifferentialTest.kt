@@ -48,14 +48,8 @@ class TokenCorpusDifferentialTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun loadCorpus(name: String): Corpus {
-        val stream = javaClass.classLoader.getResourceAsStream("token-corpus/$name")
-            ?: java.io.File("brikk-sql/testResources/token-corpus/$name")
-                .takeIf { it.exists() }
-                ?.inputStream()
-            ?: fail("corpus token-corpus/$name not found on classpath or filesystem")
-        return stream.use { json.decodeFromString(Corpus.serializer(), it.readBytes().decodeToString()) }
-    }
+    private fun loadCorpus(name: String): Corpus =
+        json.decodeFromString(Corpus.serializer(), testResource("token-corpus/$name"))
 
     private fun runCorpus(name: String, config: TokenizerConfig) {
         val corpus = loadCorpus(name)

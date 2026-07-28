@@ -28,14 +28,7 @@ class PipeDesugarCorpusTest {
         private val json = Json { ignoreUnknownKeys = true }
 
         fun loadPipeCases(): List<PipeCase> {
-            val stream = PipeDesugarCorpusTest::class.java.classLoader
-                .getResourceAsStream("dialect-corpus/base.json")
-                ?: java.io.File("brikk-sql/testResources/dialect-corpus/base.json")
-                    .takeIf { it.exists() }
-                    ?.inputStream()
-                ?: error("dialect-corpus/base.json not found on classpath or filesystem")
-
-            val root = stream.use { json.parseToJsonElement(it.readBytes().decodeToString()) }.jsonObject
+            val root = json.parseToJsonElement(testResource("dialect-corpus/base.json")).jsonObject
             return root.getValue("identity").jsonArray
                 .map { it.jsonObject }
                 .filter { "|>" in it.getValue("sql").jsonPrimitive.content }

@@ -37,17 +37,9 @@ class DatafusionFixtureTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun resource(path: String): String {
-        val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql/testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: java.io.File("testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: fail("resource $path not found on classpath or filesystem")
-        return stream.use { it.readBytes().decodeToString() }
-    }
-
     private fun loadLedger(): Map<String, String> {
         val text = runCatching {
-            resource("dialect-corpus/datafusion-fixtures-known-failures.json")
+            testResource("dialect-corpus/datafusion-fixtures-known-failures.json")
         }.getOrNull() ?: return emptyMap()
         val root = json.parseToJsonElement(text).jsonObject
         return root.getValue("cases").jsonArray.associate { entry ->
@@ -59,7 +51,7 @@ class DatafusionFixtureTest {
 
     @Test
     fun fixtureCorpusModuloLedger() {
-        val root = json.parseToJsonElement(resource("dialect-corpus/datafusion-fixtures.json")).jsonObject
+        val root = json.parseToJsonElement(testResource("dialect-corpus/datafusion-fixtures.json")).jsonObject
         val identity = root.getValue("identity").jsonArray
         val transpile = root.getValue("transpile").jsonArray
         check(identity.isNotEmpty()) { "empty identity corpus" }

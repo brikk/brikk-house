@@ -29,16 +29,8 @@ class ParserIdentityCorpusTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun resource(path: String): String {
-        val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql/testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: java.io.File("testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: fail("resource $path not found on classpath or filesystem")
-        return stream.use { it.readBytes().decodeToString() }
-    }
-
     private fun loadCorpus(): Pair<String, List<Pair<String, JsonArray>>> {
-        val root = json.parseToJsonElement(resource("ast-corpus/identity-serde.json")).jsonObject
+        val root = json.parseToJsonElement(testResource("ast-corpus/identity-serde.json")).jsonObject
         val version = root.getValue("sqlglot_version").jsonPrimitive.content
         val cases = root.getValue("cases").jsonArray.map { case ->
             val obj = case.jsonObject
@@ -49,7 +41,7 @@ class ParserIdentityCorpusTest {
 
     private fun loadLedger(): Map<String, String> {
         val text = try {
-            resource("parser-corpus/known-failures.json")
+            testResource("parser-corpus/known-failures.json")
         } catch (e: AssertionError) {
             return emptyMap()
         }

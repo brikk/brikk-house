@@ -45,17 +45,9 @@ class QualifyCorpusTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun resource(path: String): String {
-        val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql/testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: java.io.File("testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: fail("resource $path not found on classpath or filesystem")
-        return stream.use { it.readBytes().decodeToString() }
-    }
-
     private fun loadLedger(): Map<String, String> {
         val text = try {
-            resource("qualify-corpus/known-failures.json")
+            testResource("qualify-corpus/known-failures.json")
         } catch (e: AssertionError) {
             return emptyMap()
         }
@@ -88,7 +80,7 @@ class QualifyCorpusTest {
     )
 
     private fun runCorpus(name: String): CorpusResult {
-        val root = json.parseToJsonElement(resource("qualify-corpus/$name.json")).jsonObject
+        val root = json.parseToJsonElement(testResource("qualify-corpus/$name.json")).jsonObject
         val cases = root.getValue("cases").jsonArray.map { it.jsonObject }
         check(cases.isNotEmpty()) { "empty corpus: $name" }
 
