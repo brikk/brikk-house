@@ -19,6 +19,8 @@ package dev.brikk.house.sql.metadata
 /** Doris built-in functions: 728 definitions, 826 names incl. aliases, 1434 overloads. */
 val DORIS_FUNCTION_CATALOG: FunctionCatalog = FunctionCatalog(
     chunk0() + chunk1() + chunk2() + chunk3() + chunk4() + chunk5() + chunk6() + chunk7() + chunk8(),
+    // Grammar/operator forms absent from the registry (see DorisGrammarBuiltins.kt).
+    grammarBuiltins = DORIS_GRAMMAR_BUILTINS,
 )
 
 private fun chunk0(): List<FunctionDef> = listOf(

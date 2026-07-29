@@ -245,6 +245,8 @@ def main() -> None:
                  f"{total_overloads} overloads. */")
     lines.append("val DORIS_FUNCTION_CATALOG: FunctionCatalog = FunctionCatalog(")
     lines.append("    " + " + ".join(f"chunk{i}()" for i in range(len(chunks))) + ",")
+    lines.append("    // Grammar/operator forms absent from the registry (see DorisGrammarBuiltins.kt).")
+    lines.append("    grammarBuiltins = DORIS_GRAMMAR_BUILTINS,")
     lines.append(")")
     for i, chunk in enumerate(chunks):
         lines.append("")
