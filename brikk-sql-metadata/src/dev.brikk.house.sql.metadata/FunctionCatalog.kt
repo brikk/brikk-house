@@ -180,6 +180,23 @@ class FunctionCatalog(
 
     val size: Int get() = functions.size
 
+    /**
+     * Every name this catalog recognizes: each registered function's primary name and
+     * aliases, plus the [grammarBuiltins]. Use this to enumerate/list recognized names
+     * (e.g. completion) — unlike [functions] / [toJson], which stay a pure registry dump
+     * and therefore omit grammar-level forms (CAST, EXTRACT, ...). Returned in source
+     * casing (registry entries as registered; grammar builtins uppercase).
+     */
+    val knownNames: Set<String> by lazy {
+        buildSet {
+            for (def in functions) {
+                add(def.name)
+                addAll(def.aliases)
+            }
+            addAll(grammarBuiltins)
+        }
+    }
+
     /** Case-insensitive lookup by primary name or alias. */
     operator fun get(name: String): FunctionDef? = byName[name.uppercase()]
 
