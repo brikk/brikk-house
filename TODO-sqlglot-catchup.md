@@ -9,6 +9,8 @@ Tracking upstream **sqlglot** bug fixes landed since our port's pin, to decide w
 
 **Per item:** review `git -C reference/sqlglot show <hash>`, decide apply/skip, port to Kotlin + add/adjust a corpus case, then check the box with a one-line note. `!` in the subject = upstream behavior change.
 
+**Autonomous-run policy (2026-08-26):** our corpus gates are pinned to sqlglot `v30.12.0-44`; a fix that *changes transpile output* would break those gates, and they can't be regenerated piecemeal (regen bakes in ALL unported upstream changes → other gates fail). So during the unattended run I only APPLY fixes that are **output-neutral** (internal correctness) or **additive** (new parse/annotation support not covered by existing gates), each verified by `./kotlin build` + targeted tests. Output-changing `!` fixes are **DEFERRED** (left unchecked, annotated) for a coordinated full resync. `[x]` = applied or consciously skipped-N/A; `[ ]` + `DEFERRED/SKIP` note = needs human/coordinated work.
+
 ## Actionable (79) — oldest first
 
 - [x] `e17ab3023` (2026-07-13) Fix(optimizer)!: evict mutated projections from the annotator cache (#7868)
@@ -16,10 +18,13 @@ Tracking upstream **sqlglot** bug fixes landed since our port's pin, to decide w
   - files: optimizer/annotate_types.py, optimizer/qualify_columns.py
 - [ ] `6581f8c38` (2026-07-14) fix(hive)!: parse month/day without leading 0 (#7773)
   - files: dialects/dialect.py, dialects/hive.py, dialects/spark.py, dialects/spark2.py, generator.py
+  - DEFERRED (output-changing, large): introduces STRICT_TIME_PARSING + `_with_strict_time_mapping`/`_with_strict_time_inverse` metaclass helpers + PARSE_INVERSE_TIME_MAPPING + generator strtotime/strtounix + Hive/Spark/Spark2 flags. Changes Hive/Spark `MM/dd`↔`M/d` output → breaks pinned hive/spark date corpus gates. Do with item `0a374bf42` in a coordinated resync.
 - [ ] `0a374bf42` (2026-07-15) Refactor!: simplify lax/strict %m, %d transpilation to hive hierarchy (#7873)
   - files: dialects/dialect.py, dialects/hive.py, dialects/spark.py, dialects/spark2.py, generator.py
-- [ ] `618804ce1` (2026-07-17) fix(optimizer)!: resolve NATURAL JOIN common columns in qualify [CLAUDE] (#7880)
+  - DEFERRED (same strict-time theme as `6581f8c38`): output-changing hive/spark %m/%d refactor; do together in the coordinated resync.
+- [x] `618804ce1` (2026-07-17) fix(optimizer)!: resolve NATURAL JOIN common columns in qualify [CLAUDE] (#7880)
   - files: optimizer/qualify_columns.py
+  - APPLIED: `expandUsing` now treats NATURAL joins as USING over common columns (synthesize using-identifiers from the intersection when both schemas known + non-empty; else keep NATURAL). Additive (no qualify-corpus NATURAL cases); build + qualify gate green (matches ledger). TODO: add a dedicated NATURAL JOIN qualify unit test.
 - [ ] `a85eeff21` (2026-07-18) fix!: properly support VALUES as a set operation operand (#7897)
   - files: optimizer/qualify_columns.py, optimizer/scope.py, parser.py
 - [ ] `a247168f9` (2026-07-20) Fix: use `.this` and `.expression` instead of `.left` and `.right` in more places

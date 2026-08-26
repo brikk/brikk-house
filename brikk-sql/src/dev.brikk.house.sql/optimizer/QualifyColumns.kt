@@ -254,7 +254,7 @@ private fun expandUsing(scope: Scope, resolver: Resolver): Map<String, Map<Strin
     // Mapping of automatically joined column names to an ordered set of source names.
     val columnTables = LinkedHashMap<String, LinkedHashMap<String, Any?>>()
 
-    if (joins.none { !(it.args["using"] as? List<*>).isNullOrEmpty() }) {
+    if (joins.none { !(it.args["using"] as? List<*>).isNullOrEmpty() || it.method == "NATURAL" }) {
         return columnTables
     }
 
@@ -271,12 +271,29 @@ private fun expandUsing(scope: Scope, resolver: Resolver): Map<String, Map<Strin
         val joinTable = join.aliasOrName
         ordered.add(joinTable)
 
-        val using = (join.args["using"] as? List<*>)?.filterIsInstance<Expression>()
+        val joinColumns = resolver.getSourceColumns(joinTable)
+
+        var using = (join.args["using"] as? List<*>)?.filterIsInstance<Expression>()
+        if (using.isNullOrEmpty() && join.method == "NATURAL") {
+            // A NATURAL JOIN is a USING join over the columns common to both sides; when those
+            // can't be determined (unknown schema, no common columns), NATURAL stays in place
+            // and the engine decides what it means (rather than silently widening to a cross join).
+            if (columns.isNotEmpty() && "*" !in columns &&
+                joinColumns.isNotEmpty() && "*" !in joinColumns
+            ) {
+                val naturalUsing = columns.keys
+                    .filter { it in joinColumns }
+                    .mapNotNull { toIdentifier(it) }
+                if (naturalUsing.isNotEmpty()) {
+                    using = naturalUsing
+                    join.set("method", null)
+                }
+            }
+        }
         if (using.isNullOrEmpty()) {
             continue
         }
 
-        val joinColumns = resolver.getSourceColumns(joinTable)
         val conditions = mutableListOf<Expression>()
         val usingIdentifierCount = using.size
         val isSemiOrAntiJoin = join.isSemiOrAntiJoin
