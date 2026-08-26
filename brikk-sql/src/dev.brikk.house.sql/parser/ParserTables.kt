@@ -303,6 +303,7 @@ object BaseParserTables {
         TokenType.KEEP, TokenType.KILL, TokenType.LEFT, TokenType.LIMIT, TokenType.LOAD,
         TokenType.LOCK, TokenType.MATCH, TokenType.MERGE, TokenType.NATURAL,
         TokenType.NEXT, TokenType.OFFSET, TokenType.OPERATOR, TokenType.ORDINALITY,
+        TokenType.OUT,
         TokenType.OVER, TokenType.OVERLAPS, TokenType.OVERWRITE, TokenType.PARTITION,
         TokenType.PERCENT, TokenType.PIVOT, TokenType.PROJECTION, TokenType.PRAGMA,
         TokenType.PUT, TokenType.RANGE, TokenType.RECURSIVE, TokenType.REFERENCES,

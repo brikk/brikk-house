@@ -37,8 +37,9 @@ Tracking upstream **sqlglot** bug fixes landed since our port's pin, to decide w
 - [ ] `da43c5c14` (2026-07-20) feat(optimizer)!: annotate truncate for mysql (#7914)
   - files: typing/mysql.py
   - DEFERRED (typing batch): adds a custom `Trunc` annotator for MySQL (TEXT→DOUBLE else by-args). Do with the other 'annotate X for mysql' feats via a typing-metadata refresh + custom-annotator hand-port; may shift annotate-corpus results.
-- [ ] `a1e3338e3` (2026-07-20) fix(postgres): support unicode escape string literals U&'...' closes #7898
+- [x] `a1e3338e3` (2026-07-20) fix(postgres): support unicode escape string literals U&'...' closes #7898
   - files: dialects/postgres.py
+  - APPLIED: Postgres tokenizer U&'/u&' -> UNICODE_STRING + PostgresGenerator.supportsUescape=true. Additive; parser/postgres/token gates green.
 - [ ] `169b8364b` (2026-07-20) fix(duckdb): position table alias correctly when combined with time-travel syntax closes #7916
   - files: generator.py, parser.py
 - [ ] `8be76d20a` (2026-07-21) feat(duckdb): convert ARRAY_AGG IGNORE NULLS to FILTER clause (#7893)
@@ -51,14 +52,16 @@ Tracking upstream **sqlglot** bug fixes landed since our port's pin, to decide w
   - files: dialects/dialect.py, optimizer/qualify_columns.py, parser.py
 - [ ] `66316e335` (2026-07-22) fix(hive)!: parse single-digit hour/minute/second without padding CLAUDE (#7925)
   - files: dialects/dialect.py, dialects/hive.py, dialects/spark.py, dialects/spark2.py
-- [ ] `b0a8635ff` (2026-07-24) Fix(parser): treat `TokenType.OUT` as an identifier token (#7933)
+- [x] `b0a8635ff` (2026-07-24) Fix(parser): treat `TokenType.OUT` as an identifier token (#7933)
   - files: parser.py
+  - APPLIED: added TokenType.OUT to ID_VAR_TOKENS (usable as identifier). Additive; all parser corpus gates green.
 - [ ] `166cd4de9` (2026-07-24) feat(optimizer)!: annotate substringindex for mysql (#7945)
   - files: typing/mysql.py
 - [ ] `26078eb7c` (2026-07-24) feat(optimizer)!: annotate unhex for mysql (#7944)
   - files: typing/mysql.py
-- [ ] `b9fd4c9a5` (2026-07-27) Fix(typing): on_qualify expects a `Table` argument
+- [x] `b9fd4c9a5` (2026-07-27) Fix(typing): on_qualify expects a `Table` argument
   - files: optimizer/qualify.py
+  - SKIP (N/A): Python-only type annotation (`on_qualify` Callable arg Expr->Table). No runtime effect; our Kotlin onQualify is already concretely typed.
 - [ ] `5268b3463` (2026-07-28) fix(duckdb)!: division by zero returns inf, not NULL (#7969)
   - files: dialects/duckdb.py
 - [ ] `8ef659e41` (2026-07-28) fix(clickhouse)!: division by zero returns inf, not NULL

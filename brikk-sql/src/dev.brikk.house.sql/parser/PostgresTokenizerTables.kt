@@ -425,6 +425,8 @@ object PostgresTokenizerTables {
         "E'" to StringFormat("'", TokenType.BYTE_STRING),
         "x'" to StringFormat("'", TokenType.HEX_STRING),
         "X'" to StringFormat("'", TokenType.HEX_STRING),
+        "U&'" to StringFormat("'", TokenType.UNICODE_STRING),
+        "u&'" to StringFormat("'", TokenType.UNICODE_STRING),
         "\$" to StringFormat("\$", TokenType.HEREDOC_STRING),
     )
 
