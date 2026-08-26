@@ -632,9 +632,16 @@ class TypeAnnotator(
             val i = dotParts.iterator()
             var parent = expr.parent
             while (parent is Dot) {
-                (parent.expressionArg as Expression).replace(
-                    Identifier(args("this" to i.next(), "quoted" to true))
-                )
+                val identifier = parent.expressionArg as Expression
+                if (identifier is Identifier) {
+                    // Rename in place to preserve the identifier's meta, e.g. token positions.
+                    identifier.set("this", i.next())
+                    identifier.set("quoted", true)
+                } else {
+                    identifier.replace(
+                        Identifier(args("this" to i.next(), "quoted" to true))
+                    )
+                }
                 parent = parent.parent
             }
 
