@@ -982,7 +982,8 @@ private fun expandStarsInScope(
 
     val pivot = scope.pivots.getOrNull(0) as? Pivot
 
-    if (dialect.supportsStructStarExpansion && scope.stars.any { it is Dot }) {
+    val annotatedAhead = dialect.supportsStructStarExpansion && scope.stars.any { it is Dot }
+    if (annotatedAhead) {
         // Found struct expansion, annotate scope ahead of time
         annotator.annotateScope(scope)
     }
@@ -1017,20 +1018,19 @@ private fun expandStarsInScope(
                 addRenameColumns(star, tableKeys, renameColumns)
                 ilikePattern = addIlikeColumns(star)
             } else if (expression is Dot) {
-                if (dialect.supportsStructStarExpansion &&
-                    !dialect.requiresParenthesizedStructAccess
-                ) {
-                    val structFields = expandStructStarsNoParens(expression)
-                    if (structFields.isNotEmpty()) {
-                        newSelections.addAll(structFields)
-                        continue
+                val structFields = if (dialect.requiresParenthesizedStructAccess) {
+                    expandStructStarsWithParens(expression)
+                } else if (dialect.supportsStructStarExpansion) {
+                    expandStructStarsNoParens(expression)
+                } else {
+                    emptyList()
+                }
+                if (structFields.isNotEmpty()) {
+                    if (annotatedAhead) {
+                        annotator.uncache(expression)
                     }
-                } else if (dialect.requiresParenthesizedStructAccess) {
-                    val structFields = expandStructStarsWithParens(expression)
-                    if (structFields.isNotEmpty()) {
-                        newSelections.addAll(structFields)
-                        continue
-                    }
+                    newSelections.addAll(structFields)
+                    continue
                 }
             }
         }
@@ -1134,10 +1134,19 @@ private fun expandStarsInScope(
                 }
             }
         }
+
+        if (annotatedAhead) {
+            // The star projection was replaced by the expansions above
+            annotator.uncache(expression)
+        }
     }
 
     // Ensures we don't overwrite the initial selections with an empty list
     if (newSelections.isNotEmpty() && scopeExpression is Select) {
+        if (annotatedAhead) {
+            // The mutation below would otherwise be skipped by the final annotation pass
+            annotator.uncache(scopeExpression, deep = false)
+        }
         scopeExpression.set("expressions", newSelections)
     }
 }

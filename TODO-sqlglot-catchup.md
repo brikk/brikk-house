@@ -11,7 +11,8 @@ Tracking upstream **sqlglot** bug fixes landed since our port's pin, to decide w
 
 ## Actionable (79) — oldest first
 
-- [ ] `e17ab3023` (2026-07-13) Fix(optimizer)!: evict mutated projections from the annotator cache (#7868)
+- [x] `e17ab3023` (2026-07-13) Fix(optimizer)!: evict mutated projections from the annotator cache (#7868)
+  - APPLIED: added `TypeAnnotator.uncache(expr, deep)`; wired into `expandStarsInScope` (annotatedAhead flag + uncache on struct-field replace / star replace / scope pre-set). Build + Qualify/AnnotateTypes/Scope tests green.
   - files: optimizer/annotate_types.py, optimizer/qualify_columns.py
 - [ ] `6581f8c38` (2026-07-14) fix(hive)!: parse month/day without leading 0 (#7773)
   - files: dialects/dialect.py, dialects/hive.py, dialects/spark.py, dialects/spark2.py, generator.py

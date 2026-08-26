@@ -285,6 +285,23 @@ class TypeAnnotator(
         scopeSourceSelects.clear()
     }
 
+    // sqlglot: TypeAnnotator.uncache
+    /**
+     * Evicts [expression] (or its subtree, if [deep]) from the annotation caches. Must be
+     * called when an already-annotated tree is about to be mutated, both so a subsequent
+     * annotation pass doesn't skip it and so the ids of discarded nodes can't be conflated
+     * with new nodes allocated at the same addresses.
+     */
+    fun uncache(expression: Expression, deep: Boolean = true) {
+        val nodes: Iterable<Expression> = if (deep) expression.walk().asIterable() else listOf(expression)
+        for (node in nodes) {
+            val nodeId = node.objectId
+            visited.remove(nodeId)
+            nullExpressions.remove(nodeId)
+            setopColumnTypes.remove(nodeId)
+        }
+    }
+
     // sqlglot: TypeAnnotator._set_type
     private fun setType(expression: Expression, targetType: Any?): Expression {
         val prevType = expression.type
