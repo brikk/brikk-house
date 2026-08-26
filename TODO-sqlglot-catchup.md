@@ -113,6 +113,43 @@ effort (not a single work-through). Three coupled workstreams, each surfaced con
 order 1 → 2 → 3. The prep above makes it safe (regen won't silently drop hand code). Reverted clean; branch
 `sqlglot-catchup` remains at the 6 applied fixes + prep, building green.
 
+### Resync EXECUTED (2026-08-26) — source at new pin builds green; corpus reconciliation analysed
+
+Commit `c734faa` = **source resync** at `v30.17.0-72-gbac1a897b`, **builds green**: regenerated AST nodes,
+tokenizer tables, TokenType, DType, typing metadata; ported the `*_SNAPSHOT` token removal (`eeaf1b832`)
+via `VERSION_PHRASES` token-sequence matching in `parseVersion()`/`parsePeriodForSystemTime()`; typing
+batch (5 mysql annotators + clickhouse fixed-type rule + `DataType.BINARY_TYPES` + `COMPRESS_*` sets +
+`AnnotatorRef.{BitFunc,Reverse,Truncate,RegexpReplace,Compress,SetType}`).
+
+Then **all corpora regenerated** at the new pin (ast/token/parser/qualify/scope/lineage/serde incl. every
+`--dialect` and `--annotate` variant) — **uncommitted**, pending reconciliation review. Suite: **35/505
+gates fail**. Reconciliation (actual-vs-committed ledger, classified by whether upstream expected output
+changed):
+
+- **~285 catch-up gaps** (expected → ledger as deferred behavioral backlog): 196 annotate typing DRIFT +
+  86 parser DRIFT + 3 generator DRIFT + ~3 new upstream fixtures + scope/qualify/lineage new cases. These
+  are upstream behaviour we haven't ported; **0** of them are us breaking something upstream left unchanged.
+- **~51 distinct behavioural regressions, ALL traced to upstream BREAKING (`!`) changes** (expected output
+  UNCHANGED but our port now diverges because the change altered AST shape/parsing our hand code still
+  assumes). Clusters:
+  - **ANALYZE/DROP/ALTER multi-table** (~40 rows, ~40 cases) — `8efda2c6c` #8229 *ANALYZE and DROP with
+    multiple tables!* Our `parseAnalyze*`/DROP keep a single `this`; generator drops the table name.
+  - **`SOUNDS LIKE`** — `03c96cbbf`! upstream dropped the `SOUNDS LIKE` keyword→token; parse via text-seq
+    to `SOUNDEX(x)=SOUNDEX(y)` (same AST). Our `MysqlParser` still dispatches on the removed `SOUNDS_LIKE`
+    token → parse error. (TokenType enum member still exists; keyword map entry gone.)
+  - **CREATE SEQUENCE options / CREATE TEMP FUNCTION LANGUAGE / GENERATED ALWAYS AS IDENTITY (...) /
+    CAST(... CHARACTER SET ...) / mysql table options ENGINE=/CHARACTER SET / postgres `?` operator /
+    UNIX_TIMESTAMP** — smaller breaking-change clusters, each a parser/generator handler port.
+- **2 structural gates** (small hand-fixes): `argTypesMatchManifest` — 4 hand-node arg drifts
+  (`Table.shadow`, a `.negate`, `With.udfs` — hand nodes in Nodes.kt need the new args);
+  `grammarBuiltinsAreKnownButNotRegistered` — 7 grammar builtins now flagged (TIMESTAMPADD, TIMESTAMPDIFF,
+  MOD, SYSDATE, EXTRACT, CAST, CONVERT).
+
+**Reassurance:** every divergence traces to an upstream change; no evidence of resync-mechanics corruption.
+**Suggested order to green:** (1) port the breaking-change clusters (ANALYZE/DROP #8229 first — biggest),
+(2) fix the 2 structural gates, (3) accept the remaining ~285 catch-up gaps into the known-failures ledgers
+and backlog them here. Regenerated corpora are staged in the working tree (44 files) awaiting this.
+
 ## Actionable (79) — oldest first
 
 - [x] `e17ab3023` (2026-07-13) Fix(optimizer)!: evict mutated projections from the annotator cache (#7868)
