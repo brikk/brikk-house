@@ -741,6 +741,70 @@ class TypeAnnotator(
             is AnnotatorRef.ArrayBq -> annotateArrayBq(e)
             // sqlglot: bigquery _annotate_by_args_approx_top
             is AnnotatorRef.ApproxTopKBq -> annotateApproxTopKBq(e)
+            is AnnotatorRef.BitFunc -> annotateBitFunc(e)
+            is AnnotatorRef.Reverse -> annotateReverse(e)
+            is AnnotatorRef.Truncate -> annotateTruncate(e)
+            is AnnotatorRef.RegexpReplace -> annotateRegexpReplace(e)
+            is AnnotatorRef.Compress -> annotateCompress(e)
+            is AnnotatorRef.SetType -> setType(e, ref.dtype)
+        }
+    }
+
+    // sqlglot: typing/mysql.py _annotate_bit_func (BIT_AND/BIT_OR/... family).
+    private fun annotateBitFunc(e: Expression) {
+        val this0 = e.args["this"] as? Expression
+        when {
+            this0 == null || this0.isType(DType.UNKNOWN) -> setType(e, DType.UNKNOWN)
+            this0.isType(*DataType.BINARY_TYPES.toTypedArray()) -> setType(e, DType.VARBINARY)
+            else -> setType(e, DType.UBIGINT)
+        }
+    }
+
+    // sqlglot: typing/mysql.py _annotate_reverse.
+    private fun annotateReverse(e: Expression) {
+        val this0 = e.args["this"] as? Expression
+        if (this0 != null && this0.isType(DType.BINARY, DType.VARBINARY, DType.UNKNOWN)) {
+            annotateByArgs(e, listOf("this"))
+        } else {
+            setType(e, DType.VARCHAR)
+        }
+    }
+
+    // sqlglot: typing/mysql.py _annotate_truncate.
+    private fun annotateTruncate(e: Expression) {
+        val this0 = e.args["this"] as? Expression
+        if (this0 != null && this0.isType(*DataType.TEXT_TYPES.toTypedArray())) {
+            setType(e, DType.DOUBLE)
+        } else {
+            annotateByArgs(e, listOf("this"))
+        }
+    }
+
+    // sqlglot: typing/mysql.py _annotate_regexp_replace.
+    private fun annotateRegexpReplace(e: Expression) {
+        val args = listOf(e.args["this"], e.args["expression"], e.args["replacement"])
+        var hasBinary = false
+        for (arg in args) {
+            if (arg is Expression) {
+                if (arg.isType(DType.UNKNOWN)) {
+                    setType(e, DType.UNKNOWN)
+                    return
+                }
+                if (arg.isType(*DataType.BINARY_TYPES.toTypedArray())) hasBinary = true
+            }
+        }
+        setType(e, if (hasBinary) DType.LONGBLOB else DType.LONGTEXT)
+    }
+
+    // sqlglot: typing/mysql.py _annotate_compress.
+    private fun annotateCompress(e: Expression) {
+        val this0 = e.args["this"] as? Expression
+        when {
+            this0 == null -> setType(e, DType.UNKNOWN)
+            this0.isType(*COMPRESS_VARBINARY_TYPES.toTypedArray()) -> setType(e, DType.VARBINARY)
+            this0.isType(*COMPRESS_LONGBLOB_TYPES.toTypedArray()) -> setType(e, DType.LONGBLOB)
+            this0.isType(DType.TINYTEXT) -> setType(e, DType.BLOB)
+            else -> setType(e, DType.UNKNOWN)
         }
     }
 
@@ -1567,3 +1631,13 @@ class TypeAnnotator(
         return expression
     }
 }
+
+// sqlglot: typing/mysql.py COMPRESS_VARBINARY_TYPES / COMPRESS_LONGBLOB_TYPES.
+// Hand-defined (not a generated DataType.* set) — used only by annotateCompress.
+private val COMPRESS_VARBINARY_TYPES: Set<DType> = setOf(
+    DType.CHAR, DType.VARCHAR, DType.BINARY, DType.VARBINARY, DType.TINYBLOB, DType.ENUM,
+    DType.INT, DType.BIGINT, DType.DECIMAL, DType.DOUBLE, DType.DATE, DType.DATETIME,
+)
+private val COMPRESS_LONGBLOB_TYPES: Set<DType> = setOf(
+    DType.TEXT, DType.MEDIUMTEXT, DType.LONGTEXT, DType.BLOB, DType.MEDIUMBLOB, DType.LONGBLOB, DType.JSON,
+)

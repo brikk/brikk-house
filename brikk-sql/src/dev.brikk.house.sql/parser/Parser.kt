@@ -2901,13 +2901,26 @@ open class Parser(
         return this_
     }
 
+    // sqlglot: Parser.VERSION_PHRASES
+    private val VERSION_PHRASES: List<Pair<kotlin.Array<String>, String>> = listOf(
+        arrayOf("FOR", "SYSTEM_TIME") to "TIMESTAMP",
+        arrayOf("FOR", "SYSTEM", "TIME") to "TIMESTAMP",
+        arrayOf("FOR", "TIMESTAMP") to "TIMESTAMP",
+        arrayOf("FOR", "VERSION") to "VERSION",
+        arrayOf("TIMESTAMP", "AS", "OF") to "TIMESTAMP",
+        arrayOf("VERSION", "AS", "OF") to "VERSION",
+    )
+
     // sqlglot: Parser._parse_version
     protected fun parseVersion(): Expression? {
-        val this_ = when {
-            match(TokenType.TIMESTAMP_SNAPSHOT) -> "TIMESTAMP"
-            match(TokenType.VERSION_SNAPSHOT) -> "VERSION"
-            else -> return null
+        var this_: String? = null
+        for ((phrase, kindName) in VERSION_PHRASES) {
+            if (matchTextSeq(*phrase)) {
+                this_ = kindName
+                break
+            }
         }
+        if (this_ == null) return null
 
         val kind: String
         var expr: Expression?
@@ -7904,7 +7917,7 @@ open class Parser(
 
     // sqlglot: Parser._parse_period_for_system_time
     fun parsePeriodForSystemTime(): Expression? {
-        if (!match(TokenType.TIMESTAMP_SNAPSHOT)) {
+        if (!matchTextSeq("FOR", "SYSTEM_TIME")) {
             retreat(index - 1)
             return null
         }

@@ -9,7 +9,7 @@ required by their licenses.
 `brikk-sql` is a Kotlin port of [sqlglot](https://github.com/tobymao/sqlglot) by Toby Mao
 and contributors, licensed under the MIT License. The port covers the tokenizer, parser,
 AST node catalog, SQL generator, and dialect implementations, and is pinned to upstream
-version `v30.12.0-44-g93d16591`. Test fixtures under `brikk-sql/testResources/`
+version `v30.17.0-72-gbac1a897b`. Test fixtures under `brikk-sql/testResources/`
 (identity/dialect/serde corpora) are derived from sqlglot's MIT-licensed test suite.
 
 Ported code carries `// sqlglot: <symbol>` provenance comments referencing the Python
