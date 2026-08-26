@@ -1,0 +1,188 @@
+# sqlglot catch-up — fixes to triage/port
+
+Tracking upstream **sqlglot** bug fixes landed since our port's pin, to decide which to apply to brikk-sql.
+
+- **Our pin:** `v30.12.0-44-g93d16591` (commit `93d16591`)
+- **Upstream at harvest:** `v30.17.0-72-gbac1a897b` (`bac1a897b`)
+- **Harvested:** 2026-08-26  (353 commits total; 144 fixes; 79 actionable after filtering non-ported dialects)
+- **Scope:** fix commits touching files we ported (our dialects + base `dialect.py`; `parser`/`generator`/`tokens`/`expressions`; optimizer `annotate_types`/`qualify_columns`/`qualify`/`scope`; `lineage`; `typing/`). Non-ported dialects (snowflake/tsql/oracle/sqlite/starrocks-only/databricks/redshift) are listed under Excluded.
+
+**Per item:** review `git -C reference/sqlglot show <hash>`, decide apply/skip, port to Kotlin + add/adjust a corpus case, then check the box with a one-line note. `!` in the subject = upstream behavior change.
+
+## Actionable (79) — oldest first
+
+- [ ] `e17ab3023` (2026-07-13) Fix(optimizer)!: evict mutated projections from the annotator cache (#7868)
+  - files: optimizer/annotate_types.py, optimizer/qualify_columns.py
+- [ ] `6581f8c38` (2026-07-14) fix(hive)!: parse month/day without leading 0 (#7773)
+  - files: dialects/dialect.py, dialects/hive.py, dialects/spark.py, dialects/spark2.py, generator.py
+- [ ] `0a374bf42` (2026-07-15) Refactor!: simplify lax/strict %m, %d transpilation to hive hierarchy (#7873)
+  - files: dialects/dialect.py, dialects/hive.py, dialects/spark.py, dialects/spark2.py, generator.py
+- [ ] `618804ce1` (2026-07-17) fix(optimizer)!: resolve NATURAL JOIN common columns in qualify [CLAUDE] (#7880)
+  - files: optimizer/qualify_columns.py
+- [ ] `a85eeff21` (2026-07-18) fix!: properly support VALUES as a set operation operand (#7897)
+  - files: optimizer/qualify_columns.py, optimizer/scope.py, parser.py
+- [ ] `a247168f9` (2026-07-20) Fix: use `.this` and `.expression` instead of `.left` and `.right` in more places
+  - files: optimizer/annotate_types.py, optimizer/qualify_columns.py
+- [ ] `24d6d735c` (2026-07-20) fix(presto)!: respect date part boundary semantics in DATE_DIFF transpilation (#7911)
+  - files: dialects/dialect.py
+- [ ] `da43c5c14` (2026-07-20) feat(optimizer)!: annotate truncate for mysql (#7914)
+  - files: typing/mysql.py
+- [ ] `a1e3338e3` (2026-07-20) fix(postgres): support unicode escape string literals U&'...' closes #7898
+  - files: dialects/postgres.py
+- [ ] `169b8364b` (2026-07-20) fix(duckdb): position table alias correctly when combined with time-travel syntax closes #7916
+  - files: generator.py, parser.py
+- [ ] `8be76d20a` (2026-07-21) feat(duckdb): convert ARRAY_AGG IGNORE NULLS to FILTER clause (#7893)
+  - files: generator.py
+- [ ] `acb635a9d` (2026-07-21) fix(optimizer)!: don't normalize quoted derived output aliases in qualify_outputs (#7921)
+  - files: optimizer/qualify_columns.py
+- [ ] `c090f35c8` (2026-07-21) fix(optimizer)!: dedupe colliding star expanded aliases (#7872)
+  - files: optimizer/qualify_columns.py
+- [ ] `1b442c97d` (2026-07-22) fix!: handle non-literal star ILIKE patterns and Snowflake backslash escapes (#7918)
+  - files: dialects/dialect.py, optimizer/qualify_columns.py, parser.py
+- [ ] `66316e335` (2026-07-22) fix(hive)!: parse single-digit hour/minute/second without padding CLAUDE (#7925)
+  - files: dialects/dialect.py, dialects/hive.py, dialects/spark.py, dialects/spark2.py
+- [ ] `b0a8635ff` (2026-07-24) Fix(parser): treat `TokenType.OUT` as an identifier token (#7933)
+  - files: parser.py
+- [ ] `166cd4de9` (2026-07-24) feat(optimizer)!: annotate substringindex for mysql (#7945)
+  - files: typing/mysql.py
+- [ ] `26078eb7c` (2026-07-24) feat(optimizer)!: annotate unhex for mysql (#7944)
+  - files: typing/mysql.py
+- [ ] `b9fd4c9a5` (2026-07-27) Fix(typing): on_qualify expects a `Table` argument
+  - files: optimizer/qualify.py
+- [ ] `5268b3463` (2026-07-28) fix(duckdb)!: division by zero returns inf, not NULL (#7969)
+  - files: dialects/duckdb.py
+- [ ] `8ef659e41` (2026-07-28) fix(clickhouse)!: division by zero returns inf, not NULL
+  - files: dialects/clickhouse.py
+- [ ] `c1475e799` (2026-07-28) feat(trino): parse WITH FUNCTION ... RETURNS ... RETURN inline UDFs [CLAUDE] (#7934)
+  - files: generator.py, parser.py
+- [ ] `7ad56f653` (2026-07-28) fix(optimizer)!: update annotate_types.py for maybe_coerce and explode functions (#7973)
+  - files: optimizer/annotate_types.py
+- [ ] `6b12cb844` (2026-07-28) Fix some latent bugs hidden due to # type: ignore
+  - files: optimizer/annotate_types.py, parser.py
+- [ ] `a1b8c48c0` (2026-07-29) fix(optimizer)!: don't expand aggregate aliases into GROUP BY (#7971)
+  - files: optimizer/qualify_columns.py
+- [ ] `11170dc84` (2026-07-30) feat(starrocks,doris): support DROP TABLE ... FORCE [CLAUDE] (#7999)
+  - files: generator.py, parser.py
+- [ ] `9815ccb32` (2026-07-30) feat(trino): parse routine characteristics for inline UDFs [CLAUDE] (#7981)
+  - files: dialects/trino.py
+- [ ] `d10d7eef5` (2026-07-30) feat(clickhouse): support refreshable materialized views [CODEX] (#7990)
+  - files: generator.py, parser.py
+- [ ] `c9dcd3282` (2026-07-30) feat(optimizer)!: annotate `REGEXP_REPLACE` in MySQL (#7989)
+  - files: typing/mysql.py
+- [ ] `646295528` (2026-07-30) fix(postgres): transpile DAY/MONTH/YEAR to EXTRACT [CLAUDE] (#7984)
+  - files: dialects/dialect.py
+- [ ] `81c19435a` (2026-07-30) Fix(bigquery)!: do not treat `NOT DETERMINISTIC` as a single token
+  - files: dialects/bigquery.py
+- [ ] `226beade3` (2026-07-30) fix(optimizer)!: replace find / find_all with scoped lookups (#7997)
+  - files: dialects/dialect.py, parser.py
+- [ ] `eeaf1b832` (2026-07-31) fix!: do not treat time travel clauses as single tokens (#8009)
+  - files: dialects/bigquery.py, dialects/hive.py, parser.py, tokens.py
+- [ ] `03c96cbbf` (2026-07-31) fix(mysql)!: do not treat `SOUNDS LIKE` as a single token (#8006)
+  - files: dialects/mysql.py
+- [ ] `187746cdc` (2026-07-31) fix!: do not treat `CHARACTER SET` as a single token (#8007)
+  - files: parser.py, tokens.py
+- [ ] `d7fd83a7d` (2026-07-31) fix!: do not treat `START WITH` as a single token (#8008)
+  - files: parser.py, tokens.py
+- [ ] `2856c3e11` (2026-08-03) fix(duckdb)!: LAST_DAY with a WEEK(<day>) part silently returns the last day of the month (#8016)
+  - files: dialects/dialect.py, generator.py
+- [ ] `8a79d074b` (2026-08-03) feat(parser): support "replace using" for insert DML (#7950)
+  - files: generator.py, parser.py
+- [ ] `50bf93d56` (2026-08-04) fix!: degrade BigQuery WEEK(<day>) units gracefully in other dialects (#8027)
+  - files: dialects/dialect.py, generator.py
+- [ ] `f89e47139` (2026-08-04) fix(optimizer)!: support multiple (UN)PIVOT operators on a source (#8032)
+  - files: optimizer/annotate_types.py, optimizer/qualify_columns.py, optimizer/scope.py
+- [ ] `4bbe7effd` (2026-08-04) feat(trino): parse BEGIN...END routine bodies with DECLARE/SET [CLAUDE] (#8004)
+  - files: dialects/trino.py, generator.py, parser.py
+- [ ] `9fd2c39ce` (2026-08-04) Fixup
+  - files: parser.py
+- [ ] `1c45c8f11` (2026-08-04) fix(optimizer)!: resolve pivot chain aliases in star expansion and type annotation (#8041)
+  - files: optimizer/annotate_types.py, optimizer/qualify_columns.py
+- [ ] `32d44c50d` (2026-08-04) feat(optimizer)!: annotate bit_and for mysql (#8038)
+  - files: typing/mysql.py
+- [ ] `3329bb677` (2026-08-05) Fix(optimizer)!: annotate ArraySize as INT for Hive et al (#8046)
+  - files: typing/hive.py, typing/spark.py
+- [ ] `d4742deec` (2026-08-05) fix(optimizer)!: prevent fabrication of struct-field refs for schema-less correlated columns (#8043)
+  - files: optimizer/qualify_columns.py, optimizer/scope.py
+- [ ] `cb4a82146` (2026-08-06) fix(lineage)!: trace columns through chained (UN)PIVOT operators (#8042)
+  - files: lineage.py
+- [ ] `dedc7e367` (2026-08-06) fix(optimizer): expand qualify inner columns with QUALIFY/HAVING (#8050)
+  - files: optimizer/qualify_columns.py
+- [ ] `7fa1fbd05` (2026-08-07) feat(optimizer)!: annotate ToChar return type (#8064)
+  - files: typing/databricks.py
+- [ ] `463c01528` (2026-08-06) fix(optimizer): restore FLOOR type annotation lost in ANNOTATORS refactor [CLAUDE] (#8067)
+  - files: typing/__init__.py
+- [ ] `30c278e0f` (2026-08-06) fix(optimizer)!: annotate boolean binary predicates as BOOLEAN [CLAUDE] (#8069)
+  - files: typing/__init__.py
+- [ ] `b4776a409` (2026-08-08) fix(generator): avoid materializing huge integers when capping numeric type params, closes #8113
+  - files: generator.py
+- [ ] `df5ec1ecd` (2026-08-08) fix(parser): break out of the function-property loop on a failed property, closes #8112
+  - files: parser.py
+- [ ] `c25225d9a` (2026-08-09) fix(generator): double the delimiter in Unicode literals instead of applying string escapes, closes #8110
+  - files: generator.py
+- [ ] `13e6c0798` (2026-08-10) fix(optimizer)!: annotate grouping properly in the hive hierarchy
+  - files: typing/databricks.py, typing/hive.py, typing/spark.py
+- [ ] `66ecca339` (2026-08-10) fix(clickhouse)!: parse MODIFY COLUMN as AlterColumn (#8091)
+  - files: generator.py, parser.py
+- [ ] `f7dfbacd3` (2026-08-10) fix(expressions)!: classify boolean binary operators as Predicate (#8073)
+  - files: typing/__init__.py
+- [ ] `617989c38` (2026-08-10) fix(clickhouse): clean up MODIFY COLUMN handling
+  - files: generator.py
+- [ ] `781075516` (2026-08-10) fix(parser)!: move JSON extraction operators to Postgres's binary-operator precedence tier (#8063)
+  - files: parser.py
+- [ ] `672efde2a` (2026-08-10) Fixup
+  - files: dialects/dialect.py
+- [ ] `9312212f2` (2026-08-12) Fix(optimizer)!: properly support `UNION BY NAME` in qualify, type inference (#8136)
+  - files: optimizer/annotate_types.py
+- [ ] `86195827b` (2026-08-12) fix(optimizer): preserve identifier meta when restoring JSON dot part case
+  - files: optimizer/annotate_types.py
+- [ ] `b7386b756` (2026-08-12) fix(optimizer)!: scope DML / DDL query fragments properly (#8140)
+  - files: optimizer/scope.py
+- [ ] `29acdfde9` (2026-08-13) fix(trino): TIME literal with a timezone (#8154)
+  - files: parser.py
+- [ ] `cefce1918` (2026-08-13) fix(postgres)!: map JSONB_CONTAINS to @>, add JSONBContainsTopKey (#8156)
+  - files: generator.py, parser.py
+- [ ] `d89f392e0` (2026-08-14) fix(mysql): map %x and %r date format specifiers [CLAUDE] (#8142)
+  - files: dialects/mysql.py
+- [ ] `21092b308` (2026-08-14) fix(optimizer)!: do not normalize identifiers that name data rather than references (#8161)
+  - files: dialects/bigquery.py, dialects/dialect.py, dialects/duckdb.py, dialects/postgres.py, optimizer/annotate_types.py
+- [ ] `f64adb4c9` (2026-08-16) fix(bigquery): array_agg(<subquery> ignore nulls) AttributeError closes #8193
+  - files: generator.py
+- [ ] `a570cf8a9` (2026-08-17) fix(bigquery): parse FULL/LEFT before set ops as modifiers, not aliases closes #8195
+  - files: parser.py
+- [ ] `6e30ee791` (2026-08-17) fix(parser): inline digit-prefixed field parsing to avoid deepening recursion
+  - files: parser.py
+- [ ] `d7ada74e2` (2026-08-17) feat(optimizer)!:annotate Left function for posrgres (#8189)
+  - files: typing/postgres.py
+- [ ] `f62c3446d` (2026-08-19) fix(qualify): resolve snowflake positional column refs (#8202)
+  - files: dialects/dialect.py, optimizer/qualify_columns.py
+- [ ] `038f01599` (2026-08-20) fix(parser): parse a list of tables in DROP TABLE [CLAUDE] (#8223)
+  - files: generator.py, parser.py
+- [ ] `8efda2c6c` (2026-08-20) fix(parser)!: ANALYZE and DROP with multiple tables (#8229)
+  - files: generator.py, parser.py
+- [ ] `b79cbf86d` (2026-08-21) fix(optimizer): preserve UNPIVOT passthrough columns (#8238)
+  - files: optimizer/qualify_columns.py
+- [ ] `930f1a32f` (2026-08-21) fix!(postgres, duckdb): preserve JSON extraction RHS grouping [CODEX] (#8237)
+  - files: dialects/dialect.py
+- [ ] `d5e3f14b1` (2026-08-24) fix(parser, optimizer): support starrocks GENERATE_SERIES parse and qualify (#8246)
+  - files: parser.py
+- [ ] `a60171e8f` (2026-08-24) fix(optimizer): apply qualified star exclusions only to the referenced source (#8247)
+  - files: optimizer/qualify_columns.py
+- [ ] `88419b1aa` (2026-08-25) fix(dialect): fall back on TokenError when an operand isn't a JSON path (#8260)
+  - files: dialects/dialect.py
+
+## Excluded — non-ported dialects (13), recorded so we don't re-triage
+
+- `21ebde8eb` (2026-07-13) feat(optimizer)!: type annotation for databricks REGR_SXX, REGR_SXY, REGR_SYY (#7851)
+- `f617f30cc` (2026-07-14) feat(optimizer)!: type annotation for databricks RINT (#7869)
+- `b2c07a1ee` (2026-07-17) fix(snowflake): wrap FILTER condition inside DISTINCT/ORDER BY args [CLAUDE] (#7884)
+- `281442123` (2026-07-17) fix(snowflake): parse AUTOINCREMENT parts independently [CLAUDE] (#7885)
+- `a715f9f9a` (2026-07-21) feat(optimizer)!: type annotation for databricks NANVL, SIGN, SHIFTLEFT, SIGNUM, SHUFFLE (#7896)
+- `aa495ef8d` (2026-07-28) feat(optimizer)!: type annotation for databricks NEGATIVE (#7975)
+- `3c6d84248` (2026-07-30) feat(starrocks): parse REFRESH EXTERNAL TABLE [CLAUDE] (#8000)
+- `495b81ce8` (2026-08-03) fix(snowflake): name pivot output columns after their IN-list alias (#8028)
+- `978bbd276` (2026-08-03) fix(tsql): UNPIVOT outputs the value column before the name column (#8030)
+- `6443883c2` (2026-08-03) fix(oracle): generate valid (UN)PIVOT syntax (#8029)
+- `0c19a6dab` (2026-08-06) Fix(tsql): support nullability in ALTER COLUMN (#8053)
+- `2f914c54a` (2026-08-10) fix(sqlite)!: parse ||, -> and ->> as a single tier that binds tighter than arithmetic closes #8115
+- `353d0ffca` (2026-08-11) fix(sqlite): emit STORED for generated columns instead of PERSISTED (#8123)
+
