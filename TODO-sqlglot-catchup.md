@@ -58,6 +58,30 @@ Bumped `reference/sqlglot` to `v30.17.0-72-gbac1a897b` and ran the source genera
   OUT of generated files (or make the generator emit them) so regen stops clobbering them; (b) port the
   token-removal fixes (`eeaf1b832` et al.) as part of it.
 
+### Prep DONE (2026-08-26) — regen no longer silently loses hand code
+
+Regenerated all source generators at the current pin and diffed to find every hand edit embedded in
+generated files. Only two existed:
+- **`DType.intoExpr(...)`** (was inside generated `ast/DataType.kt`) → **externalized** to a hand file
+  `ast/DTypeExtensions.kt` as `fun DType.intoExpr(...)` (extension fn; callers just add an import). Regen
+  no longer clobbers it. **This is the rule going forward: anything expressible as an extension fn lives
+  in a hand file, never in a `Generated*.kt`.**
+- **`U&'`/`u&'` unicode-string entries** in generated `PostgresTokenizerTables.FORMAT_STRINGS`
+  (from `a1e3338e3`) → **CANNOT be externalized** (it's data inside a generated map the tokenizer reads;
+  not an extension point). It *is* auto-generated once the pin is ≥ `a1e3338e3` (i.e. the resync absorbs
+  it and it regenerates identically). Until then it's a minimal hand-patch inside a generated file,
+  protected by a **guard test** `PostgresTokenizerTest.unicodeStringLiteralsAreTokenized_generatedPatchGuard`
+  that fails loudly if a regen wipes it and nobody re-applies it.
+
+**Pattern for non-externalizable generated-map patches:** keep the minimal in-map patch + add a behavioral
+guard test (asserts the patched behavior) so a forgotten re-patch after regen breaks a test, not silently.
+
+**Net:** `code-gen` now reproduces every generated file with **zero** hand-code loss except the single
+guarded `U&'` map patch (which the resync itself removes the need for). Env note: gen scripts need
+`reference/sqlglot/sqlglot/_version.py` (a 2-line `__version__`/`__version_tuple__` shim; gitignored).
+Still outstanding for the actual resync: porting the coupled token/AST removals (`eeaf1b832` et al.) so
+`Parser.kt` compiles against the regenerated `TokenType`.
+
 ## Actionable (79) — oldest first
 
 - [x] `e17ab3023` (2026-07-13) Fix(optimizer)!: evict mutated projections from the annotator cache (#7868)

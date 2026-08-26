@@ -149,12 +149,6 @@ enum class DType(val value: kotlin.String) {
                 ?: throw IllegalArgumentException("Unknown DataType.Type value: $value")
     }
 
-    // sqlglot: datatypes.DType.into_expr — converts this DType into a DataType instance.
-    fun intoExpr(kwargs: Args = emptyMap()): DataType {
-        val dataType = DataType(args("this" to this))
-        for ((k, v) in kwargs) dataType.set(k, v)
-        return dataType
-    }
 }
 
 // sqlglot: datatypes.DataType(Expression) — is_data_type. The "this" arg holds a DType.

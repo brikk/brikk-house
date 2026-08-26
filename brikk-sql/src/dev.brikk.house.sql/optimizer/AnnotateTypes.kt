@@ -42,6 +42,7 @@ import dev.brikk.house.sql.ast.outputColumns
 import dev.brikk.house.sql.ast.outputName
 import dev.brikk.house.sql.ast.selects
 import dev.brikk.house.sql.ast.unpivot
+import dev.brikk.house.sql.ast.intoExpr
 import dev.brikk.house.sql.dialects.Dialect
 import dev.brikk.house.sql.dialects.Dialects
 
