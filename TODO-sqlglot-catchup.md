@@ -35,6 +35,29 @@ can't be validated against corpus gates pinned to `v30.12.0-44`. Rather than 72 
 metadata, reconcile the known-failure ledgers, then work the deferred list against the refreshed gates.
 The 6 applied here are safe standalone and don't require that.
 
+### Resync feasibility spike (2026-08-26) — findings (attempted, then reverted clean)
+
+Bumped `reference/sqlglot` to `v30.17.0-72-gbac1a897b` and ran the source generators. Results:
+- **Env:** gen scripts need `sqlglot` importable; a `reference/sqlglot/sqlglot/_version.py` shim
+  (`__version__`/`__version_tuple__`) is enough (no full pip install). The reference clone is local to
+  this worktree (not shared with the `sql-focus` worktree).
+- **Toolchain is healthy** at the current pin (regen reproduces committed files byte-for-byte except the
+  git-describe stamp) — so regen itself works.
+- **BUT the regen is NOT a clean "overwrite generated, never touch" step:**
+  1. It **drops hand-maintained code embedded in generated files** — e.g. `DType.intoExpr(...)` lives inside
+     the generated `ast/DataType.kt`; `gen_ast_nodes` rewrites the file and silently removes it →
+     `AnnotateTypes.kt` stops compiling. Every regenerated `Generated*.kt`/`DataType.kt` must be audited for
+     lost hand additions (or the generators taught to emit/preserve them).
+  2. Reaching even a **building** state requires porting some deferred behavioral fixes first: upstream
+     removed the `TIMESTAMP_SNAPSHOT`/`VERSION_SNAPSHOT` tokens (deferred `eeaf1b832`), so `Parser.kt`
+     references dangle until that time-travel change is ported. The corpus/ledger review checkpoint can't be
+     reached before this reconciliation.
+- **Conclusion:** the resync is a focused, *attended* reconciliation (audit hand-in-generated code + port
+  coupled token/AST changes, then reconcile gates) — not a safe unattended auto-regen. Recommend doing it
+  as a dedicated reviewed effort. Two prep items worth doing first: (a) move hand methods like `intoExpr`
+  OUT of generated files (or make the generator emit them) so regen stops clobbering them; (b) port the
+  token-removal fixes (`eeaf1b832` et al.) as part of it.
+
 ## Actionable (79) — oldest first
 
 - [x] `e17ab3023` (2026-07-13) Fix(optimizer)!: evict mutated projections from the annotator cache (#7868)
