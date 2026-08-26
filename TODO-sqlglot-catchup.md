@@ -79,8 +79,39 @@ guard test (asserts the patched behavior) so a forgotten re-patch after regen br
 **Net:** `code-gen` now reproduces every generated file with **zero** hand-code loss except the single
 guarded `U&'` map patch (which the resync itself removes the need for). Env note: gen scripts need
 `reference/sqlglot/sqlglot/_version.py` (a 2-line `__version__`/`__version_tuple__` shim; gitignored).
-Still outstanding for the actual resync: porting the coupled token/AST removals (`eeaf1b832` et al.) so
-`Parser.kt` compiles against the regenerated `TokenType`.
+
+### Resync scope spike #2 (2026-08-26) — attempted full regen at `bac1a897b`, reverted clean
+
+Ran source generators at the new pin to size the reconciliation. It's a **multi-session, attended**
+effort (not a single work-through). Three coupled workstreams, each surfaced concretely:
+
+1. **Compile reconciliation (AST/token removals).** Regen removes `TIMESTAMP_SNAPSHOT`/`VERSION_SNAPSHOT`
+   tokens (`eeaf1b832`) → `Parser.parseVersion()` (Parser.kt ~L2905) must be rewritten to match time-travel
+   phrases as token *sequences* (`VERSION_PHRASES` table), mirroring upstream `_parse_version`. Bounded
+   (one function + the tokenizer entries auto-remove). Expect a few more such dangling refs to fix.
+
+2. **Typing batch (`gen_typing_metadata` hard-fails on each unclassified annotator).** Bigger than the
+   earlier "typing" estimate — needs a `classify` rule + `AnnotatorRef` + Kotlin impl per NEW annotator.
+   Ones used by our ported dialects (worked out during the spike; re-apply during resync):
+   - `_annotate_bit_func` (mysql/doris #8261): UNKNOWN→UNKNOWN; BINARY/VARBINARY→VARBINARY; else UBIGINT.
+   - `_annotate_reverse` (mysql): BINARY/VARBINARY/UNKNOWN `this` → byArgs("this"); else VARCHAR.
+   - `_annotate_truncate` (mysql): TEXT `this` → DOUBLE; else byArgs("this").
+   - `_annotate_regexp_replace` (mysql): any UNKNOWN arg → UNKNOWN; any BINARY arg → LONGBLOB; else LONGTEXT
+     (args: this, expression, replacement).
+   - `_annotate_compress` (mysql): `this` in {CHAR,VARCHAR,BINARY,VARBINARY,TINYBLOB,ENUM,INT,BIGINT,
+     DECIMAL,DOUBLE,DATE,DATETIME}→VARBINARY; in {TEXT,MEDIUMTEXT,LONGTEXT,BLOB,MEDIUMBLOB,LONGBLOB,JSON}
+     →LONGBLOB; TINYTEXT→BLOB; else UNKNOWN.
+   - PLUS inline-lambda annotators (not `def`s), e.g. clickhouse `DataType.build("Float64",...)` — several
+     more; discover by iterating `gen_typing_metadata` (it fails loudly on each, by design).
+   `BINARY_TYPES` is not a generated `DataType.*` set here — define it hand-side if needed.
+
+3. **Corpus reconciliation.** After it builds, regen ast/token/parser/qualify/scope/lineage/serde corpora;
+   many gate cases will diverge (the deferred behavioral fixes) → ledger or fix, then **review the ledger
+   diff** for real regressions vs expected catch-up gaps.
+
+**Recommendation:** schedule this as a focused effort (likely a dedicated branch + a few sessions), in the
+order 1 → 2 → 3. The prep above makes it safe (regen won't silently drop hand code). Reverted clean; branch
+`sqlglot-catchup` remains at the 6 applied fixes + prep, building green.
 
 ## Actionable (79) — oldest first
 
