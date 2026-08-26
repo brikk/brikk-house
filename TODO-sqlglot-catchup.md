@@ -27,12 +27,16 @@ Tracking upstream **sqlglot** bug fixes landed since our port's pin, to decide w
   - APPLIED: `expandUsing` now treats NATURAL joins as USING over common columns (synthesize using-identifiers from the intersection when both schemas known + non-empty; else keep NATURAL). Additive (no qualify-corpus NATURAL cases); build + qualify gate green (matches ledger). TODO: add a dedicated NATURAL JOIN qualify unit test.
 - [ ] `a85eeff21` (2026-07-18) fix!: properly support VALUES as a set operation operand (#7897)
   - files: optimizer/qualify_columns.py, optimizer/scope.py, parser.py
+  - DEFERRED (output-changing): parser wraps VALUES set-op operands as `SELECT * FROM (VALUES ...) AS _values` — our ast/parser corpus has round-tripping `VALUES (1) UNION ...` cases that this would rewrite. NOTE: the scope/qualify `.left`/`.right`→args-access sub-change is a safe latent-crash fix (do with the resync, or folds in with item `a247168f9`).
 - [ ] `a247168f9` (2026-07-20) Fix: use `.this` and `.expression` instead of `.left` and `.right` in more places
-  - files: optimizer/annotate_types.py, optimizer/qualify_columns.py
+  - files: optimizer/annotate_types.py, optimizer/qualify_columns.py, optimizer/resolver.py
+  - DEFERRED (cluster with `a85eeff21`): annotate_types/resolver `.left`/`.right`→`.this`/`.expression` is output-neutral robustness, but the qualify_columns part builds on the deferred #7897 `_expand_alias_refs` change. Apply the whole VALUES-set-op cluster together in the resync.
 - [ ] `24d6d735c` (2026-07-20) fix(presto)!: respect date part boundary semantics in DATE_DIFF transpilation (#7911)
   - files: dialects/dialect.py
+  - DEFERRED (output-changing): presto DATE_DIFF date-part boundary semantics + WEEK(<day>) DOW; touches duckdb/presto generators + bigquery parser. Transpile-output change.
 - [ ] `da43c5c14` (2026-07-20) feat(optimizer)!: annotate truncate for mysql (#7914)
   - files: typing/mysql.py
+  - DEFERRED (typing batch): adds a custom `Trunc` annotator for MySQL (TEXT→DOUBLE else by-args). Do with the other 'annotate X for mysql' feats via a typing-metadata refresh + custom-annotator hand-port; may shift annotate-corpus results.
 - [ ] `a1e3338e3` (2026-07-20) fix(postgres): support unicode escape string literals U&'...' closes #7898
   - files: dialects/postgres.py
 - [ ] `169b8364b` (2026-07-20) fix(duckdb): position table alias correctly when combined with time-travel syntax closes #7916
