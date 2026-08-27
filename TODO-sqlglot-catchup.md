@@ -174,11 +174,53 @@ adopt-the-new-shape; **no category (b)** — nothing where upstream's new output
 - **~285 catch-up-gap DRIFT** (typing annotation refinements + parser/scope/qualify behavior changes):
   accepted into the per-corpus `known-failures` ledgers as deferred; work through as normal backlog.
 
-**Tooling gotcha:** `tools/extract_dialect_tests.py` wipes **all** `dialect-corpus/*.json` (line ~435) before
-writing the sqlglot-derived `<dialect>.json`, which also deletes the `*-known-failures.json` ledgers and the
-externally-sourced `datafusion-*.json` inputs. After running it, restore those from git.
+**Tooling gotcha (FIXED 2026-08-27, commit 08179ef):** `tools/extract_dialect_tests.py` used to wipe **all**
+`dialect-corpus/*.json`, deleting the `*-known-failures.json` ledgers and externally-sourced
+`datafusion-*.json` inputs. Now scoped to only prune script-owned `<dialect>.json` inputs (preserves
+`*-known-failures.json` and `datafusion-*.json`).
 
-## Actionable (79) — oldest first
+### Post-resync reconciliation of the deferred list (2026-08-27) — THIS SUPERSEDES the `[ ]` checkboxes below
+
+The old `[ ]`/DEFERRED rationale ("would break the pinned corpus") is **obsolete**: the resync regenerated all
+corpora at the new pin, so every upstream output change is now the *expected* value. Post-resync each old
+deferred item is in exactly one of three states:
+
+**A. DONE — explicitly ported during the resync** (green, in the source):
+`eeaf1b832` time-travel tokens, `03c96cbbf` SOUNDS LIKE, `187746cdc` CHARACTER SET, `d7fd83a7d` START WITH,
+`81c19435a` NOT DETERMINISTIC, `cefce1918` (#8156) postgres `?`/JSONBContainsTopKey, `11170dc84` (#7999)
+DROP…FORCE, `da43c5c14` (#7914) truncate, `c9dcd3282` (#7989) regexp_replace, `32d44c50d` (#8038) bit_and
+(BitFunc), and the ASCII half of `21092b308` (#8161). Also #8229 ANALYZE/DROP multi-table.
+
+**B. DONE — baked-in by the typing-metadata / corpus regen** (no hand-port needed; verified present in
+`GeneratedTypingMetadata.kt` or matched by the green suite): the `{"returns": …}` typing items —
+`#7945` substringindex, `#7944` unhex, `#8046` ArraySize, `#8064` ToChar, `#8067` FLOOR, `#13e6c0798`
+grouping, `#8069` boolean-predicate, `#7973` maybe_coerce/explode — plus every output-changing item whose
+behavior our generic port already matches (anything NOT appearing in a ledger). The green suite is the proof.
+
+**C. STILL OPEN** — two kinds:
+  - **Ledgered behavioral gaps** (our port diverges; captured in the per-corpus `known-failures`): the big one
+    is the **hive/spark lax-strict time-format hierarchy** (`6581f8c38`/`0a374bf42`/`66316e335`/#7773/#7925)
+    — a real multi-commit refactor of TIME_MAPPING (`%mstrict`/`%m` markers). Most other C-items are small
+    per-node gaps living in the ledgers.
+  - **Feature-parse items** (new syntax, not corpus-covered, port deliberately): `#7934`/`#9815ccb32`/`#8004`
+    trino inline-UDF / routine bodies, `#7990` clickhouse refreshable MV, `#7950` REPLACE USING, and the
+    "data-not-references" half of `#8161`.
+
+**Authoritative open-work list now = the per-corpus `known-failures` ledgers + the feature-parse items above.**
+
+### DRIFT backlog triage (2026-08-27)
+
+Resync net delta: **+370 known-failures** (702 → 1072 across 53 ledger files) after the breaking-change ports.
+So there's a ~702 pre-existing baseline (the port was never 100%) plus ~370 resync catch-up gaps. Shape:
+- **Transpile** (~468 total, mixed pre-existing + new): concentrated on write-targets duckdb (156) /
+  bigquery (110) / spark (63) / presto (44). A chunk of the hive/spark ones need the time-format refactor.
+- **Annotate** (~224): a recurring `k=partition` type-mismatch cluster (~43) looks like one partition-typing
+  fix; ~30 are parser gaps inside the annotate corpus ("Required keyword"/"Invalid expression") = new syntax
+  not yet parsed; the rest are scattered per-node type refinements.
+- **Parser** (~232), scope/qualify/lineage small.
+This is normal incremental backlog, **not** a near-current blocker — we're only 6 commits behind upstream main.
+
+## Actionable (79) — oldest first  (checkboxes below predate the resync; see reconciliation above)
 
 - [x] `e17ab3023` (2026-07-13) Fix(optimizer)!: evict mutated projections from the annotator cache (#7868)
   - APPLIED: added `TypeAnnotator.uncache(expr, deep)`; wired into `expandStarsInScope` (annotatedAhead flag + uncache on struct-field replace / star replace / scope pre-set). Build + Qualify/AnnotateTypes/Scope tests green.
