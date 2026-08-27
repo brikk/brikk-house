@@ -164,6 +164,9 @@ open class Generator(
     open val unpivotAliasesAreIdentifiers: Boolean get() = true
     open val renameTableWithDb: Boolean get() = true
     open val groupingsSep: String get() = ","
+
+    // sqlglot: Generator.DECLARE_DEFAULT_ASSIGNMENT (base "="; bigquery/trino use "DEFAULT")
+    open val declareDefaultAssignment: String get() = "="
     open val indexOn: String get() = "ON"
     open val joinHints: Boolean get() = true
     open val directedJoins: Boolean get() = false
@@ -717,6 +720,23 @@ open class Generator(
             effectiveInverseTimeMapping
         }
         return formatTimeString(sql(expression, "format"), mapping)
+    }
+
+    // sqlglot: Generator.declare_sql
+    open fun declareSql(expression: Declare): String {
+        val replace = if (expression.args["replace"] == true) "OR REPLACE " else ""
+        return "DECLARE $replace${expressions(expression, flat = true)}"
+    }
+
+    // sqlglot: Generator.declareitem_sql
+    open fun declareitemSql(expression: DeclareItem): String {
+        val variables = expressions(expression, key = "this")
+        var default = sql(expression, "default")
+        default = if (default.isNotEmpty()) " $declareDefaultAssignment $default" else ""
+        var kind = sql(expression, "kind")
+        if (expression.args["kind"] is Schema) kind = "TABLE $kind"
+        kind = if (kind.isNotEmpty()) " $kind" else ""
+        return "$variables$kind$default"
     }
 
     // sqlglot: Generator.binary

@@ -24,42 +24,6 @@
         {
             "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' FROM person WHERE zip_code > 94500",
             "reason": "UnsupportedError: Unsupported expression type QueryTransform"
-        },
-        {
-            "sql": "DECLARE VAR x INT",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE x INT",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE x, y, z INT DEFAULT 1",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE x INT = 5",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE five = 5",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE OR REPLACE five = 55",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE VARIABLE size DEFAULT 6",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE some_var STRING",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
         }
     ]
 }

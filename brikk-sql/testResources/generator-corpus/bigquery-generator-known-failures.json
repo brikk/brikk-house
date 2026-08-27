@@ -190,42 +190,6 @@
             "reason": "output mismatch: expected `SELECT * FROM UNNEST(x) WITH OFFSET AS offset EXCEPT DISTINCT SELECT * FROM UNNEST(y) WITH OFFSET AS offset` actual `SELECT * FROM UNNEST(x) WITH OFFSET AS offset EXCEPT SELECT * FROM UNNEST(y) WITH OFFSET AS offset`"
         },
         {
-            "sql": "DECLARE X INT64",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE X INT64 DEFAULT 1",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE X FLOAT64 DEFAULT 0.9",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE X INT64 DEFAULT (SELECT MAX(col) FROM foo)",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE X, Y, Z INT64",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE X, Y, Z INT64 DEFAULT 42",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE X, Y, Z INT64 DEFAULT (SELECT 42)",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE START_DATE DATE DEFAULT CURRENT_DATE - 1",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
-            "sql": "DECLARE TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP() - INTERVAL '1' HOUR",
-            "reason": "UnsupportedError: Unsupported expression type Declare"
-        },
-        {
             "sql": "LAST_DAY(DATETIME '2008-11-10 15:30:00', WEEK(SUNDAY))",
             "reason": "output mismatch: expected `LAST_DAY(CAST('2008-11-10 15:30:00' AS DATETIME), WEEK)` actual `LAST_DAY(CAST('2008-11-10 15:30:00' AS DATETIME), WEEK(SUNDAY))`"
         },

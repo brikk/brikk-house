@@ -327,39 +327,11 @@
         },
         {
             "sql": "DECLARE X INT64",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE X INT64 DEFAULT 1",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE X FLOAT64 DEFAULT 0.9",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE X INT64 DEFAULT (SELECT MAX(col) FROM foo)",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+            "reason": "ast-mismatch at #8: expected {\"i\":1,\"k\":\"default\",\"v\":false}"
         },
         {
             "sql": "DECLARE X, Y, Z INT64",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE X, Y, Z INT64 DEFAULT 42",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE X, Y, Z INT64 DEFAULT (SELECT 42)",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE START_DATE DATE DEFAULT CURRENT_DATE - 1",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP() - INTERVAL '1' HOUR",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+            "reason": "ast-mismatch at #14: expected {\"i\":1,\"k\":\"default\",\"v\":false}"
         },
         {
             "sql": "DATETIME_DIFF('2017-12-18', '2017-12-17', WEEK(MONDAY))",

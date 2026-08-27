@@ -5681,6 +5681,39 @@ open class Parser(
         )
     }
 
+    // sqlglot: Parser._parse_declareitem
+    fun parseDeclareitem(): Expression? {
+        matchTexts(setOf("VAR", "VARIABLE"))
+
+        val vars = parseCsv { parseIdVar() }
+        if (vars.isEmpty()) return null
+
+        match(TokenType.ALIAS)
+        val kind = if (match(TokenType.TABLE)) parseSchema() else parseTypes()
+        val default = if (match(TokenType.DEFAULT) || match(TokenType.EQ)) parseBitwise() else null
+
+        return expression(
+            dev.brikk.house.sql.ast.DeclareItem(
+                args("this" to vars, "kind" to kind, "default" to default)
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_declare
+    fun parseDeclare(): Expression {
+        val start = prevToken
+        val replace = matchTextSeq("OR", "REPLACE")
+        val expressions = tryParse({ parseCsv { parseDeclareitem() } })
+
+        if (expressions.isNullOrEmpty() || currToken.exists) {
+            return parseAsCommand(start)
+        }
+
+        return expression(
+            dev.brikk.house.sql.ast.Declare(args("expressions" to expressions, "replace" to replace))
+        )
+    }
+
     // sqlglot: Parser._parse_insert_table
     protected fun parseInsertTable(): Expression? {
         val this_ = parseTable(schema = true, parsePartition = true)

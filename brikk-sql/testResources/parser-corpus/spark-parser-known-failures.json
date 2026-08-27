@@ -3,39 +3,15 @@
     "cases": [
         {
             "sql": "DECLARE VAR x INT",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+            "reason": "ast-mismatch at #8: expected {\"i\":1,\"k\":\"default\",\"v\":false}"
         },
         {
             "sql": "DECLARE x INT",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE x, y, z INT DEFAULT 1",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE x INT = 5",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE five = 5",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE OR REPLACE five = 55",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-        },
-        {
-            "sql": "DECLARE VARIABLE size DEFAULT 6",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+            "reason": "ast-mismatch at #8: expected {\"i\":1,\"k\":\"default\",\"v\":false}"
         },
         {
             "sql": "DECLARE some_var STRING",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+            "reason": "ast-mismatch at #8: expected {\"i\":1,\"k\":\"default\",\"v\":false}"
         }
     ]
 }

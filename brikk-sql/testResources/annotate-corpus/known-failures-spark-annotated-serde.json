@@ -6,39 +6,15 @@
         },
         {
             "sql": "DECLARE VAR x INT",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m VAR x INT"
+            "reason": "type-mismatch at #8 (? k=default): expected t=null actual t=null"
         },
         {
             "sql": "DECLARE x INT",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m x INT"
-        },
-        {
-            "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m VARIABLE myvar INT DEFAULT 5"
-        },
-        {
-            "sql": "DECLARE x, y, z INT DEFAULT 1",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m x, y, z INT DEFAULT 1"
-        },
-        {
-            "sql": "DECLARE x INT = 5",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m x INT = 5"
-        },
-        {
-            "sql": "DECLARE five = 5",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m five = 5"
-        },
-        {
-            "sql": "DECLARE OR REPLACE five = 55",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m OR REPLACE five = 55"
-        },
-        {
-            "sql": "DECLARE VARIABLE size DEFAULT 6",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m VARIABLE size DEFAULT 6"
+            "reason": "type-mismatch at #8 (? k=default): expected t=null actual t=null"
         },
         {
             "sql": "DECLARE some_var STRING",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m some_var STRING"
+            "reason": "type-mismatch at #8 (? k=default): expected t=null actual t=null"
         }
     ]
 }

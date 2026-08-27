@@ -43,6 +43,9 @@ open class TrinoGenerator(
     // sqlglot: TrinoGenerator.EXCEPT_INTERSECT_SUPPORT_ALL_CLAUSE = True
     override val exceptIntersectSupportAllClause: Boolean get() = true
 
+    // sqlglot: Trino.Generator.DECLARE_DEFAULT_ASSIGNMENT = "DEFAULT"
+    override val declareDefaultAssignment: String get() = "DEFAULT"
+
     // sqlglot: Trino.CONCAT_WS_COALESCE = True
     override val dialectConcatWsCoalesce: Boolean get() = true
 

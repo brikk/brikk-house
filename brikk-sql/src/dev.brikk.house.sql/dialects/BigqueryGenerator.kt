@@ -70,6 +70,9 @@ open class BigqueryGenerator(
     override val queryHints: Boolean get() = false
     override val tableHints: Boolean get() = false
     override val limitFetch: String get() = "LIMIT"
+
+    // sqlglot: BigQuery.Generator.DECLARE_DEFAULT_ASSIGNMENT = "DEFAULT"
+    override val declareDefaultAssignment: String get() = "DEFAULT"
     override val renameTableWithDb: Boolean get() = false
     override val nvl2Supported: Boolean get() = false
     override val unnestWithOrdinality: Boolean get() = false

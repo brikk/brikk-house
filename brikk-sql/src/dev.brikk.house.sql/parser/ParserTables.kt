@@ -582,6 +582,7 @@ object BaseParserTables {
         TokenType.COMMIT to { p -> p.parseCommitOrRollback() },
         TokenType.COPY to { p -> p.parseCopy() },
         TokenType.CREATE to { p -> p.parseCreate() },
+        TokenType.DECLARE to { p -> p.parseDeclare() },
         TokenType.DELETE to { p -> p.parseDelete() },
         TokenType.DESC to { p -> p.parseDescribe() },
         TokenType.DESCRIBE to { p -> p.parseDescribe() },
