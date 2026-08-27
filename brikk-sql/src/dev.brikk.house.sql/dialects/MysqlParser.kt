@@ -277,6 +277,23 @@ open class MysqlParser(
         return super.parseAlterTableRename()
     }
 
+    // sqlglot #8006: MySQLParser._parse_range — `x SOUNDS LIKE y` -> SOUNDEX(x) = SOUNDEX(y)
+    // via text-sequence matching (no longer a single SOUNDS_LIKE token).
+    override fun parseRange(this_: Expression?): Expression? {
+        val current = this_ ?: parseBitwise()
+        if (matchTextSeq("SOUNDS", "LIKE")) {
+            return expression(
+                EQ(
+                    args(
+                        "this" to expression(Soundex(args("this" to current))),
+                        "expression" to expression(Soundex(args("this" to parseTerm()))),
+                    )
+                )
+            )
+        }
+        return super.parseRange(current)
+    }
+
     // sqlglot: MySQLParser._parse_alter_drop_action
     override fun parseAlterDropAction(): Expression? {
         if (matchPair(TokenType.DROP, TokenType.PRIMARY_KEY)) {
@@ -796,16 +813,8 @@ object MysqlParserTables {
     // sqlglot: MySQLParser.RANGE_PARSERS
     val RANGE_PARSERS: Map<TokenType, (Parser, Expression?) -> Expression?> =
         BaseParserTables.RANGE_PARSERS + mapOf<TokenType, (Parser, Expression?) -> Expression?>(
-            TokenType.SOUNDS_LIKE to { p, this_ ->
-                p.expression(
-                    EQ(
-                        args(
-                            "this" to p.expression(Soundex(args("this" to this_))),
-                            "expression" to p.expression(Soundex(args("this" to p.parseTerm()))),
-                        )
-                    )
-                )
-            },
+            // sqlglot #8006: `SOUNDS LIKE` is no longer a single token; handled in
+            // MysqlParser.parseRange via text-sequence matching instead.
             TokenType.MEMBER_OF to { p, this_ ->
                 p.expression(
                     JSONArrayContains(

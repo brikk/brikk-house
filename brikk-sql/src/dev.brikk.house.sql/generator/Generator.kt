@@ -1348,7 +1348,7 @@ open class Generator(
 
     // sqlglot: Generator.drop_sql
     open fun dropSql(expression: Drop): String {
-        val thisSql = sql(expression, "this")
+        val tables = expressions(expression, key = "tables", flat = true)
         var exprs = expressions(expression, flat = true)
         if (exprs.isNotEmpty()) exprs = " ($exprs)"
         var kind = expression.args["kind"] as? String ?: ""
@@ -1366,7 +1366,8 @@ open class Generator(
         val constraints = if (expression.args["constraints"] == true) " CONSTRAINTS" else ""
         val purge = if (expression.args["purge"] == true) " PURGE" else ""
         val sync = if (expression.args["sync"] == true) " SYNC" else ""
-        return "DROP$temporary$materialized$iceberg $kind$concurrentlySql$existsSql$thisSql$onCluster$exprs$cascade$restrict$constraints$purge$sync"
+        val force = if (expression.args["force"] == true) " FORCE" else ""
+        return "DROP$temporary$materialized$iceberg $kind$concurrentlySql$existsSql$tables$onCluster$exprs$cascade$restrict$constraints$purge$sync$force"
     }
 
     // sqlglot: Generator.set_operation
@@ -4841,8 +4842,8 @@ open class Generator(
         if (options.isNotEmpty()) options = " $options"
         var kind = sql(expression, "kind")
         if (kind.isNotEmpty()) kind = " $kind"
-        var thisSql = sql(expression, "this")
-        if (thisSql.isNotEmpty()) thisSql = " $thisSql"
+        var tables = expressions(expression, key = "tables", flat = true)
+        if (tables.isNotEmpty()) tables = " $tables"
         var mode = sql(expression, "mode")
         if (mode.isNotEmpty()) mode = " $mode"
         var properties = sql(expression, "properties")
@@ -4851,7 +4852,7 @@ open class Generator(
         if (partition.isNotEmpty()) partition = " $partition"
         var innerExpression = sql(expression, "expression")
         if (innerExpression.isNotEmpty()) innerExpression = " $innerExpression"
-        return "ANALYZE$options$kind$thisSql$partition$mode$innerExpression$properties"
+        return "ANALYZE$options$kind$tables$partition$mode$innerExpression$properties"
     }
 
     // sqlglot: Generator.struct_sql
