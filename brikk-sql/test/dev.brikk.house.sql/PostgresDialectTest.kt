@@ -25,9 +25,9 @@ class PostgresDialectTest {
     fun jsonArrowOperators() {
         // COLUMN_OPERATORS[ARROW] via build_json_extract_path (arrow_req_json_type=True)
         assertEquals("SELECT x -> 'a' -> 0 FROM t", roundTrip("SELECT x -> 'a' -> 0 FROM t"))
-        // `?` -> JSONBContains; base renders the function name
+        // sqlglot #8156: `?` -> JSONBContainsTopKey; base renders the `?` operator.
         assertEquals(
-            "SELECT JSONB_CONTAINS(x, 'k')",
+            "SELECT x ? 'k'",
             transpile("SELECT x ? 'k'", read = "postgres", write = ""),
         )
     }
