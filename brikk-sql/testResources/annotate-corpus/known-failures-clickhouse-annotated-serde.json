@@ -33,14 +33,6 @@
             "reason": "type-mismatch at #24 (? k=partition): expected t=null actual t=null"
         },
         {
-            "sql": "ALTER TABLE visits ON CLUSTER test_cluster DROP COLUMN col1",
-            "reason": "type-mismatch at #23 (? k=force): expected t=null actual t=null"
-        },
-        {
-            "sql": "ALTER TABLE visits ON CLUSTER '{cluster}' DROP COLUMN col1",
-            "reason": "type-mismatch at #23 (? k=force): expected t=null actual t=null"
-        },
-        {
             "sql": "INSERT INTO t (col1, col2) VALUES ('abcd', 1234)",
             "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
         },
@@ -71,14 +63,6 @@
         {
             "sql": "CREATE TABLE data5 (\"x\" UInt32, \"y\" UInt32) ENGINE=MergeTree ORDER BY (round(y / 1000000000), cityHash64(x)) SAMPLE BY cityHash64(x)",
             "reason": "type-mismatch at #45 (? k=safe): expected t=null actual t=null"
-        },
-        {
-            "sql": "DROP TABLE t SYNC",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP DATABASE IF EXISTS d SYNC",
-            "reason": "payload count expected=17 actual=16"
         },
         {
             "sql": "SELECT * FROM arrays_test ARRAY JOIN arr1, arrays_test.arr2 AS foo, ['a', 'b', 'c'] AS elem",

@@ -97,22 +97,6 @@
             "reason": "ParseError: SELECT INTO is not supported yet. Line 1, Col: 46.\n  WITH t(c) AS (SELECT 1) SELECT * INTO \u001b[4mUNLOGGED\u001b[0m foo FROM (SELECT c AS c FROM t) "
         },
         {
-            "sql": "DROP INDEX ix_table_id",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP INDEX IF EXISTS ix_table_id",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP INDEX CONCURRENTLY ix_table_id",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP INDEX CONCURRENTLY IF EXISTS ix_table_id",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
             "sql": "SELECT * FROM ROWS FROM (FUNC1(col1, col2))",
             "reason": "ParseError: ROWS FROM is not supported yet. Line 1, Col: 18.\n  SELECT * FROM \u001b[4mROWS\u001b[0m FROM (FUNC1(col1, col2))"
         },

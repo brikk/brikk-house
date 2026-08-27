@@ -34,14 +34,6 @@
             "reason": "ast-mismatch at #24: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
         },
         {
-            "sql": "ALTER TABLE visits ON CLUSTER test_cluster DROP COLUMN col1",
-            "reason": "ast-mismatch at #23: expected {\"i\":7,\"k\":\"force\",\"v\":false}"
-        },
-        {
-            "sql": "ALTER TABLE visits ON CLUSTER '{cluster}' DROP COLUMN col1",
-            "reason": "ast-mismatch at #23: expected {\"i\":7,\"k\":\"force\",\"v\":false}"
-        },
-        {
             "sql": "INSERT INTO t (col1, col2) VALUES ('abcd', 1234)",
             "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
         },
@@ -72,14 +64,6 @@
         {
             "sql": "CREATE TABLE data5 (\"x\" UInt32, \"y\" UInt32) ENGINE=MergeTree ORDER BY (round(y / 1000000000), cityHash64(x)) SAMPLE BY cityHash64(x)",
             "reason": "ast-mismatch at #45: expected {\"i\":36,\"k\":\"safe\",\"v\":false}"
-        },
-        {
-            "sql": "DROP TABLE t SYNC",
-            "reason": "ast-mismatch: payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP DATABASE IF EXISTS d SYNC",
-            "reason": "ast-mismatch: payload count expected=17 actual=16"
         },
         {
             "sql": "arrayConcat([1, 2], [3, 4])",

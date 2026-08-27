@@ -1,14 +1,6 @@
 {
     "cases": [
         {
-            "sql": "ALTER TABLE users DROP COLUMN zip",
-            "reason": "type-mismatch at #23 (? k=force): expected t=null actual t=null"
-        },
-        {
-            "sql": "ALTER TABLE IF EXISTS users DROP COLUMN IF EXISTS zip",
-            "reason": "type-mismatch at #23 (? k=force): expected t=null actual t=null"
-        },
-        {
             "sql": "ALTER TABLE people SET PROPERTIES x = 'y'",
             "reason": "type-mismatch at #0 (Command): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },

@@ -121,22 +121,6 @@
             "reason": "type-mismatch at #19 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
         {
-            "sql": "DROP INDEX a.b.c",
-            "reason": "payload count expected=23 actual=22"
-        },
-        {
-            "sql": "DROP FUNCTION a.b.c (INT)",
-            "reason": "payload count expected=26 actual=25"
-        },
-        {
-            "sql": "DROP MATERIALIZED VIEW x.y.z",
-            "reason": "payload count expected=23 actual=22"
-        },
-        {
-            "sql": "DROP PROCEDURE a.b.c (INT)",
-            "reason": "payload count expected=26 actual=25"
-        },
-        {
             "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds) SELECT x FROM y",
             "reason": "type-mismatch at #18 (? k=partition): expected t=null actual t=null"
         },
@@ -155,62 +139,6 @@
         {
             "sql": "INSERT INTO a.b PARTITION(DAY = '2024-04-14') (col1, col2) SELECT x FROM y",
             "reason": "type-mismatch at #29 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "DROP TABLE a",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP TABLE a.b",
-            "reason": "payload count expected=20 actual=19"
-        },
-        {
-            "sql": "DROP TABLE a, b",
-            "reason": "payload count expected=21 actual=20"
-        },
-        {
-            "sql": "DROP TABLE a.b, c.d",
-            "reason": "payload count expected=27 actual=26"
-        },
-        {
-            "sql": "DROP TABLE IF EXISTS a",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP TABLE IF EXISTS a, b CASCADE",
-            "reason": "payload count expected=21 actual=20"
-        },
-        {
-            "sql": "DROP TABLE IF EXISTS a.b",
-            "reason": "payload count expected=20 actual=19"
-        },
-        {
-            "sql": "DROP TABLE a CASCADE",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP TABLE s_hajo CASCADE CONSTRAINTS",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP TABLE a PURGE",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP VIEW a",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP VIEW a.b",
-            "reason": "payload count expected=20 actual=19"
-        },
-        {
-            "sql": "DROP VIEW IF EXISTS a",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP VIEW IF EXISTS a.b",
-            "reason": "payload count expected=20 actual=19"
         },
         {
             "sql": "INSERT INTO x SELECT * FROM y",
@@ -293,22 +221,6 @@
             "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
         },
         {
-            "sql": "ALTER TABLE integers DROP COLUMN k",
-            "reason": "type-mismatch at #23 (? k=force): expected t=null actual t=null"
-        },
-        {
-            "sql": "ALTER TABLE integers DROP COLUMN IF EXISTS k",
-            "reason": "type-mismatch at #23 (? k=force): expected t=null actual t=null"
-        },
-        {
-            "sql": "ALTER TABLE integers DROP COLUMN k CASCADE",
-            "reason": "type-mismatch at #23 (? k=force): expected t=null actual t=null"
-        },
-        {
-            "sql": "ALTER TABLE mydataset.mytable DROP COLUMN A, DROP COLUMN IF EXISTS B",
-            "reason": "type-mismatch at #26 (? k=force): expected t=null actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
             "sql": "SELECT div.a FROM test_table AS div",
             "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
@@ -331,14 +243,6 @@
         {
             "sql": "SELECT test.Unknown FROM test",
             "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "DROP TABLE \"if\"",
-            "reason": "payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP INDEX \"concurrently\"",
-            "reason": "payload count expected=17 actual=16"
         }
     ]
 }

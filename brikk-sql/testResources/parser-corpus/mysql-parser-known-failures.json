@@ -2,10 +2,6 @@
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
     "cases": [
         {
-            "sql": "ALTER TABLE t DROP COLUMN c, DROP PRIMARY KEY, DROP INDEX `i`",
-            "reason": "ast-mismatch at #23: expected {\"i\":7,\"k\":\"force\",\"v\":false}"
-        },
-        {
             "sql": "INSERT INTO things (a, b) VALUES (1, 2) AS new_data ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id), a = new_data.a, b = new_data.b",
             "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
         },

@@ -2,10 +2,6 @@
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
     "cases": [
         {
-            "sql": "DROP NAMESPACE my_catalog.my_namespace",
-            "reason": "ast-mismatch: payload count expected=20 actual=19"
-        },
-        {
             "sql": "INSERT OVERWRITE TABLE db1.tb1 TABLE db2.tb2",
             "reason": "ast-mismatch at #12: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
         },

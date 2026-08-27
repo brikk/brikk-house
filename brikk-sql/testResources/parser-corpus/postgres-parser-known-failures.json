@@ -58,22 +58,6 @@
             "reason": "SELECT INTO is not supported yet. Line 1, Col: 46."
         },
         {
-            "sql": "DROP INDEX ix_table_id",
-            "reason": "ast-mismatch: payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP INDEX IF EXISTS ix_table_id",
-            "reason": "ast-mismatch: payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP INDEX CONCURRENTLY ix_table_id",
-            "reason": "ast-mismatch: payload count expected=17 actual=16"
-        },
-        {
-            "sql": "DROP INDEX CONCURRENTLY IF EXISTS ix_table_id",
-            "reason": "ast-mismatch: payload count expected=17 actual=16"
-        },
-        {
             "sql": "SELECT * FROM ROWS FROM (FUNC1(col1, col2))",
             "reason": "ROWS FROM is not supported yet. Line 1, Col: 18."
         },

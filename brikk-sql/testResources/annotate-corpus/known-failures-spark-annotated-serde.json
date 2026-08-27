@@ -1,10 +1,6 @@
 {
     "cases": [
         {
-            "sql": "DROP NAMESPACE my_catalog.my_namespace",
-            "reason": "payload count expected=20 actual=19"
-        },
-        {
             "sql": "INSERT OVERWRITE TABLE db1.tb1 TABLE db2.tb2",
             "reason": "type-mismatch at #12 (? k=partition): expected t=null actual t=null"
         },

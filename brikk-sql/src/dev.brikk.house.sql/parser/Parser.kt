@@ -5972,6 +5972,8 @@ open class Parser(
                     "concurrently" to concurrently,
                     "sync" to matchTextSeq("SYNC"),
                     "iceberg" to iceberg,
+                    // sqlglot #7999: DROP TABLE ... FORCE (starrocks/doris).
+                    "force" to matchTextSeq("FORCE"),
                 )
             )
         )
