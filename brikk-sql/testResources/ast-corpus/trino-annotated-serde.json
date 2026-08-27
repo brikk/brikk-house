@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "fixture": "dialect-corpus/trino.json",
  "dialect": "trino",
  "case_count": 55,
@@ -5791,7 +5791,8 @@
     },
     {
      "i": 7,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.core.Column",
      "t": [
       {
@@ -5885,6 +5886,11 @@
     {
      "i": 7,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 7,
+     "k": "force",
      "v": false
     },
     {
@@ -6014,7 +6020,8 @@
     },
     {
      "i": 7,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.core.Column",
      "t": [
       {
@@ -6108,6 +6115,11 @@
     {
      "i": 7,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 7,
+     "k": "force",
      "v": false
     },
     {
@@ -9579,7 +9591,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -9647,7 +9660,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {

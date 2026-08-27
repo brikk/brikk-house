@@ -1,4 +1,89 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": []
+    "sqlglot_version": "v30.17.0-72-gbac1a897b",
+    "cases": [
+        {
+            "sql": "SELECT * FROM (SELECT a FROM b SAMPLE 1 / 10 OFFSET 1 / 2)",
+            "reason": "ast-mismatch at #23: expected {\"i\":15,\"k\":\"safe\",\"v\":false}"
+        },
+        {
+            "sql": "SELECT and(1, 2)",
+            "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
+        },
+        {
+            "sql": "SELECT or(1, 2)",
+            "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
+        },
+        {
+            "sql": "INSERT INTO tab VALUES ({'key1': 1, 'key2': 10}), ({'key1': 2, 'key2': 20}), ({'key1': 3, 'key2': 30})",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO FUNCTION s3('url', 'CSV', 'name String, value UInt32', 'gzip') SELECT name, value FROM existing_table",
+            "reason": "ast-mismatch at #19: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO FUNCTION remote('localhost', default.simple_table) VALUES (100, 'inserted via remote()')",
+            "reason": "ast-mismatch at #17: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO TABLE FUNCTION hdfs('hdfs://hdfs1:9000/test', 'TSV', 'name String, column2 UInt32, column3 UInt32') VALUES ('test', 1, 2)",
+            "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO t (n.a, n.b) VALUES (1, [1, 2])",
+            "reason": "ast-mismatch at #24: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "ALTER TABLE visits ON CLUSTER test_cluster DROP COLUMN col1",
+            "reason": "ast-mismatch at #23: expected {\"i\":7,\"k\":\"force\",\"v\":false}"
+        },
+        {
+            "sql": "ALTER TABLE visits ON CLUSTER '{cluster}' DROP COLUMN col1",
+            "reason": "ast-mismatch at #23: expected {\"i\":7,\"k\":\"force\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO t (col1, col2) VALUES ('abcd', 1234)",
+            "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "SELECT arrayConcat([1, 2], [3, 4])",
+            "reason": "ast-mismatch at #9: expected Array (k=expressions)"
+        },
+        {
+            "sql": "SELECT or(0, 1, -2)",
+            "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
+        },
+        {
+            "sql": "SELECT and(1, 2, 3)",
+            "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
+        },
+        {
+            "sql": "SELECT or(and(3, 0), 5)",
+            "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
+        },
+        {
+            "sql": "INSERT INTO t (col1, col2) FORMAT Values('abcd', 1234)",
+            "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO FUNCTION s3('a', 'b', 'c', 'd', 'e') PARTITION BY CONCAT(s1, s2, s3, s4) SETTINGS set1 = 1, set2 = '2' SELECT * FROM some_table SETTINGS foo = 3",
+            "reason": "ast-mismatch at #22: expected PartitionedByProperty (k=partition)"
+        },
+        {
+            "sql": "CREATE TABLE data5 (\"x\" UInt32, \"y\" UInt32) ENGINE=MergeTree ORDER BY (round(y / 1000000000), cityHash64(x)) SAMPLE BY cityHash64(x)",
+            "reason": "ast-mismatch at #45: expected {\"i\":36,\"k\":\"safe\",\"v\":false}"
+        },
+        {
+            "sql": "DROP TABLE t SYNC",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP DATABASE IF EXISTS d SYNC",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "arrayConcat([1, 2], [3, 4])",
+            "reason": "ast-mismatch at #8: expected Array (k=expressions)"
+        }
+    ]
 }

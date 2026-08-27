@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "fixture": "normalize_identifiers",
  "cases": [
   {
@@ -112,6 +112,46 @@
    "sql": "SELECT `foo`, `BaR` FROM baz CROSS JOIN `bla` CROSS JOIN bloo",
    "expected": "SELECT `FOO`, `BAR` FROM BAZ CROSS JOIN `BLA` CROSS JOIN BLOO",
    "dialect": "bigquery,normalization_strategy=case_insensitive_uppercase",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT \"Fo\u00c4\" FROM \"Ba\u00dc\"",
+   "expected": "SELECT \"fo\u00c4\" FROM \"ba\u00dc\"",
+   "title": "duckdb only normalizes ascii characters",
+   "dialect": "duckdb"
+  },
+  {
+   "sql": "SELECT Fo\u00c4 FROM Ba\u00dc",
+   "expected": "SELECT fo\u00c4 FROM ba\u00dc",
+   "title": "postgres only normalizes ascii characters",
+   "dialect": "postgres"
+  },
+  {
+   "sql": "SELECT `Fo\u00c4` FROM `Ba\u00dc`",
+   "expected": "SELECT `fo\u00c4` FROM `ba\u00dc`",
+   "title": "bigquery only normalizes ascii characters",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT \"Fo\u00c4\" FROM \"Ba\u00dc\"",
+   "expected": "SELECT \"fo\u00c4\" FROM \"ba\u00dc\"",
+   "title": "redshift only normalizes ascii characters",
+   "dialect": "redshift",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT `Fo\u00c4` FROM `Ba\u00dc`",
+   "expected": "SELECT `fo\u00e4` FROM `ba\u00fc`",
+   "title": "spark normalizes unicode characters",
+   "dialect": "spark",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT \"Fo\u00c4\" FROM \"Ba\u00dc\"",
+   "expected": "SELECT \"fo\u00c4\" FROM \"ba\u00dc\"",
+   "title": "sqlite only normalizes ascii characters",
+   "dialect": "sqlite",
    "dialect_supported": false
   }
  ]

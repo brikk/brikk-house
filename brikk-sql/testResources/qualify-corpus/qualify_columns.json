@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "fixture": "qualify_columns",
  "schema": {
   "x": {
@@ -201,6 +201,33 @@
   {
    "sql": "SELECT COALESCE(x.a) AS d FROM x JOIN y ON x.b = y.b GROUP BY d",
    "expected": "SELECT COALESCE(x.a) AS d FROM x AS x JOIN y AS y ON x.b = y.b GROUP BY COALESCE(x.a)"
+  },
+  {
+   "sql": "SELECT SUM(x.a) AS d FROM x JOIN y ON x.b = y.b GROUP BY UPPER(d)",
+   "expected": "SELECT SUM(x.a) AS d FROM x AS x JOIN y AS y ON x.b = y.b GROUP BY UPPER(d)",
+   "title": "Aggregate alias must not be expanded into a GROUP BY (would nest the aggregate)",
+   "flags": {
+    "validate_qualify_columns": false
+   }
+  },
+  {
+   "sql": "SELECT SUM(x.a) AS d FROM x JOIN y ON x.b = y.b GROUP BY d",
+   "expected": "SELECT SUM(x.a) AS d FROM x AS x JOIN y AS y ON x.b = y.b GROUP BY d",
+   "title": "Standalone aggregate alias reference in GROUP BY must not be expanded",
+   "flags": {
+    "validate_qualify_columns": false
+   }
+  },
+  {
+   "sql": "SELECT SUM(x.a) AS c FROM x JOIN y ON x.b = y.b GROUP BY UPPER(c)",
+   "expected": "SELECT SUM(x.a) AS c FROM x AS x JOIN y AS y ON x.b = y.b GROUP BY UPPER(y.c)",
+   "title": "Aggregate alias colliding with a base column resolves the GROUP BY ref to the column"
+  },
+  {
+   "sql": "WITH x AS (SELECT * FROM (VALUES (1, 10), (2, 10), (3, 20)) AS v(a, b)) SELECT (SELECT MAX(t.a) FROM x AS t) + x.b AS f FROM x GROUP BY f ORDER BY f",
+   "expected": "WITH x AS (SELECT v.a AS a, v.b AS b FROM (VALUES (1, 10), (2, 10), (3, 20)) AS v(a, b)) SELECT (SELECT MAX(t.a) AS _col_0 FROM x AS t) + x.b AS f FROM x AS x GROUP BY (SELECT MAX(t.a) AS _col_0 FROM x AS t) + x.b ORDER BY f",
+   "title": "Aggregate in a subquery scope does not block expanding an alias into GROUP BY",
+   "dialect": "duckdb"
   },
   {
    "sql": "SELECT a + 1 AS d FROM x WHERE d > 1",
@@ -427,6 +454,16 @@
    "dialect_supported": false
   },
   {
+   "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) ORDER BY bar",
+   "expected": "SELECT _0.foo AS foo, _0.bar AS bar, _0.baz AS baz FROM (SELECT 1 AS foo, 2 AS bar UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0 ORDER BY _0.bar",
+   "dialect": "duckdb"
+  },
+  {
+   "sql": "SELECT baz FROM (SELECT 1 AS foo, 2 AS bar UNION BY NAME SELECT 3 AS bar, 4 AS baz) AS t ORDER BY baz",
+   "expected": "SELECT t.baz AS baz FROM (SELECT 1 AS foo, 2 AS bar UNION BY NAME SELECT 3 AS bar, 4 AS baz) AS t ORDER BY baz",
+   "dialect": "duckdb"
+  },
+  {
    "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME ON (foo, bar) SELECT 3 AS bar, 4 AS baz)",
    "expected": "SELECT _0.foo AS foo, _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME ON (foo, bar) SELECT 3 AS bar, 4 AS baz) AS _0",
    "dialect": "bigquery",
@@ -441,6 +478,13 @@
   {
    "sql": "SELECT * FROM ((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) FULL UNION ALL BY NAME ON (foo, qux) SELECT 3 AS qux, 4 AS bar)",
    "expected": "SELECT _0.foo AS foo, _0.qux AS qux FROM ((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) FULL UNION ALL BY NAME ON (foo, qux) SELECT 3 AS qux, 4 AS bar) AS _0",
+   "dialect": "bigquery",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT * FROM ((SELECT 1 AS foo, 2 AS bar) FULL OUTER UNION ALL BY NAME (SELECT 3 AS bar, 4 AS baz))",
+   "expected": "SELECT _0.foo AS foo, _0.bar AS bar, _0.baz AS baz FROM ((SELECT 1 AS foo, 2 AS bar) FULL OUTER UNION ALL BY NAME (SELECT 3 AS bar, 4 AS baz)) AS _0",
+   "title": "parenthesized set operation operands with side & kind",
    "dialect": "bigquery",
    "dialect_supported": false
   },
@@ -516,6 +560,21 @@
   {
    "sql": "SELECT (SELECT n.a FROM n WHERE n.id = m.id) FROM m AS m",
    "expected": "SELECT (SELECT n.a AS a FROM n AS n WHERE n.id = m.id) AS _col_0 FROM m AS m"
+  },
+  {
+   "sql": "SELECT id FROM t WHERE id > (SELECT AVG(id) FROM u WHERE u.name = t.name)",
+   "expected": "SELECT t.id AS id FROM t AS t WHERE t.id > (SELECT AVG(u.id) AS _col_0 FROM u AS u WHERE u.name = t.name)",
+   "title": "correlated aggregate resolves to local source without schema"
+  },
+  {
+   "sql": "SELECT id FROM t WHERE id > (SELECT AVG(id) FROM t AS t2 WHERE t2.k = t.k)",
+   "expected": "SELECT t.id AS id FROM t AS t WHERE t.id > (SELECT AVG(t2.id) AS _col_0 FROM t AS t2 WHERE t2.k = t.k)",
+   "title": "correlated aggregate with self-correlation via alias"
+  },
+  {
+   "sql": "SELECT id FROM t WHERE id > (SELECT AVG(u) FROM u WHERE u.k = t.k)",
+   "expected": "SELECT t.id AS id FROM t AS t WHERE t.id > (SELECT AVG(u.u) AS _col_0 FROM u AS u WHERE u.k = t.k)",
+   "title": "correlated aggregate where inner column name matches outer table"
   },
   {
    "sql": "SELECT * FROM x",
@@ -742,6 +801,14 @@
    "expected": "SELECT x.b AS b FROM x AS x"
   },
   {
+   "sql": "SELECT * EXCEPT (y.b) FROM x AS x JOIN y AS y ON x.b = y.b",
+   "expected": "SELECT x.a AS a, x.b AS b, y.c AS c FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT * EXCEPT (b, y.c) FROM x AS x JOIN y AS y ON x.b = y.b",
+   "expected": "SELECT x.a AS a FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
    "sql": "SELECT * EXCEPT (a, b) FROM x",
    "expected": "SELECT * EXCEPT (a, b) FROM x AS x"
   },
@@ -873,6 +940,40 @@
    "sql": "WITH t1 AS (SELECT 1 AS id), t2 AS (SELECT 2 AS id) SELECT STRUCT(id AS col) AS my_field FROM t1 JOIN t2 USING (id)",
    "expected": "WITH t1 AS (SELECT 1 AS id), t2 AS (SELECT 2 AS id) SELECT STRUCT(COALESCE(t1.id, t2.id) AS col) AS my_field FROM t1 AS t1 JOIN t2 AS t2 ON t1.id = t2.id",
    "title": "Do not rename aliased STRUCT fields if replacing USING columns"
+  },
+  {
+   "sql": "SELECT b FROM x NATURAL JOIN y",
+   "expected": "SELECT COALESCE(x.b, y.b) AS b FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT * FROM x NATURAL JOIN y",
+   "expected": "SELECT x.a AS a, COALESCE(x.b, y.b) AS b, y.c AS c FROM x AS x JOIN y AS y ON x.b = y.b"
+  },
+  {
+   "sql": "SELECT a FROM x NATURAL JOIN z",
+   "expected": "SELECT x.a AS a FROM x AS x JOIN z AS z ON x.b = z.b"
+  },
+  {
+   "sql": "SELECT b FROM x NATURAL JOIN y NATURAL JOIN z",
+   "expected": "SELECT COALESCE(x.b, y.b, z.b) AS b FROM x AS x JOIN y AS y ON x.b = y.b JOIN z AS z ON COALESCE(x.b, y.b) = z.b AND y.c = z.c"
+  },
+  {
+   "sql": "SELECT a, d FROM x NATURAL LEFT JOIN w",
+   "expected": "SELECT x.a AS a, w.d AS d FROM x AS x NATURAL LEFT JOIN w AS w"
+  },
+  {
+   "sql": "SELECT * FROM x NATURAL JOIN unknown_table",
+   "expected": "SELECT * FROM x AS x NATURAL JOIN unknown_table AS unknown_table",
+   "flags": {
+    "validate_qualify_columns": false
+   }
+  },
+  {
+   "sql": "SELECT * FROM unknown_table NATURAL JOIN x",
+   "expected": "SELECT * FROM unknown_table AS unknown_table NATURAL JOIN x AS x",
+   "flags": {
+    "validate_qualify_columns": false
+   }
   },
   {
    "sql": "SELECT /*+ BROADCAST(y) */ x.b FROM x JOIN y ON x.b = y.b",
@@ -1112,6 +1213,36 @@
    "expected": "SELECT _0.a AS a, _0.b AS b, _1.b AS b, _1.c AS c FROM ((SELECT x.a AS a, x.b AS b FROM x AS x) AS _0 INNER JOIN (SELECT y.b AS b, y.c AS c FROM y AS y) AS _1 ON _0.a = _1.c)"
   },
   {
+   "sql": "SELECT * FROM (SELECT * FROM x CROSS JOIN y) AS s",
+   "expected": "SELECT * FROM (SELECT x.a AS a, x.b AS b, y.b AS b, y.c AS c FROM x AS x CROSS JOIN y AS y) AS s",
+   "title": "outer star over derived table with duplicate output names is left unexpanded"
+  },
+  {
+   "sql": "SELECT s.* FROM (SELECT * FROM x CROSS JOIN y) AS s",
+   "expected": "SELECT s.* FROM (SELECT x.a AS a, x.b AS b, y.b AS b, y.c AS c FROM x AS x CROSS JOIN y AS y) AS s",
+   "title": "qualified outer star over derived table with duplicate output names is left unexpanded"
+  },
+  {
+   "sql": "SELECT * FROM (SELECT a, c FROM x CROSS JOIN y) AS s",
+   "expected": "SELECT s.a AS a, s.c AS c FROM (SELECT x.a AS a, y.c AS c FROM x AS x CROSS JOIN y AS y) AS s",
+   "title": "outer star over derived table with distinct output names is expanded normally"
+  },
+  {
+   "sql": "SELECT * FROM (SELECT * FROM (SELECT * FROM x CROSS JOIN y) AS s) AS t",
+   "expected": "SELECT * FROM (SELECT * FROM (SELECT x.a AS a, x.b AS b, y.b AS b, y.c AS c FROM x AS x CROSS JOIN y AS y) AS s) AS t",
+   "title": "nested outer stars over duplicate output names are left unexpanded at each level"
+  },
+  {
+   "sql": "SELECT * FROM (SELECT a AS k, a AS k FROM x) AS s",
+   "expected": "SELECT * FROM (SELECT x.a AS k, x.a AS k FROM x AS x) AS s",
+   "title": "user-authored duplicate aliases in a derived table are preserved, not clobbered"
+  },
+  {
+   "sql": "SELECT * FROM (SELECT *, a AS extra FROM x CROSS JOIN y) AS s",
+   "expected": "SELECT * FROM (SELECT x.a AS a, x.b AS b, y.b AS b, y.c AS c, x.a AS extra FROM x AS x CROSS JOIN y AS y) AS s",
+   "title": "mixed star and explicit projection in a derived table with duplicate output names is preserved"
+  },
+  {
    "sql": "SELECT b FROM ((SELECT a FROM x) INNER JOIN y ON a = b)",
    "expected": "SELECT y.b AS b FROM ((SELECT x.a AS a FROM x AS x) AS _0 INNER JOIN y AS y ON _0.a = y.b)"
   },
@@ -1170,6 +1301,184 @@
    "sql": "SELECT * FROM x ANTI JOIN y USING (b) JOIN y USING (b)",
    "expected": "SELECT x.a AS a, COALESCE(x.b, y_2.b) AS b, y_2.c AS c FROM x AS x ANTI JOIN y AS y ON x.b = y.b JOIN y AS y_2 ON x.b = y_2.b",
    "title": "ANTI + normal joins reinclude the table on scope"
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS id, 100 AS jan, 200 AS feb, 7 AS north, 8 AS south) SELECT * FROM t UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south))",
+   "expected": "WITH t AS (SELECT 1 AS id, 100 AS jan, 200 AS feb, 7 AS north, 8 AS south) SELECT t.id AS id, t.month AS month, t.revenue AS revenue, t.region AS region, t.headcount AS headcount FROM t AS t UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS t",
+   "title": "chained UNPIVOT, source is a CTE",
+   "dialect": "duckdb"
+  },
+  {
+   "sql": "SELECT * FROM unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south))",
+   "expected": "SELECT unpivotable.id AS id, unpivotable.month AS month, unpivotable.revenue AS revenue, unpivotable.region AS region, unpivotable.headcount AS headcount FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS unpivotable",
+   "title": "chained UNPIVOT, source columns come from the schema",
+   "dialect": "duckdb",
+   "skipped": "oracle output differs from fixture: SELECT * FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS unpivotable"
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS id, 100 AS jan, 200 AS feb, 7 AS north, 8 AS south) SELECT u.month, u.headcount FROM t UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS u",
+   "expected": "WITH t AS (SELECT 1 AS id, 100 AS jan, 200 AS feb, 7 AS north, 8 AS south) SELECT u.month AS month, u.headcount AS headcount FROM t AS t UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS u",
+   "title": "chained UNPIVOT, explicit columns under the chain's alias",
+   "dialect": "duckdb"
+  },
+  {
+   "sql": "SELECT * FROM pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) PIVOT(SUM(amt) FOR kind IN ('x' AS x, 'y' AS y))",
+   "expected": "SELECT _0.id AS id, _0.a AS a, _0.b AS b, _0.x AS x, _0.y AS y FROM pivotable AS pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) PIVOT(SUM(amt) FOR kind IN ('x' AS x, 'y' AS y)) AS _0",
+   "title": "chained PIVOT, the second groups by what the first produced",
+   "dialect": "duckdb",
+   "skipped": "oracle output differs from fixture: SELECT * FROM pivotable AS pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) PIVOT(SUM(amt) FOR kind IN ('x' AS x, 'y' AS y)) AS _0"
+  },
+  {
+   "sql": "SELECT * FROM pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) UNPIVOT(v FOR c IN (a, b))",
+   "expected": "SELECT pivotable.id AS id, pivotable.kind AS kind, pivotable.amt AS amt, pivotable.c AS c, pivotable.v AS v FROM pivotable AS pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) UNPIVOT(v FOR c IN (a, b)) AS pivotable",
+   "title": "PIVOT then UNPIVOT of the columns it produced",
+   "dialect": "duckdb",
+   "skipped": "oracle output differs from fixture: SELECT * FROM pivotable AS pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) UNPIVOT(v FOR c IN (a, b)) AS pivotable"
+  },
+  {
+   "sql": "SELECT * FROM x JOIN unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = u.id",
+   "expected": "SELECT x.a AS a, x.b AS b, u.id AS id, u.north AS north, u.south AS south, u.month AS month, u.revenue AS revenue FROM x AS x JOIN unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = u.id",
+   "title": "a source joined next to a pivoted one is not expanded through its operators",
+   "dialect": "duckdb",
+   "skipped": "oracle output differs from fixture: SELECT * FROM x AS x JOIN unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = unpivotable.u.id"
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS \"Id\", 2 AS \"Jan\", 3 AS \"Feb\", 4 AS \"Nor\", 5 AS \"Sou\") SELECT * FROM t UNPIVOT(v1 FOR n1 IN (\"Jan\", \"Feb\")) UNPIVOT(v2 FOR n2 IN (\"Nor\", \"Sou\"))",
+   "expected": "WITH T AS (SELECT 1 AS \"Id\", 2 AS \"Jan\", 3 AS \"Feb\", 4 AS \"Nor\", 5 AS \"Sou\") SELECT T.\"Id\" AS \"Id\", T.N1 AS N1, T.V1 AS V1, T.N2 AS N2, T.V2 AS V2 FROM T AS T UNPIVOT(V1 FOR N1 IN (\"Jan\", \"Feb\")) UNPIVOT(V2 FOR N2 IN (\"Nor\", \"Sou\")) AS T",
+   "title": "chained UNPIVOT keeps quoted identifiers case-sensitive, unlike the names it produces",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT u.* FROM unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u",
+   "expected": "SELECT u.id AS id, u.north AS north, u.south AS south, u.month AS month, u.revenue AS revenue FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u",
+   "title": "qualified star over the pivot alias of a pivoted table",
+   "dialect": "duckdb",
+   "skipped": "oracle output differs from fixture: SELECT unpivotable.u.* FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u"
+  },
+  {
+   "sql": "SELECT x.b, u.* FROM x JOIN unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = u.id",
+   "expected": "SELECT x.b AS b, u.id AS id, u.north AS north, u.south AS south, u.month AS month, u.revenue AS revenue FROM x AS x JOIN unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = u.id",
+   "title": "qualified star over the pivot alias, next to a joined plain source",
+   "dialect": "duckdb",
+   "skipped": "oracle output differs from fixture: SELECT x.b AS b, unpivotable.u.* FROM x AS x JOIN unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = unpivotable.u.id"
+  },
+  {
+   "sql": "WITH c AS (SELECT id, jan, feb FROM unpivotable) SELECT piv.* FROM c UNPIVOT(revenue FOR month IN (jan, feb)) AS piv",
+   "expected": "WITH c AS (SELECT unpivotable.id AS id, unpivotable.jan AS jan, unpivotable.feb AS feb FROM unpivotable AS unpivotable) SELECT piv.id AS id, piv.month AS month, piv.revenue AS revenue FROM c AS c UNPIVOT(revenue FOR month IN (jan, feb)) AS piv",
+   "title": "qualified star over the pivot alias of a pivoted CTE",
+   "dialect": "duckdb"
+  },
+  {
+   "sql": "SELECT piv.* FROM (SELECT id, jan, feb FROM unpivotable) UNPIVOT(revenue FOR month IN (jan, feb)) AS piv",
+   "expected": "SELECT piv.id AS id, piv.month AS month, piv.revenue AS revenue FROM (SELECT unpivotable.id AS id, unpivotable.jan AS jan, unpivotable.feb AS feb FROM unpivotable AS unpivotable) AS _0 UNPIVOT(revenue FOR month IN (jan, feb)) AS piv",
+   "title": "qualified star over the pivot alias of a pivoted subquery",
+   "dialect": "duckdb"
+  },
+  {
+   "sql": "SELECT u.* FROM unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS u",
+   "expected": "SELECT u.id AS id, u.month AS month, u.revenue AS revenue, u.region AS region, u.headcount AS headcount FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS u",
+   "title": "qualified star over the alias of a chain of operators",
+   "dialect": "duckdb",
+   "skipped": "oracle output differs from fixture: SELECT unpivotable.u.* FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS u"
+  },
+  {
+   "sql": "WITH t AS (SELECT PARSE_JSON('{\"id\": 1}') AS data, 'file' AS filepath) SELECT t.$1:\"id\"::INT AS id, t.$2 AS filename FROM t",
+   "expected": "WITH T AS (SELECT PARSE_JSON('{\"id\": 1}') AS DATA, 'file' AS FILEPATH) SELECT CAST(GET_PATH(T.DATA, 'id') AS INT) AS ID, T.FILEPATH AS FILENAME FROM T AS T",
+   "title": "resolve Snowflake positional references inside composed expressions",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS \"lower\") SELECT t.$1 FROM t",
+   "expected": "WITH T AS (SELECT 1 AS \"lower\") SELECT T.\"lower\" AS \"lower\" FROM T AS T",
+   "title": "resolve Snowflake positional reference to a quoted column",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS \"SELECT\") SELECT t.$1 FROM t",
+   "expected": "WITH T AS (SELECT 1 AS \"SELECT\") SELECT T.\"SELECT\" AS \"SELECT\" FROM T AS T",
+   "title": "preserve explicit quotes when resolving Snowflake positional references",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS x, 2 AS x, 3 AS y) SELECT t.$2, t.$3 FROM t",
+   "expected": "WITH T AS (SELECT 1 AS X, 2 AS X, 3 AS Y) SELECT T.$2 AS _COL_0, T.Y AS Y FROM T AS T",
+   "title": "preserve ambiguous Snowflake positional reference and resolve unique one",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t(\"lower\") AS (SELECT 1) SELECT t.$1 FROM t",
+   "expected": "WITH T AS (SELECT 1 AS \"lower\") SELECT T.\"lower\" AS \"lower\" FROM T AS T",
+   "title": "resolve Snowflake positional reference with CTE column aliases",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS \"SELECT\", 2 AS a, 3 AS b) SELECT t.$1 FROM t UNPIVOT(v FOR k IN (a, b))",
+   "expected": "WITH T AS (SELECT 1 AS \"SELECT\", 2 AS A, 3 AS B) SELECT T.$1 AS _COL_0 FROM T AS T UNPIVOT(V FOR K IN (A, B)) AS T",
+   "title": "preserve Snowflake positional reference through UNPIVOT",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS id, 2 AS v, 'a' AS k) SELECT p.$2 FROM t PIVOT(SUM(v) FOR k IN ('a' AS \"SELECT\")) AS p",
+   "expected": "WITH T AS (SELECT 1 AS ID, 2 AS V, 'a' AS K) SELECT P.$2 AS _COL_0 FROM T AS T PIVOT(SUM(T.V) FOR T.K IN ('a' AS \"SELECT\")) AS P",
+   "title": "preserve Snowflake positional reference through aliased PIVOT",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS id, 2 AS v, 'a' AS k) SELECT t.$2 FROM t PIVOT(SUM(v) FOR k IN ('a' AS a))",
+   "expected": "WITH T AS (SELECT 1 AS ID, 2 AS V, 'a' AS K) SELECT _0.$2 AS _COL_0 FROM T AS T PIVOT(SUM(T.V) FOR T.K IN ('a' AS A)) AS _0",
+   "title": "retarget Snowflake positional reference to generated PIVOT alias",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS id, 2 AS v, 'a' AS k) SELECT t.$1 FROM t PIVOT(SUM(v) FOR k IN ('a' AS a)) UNPIVOT(v2 FOR k2 IN (a))",
+   "expected": "WITH T AS (SELECT 1 AS ID, 2 AS V, 'a' AS K) SELECT T.$1 AS _COL_0 FROM T AS T PIVOT(SUM(T.V) FOR T.K IN ('a' AS A)) UNPIVOT(V2 FOR K2 IN (A)) AS T",
+   "title": "retarget Snowflake positional reference to final chained operator",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t AS (SELECT 1 AS x), s AS (SELECT 1 AS id, 2 AS v, 'a' AS k) SELECT t.$1, p.$2 FROM t CROSS JOIN s PIVOT(SUM(v) FOR k IN ('a' AS a)) AS p",
+   "expected": "WITH T AS (SELECT 1 AS X), S AS (SELECT 1 AS ID, 2 AS V, 'a' AS K) SELECT T.X AS X, P.$2 AS _COL_1 FROM T AS T CROSS JOIN S AS S PIVOT(SUM(S.V) FOR S.K IN ('a' AS A)) AS P",
+   "title": "resolve Snowflake positional reference beside unrelated PIVOT",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT x.$1, x.$2 FROM x AS x(alias_name)",
+   "expected": "SELECT X.ALIAS_NAME AS ALIAS_NAME, X.B AS B FROM X AS X(ALIAS_NAME)",
+   "title": "resolve Snowflake positional reference with table alias column list",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT t.$1 FROM source AS t",
+   "expected": "SELECT T.$1 AS _COL_0 FROM SOURCE AS T",
+   "title": "preserve Snowflake positional reference from unknown source",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "WITH t AS (SELECT * FROM source) SELECT t.$1 FROM t",
+   "expected": "WITH T AS (SELECT * FROM SOURCE AS SOURCE) SELECT T.$1 AS _COL_0 FROM T AS T",
+   "title": "preserve Snowflake positional reference from star source",
+   "dialect": "snowflake",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT x.$2 FROM unknown AS x(alias_name)",
+   "expected": "SELECT X.$2 AS _COL_0 FROM UNKNOWN AS X(ALIAS_NAME)",
+   "title": "preserve Snowflake positional reference beyond partial table alias list",
+   "dialect": "snowflake",
+   "dialect_supported": false
   }
  ]
 }

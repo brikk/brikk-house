@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "fixture": "dialect-corpus/doris.json",
  "dialect": "doris",
  "case_count": 40,
@@ -1413,11 +1413,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -1437,13 +1432,13 @@
      "c": "sqlglot.expressions.query.Values"
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple"
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -1455,17 +1450,17 @@
      }
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -1477,12 +1472,12 @@
      }
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "this",
      "v": "2"
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "is_string",
      "v": false
     },
@@ -2133,7 +2128,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {
@@ -2173,7 +2169,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {
@@ -2213,7 +2210,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {

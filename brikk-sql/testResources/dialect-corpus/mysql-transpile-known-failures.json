@@ -1,20 +1,48 @@
 {
- "cases": [
-  {
-   "case": "read|postgres|SELECT * FROM x LEFT JOIN y ON x.id = y.id UNION ALL SELECT * FROM x RIGHT JOIN y ON x.id = y.id WHERE NOT EXISTS(SELECT 1 FROM x WHERE x.id = y.id) ORDER BY 1 LIMIT 0",
-   "reason": "transforms.eliminate_full_outer_join (MySQL exp.Select preprocess) not ported"
-  },
-  {
-   "case": "read|postgres|SELECT * FROM t1 LEFT OUTER JOIN t2 ON t1.x = t2.x UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 ON t1.x = t2.x WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x)",
-   "reason": "transforms.eliminate_full_outer_join (MySQL exp.Select preprocess) not ported"
-  },
-  {
-   "case": "read|postgres|SELECT * FROM t1 LEFT OUTER JOIN t2 USING (x) UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 USING (x) WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x)",
-   "reason": "transforms.eliminate_full_outer_join (MySQL exp.Select preprocess) not ported"
-  },
-  {
-   "case": "read|postgres|SELECT * FROM t1 LEFT OUTER JOIN t2 USING (x, y) UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 USING (x, y) WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x AND t1.y = t2.y)",
-   "reason": "transforms.eliminate_full_outer_join (MySQL exp.Select preprocess) not ported"
-  }
- ]
+    "cases": [
+        {
+            "case": "write|duckdb|SELECT DATE_FORMAT('2021-01-01 22:23:00', '%x')",
+            "reason": "expected `SELECT STRFTIME(CAST('2021-01-01 22:23:00' AS TIMESTAMP), '%G')` actual `SELECT STRFTIME(TS_OR_DS_TO_TIMESTAMP('2021-01-01 22:23:00'), '%x')`"
+        },
+        {
+            "case": "read|duckdb|SELECT DATE_FORMAT(CAST('2021-01-01 22:23:00' AS DATETIME), '%x')",
+            "reason": "expected `SELECT DATE_FORMAT(CAST('2021-01-01 22:23:00' AS DATETIME), '%x')` actual `SELECT DATE_FORMAT(CAST('2021-01-01 22:23:00' AS DATETIME), '%G')`"
+        },
+        {
+            "case": "write|duckdb|SELECT DATE_FORMAT('2007-10-04 22:23:00', '%r')",
+            "reason": "expected `SELECT STRFTIME(CAST('2007-10-04 22:23:00' AS TIMESTAMP), '%I:%M:%S %p')` actual `SELECT STRFTIME(TS_OR_DS_TO_TIMESTAMP('2007-10-04 22:23:00'), '%r')`"
+        },
+        {
+            "case": "write|postgres|SELECT DATEDIFF(x, y)",
+            "reason": "expected `SELECT (CAST(x AS DATE) - CAST(y AS DATE))` actual `SELECT CAST(AGE(CAST(x AS TIMESTAMP), CAST(y AS TIMESTAMP)) AS BIGINT)`"
+        },
+        {
+            "case": "write|presto|SELECT DATEDIFF(x, y)",
+            "reason": "expected `SELECT DATE_DIFF('DAY', DATE_TRUNC('DAY', y), DATE_TRUNC('DAY', x))` actual `SELECT DATE_DIFF('DAY', y, x)`"
+        },
+        {
+            "case": "read|postgres|SELECT * FROM x LEFT JOIN y ON x.id = y.id UNION ALL SELECT * FROM x RIGHT JOIN y ON x.id = y.id WHERE NOT EXISTS(SELECT 1 FROM x WHERE x.id = y.id) ORDER BY 1 LIMIT 0",
+            "reason": "expected `SELECT * FROM x LEFT JOIN y ON x.id = y.id UNION ALL SELECT * FROM x RIGHT JOIN y ON x.id = y.id WHERE NOT EXISTS(SELECT 1 FROM x WHERE x.id = y.id) ORDER BY 1 LIMIT 0` actual `SELECT * FROM x FULL JOIN y ON x.id = y.id ORDER BY 1 LIMIT 0`"
+        },
+        {
+            "case": "read|postgres|SELECT * FROM t1 LEFT OUTER JOIN t2 ON t1.x = t2.x UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 ON t1.x = t2.x WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x)",
+            "reason": "expected `SELECT * FROM t1 LEFT OUTER JOIN t2 ON t1.x = t2.x UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 ON t1.x = t2.x WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x)` actual `SELECT * FROM t1 FULL OUTER JOIN t2 ON t1.x = t2.x`"
+        },
+        {
+            "case": "read|postgres|SELECT * FROM t1 LEFT OUTER JOIN t2 USING (x) UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 USING (x) WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x)",
+            "reason": "expected `SELECT * FROM t1 LEFT OUTER JOIN t2 USING (x) UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 USING (x) WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x)` actual `SELECT * FROM t1 FULL OUTER JOIN t2 USING (x)`"
+        },
+        {
+            "case": "read|postgres|SELECT * FROM t1 LEFT OUTER JOIN t2 USING (x, y) UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 USING (x, y) WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x AND t1.y = t2.y)",
+            "reason": "expected `SELECT * FROM t1 LEFT OUTER JOIN t2 USING (x, y) UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 USING (x, y) WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x AND t1.y = t2.y)` actual `SELECT * FROM t1 FULL OUTER JOIN t2 USING (x, y)`"
+        },
+        {
+            "case": "write|clickhouse|a / b",
+            "reason": "expected `a / nullIf(b, 0)` actual `a / b`"
+        },
+        {
+            "case": "write|duckdb|a / b",
+            "reason": "expected `a / NULLIF(b, 0)` actual `a / b`"
+        }
+    ]
 }

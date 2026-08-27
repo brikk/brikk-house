@@ -1,29 +1,93 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": [
-  {
-   "sql": "'x' 'y' 'z'",
-   "reason": "adjacent string literal concatenation (Parser._parse_string concat loop) not ported"
-  },
-  {
-   "sql": "WITH t(c) AS (SELECT 1) SELECT * INTO UNLOGGED foo FROM (SELECT c AS c FROM t) AS temp",
-   "reason": "SELECT INTO (UNLOGGED) target tables not ported (base parser gate)"
-  },
-  {
-   "sql": "SELECT * FROM ROWS FROM (FUNC1(col1, col2))",
-   "reason": "ROWS FROM (...) table functions (Parser._parse_rows_from) not ported"
-  },
-  {
-   "sql": "SELECT * FROM ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT), FUNC2(col2) AS alias2(\"col2\" INT)) WITH ORDINALITY",
-   "reason": "ROWS FROM (...) table functions (Parser._parse_rows_from) not ported"
-  },
-  {
-   "sql": "SELECT * FROM table1, ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT)) WITH ORDINALITY AS alias3(\"col3\" INT, \"col4\" TEXT)",
-   "reason": "ROWS FROM (...) table functions (Parser._parse_rows_from) not ported"
-  },
-  {
-   "sql": "WITH RECURSIVE search_graph(id, link, data, depth) AS (SELECT g.id, g.link, g.data, 1 FROM graph AS g UNION ALL SELECT g.id, g.link, g.data, sg.depth + 1 FROM graph AS g, search_graph AS sg WHERE g.id = sg.link) CYCLE id SET is_cycle USING path SELECT * FROM search_graph",
-   "reason": "WITH ... SEARCH/CYCLE clause parsing (RecursiveWithSearch) not ported"
-  }
- ]
+    "sqlglot_version": "v30.17.0-72-gbac1a897b",
+    "cases": [
+        {
+            "sql": "'x' 'y' 'z'",
+            "reason": "Adjacent string literals are not supported yet. Line 1, Col: 7."
+        },
+        {
+            "sql": "SELECT id, email, CAST(deleted AS TEXT) FROM users WHERE deleted NOTNULL",
+            "reason": "ast-mismatch at #23: expected Is (k=this)"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) RETURNING a",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) RETURNING a, b",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) RETURNING *",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO book (isbn, title) VALUES ($1, $2) ON CONFLICT(isbn) WHERE deleted_at IS NULL DO UPDATE SET title = EXCLUDED.title RETURNING id, isbn",
+            "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO newtable AS t(a, b, c) VALUES (1, 2, 3) ON CONFLICT(c) DO UPDATE SET a = t.a + 1 WHERE t.a < 1",
+            "reason": "ast-mismatch at #22: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO tbl (a, b) VALUES (1, 'x') ON CONFLICT(a, LOWER(b)) DO UPDATE SET b = excluded.b",
+            "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON CONFLICT(id) DO NOTHING RETURNING *",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON CONFLICT(id) DO UPDATE SET x.id = 1 RETURNING *",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON CONFLICT(id) DO UPDATE SET x.id = excluded.id RETURNING *",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON CONFLICT ON CONSTRAINT pkey DO NOTHING RETURNING *",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON CONFLICT ON CONSTRAINT pkey DO UPDATE SET x.id = 1 RETURNING *",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "WITH t(c) AS (SELECT 1) SELECT * INTO UNLOGGED foo FROM (SELECT c AS c FROM t) AS temp",
+            "reason": "SELECT INTO is not supported yet. Line 1, Col: 46."
+        },
+        {
+            "sql": "DROP INDEX ix_table_id",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP INDEX IF EXISTS ix_table_id",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP INDEX CONCURRENTLY ix_table_id",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP INDEX CONCURRENTLY IF EXISTS ix_table_id",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "SELECT * FROM ROWS FROM (FUNC1(col1, col2))",
+            "reason": "ROWS FROM is not supported yet. Line 1, Col: 18."
+        },
+        {
+            "sql": "SELECT * FROM ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT), FUNC2(col2) AS alias2(\"col2\" INT)) WITH ORDINALITY",
+            "reason": "ROWS FROM is not supported yet. Line 1, Col: 18."
+        },
+        {
+            "sql": "SELECT * FROM table1, ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT)) WITH ORDINALITY AS alias3(\"col3\" INT, \"col4\" TEXT)",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 26."
+        },
+        {
+            "sql": "WITH RECURSIVE search_graph(id, link, data, depth) AS (SELECT g.id, g.link, g.data, 1 FROM graph AS g UNION ALL SELECT g.id, g.link, g.data, sg.depth + 1 FROM graph AS g, search_graph AS sg WHERE g.id = sg.link) CYCLE id SET is_cycle USING path SELECT * FROM search_graph",
+            "reason": "WITH ... SEARCH is not supported yet. Line 1, Col: 220."
+        }
+    ]
 }

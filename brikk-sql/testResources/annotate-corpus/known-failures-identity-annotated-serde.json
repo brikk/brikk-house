@@ -1,0 +1,344 @@
+{
+    "cases": [
+        {
+            "sql": "SELECT test.* FROM test",
+            "reason": "type-mismatch at #2 (Star k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT \"a\".\"b\" FROM \"a\"",
+            "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT \"a\".b FROM a",
+            "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT a.b FROM \"a\"",
+            "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT a.b FROM a",
+            "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT t.a FROM test AS t GROUP BY ROLLUP (t.x)",
+            "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a.b.table1 AS t UNPIVOT((c3) FOR c4 IN (a, b))",
+            "reason": "payload count expected=40 actual=39"
+        },
+        {
+            "sql": "SELECT a FROM test UNPIVOT(x FOR y IN (z, q)) AS x",
+            "reason": "type-mismatch at #28 (? k=value_columns_first): expected t=null actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT a FROM test PIVOT(SUM(x) FOR y IN ('z', 'q')) UNPIVOT(x FOR y IN (z, q)) AS x",
+            "reason": "type-mismatch at #56 (? k=value_columns_first): expected t=null actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a JOIN b ON a.x = b.x",
+            "reason": "type-mismatch at #23 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a JOIN b AS c ON a.x = b.x",
+            "reason": "type-mismatch at #20 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a INNER JOIN b ON a.x = b.x",
+            "reason": "type-mismatch at #24 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a LEFT JOIN b ON a.x = b.x",
+            "reason": "type-mismatch at #24 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a RIGHT JOIN b ON a.x = b.x",
+            "reason": "type-mismatch at #24 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a CROSS JOIN b ON a.x = b.x",
+            "reason": "type-mismatch at #24 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a SEMI JOIN b ON a.x = b.x",
+            "reason": "type-mismatch at #24 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a LEFT SEMI JOIN b ON a.x = b.x",
+            "reason": "type-mismatch at #25 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a LEFT ANTI JOIN b ON a.x = b.x",
+            "reason": "type-mismatch at #25 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a RIGHT SEMI JOIN b ON a.x = b.x",
+            "reason": "type-mismatch at #25 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a RIGHT ANTI JOIN b ON a.x = b.x",
+            "reason": "type-mismatch at #25 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a JOIN (SELECT a FROM c) AS b ON a.x = b.x AND a.x < 2",
+            "reason": "type-mismatch at #43 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a JOIN b ON a.foo = b.bar JOIN c ON a.foo = c.bar",
+            "reason": "type-mismatch at #36 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a LEFT JOIN b ON a.foo = b.bar JOIN c ON a.foo = c.bar",
+            "reason": "type-mismatch at #37 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a LEFT INNER JOIN b ON a.foo = b.bar",
+            "reason": "type-mismatch at #18 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a LEFT OUTER JOIN b ON a.foo = b.bar",
+            "reason": "type-mismatch at #18 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a OUTER JOIN b ON a.foo = b.bar",
+            "reason": "type-mismatch at #17 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a FULL JOIN b ON a.foo = b.bar",
+            "reason": "type-mismatch at #17 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT 1 FROM a JOIN b JOIN c ON b.id = c.id ON a.id = b.id",
+            "reason": "type-mismatch at #43 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT A.* EXCEPT (A.COL_1) FROM TABLE_1 AS A",
+            "reason": "type-mismatch at #2 (Star k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT a['1'], b[0], x.c[0], \"x\".d['1'] FROM x",
+            "reason": "type-mismatch at #19 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "DROP INDEX a.b.c",
+            "reason": "payload count expected=23 actual=22"
+        },
+        {
+            "sql": "DROP FUNCTION a.b.c (INT)",
+            "reason": "payload count expected=26 actual=25"
+        },
+        {
+            "sql": "DROP MATERIALIZED VIEW x.y.z",
+            "reason": "payload count expected=23 actual=22"
+        },
+        {
+            "sql": "DROP PROCEDURE a.b.c (INT)",
+            "reason": "payload count expected=26 actual=25"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds) SELECT x FROM y",
+            "reason": "type-mismatch at #18 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds = 'YYYY-MM-DD') SELECT x FROM y",
+            "reason": "type-mismatch at #22 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds, hour) SELECT x FROM y",
+            "reason": "type-mismatch at #22 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds = 'YYYY-MM-DD', hour = 'hh') SELECT x FROM y",
+            "reason": "type-mismatch at #30 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO a.b PARTITION(DAY = '2024-04-14') (col1, col2) SELECT x FROM y",
+            "reason": "type-mismatch at #29 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "DROP TABLE a",
+            "reason": "payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP TABLE a.b",
+            "reason": "payload count expected=20 actual=19"
+        },
+        {
+            "sql": "DROP TABLE a, b",
+            "reason": "payload count expected=21 actual=20"
+        },
+        {
+            "sql": "DROP TABLE a.b, c.d",
+            "reason": "payload count expected=27 actual=26"
+        },
+        {
+            "sql": "DROP TABLE IF EXISTS a",
+            "reason": "payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP TABLE IF EXISTS a, b CASCADE",
+            "reason": "payload count expected=21 actual=20"
+        },
+        {
+            "sql": "DROP TABLE IF EXISTS a.b",
+            "reason": "payload count expected=20 actual=19"
+        },
+        {
+            "sql": "DROP TABLE a CASCADE",
+            "reason": "payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP TABLE s_hajo CASCADE CONSTRAINTS",
+            "reason": "payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP TABLE a PURGE",
+            "reason": "payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP VIEW a",
+            "reason": "payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP VIEW a.b",
+            "reason": "payload count expected=20 actual=19"
+        },
+        {
+            "sql": "DROP VIEW IF EXISTS a",
+            "reason": "payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP VIEW IF EXISTS a.b",
+            "reason": "payload count expected=20 actual=19"
+        },
+        {
+            "sql": "INSERT INTO x SELECT * FROM y",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO x (SELECT * FROM y)",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO x WITH y AS (SELECT 1) SELECT * FROM y",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO x.z IF EXISTS SELECT * FROM y",
+            "reason": "type-mismatch at #12 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0)",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0), (1, 'a', 3.0), (X(), y[1], z.x)",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO y (a, b, c) SELECT a, b, c FROM x",
+            "reason": "type-mismatch at #19 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO y (SELECT 1) UNION (SELECT 2)",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO result_table (WITH test AS (SELECT * FROM source_table) SELECT * FROM test)",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO \"tests_user\" (\"username\", \"first_name\", \"last_name\") VALUES ('fiara', 'Fiara', 'Ironhide') RETURNING \"tests_user\".\"id\"",
+            "reason": "type-mismatch at #19 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO t1 (tc1 /* tc1 */, tc2 /* tc2 */) SELECT c1 /* sc1 */, c2 /* sc2 */ FROM t",
+            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO t1 (\"tc1\" /* tc1 */, \"tc2\" /* tc2 */) SELECT \"c1\" /* sc1 */, \"c2\" /* sc2 */ FROM t",
+            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE x IF EXISTS SELECT * FROM y",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE a.b IF EXISTS SELECT * FROM y",
+            "reason": "type-mismatch at #12 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT OVERWRITE DIRECTORY 'x' SELECT 1",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT OVERWRITE LOCAL DIRECTORY 'x' SELECT 1",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT OVERWRITE LOCAL DIRECTORY 'x' ROW FORMAT DELIMITED FIELDS TERMINATED BY '1' COLLECTION ITEMS TERMINATED BY '2' MAP KEYS TERMINATED BY '3' LINES TERMINATED BY '4' NULL DEFINED AS '5' SELECT 1",
+            "reason": "type-mismatch at #25 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "WITH a AS (SELECT 1) INSERT INTO b SELECT * FROM a",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "WITH a AS ((SELECT b.foo AS foo, b.bar AS bar FROM b) UNION ALL (SELECT c.foo AS foo, c.bar AS bar FROM c)) SELECT * FROM a",
+            "reason": "type-mismatch at #14 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "INSERT INTO foo SELECT * FROM bar /* comment */",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "ALTER TABLE integers DROP COLUMN k",
+            "reason": "type-mismatch at #23 (? k=force): expected t=null actual t=null"
+        },
+        {
+            "sql": "ALTER TABLE integers DROP COLUMN IF EXISTS k",
+            "reason": "type-mismatch at #23 (? k=force): expected t=null actual t=null"
+        },
+        {
+            "sql": "ALTER TABLE integers DROP COLUMN k CASCADE",
+            "reason": "type-mismatch at #23 (? k=force): expected t=null actual t=null"
+        },
+        {
+            "sql": "ALTER TABLE mydataset.mytable DROP COLUMN A, DROP COLUMN IF EXISTS B",
+            "reason": "type-mismatch at #26 (? k=force): expected t=null actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT div.a FROM test_table AS div",
+            "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT LEFT.FOO FROM BLA AS LEFT",
+            "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT RIGHT.FOO FROM BLA AS RIGHT",
+            "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "/* comment1 */ INSERT INTO x /* comment2 */ VALUES (1, 2, 3)",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "SELECT cube, cube.x FROM cube",
+            "reason": "type-mismatch at #6 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT test.Unknown FROM test",
+            "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "DROP TABLE \"if\"",
+            "reason": "payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP INDEX \"concurrently\"",
+            "reason": "payload count expected=17 actual=16"
+        }
+    ]
+}

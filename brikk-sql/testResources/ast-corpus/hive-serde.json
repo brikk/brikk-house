@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "fixture": "dialect-corpus/hive.json",
  "dialect": "hive",
  "case_count": 61,
@@ -4563,11 +4563,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -4587,13 +4582,13 @@
      "c": "sqlglot.expressions.query.Values"
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple"
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -4605,17 +4600,17 @@
      }
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "this",
      "v": "896"
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -4627,17 +4622,17 @@
      }
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "this",
      "v": "US"
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "is_string",
      "v": true
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -4649,17 +4644,17 @@
      }
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "this",
      "v": "TAMPA"
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "is_string",
      "v": true
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -4671,12 +4666,12 @@
      }
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "this",
      "v": "33607"
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "is_string",
      "v": false
     },
@@ -4815,11 +4810,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -4839,13 +4829,13 @@
      "c": "sqlglot.expressions.query.Values"
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple"
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -4857,17 +4847,17 @@
      }
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "this",
      "v": "896"
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -4879,17 +4869,17 @@
      }
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "this",
      "v": "US"
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "is_string",
      "v": true
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -4901,17 +4891,17 @@
      }
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "this",
      "v": "TAMPA"
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "is_string",
      "v": true
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -4923,12 +4913,12 @@
      }
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "this",
      "v": "33607"
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "is_string",
      "v": false
     },
@@ -5108,11 +5098,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -5132,7 +5117,7 @@
      "c": "sqlglot.expressions.query.Select"
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -5144,17 +5129,17 @@
      }
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "from_",
      "c": "sqlglot.expressions.query.From"
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "this",
      "c": "sqlglot.expressions.query.Table"
     },
     {
-     "i": 32,
+     "i": 31,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
@@ -5165,17 +5150,17 @@
      }
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "this",
      "v": "b"
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "quoted",
      "v": true
     },
     {
-     "i": 32,
+     "i": 31,
      "k": "db",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
@@ -5186,12 +5171,12 @@
      }
     },
     {
-     "i": 36,
+     "i": 35,
      "k": "this",
      "v": "a"
     },
     {
-     "i": 36,
+     "i": 35,
      "k": "quoted",
      "v": true
     },

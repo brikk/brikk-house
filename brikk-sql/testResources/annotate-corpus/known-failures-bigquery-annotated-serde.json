@@ -1,296 +1,316 @@
 {
-  "cases": [
-    {
-      "sql": "SELECT * FROM `domain.com:project-id.mydataset.mytable`",
-      "reason": "annotate cascade of parser gap: INFORMATION_SCHEMA / domain-scoped project-id table-name merging not ported (_parse_table_parts + _split_qualified_name)"
-    },
-    {
-      "sql": "SELECT * FROM `domain.com:project-id.region-us.INFORMATION_SCHEMA`.JOBS",
-      "reason": "annotate cascade of parser gap: INFORMATION_SCHEMA / domain-scoped project-id table-name merging not ported (_parse_table_parts + _split_qualified_name)"
-    },
-    {
-      "sql": "SELECT * FROM `domain.com:project-id.region-us.INFORMATION_SCHEMA.JOBS`",
-      "reason": "annotate cascade of parser gap: INFORMATION_SCHEMA / domain-scoped project-id table-name merging not ported (_parse_table_parts + _split_qualified_name)"
-    },
-    {
-      "sql": "SELECT * FROM `a.b.com:project-id.mydataset.mytable`",
-      "reason": "annotate cascade of parser gap: INFORMATION_SCHEMA / domain-scoped project-id table-name merging not ported (_parse_table_parts + _split_qualified_name)"
-    },
-    {
-      "sql": "SELECT * FROM `a.b.com:project-id.region-us.INFORMATION_SCHEMA.JOBS`",
-      "reason": "annotate cascade of parser gap: INFORMATION_SCHEMA / domain-scoped project-id table-name merging not ported (_parse_table_parts + _split_qualified_name)"
-    },
-    {
-      "sql": "SELECT * FROM x-0.y",
-      "reason": "annotate cascade of parser gap: wildcard/dashed table-part trailing token handling differs (_parse_table_parts wildcard)"
-    },
-    {
-      "sql": "SELECT `p.d.UdF`(data) FROM `p.d.t`",
-      "reason": "annotate cascade of parser gap: dotted project/dataset/table name unraveling not ported (_parse_table_parts / _parse_column + _split_qualified_name, quoted_table/quoted_column meta)"
-    },
-    {
-      "sql": "SELECT `p.d.UdF`(data).* FROM `p.d.t`",
-      "reason": "annotate cascade of parser gap: dotted project/dataset/table name unraveling not ported (_parse_table_parts / _parse_column + _split_qualified_name, quoted_table/quoted_column meta)"
-    },
-    {
-      "sql": "SELECT * FROM `my-project.my-dataset.my-table`",
-      "reason": "annotate cascade of parser gap: dotted project/dataset/table name unraveling not ported (_parse_table_parts / _parse_column + _split_qualified_name, quoted_table/quoted_column meta)"
-    },
-    {
-      "sql": "CREATE OR REPLACE TABLE `a.b.c` CLONE `a.b.d`",
-      "reason": "annotate cascade of parser gap: dotted project/dataset/table name unraveling not ported (_parse_table_parts / _parse_column + _split_qualified_name, quoted_table/quoted_column meta)"
-    },
-    {
-      "sql": "SELECT * FROM x.*",
-      "reason": "annotate cascade of parser gap: wildcard/dashed table-part trailing token handling differs (_parse_table_parts wildcard)"
-    },
-    {
-      "sql": "SELECT * FROM x.y*",
-      "reason": "annotate cascade of parser gap: wildcard/dashed table-part trailing token handling differs (_parse_table_parts wildcard)"
-    },
-    {
-      "sql": "SAFE_CAST(encrypted_value AS STRING FORMAT 'BASE64')",
-      "reason": "annotate cascade of parser gap: CAST ... FORMAT not supported by base parser yet (BigQuery FORMAT/AT TIME ZONE cast extension unported)"
-    },
-    {
-      "sql": "CAST(encrypted_value AS STRING FORMAT 'BASE64')",
-      "reason": "annotate cascade of parser gap: CAST ... FORMAT not supported by base parser yet (BigQuery FORMAT/AT TIME ZONE cast extension unported)"
-    },
-    {
-      "sql": "CREATE TABLE t CLUSTER BY col1, col2",
-      "reason": "annotate cascade of parser gap: structural AST mismatch on unported BigQuery-specific handling: Expecting (. Line 1, Col: 30."
-    },
-    {
-      "sql": "SELECT * FROM x-0.a",
-      "reason": "annotate cascade of parser gap: wildcard/dashed table-part trailing token handling differs (_parse_table_parts wildcard)"
-    },
-    {
-      "sql": "DATE_TRUNC(col, MONTH, 'UTC+8')",
-      "reason": "annotate cascade of parser gap: DATE_TRUNC unit not stringified to Literal (bigquery date-part-as-string-literal handling)"
-    },
-    {
-      "sql": "CREATE TABLE x (a STRUCT<b STRING OPTIONS (description='b')>)",
-      "reason": "annotate cascade of parser gap: typed STRUCT<...>(...) literal cast parsing differs (base struct-cast handling)"
-    },
-    {
-      "sql": "LOG(n, b)",
-      "reason": "annotate cascade of parser gap: Log node name-meta differs (preserveOriginalNames on multi-arg LOG)"
-    },
-    {
-      "sql": "FOR record IN (SELECT word, word_count FROM bigquery-public-data.samples.shakespeare LIMIT 5) DO SELECT record.word, record.word_count",
-      "reason": "annotate cascade of parser gap: list-comprehension / array-subquery construct not ported"
-    },
-    {
-      "sql": "CREATE TABLE x (a STRING OPTIONS (description='x')) OPTIONS (table_expiration_days=1)",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Expecting ). Line 1, Col: 32."
-    },
-    {
-      "sql": "SELECT * FROM `proj.dataset.INFORMATION_SCHEMA.SOME_VIEW`",
-      "reason": "annotate cascade of parser gap: INFORMATION_SCHEMA / domain-scoped project-id table-name merging not ported (_parse_table_parts + _split_qualified_name)"
-    },
-    {
-      "sql": "SELECT * FROM region_or_dataset.INFORMATION_SCHEMA.TABLES",
-      "reason": "annotate cascade of parser gap: INFORMATION_SCHEMA / domain-scoped project-id table-name merging not ported (_parse_table_parts + _split_qualified_name)"
-    },
-    {
-      "sql": "SELECT * FROM region_or_dataset.INFORMATION_SCHEMA.TABLES AS some_name",
-      "reason": "annotate cascade of parser gap: INFORMATION_SCHEMA / domain-scoped project-id table-name merging not ported (_parse_table_parts + _split_qualified_name)"
-    },
-    {
-      "sql": "SELECT * FROM proj.region_or_dataset.INFORMATION_SCHEMA.TABLES",
-      "reason": "annotate cascade of parser gap: INFORMATION_SCHEMA / domain-scoped project-id table-name merging not ported (_parse_table_parts + _split_qualified_name)"
-    },
-    {
-      "sql": "EXPORT DATA OPTIONS (URI='gs://bucket/folder/*.csv') AS (SELECT 1)",
-      "reason": "annotate cascade of parser gap: EXPORT DATA connection default-arg ordering differs (Export options/connection meta)"
-    },
-    {
-      "sql": "EXPORT DATA OPTIONS (URI='gs://path*.csv.gz', FORMAT='CSV') AS SELECT * FROM all_rows",
-      "reason": "annotate cascade of parser gap: EXPORT DATA connection default-arg ordering differs (Export options/connection meta)"
-    },
-    {
-      "sql": "JSON_KEYS(PARSE_JSON('{\"a\": {\"b\":1}}'), 1, mode => 'lax')",
-      "reason": "annotate cascade of parser gap: JSON path/kwarg handling differs (JSON function kwargs / jsonpath tokenizer bigquery extension)"
-    },
-    {
-      "sql": "JSON_EXTRACT_STRING_ARRAY(PARSE_JSON('{\"fruits\": [\"apples\", \"oranges\", \"grapes\"]}'), '$.fruits')",
-      "reason": "annotate cascade of parser gap: JSON path/kwarg handling differs (JSON function kwargs / jsonpath tokenizer bigquery extension)"
-    },
-    {
-      "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'locf')]) ORDER BY time",
-      "reason": "annotate cascade of parser gap: GAP_FILL function parser not ported (base FUNCTION_PARSERS lacks GAP_FILL)"
-    },
-    {
-      "sql": "SELECT a, b, c, d, e FROM GAP_FILL(TABLE foo, ts_column => 'b', partitioning_columns => ['a'], value_columns => [('c', 'bar'), ('d', 'baz'), ('e', 'bla')], bucket_width => INTERVAL '1' DAY)",
-      "reason": "annotate cascade of parser gap: GAP_FILL function parser not ported (base FUNCTION_PARSERS lacks GAP_FILL)"
-    },
-    {
-      "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'linear')], ignore_null_values => FALSE) ORDER BY time",
-      "reason": "annotate cascade of parser gap: GAP_FILL function parser not ported (base FUNCTION_PARSERS lacks GAP_FILL)"
-    },
-    {
-      "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE) ORDER BY time",
-      "reason": "annotate cascade of parser gap: GAP_FILL function parser not ported (base FUNCTION_PARSERS lacks GAP_FILL)"
-    },
-    {
-      "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'null')], origin => CAST('2023-11-01 09:30:01' AS DATETIME)) ORDER BY time",
-      "reason": "annotate cascade of parser gap: GAP_FILL function parser not ported (base FUNCTION_PARSERS lacks GAP_FILL)"
-    },
-    {
-      "sql": "SELECT * FROM ML.PREDICT(MODEL mydataset.mymodel, (SELECT label, column1, column2 FROM mydataset.mytable))",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT label, predicted_label1, predicted_label AS predicted_label2 FROM ML.PREDICT(MODEL mydataset.mymodel2, (SELECT * EXCEPT (predicted_label), predicted_label AS predicted_label1 FROM ML.PREDICT(MODEL mydataset.mymodel1, TABLE mydataset.mytable)))",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT * FROM ML.PREDICT(MODEL mydataset.mymodel, (SELECT custom_label, column1, column2 FROM mydataset.mytable), STRUCT(0.55 AS threshold))",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT * FROM ML.PREDICT(MODEL `my_project`.my_dataset.my_model, (SELECT * FROM input_data))",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT * FROM ML.PREDICT(MODEL my_dataset.vision_model, (SELECT uri, ML.RESIZE_IMAGE(ML.DECODE_IMAGE(data), 480, 480, FALSE) AS input FROM my_dataset.object_table))",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT * FROM ML.PREDICT(MODEL my_dataset.vision_model, (SELECT uri, ML.CONVERT_COLOR_SPACE(ML.RESIZE_IMAGE(ML.DECODE_IMAGE(data), 224, 280, TRUE), 'YIQ') AS input FROM my_dataset.object_table WHERE content_type = 'image/jpeg'))",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT * FROM ML.FEATURES_AT_TIME(TABLE mydataset.feature_table, time => '2022-06-11 10:00:00+00', num_rows => 1, ignore_feature_nulls => TRUE)",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Expecting ). Line 1, Col: 49."
-    },
-    {
-      "sql": "SELECT * FROM VECTOR_SEARCH(TABLE mydataset.base_table, 'column_to_search', TABLE mydataset.query_table, 'query_column_to_search', top_k => 2, distance_type => 'cosine', options => '{\"fraction_lists_to_search\":0.15}')",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT * FROM VECTOR_SEARCH(TABLE mydataset.base_table, 'column_to_search', TABLE mydataset.query_table, query_column_to_search => 'query_column_to_search', top_k => 2, distance_type => 'cosine', options => '{\"fraction_lists_to_search\":0.15}')",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT * FROM VECTOR_SEARCH((SELECT * FROM mydataset.base_table), 'column_to_search', (SELECT * FROM mydataset.query_table), 'query_column_to_search')",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT * FROM VECTOR_SEARCH(TABLE mydataset.base_table, 'column_to_search', TABLE mydataset.query_table)",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT * FROM ML.TRANSLATE(MODEL `mydataset.mytranslatemodel`, TABLE `mydataset.mybqtable`, STRUCT('translate_text' AS translate_mode, 'zh-CN' AS target_language_code))",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Invalid expression / Unexpected token. Line 1, Col: 168."
-    },
-    {
-      "sql": "SELECT * FROM ML.FORECAST(MODEL `mydataset.mymodel`, STRUCT(2 AS horizon))",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Expecting ). Line 1, Col: 51."
-    },
-    {
-      "sql": "SELECT * FROM ML.FORECAST(MODEL `mydataset.mymodel`, TABLE `mydataset.mybqtable`, STRUCT(2 AS horizon, 4 AS confidence_level))",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Expecting ). Line 1, Col: 51."
-    },
-    {
-      "sql": "SELECT * FROM ML.FORECAST(MODEL `mydataset.mymodel`, (SELECT * FROM mydataset.query_table), STRUCT())",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Expecting ). Line 1, Col: 51."
-    },
-    {
-      "sql": "SELECT * FROM AI.FORECAST(TABLE citibike_trips, data_col => 'num_trips', timestamp_col => 'date', horizon => 30)",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Expecting ). Line 1, Col: 46."
-    },
-    {
-      "sql": "SELECT * FROM AI.FORECAST((SELECT * FROM citibike_trips), data_col => 'num_trips', timestamp_col => 'date', horizon => 30)",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT * FROM ML.GENERATE_TEXT(MODEL `mydataset.gemini_model`, TABLE `mydataset.prompt_table`, STRUCT(0.15 AS temperature))",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Expecting ). Line 1, Col: 61."
-    },
-    {
-      "sql": "SELECT * FROM AI.GENERATE_TEXT(MODEL `mydataset.gemini_model`, TABLE `mydataset.prompt_table`, STRUCT(0.15 AS temperature))",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Expecting ). Line 1, Col: 61."
-    },
-    {
-      "sql": "SELECT AI.GENERATE_BOOL(MODEL `mydataset.gemini_model`, 'Is sky blue?')",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Expecting ). Line 1, Col: 54."
-    },
-    {
-      "sql": "SELECT AI.EMBED('hello')",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT AI.SIMILARITY('a', 'b')",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "SELECT AI.GENERATE('Write a haiku')",
-      "reason": "annotate cascade of parser gap: ML.*/AI.* TVF and model-function parsers not ported (custom BigQuery TVF grammar: _parse_ml/_parse_generate/_parse_vector_search/_parse_forecast/_parse_features_at_time)"
-    },
-    {
-      "sql": "REGEXP_EXTRACT(x, '(?<)')",
-      "reason": "annotate cascade of parser gap: REGEXP_EXTRACT group/position handling differs (regex single-group detection + REGEXP_EXTRACT_POSITION_OVERFLOW_RETURNS_NULL not ported)"
-    },
-    {
-      "sql": "REGEXP_EXTRACT(`foo`, 'bar: (.+?)', 1, 1)",
-      "reason": "annotate cascade of parser gap: REGEXP_EXTRACT group/position handling differs (regex single-group detection + REGEXP_EXTRACT_POSITION_OVERFLOW_RETURNS_NULL not ported)"
-    },
-    {
-      "sql": "REGEXP_EXTRACT(svc_plugin_output, r'\\\\\\((.*)')",
-      "reason": "annotate cascade of parser gap: REGEXP_EXTRACT group/position handling differs (regex single-group detection + REGEXP_EXTRACT_POSITION_OVERFLOW_RETURNS_NULL not ported)"
-    },
-    {
-      "sql": "REGEXP_SUBSTR(value, pattern, position, occurrence)",
-      "reason": "annotate cascade of parser gap: REGEXP_EXTRACT group/position handling differs (regex single-group detection + REGEXP_EXTRACT_POSITION_OVERFLOW_RETURNS_NULL not ported)"
-    },
-    {
-      "sql": "DECLARE X INT64",
-      "reason": "annotate cascade of parser gap: DECLARE statement parsing not ported (no base _parse_declare; BigQueryParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
-    },
-    {
-      "sql": "DECLARE X INT64 DEFAULT 1",
-      "reason": "annotate cascade of parser gap: DECLARE statement parsing not ported (no base _parse_declare; BigQueryParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
-    },
-    {
-      "sql": "DECLARE X FLOAT64 DEFAULT 0.9",
-      "reason": "annotate cascade of parser gap: DECLARE statement parsing not ported (no base _parse_declare; BigQueryParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
-    },
-    {
-      "sql": "DECLARE X INT64 DEFAULT (SELECT MAX(col) FROM foo)",
-      "reason": "annotate cascade of parser gap: DECLARE statement parsing not ported (no base _parse_declare; BigQueryParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
-    },
-    {
-      "sql": "DECLARE X, Y, Z INT64",
-      "reason": "annotate cascade of parser gap: DECLARE statement parsing not ported (no base _parse_declare; BigQueryParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
-    },
-    {
-      "sql": "DECLARE X, Y, Z INT64 DEFAULT 42",
-      "reason": "annotate cascade of parser gap: DECLARE statement parsing not ported (no base _parse_declare; BigQueryParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
-    },
-    {
-      "sql": "DECLARE X, Y, Z INT64 DEFAULT (SELECT 42)",
-      "reason": "annotate cascade of parser gap: DECLARE statement parsing not ported (no base _parse_declare; BigQueryParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
-    },
-    {
-      "sql": "DECLARE START_DATE DATE DEFAULT CURRENT_DATE - 1",
-      "reason": "annotate cascade of parser gap: DECLARE statement parsing not ported (no base _parse_declare; BigQueryParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
-    },
-    {
-      "sql": "DECLARE TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP() - INTERVAL '1' HOUR",
-      "reason": "annotate cascade of parser gap: DECLARE statement parsing not ported (no base _parse_declare; BigQueryParser.STATEMENT_PARSERS[DECLARE] unimplemented)"
-    },
-    {
-      "sql": "SELECT `db.t`.`c` FROM `db.t`",
-      "reason": "annotate cascade of parser gap: dotted project/dataset/table name unraveling not ported (_parse_table_parts / _parse_column + _split_qualified_name, quoted_table/quoted_column meta)"
-    },
-    {
-      "sql": "SELECT `p.d.t`.`c`.`f` FROM `p.d.t`",
-      "reason": "annotate cascade of parser gap: dotted project/dataset/table name unraveling not ported (_parse_table_parts / _parse_column + _split_qualified_name, quoted_table/quoted_column meta)"
-    },
-    {
-      "sql": "SELECT * FROM ML.TRANSLATE(MODEL `mydataset.mymodel`, (SELECT comment AS text_content FROM mydataset.mytable), STRUCT('translate_text' AS translate_mode, 'en' AS target_language_code))",
-      "reason": "annotate cascade of parser gap: parse failure on unported BigQuery grammar (see reason); ledgered pending feature port: Invalid expression / Unexpected token. Line 1, Col: 184."
-    }
-  ]
+    "cases": [
+        {
+            "sql": "SELECT * FROM `domain.com:project-id.mydataset.mytable`",
+            "reason": "type-mismatch at #3 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM `domain.com:project-id.region-us.INFORMATION_SCHEMA`.JOBS",
+            "reason": "type-mismatch at #3 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM `domain.com:project-id.region-us.INFORMATION_SCHEMA.JOBS`",
+            "reason": "type-mismatch at #3 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM `a.b.com:project-id.mydataset.mytable`",
+            "reason": "type-mismatch at #3 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM `a.b.com:project-id.region-us.INFORMATION_SCHEMA.JOBS`",
+            "reason": "type-mismatch at #3 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM x-0.y",
+            "reason": "type-mismatch at #5 (? k=this): expected t=null actual t=null"
+        },
+        {
+            "sql": "SELECT `p.d.UdF`(data) FROM `p.d.t`",
+            "reason": "type-mismatch at #10 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT `p.d.UdF`(data).* FROM `p.d.t`",
+            "reason": "type-mismatch at #12 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM `my-project.my-dataset.my-table`",
+            "reason": "type-mismatch at #3 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "CREATE OR REPLACE TABLE `a.b.c` CLONE `a.b.d`",
+            "reason": "type-mismatch at #1 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM x.*",
+            "reason": "type-mismatch at #4 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=null"
+        },
+        {
+            "sql": "SELECT * FROM x.y*",
+            "reason": "type-mismatch at #5 (? k=this): expected t=null actual t=null"
+        },
+        {
+            "sql": "SAFE_CAST(encrypted_value AS STRING FORMAT 'BASE64')",
+            "reason": "ParseError: CAST ... FORMAT is not supported yet. Line 1, Col: 51.\n  SAFE_CAST(encrypted_value AS STRING FORMAT \u001b[4m'BASE64'\u001b[0m)"
+        },
+        {
+            "sql": "CAST(encrypted_value AS STRING FORMAT 'BASE64')",
+            "reason": "ParseError: CAST ... FORMAT is not supported yet. Line 1, Col: 46.\n  CAST(encrypted_value AS STRING FORMAT \u001b[4m'BASE64'\u001b[0m)"
+        },
+        {
+            "sql": "CREATE TABLE t CLUSTER BY col1, col2",
+            "reason": "ParseError: Expecting (. Line 1, Col: 30.\n  CREATE TABLE t CLUSTER BY \u001b[4mcol1\u001b[0m, col2"
+        },
+        {
+            "sql": "SELECT * FROM x-0.a",
+            "reason": "type-mismatch at #5 (? k=this): expected t=null actual t=null"
+        },
+        {
+            "sql": "DATE_TRUNC(col, MONTH, 'UTC+8')",
+            "reason": "type-mismatch at #1 (Literal k=unit): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM q UNPIVOT(values FOR quarter IN (b, c))",
+            "reason": "payload count expected=26 actual=25"
+        },
+        {
+            "sql": "CREATE TABLE x (a STRUCT<b STRING OPTIONS (description='b')>)",
+            "reason": "ParseError: Expecting >. Line 1, Col: 41.\n  CREATE TABLE x (a STRUCT<b STRING \u001b[4mOPTIONS\u001b[0m (description='b')>)"
+        },
+        {
+            "sql": "LOG(n, b)",
+            "reason": "type-mismatch at #3 (? k=this): expected t=null actual t=null"
+        },
+        {
+            "sql": "SELECT * FROM x WHERE x.y >= (SELECT MAX(a) FROM b-c) - 20",
+            "reason": "type-mismatch at #10 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "FOR record IN (SELECT word, word_count FROM bigquery-public-data.samples.shakespeare LIMIT 5) DO SELECT record.word, record.word_count",
+            "reason": "ParseError: Required keyword: 'this' missing for Comprehension. Line 1, Col: 96.\n  FOR record IN (SELECT word, word_count FROM bigquery-public-data.samp"
+        },
+        {
+            "sql": "CREATE TABLE x (a STRING OPTIONS (description='x')) OPTIONS (table_expiration_days=1)",
+            "reason": "ParseError: Expecting ). Line 1, Col: 32.\n  CREATE TABLE x (a STRING \u001b[4mOPTIONS\u001b[0m (description='x')) OPTIONS (table_expiration_days=1)"
+        },
+        {
+            "sql": "SELECT * FROM (SELECT * FROM `t`) AS a UNPIVOT((c) FOR c_name IN (v1, v2))",
+            "reason": "type-mismatch at #31 (? k=value_columns_first): expected t=null actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM `proj.dataset.INFORMATION_SCHEMA.SOME_VIEW`",
+            "reason": "type-mismatch at #3 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM region_or_dataset.INFORMATION_SCHEMA.TABLES",
+            "reason": "type-mismatch at #5 (? k=this): expected t=null actual t=null"
+        },
+        {
+            "sql": "SELECT * FROM region_or_dataset.INFORMATION_SCHEMA.TABLES AS some_name",
+            "reason": "type-mismatch at #5 (? k=this): expected t=null actual t=null"
+        },
+        {
+            "sql": "SELECT * FROM proj.region_or_dataset.INFORMATION_SCHEMA.TABLES",
+            "reason": "type-mismatch at #4 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "EXPORT DATA OPTIONS (URI='gs://bucket/folder/*.csv') AS (SELECT 1)",
+            "reason": "type-mismatch at #1 (? k=connection): expected t=null actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "EXPORT DATA OPTIONS (URI='gs://path*.csv.gz', FORMAT='CSV') AS SELECT * FROM all_rows",
+            "reason": "type-mismatch at #1 (? k=connection): expected t=null actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "JSON_KEYS(PARSE_JSON('{\"a\": {\"b\":1}}'), 1, mode => 'lax')",
+            "reason": "payload count expected=14 actual=8"
+        },
+        {
+            "sql": "JSON_EXTRACT_STRING_ARRAY(PARSE_JSON('{\"fruits\": [\"apples\", \"oranges\", \"grapes\"]}'), '$.fruits')",
+            "reason": "type-mismatch at #5 (JSONPath k=expression): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "INSERT INTO test (cola, colb) VALUES (CAST(7 AS STRING(10)), CAST(14 AS STRING(10)))",
+            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'locf')]) ORDER BY time",
+            "reason": "ParseError: Required keyword: 'ts_column' missing for GapFill. Line 1, Col: 40.\n  SELECT * FROM GAP_FILL(TABLE \u001b[4mdevice_data\u001b[0m, ts_column => 'time',"
+        },
+        {
+            "sql": "SELECT a, b, c, d, e FROM GAP_FILL(TABLE foo, ts_column => 'b', partitioning_columns => ['a'], value_columns => [('c', 'bar'), ('d', 'baz'), ('e', 'bla')], bucket_width => INTERVAL '1' DAY)",
+            "reason": "ParseError: Required keyword: 'ts_column' missing for GapFill. Line 1, Col: 44.\n  SELECT a, b, c, d, e FROM GAP_FILL(TABLE \u001b[4mfoo\u001b[0m, ts_column => 'b'"
+        },
+        {
+            "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'linear')], ignore_null_values => FALSE) ORDER BY time",
+            "reason": "ParseError: Required keyword: 'ts_column' missing for GapFill. Line 1, Col: 40.\n  SELECT * FROM GAP_FILL(TABLE \u001b[4mdevice_data\u001b[0m, ts_column => 'time',"
+        },
+        {
+            "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE) ORDER BY time",
+            "reason": "ParseError: Required keyword: 'ts_column' missing for GapFill. Line 1, Col: 40.\n  SELECT * FROM GAP_FILL(TABLE \u001b[4mdevice_data\u001b[0m, ts_column => 'time',"
+        },
+        {
+            "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'null')], origin => CAST('2023-11-01 09:30:01' AS DATETIME)) ORDER BY time",
+            "reason": "ParseError: Required keyword: 'ts_column' missing for GapFill. Line 1, Col: 40.\n  SELECT * FROM GAP_FILL(TABLE \u001b[4mdevice_data\u001b[0m, ts_column => 'time',"
+        },
+        {
+            "sql": "SELECT * FROM ML.PREDICT(MODEL mydataset.mymodel, (SELECT label, column1, column2 FROM mydataset.mytable))",
+            "reason": "ParseError: Required keyword: 'expression' missing for Predict. Line 1, Col: 40.\n  SELECT * FROM ML.PREDICT(MODEL \u001b[4mmydataset\u001b[0m.mymodel, (SELECT lab"
+        },
+        {
+            "sql": "SELECT label, predicted_label1, predicted_label AS predicted_label2 FROM ML.PREDICT(MODEL mydataset.mymodel2, (SELECT * EXCEPT (predicted_label), predicted_label AS predicted_label1 FROM ML.PREDICT(MODEL mydataset.mymodel1, TABLE mydataset.mytable)))",
+            "reason": "ParseError: Required keyword: 'expression' missing for Predict. Line 1, Col: 99.\n  SELECT label, predicted_label1, predicted_label AS predicted_label2 F"
+        },
+        {
+            "sql": "SELECT * FROM ML.PREDICT(MODEL mydataset.mymodel, (SELECT custom_label, column1, column2 FROM mydataset.mytable), STRUCT(0.55 AS threshold))",
+            "reason": "ParseError: Required keyword: 'expression' missing for Predict. Line 1, Col: 40.\n  SELECT * FROM ML.PREDICT(MODEL \u001b[4mmydataset\u001b[0m.mymodel, (SELECT cus"
+        },
+        {
+            "sql": "SELECT * FROM ML.PREDICT(MODEL `my_project`.my_dataset.my_model, (SELECT * FROM input_data))",
+            "reason": "ParseError: Required keyword: 'expression' missing for Predict. Line 1, Col: 43.\n  SELECT * FROM ML.PREDICT(MODEL \u001b[4m`my_project`\u001b[0m.my_dataset.my_mod"
+        },
+        {
+            "sql": "SELECT * FROM ML.PREDICT(MODEL my_dataset.vision_model, (SELECT uri, ML.RESIZE_IMAGE(ML.DECODE_IMAGE(data), 480, 480, FALSE) AS input FROM my_dataset.object_table))",
+            "reason": "ParseError: Required keyword: 'expression' missing for Predict. Line 1, Col: 41.\n  SELECT * FROM ML.PREDICT(MODEL \u001b[4mmy_dataset\u001b[0m.vision_model, (SELE"
+        },
+        {
+            "sql": "SELECT * FROM ML.PREDICT(MODEL my_dataset.vision_model, (SELECT uri, ML.CONVERT_COLOR_SPACE(ML.RESIZE_IMAGE(ML.DECODE_IMAGE(data), 224, 280, TRUE), 'YIQ') AS input FROM my_dataset.object_table WHERE content_type = 'image/jpeg'))",
+            "reason": "ParseError: Required keyword: 'expression' missing for Predict. Line 1, Col: 41.\n  SELECT * FROM ML.PREDICT(MODEL \u001b[4mmy_dataset\u001b[0m.vision_model, (SELE"
+        },
+        {
+            "sql": "SELECT * FROM ML.FEATURES_AT_TIME(TABLE mydataset.feature_table, time => '2022-06-11 10:00:00+00', num_rows => 1, ignore_feature_nulls => TRUE)",
+            "reason": "ParseError: Expecting ). Line 1, Col: 49.\n  SELECT * FROM ML.FEATURES_AT_TIME(TABLE \u001b[4mmydataset\u001b[0m.feature_table, time => '2022-06-11 10:00:00+00', n"
+        },
+        {
+            "sql": "SELECT * FROM VECTOR_SEARCH(TABLE mydataset.base_table, 'column_to_search', TABLE mydataset.query_table, 'query_column_to_search', top_k => 2, distance_type => 'cosine', options => '{\"fraction_lists_to_search\":0.15}')",
+            "reason": "ParseError: Required keyword: 'column_to_search' missing for VectorSearch. Line 1, Col: 43.\n  SELECT * FROM VECTOR_SEARCH(TABLE \u001b[4mmydataset\u001b[0m.base_t"
+        },
+        {
+            "sql": "SELECT * FROM VECTOR_SEARCH(TABLE mydataset.base_table, 'column_to_search', TABLE mydataset.query_table, query_column_to_search => 'query_column_to_search', top_k => 2, distance_type => 'cosine', options => '{\"fraction_lists_to_search\":0.15}')",
+            "reason": "ParseError: Required keyword: 'column_to_search' missing for VectorSearch. Line 1, Col: 43.\n  SELECT * FROM VECTOR_SEARCH(TABLE \u001b[4mmydataset\u001b[0m.base_t"
+        },
+        {
+            "sql": "SELECT * FROM VECTOR_SEARCH((SELECT * FROM mydataset.base_table), 'column_to_search', (SELECT * FROM mydataset.query_table), 'query_column_to_search')",
+            "reason": "type-mismatch at #4 (VectorSearch k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM VECTOR_SEARCH(TABLE mydataset.base_table, 'column_to_search', TABLE mydataset.query_table)",
+            "reason": "ParseError: Required keyword: 'column_to_search' missing for VectorSearch. Line 1, Col: 43.\n  SELECT * FROM VECTOR_SEARCH(TABLE \u001b[4mmydataset\u001b[0m.base_t"
+        },
+        {
+            "sql": "SELECT * FROM ML.TRANSLATE(MODEL `mydataset.mytranslatemodel`, TABLE `mydataset.mybqtable`, STRUCT('translate_text' AS translate_mode, 'zh-CN' AS target_language_code))",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 168.\n  E `mydataset.mybqtable`, STRUCT('translate_text' AS translate_mode, 'zh-CN' AS ta"
+        },
+        {
+            "sql": "SELECT * FROM ML.FORECAST(MODEL `mydataset.mymodel`, STRUCT(2 AS horizon))",
+            "reason": "ParseError: Expecting ). Line 1, Col: 51.\n  SELECT * FROM ML.FORECAST(MODEL \u001b[4m`mydataset.mymodel`\u001b[0m, STRUCT(2 AS horizon))"
+        },
+        {
+            "sql": "SELECT * FROM ML.FORECAST(MODEL `mydataset.mymodel`, TABLE `mydataset.mybqtable`, STRUCT(2 AS horizon, 4 AS confidence_level))",
+            "reason": "ParseError: Expecting ). Line 1, Col: 51.\n  SELECT * FROM ML.FORECAST(MODEL \u001b[4m`mydataset.mymodel`\u001b[0m, TABLE `mydataset.mybqtable`, STRUCT(2 AS horizo"
+        },
+        {
+            "sql": "SELECT * FROM ML.FORECAST(MODEL `mydataset.mymodel`, (SELECT * FROM mydataset.query_table), STRUCT())",
+            "reason": "ParseError: Expecting ). Line 1, Col: 51.\n  SELECT * FROM ML.FORECAST(MODEL \u001b[4m`mydataset.mymodel`\u001b[0m, (SELECT * FROM mydataset.query_table), STRUCT()"
+        },
+        {
+            "sql": "SELECT * FROM AI.FORECAST(TABLE citibike_trips, data_col => 'num_trips', timestamp_col => 'date', horizon => 30)",
+            "reason": "ParseError: Expecting ). Line 1, Col: 46.\n  SELECT * FROM AI.FORECAST(TABLE \u001b[4mcitibike_trips\u001b[0m, data_col => 'num_trips', timestamp_col => 'date', ho"
+        },
+        {
+            "sql": "SELECT * FROM AI.FORECAST((SELECT * FROM citibike_trips), data_col => 'num_trips', timestamp_col => 'date', horizon => 30)",
+            "reason": "type-mismatch at #4 (AIForecast k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM ML.GENERATE_TEXT(MODEL `mydataset.gemini_model`, TABLE `mydataset.prompt_table`, STRUCT(0.15 AS temperature))",
+            "reason": "ParseError: Expecting ). Line 1, Col: 61.\n  SELECT * FROM ML.GENERATE_TEXT(MODEL \u001b[4m`mydataset.gemini_model`\u001b[0m, TABLE `mydataset.prompt_table`, STRUC"
+        },
+        {
+            "sql": "SELECT * FROM AI.GENERATE_TEXT(MODEL `mydataset.gemini_model`, TABLE `mydataset.prompt_table`, STRUCT(0.15 AS temperature))",
+            "reason": "ParseError: Expecting ). Line 1, Col: 61.\n  SELECT * FROM AI.GENERATE_TEXT(MODEL \u001b[4m`mydataset.gemini_model`\u001b[0m, TABLE `mydataset.prompt_table`, STRUC"
+        },
+        {
+            "sql": "SELECT AI.GENERATE_BOOL(MODEL `mydataset.gemini_model`, 'Is sky blue?')",
+            "reason": "ParseError: Expecting ). Line 1, Col: 54.\n  SELECT AI.GENERATE_BOOL(MODEL \u001b[4m`mydataset.gemini_model`\u001b[0m, 'Is sky blue?')"
+        },
+        {
+            "sql": "SELECT AI.EMBED('hello')",
+            "reason": "type-mismatch at #5 (AIEmbed k=expression): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT AI.SIMILARITY('a', 'b')",
+            "reason": "type-mismatch at #5 (AISimilarity k=expression): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT AI.GENERATE('Write a haiku')",
+            "reason": "type-mismatch at #5 (AIGenerate k=expression): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "REGEXP_EXTRACT(x, '(?<)')",
+            "reason": "type-mismatch at #8 (? k=null_if_pos_overflow): expected t=null actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "REGEXP_EXTRACT(`foo`, 'bar: (.+?)', 1, 1)",
+            "reason": "type-mismatch at #8 (Literal k=position): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "REGEXP_EXTRACT(svc_plugin_output, r'\\\\\\((.*)')",
+            "reason": "type-mismatch at #8 (? k=this): expected t=null actual t=null"
+        },
+        {
+            "sql": "REGEXP_SUBSTR(value, pattern, position, occurrence)",
+            "reason": "type-mismatch at #9 (Column k=position): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "DECLARE X INT64",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m X INT64"
+        },
+        {
+            "sql": "DECLARE X INT64 DEFAULT 1",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m X INT64 DEFAULT 1"
+        },
+        {
+            "sql": "DECLARE X FLOAT64 DEFAULT 0.9",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m X FLOAT64 DEFAULT 0.9"
+        },
+        {
+            "sql": "DECLARE X INT64 DEFAULT (SELECT MAX(col) FROM foo)",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m X INT64 DEFAULT (SELECT MAX(col) FROM foo)"
+        },
+        {
+            "sql": "DECLARE X, Y, Z INT64",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m X, Y, Z INT64"
+        },
+        {
+            "sql": "DECLARE X, Y, Z INT64 DEFAULT 42",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m X, Y, Z INT64 DEFAULT 42"
+        },
+        {
+            "sql": "DECLARE X, Y, Z INT64 DEFAULT (SELECT 42)",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m X, Y, Z INT64 DEFAULT (SELECT 42)"
+        },
+        {
+            "sql": "DECLARE START_DATE DATE DEFAULT CURRENT_DATE - 1",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m START_DATE DATE DEFAULT CURRENT_DATE - 1"
+        },
+        {
+            "sql": "DECLARE TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP() - INTERVAL '1' HOUR",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 7.\n  \u001b[4mDECLARE\u001b[0m TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP() - INTERVAL '1' HOUR"
+        },
+        {
+            "sql": "DATETIME_DIFF('2017-12-18', '2017-12-17', WEEK(MONDAY))",
+            "reason": "payload count expected=11 actual=10"
+        },
+        {
+            "sql": "SELECT `db.t`.`c` FROM `db.t`",
+            "reason": "type-mismatch at #1 (Column k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT `p.d.t`.`c`.`f` FROM `p.d.t`",
+            "reason": "type-mismatch at #1 (Column k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM ML.TRANSLATE(MODEL `mydataset.mymodel`, (SELECT comment AS text_content FROM mydataset.mytable), STRUCT('translate_text' AS translate_mode, 'en' AS target_language_code))",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 184.\n  nt FROM mydataset.mytable), STRUCT('translate_text' AS translate_mode, 'en' AS ta"
+        }
+    ]
 }

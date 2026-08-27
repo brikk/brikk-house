@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-72-gbac1a897b",
   "dialect": "duckdb",
   "identity": [
     {
@@ -15,6 +15,11 @@
     {
       "sql": "PIVOT duckdb_functions() ON schema_name USING AVG(LENGTH(function_name))::INTEGER GROUP BY schema_name",
       "expected": "PIVOT DUCKDB_FUNCTIONS() ON schema_name USING CAST(AVG(LENGTH(function_name)) AS INT) GROUP BY schema_name",
+      "pretty": false
+    },
+    {
+      "sql": "FROM_HEX('AA')",
+      "expected": "UNHEX('AA')",
       "pretty": false
     },
     {
@@ -144,6 +149,11 @@
     },
     {
       "sql": "SELECT * FROM my_ducklake.demo AT (VERSION => 2)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t1 AS a AT (VERSION => 3) JOIN t2 AS b AT (TIMESTAMP => NOW() - INTERVAL '1' WEEK) ON a.id = b.id",
       "expected": null,
       "pretty": false
     },
@@ -339,6 +349,16 @@
     },
     {
       "sql": "x -> '$.family'",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT a -> 'it''s' FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT a ->> 'it''s' FROM t",
       "expected": null,
       "pretty": false
     },
@@ -2221,6 +2241,75 @@
       }
     },
     {
+      "sql": "SELECT COUNT(*) FILTER (WHERE b > 0) FROM t",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT COUNT(*) FILTER(WHERE b > 0) FROM t",
+        "snowflake": "SELECT COUNT_IF(b > 0) FROM t"
+      }
+    },
+    {
+      "sql": "SELECT c, COUNT(*) FILTER (WHERE b > 0) OVER (PARTITION BY c) FROM t",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT c, COUNT(*) FILTER(WHERE b > 0) OVER (PARTITION BY c) FROM t",
+        "snowflake": "SELECT c, COUNT_IF(b > 0) OVER (PARTITION BY c) FROM t"
+      }
+    },
+    {
+      "sql": "SELECT COUNT(t.*) FILTER (WHERE b > 0) FROM t",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT COUNT(t.*) FILTER(WHERE b > 0) FROM t",
+        "snowflake": "SELECT COUNT_IF(b > 0) FROM t"
+      }
+    },
+    {
+      "sql": "SELECT COUNT(DISTINCT a) FILTER (WHERE b > 0) FROM t",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT COUNT(DISTINCT a) FILTER(WHERE b > 0) FROM t",
+        "snowflake": "SELECT COUNT(DISTINCT IFF(b > 0, a, NULL)) FROM t"
+      }
+    },
+    {
+      "sql": "SELECT ARRAY_AGG(DISTINCT a) FILTER (WHERE a IS NOT NULL)",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT ARRAY_AGG(DISTINCT a) FILTER(WHERE NOT a IS NULL)",
+        "snowflake": "SELECT ARRAY_AGG(DISTINCT IFF(NOT a IS NULL, a, NULL))"
+      }
+    },
+    {
+      "sql": "SELECT ARRAY_AGG(col ORDER BY sort_col) FILTER (WHERE col IS NOT NULL)",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT ARRAY_AGG(col ORDER BY sort_col) FILTER(WHERE NOT col IS NULL)",
+        "snowflake": "SELECT ARRAY_AGG(IFF(NOT col IS NULL, col, NULL)) WITHIN GROUP (ORDER BY sort_col)"
+      }
+    },
+    {
+      "sql": "SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY b) FILTER (WHERE a IS NOT NULL) FROM t",
+      "read": {},
+      "write": {
+        "snowflake": "SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY IFF(NOT a IS NULL, b, NULL)) FROM t"
+      }
+    },
+    {
+      "sql": "SELECT PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY b DESC) FILTER (WHERE b > 0) FROM t",
+      "read": {},
+      "write": {
+        "snowflake": "SELECT PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY IFF(b > 0, b, NULL) DESC NULLS LAST) FROM t"
+      }
+    },
+    {
+      "sql": "SELECT MODE() WITHIN GROUP (ORDER BY col) FILTER (WHERE b < 3) FROM t",
+      "read": {},
+      "write": {
+        "snowflake": "SELECT MODE(IFF(b < 3, col, NULL)) FROM t"
+      }
+    },
+    {
       "sql": "SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6])",
       "read": {},
       "write": {
@@ -2274,6 +2363,13 @@
       "write": {}
     },
     {
+      "sql": "SELECT * FROM t1 AS a AT (TIMESTAMP => CAST('2024-01-01' AS TIMESTAMP))",
+      "read": {
+        "snowflake": "SELECT * FROM t1 AT (TIMESTAMP => '2024-01-01'::TIMESTAMP) AS a"
+      },
+      "write": {}
+    },
+    {
       "sql": "SELECT JSON_ARRAY('a', 'b', 'c')",
       "read": {},
       "write": {
@@ -2312,6 +2408,13 @@
         "duckdb": "SELECT JSON_ARRAY('a', 'b', 'c', 'd', 'e')",
         "snowflake": "SELECT TO_VARIANT(ARRAY_CONSTRUCT('a', 'b', 'c', 'd', 'e'))"
       }
+    },
+    {
+      "sql": "SELECT a -> ('x' || 'y')",
+      "read": {
+        "duckdb": "SELECT JSON_EXTRACT(a, 'x' || 'y')"
+      },
+      "write": {}
     },
     {
       "sql": "SELECT NOT (data -> '$.value')",
@@ -3375,8 +3478,8 @@
         "bigquery": "PARSE_TIMESTAMP('%-m/%e/%y %-I:%M %p', x)",
         "duckdb": "STRPTIME(x, '%-m/%-d/%y %-I:%M %p')",
         "presto": "DATE_PARSE(x, '%c/%e/%y %l:%i %p')",
-        "hive": "CAST(FROM_UNIXTIME(UNIX_TIMESTAMP(x, 'M/d/yy h:mm a')) AS TIMESTAMP)",
-        "spark": "TO_TIMESTAMP(x, 'M/d/yy h:mm a')"
+        "hive": "CAST(FROM_UNIXTIME(UNIX_TIMESTAMP(x, 'M/d/yy h:m a')) AS TIMESTAMP)",
+        "spark": "TO_TIMESTAMP(x, 'M/d/yy h:m a')"
       }
     },
     {
@@ -3814,6 +3917,15 @@
       }
     },
     {
+      "sql": "a / b",
+      "read": {},
+      "write": {
+        "duckdb": "a / b",
+        "mysql": "a / b",
+        "postgres": "CAST(a AS DOUBLE PRECISION) / b"
+      }
+    },
+    {
       "sql": "SELECT MAP_CONCAT(CAST({'a': 1, 'b': 2} AS MAP(TEXT, DECIMAL(38, 0))), MAP {'c': CAST(3 AS DECIMAL(38, 0))})",
       "read": {
         "snowflake": "SELECT MAP_INSERT({'a':1,'b':2}::MAP(VARCHAR,NUMBER),'c',3)"
@@ -3861,8 +3973,8 @@
     }
   ],
   "stats": {
-    "identity_count": 382,
-    "transpile_count": 225,
+    "identity_count": 386,
+    "transpile_count": 237,
     "skipped_dynamic": 10
   }
 }

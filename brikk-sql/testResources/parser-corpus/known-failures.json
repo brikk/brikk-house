@@ -1,4 +1,213 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": []
+    "sqlglot_version": "v30.17.0-72-gbac1a897b",
+    "cases": [
+        {
+            "sql": "SELECT 1 FROM a.b.table1 AS t UNPIVOT((c3) FOR c4 IN (a, b))",
+            "reason": "ast-mismatch: payload count expected=40 actual=39"
+        },
+        {
+            "sql": "SELECT a FROM test UNPIVOT(x FOR y IN (z, q)) AS x",
+            "reason": "ast-mismatch at #28: expected {\"i\":10,\"k\":\"value_columns_first\",\"v\":false}"
+        },
+        {
+            "sql": "SELECT a FROM test PIVOT(SUM(x) FOR y IN ('z', 'q')) UNPIVOT(x FOR y IN (z, q)) AS x",
+            "reason": "ast-mismatch at #56: expected {\"i\":38,\"k\":\"value_columns_first\",\"v\":false}"
+        },
+        {
+            "sql": "DROP INDEX a.b.c",
+            "reason": "ast-mismatch: payload count expected=23 actual=22"
+        },
+        {
+            "sql": "DROP FUNCTION a.b.c (INT)",
+            "reason": "ast-mismatch: payload count expected=26 actual=25"
+        },
+        {
+            "sql": "DROP MATERIALIZED VIEW x.y.z",
+            "reason": "ast-mismatch: payload count expected=23 actual=22"
+        },
+        {
+            "sql": "DROP PROCEDURE a.b.c (INT)",
+            "reason": "ast-mismatch: payload count expected=26 actual=25"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds) SELECT x FROM y",
+            "reason": "ast-mismatch at #18: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds = 'YYYY-MM-DD') SELECT x FROM y",
+            "reason": "ast-mismatch at #22: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds, hour) SELECT x FROM y",
+            "reason": "ast-mismatch at #22: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds = 'YYYY-MM-DD', hour = 'hh') SELECT x FROM y",
+            "reason": "ast-mismatch at #30: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO a.b PARTITION(DAY = '2024-04-14') (col1, col2) SELECT x FROM y",
+            "reason": "ast-mismatch at #29: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "DROP TABLE a",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP TABLE a.b",
+            "reason": "ast-mismatch: payload count expected=20 actual=19"
+        },
+        {
+            "sql": "DROP TABLE a, b",
+            "reason": "ast-mismatch: payload count expected=21 actual=20"
+        },
+        {
+            "sql": "DROP TABLE a.b, c.d",
+            "reason": "ast-mismatch: payload count expected=27 actual=26"
+        },
+        {
+            "sql": "DROP TABLE IF EXISTS a",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP TABLE IF EXISTS a, b CASCADE",
+            "reason": "ast-mismatch: payload count expected=21 actual=20"
+        },
+        {
+            "sql": "DROP TABLE IF EXISTS a.b",
+            "reason": "ast-mismatch: payload count expected=20 actual=19"
+        },
+        {
+            "sql": "DROP TABLE a CASCADE",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP TABLE s_hajo CASCADE CONSTRAINTS",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP TABLE a PURGE",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP VIEW a",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP VIEW a.b",
+            "reason": "ast-mismatch: payload count expected=20 actual=19"
+        },
+        {
+            "sql": "DROP VIEW IF EXISTS a",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP VIEW IF EXISTS a.b",
+            "reason": "ast-mismatch: payload count expected=20 actual=19"
+        },
+        {
+            "sql": "INSERT INTO x SELECT * FROM y",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x (SELECT * FROM y)",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x WITH y AS (SELECT 1) SELECT * FROM y",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x.z IF EXISTS SELECT * FROM y",
+            "reason": "ast-mismatch at #12: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0)",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0), (1, 'a', 3.0), (X(), y[1], z.x)",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO y (a, b, c) SELECT a, b, c FROM x",
+            "reason": "ast-mismatch at #19: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO y (SELECT 1) UNION (SELECT 2)",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO result_table (WITH test AS (SELECT * FROM source_table) SELECT * FROM test)",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO \"tests_user\" (\"username\", \"first_name\", \"last_name\") VALUES ('fiara', 'Fiara', 'Ironhide') RETURNING \"tests_user\".\"id\"",
+            "reason": "ast-mismatch at #19: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO t1 (tc1 /* tc1 */, tc2 /* tc2 */) SELECT c1 /* sc1 */, c2 /* sc2 */ FROM t",
+            "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO t1 (\"tc1\" /* tc1 */, \"tc2\" /* tc2 */) SELECT \"c1\" /* sc1 */, \"c2\" /* sc2 */ FROM t",
+            "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE x IF EXISTS SELECT * FROM y",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT OVERWRITE TABLE a.b IF EXISTS SELECT * FROM y",
+            "reason": "ast-mismatch at #12: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT OVERWRITE DIRECTORY 'x' SELECT 1",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT OVERWRITE LOCAL DIRECTORY 'x' SELECT 1",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT OVERWRITE LOCAL DIRECTORY 'x' ROW FORMAT DELIMITED FIELDS TERMINATED BY '1' COLLECTION ITEMS TERMINATED BY '2' MAP KEYS TERMINATED BY '3' LINES TERMINATED BY '4' NULL DEFINED AS '5' SELECT 1",
+            "reason": "ast-mismatch at #25: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "WITH a AS (SELECT 1) INSERT INTO b SELECT * FROM a",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO foo SELECT * FROM bar /* comment */",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "ALTER TABLE integers DROP COLUMN k",
+            "reason": "ast-mismatch at #23: expected {\"i\":7,\"k\":\"force\",\"v\":false}"
+        },
+        {
+            "sql": "ALTER TABLE integers DROP COLUMN IF EXISTS k",
+            "reason": "ast-mismatch at #23: expected {\"i\":7,\"k\":\"force\",\"v\":false}"
+        },
+        {
+            "sql": "ALTER TABLE integers DROP COLUMN k CASCADE",
+            "reason": "ast-mismatch at #23: expected {\"i\":7,\"k\":\"force\",\"v\":false}"
+        },
+        {
+            "sql": "ALTER TABLE mydataset.mytable DROP COLUMN A, DROP COLUMN IF EXISTS B",
+            "reason": "ast-mismatch at #26: expected {\"i\":10,\"k\":\"force\",\"v\":false}"
+        },
+        {
+            "sql": "/* comment1 */ INSERT INTO x /* comment2 */ VALUES (1, 2, 3)",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "DROP TABLE \"if\"",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        },
+        {
+            "sql": "DROP INDEX \"concurrently\"",
+            "reason": "ast-mismatch: payload count expected=17 actual=16"
+        }
+    ]
 }

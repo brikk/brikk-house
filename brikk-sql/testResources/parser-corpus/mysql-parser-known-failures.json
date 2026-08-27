@@ -1,4 +1,33 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": []
+    "sqlglot_version": "v30.17.0-72-gbac1a897b",
+    "cases": [
+        {
+            "sql": "ALTER TABLE t DROP COLUMN c, DROP PRIMARY KEY, DROP INDEX `i`",
+            "reason": "ast-mismatch at #23: expected {\"i\":7,\"k\":\"force\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO things (a, b) VALUES (1, 2) AS new_data ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id), a = new_data.a, b = new_data.b",
+            "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT IGNORE INTO subscribers (email) VALUES ('john.doe@gmail.com'), ('jane.smith@ibm.com')",
+            "reason": "ast-mismatch at #13: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO t1 (a, b, c) VALUES (1, 2, 3), (4, 5, 6) ON DUPLICATE KEY UPDATE c = VALUES(a) + VALUES(b)",
+            "reason": "ast-mismatch at #19: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO t1 (a, b) SELECT c, d FROM t2 UNION SELECT e, f FROM t3 ON DUPLICATE KEY UPDATE b = b + c",
+            "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO t1 (a, b, c) VALUES (1, 2, 3) ON DUPLICATE KEY UPDATE c = c + 1",
+            "reason": "ast-mismatch at #19: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        },
+        {
+            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON DUPLICATE KEY UPDATE x.id = 1",
+            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
+        }
+    ]
 }

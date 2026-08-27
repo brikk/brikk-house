@@ -1,0 +1,36 @@
+{
+    "cases": [
+        {
+            "sql": "SELECT tbl.x*1e4+tbl.y FROM tbl",
+            "reason": "type-mismatch at #4 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "INSERT INTO t DEFAULT VALUES RETURNING (c1)",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "INSERT INTO x BY NAME SELECT 1 AS y",
+            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
+        },
+        {
+            "sql": "SELECT df1.*, df2.* FROM df1 POSITIONAL JOIN df2",
+            "reason": "type-mismatch at #7 (Star k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM t1 WHERE NOT EXISTS(FROM t2 WHERE t2.id = t1.id)",
+            "reason": "type-mismatch at #27 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM tbl TABLESAMPLE RESERVOIR(20%), tbl2 WHERE tbl.i=tbl2.i",
+            "reason": "type-mismatch at #28 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT * FROM tbl, tbl2 WHERE tbl.i=tbl2.i USING SAMPLE RESERVOIR(20%)",
+            "reason": "type-mismatch at #22 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT foo: t.col FROM t",
+            "reason": "type-mismatch at #3 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        }
+    ]
+}
