@@ -220,6 +220,32 @@ So there's a ~702 pre-existing baseline (the port was never 100%) plus ~370 resy
 - **Parser** (~232), scope/qualify/lineage small.
 This is normal incremental backlog, **not** a near-current blocker — we're only 6 commits behind upstream main.
 
+### Backlog worked down (2026-08-27) — suite stays GREEN throughout
+
+- **hive/spark lax-strict time-format hierarchy** (#7873/#7773/#7925) — PORTED (commit 08292fb):
+  STRICT_TIME_FORMATS + withStrictTimeInverse; hive TIME_MAPPING strict/lax markers; HiveGenerator
+  lenientParseFormat/format_time/isCastTimeFormat. Fixed 19 cases, 0 regressions.
+- **INSERT REPLACE WHERE/USING** (#7950) — PORTED (commit d509129): where/using null (not false) when
+  absent + parse REPLACE USING. This was the root of the "partition-typing" annotate cluster (a stray
+  `where=false` shifted every INSERT's serialized arg positions). Fixed **116** cases, 0 regressions.
+- **DECLARE statement** — PORTED (commit ada7c54): parseDeclare/parseDeclareitem + declare_sql/
+  declareitem_sql (DECLARE_DEFAULT_ASSIGNMENT base `=`, bigquery/trino `DEFAULT`). Fixed 44 cases.
+- **#8161 data-not-references** — no work needed: normalize_identifiers gate already 0 failures after the
+  ASCII_ONLY_NORMALIZATION port.
+- **trino inline-UDF / routine bodies (#7934/#8004/#9815ccb32), clickhouse refreshable MV (#7990)** —
+  DEFERRED (deliberate): at our pin these round-trip fine as `Command` fallback (present in corpora, not in
+  any ledger), so porting proper AST nodes is unverifiable by the gates and risks regressing the passing
+  round-trips. Real feature work; do it when there's AST-comparison coverage (see bump note).
+
+**6-commit bump to exactly-current (v30.17.0-78-g3110e151b) — ASSESSED, then reverted (not shipped).**
+Only 2 code ports needed (MOD at multiplicative precedence #8259; GRANT/REVOKE no-privileges #8271; the two
+postgres bit_or/bit_xor typing feats bake in via the metadata regen; 2 commits are non-ported dialects).
+BUT regenerating corpora at -78 surfaced **~246 NEW cases fixing nothing** — dominated by ~96 trino
+inline-UDF/routine-body cases (the deferred feature, now serializable upstream so they enter the serde
+corpus) plus scattered new fixtures (`INT KEY`, `SOUNDS LIKE ... IS NULL`, …). My MOD/GRANT ports were clean
+(0 regressions). Since the bump fixes nothing and turns into the deferred trino-UDF feature port + a large
+ledger addition, it's better batched into a dedicated resync. Reverted to `bac1a897b`; branch stays green.
+
 ## Actionable (79) — oldest first  (checkboxes below predate the resync; see reconciliation above)
 
 - [x] `e17ab3023` (2026-07-13) Fix(optimizer)!: evict mutated projections from the annotator cache (#7868)
