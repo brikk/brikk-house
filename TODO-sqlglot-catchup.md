@@ -150,6 +150,34 @@ changed):
 (2) fix the 2 structural gates, (3) accept the remaining ~285 catch-up gaps into the known-failures ledgers
 and backlog them here. Regenerated corpora are staged in the working tree (44 files) awaiting this.
 
+### Resync COMPLETE — suite green at v30.17.0-72-gbac1a897b (2026-08-27)
+
+Full test suite passes (505 + metadata module, exit 0). Breaking-change clusters ported (all category (a),
+adopt-the-new-shape; **no category (b)** — nothing where upstream's new output was undesirable):
+- **#8229** ANALYZE/DROP/ALTER multi-table → `tables` list (parser + generator).
+- **#8006** `SOUNDS LIKE` → text-seq → `SOUNDEX(x)=SOUNDEX(y)` (MysqlParser.parseRange override).
+- **#8007** `CHARACTER SET` two-token → parseProperty/parsePropertyBefore/parseColumnConstraint/parseCast.
+- **#8008** `START WITH` two-token → parseConnect / parseSequenceProperties / GENERATED IDENTITY /
+  query-modifier loop + table-alias guard.
+- **#81c19435a** `NOT DETERMINISTIC` two-token → BigqueryParser.parseProperty override.
+- **#8156** postgres `?` → `JSONBContainsTopKey` (base generator `?`; PLACEHOLDER column-op; drop the old
+  postgres `JSONBContains`→`?`).
+- **ASCII_ONLY_NORMALIZATION** (postgres/duckdb/bigquery case-fold ASCII only in normalize_identifier).
+- Structural: `Column.shadow`, `Is.negate`, `With.udfs`+optional-`expressions` arg drifts; stale doris
+  grammarBuiltins test + postgres `?` hand test updated.
+
+**Deferred (ledgered as known catch-up gaps, backlog):**
+- **hive/spark lax-strict time-format hierarchy** (#7873/#7773/#7925/#6581f8c38): our TIME_MAPPING doesn't
+  carry the new `%mstrict`/`%m` markers, so hive/spark default time formats aren't recognized/omitted.
+  Surfaced as e.g. `UNIX_TIMESTAMP()` → we emit the default format instead of dropping it. One visible
+  generator case ledgered; likely covers a chunk of the hive/spark transpile DRIFT too.
+- **~285 catch-up-gap DRIFT** (typing annotation refinements + parser/scope/qualify behavior changes):
+  accepted into the per-corpus `known-failures` ledgers as deferred; work through as normal backlog.
+
+**Tooling gotcha:** `tools/extract_dialect_tests.py` wipes **all** `dialect-corpus/*.json` (line ~435) before
+writing the sqlglot-derived `<dialect>.json`, which also deletes the `*-known-failures.json` ledgers and the
+externally-sourced `datafusion-*.json` inputs. After running it, restore those from git.
+
 ## Actionable (79) — oldest first
 
 - [x] `e17ab3023` (2026-07-13) Fix(optimizer)!: evict mutated projections from the annotator cache (#7868)
