@@ -16,6 +16,9 @@ open class PostgresDialect : Dialect() {
 
     override val name: String get() = "postgres"
 
+    // sqlglot: Postgres.ASCII_ONLY_NORMALIZATION = True
+    override val asciiOnlyNormalization: Boolean get() = true
+
     // sqlglot: Postgres.TABLES_REFERENCEABLE_AS_COLUMNS
     override val tablesReferenceableAsColumns: Boolean get() = true
 

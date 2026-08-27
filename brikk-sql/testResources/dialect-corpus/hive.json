@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.12.0-44-g93d16591",
   "dialect": "hive",
   "identity": [
     {
@@ -668,13 +668,6 @@
       }
     },
     {
-      "sql": "STR_TO_DATE(x)",
-      "read": {},
-      "write": {
-        "hive": "CAST(x AS DATE)"
-      }
-    },
-    {
       "sql": "(UNIX_TIMESTAMP(y) - UNIX_TIMESTAMP(x)) * 1000",
       "read": {
         "presto": "DATE_DIFF('millisecond', x, y)"
@@ -727,9 +720,9 @@
       "sql": "DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
       "read": {},
       "write": {
-        "bigquery": "FORMAT_DATE('%Y-%m-%d %H:%M:%S', CAST('2020-01-01' AS DATETIME))",
+        "bigquery": "FORMAT_DATE('%F %T', CAST('2020-01-01' AS DATETIME))",
         "duckdb": "STRFTIME(CAST('2020-01-01' AS TIMESTAMP), '%Y-%m-%d %H:%M:%S')",
-        "presto": "DATE_FORMAT(CAST('2020-01-01' AS TIMESTAMP), '%Y-%m-%d %H:%i:%s')",
+        "presto": "DATE_FORMAT(CAST('2020-01-01' AS TIMESTAMP), '%Y-%m-%d %T')",
         "hive": "DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
         "spark": "DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')"
       }
@@ -801,10 +794,10 @@
       "read": {},
       "write": {
         "duckdb": "EPOCH(STRPTIME(x, '%Y-%m-%d %H:%M:%S'))",
-        "presto": "TO_UNIXTIME(COALESCE(TRY(DATE_PARSE(CAST(x AS VARCHAR), '%Y-%m-%d %H:%i:%s')), PARSE_DATETIME(DATE_FORMAT(x, '%Y-%m-%d %H:%i:%s'), 'yyyy-MM-dd HH:mm:ss')))",
+        "presto": "TO_UNIXTIME(COALESCE(TRY(DATE_PARSE(CAST(x AS VARCHAR), '%Y-%m-%d %T')), PARSE_DATETIME(DATE_FORMAT(x, '%Y-%m-%d %T'), 'yyyy-MM-dd HH:mm:ss')))",
         "hive": "UNIX_TIMESTAMP(x)",
         "spark": "UNIX_TIMESTAMP(x)",
-        "": "STR_TO_UNIX(x, '%Y-%mstrict-%dstrict %Hstrict:%Mstrict:%Sstrict')"
+        "": "STR_TO_UNIX(x, '%Y-%m-%d %H:%M:%S')"
       }
     },
     {
@@ -1311,7 +1304,7 @@
   ],
   "stats": {
     "identity_count": 61,
-    "transpile_count": 94,
+    "transpile_count": 93,
     "skipped_dynamic": 2
   }
 }

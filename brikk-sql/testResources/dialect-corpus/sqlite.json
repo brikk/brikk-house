@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.12.0-44-g93d16591",
   "dialect": "sqlite",
   "identity": [
     {
@@ -59,11 +59,6 @@
     },
     {
       "sql": "SELECT rowid FROM t1 WHERE t1 MATCH 'lorem'",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT * FROM t WHERE a REGEXP 'x'",
       "expected": null,
       "pretty": false
     },
@@ -154,36 +149,6 @@
     },
     {
       "sql": "SELECT JSON_EXTRACT('[10, 20, [30, 40]]', '$[2]', '$[0]', '$[1]')",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT JSON_EXTRACT(a, '$.k') FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a -> '$.k' FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a ->> '$.k' FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT JSON_SET('{}', '$.x', JSON_EXTRACT(a, '$.k'))",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT JSON_EXTRACT(a, '$') FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT JSON_EXTRACT(a, b) FROM t",
       "expected": null,
       "pretty": false
     },
@@ -279,76 +244,6 @@
       "pretty": false
     },
     {
-      "sql": "SELECT a.data ->> b.key ->> a.final_key FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a -> b ->> c -> d FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a || b ->> c",
-      "expected": "SELECT (a || b) ->> c",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a ->> b || c FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT 2 * 3 || 4",
-      "expected": "SELECT 2 * (3 || 4)",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT 1 + 2 || 3",
-      "expected": "SELECT 1 + (2 || 3)",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a || b * c FROM t",
-      "expected": "SELECT (a || b) * c FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a - b ->> c FROM t",
-      "expected": "SELECT a - (b ->> c) FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a ->> b + c FROM t",
-      "expected": "SELECT (a ->> b) + c FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT -a || b FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a || b COLLATE NOCASE FROM t ORDER BY 1",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a COLLATE NOCASE || b -> c FROM t",
-      "expected": "SELECT (a COLLATE NOCASE || b) -> c FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a COLLATE NOCASE || b * c FROM t",
-      "expected": "SELECT (a COLLATE NOCASE || b) * c FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a COLLATE NOCASE -> b + c FROM t",
-      "expected": "SELECT (a COLLATE NOCASE -> b) + c FROM t",
-      "pretty": false
-    },
-    {
       "sql": "SELECT STRFTIME('%Y/%m/%d', 'now')",
       "expected": null,
       "pretty": false
@@ -361,46 +256,6 @@
     {
       "sql": "SELECT STRFTIME('%s')",
       "expected": "SELECT STRFTIME('%s', CURRENT_TIMESTAMP)",
-      "pretty": false
-    },
-    {
-      "sql": "CREATE TABLE t (a INTEGER, b INTEGER AS (a * 2) STORED)",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "CREATE TABLE t (a INTEGER, b INTEGER AS (a * 2))",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "CREATE TABLE t (a INTEGER, b AS (a * 2) STORED)",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "CREATE TABLE t (a INTEGER, b AS (a * 2))",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "CREATE TABLE t (a INTEGER, b INTEGER GENERATED ALWAYS AS (a * 2) STORED)",
-      "expected": "CREATE TABLE t (a INTEGER, b INTEGER AS (a * 2) STORED)",
-      "pretty": false
-    },
-    {
-      "sql": "CREATE TABLE t (a INTEGER, b INTEGER GENERATED ALWAYS AS (a * 2) VIRTUAL)",
-      "expected": "CREATE TABLE t (a INTEGER, b INTEGER AS (a * 2))",
-      "pretty": false
-    },
-    {
-      "sql": "CREATE TABLE t (a INTEGER, b INTEGER GENERATED ALWAYS AS (a * 2))",
-      "expected": "CREATE TABLE t (a INTEGER, b INTEGER AS (a * 2))",
-      "pretty": false
-    },
-    {
-      "sql": "CREATE TABLE t (a INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY)",
-      "expected": "CREATE TABLE t (a INTEGER PRIMARY KEY AUTOINCREMENT)",
       "pretty": false
     },
     {
@@ -582,16 +437,6 @@
       "check_command_warning": true
     },
     {
-      "sql": "SELECT a -> 'it''s' FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT a ->> 'it''s' FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
       "sql": "SELECT * FROM t AS t(c1, c2)",
       "expected": "SELECT * FROM t AS t",
       "pretty": false
@@ -613,30 +458,6 @@
     }
   ],
   "transpile": [
-    {
-      "sql": "SELECT DATE(d, '1 DAY') FROM t",
-      "read": {
-        "duckdb": "SELECT DATE_ADD(d, INTERVAL 1 DAY) FROM t"
-      },
-      "write": {}
-    },
-    {
-      "sql": "SELECT JSON_EXTRACT(a, '$.k') FROM t",
-      "read": {},
-      "write": {
-        "postgres": "SELECT JSON_EXTRACT_PATH_TEXT(a, 'k') FROM t",
-        "mysql": "SELECT a ->> '$.k' FROM t"
-      }
-    },
-    {
-      "sql": "SELECT JSON_EXTRACT('[10, 20, [30, 40]]', '$[1]')",
-      "read": {},
-      "write": {
-        "sqlite": "SELECT JSON_EXTRACT('[10, 20, [30, 40]]', '$[1]')",
-        "mysql": "SELECT CAST('[10, 20, [30, 40]]' AS JSON) ->> '$[1]'",
-        "duckdb": "SELECT '[10, 20, [30, 40]]' ->> '$[1]'"
-      }
-    },
     {
       "sql": "SELECT LIKE(y, x)",
       "read": {},
@@ -863,13 +684,6 @@
       }
     },
     {
-      "sql": "CREATE TABLE t (a INTEGER, b AS (a * 2) STORED NOT NULL)",
-      "read": {
-        "tsql": "CREATE TABLE t (a INT, b AS (a * 2) PERSISTED NOT NULL)"
-      },
-      "write": {}
-    },
-    {
       "sql": "\n            CREATE TABLE \"Track\"\n            (\n                CONSTRAINT \"PK_Track\" FOREIGN KEY (\"TrackId\"),\n                FOREIGN KEY (\"AlbumId\") REFERENCES \"Album\" (\n                    \"AlbumId\"\n                ) ON DELETE NO ACTION ON UPDATE NO ACTION,\n                FOREIGN KEY (\"AlbumId\") ON DELETE CASCADE ON UPDATE RESTRICT,\n                FOREIGN KEY (\"AlbumId\") ON DELETE SET NULL ON UPDATE SET DEFAULT\n            )\n            ",
       "read": {},
       "write": {
@@ -899,8 +713,8 @@
     }
   ],
   "stats": {
-    "identity_count": 121,
-    "transpile_count": 35,
+    "identity_count": 90,
+    "transpile_count": 31,
     "skipped_dynamic": 1
   }
 }

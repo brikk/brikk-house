@@ -34,6 +34,9 @@ open class BigqueryDialect : Dialect() {
     // sqlglot: BigQuery.NORMALIZATION_STRATEGY = NormalizationStrategy.CASE_INSENSITIVE
     override val normalizationStrategy get() = NormalizationStrategy.CASE_INSENSITIVE
 
+    // sqlglot: BigQuery.ASCII_ONLY_NORMALIZATION = True
+    override val asciiOnlyNormalization: Boolean get() = true
+
     // sqlglot: BigQuery.COERCES_TO — augments the base lattice (BIGNUMERIC targets etc.)
     override val coercesTo: Map<DType, Set<DType>> get() = BIGQUERY_COERCES_TO
 

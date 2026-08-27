@@ -1,0 +1,149 @@
+{
+  "note": "Oracle-less ledger for DatafusionFixtureTest. DataFusion has no sqlglot dialect, so these are honest, understood divergences between polyglot's hand-authored fixture rendering and brikk's sqlglot-derived AST/generator canonicalization. Almost all are semantically identical surface differences; a handful (log2/log10/strpos/random/bool_and/bool_or renames, ~ operator, Arrow type surface) are deferred to phase 2 behind an engine verifier.",
+  "cases": [
+    {
+      "case": "identity|SELECT * FROM t ORDER BY x NULLS FIRST",
+      "reason": "NULLS FIRST is the SQL default for ASC ordering; brikk's generator omits the redundant explicit NULLS FIRST. polyglot echoes it verbatim. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT ALL x FROM t",
+      "reason": "SELECT ALL is the default quantifier; brikk drops the redundant ALL keyword, polyglot preserves it. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT * FROM t WHERE x NOT BETWEEN 1 AND 10",
+      "reason": "brikk canonicalizes `x NOT BETWEEN a AND b` to `NOT x BETWEEN a AND b` (sqlglot AST normal form); polyglot keeps the inline NOT. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT * FROM t WHERE x IS NOT NULL",
+      "reason": "brikk canonicalizes `x IS NOT NULL` to `NOT x IS NULL` (sqlglot AST normal form); polyglot keeps IS NOT NULL. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT * FROM t WHERE x NOT IN (1, 2, 3)",
+      "reason": "brikk canonicalizes `x NOT IN (...)` to `NOT x IN (...)` (sqlglot AST normal form); polyglot keeps NOT IN. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT * FROM t QUALIFY ROW_NUMBER() OVER (PARTITION BY x ORDER BY y) = 1",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT * FROM t QUALIFY RANK() OVER (ORDER BY x) <= 3",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT * FROM unnest(ARRAY[1, 2, 3]) AS t(x)",
+      "reason": "brikk lowercases the UNNEST-family + renders ARRAY[...] as the canonical array(...) constructor; polyglot preserves ARRAY[...] literal syntax and upper UNNEST. Divergent surface, equivalent semantics (both legal in DataFusion)."
+    },
+    {
+      "case": "identity|SELECT x != 1 FROM t",
+      "reason": "brikk canonicalizes the `!=` operator to its `<>` spelling (sqlglot NEQ normal form); DataFusion accepts both. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT x ~ 'pattern' FROM t",
+      "reason": "postgres-style `~` regex-match operator is not wired into brikk's BASE parser (no datafusion parser hook added in thin phase 1); DataFusion supports it. Honest parser gap, deferred (would need a RANGE_PARSERS[TILDE] hook + engine verifier to justify the AST choice)."
+    },
+    {
+      "case": "identity|SELECT x ~* 'pattern' FROM t",
+      "reason": "`~*` parses in BASE to a case-insensitive regex node that brikk renders as regexp_i_like(...); polyglot echoes the `~*` operator. Honest rendering gap (no datafusion operator-restore hook in thin phase 1)."
+    },
+    {
+      "case": "identity|SELECT CAST(x AS INTEGER) FROM t",
+      "reason": "brikk canonicalizes the INTEGER type keyword to INT (shared DType.INT spelling); DataFusion accepts both. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT CAST(x AS NUMERIC(10, 2)) FROM t",
+      "reason": "brikk canonicalizes NUMERIC to its DECIMAL synonym (shared DType); DataFusion treats them as aliases. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT x::INT FROM t",
+      "reason": "brikk parses the `::` cast operator and renders it as CAST(...) (sqlglot AST has no dedicated `::` node); DataFusion accepts both. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT x::VARCHAR FROM t",
+      "reason": "brikk renders `::` casts as CAST(...) (see x::INT). Semantically identical."
+    },
+    {
+      "case": "identity|SELECT CAST(x AS BYTEA) FROM t",
+      "reason": "brikk canonicalizes the postgres BYTEA type name to VARBINARY (shared DType); DataFusion's Arrow type surface differs from both \u2014 a FunctionCatalog/type map is phase 2. Divergent spelling."
+    },
+    {
+      "case": "identity|SELECT log2(x) FROM t",
+      "reason": "brikk parses log2 into its exp.Log node and renders the general log(base, x) form; DataFusion has a dedicated log2. Would need a datafusion generator override backed by an engine verifier (phase 2)."
+    },
+    {
+      "case": "identity|SELECT log10(x) FROM t",
+      "reason": "brikk parses log10 into exp.Log rendered as log(10, x); DataFusion has dedicated log10. Same class of gap as log2 (phase 2)."
+    },
+    {
+      "case": "identity|SELECT substr(s, 1, 5) FROM t",
+      "reason": "brikk canonicalizes substr -> exp.Substring rendered as substring(...); DataFusion supports both substr and substring. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT strpos(s, 'sub') FROM t",
+      "reason": "brikk parses strpos into exp.StrPosition rendered as str_position(...); DataFusion spells it strpos/position. Rename would need engine-verifier backing (phase 2)."
+    },
+    {
+      "case": "identity|SELECT current_date()",
+      "reason": "brikk parses current_date() into exp.CurrentDate rendered as the bare CURRENT_DATE keyword form; DataFusion accepts the parenthesized function form. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT date_trunc('month', ts) FROM t",
+      "reason": "brikk uppercases the date-part literal ('month' -> 'MONTH') during date_trunc canonicalization; DataFusion is case-insensitive on the part. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT bool_and(x) FROM t",
+      "reason": "brikk parses bool_and into exp.LogicalAnd rendered as logical_and(...); DataFusion supports bool_and as an alias. Rename needs engine-verifier backing (phase 2)."
+    },
+    {
+      "case": "identity|SELECT bool_or(x) FROM t",
+      "reason": "brikk renders exp.LogicalOr as logical_or(...); DataFusion supports bool_or alias (phase 2, same as bool_and)."
+    },
+    {
+      "case": "identity|SELECT ROW_NUMBER() OVER (ORDER BY x) FROM t",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT RANK() OVER (ORDER BY x) FROM t",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT DENSE_RANK() OVER (ORDER BY x) FROM t",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT NTILE(4) OVER (ORDER BY x) FROM t",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT LAG(x, 1) OVER (ORDER BY y) FROM t",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT LEAD(x, 1) OVER (ORDER BY y) FROM t",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT FIRST_VALUE(x) OVER (ORDER BY y) FROM t",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT LAST_VALUE(x) OVER (ORDER BY y) FROM t",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT NTH_VALUE(x, 3) OVER (ORDER BY y) FROM t",
+      "reason": "polyglot keeps built-in window function names in their original (upper) case; brikk's datafusion generator lowercases all function names (normalize_functions=lower, a headline DataFusion trait). DataFusion the engine is case-insensitive on function names, so both render legally \u2014 this is a rendering-convention divergence, not a bug."
+    },
+    {
+      "case": "identity|SELECT array_has(arr, 1) FROM t",
+      "reason": "brikk parses array_has into exp.ArrayContains rendered as array_contains(...); DataFusion supports both. Semantically identical."
+    },
+    {
+      "case": "identity|SELECT random()",
+      "reason": "brikk parses random() into exp.Rand rendered as rand(); DataFusion spells it random(). Rename needs engine-verifier backing (phase 2)."
+    },
+    {
+      "case": "identity|SELECT char_length(s) FROM t",
+      "reason": "brikk canonicalizes char_length into exp.Length rendered as length(...); DataFusion supports both. Semantically identical."
+    }
+  ]
+}

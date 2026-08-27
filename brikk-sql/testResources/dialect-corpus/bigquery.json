@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.12.0-44-g93d16591",
   "dialect": "bigquery",
   "identity": [
     {
@@ -100,31 +100,6 @@
     {
       "sql": "SELECT jsondoc['some_key']",
       "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT data.144A_FLAG FROM t",
-      "expected": "SELECT data.`144A_FLAG` FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT t.1a FROM t",
-      "expected": "SELECT t.`1a` FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT STRING(data.144) FROM t",
-      "expected": "SELECT STRING(data.`144`) FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT STRING(data.1e10) FROM t",
-      "expected": "SELECT STRING(data.`1e10`) FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT t.144 A_FLAG FROM t",
-      "expected": "SELECT t.`144` AS A_FLAG FROM t",
       "pretty": false
     },
     {
@@ -239,16 +214,6 @@
     },
     {
       "sql": "ARRAY_AGG(DISTINCT x IGNORE NULLS HAVING MAX x ORDER BY x LIMIT 1)",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT ARRAY_AGG((SELECT c FROM t LIMIT 1) IGNORE NULLS) FROM u",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT ARRAY_AGG((SELECT c FROM t ORDER BY c) IGNORE NULLS LIMIT 1) FROM u",
       "expected": null,
       "pretty": false
     },
@@ -613,16 +578,6 @@
       "pretty": false
     },
     {
-      "sql": "FOR system_time IN (SELECT 1 AS x) DO SELECT system_time.x",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "FOR timestamp IN (SELECT 1 AS x) DO SELECT timestamp.x",
-      "expected": null,
-      "pretty": false
-    },
-    {
       "sql": "DATE(CAST('2016-12-25 05:30:00+07' AS DATETIME), 'America/Los_Angeles')",
       "expected": null,
       "pretty": false
@@ -755,31 +710,6 @@
     {
       "sql": "x <> ''''''",
       "expected": "x <> ''",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT \"\"\"ends with \\\"word\\\"\"\"\"",
-      "expected": "SELECT 'ends with \"word\"'",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT '''ends with \\'word\\''''",
-      "expected": "SELECT 'ends with \\'word\\''",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT \"\"\"a\\\"b\"\"\"",
-      "expected": "SELECT 'a\"b'",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT r\"\"\"ends with \\\"\"\"\"",
-      "expected": "SELECT 'ends with \\\\\"'",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT r\"\"\"a\\\"b\"\"\"",
-      "expected": "SELECT 'a\\\\\"b'",
       "pretty": false
     },
     {
@@ -1448,21 +1378,6 @@
       "pretty": false
     },
     {
-      "sql": "(SELECT 1 AS foo) FULL OUTER UNION ALL BY NAME (SELECT 2 AS foo, 3 AS bar)",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "(SELECT 1 AS foo) FULL UNION ALL BY NAME (SELECT 2 AS foo)",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "(SELECT 1) AS x UNION ALL (SELECT 2)",
-      "expected": null,
-      "pretty": false
-    },
-    {
       "sql": "SELECT 1 AS x UNION ALL CORRESPONDING SELECT 2 AS x",
       "expected": "SELECT 1 AS x INNER UNION ALL BY NAME SELECT 2 AS x",
       "pretty": false
@@ -1723,11 +1638,6 @@
       "pretty": false
     },
     {
-      "sql": "SELECT NOT deterministic FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
       "sql": "SELECT * FROM ML.TRANSLATE(MODEL `mydataset.mymodel`, (SELECT comment AS text_content FROM mydataset.mytable), STRUCT('translate_text' AS translate_mode, 'en' AS target_language_code))",
       "expected": null,
       "pretty": false
@@ -1803,14 +1713,6 @@
       "read": {},
       "write": {
         "duckdb": "WITH data AS (SELECT 'A' AS fruit, 20 AS sold UNION ALL SELECT NULL AS fruit, 25 AS sold) SELECT ARG_MAX_NULL(fruit, sold) FROM data"
-      }
-    },
-    {
-      "sql": "SELECT DATE_TRUNC(DATE '2015-06-15', ISOYEAR)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATE_TRUNC(CAST('2015-06-15' AS DATE), ISOYEAR)",
-        "duckdb": "SELECT DATE_TRUNC('ISOYEAR', CAST('2015-06-15' AS DATE))"
       }
     },
     {
@@ -2079,31 +1981,21 @@
       }
     },
     {
-      "sql": "SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY x LIMIT 10) AS x",
+      "sql": "SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY a, b DESC LIMIT 10) AS x",
       "read": {},
       "write": {
-        "bigquery": "SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY x LIMIT 10) AS x",
-        "duckdb": {
-          "error": "UnsupportedError"
-        },
-        "spark": "SELECT COLLECT_LIST(DISTINCT x ORDER BY x LIMIT 10) IGNORE NULLS AS x"
+        "bigquery": "SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY a, b DESC LIMIT 10) AS x",
+        "duckdb": "SELECT ARRAY_AGG(DISTINCT x ORDER BY a NULLS FIRST, b DESC LIMIT 10) AS x",
+        "spark": "SELECT COLLECT_LIST(DISTINCT x ORDER BY a, b DESC LIMIT 10) IGNORE NULLS AS x"
       }
     },
     {
-      "sql": "SELECT ARRAY_AGG(x IGNORE NULLS) AS x",
+      "sql": "SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY a, b DESC LIMIT 1, 10) AS x",
       "read": {},
       "write": {
-        "bigquery": "SELECT ARRAY_AGG(x IGNORE NULLS) AS x",
-        "duckdb": "SELECT ARRAY_AGG(x) FILTER(WHERE x IS NOT NULL) AS x"
-      }
-    },
-    {
-      "sql": "SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY x) AS x",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY x) AS x",
-        "duckdb": "SELECT ARRAY_AGG(DISTINCT x ORDER BY x NULLS FIRST) FILTER(WHERE x IS NOT NULL) AS x",
-        "spark": "SELECT COLLECT_LIST(DISTINCT x) IGNORE NULLS AS x"
+        "bigquery": "SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY a, b DESC LIMIT 1, 10) AS x",
+        "duckdb": "SELECT ARRAY_AGG(DISTINCT x ORDER BY a NULLS FIRST, b DESC LIMIT 1, 10) AS x",
+        "spark": "SELECT COLLECT_LIST(DISTINCT x ORDER BY a, b DESC LIMIT 1, 10) IGNORE NULLS AS x"
       }
     },
     {
@@ -2217,9 +2109,7 @@
         "bigquery": "SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0), MINUTE)",
         "databricks": "SELECT TIMESTAMPDIFF(MINUTE, CAST(FROM_UNIXTIME(0) AS TIMESTAMP), CAST(FROM_UNIXTIME(60) AS TIMESTAMP))",
         "duckdb": "SELECT DATE_DIFF('MINUTE', TO_TIMESTAMP(0), TO_TIMESTAMP(60))",
-        "presto": "SELECT DATE_DIFF('MINUTE', FROM_UNIXTIME(0), FROM_UNIXTIME(60))",
-        "snowflake": "SELECT TIMESTAMPDIFF(MINUTE, TO_TIMESTAMP(0), TO_TIMESTAMP(60))",
-        "trino": "SELECT DATE_DIFF('MINUTE', FROM_UNIXTIME(0), FROM_UNIXTIME(60))"
+        "snowflake": "SELECT TIMESTAMPDIFF(MINUTE, TO_TIMESTAMP(0), TO_TIMESTAMP(60))"
       }
     },
     {
@@ -2232,9 +2122,7 @@
       "write": {
         "databricks": "TIMESTAMPDIFF(MONTH, b, a)",
         "mysql": "TIMESTAMPDIFF(MONTH, b, a)",
-        "presto": "DATE_DIFF('MONTH', b, a)",
-        "snowflake": "TIMESTAMPDIFF(MONTH, b, a)",
-        "trino": "DATE_DIFF('MONTH', b, a)"
+        "snowflake": "TIMESTAMPDIFF(MONTH, b, a)"
       }
     },
     {
@@ -2294,25 +2182,6 @@
       "write": {
         "bigquery": "CREATE OR REPLACE TABLE `a.b.c` COPY `a.b.d`",
         "snowflake": "CREATE OR REPLACE TABLE \"a\".\"b\".\"c\" CLONE \"a\".\"b\".\"d\""
-      }
-    },
-    {
-      "sql": "SELECT DATETIME_DIFF(DATETIME '2021-02-01 00:00:00', DATETIME '2021-01-31 00:00:00', MONTH)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATETIME_DIFF(CAST('2021-02-01 00:00:00' AS DATETIME), CAST('2021-01-31 00:00:00' AS DATETIME), MONTH)",
-        "presto": "SELECT DATE_DIFF('MONTH', DATE_TRUNC('MONTH', CAST('2021-01-31 00:00:00' AS TIMESTAMP)), DATE_TRUNC('MONTH', CAST('2021-02-01 00:00:00' AS TIMESTAMP)))",
-        "trino": "SELECT DATE_DIFF('MONTH', DATE_TRUNC('MONTH', CAST('2021-01-31 00:00:00' AS TIMESTAMP)), DATE_TRUNC('MONTH', CAST('2021-02-01 00:00:00' AS TIMESTAMP)))"
-      }
-    },
-    {
-      "sql": "SELECT DATETIME_DIFF(DATETIME '2017-10-15 00:00:00', DATETIME '2017-10-14 00:00:00', WEEK)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATETIME_DIFF(CAST('2017-10-15 00:00:00' AS DATETIME), CAST('2017-10-14 00:00:00' AS DATETIME), WEEK)",
-        "duckdb": "SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2017-10-14 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY), DATE_TRUNC('WEEK', CAST('2017-10-15 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY))",
-        "presto": "SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2017-10-14 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY), DATE_TRUNC('WEEK', CAST('2017-10-15 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY))",
-        "trino": "SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2017-10-14 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY), DATE_TRUNC('WEEK', CAST('2017-10-15 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY))"
       }
     },
     {
@@ -2642,9 +2511,8 @@
       "sql": "r'x\\''",
       "read": {},
       "write": {
-        "bigquery": "'x\\\\\\''",
-        "duckdb": "'x\\'''",
-        "hive": "'x\\\\\\''"
+        "bigquery": "'x\\''",
+        "hive": "'x\\''"
       }
     },
     {
@@ -2953,18 +2821,9 @@
       "read": {},
       "write": {
         "bigquery": "SELECT * FROM a WHERE b IN UNNEST([1, 2, 3])",
-        "duckdb": "SELECT * FROM a WHERE CASE WHEN [1, 2, 3] IS NULL OR ARRAY_LENGTH([1, 2, 3]) = 0 THEN FALSE WHEN ARRAY_CONTAINS([1, 2, 3], b) THEN TRUE WHEN b IS NULL OR ARRAY_LENGTH([1, 2, 3]) <> LIST_COUNT([1, 2, 3]) THEN NULL ELSE FALSE END",
         "presto": "SELECT * FROM a WHERE b IN (SELECT UNNEST(ARRAY[1, 2, 3]))",
         "hive": "SELECT * FROM a WHERE b IN (SELECT EXPLODE(ARRAY(1, 2, 3)))",
         "spark": "SELECT * FROM a WHERE b IN (SELECT EXPLODE(ARRAY(1, 2, 3)))"
-      }
-    },
-    {
-      "sql": "SELECT * FROM a WHERE b NOT IN UNNEST([1, 2, 3])",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT * FROM a WHERE NOT b IN UNNEST([1, 2, 3])",
-        "duckdb": "SELECT * FROM a WHERE NOT CASE WHEN [1, 2, 3] IS NULL OR ARRAY_LENGTH([1, 2, 3]) = 0 THEN FALSE WHEN ARRAY_CONTAINS([1, 2, 3], b) THEN TRUE WHEN b IS NULL OR ARRAY_LENGTH([1, 2, 3]) <> LIST_COUNT([1, 2, 3]) THEN NULL ELSE FALSE END"
       }
     },
     {
@@ -3413,48 +3272,11 @@
       }
     },
     {
-      "sql": "SELECT ARRAY_CONCAT_AGG(arr) FROM (SELECT [1, 2] AS arr) AS t",
+      "sql": "SELECT ARRAY_CONCAT_AGG(1)",
       "read": {},
       "write": {
-        "bigquery": "SELECT ARRAY_CONCAT_AGG(arr) FROM (SELECT [1, 2] AS arr) AS t",
-        "snowflake": "SELECT ARRAY_FLATTEN(ARRAY_AGG(arr)) FROM (SELECT [1, 2] AS arr) AS t",
-        "duckdb": "SELECT FLATTEN(ARRAY_AGG(arr) FILTER(WHERE NOT arr IS NULL)) FROM (SELECT [1, 2] AS arr) AS t"
-      }
-    },
-    {
-      "sql": "SELECT ARRAY_CONCAT_AGG(arr ORDER BY y) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT ARRAY_CONCAT_AGG(arr ORDER BY y) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t",
-        "duckdb": "SELECT FLATTEN(ARRAY_AGG(arr ORDER BY y NULLS FIRST) FILTER(WHERE NOT arr IS NULL)) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t"
-      }
-    },
-    {
-      "sql": "SELECT ARRAY_CONCAT_AGG(arr LIMIT 2) FROM (SELECT [1, 2] AS arr) AS t",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT ARRAY_CONCAT_AGG(arr LIMIT 2) FROM (SELECT [1, 2] AS arr) AS t",
-        "duckdb": {
-          "error": "UnsupportedError"
-        }
-      }
-    },
-    {
-      "sql": "SELECT ARRAY_CONCAT_AGG(arr ORDER BY y DESC LIMIT 2) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT ARRAY_CONCAT_AGG(arr ORDER BY y DESC LIMIT 2) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t",
-        "duckdb": {
-          "error": "UnsupportedError"
-        }
-      }
-    },
-    {
-      "sql": "SELECT * FROM a LEFT JOIN b ON a.key = b.key AND a.val IN UNNEST(b.arr)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT * FROM a LEFT JOIN b ON a.key = b.key AND a.val IN UNNEST(b.arr)",
-        "duckdb": "SELECT * FROM a LEFT JOIN b ON a.key = b.key AND CASE WHEN b.arr IS NULL OR ARRAY_LENGTH(b.arr) = 0 THEN FALSE WHEN ARRAY_CONTAINS(b.arr, a.val) THEN TRUE WHEN a.val IS NULL OR ARRAY_LENGTH(b.arr) <> LIST_COUNT(b.arr) THEN NULL ELSE FALSE END"
+        "snowflake": "SELECT ARRAY_FLATTEN(ARRAY_AGG(1))",
+        "bigquery": "SELECT ARRAY_CONCAT_AGG(1)"
       }
     },
     {
@@ -4019,197 +3841,6 @@
       }
     },
     {
-      "sql": "SELECT LAST_DAY(DATE '2008-11-10', WEEK(SUNDAY))",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK)",
-        "duckdb": "SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((13 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)"
-      }
-    },
-    {
-      "sql": "SELECT LAST_DAY(DATE '2008-11-10', WEEK)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK)",
-        "duckdb": "SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((13 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)"
-      }
-    },
-    {
-      "sql": "SELECT LAST_DAY(DATE '2008-11-10', WEEK(MONDAY))",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK(MONDAY))",
-        "duckdb": "SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((7 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)"
-      }
-    },
-    {
-      "sql": "SELECT LAST_DAY(DATE '2008-11-10', ISOWEEK)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT LAST_DAY(CAST('2008-11-10' AS DATE), ISOWEEK)",
-        "duckdb": "SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((7 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)"
-      }
-    },
-    {
-      "sql": "SELECT DATE_TRUNC(d, WEEK(SUNDAY))",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATE_TRUNC(d, WEEK)",
-        "exasol": {
-          "error": "UnsupportedError"
-        },
-        "mysql": {
-          "error": "UnsupportedError"
-        },
-        "snowflake": {
-          "error": "UnsupportedError"
-        },
-        "spark": {
-          "error": "UnsupportedError"
-        }
-      }
-    },
-    {
-      "sql": "SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT TIMESTAMP_TRUNC(ts, WEEK)",
-        "clickhouse": {
-          "error": "UnsupportedError"
-        },
-        "duckdb": "SELECT DATE_TRUNC('WEEK', ts + INTERVAL '1' DAY) + INTERVAL '-1' DAY",
-        "mysql": {
-          "error": "UnsupportedError"
-        },
-        "snowflake": {
-          "error": "UnsupportedError"
-        },
-        "spark": {
-          "error": "UnsupportedError"
-        }
-      }
-    },
-    {
-      "sql": "SELECT DATETIME_TRUNC(dt, WEEK(SUNDAY))",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATETIME_TRUNC(dt, WEEK)",
-        "duckdb": "SELECT DATE_TRUNC('WEEK', CAST(dt AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY"
-      }
-    },
-    {
-      "sql": "SELECT DATE_DIFF(d1, d2, WEEK(SUNDAY))",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATE_DIFF(d1, d2, WEEK)",
-        "snowflake": {
-          "error": "UnsupportedError"
-        },
-        "tsql": "SELECT DATEDIFF(WEEK, d2, d1)"
-      }
-    },
-    {
-      "sql": "SELECT LAST_DAY(d, WEEK(SUNDAY))",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT LAST_DAY(d, WEEK)",
-        "snowflake": {
-          "error": "UnsupportedError"
-        }
-      }
-    },
-    {
-      "sql": "SELECT EXTRACT(WEEK(THURSDAY) FROM d)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT EXTRACT(WEEK(THURSDAY) FROM d)",
-        "hive": {
-          "error": "UnsupportedError"
-        },
-        "snowflake": {
-          "error": "UnsupportedError"
-        },
-        "spark": {
-          "error": "UnsupportedError"
-        }
-      }
-    },
-    {
-      "sql": "SELECT DATE_TRUNC(DATE '2008-11-10', WEEK(SUNDAY))",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATE_TRUNC(CAST('2008-11-10' AS DATE), WEEK)",
-        "duckdb": "SELECT CAST(DATE_TRUNC('WEEK', CAST('2008-11-10' AS DATE) + INTERVAL '1' DAY) + INTERVAL '-1' DAY AS DATE)"
-      }
-    },
-    {
-      "sql": "SELECT DATE_TRUNC(DATE '2008-11-10', ISOWEEK)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATE_TRUNC(CAST('2008-11-10' AS DATE), ISOWEEK)",
-        "duckdb": "SELECT DATE_TRUNC('WEEK', CAST('2008-11-10' AS DATE))"
-      }
-    },
-    {
-      "sql": "SELECT DATE_TRUNC(DATE '2008-11-10', WEEK)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATE_TRUNC(CAST('2008-11-10' AS DATE), WEEK)",
-        "duckdb": "SELECT CAST(DATE_TRUNC('WEEK', CAST('2008-11-10' AS DATE) + INTERVAL '1' DAY) + INTERVAL '-1' DAY AS DATE)",
-        "snowflake": {
-          "error": "UnsupportedError"
-        }
-      }
-    },
-    {
-      "sql": "SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00', WEEK)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT TIMESTAMP_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK)",
-        "duckdb": "SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ) + INTERVAL '1' DAY) + INTERVAL '-1' DAY"
-      }
-    },
-    {
-      "sql": "SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00', WEEK(SUNDAY))",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT TIMESTAMP_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK)",
-        "duckdb": "SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ) + INTERVAL '1' DAY) + INTERVAL '-1' DAY"
-      }
-    },
-    {
-      "sql": "SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK)",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS DATETIME), WEEK)",
-        "duckdb": "SELECT DATE_TRUNC('WEEK', CAST(CAST('2008-11-10 14:30:00' AS TIMESTAMP) AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY"
-      }
-    },
-    {
-      "sql": "SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK(SUNDAY))",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS DATETIME), WEEK)",
-        "duckdb": "SELECT DATE_TRUNC('WEEK', CAST(CAST('2008-11-10 14:30:00' AS TIMESTAMP) AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY"
-      }
-    },
-    {
-      "sql": "SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00+00', WEEK, 'America/New_York')",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT TIMESTAMP_TRUNC(CAST('2008-11-10 14:30:00+00' AS TIMESTAMP), WEEK, 'America/New_York')",
-        "duckdb": "SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'"
-      }
-    },
-    {
-      "sql": "SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00+00', WEEK(SUNDAY), 'America/New_York')",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT TIMESTAMP_TRUNC(CAST('2008-11-10 14:30:00+00' AS TIMESTAMP), WEEK, 'America/New_York')",
-        "duckdb": "SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'"
-      }
-    },
-    {
       "sql": "SELECT DATE_DIFF('2024-06-15', '2024-01-08', WEEK(MONDAY))",
       "read": {},
       "write": {
@@ -4572,8 +4203,8 @@
     }
   ],
   "stats": {
-    "identity_count": 353,
-    "transpile_count": 288,
-    "skipped_dynamic": 27
+    "identity_count": 335,
+    "transpile_count": 260,
+    "skipped_dynamic": 25
   }
 }

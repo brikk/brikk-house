@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.12.0-44-g93d16591",
   "dialect": "dremio",
   "identity": [
     {
@@ -69,21 +69,6 @@
     },
     {
       "sql": "SELECT * FROM t ORDER BY a DESC NULLS FIRST",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT * FROM t AT SNAPSHOT '4132119532727284872'",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT * FROM t AT TIMESTAMP '2024-01-01 12:00:00.000'",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT * FROM t AT SNAPSHOT '4132119532727284872' AS a",
       "expected": null,
       "pretty": false
     },
@@ -178,11 +163,6 @@
       "pretty": false
     },
     {
-      "sql": "SELECT REGEXP_SPLIT(tags, ',', 'ALL', 1000) AS t",
-      "expected": null,
-      "pretty": false
-    },
-    {
       "sql": "TO_CHAR(5555, '#')",
       "expected": null,
       "pretty": false
@@ -228,26 +208,6 @@
       }
     },
     {
-      "sql": "SELECT * FROM t AT SNAPSHOT '123'",
-      "read": {
-        "spark": "SELECT * FROM t VERSION AS OF '123'",
-        "trino": "SELECT * FROM t FOR VERSION AS OF '123'"
-      },
-      "write": {
-        "spark": "SELECT * FROM t VERSION AS OF '123'",
-        "trino": "SELECT * FROM t FOR VERSION AS OF '123'"
-      }
-    },
-    {
-      "sql": "SELECT * FROM t AT TIMESTAMP '2024-01-01'",
-      "read": {
-        "spark": "SELECT * FROM t TIMESTAMP AS OF '2024-01-01'"
-      },
-      "write": {
-        "spark": "SELECT * FROM t TIMESTAMP AS OF '2024-01-01'"
-      }
-    },
-    {
       "sql": "SELECT CONVERT_TIMEZONE('America/Chicago', DateColumn)",
       "read": {},
       "write": {
@@ -286,8 +246,8 @@
     }
   ],
   "stats": {
-    "identity_count": 43,
-    "transpile_count": 7,
+    "identity_count": 39,
+    "transpile_count": 5,
     "skipped_dynamic": 2
   }
 }

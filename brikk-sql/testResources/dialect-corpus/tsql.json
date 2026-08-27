@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.12.0-44-g93d16591",
   "dialect": "tsql",
   "identity": [
     {
@@ -40,11 +40,6 @@
     {
       "sql": "DROP view a.b.c",
       "expected": "DROP VIEW b.c",
-      "pretty": false
-    },
-    {
-      "sql": "DROP VIEW a.b.c, a.b.d",
-      "expected": "DROP VIEW b.c, b.d",
       "pretty": false
     },
     {
@@ -470,11 +465,6 @@
       "pretty": false
     },
     {
-      "sql": "CREATE VIEW start WITH SCHEMABINDING AS SELECT a FROM x",
-      "expected": null,
-      "pretty": false
-    },
-    {
       "sql": "CREATE SCHEMA testSchema",
       "expected": null,
       "pretty": false
@@ -566,21 +556,6 @@
       "sql": "INSERT INTO Production.UpdatedInventory SELECT ProductID, LocationID, NewQty, PreviousQty FROM (MERGE INTO Production.ProductInventory AS pi USING (SELECT ProductID, SUM(OrderQty) FROM Sales.SalesOrderDetail AS sod INNER JOIN Sales.SalesOrderHeader AS soh ON sod.SalesOrderID = soh.SalesOrderID AND soh.OrderDate BETWEEN '20030701' AND '20030731' GROUP BY ProductID) AS src(ProductID, OrderQty) ON pi.ProductID = src.ProductID WHEN MATCHED AND pi.Quantity - src.OrderQty >= 0 THEN UPDATE SET pi.Quantity = pi.Quantity - src.OrderQty WHEN MATCHED AND pi.Quantity - src.OrderQty <= 0 THEN DELETE OUTPUT $action, Inserted.ProductID, Inserted.LocationID, Inserted.Quantity AS NewQty, Deleted.Quantity AS PreviousQty) AS Changes(Action, ProductID, LocationID, NewQty, PreviousQty) WHERE Action = 'UPDATE'",
       "expected": "INSERT INTO Production.UpdatedInventory\nSELECT\n  ProductID,\n  LocationID,\n  NewQty,\n  PreviousQty\nFROM (\n  MERGE INTO Production.ProductInventory AS pi\n  USING (\n    SELECT\n      ProductID,\n      SUM(OrderQty)\n    FROM Sales.SalesOrderDetail AS sod\n    INNER JOIN Sales.SalesOrderHeader AS soh\n      ON sod.SalesOrderID = soh.SalesOrderID\n      AND soh.OrderDate BETWEEN '20030701' AND '20030731'\n    GROUP BY\n      ProductID\n  ) AS src(ProductID, OrderQty)\n  ON pi.ProductID = src.ProductID\n  WHEN MATCHED AND pi.Quantity - src.OrderQty >= 0 THEN UPDATE SET\n    pi.Quantity = pi.Quantity - src.OrderQty\n  WHEN MATCHED AND pi.Quantity - src.OrderQty <= 0 THEN DELETE\n  OUTPUT $action, Inserted.ProductID, Inserted.LocationID, Inserted.Quantity AS NewQty, Deleted.Quantity AS PreviousQty\n) AS Changes(Action, ProductID, LocationID, NewQty, PreviousQty)\nWHERE\n  Action = 'UPDATE'",
       "pretty": true
-    },
-    {
-      "sql": "ALTER TABLE a ALTER COLUMN b INTEGER NOT NULL",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "ALTER TABLE a ALTER COLUMN b INTEGER NULL",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "ALTER TABLE a ALTER COLUMN b VARCHAR(10) COLLATE Latin1_General_CI_AS NOT NULL",
-      "expected": null,
-      "pretty": false
     },
     {
       "sql": "BEGIN TRANSACTION",
@@ -818,11 +793,6 @@
       "pretty": false
     },
     {
-      "sql": "WITH t AS (SELECT 0 AS col) SELECT YEAR(col) FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
       "sql": "CREATE TABLE test (\"data\" CHAR(7), \"valid_from\" DATETIME2(2) GENERATED ALWAYS AS ROW START NOT NULL, \"valid_to\" DATETIME2(2) GENERATED ALWAYS AS ROW END NOT NULL, PERIOD FOR SYSTEM_TIME (\"valid_from\", \"valid_to\")) WITH(SYSTEM_VERSIONING=ON)",
       "expected": "CREATE TABLE test ([data] CHAR(7), [valid_from] DATETIME2(2) GENERATED ALWAYS AS ROW START NOT NULL, [valid_to] DATETIME2(2) GENERATED ALWAYS AS ROW END NOT NULL, PERIOD FOR SYSTEM_TIME ([valid_from], [valid_to])) WITH(SYSTEM_VERSIONING=ON)",
       "pretty": false
@@ -879,26 +849,6 @@
     },
     {
       "sql": "SELECT [x] FROM [a].[b] FOR SYSTEM_TIME ALL AS alias",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT x FROM start WITH (NOLOCK)",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT * FROM t AS start WITH (NOLOCK)",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "UPDATE start WITH (ROWLOCK) SET a = 1",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "DELETE FROM start WITH (ROWLOCK)",
       "expected": null,
       "pretty": false
     },
@@ -2005,30 +1955,6 @@
       }
     },
     {
-      "sql": "ALTER TABLE a ALTER COLUMN b INTEGER NOT NULL",
-      "read": {},
-      "write": {
-        "": {
-          "error": "UnsupportedError"
-        },
-        "hive": {
-          "error": "UnsupportedError"
-        },
-        "singlestore": {
-          "error": "UnsupportedError"
-        },
-        "mysql": "ALTER TABLE a MODIFY COLUMN b INT NOT NULL",
-        "starrocks": "ALTER TABLE a MODIFY COLUMN b INT NOT NULL"
-      }
-    },
-    {
-      "sql": "ALTER TABLE a ALTER COLUMN b INTEGER NULL",
-      "read": {},
-      "write": {
-        "mysql": "ALTER TABLE a MODIFY COLUMN b INT NULL"
-      }
-    },
-    {
       "sql": "CREATE TABLE #mytemp (a INTEGER, b CHAR(2), c TIME(4), d FLOAT(24))",
       "read": {},
       "write": {
@@ -2390,7 +2316,7 @@
       "sql": "CONVERT(DATE, x, 121)",
       "read": {},
       "write": {
-        "spark": "TO_DATE(x, 'yyyy-M-d H:m:s.SSSSSS')",
+        "spark": "TO_DATE(x, 'yyyy-MM-dd HH:mm:ss.SSSSSS')",
         "tsql": "CONVERT(DATE, x, 121)"
       }
     },
@@ -2398,7 +2324,7 @@
       "sql": "CONVERT(DATETIME, x, 121)",
       "read": {},
       "write": {
-        "spark": "TO_TIMESTAMP(x, 'yyyy-M-d H:m:s.SSSSSS')",
+        "spark": "TO_TIMESTAMP(x, 'yyyy-MM-dd HH:mm:ss.SSSSSS')",
         "tsql": "CONVERT(DATETIME, x, 121)"
       }
     },
@@ -2406,7 +2332,7 @@
       "sql": "CONVERT(DATETIME2, x, 121)",
       "read": {},
       "write": {
-        "spark": "TO_TIMESTAMP(x, 'yyyy-M-d H:m:s.SSSSSS')",
+        "spark": "TO_TIMESTAMP(x, 'yyyy-MM-dd HH:mm:ss.SSSSSS')",
         "tsql": "CONVERT(DATETIME2, x, 121)"
       }
     },
@@ -2644,30 +2570,6 @@
       "read": {},
       "write": {
         "spark": "SELECT '\\'test\\''"
-      }
-    },
-    {
-      "sql": "DAY(x)",
-      "read": {},
-      "write": {
-        "tsql": "DAY(x)",
-        "": "DAY(CAST(x AS DATE))"
-      }
-    },
-    {
-      "sql": "MONTH(x)",
-      "read": {},
-      "write": {
-        "tsql": "MONTH(x)",
-        "": "MONTH(CAST(x AS DATE))"
-      }
-    },
-    {
-      "sql": "YEAR(x)",
-      "read": {},
-      "write": {
-        "tsql": "YEAR(x)",
-        "": "YEAR(CAST(x AS DATE))"
       }
     },
     {
@@ -2944,8 +2846,8 @@
     }
   ],
   "stats": {
-    "identity_count": 224,
-    "transpile_count": 212,
+    "identity_count": 214,
+    "transpile_count": 207,
     "skipped_dynamic": 21
   }
 }

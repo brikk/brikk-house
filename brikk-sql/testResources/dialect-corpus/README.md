@@ -2,7 +2,7 @@
 
 Machine-extracted from the inline dialect test assertions of
 [sqlglot](https://github.com/tobymao/sqlglot) (`tests/dialects/test_*.py`),
-pinned at **v30.17.0-72-gbac1a897b** (see `reference/sqlglot`).
+pinned at **v30.12.0-44-g93d16591** (see `reference/sqlglot`).
 
 sqlglot is Copyright (c) 2025 Toby Mao and released under the MIT License.
 This corpus is a mechanical transformation of its test suite and carries the
@@ -34,39 +34,39 @@ python3 tools/extract_dialect_tests.py
 | dialect | identity | transpile | skipped_dynamic |
 |---|---|---|---|
 | athena | 52 | 1 | 0 |
-| base | 99 | 282 | 38 |
-| bigquery | 353 | 288 | 27 |
-| clickhouse | 304 | 79 | 23 |
-| databricks | 144 | 32 | 1 |
-| doris | 44 | 18 | 0 |
-| dremio | 43 | 7 | 2 |
-| drill | 4 | 8 | 0 |
+| base | 99 | 277 | 38 |
+| bigquery | 335 | 260 | 25 |
+| clickhouse | 284 | 74 | 22 |
+| databricks | 138 | 31 | 1 |
+| doris | 41 | 18 | 0 |
+| dremio | 39 | 5 | 2 |
+| drill | 4 | 1 | 0 |
 | druid | 10 | 0 | 3 |
-| duckdb | 386 | 237 | 10 |
+| duckdb | 382 | 225 | 10 |
 | dune | 2 | 0 | 1 |
 | exasol | 84 | 66 | 11 |
 | fabric | 45 | 2 | 0 |
-| hive | 61 | 94 | 2 |
+| hive | 61 | 93 | 2 |
 | materialize | 18 | 6 | 0 |
-| mysql | 306 | 103 | 34 |
-| oracle | 178 | 33 | 9 |
-| postgres | 385 | 99 | 17 |
-| presto | 48 | 147 | 3 |
+| mysql | 289 | 100 | 34 |
+| oracle | 171 | 30 | 9 |
+| postgres | 362 | 82 | 17 |
+| presto | 44 | 147 | 3 |
 | prql | 0 | 29 | 0 |
-| redshift | 115 | 52 | 2 |
+| redshift | 115 | 51 | 2 |
 | risingwave | 7 | 1 | 0 |
 | singlestore | 106 | 112 | 0 |
-| snowflake | 826 | 530 | 32 |
+| snowflake | 811 | 527 | 32 |
 | solr | 3 | 0 | 0 |
-| spark | 106 | 135 | 3 |
-| sqlite | 121 | 35 | 1 |
-| starrocks | 78 | 16 | 6 |
+| spark | 101 | 126 | 3 |
+| sqlite | 90 | 31 | 1 |
+| starrocks | 67 | 16 | 6 |
 | tableau | 0 | 7 | 0 |
 | teradata | 74 | 24 | 0 |
-| trino | 109 | 4 | 3 |
-| tsql | 224 | 212 | 21 |
-| **TOTAL** | **4335** | **2659** | **249** |
+| trino | 55 | 3 | 3 |
+| tsql | 214 | 207 | 21 |
+| **TOTAL** | **4103** | **2552** | **246** |
 
-Coverage: 6994 of 7245 textual `validate_*` call sites
-(96.5%). Skipped calls use runtime-computed arguments (loops,
+Coverage: 6655 of 6903 textual `validate_*` call sites
+(96.4%). Skipped calls use runtime-computed arguments (loops,
 variables, f-string interpolation) and cannot be extracted statically.

@@ -62,6 +62,10 @@ open class Dialect {
     // sqlglot: Dialect.NORMALIZATION_STRATEGY
     open val normalizationStrategy: NormalizationStrategy get() = NormalizationStrategy.LOWERCASE
 
+    // sqlglot: Dialect.ASCII_ONLY_NORMALIZATION — when true, identifier case-folding only
+    // touches ASCII A-Z/a-z (non-ASCII letters are left as-is).
+    open val asciiOnlyNormalization: Boolean get() = false
+
     // sqlglot: Dialect.EXPRESSION_METADATA (type inference & validation rules; see
     // GeneratedTypingMetadata — doris shares mysql, trino shares presto)
     open val expressionMetadata: Map<kotlin.reflect.KClass<out Expression>, TypingSpec>
@@ -188,18 +192,29 @@ open class Dialect {
                 )
         ) {
             val name = expression.thisArg as String
-            val normalized =
-                if (
-                    normalizationStrategy == NormalizationStrategy.UPPERCASE ||
+            val upper =
+                normalizationStrategy == NormalizationStrategy.UPPERCASE ||
                     normalizationStrategy == NormalizationStrategy.CASE_INSENSITIVE_UPPERCASE
-                ) {
-                    name.uppercase()
-                } else {
-                    name.lowercase()
-                }
+            val normalized = when {
+                upper && asciiOnlyNormalization -> asciiTranslate(name, toUpper = true)
+                upper -> name.uppercase()
+                asciiOnlyNormalization -> asciiTranslate(name, toUpper = false)
+                else -> name.lowercase()
+            }
             expression.set("this", normalized)
         }
         return expression
+    }
+
+    // sqlglot: ASCII_LOWER / ASCII_UPPER translation tables (ASCII letters only).
+    private fun asciiTranslate(s: String, toUpper: Boolean): String = buildString(s.length) {
+        for (c in s) append(
+            when {
+                toUpper && c in 'a'..'z' -> c - 32
+                !toUpper && c in 'A'..'Z' -> c + 32
+                else -> c
+            }
+        )
     }
 
     /**

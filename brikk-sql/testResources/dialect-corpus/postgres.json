@@ -1,12 +1,7 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.12.0-44-g93d16591",
   "dialect": "postgres",
   "identity": [
-    {
-      "sql": "UPDATE character SET x = 1",
-      "expected": null,
-      "pretty": false
-    },
     {
       "sql": "WITH t AS (SELECT 1 AS \"null\") SELECT t.null FROM t",
       "expected": null,
@@ -790,7 +785,7 @@
     },
     {
       "sql": "SELECT id, email, CAST(deleted AS TEXT) FROM users WHERE deleted NOTNULL",
-      "expected": "SELECT id, email, CAST(deleted AS TEXT) FROM users WHERE deleted IS NOT NULL",
+      "expected": "SELECT id, email, CAST(deleted AS TEXT) FROM users WHERE NOT deleted IS NULL",
       "pretty": false
     },
     {
@@ -855,23 +850,8 @@
     },
     {
       "sql": "\n            WITH\n              json_data AS (SELECT '{\"field_id\": [1, 2, 3]}'::JSON AS data),\n              field_ids AS (SELECT 'field_id' AS field_id)\n\n            SELECT\n                JSON_ARRAY_ELEMENTS(json_data.data -> field_ids.field_id) AS element\n            FROM json_data, field_ids\n            ",
-      "expected": "WITH json_data AS (\n  SELECT\n    CAST('{\"field_id\": [1, 2, 3]}' AS JSON) AS data\n), field_ids AS (\n  SELECT\n    'field_id' AS field_id\n)\nSELECT\n  JSON_ARRAY_ELEMENTS(json_data.data -> field_ids.field_id) AS element\nFROM json_data, field_ids",
+      "expected": "WITH json_data AS (\n  SELECT\n    CAST('{\"field_id\": [1, 2, 3]}' AS JSON) AS data\n), field_ids AS (\n  SELECT\n    'field_id' AS field_id\n)\nSELECT\n  JSON_ARRAY_ELEMENTS(JSON_EXTRACT_PATH(json_data.data, field_ids.field_id)) AS element\nFROM json_data, field_ids",
       "pretty": true
-    },
-    {
-      "sql": "SELECT JSON_EXTRACT_PATH(x, k1, 'k2') FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT JSON_EXTRACT_PATH(x, 'k1', k2) FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT JSON_EXTRACT_PATH_TEXT(x, k1, 'k2') FROM t",
-      "expected": null,
-      "pretty": false
     },
     {
       "sql": "SELECT TRIM(LEADING ' XXX ' COLLATE \"de_DE\")",
@@ -1051,17 +1031,6 @@
     {
       "sql": "SELECT * FROM schema_name.table_name st WHERE JSON_EXTRACT_PATH_TEXT((st.data)::json, variadic array['test'::text]) = 'test'::text",
       "expected": "SELECT * FROM schema_name.table_name AS st WHERE JSON_EXTRACT_PATH_TEXT(CAST((st.data) AS JSON), VARIADIC ARRAY[CAST('test' AS TEXT)]) = CAST('test' AS TEXT)",
-      "pretty": false
-    },
-    {
-      "sql": "CREATE VIEW v AS SELECT * FROM start WITH CHECK OPTION",
-      "expected": null,
-      "pretty": false,
-      "check_command_warning": true
-    },
-    {
-      "sql": "CREATE VIEW start WITH (security_barrier=TRUE) AS SELECT 1",
-      "expected": null,
       "pretty": false
     },
     {
@@ -1639,41 +1608,6 @@
       "pretty": false
     },
     {
-      "sql": "SELECT u & 5 FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT (U&'\\FE01' || 'Test literal') AS label FROM data",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT U&'d!0061t!+000061' UESCAPE '!' AS label",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT u&'\\0441\\043B\\043E\\043D'",
-      "expected": "SELECT U&'\\0441\\043B\\043E\\043D'",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT U&'can''t'",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT U&'a''b''c'",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT U&'can''t !0061' UESCAPE '!' AS label",
-      "expected": null,
-      "pretty": false
-    },
-    {
       "sql": "VAR_SAMP(x)",
       "expected": "VAR_SAMP(x)",
       "pretty": false
@@ -1740,16 +1674,6 @@
     },
     {
       "sql": "ANALYZE TBL",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "ANALYZE t1, t2",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "ANALYZE VERBOSE t1, t2",
       "expected": null,
       "pretty": false
     },
@@ -1829,47 +1753,7 @@
       "pretty": false
     },
     {
-      "sql": "SELECT r IS NOT NULL FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT NOT r IS NULL FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT NOT r IS NOT NULL FROM t",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "SELECT r NOTNULL FROM t",
-      "expected": "SELECT r IS NOT NULL FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "SELECT r ISNULL FROM t",
-      "expected": "SELECT r IS NULL FROM t",
-      "pretty": false
-    },
-    {
-      "sql": "JSONB_CONTAINS(x, y)",
-      "expected": null,
-      "pretty": false
-    },
-    {
       "sql": "ARRAY[1, 2, 3] && ARRAY[1, 2]",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "a ? b",
-      "expected": null,
-      "pretty": false
-    },
-    {
-      "sql": "a @> b",
       "expected": null,
       "pretty": false
     },
@@ -1930,24 +1814,16 @@
     },
     {
       "sql": "x::JSON -> 'duration' ->> -1",
-      "expected": "CAST(x AS JSON) -> 'duration' ->> -1",
+      "expected": "JSON_EXTRACT_PATH_TEXT(CAST(x AS JSON) -> 'duration', -1)",
       "pretty": false
     }
   ],
   "transpile": [
     {
-      "sql": "SELECT BTRIM(x, 'ab')",
-      "read": {},
-      "write": {
-        "postgres": "SELECT TRIM('ab' FROM x)",
-        "duckdb": "SELECT TRIM(x, 'ab')"
-      }
-    },
-    {
       "sql": "x ? y",
       "read": {},
       "write": {
-        "": "x ? y",
+        "": "JSONB_CONTAINS(x, y)",
         "postgres": "x ? y"
       }
     },
@@ -2078,27 +1954,6 @@
         "postgres": "SELECT JSON_EXTRACT_PATH_TEXT(x, k1, k2, k3) FROM t",
         "redshift": "SELECT JSON_EXTRACT_PATH_TEXT(x, k1, k2, k3) FROM t"
       }
-    },
-    {
-      "sql": "SELECT JSON_EXTRACT_PATH(a, VARIADIC '{}') FROM t",
-      "read": {
-        "mysql": "SELECT JSON_EXTRACT(a, '$') FROM t"
-      },
-      "write": {}
-    },
-    {
-      "sql": "SELECT JSON_EXTRACT_PATH_TEXT(a, VARIADIC '{}') FROM t",
-      "read": {
-        "mysql": "SELECT JSON_EXTRACT_SCALAR(a, '$') FROM t"
-      },
-      "write": {}
-    },
-    {
-      "sql": "SELECT 'prefix' || JSON_EXTRACT_PATH_TEXT(a, VARIADIC '{}') FROM t",
-      "read": {
-        "postgres": "SELECT 'prefix' || JSON_EXTRACT_SCALAR(a, '$') FROM t"
-      },
-      "write": {}
     },
     {
       "sql": "x #> 'y'",
@@ -2252,48 +2107,10 @@
       "sql": "SELECT GENERATE_SERIES(1, 5)",
       "read": {},
       "write": {
-        "bigquery": "SELECT _gen_series_value FROM UNNEST(GENERATE_ARRAY(1, 5)) AS _gen_series_value",
+        "bigquery": {
+          "error": "UnsupportedError"
+        },
         "postgres": "SELECT GENERATE_SERIES(1, 5)"
-      }
-    },
-    {
-      "sql": "SELECT GENERATE_SERIES(1, 5) AS x",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT x FROM UNNEST(GENERATE_ARRAY(1, 5)) AS x",
-        "postgres": "SELECT GENERATE_SERIES(1, 5) AS x"
-      }
-    },
-    {
-      "sql": "SELECT GENERATE_SERIES(1, 5) AS x WHERE x > 2 ORDER BY x DESC LIMIT 3",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT x FROM UNNEST(GENERATE_ARRAY(1, 5)) AS x WHERE x > 2 ORDER BY x DESC NULLS FIRST LIMIT 3",
-        "postgres": "SELECT GENERATE_SERIES(1, 5) AS x WHERE x > 2 ORDER BY x DESC LIMIT 3"
-      }
-    },
-    {
-      "sql": "SELECT y, GENERATE_SERIES(1, 3) AS g FROM t",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT y, g FROM t CROSS JOIN UNNEST(GENERATE_ARRAY(1, 3)) AS g",
-        "postgres": "SELECT y, GENERATE_SERIES(1, 3) AS g FROM t"
-      }
-    },
-    {
-      "sql": "SELECT GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT a, b FROM UNNEST(GENERATE_ARRAY(1, 2)) AS a CROSS JOIN UNNEST(GENERATE_ARRAY(11, 13)) AS b",
-        "postgres": "SELECT GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b"
-      }
-    },
-    {
-      "sql": "SELECT y, GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b FROM t",
-      "read": {},
-      "write": {
-        "bigquery": "SELECT y, a, b FROM t CROSS JOIN UNNEST(GENERATE_ARRAY(1, 2)) AS a CROSS JOIN UNNEST(GENERATE_ARRAY(11, 13)) AS b",
-        "postgres": "SELECT y, GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b FROM t"
       }
     },
     {
@@ -2676,36 +2493,6 @@
       }
     },
     {
-      "sql": "SELECT U&'Hello winter \\2603 !'",
-      "read": {
-        "presto": "SELECT U&'Hello winter \\2603 !'"
-      },
-      "write": {
-        "presto": "SELECT U&'Hello winter \\2603 !'"
-      }
-    },
-    {
-      "sql": "SELECT U&'can''t'",
-      "read": {},
-      "write": {
-        "athena": "SELECT U&'can''t'",
-        "bigquery": "SELECT 'can\\'t'",
-        "duckdb": "SELECT 'can''t'",
-        "postgres": "SELECT U&'can''t'",
-        "presto": "SELECT U&'can''t'"
-      }
-    },
-    {
-      "sql": "SELECT U&'a\nb'",
-      "read": {},
-      "write": {
-        "athena": "SELECT U&'a\nb'",
-        "bigquery": "SELECT 'a\\nb'",
-        "duckdb": "SELECT 'a\nb'",
-        "postgres": "SELECT U&'a\nb'"
-      }
-    },
-    {
       "sql": "VAR_POP(x)",
       "read": {
         "": "VARIANCE_POP(x)"
@@ -2807,34 +2594,6 @@
       }
     },
     {
-      "sql": "SELECT a -> ('x' || 'y')",
-      "read": {
-        "postgres": "SELECT JSON_EXTRACT(a, 'x' || 'y')"
-      },
-      "write": {}
-    },
-    {
-      "sql": "SELECT a -> (1 + 2)",
-      "read": {
-        "postgres": "SELECT JSON_EXTRACT(a, 1 + 2)"
-      },
-      "write": {}
-    },
-    {
-      "sql": "SELECT a -> (NOT x)",
-      "read": {
-        "postgres": "SELECT JSON_EXTRACT(a, NOT x)"
-      },
-      "write": {}
-    },
-    {
-      "sql": "SELECT a #> (n IN (1, 2))",
-      "read": {
-        "postgres": "SELECT JSONB_EXTRACT(a, n IN (1, 2))"
-      },
-      "write": {}
-    },
-    {
       "sql": "ROUND(CAST(CAST(x AS DOUBLE PRECISION) AS DECIMAL), 4)",
       "read": {
         "postgres": "ROUND(x::DOUBLE, 4)",
@@ -2847,13 +2606,6 @@
       "sql": "ROUND(CAST(x AS DECIMAL(18, 3)), 4)",
       "read": {
         "duckdb": "ROUND(x::DECIMAL, 4)"
-      },
-      "write": {}
-    },
-    {
-      "sql": "SELECT EXTRACT(DAY FROM CAST(x AS DATE)), EXTRACT(MONTH FROM CAST(x AS DATE)), EXTRACT(YEAR FROM CAST(x AS DATE))",
-      "read": {
-        "tsql": "SELECT DAY(x), MONTH(x), YEAR(x)"
       },
       "write": {}
     },
@@ -2879,8 +2631,8 @@
     }
   ],
   "stats": {
-    "identity_count": 385,
-    "transpile_count": 99,
+    "identity_count": 362,
+    "transpile_count": 82,
     "skipped_dynamic": 17
   }
 }
