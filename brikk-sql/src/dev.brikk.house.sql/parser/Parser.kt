@@ -6568,7 +6568,7 @@ open class Parser(
     // -----------------------------------------------------------------------
 
     // sqlglot: Parser._parse_property
-    fun parseProperty(): kotlin.Any? {
+    open fun parseProperty(): kotlin.Any? {
         if (matchTexts(propertyParsers.keys)) {
             return propertyParsers.getValue(prevToken.text.uppercase())(this, PropertyKwargs())
         }

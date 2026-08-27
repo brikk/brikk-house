@@ -559,8 +559,11 @@ object BaseParserTables {
                 )
             },
             TokenType.PLACEHOLDER to { parser, this_, key ->
+                // sqlglot #8156: `?` builds JSONBContainsTopKey (was JSONBContains).
                 parser.expression(
-                    dev.brikk.house.sql.ast.JSONBContains(args("this" to this_, "expression" to key))
+                    dev.brikk.house.sql.ast.JSONBContainsTopKey(
+                        args("this" to this_, "expression" to key)
+                    )
                 )
             },
         )

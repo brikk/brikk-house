@@ -326,9 +326,17 @@ open class BigqueryParser(
     // sqlglot: BigQueryParser.PROPERTY_PARSERS
     override val propertyParsers: Map<String, (Parser, Parser.PropertyKwargs) -> kotlin.Any?>
         get() = super.propertyParsers + mapOf<String, (Parser, Parser.PropertyKwargs) -> kotlin.Any?>(
-            "NOT DETERMINISTIC" to { _, _ -> StabilityProperty(args("this" to Literal.string("VOLATILE"))) },
             "OPTIONS" to { p, _ -> p.parseWithProperty() },
         )
+
+    // sqlglot #81c19435a: `NOT DETERMINISTIC` is no longer a single token; match it as a
+    // text-sequence here so a bare `NOT` stays a boolean operator elsewhere.
+    override fun parseProperty(): kotlin.Any? {
+        if (matchTextSeq("NOT", "DETERMINISTIC")) {
+            return expression(StabilityProperty(args("this" to Literal.string("VOLATILE"))))
+        }
+        return super.parseProperty()
+    }
 
     // sqlglot: BigQueryParser._parse_table_part — dashed table names (project-id.dataset)
     // and numeric-suffixed parts (`foo.bar.25`).

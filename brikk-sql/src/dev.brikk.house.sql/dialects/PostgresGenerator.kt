@@ -1244,7 +1244,8 @@ open class PostgresGenerator(
             }
             reg(JSONBExtract::class) { e -> binary(e as Binary, "#>") }
             reg(JSONBExtractScalar::class) { e -> binary(e as Binary, "#>>") }
-            reg(JSONBContains::class) { e -> binary(e as Binary, "?") }
+            // sqlglot #8156: the `?` operator now maps to JSONBContainsTopKey (base
+            // generator); JSONBContains renders as its function form.
             reg(ParseJSON::class) { e ->
                 sql(Cast(args("this" to e.thisArg, "to" to DataType(args("this" to DType.JSON)))))
             }

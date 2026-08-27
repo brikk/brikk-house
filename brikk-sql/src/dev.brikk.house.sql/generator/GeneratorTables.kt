@@ -636,6 +636,8 @@ object GeneratorTables {
         reg(WithOperator::class) { e -> "${sql(e, "this")} WITH ${sql(e, "op")}" }
         reg(JSONBContainsAnyTopKeys::class) { e -> binary(e as Binary, "?|") }
         reg(JSONBContainsAllTopKeys::class) { e -> binary(e as Binary, "?&") }
+        // sqlglot #8156: JSONBContainsTopKey renders as the `?` operator.
+        reg(JSONBContainsTopKey::class) { e -> binary(e as Binary, "?") }
         reg(JSONBDeleteAtPath::class) { e -> binary(e as Binary, "#-") }
         reg(JSONBPathExists::class) { e -> binary(e as Binary, "@?") }
 
