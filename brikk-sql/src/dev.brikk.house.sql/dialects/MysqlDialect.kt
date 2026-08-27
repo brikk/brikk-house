@@ -49,8 +49,10 @@ class MysqlDialect : Dialect() {
             "%W" to "%A",
         )
 
-        // sqlglot: MySQL.INVERSE_TIME_MAPPING
+        // sqlglot: MySQL.INVERSE_TIME_MAPPING (+ _with_strict_time_inverse)
         val INVERSE_TIME_MAPPING: Map<String, String> =
-            TIME_MAPPING.entries.associate { (k, v) -> v to k }
+            dev.brikk.house.sql.parser.withStrictTimeInverse(
+                TIME_MAPPING.entries.associate { (k, v) -> v to k },
+            )
     }
 }

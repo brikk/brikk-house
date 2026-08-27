@@ -17,6 +17,7 @@ import dev.brikk.house.sql.parser.Token
 import dev.brikk.house.sql.parser.Tokenizer
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
+import dev.brikk.house.sql.parser.withStrictTimeInverse
 
 /**
  * Port of sqlglot's Dialect (reference/sqlglot/sqlglot/dialects/dialect.py) — the
@@ -142,9 +143,10 @@ open class Dialect {
     // sqlglot: Dialect.TIME_MAPPING (dialect format specifier -> python strftime)
     open val timeMapping: Map<String, String> get() = emptyMap()
 
-    // sqlglot: Dialect.INVERSE_TIME_MAPPING ({v: k for k, v in TIME_MAPPING.items()})
+    // sqlglot: Dialect.INVERSE_TIME_MAPPING — auto-inverse of TIME_MAPPING, then
+    // _with_strict_time_inverse so %mstrict never leaks / pads correctly on strict dialects.
     val inverseTimeMapping: Map<String, String> by lazy {
-        timeMapping.entries.associate { (k, v) -> v to k }
+        withStrictTimeInverse(timeMapping.entries.associate { (k, v) -> v to k })
     }
 
     // sqlglot: Dialect.parser

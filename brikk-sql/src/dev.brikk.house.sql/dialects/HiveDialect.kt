@@ -53,15 +53,25 @@ open class HiveDialect : Dialect() {
         const val INITCAP_DEFAULT_DELIMITER_CHARS: String = " \t\n\r\u000c\u000b\u001c\u001d\u001e\u001f"
 
         // sqlglot: Hive.TIME_MAPPING
+        // Hive 4.0+ parses MM/dd/HH/hh/mm/ss strictly (java.time.DateTimeFormatter, see
+        // HIVE-25458/HIVE-25576). Padded forms map to STRICT internal tokens; single-char
+        // forms map to NON-PADDED tokens.
         val TIME_MAPPING: Map<String, String> = mapOf(
             "y" to "%Y", "Y" to "%Y", "YYYY" to "%Y", "yyyy" to "%Y",
             "YY" to "%y", "yy" to "%y",
-            "MMMM" to "%B", "MMM" to "%b", "MM" to "%m", "M" to "%-m",
-            "dd" to "%d", "d" to "%-d",
-            "HH" to "%H", "H" to "%-H",
-            "hh" to "%I", "h" to "%-I",
-            "mm" to "%M", "m" to "%-M",
-            "ss" to "%S", "s" to "%-S",
+            "MMMM" to "%B", "MMM" to "%b",
+            "MM" to "%mstrict",
+            "M" to "%-m",
+            "dd" to "%dstrict",
+            "d" to "%-d",
+            "HH" to "%Hstrict",
+            "H" to "%-H",
+            "hh" to "%Istrict",
+            "h" to "%-I",
+            "mm" to "%Mstrict",
+            "m" to "%-M",
+            "ss" to "%Sstrict",
+            "s" to "%-S",
             "SSSSSS" to "%f",
             "a" to "%p",
             "DD" to "%j", "D" to "%-j",

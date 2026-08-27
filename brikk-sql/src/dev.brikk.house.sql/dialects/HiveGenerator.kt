@@ -14,6 +14,7 @@ import dev.brikk.house.sql.generator.anyToExists
 import dev.brikk.house.sql.generator.inheritStructFieldNames
 import dev.brikk.house.sql.parser.HiveTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
+import dev.brikk.house.sql.parser.formatTimeString
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.String
@@ -31,9 +32,83 @@ private fun hiveUnitToStr(expression: Expression, default: String = "DAY"): Expr
 }
 
 // sqlglot: generators.hive HIVE_DATEINT_FORMAT / HIVE_TIME_FORMAT / HIVE_DATE_FORMAT
+// These constants are duplicated from the Hive dialect class to avoid circular imports.
+// They must be kept in sync with HiveDialect.TIME_FORMAT / DATE_FORMAT / DATEINT_FORMAT.
 private const val HIVE_TIME_FORMAT = "'yyyy-MM-dd HH:mm:ss'"
 private const val HIVE_DATE_FORMAT = "'yyyy-MM-dd'"
 private const val HIVE_DATEINT_FORMAT = "'yyyyMMdd'"
+
+// The default formats above, as rendered by the lenient rewrite (non-padded month/day/time)
+private val HIVE_NON_PADDED_TIME_FORMATS = setOf("'yyyy-M-d H:m:s'", "'yyyy-M-d'")
+
+// Expressions that parse a string with a format (vs. formatting one, like TimeToStr).
+private val PARSE_TIME_EXPRESSION_CLASSES: Set<KClass<out Expression>> = setOf(
+    StrToTime::class, StrToDate::class, StrToUnix::class, TsOrDsToDate::class,
+)
+
+// sqlglot: generators.hive.CANONICAL_TIME_FORMAT
+// Matches %mstrict/%dstrict/... or %-X / %:X / %.X or any single-char %X specifier.
+private val CANONICAL_TIME_FORMAT: Regex = Regex("""%(?:[mdHIMS]strict|[-:].|.)""")
+
+// sqlglot: generators.hive.LAX_TO_NON_PADDED_FORMATS
+private val LAX_TO_NON_PADDED_FORMATS: Map<String, String> = mapOf(
+    "%m" to "%-m",
+    "%d" to "%-d",
+    "%H" to "%-H",
+    "%I" to "%-I",
+    "%M" to "%-M",
+    "%S" to "%-S",
+)
+
+/**
+ * sqlglot: generators.hive._lenient_parse_format
+ *
+ * Changes a lax month/day/hour/minute/second in a canonical format to its non-padded form
+ * (e.g. %m -> %-m), which java.time parses with or without a leading zero. This is only safe
+ * for delimited specifiers, because adjacent fields parse greedily, so e.g. 'yyyyMd' (from
+ * '%Y%m%d') can't even parse '20200101'.
+ *
+ * The format is decomposed into specifiers (`formats`) and the interleaved literal text (`parts`).
+ * Specifier i sits between parts[i] and parts[i + 1]. A specifier is changed only when its
+ * neighbors don't touch a digit run, i.e., neither side is another specifier or a literal digit.
+ * At the end, the pieces are zipped back together to produce the rewritten canonical format.
+ */
+// sqlglot: generators.hive._lenient_parse_format
+private fun lenientParseFormat(fmt: String): String {
+    // Python re.split(pattern, s) without a capturing group yields the literal parts;
+    // re.findall yields the matched specifiers. Kotlin Regex.split drops trailing empties
+    // by default — use limit=0 behavior via findAll + manual split.
+    val formats = CANONICAL_TIME_FORMAT.findAll(fmt).map { it.value }.toMutableList()
+    val parts = mutableListOf<String>()
+    var last = 0
+    for (m in CANONICAL_TIME_FORMAT.findAll(fmt)) {
+        parts.add(fmt.substring(last, m.range.first))
+        last = m.range.last + 1
+    }
+    parts.add(fmt.substring(last))
+    // parts has formats.size + 1 entries (possibly empty strings at ends)
+
+    for (i in formats.indices) {
+        val fmt_ = formats[i]
+        val nonPadded = LAX_TO_NON_PADDED_FORMATS[fmt_] ?: continue
+        val left = parts[i]
+        val right = parts[i + 1]
+        val leftAdjacent = (left.isEmpty() && i > 0) || (left.isNotEmpty() && left.last().isDigit())
+        val rightAdjacent =
+            (right.isEmpty() && i < formats.size - 1) || (right.isNotEmpty() && right.first().isDigit())
+        if (!leftAdjacent && !rightAdjacent) {
+            formats[i] = nonPadded
+        }
+    }
+
+    return buildString {
+        for (i in formats.indices) {
+            append(parts[i])
+            append(formats[i])
+        }
+        append(parts.last())
+    }
+}
 
 // sqlglot: generators.hive DATE_DELTA_INTERVAL (FuncName, Multiplier)
 private val DATE_DELTA_INTERVAL: Map<String, Pair<String, Int>> = mapOf(
@@ -115,7 +190,9 @@ open class HiveGenerator(
 
     // sqlglot: Hive dialect-level flags read by the generator
     override val dialectTimeFormat: String get() = HIVE_TIME_FORMAT
-    override val inverseTimeMapping: Map<String, String> get() = HIVE_INVERSE_TIME_MAPPING
+    // Prefer the live dialect inverse (Spark2/Spark override TIME_MAPPING) so each
+    // member of the Hive hierarchy gets the correct strict/lax inverse.
+    override val inverseTimeMapping: Map<String, String> get() = dialect.inverseTimeMapping
 
     // sqlglot: Hive.STRINGS_SUPPORT_ESCAPED_SEQUENCES = True + Hive.ESCAPED_SEQUENCES
     override val dialectStringsSupportEscapedSequences: Boolean get() = true
@@ -213,10 +290,48 @@ open class HiveGenerator(
         return diffSql
     }
 
+    // sqlglot: generators.hive.HiveGenerator.format_time
+    override fun formatTime(
+        expression: Expression,
+        inverseTimeMappingOverride: Map<String, String>?,
+    ): String? {
+        // Inferred property because this method is reused by other dialects under Hive
+        val isDialectStrict = dialect.timeMapping["MM"] == "%mstrict"
+
+        if (
+            isDialectStrict &&
+            inverseTimeMappingOverride == null &&
+            expression::class in PARSE_TIME_EXPRESSION_CLASSES
+        ) {
+            // Render a lenient %m/%d non-padded (M/d) so single-digit sources stay parseable
+            return formatTimeString(
+                lenientParseFormat(sql(expression, "format")),
+                inverseTimeMapping,
+            )
+        }
+
+        return super.formatTime(expression, inverseTimeMappingOverride)
+    }
+
+    // sqlglot: generators.hive._is_cast_time_format
+    /** Checks whether CAST subsumes the expression's parse format. */
+    internal fun isCastTimeFormat(expression: Expression, timeFormat: String): Boolean {
+        if (timeFormat == HIVE_TIME_FORMAT || timeFormat == HIVE_DATE_FORMAT) return true
+
+        if (timeFormat in HIVE_NON_PADDED_TIME_FORMATS) {
+            // The base render skips the lenient rewrite: a lax specifier pads back (e.g. %m -> MM),
+            // an explicit non-padded specifier (e.g. %-m) doesn't
+            val paddedFormat = super.formatTime(expression, inverseTimeMappingOverride = null)
+            return paddedFormat == HIVE_TIME_FORMAT || paddedFormat == HIVE_DATE_FORMAT
+        }
+
+        return false
+    }
+
     // sqlglot: generators.hive._to_date_sql (TsOrDsToDate)
     internal fun toDateSql(expression: TsOrDsToDate): String {
         val timeFormat = formatTime(expression)
-        if (timeFormat != null && timeFormat != HIVE_TIME_FORMAT && timeFormat != HIVE_DATE_FORMAT) {
+        if (timeFormat != null && !isCastTimeFormat(expression, timeFormat)) {
             return func("TO_DATE", expression.thisArg, timeFormat)
         }
         if (expression.parent?.let { it::class in tsOrDsExpressions } == true) {
@@ -229,7 +344,7 @@ open class HiveGenerator(
     internal fun strToTemporalSql(expression: Expression, castTo: String): String {
         var this_ = sql(expression, "this")
         val timeFormat = formatTime(expression)
-        if (timeFormat != null && timeFormat != HIVE_TIME_FORMAT && timeFormat != HIVE_DATE_FORMAT) {
+        if (timeFormat != null && !isCastTimeFormat(expression, timeFormat)) {
             this_ = "FROM_UNIXTIME(UNIX_TIMESTAMP($this_, $timeFormat))"
         }
         return "CAST($this_ AS $castTo)"

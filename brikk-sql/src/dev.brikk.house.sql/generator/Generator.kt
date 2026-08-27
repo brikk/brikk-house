@@ -8,6 +8,7 @@ import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.ast.Set as SetNode
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
+import dev.brikk.house.sql.parser.withStrictTimeInverse
 import kotlin.Boolean
 import kotlin.String
 import kotlin.collections.List
@@ -696,10 +697,27 @@ open class Generator(
     // sqlglot: Generator.too_wide
     fun tooWide(args: Iterable<String>): Boolean = args.sumOf { it.length } > maxTextWidth
 
+    // Cached inverse with strict-token degradation/padding (sqlglot metaclass
+    // _with_strict_time_inverse applied to every dialect's INVERSE_TIME_MAPPING).
+    private val effectiveInverseTimeMapping: Map<String, String> by lazy {
+        withStrictTimeInverse(inverseTimeMapping)
+    }
+
     // sqlglot: Generator.format_time — renders args["format"] and converts python
     // strftime specifiers back into this dialect's (INVERSE_TIME_MAPPING).
-    open fun formatTime(expression: Expression): String? =
-        formatTimeString(sql(expression, "format"), inverseTimeMapping)
+    // Optional [inverseTimeMappingOverride] matches upstream's inverse_time_mapping kwarg
+    // (e.g. Presto strtounix routing through Hive.INVERSE_TIME_MAPPING).
+    open fun formatTime(
+        expression: Expression,
+        inverseTimeMappingOverride: Map<String, String>? = null,
+    ): String? {
+        val mapping = if (inverseTimeMappingOverride != null) {
+            withStrictTimeInverse(inverseTimeMappingOverride)
+        } else {
+            effectiveInverseTimeMapping
+        }
+        return formatTimeString(sql(expression, "format"), mapping)
+    }
 
     // sqlglot: Generator.binary
     open fun binary(expression: Binary, op: String): String {
