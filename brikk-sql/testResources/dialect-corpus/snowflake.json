@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-72-gbac1a897b",
   "dialect": "snowflake",
   "identity": [
     {
@@ -1735,6 +1735,16 @@
       "pretty": false
     },
     {
+      "sql": "SELECT $$a\\$b$$",
+      "expected": "SELECT 'a\\\\$b'",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT $$a\\$$",
+      "expected": "SELECT 'a\\\\'",
+      "pretty": false
+    },
+    {
       "sql": "SELECT {'test': 'best'}::VARIANT",
       "expected": "SELECT CAST(OBJECT_CONSTRUCT('test', 'best') AS VARIANT)",
       "pretty": false
@@ -1815,6 +1825,46 @@
       "pretty": false
     },
     {
+      "sql": "CREATE TABLE x (y INT AUTOINCREMENT START 10)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE x (y INT AUTOINCREMENT INCREMENT 2)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE x (y INT AUTOINCREMENT ORDER)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE x (y INT AUTOINCREMENT NOORDER)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE x (y INT AUTOINCREMENT START 10 NOORDER)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE x (y INT AUTOINCREMENT INCREMENT 2 ORDER)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE x (y INT AUTOINCREMENT INCREMENT 2 START 10)",
+      "expected": "CREATE TABLE x (y INT AUTOINCREMENT START 10 INCREMENT 2)",
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE x (y INT AUTOINCREMENT(0, 1) ORDER)",
+      "expected": "CREATE TABLE x (y INT AUTOINCREMENT START 0 INCREMENT 1 ORDER)",
+      "pretty": false
+    },
+    {
       "sql": "SELECT DAYOFWEEK('2016-01-02T23:39:20.123-07:00'::TIMESTAMP)",
       "expected": "SELECT DAYOFWEEK(CAST('2016-01-02T23:39:20.123-07:00' AS TIMESTAMP))",
       "pretty": false
@@ -1852,6 +1902,16 @@
     {
       "sql": "SELECT TIMESTAMPNTZFROMPARTS(2013, 4, 5, 12, 00, 00)",
       "expected": "SELECT TIMESTAMP_FROM_PARTS(2013, 4, 5, 12, 00, 00)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT id FROM t START WITH (parent_id IS NULL) CONNECT BY PRIOR id = parent_id",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT id FROM t START WITH (x) CONNECT BY PRIOR id = parent_id",
+      "expected": null,
       "pretty": false
     },
     {
@@ -2161,6 +2221,16 @@
     },
     {
       "sql": "SELECT CURRENT_SCHEMA()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t UNPIVOT(a FOR b IN (c, d)) UNPIVOT(e FOR f IN (g, h))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t PIVOT(SUM(v) FOR c IN ('a' AS a)) UNPIVOT(x FOR y IN (a))",
       "expected": null,
       "pretty": false
     },
@@ -2739,6 +2809,11 @@
     {
       "sql": "SELECT * FROM TABLE($$MYDB. \"MYSCHEMA\".\"MYTABLE\"$$)",
       "expected": "SELECT * FROM TABLE('MYDB. \"MYSCHEMA\".\"MYTABLE\"')",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT value FROM TABLE(FLATTEN(input => SELECT PARSE_JSON('[1, 2]')))",
+      "expected": null,
       "pretty": false
     },
     {
@@ -4068,6 +4143,13 @@
   ],
   "transpile": [
     {
+      "sql": "SELECT MODE(x) FROM t",
+      "read": {
+        "postgres": "SELECT MODE() WITHIN GROUP (ORDER BY x) FROM t"
+      },
+      "write": {}
+    },
+    {
       "sql": "SELECT BITMAP_BIT_POSITION(10)",
       "read": {},
       "write": {
@@ -4510,6 +4592,20 @@
         "snowflake": "SELECT STRTOK('ab', ' ', 1)",
         "duckdb": "SELECT CASE WHEN ' ' = '' AND 'ab' = '' THEN NULL WHEN ' ' = '' AND 1 = 1 THEN 'ab' WHEN ' ' = '' THEN NULL WHEN 1 < 0 THEN NULL WHEN 'ab' IS NULL OR ' ' IS NULL OR 1 IS NULL THEN NULL ELSE LIST_FILTER(REGEXP_SPLIT_TO_ARRAY('ab', CASE WHEN ' ' = '' THEN '' ELSE '[' || REGEXP_REPLACE(' ', '([\\[\\]^.\\-*+?(){}|$\\\\])', '\\\\\\1', 'g') || ']' END), x -> NOT x = '')[1] END"
       }
+    },
+    {
+      "sql": "CREATE TABLE c (pk BIGINT AUTOINCREMENT START 10)",
+      "read": {
+        "postgres": "CREATE TABLE c (pk BIGINT GENERATED ALWAYS AS IDENTITY (START WITH 10))"
+      },
+      "write": {}
+    },
+    {
+      "sql": "CREATE TABLE c (pk BIGINT AUTOINCREMENT INCREMENT -1)",
+      "read": {
+        "postgres": "CREATE TABLE c (pk BIGINT GENERATED ALWAYS AS IDENTITY (INCREMENT BY -1))"
+      },
+      "write": {}
     },
     {
       "sql": "SELECT LTRIM(RTRIM(col)) FROM t1",
@@ -5219,7 +5315,7 @@
         "bigquery": "SELECT PARSE_TIMESTAMP('%d-%m-%Y %I:%M:%S', col) FROM t",
         "duckdb": "SELECT STRPTIME(col, '%d-%m-%Y %I:%M:%S') FROM t",
         "snowflake": "SELECT TO_TIMESTAMP(col, 'DD-mm-yyyy hh12:mi:ss') FROM t",
-        "spark": "SELECT TO_TIMESTAMP(col, 'dd-MM-yyyy hh:mm:ss') FROM t"
+        "spark": "SELECT TO_TIMESTAMP(col, 'd-M-yyyy h:m:s') FROM t"
       }
     },
     {
@@ -5290,7 +5386,7 @@
       "write": {
         "bigquery": "SELECT PARSE_TIMESTAMP('%m/%d/%Y %T', '04/05/2013 01:02:03')",
         "snowflake": "SELECT TO_TIMESTAMP('04/05/2013 01:02:03', 'mm/DD/yyyy hh24:mi:ss')",
-        "spark": "SELECT TO_TIMESTAMP('04/05/2013 01:02:03', 'MM/dd/yyyy HH:mm:ss')"
+        "spark": "SELECT TO_TIMESTAMP('04/05/2013 01:02:03', 'M/d/yyyy H:m:s')"
       }
     },
     {
@@ -8564,8 +8660,8 @@
     }
   ],
   "stats": {
-    "identity_count": 811,
-    "transpile_count": 527,
+    "identity_count": 826,
+    "transpile_count": 530,
     "skipped_dynamic": 32
   }
 }

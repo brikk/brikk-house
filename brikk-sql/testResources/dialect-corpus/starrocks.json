@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-72-gbac1a897b",
   "dialect": "starrocks",
   "identity": [
     {
@@ -108,12 +108,62 @@
       "pretty": false
     },
     {
+      "sql": "SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10, 2)) AS t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT x FROM TABLE(GENERATE_SERIES(0, 10)) AS t(x)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t, GENERATE_SERIES(t.s, t.e)",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "INSERT OVERWRITE my_table SELECT * FROM other_table",
       "expected": null,
       "pretty": false
     },
     {
       "sql": "CREATE TABLE t (c INT) COMMENT 'c'",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DROP TABLE my_table",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DROP TABLE IF EXISTS example_db.my_table",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DROP TABLE my_table FORCE",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DROP TEMPORARY TABLE my_table FORCE",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REFRESH EXTERNAL TABLE hive1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REFRESH EXTERNAL TABLE hive_catalog.hive_db.hive_table",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REFRESH EXTERNAL TABLE hudi1 PARTITION('date=2022-12-20', 'date=2022-12-21')",
       "expected": null,
       "pretty": false
     },
@@ -336,6 +386,11 @@
       "sql": "arr[1]",
       "expected": null,
       "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM TABLE(GENERATE_SERIES(0, 10))",
+      "expected": null,
+      "pretty": false
     }
   ],
   "transpile": [
@@ -497,7 +552,7 @@
     }
   ],
   "stats": {
-    "identity_count": 67,
+    "identity_count": 78,
     "transpile_count": 16,
     "skipped_dynamic": 6
   }

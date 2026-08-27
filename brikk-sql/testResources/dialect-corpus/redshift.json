@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-72-gbac1a897b",
   "dialect": "redshift",
   "identity": [
     {
@@ -628,6 +628,13 @@
       }
     },
     {
+      "sql": "SELECT LISTAGG(x, ',') WITHIN GROUP (ORDER BY y) FILTER (WHERE z > 0) FROM t",
+      "read": {},
+      "write": {
+        "snowflake": "SELECT LISTAGG(IFF(z > 0, x, NULL), ',') WITHIN GROUP (ORDER BY y) FROM t"
+      }
+    },
+    {
       "sql": "SELECT APPROXIMATE COUNT(DISTINCT y)",
       "read": {
         "spark": "SELECT APPROX_COUNT_DISTINCT(y)"
@@ -1059,7 +1066,7 @@
   ],
   "stats": {
     "identity_count": 115,
-    "transpile_count": 51,
+    "transpile_count": 52,
     "skipped_dynamic": 2
   }
 }

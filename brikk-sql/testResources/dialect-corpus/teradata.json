@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-72-gbac1a897b",
   "dialect": "teradata",
   "identity": [
     {
@@ -484,9 +484,9 @@
       "write": {
         "teradata": "CAST('1992-01' AS DATE FORMAT 'YYYY-DD')",
         "bigquery": "PARSE_DATE('%Y-%d', '1992-01')",
-        "databricks": "TO_DATE('1992-01', 'yyyy-dd')",
+        "databricks": "TO_DATE('1992-01', 'yyyy-d')",
         "mysql": "STR_TO_DATE('1992-01', '%Y-%d')",
-        "spark": "TO_DATE('1992-01', 'yyyy-dd')",
+        "spark": "TO_DATE('1992-01', 'yyyy-d')",
         "": "STR_TO_DATE('1992-01', '%Y-%d')"
       }
     },
