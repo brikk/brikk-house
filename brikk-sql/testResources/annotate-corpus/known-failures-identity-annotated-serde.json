@@ -121,104 +121,8 @@
             "reason": "type-mismatch at #19 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
         {
-            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds) SELECT x FROM y",
-            "reason": "type-mismatch at #18 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds = 'YYYY-MM-DD') SELECT x FROM y",
-            "reason": "type-mismatch at #22 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds, hour) SELECT x FROM y",
-            "reason": "type-mismatch at #22 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT OVERWRITE TABLE a.b PARTITION(ds = 'YYYY-MM-DD', hour = 'hh') SELECT x FROM y",
-            "reason": "type-mismatch at #30 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO a.b PARTITION(DAY = '2024-04-14') (col1, col2) SELECT x FROM y",
-            "reason": "type-mismatch at #29 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x SELECT * FROM y",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x (SELECT * FROM y)",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x WITH y AS (SELECT 1) SELECT * FROM y",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x.z IF EXISTS SELECT * FROM y",
-            "reason": "type-mismatch at #12 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0)",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0), (1, 'a', 3.0), (X(), y[1], z.x)",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO y (a, b, c) SELECT a, b, c FROM x",
-            "reason": "type-mismatch at #19 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO y (SELECT 1) UNION (SELECT 2)",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO result_table (WITH test AS (SELECT * FROM source_table) SELECT * FROM test)",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO \"tests_user\" (\"username\", \"first_name\", \"last_name\") VALUES ('fiara', 'Fiara', 'Ironhide') RETURNING \"tests_user\".\"id\"",
-            "reason": "type-mismatch at #19 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO t1 (tc1 /* tc1 */, tc2 /* tc2 */) SELECT c1 /* sc1 */, c2 /* sc2 */ FROM t",
-            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO t1 (\"tc1\" /* tc1 */, \"tc2\" /* tc2 */) SELECT \"c1\" /* sc1 */, \"c2\" /* sc2 */ FROM t",
-            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT OVERWRITE TABLE x IF EXISTS SELECT * FROM y",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT OVERWRITE TABLE a.b IF EXISTS SELECT * FROM y",
-            "reason": "type-mismatch at #12 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT OVERWRITE DIRECTORY 'x' SELECT 1",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT OVERWRITE LOCAL DIRECTORY 'x' SELECT 1",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT OVERWRITE LOCAL DIRECTORY 'x' ROW FORMAT DELIMITED FIELDS TERMINATED BY '1' COLLECTION ITEMS TERMINATED BY '2' MAP KEYS TERMINATED BY '3' LINES TERMINATED BY '4' NULL DEFINED AS '5' SELECT 1",
-            "reason": "type-mismatch at #25 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "WITH a AS (SELECT 1) INSERT INTO b SELECT * FROM a",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
             "sql": "WITH a AS ((SELECT b.foo AS foo, b.bar AS bar FROM b) UNION ALL (SELECT c.foo AS foo, c.bar AS bar FROM c)) SELECT * FROM a",
             "reason": "type-mismatch at #14 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "INSERT INTO foo SELECT * FROM bar /* comment */",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
         },
         {
             "sql": "SELECT div.a FROM test_table AS div",
@@ -231,10 +135,6 @@
         {
             "sql": "SELECT RIGHT.FOO FROM BLA AS RIGHT",
             "reason": "type-mismatch at #2 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "/* comment1 */ INSERT INTO x /* comment2 */ VALUES (1, 2, 3)",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
         },
         {
             "sql": "SELECT cube, cube.x FROM cube",

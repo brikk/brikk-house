@@ -1,9 +1,4 @@
 {
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": [
-        {
-            "sql": "INSERT OVERWRITE TABLE test PARTITION(p1, p2) VALUES (1, 2)",
-            "reason": "ast-mismatch at #19: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
-        }
-    ]
+    "cases": []
 }

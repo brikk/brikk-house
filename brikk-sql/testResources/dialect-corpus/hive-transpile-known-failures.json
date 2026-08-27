@@ -1,81 +1,80 @@
 {
-  "sqlglot_version": null,
-  "cases": [
-    {
-      "case": "write|spark|CREATE TABLE x (w STRING) PARTITIONED BY (y INT, z INT)",
-      "reason": "expected `CREATE TABLE x (w STRING, y INT, z INT) PARTITIONED BY (y, z)` actual `CREATE TABLE x (w STRING) PARTITIONED BY (y INT, z INT)`"
-    },
-    {
-      "case": "write|spark|ALTER TABLE x CHANGE COLUMN a a VARCHAR(10) CASCADE",
-      "reason": "expected `ALTER TABLE x ALTER COLUMN a TYPE VARCHAR(10)` actual `ALTER TABLE x ALTER COLUMN a TYPE VARCHAR(10) CASCADE`"
-    },
-    {
-      "case": "write|duckdb|SELECT a, b FROM x LATERAL VIEW EXPLODE(y) t AS a LATERAL VIEW EXPLODE(z) u AS b",
-      "reason": "expected `SELECT a, b FROM x CROSS JOIN UNNEST(y) AS t(a) CROSS JOIN UNNEST(z) AS u(b)` actual `SELECT a, b FROM x LATERAL VIEW UNNEST(y) t AS a LATERAL VIEW UNNEST(z) u AS b`"
-    },
-    {
-      "case": "write|duckdb|SELECT a FROM x LATERAL VIEW EXPLODE(y) t AS a",
-      "reason": "expected `SELECT a FROM x CROSS JOIN UNNEST(y) AS t(a)` actual `SELECT a FROM x LATERAL VIEW UNNEST(y) t AS a`"
-    },
-    {
-      "case": "write|presto|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
-      "reason": "expected `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col FROM UNNEST(y) WITH ORDINALITY AS t(col, pos))` actual `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col)`"
-    },
-    {
-      "case": "write|trino|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
-      "reason": "expected `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col FROM UNNEST(y) WITH ORDINALITY AS t(col, pos))` actual `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col)`"
-    },
-    {
-      "case": "write|duckdb|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
-      "reason": "expected `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col FROM UNNEST(y) WITH ORDINALITY AS t(col, pos))` actual `SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col`"
-    },
-    {
-      "case": "write|presto|SELECT * FROM x LATERAL VIEW POSEXPLODE(MAP(col, 'val')) t AS pos, key, value",
-      "reason": "expected `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value FROM UNNEST(MAP(ARRAY[col], ARRAY['val'])) WITH ORDINALITY AS t(key, value, pos))` actual `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value)`"
-    },
-    {
-      "case": "write|trino|SELECT * FROM x LATERAL VIEW POSEXPLODE(MAP(col, 'val')) t AS pos, key, value",
-      "reason": "expected `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value FROM UNNEST(MAP(ARRAY[col], ARRAY['val'])) WITH ORDINALITY AS t(key, value, pos))` actual `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value)`"
-    },
-    {
-      "case": "write|duckdb|SELECT a FROM x LATERAL VIEW EXPLODE(ARRAY(y)) t AS a",
-      "reason": "expected `SELECT a FROM x CROSS JOIN UNNEST([y]) AS t(a)` actual `SELECT a FROM x LATERAL VIEW UNNEST([y]) t AS a`"
-    },
-    {
-      "case": "write|duckdb|from_unixtime(x, \"yyyy-MM-dd'T'HH\")",
-      "reason": "expected `STRFTIME(TO_TIMESTAMP(x), '%Y-%m-%d''T''%H')` actual `UNIX_TO_STR(x, '%Y-%mstrict-%dstrict''T''%Hstrict')`"
-    },
-    {
-      "case": "write|bigquery|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
-      "reason": "expected `FORMAT_DATE('%Y-%m-%d %H:%M:%S', CAST('2020-01-01' AS DATETIME))` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', TIME_STR_TO_TIME('2020-01-01'))`"
-    },
-    {
-      "case": "write|duckdb|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
-      "reason": "expected `STRFTIME(CAST('2020-01-01' AS TIMESTAMP), '%Y-%m-%d %H:%M:%S')` actual `STRFTIME(TIME_STR_TO_TIME('2020-01-01'), '%Y-%m-%d %H:%M:%S')`"
-    },
-    {
-      "case": "write|bigquery|DATE_ADD('2020-01-01', 1)",
-      "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1, DAY)`"
-    },
-    {
-      "case": "write|bigquery|DATE_SUB('2020-01-01', 1)",
-      "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL (1 * -1) DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1 * -1, DAY)`"
-    },
-    {
-      "case": "write|duckdb|LOCATE('a', x)",
-      "reason": "expected `STRPOS(x, 'a')` actual `STR_POSITION(x, 'a')`"
-    },
-    {
-      "case": "write|duckdb|LOCATE('a', x, 3)",
-      "reason": "expected `CASE WHEN STRPOS(SUBSTRING(x, 3), 'a') = 0 THEN 0 ELSE STRPOS(SUBSTRING(x, 3), 'a') + 3 - 1 END` actual `STR_POSITION(x, 'a', 3)`"
-    },
-    {
-      "case": "write|duckdb|COLLECT_LIST(x)",
-      "reason": "expected `ARRAY_AGG(x) FILTER(WHERE x IS NOT NULL)` actual `ARRAY_AGG(x)`"
-    },
-    {
-      "case": "write|presto|COLLECT_LIST(x)",
-      "reason": "expected `ARRAY_AGG(x) FILTER(WHERE x IS NOT NULL)` actual `ARRAY_AGG(x)`"
-    }
-  ]
+    "cases": [
+        {
+            "case": "write|spark|CREATE TABLE x (w STRING) PARTITIONED BY (y INT, z INT)",
+            "reason": "expected `CREATE TABLE x (w STRING, y INT, z INT) PARTITIONED BY (y, z)` actual `CREATE TABLE x (w STRING) PARTITIONED BY (y INT, z INT)`"
+        },
+        {
+            "case": "write|spark|ALTER TABLE x CHANGE COLUMN a a VARCHAR(10) CASCADE",
+            "reason": "expected `ALTER TABLE x ALTER COLUMN a TYPE VARCHAR(10)` actual `ALTER TABLE x ALTER COLUMN a TYPE VARCHAR(10) CASCADE`"
+        },
+        {
+            "case": "write|duckdb|SELECT a, b FROM x LATERAL VIEW EXPLODE(y) t AS a LATERAL VIEW EXPLODE(z) u AS b",
+            "reason": "expected `SELECT a, b FROM x CROSS JOIN UNNEST(y) AS t(a) CROSS JOIN UNNEST(z) AS u(b)` actual `SELECT a, b FROM x LATERAL VIEW UNNEST(y) t AS a LATERAL VIEW UNNEST(z) u AS b`"
+        },
+        {
+            "case": "write|duckdb|SELECT a FROM x LATERAL VIEW EXPLODE(y) t AS a",
+            "reason": "expected `SELECT a FROM x CROSS JOIN UNNEST(y) AS t(a)` actual `SELECT a FROM x LATERAL VIEW UNNEST(y) t AS a`"
+        },
+        {
+            "case": "write|presto|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
+            "reason": "expected `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col FROM UNNEST(y) WITH ORDINALITY AS t(col, pos))` actual `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col)`"
+        },
+        {
+            "case": "write|trino|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
+            "reason": "expected `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col FROM UNNEST(y) WITH ORDINALITY AS t(col, pos))` actual `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col)`"
+        },
+        {
+            "case": "write|duckdb|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
+            "reason": "expected `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col FROM UNNEST(y) WITH ORDINALITY AS t(col, pos))` actual `SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col`"
+        },
+        {
+            "case": "write|presto|SELECT * FROM x LATERAL VIEW POSEXPLODE(MAP(col, 'val')) t AS pos, key, value",
+            "reason": "expected `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value FROM UNNEST(MAP(ARRAY[col], ARRAY['val'])) WITH ORDINALITY AS t(key, value, pos))` actual `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value)`"
+        },
+        {
+            "case": "write|trino|SELECT * FROM x LATERAL VIEW POSEXPLODE(MAP(col, 'val')) t AS pos, key, value",
+            "reason": "expected `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value FROM UNNEST(MAP(ARRAY[col], ARRAY['val'])) WITH ORDINALITY AS t(key, value, pos))` actual `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value)`"
+        },
+        {
+            "case": "write|duckdb|SELECT a FROM x LATERAL VIEW EXPLODE(ARRAY(y)) t AS a",
+            "reason": "expected `SELECT a FROM x CROSS JOIN UNNEST([y]) AS t(a)` actual `SELECT a FROM x LATERAL VIEW UNNEST([y]) t AS a`"
+        },
+        {
+            "case": "write|duckdb|from_unixtime(x, \"yyyy-MM-dd'T'HH\")",
+            "reason": "expected `STRFTIME(TO_TIMESTAMP(x), '%Y-%m-%d''T''%H')` actual `UNIX_TO_STR(x, '%Y-%mstrict-%dstrict''T''%Hstrict')`"
+        },
+        {
+            "case": "write|bigquery|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
+            "reason": "expected `FORMAT_DATE('%Y-%m-%d %H:%M:%S', CAST('2020-01-01' AS DATETIME))` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', TIME_STR_TO_TIME('2020-01-01'))`"
+        },
+        {
+            "case": "write|duckdb|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
+            "reason": "expected `STRFTIME(CAST('2020-01-01' AS TIMESTAMP), '%Y-%m-%d %H:%M:%S')` actual `STRFTIME(TIME_STR_TO_TIME('2020-01-01'), '%Y-%m-%d %H:%M:%S')`"
+        },
+        {
+            "case": "write|bigquery|DATE_ADD('2020-01-01', 1)",
+            "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1, DAY)`"
+        },
+        {
+            "case": "write|bigquery|DATE_SUB('2020-01-01', 1)",
+            "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL (1 * -1) DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1 * -1, DAY)`"
+        },
+        {
+            "case": "write|duckdb|LOCATE('a', x)",
+            "reason": "expected `STRPOS(x, 'a')` actual `STR_POSITION(x, 'a')`"
+        },
+        {
+            "case": "write|duckdb|LOCATE('a', x, 3)",
+            "reason": "expected `CASE WHEN STRPOS(SUBSTRING(x, 3), 'a') = 0 THEN 0 ELSE STRPOS(SUBSTRING(x, 3), 'a') + 3 - 1 END` actual `STR_POSITION(x, 'a', 3)`"
+        },
+        {
+            "case": "write|duckdb|COLLECT_LIST(x)",
+            "reason": "expected `ARRAY_AGG(x) FILTER(WHERE x IS NOT NULL)` actual `ARRAY_AGG(x)`"
+        },
+        {
+            "case": "write|presto|COLLECT_LIST(x)",
+            "reason": "expected `ARRAY_AGG(x) FILTER(WHERE x IS NOT NULL)` actual `ARRAY_AGG(x)`"
+        }
+    ]
 }

@@ -1,30 +1,6 @@
 {
     "cases": [
         {
-            "sql": "INSERT INTO things (a, b) VALUES (1, 2) AS new_data ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id), a = new_data.a, b = new_data.b",
-            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT IGNORE INTO subscribers (email) VALUES ('john.doe@gmail.com'), ('jane.smith@ibm.com')",
-            "reason": "type-mismatch at #13 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO t1 (a, b, c) VALUES (1, 2, 3), (4, 5, 6) ON DUPLICATE KEY UPDATE c = VALUES(a) + VALUES(b)",
-            "reason": "type-mismatch at #19 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO t1 (a, b) SELECT c, d FROM t2 UNION SELECT e, f FROM t3 ON DUPLICATE KEY UPDATE b = b + c",
-            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO t1 (a, b, c) VALUES (1, 2, 3) ON DUPLICATE KEY UPDATE c = c + 1",
-            "reason": "type-mismatch at #19 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON DUPLICATE KEY UPDATE x.id = 1",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
             "sql": "CREATE OR REPLACE VIEW my_view AS SELECT column1 AS `boo`, column2 AS `foo` FROM my_table WHERE column3 = 'some_value' UNION SELECT q.* FROM fruits_table, JSON_TABLE(Fruits, '$[*]' COLUMNS(id VARCHAR(255) PATH '$.$id', value VARCHAR(255) PATH '$.value')) AS q",
             "reason": "type-mismatch at #44 (Star k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },

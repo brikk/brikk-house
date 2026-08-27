@@ -129,10 +129,6 @@
             "reason": "type-mismatch at #5 (JSONPath k=expression): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
         {
-            "sql": "INSERT INTO test (cola, colb) VALUES (CAST(7 AS STRING(10)), CAST(14 AS STRING(10)))",
-            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
-        },
-        {
             "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'locf')]) ORDER BY time",
             "reason": "ParseError: Required keyword: 'ts_column' missing for GapFill. Line 1, Col: 40.\n  SELECT * FROM GAP_FILL(TABLE \u001b[4mdevice_data\u001b[0m, ts_column => 'time',"
         },

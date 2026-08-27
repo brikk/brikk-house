@@ -1,45 +1,41 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
-  "cases": [
-    {
-      "sql": "INSERT OVERWRITE TABLE db1.tb1 TABLE db2.tb2",
-      "reason": "ast-mismatch at #12: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
-    },
-    {
-      "sql": "DECLARE VAR x INT",
-      "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-    },
-    {
-      "sql": "DECLARE x INT",
-      "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-    },
-    {
-      "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
-      "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-    },
-    {
-      "sql": "DECLARE x, y, z INT DEFAULT 1",
-      "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-    },
-    {
-      "sql": "DECLARE x INT = 5",
-      "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-    },
-    {
-      "sql": "DECLARE five = 5",
-      "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-    },
-    {
-      "sql": "DECLARE OR REPLACE five = 55",
-      "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-    },
-    {
-      "sql": "DECLARE VARIABLE size DEFAULT 6",
-      "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-    },
-    {
-      "sql": "DECLARE some_var STRING",
-      "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
-    }
-  ]
+    "sqlglot_version": "v30.17.0-72-gbac1a897b",
+    "cases": [
+        {
+            "sql": "DECLARE VAR x INT",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+        },
+        {
+            "sql": "DECLARE x INT",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+        },
+        {
+            "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+        },
+        {
+            "sql": "DECLARE x, y, z INT DEFAULT 1",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+        },
+        {
+            "sql": "DECLARE x INT = 5",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+        },
+        {
+            "sql": "DECLARE five = 5",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+        },
+        {
+            "sql": "DECLARE OR REPLACE five = 55",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+        },
+        {
+            "sql": "DECLARE VARIABLE size DEFAULT 6",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+        },
+        {
+            "sql": "DECLARE some_var STRING",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 7."
+        }
+    ]
 }

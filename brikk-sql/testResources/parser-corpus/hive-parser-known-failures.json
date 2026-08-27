@@ -1,17 +1,4 @@
 {
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": [
-        {
-            "sql": "INSERT OVERWRITE TABLE zipcodes PARTITION(state = '0') VALUES (896, 'US', 'TAMPA', 33607)",
-            "reason": "ast-mismatch at #19: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
-        },
-        {
-            "sql": "INSERT OVERWRITE TABLE zipcodes PARTITION(state = 0) VALUES (896, 'US', 'TAMPA', 33607)",
-            "reason": "ast-mismatch at #19: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
-        },
-        {
-            "sql": "INSERT OVERWRITE DIRECTORY 'x' ROW FORMAT DELIMITED FIELDS TERMINATED BY '\u0001' COLLECTION ITEMS TERMINATED BY ',' MAP KEYS TERMINATED BY ':' LINES TERMINATED BY '' STORED AS TEXTFILE SELECT * FROM `a`.`b`",
-            "reason": "ast-mismatch at #25: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
-        }
-    ]
+    "cases": []
 }

@@ -13,30 +13,6 @@
             "reason": "type-mismatch at #1 (Paren k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
         {
-            "sql": "INSERT INTO tab VALUES ({'key1': 1, 'key2': 10}), ({'key1': 2, 'key2': 20}), ({'key1': 3, 'key2': 30})",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO FUNCTION s3('url', 'CSV', 'name String, value UInt32', 'gzip') SELECT name, value FROM existing_table",
-            "reason": "type-mismatch at #19 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO FUNCTION remote('localhost', default.simple_table) VALUES (100, 'inserted via remote()')",
-            "reason": "type-mismatch at #17 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO TABLE FUNCTION hdfs('hdfs://hdfs1:9000/test', 'TSV', 'name String, column2 UInt32, column3 UInt32') VALUES ('test', 1, 2)",
-            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO t (n.a, n.b) VALUES (1, [1, 2])",
-            "reason": "type-mismatch at #24 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO t (col1, col2) VALUES ('abcd', 1234)",
-            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
-        },
-        {
             "sql": "SELECT arrayConcat([1, 2], [3, 4])",
             "reason": "type-mismatch at #9 (Array k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
@@ -51,14 +27,6 @@
         {
             "sql": "SELECT or(and(3, 0), 5)",
             "reason": "type-mismatch at #1 (Paren k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "INSERT INTO t (col1, col2) FORMAT Values('abcd', 1234)",
-            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO FUNCTION s3('a', 'b', 'c', 'd', 'e') PARTITION BY CONCAT(s1, s2, s3, s4) SETTINGS set1 = 1, set2 = '2' SELECT * FROM some_table SETTINGS foo = 3",
-            "reason": "type-mismatch at #22 (PartitionedByProperty k=partition): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=null"
         },
         {
             "sql": "CREATE TABLE data5 (\"x\" UInt32, \"y\" UInt32) ENGINE=MergeTree ORDER BY (round(y / 1000000000), cityHash64(x)) SAMPLE BY cityHash64(x)",

@@ -158,10 +158,6 @@
             "reason": "ast-mismatch at #5: expected JSONPath (k=expression)"
         },
         {
-            "sql": "INSERT INTO test (cola, colb) VALUES (CAST(7 AS STRING(10)), CAST(14 AS STRING(10)))",
-            "reason": "ast-mismatch at #16: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
-        },
-        {
             "sql": "SELECT * FROM GAP_FILL(TABLE device_data, ts_column => 'time', bucket_width => INTERVAL '1' MINUTE, value_columns => [('signal', 'locf')]) ORDER BY time",
             "reason": "Required keyword: 'ts_column' missing for GapFill. Line 1, Col: 40."
         },

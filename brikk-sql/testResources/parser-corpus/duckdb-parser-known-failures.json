@@ -2,14 +2,6 @@
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
     "cases": [
         {
-            "sql": "INSERT INTO t DEFAULT VALUES RETURNING (c1)",
-            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
-        },
-        {
-            "sql": "INSERT INTO x BY NAME SELECT 1 AS y",
-            "reason": "ast-mismatch at #9: expected {\"i\":0,\"k\":\"partition\",\"v\":false}"
-        },
-        {
             "sql": "SELECT $🦆$foo$🦆$",
             "reason": "ast-mismatch at #1: expected RawString (k=expressions)"
         }

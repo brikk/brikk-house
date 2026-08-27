@@ -1,65 +1,65 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
-  "cases": [
-    {
-      "sql": "SELECT TRANSFORM(x) USING 'x' AS (x INT) FROM t",
-      "reason": "UnsupportedError: Unsupported expression type QueryTransform"
-    },
-    {
-      "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' AS (a, b, c) FROM person WHERE zip_code > 94511",
-      "reason": "UnsupportedError: Unsupported expression type QueryTransform"
-    },
-    {
-      "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' AS (a STRING, b STRING, c STRING) FROM person WHERE zip_code > 94511",
-      "reason": "UnsupportedError: Unsupported expression type QueryTransform"
-    },
-    {
-      "sql": "SELECT TRANSFORM(name, age) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n' NULL DEFINED AS 'NULL' USING 'cat' AS (name_age STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY '@' LINES TERMINATED BY '\\n' NULL DEFINED AS 'NULL' FROM person",
-      "reason": "UnsupportedError: Unsupported expression type QueryTransform"
-    },
-    {
-      "sql": "SELECT TRANSFORM(zip_code, name, age) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' WITH SERDEPROPERTIES ('field.delim'='\\t') USING 'cat' AS (a STRING, b STRING, c STRING) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' WITH SERDEPROPERTIES ('field.delim'='\\t') FROM person WHERE zip_code > 94511",
-      "reason": "UnsupportedError: Unsupported expression type QueryTransform"
-    },
-    {
-      "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' FROM person WHERE zip_code > 94500",
-      "reason": "UnsupportedError: Unsupported expression type QueryTransform"
-    },
-    {
-      "sql": "DECLARE VAR x INT",
-      "reason": "UnsupportedError: Unsupported expression type Declare"
-    },
-    {
-      "sql": "DECLARE x INT",
-      "reason": "UnsupportedError: Unsupported expression type Declare"
-    },
-    {
-      "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
-      "reason": "UnsupportedError: Unsupported expression type Declare"
-    },
-    {
-      "sql": "DECLARE x, y, z INT DEFAULT 1",
-      "reason": "UnsupportedError: Unsupported expression type Declare"
-    },
-    {
-      "sql": "DECLARE x INT = 5",
-      "reason": "UnsupportedError: Unsupported expression type Declare"
-    },
-    {
-      "sql": "DECLARE five = 5",
-      "reason": "UnsupportedError: Unsupported expression type Declare"
-    },
-    {
-      "sql": "DECLARE OR REPLACE five = 55",
-      "reason": "UnsupportedError: Unsupported expression type Declare"
-    },
-    {
-      "sql": "DECLARE VARIABLE size DEFAULT 6",
-      "reason": "UnsupportedError: Unsupported expression type Declare"
-    },
-    {
-      "sql": "DECLARE some_var STRING",
-      "reason": "UnsupportedError: Unsupported expression type Declare"
-    }
-  ]
+    "sqlglot_version": "v30.17.0-72-gbac1a897b",
+    "cases": [
+        {
+            "sql": "SELECT TRANSFORM(x) USING 'x' AS (x INT) FROM t",
+            "reason": "UnsupportedError: Unsupported expression type QueryTransform"
+        },
+        {
+            "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' AS (a, b, c) FROM person WHERE zip_code > 94511",
+            "reason": "UnsupportedError: Unsupported expression type QueryTransform"
+        },
+        {
+            "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' AS (a STRING, b STRING, c STRING) FROM person WHERE zip_code > 94511",
+            "reason": "UnsupportedError: Unsupported expression type QueryTransform"
+        },
+        {
+            "sql": "SELECT TRANSFORM(name, age) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\\n' NULL DEFINED AS 'NULL' USING 'cat' AS (name_age STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY '@' LINES TERMINATED BY '\\n' NULL DEFINED AS 'NULL' FROM person",
+            "reason": "UnsupportedError: Unsupported expression type QueryTransform"
+        },
+        {
+            "sql": "SELECT TRANSFORM(zip_code, name, age) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' WITH SERDEPROPERTIES ('field.delim'='\\t') USING 'cat' AS (a STRING, b STRING, c STRING) ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' WITH SERDEPROPERTIES ('field.delim'='\\t') FROM person WHERE zip_code > 94511",
+            "reason": "UnsupportedError: Unsupported expression type QueryTransform"
+        },
+        {
+            "sql": "SELECT TRANSFORM(zip_code, name, age) USING 'cat' FROM person WHERE zip_code > 94500",
+            "reason": "UnsupportedError: Unsupported expression type QueryTransform"
+        },
+        {
+            "sql": "DECLARE VAR x INT",
+            "reason": "UnsupportedError: Unsupported expression type Declare"
+        },
+        {
+            "sql": "DECLARE x INT",
+            "reason": "UnsupportedError: Unsupported expression type Declare"
+        },
+        {
+            "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
+            "reason": "UnsupportedError: Unsupported expression type Declare"
+        },
+        {
+            "sql": "DECLARE x, y, z INT DEFAULT 1",
+            "reason": "UnsupportedError: Unsupported expression type Declare"
+        },
+        {
+            "sql": "DECLARE x INT = 5",
+            "reason": "UnsupportedError: Unsupported expression type Declare"
+        },
+        {
+            "sql": "DECLARE five = 5",
+            "reason": "UnsupportedError: Unsupported expression type Declare"
+        },
+        {
+            "sql": "DECLARE OR REPLACE five = 55",
+            "reason": "UnsupportedError: Unsupported expression type Declare"
+        },
+        {
+            "sql": "DECLARE VARIABLE size DEFAULT 6",
+            "reason": "UnsupportedError: Unsupported expression type Declare"
+        },
+        {
+            "sql": "DECLARE some_var STRING",
+            "reason": "UnsupportedError: Unsupported expression type Declare"
+        }
+    ]
 }

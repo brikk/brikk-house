@@ -49,50 +49,6 @@
             "reason": "type-mismatch at #20 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
         {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) RETURNING a",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) RETURNING a, b",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) RETURNING *",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO book (isbn, title) VALUES ($1, $2) ON CONFLICT(isbn) WHERE deleted_at IS NULL DO UPDATE SET title = EXCLUDED.title RETURNING id, isbn",
-            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO newtable AS t(a, b, c) VALUES (1, 2, 3) ON CONFLICT(c) DO UPDATE SET a = t.a + 1 WHERE t.a < 1",
-            "reason": "type-mismatch at #22 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO tbl (a, b) VALUES (1, 'x') ON CONFLICT(a, LOWER(b)) DO UPDATE SET b = excluded.b",
-            "reason": "type-mismatch at #16 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON CONFLICT(id) DO NOTHING RETURNING *",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON CONFLICT(id) DO UPDATE SET x.id = 1 RETURNING *",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON CONFLICT(id) DO UPDATE SET x.id = excluded.id RETURNING *",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON CONFLICT ON CONSTRAINT pkey DO NOTHING RETURNING *",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
-            "sql": "INSERT INTO x VALUES (1, 'a', 2.0) ON CONFLICT ON CONSTRAINT pkey DO UPDATE SET x.id = 1 RETURNING *",
-            "reason": "type-mismatch at #9 (? k=partition): expected t=null actual t=null"
-        },
-        {
             "sql": "WITH t(c) AS (SELECT 1) SELECT * INTO UNLOGGED foo FROM (SELECT c AS c FROM t) AS temp",
             "reason": "ParseError: SELECT INTO is not supported yet. Line 1, Col: 46.\n  WITH t(c) AS (SELECT 1) SELECT * INTO \u001b[4mUNLOGGED\u001b[0m foo FROM (SELECT c AS c FROM t) "
         },

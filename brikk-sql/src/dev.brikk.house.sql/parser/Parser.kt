@@ -5637,16 +5637,34 @@ open class Parser(
 
         val returning = parseReturning() // TSQL allows RETURNING before source
 
+        val stored = if (matchTextSeq("STORED")) parseStored() else false
+        val byName = matchTextSeq("BY", "NAME")
+        val exists = parseExists()
+
+        // sqlglot #7950: REPLACE WHERE ... / REPLACE USING (...) — both null when absent,
+        // so (like upstream) they're omitted from the serialized node rather than emitted
+        // as `false` (which previously shifted downstream arg positions).
+        var replaceWhere: Expression? = null
+        var replaceUsing: List<Expression>? = null
+        if (match(TokenType.REPLACE)) {
+            if (match(TokenType.WHERE)) {
+                replaceWhere = parseDisjunction()
+            } else if (match(TokenType.USING)) {
+                replaceUsing = parseUsingIdentifiers()
+            }
+        }
+
         return expression(
             Insert(
                 args(
                     "hint" to hint,
                     "is_function" to isFunction,
                     "this" to this_,
-                    "stored" to (if (matchTextSeq("STORED")) parseStored() else false),
-                    "by_name" to matchTextSeq("BY", "NAME"),
-                    "exists" to parseExists(),
-                    "where" to (if (matchPair(TokenType.REPLACE, TokenType.WHERE)) parseDisjunction() else false),
+                    "stored" to stored,
+                    "by_name" to byName,
+                    "exists" to exists,
+                    "where" to replaceWhere,
+                    "using" to replaceUsing,
                     "partition" to (if (match(TokenType.PARTITION_BY)) parsePartitionedBy() else false),
                     "settings" to (if (matchTextSeq("SETTINGS")) parseSettingsProperty() else false),
                     "default" to matchTextSeq("DEFAULT", "VALUES"),
