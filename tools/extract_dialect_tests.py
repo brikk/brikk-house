@@ -432,7 +432,17 @@ def main() -> int:
     }
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    # This script owns only the per-dialect `<name>.json` transpile-input files. Other
+    # JSON in this dir is produced elsewhere and MUST be preserved, otherwise a re-run
+    # silently deletes it:
+    #   *-known-failures.json  — curated gate ledgers (written by the corpus gate tests)
+    #   datafusion-*.json      — import_polyglot_datafusion_fixtures.py /
+    #                            extract_datafusion_slt_corpus.py
+    # Only prune stale dialect-input files (removes inputs for dropped dialects).
     for stale in OUT_DIR.glob("*.json"):
+        name = stale.name
+        if name.endswith("-known-failures.json") or name.startswith("datafusion-"):
+            continue
         stale.unlink()
 
     rows = []
