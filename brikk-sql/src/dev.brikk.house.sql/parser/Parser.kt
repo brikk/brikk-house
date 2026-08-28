@@ -3919,7 +3919,10 @@ open class Parser(
         Regex("^\\s*-?\\s*\\d+(?:\\.\\d+)?\\s+(?:-?(?:\\d+:)?\\d+:\\d+(?:\\.\\d+)?|-?(?:\\d+:){1,2}|:)\\s*")
 
     // sqlglot: Parser._parse_interval_span
-    protected fun parseIntervalSpan(thisIn: Expression?): Expression {
+    protected fun parseIntervalSpan(
+        thisIn: Expression?,
+        parseFunctionUnit: kotlin.Boolean = true,
+    ): Expression {
         var this_ = thisIn
 
         // handle day-time format interval span with omitted units:
@@ -3948,7 +3951,7 @@ open class Parser(
         if (intervalSpanUnitsOmitted == true) {
             unit = null
         } else {
-            unit = parseFunction()
+            unit = if (parseFunctionUnit) parseFunction() else null
             if (unit == null &&
                 (currToken.tokenType == TokenType.VAR ||
                     currToken.text.uppercase() in validIntervalUnits)
@@ -4002,7 +4005,10 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_interval
-    protected fun parseInterval(requireInterval: kotlin.Boolean = true): Expression? {
+    protected fun parseInterval(
+        requireInterval: kotlin.Boolean = true,
+        parseFunctionUnit: kotlin.Boolean = true,
+    ): Expression? {
         val startIndex = index
 
         if (!match(TokenType.INTERVAL) && requireInterval) return null
@@ -4024,7 +4030,7 @@ open class Parser(
             return null
         }
 
-        val interval = parseIntervalSpan(this_)
+        val interval = parseIntervalSpan(this_, parseFunctionUnit = parseFunctionUnit)
 
         val plusIndex = index
         match(TokenType.PLUS)
@@ -4032,7 +4038,12 @@ open class Parser(
         // Convert INTERVAL 'val_1' unit_1 [+] ... [+] 'val_n' unit_n into a sum of intervals
         if (matchSet(setOf(TokenType.STRING, TokenType.NUMBER), advance = false)) {
             return expression(
-                Add(args("this" to interval, "expression" to parseInterval(false)))
+                Add(
+                    args(
+                        "this" to interval,
+                        "expression" to parseInterval(false, parseFunctionUnit = parseFunctionUnit),
+                    )
+                )
             )
         }
 

@@ -157,6 +157,10 @@ open class Generator(
     open val createFunctionReturnAs: Boolean get() = true
     open val singleStringInterval: Boolean get() = false
     open val intervalAllowsPluralForm: Boolean get() = true
+
+    // sqlglot: Generator.AUTO_REFRESH_BARE_INTERVALS — intervals in a REFRESH schedule
+    // (AutoRefreshProperty) render without the INTERVAL keyword (ClickHouse).
+    open val autoRefreshBareIntervals: Boolean get() = false
     open val limitFetch: String get() = "ALL"
     // sqlglot: Generator.LIMIT_ONLY_LITERALS
     open val limitOnlyLiterals: Boolean get() = false
@@ -3530,6 +3534,11 @@ open class Generator(
     // sqlglot: Generator.interval_sql (base: SINGLE_STRING_INTERVAL=false,
     // INTERVAL_ALLOWS_PLURAL_FORM=true)
     open fun intervalSql(expression: Interval): String {
+        // sqlglot #7990: bare intervals inside a ClickHouse REFRESH schedule omit INTERVAL.
+        val includeKeyword = !autoRefreshBareIntervals ||
+            expression.findAncestor(AutoRefreshProperty::class, Select::class) !is AutoRefreshProperty
+        var intervalKeyword = if (includeKeyword) "INTERVAL" else ""
+
         val unitExpression = expression.args["unit"]
         var unit = if (unitExpression != null) sql(unitExpression) else ""
         if (!intervalAllowsPluralForm) unit = GeneratorTables.TIME_PART_SINGULARS[unit] ?: unit
@@ -3538,19 +3547,24 @@ open class Generator(
         if (singleStringInterval) {
             val thisName = (expression.args["this"] as? Expression)?.name ?: ""
             if (thisName.isNotEmpty()) {
-                if (unitExpression is IntervalSpan) return "INTERVAL '$thisName'$unit"
-                return "INTERVAL '$thisName$unit'"
+                intervalKeyword = if (intervalKeyword.isNotEmpty()) "$intervalKeyword " else ""
+                if (unitExpression is IntervalSpan) return "$intervalKeyword'$thisName'$unit"
+                return "$intervalKeyword'$thisName$unit'"
             }
-            return "INTERVAL$unit"
+            return "$intervalKeyword$unit"
         }
 
+        val thisExpr = expression.args["this"]
         var thisSql = sql(expression, "this")
         if (thisSql.isNotEmpty()) {
-            val unwrapped = isUnwrappedIntervalValue(expression.args["this"])
-            thisSql = if (unwrapped) " $thisSql" else " ($thisSql)"
+            if (!includeKeyword && (thisExpr as? Expression)?.isString == true) {
+                thisSql = (thisExpr as Expression).name
+            }
+            if (!isUnwrappedIntervalValue(thisExpr)) thisSql = "($thisSql)"
+            if (includeKeyword) thisSql = " $thisSql"
         }
 
-        return "INTERVAL$thisSql$unit"
+        return "$intervalKeyword$thisSql$unit"
     }
 
     // sqlglot: Generator.UNWRAPPED_INTERVAL_VALUES (base: Column, Literal, Neg, Paren)
