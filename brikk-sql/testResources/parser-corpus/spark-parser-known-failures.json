@@ -1,17 +1,4 @@
 {
-    "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": [
-        {
-            "sql": "DECLARE VAR x INT",
-            "reason": "ast-mismatch at #8: expected {\"i\":1,\"k\":\"default\",\"v\":false}"
-        },
-        {
-            "sql": "DECLARE x INT",
-            "reason": "ast-mismatch at #8: expected {\"i\":1,\"k\":\"default\",\"v\":false}"
-        },
-        {
-            "sql": "DECLARE some_var STRING",
-            "reason": "ast-mismatch at #8: expected {\"i\":1,\"k\":\"default\",\"v\":false}"
-        }
-    ]
+  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "cases": []
 }

@@ -212,6 +212,91 @@ open class TrinoGenerator(
         return super.altersetSql(expression)
     }
 
+    // sqlglot: TrinoGenerator.functionspecification_sql
+    override fun functionspecificationSql(expression: FunctionSpecification): String {
+        val characteristics = expression.args["characteristics"] as? Properties
+        val characteristicsSql =
+            if (characteristics != null) {
+                properties(characteristics, prefix = " ", sep = " ", wrapped = false)
+            } else {
+                ""
+            }
+        val props = expression.args["properties"] as? Properties
+        val withSql = if (props != null) " ${withProperties(props)}" else ""
+        val body = sql(expression, "expression")
+        return "FUNCTION ${sql(expression, "this")}$characteristicsSql$withSql $body"
+    }
+
+    // sqlglot: TrinoGenerator.ifblock_sql
+    override fun ifblockSql(expression: IfBlock): String {
+        // ELSEIF chains nest into `false` at parse time; flatten rather than recurse.
+        val branches = mutableListOf<String>()
+        var node: Expression? = expression
+
+        while (node is IfBlock) {
+            val keyword = if (branches.isEmpty()) "IF" else "ELSEIF"
+            branches.add("$keyword ${sql(node, "this")} THEN ${sql(node, "true")};")
+            node = node.args["false"] as? Expression
+        }
+
+        if (node != null) {
+            branches.add("ELSE ${sql(node)};")
+        }
+
+        return "${branches.joinToString(" ")} END IF"
+    }
+
+    // sqlglot: TrinoGenerator.casestatement_sql
+    override fun casestatementSql(expression: CaseStatement): String {
+        val thisSql = sql(expression, "this")
+        val branches = mutableListOf(if (thisSql.isNotEmpty()) "CASE $thisSql" else "CASE")
+
+        for (node in expression.args["ifs"] as? List<*> ?: emptyList<Any?>()) {
+            val ifNode = node as? Expression ?: continue
+            branches.add("WHEN ${sql(ifNode, "this")} THEN ${sql(ifNode, "true")};")
+        }
+
+        val default = expression.args["default"] as? Expression
+        if (default != null) {
+            branches.add("ELSE ${sql(default)};")
+        }
+
+        branches.add("END CASE")
+        return branches.joinToString(" ")
+    }
+
+    // sqlglot: TrinoGenerator.whileblock_sql
+    override fun whileblockSql(expression: WhileBlock): String {
+        val label = expression.args["label"] as? Expression
+        val labelSql = if (label != null) "${sql(label)}: " else ""
+        val condition = sql(expression, "this")
+        val body = sql(expression, "body")
+        return "${labelSql}WHILE $condition DO $body; END WHILE"
+    }
+
+    // sqlglot: TrinoGenerator.loopblock_sql
+    override fun loopblockSql(expression: LoopBlock): String {
+        val label = expression.args["label"] as? Expression
+        val labelSql = if (label != null) "${sql(label)}: " else ""
+        val body = sql(expression, "body")
+        return "${labelSql}LOOP $body; END LOOP"
+    }
+
+    // sqlglot: TrinoGenerator.repeatblock_sql
+    override fun repeatblockSql(expression: RepeatBlock): String {
+        val label = expression.args["label"] as? Expression
+        val labelSql = if (label != null) "${sql(label)}: " else ""
+        val body = sql(expression, "body")
+        val until = sql(expression, "until")
+        return "${labelSql}REPEAT $body; UNTIL $until END REPEAT"
+    }
+
+    // sqlglot: TrinoGenerator.leave_sql
+    override fun leaveSql(expression: Leave): String = "LEAVE ${sql(expression, "this")}"
+
+    // sqlglot: TrinoGenerator.iterate_sql
+    override fun iterateSql(expression: Iterate): String = "ITERATE ${sql(expression, "this")}"
+
     // sqlglot: TrinoGenerator.jsonextract_sql
     override fun jsonextractSql(expression: JSONExtract): String {
         if (!isTruthy(expression.args["json_query"])) {
@@ -277,6 +362,21 @@ open class TrinoGenerator(
             reg(GroupConcat::class) { e -> tg().groupconcatSql(e as GroupConcat) }
             reg(LocationProperty::class) { e -> propertySql(e as Property) }
             reg(Merge::class) { e -> tg().mergeWithoutTargetSql(e as Merge) }
+            // sqlglot: TrinoGenerator.TRANSFORMS[StabilityProperty]
+            reg(StabilityProperty::class) { e ->
+                if (e.name == "IMMUTABLE") "DETERMINISTIC" else "NOT DETERMINISTIC"
+            }
+            // sqlglot: Trino inline-UDF / routine body renderers
+            reg(FunctionSpecification::class) { e ->
+                tg().functionspecificationSql(e as FunctionSpecification)
+            }
+            reg(IfBlock::class) { e -> tg().ifblockSql(e as IfBlock) }
+            reg(CaseStatement::class) { e -> tg().casestatementSql(e as CaseStatement) }
+            reg(WhileBlock::class) { e -> tg().whileblockSql(e as WhileBlock) }
+            reg(LoopBlock::class) { e -> tg().loopblockSql(e as LoopBlock) }
+            reg(RepeatBlock::class) { e -> tg().repeatblockSql(e as RepeatBlock) }
+            reg(Leave::class) { e -> tg().leaveSql(e as Leave) }
+            reg(Iterate::class) { e -> tg().iterateSql(e as Iterate) }
             reg(TimeStrToTime::class) { e -> tg().timestrtotimeSql(e, includePrecision = true) }
             reg(Trim::class) { e -> tg().trinoTrimSql(e as Trim) }
         }

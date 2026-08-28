@@ -232,10 +232,15 @@ This is normal incremental backlog, **not** a near-current blocker — we're onl
   declareitem_sql (DECLARE_DEFAULT_ASSIGNMENT base `=`, bigquery/trino `DEFAULT`). Fixed 44 cases.
 - **#8161 data-not-references** — no work needed: normalize_identifiers gate already 0 failures after the
   ASCII_ONLY_NORMALIZATION port.
-- **trino inline-UDF / routine bodies (#7934/#8004/#9815ccb32), clickhouse refreshable MV (#7990)** —
-  DEFERRED (deliberate): at our pin these round-trip fine as `Command` fallback (present in corpora, not in
-  any ledger), so porting proper AST nodes is unverifiable by the gates and risks regressing the passing
-  round-trips. Real feature work; do it when there's AST-comparison coverage (see bump note).
+- **trino inline-UDF / routine bodies (#7934/#8004/#9815ccb32)** — DONE (commit 35d1fac). Regenerated the
+  trino serde/annotate corpora (the committed ones were stale — `trino.json` had 48 `WITH FUNCTION` identity
+  cases the serde corpora lacked), giving real AST-comparison coverage, then ported the full feature:
+  `WITH FUNCTION ... RETURNS ... RETURN | BEGIN...END` with IF/ELSEIF/ELSE, CASE, WHILE, LOOP, REPEAT/UNTIL,
+  labels+LEAVE/ITERATE, SET, DECLARE, RETURN (TrinoParser parseRoutine*; base EndStatement + chunk-continuation;
+  ZONE_AWARE TIME→TIMETZ; ~13 generator methods). **48 trino cases pass across all gates + 12 bonus
+  bigquery/spark fixes; 0 regressions.**
+- **clickhouse refreshable MV (#7990)** — still DEFERRED (round-trips as Command; no gate coverage; port when
+  there's AST-comparison coverage, same approach as trino above: regen the clickhouse serde corpus first).
 
 **6-commit bump to exactly-current (v30.17.0-78-g3110e151b) — ASSESSED, then reverted (not shipped).**
 Only 2 code ports needed (MOD at multiplicative precedence #8259; GRANT/REVOKE no-privileges #8271; the two

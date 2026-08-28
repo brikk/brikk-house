@@ -882,8 +882,12 @@ open class Parser(
     var prevComments: List<String> = emptyList()
         protected set
 
-    private var chunks: List<MutableList<Token>> = emptyList()
-    private var chunkIndex: Int = 0
+    // Protected so dialect routine-body parsers (e.g. Trino WITH FUNCTION) can
+    // continue across semicolon-split chunks the same way as parseBatchStatements.
+    protected var chunks: List<MutableList<Token>> = emptyList()
+        private set
+    protected var chunkIndex: Int = 0
+        private set
     private var nodeCount: Int = 0
 
     /** Python's `bool(token)` — SENTINEL tokens are falsy. */
@@ -934,7 +938,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._advance_chunk
-    private fun advanceChunk() {
+    protected fun advanceChunk() {
         index = -1
         tokens = chunks[chunkIndex]
         tokensSize = tokens.size
@@ -1215,8 +1219,8 @@ open class Parser(
             }
 
             if (expressions.isNotEmpty() && !nextToken.exists && match(TokenType.END)) {
-                // sqlglot: exp.EndStatement() — control-flow statements not ported.
-                raiseError("END statements are not supported yet")
+                // sqlglot: exp.EndStatement()
+                expressions.add(dev.brikk.house.sql.ast.EndStatement())
                 continue
             }
 
@@ -1987,14 +1991,20 @@ open class Parser(
         if (!skipWithToken && !match(TokenType.WITH)) return null
 
         val comments = prevComments
-        val recursive = match(TokenType.RECURSIVE)
+        var recursive = match(TokenType.RECURSIVE)
 
         var lastComments: List<String>? = null
         val expressions = mutableListOf<Expression>()
+        val udfs = mutableListOf<Expression>()
         while (true) {
             val cte = parseCte()
-            if (cte is CTE) {
-                expressions.add(cte)
+            if (cte != null) {
+                // sqlglot: FunctionSpecification entries go into With.udfs; CTEs into expressions
+                if (cte is dev.brikk.house.sql.ast.FunctionSpecification) {
+                    udfs.add(cte)
+                } else {
+                    expressions.add(cte)
+                }
                 if (!lastComments.isNullOrEmpty()) cte.addComments(lastComments)
             }
 
@@ -2002,6 +2012,7 @@ open class Parser(
                 break
             } else {
                 match(TokenType.WITH)
+                recursive = match(TokenType.RECURSIVE) || recursive
             }
 
             lastComments = prevComments
@@ -2013,6 +2024,7 @@ open class Parser(
                     "expressions" to expressions,
                     "recursive" to if (recursive) true else null,
                     "search" to parseRecursiveWithSearch(),
+                    "udfs" to udfs.ifEmpty { null },
                 )
             ),
             comments = comments,
@@ -3845,12 +3857,15 @@ open class Parser(
                 if (literalParser != null) return literalParser(this, this_, dataType)
 
                 // sqlglot: ZONE_AWARE_TIMESTAMP_CONSTRUCTOR (parser.py TIME_ZONE_RE)
+                // Promotes TIMESTAMP→TIMESTAMPTZ and TIME→TIMETZ when the literal carries a zone.
                 var toType = dataType
-                if (zoneAwareTimestampConstructor &&
-                    dataType.thisArg == DType.TIMESTAMP &&
-                    TIME_ZONE_RE.containsMatchIn(literal)
-                ) {
-                    toType = expression(DataType(args("this" to DType.TIMESTAMPTZ)))
+                if (zoneAwareTimestampConstructor && TIME_ZONE_RE.containsMatchIn(literal)) {
+                    when (dataType.thisArg) {
+                        DType.TIMESTAMP ->
+                            toType = expression(DataType(args("this" to DType.TIMESTAMPTZ)))
+                        DType.TIME ->
+                            toType = expression(DataType(args("this" to DType.TIMETZ)))
+                    }
                 }
 
                 return expression(Cast(args("this" to this_, "to" to toType)))
@@ -5690,7 +5705,9 @@ open class Parser(
 
         match(TokenType.ALIAS)
         val kind = if (match(TokenType.TABLE)) parseSchema() else parseTypes()
-        val default = if (match(TokenType.DEFAULT) || match(TokenType.EQ)) parseBitwise() else null
+        // sqlglot: `(match DEFAULT or EQ) and parse_bitwise` — False (not null) when absent
+        val default: kotlin.Any? =
+            if (match(TokenType.DEFAULT) || match(TokenType.EQ)) parseBitwise() else false
 
         return expression(
             dev.brikk.house.sql.ast.DeclareItem(

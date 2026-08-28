@@ -472,6 +472,17 @@ object GeneratorTables {
         reg(Rollback::class) { e -> rollbackSql(e as Rollback) }
         reg(LoadData::class) { e -> loaddataSql(e as LoadData) }
         reg(Return::class) { e -> returnSql(e as Return) }
+        // sqlglot: routine / inline-UDF body nodes (Trino WITH FUNCTION, etc.)
+        reg(EndStatement::class) { _ -> "END" }
+        reg(Block::class) { e -> blockSql(e as Block) }
+        reg(FunctionSpecification::class) { e -> functionspecificationSql(e as FunctionSpecification) }
+        reg(IfBlock::class) { e -> ifblockSql(e as IfBlock) }
+        reg(CaseStatement::class) { e -> casestatementSql(e as CaseStatement) }
+        reg(WhileBlock::class) { e -> whileblockSql(e as WhileBlock) }
+        reg(LoopBlock::class) { e -> loopblockSql(e as LoopBlock) }
+        reg(RepeatBlock::class) { e -> repeatblockSql(e as RepeatBlock) }
+        reg(Leave::class) { e -> leaveSql(e as Leave) }
+        reg(Iterate::class) { e -> iterateSql(e as Iterate) }
         reg(Partition::class) { e -> partitionSql(e as Partition) }
         reg(PartitionRange::class) { e -> partitionrangeSql(e as PartitionRange) }
         reg(Grant::class) { e -> grantSql(e as Grant) }
