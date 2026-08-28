@@ -739,6 +739,61 @@ open class Generator(
         return "$variables$kind$default"
     }
 
+    // sqlglot: Generator.block_sql
+    open fun blockSql(expression: Block): String {
+        val exprs = expressions(expression, sep = "; ", flat = true)
+        val begin = if (expression.args["begin"] == true) "BEGIN " else ""
+        return if (exprs.isNotEmpty()) "$begin$exprs" else ""
+    }
+
+    // sqlglot: Generator.functionspecification_sql (base: unsupported; dialects override)
+    open fun functionspecificationSql(expression: FunctionSpecification): String {
+        unsupported("Unsupported Inline UDFs syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.ifblock_sql (base: unsupported; dialects override)
+    open fun ifblockSql(expression: IfBlock): String {
+        unsupported("Unsupported If block syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.casestatement_sql (base: unsupported; dialects override)
+    open fun casestatementSql(expression: CaseStatement): String {
+        unsupported("Unsupported Case statement syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.whileblock_sql (base: unsupported; dialects override)
+    open fun whileblockSql(expression: WhileBlock): String {
+        unsupported("Unsupported While block syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.loopblock_sql (base: unsupported; dialects override)
+    open fun loopblockSql(expression: LoopBlock): String {
+        unsupported("Unsupported Loop block syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.repeatblock_sql (base: unsupported; dialects override)
+    open fun repeatblockSql(expression: RepeatBlock): String {
+        unsupported("Unsupported Repeat block syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.leave_sql (base: unsupported; dialects override)
+    open fun leaveSql(expression: Leave): String {
+        unsupported("Unsupported Leave syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.iterate_sql (base: unsupported; dialects override)
+    open fun iterateSql(expression: Iterate): String {
+        unsupported("Unsupported Iterate syntax")
+        return ""
+    }
+
     // sqlglot: Generator.binary
     open fun binary(expression: Binary, op: String): String {
         var opText = op
@@ -1239,12 +1294,16 @@ open class Generator(
 
     // sqlglot: Generator.with_sql
     open fun withSql(expression: With): String {
+        var udfs = expressions(expression, key = "udfs", flat = true)
+        udfs = if (udfs.isNotEmpty()) "WITH $udfs" else ""
+
         val sqlText = expressions(expression, flat = true)
         val recursive =
             if (cteRecursiveKeywordRequired && expression.args["recursive"] == true) "RECURSIVE " else ""
         var search = sql(expression, "search")
         if (search.isNotEmpty()) search = " $search"
-        return "WITH $recursive$sqlText$search"
+        val ctes = if (sqlText.isNotEmpty()) "WITH $recursive$sqlText$search" else ""
+        return if (udfs.isNotEmpty() && ctes.isNotEmpty()) "$udfs $ctes" else "$udfs$ctes"
     }
 
     // sqlglot: Generator.cte_sql

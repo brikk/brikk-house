@@ -294,7 +294,8 @@ object BaseParserTables {
         TokenType.BEGIN, TokenType.BPCHAR, TokenType.CACHE, TokenType.CASE,
         TokenType.COLLATE, TokenType.COMMAND, TokenType.COMMENT, TokenType.COMMIT,
         TokenType.CONSTRAINT, TokenType.COPY, TokenType.CUBE, TokenType.CURRENT_SCHEMA,
-        TokenType.DEFAULT, TokenType.DELETE, TokenType.DESC, TokenType.DESCRIBE,
+        // sqlglot: TokenType.DECLARE (inline UDF / routine labels & identifiers)
+        TokenType.DECLARE, TokenType.DEFAULT, TokenType.DELETE, TokenType.DESC, TokenType.DESCRIBE,
         TokenType.DETACH, TokenType.DICTIONARY, TokenType.DIV, TokenType.END,
         TokenType.EXECUTE, TokenType.EXPORT, TokenType.ESCAPE, TokenType.FALSE,
         TokenType.FIRST, TokenType.FILE, TokenType.FILTER, TokenType.FINAL,
@@ -378,6 +379,8 @@ object BaseParserTables {
         TokenType.COLLATE, TokenType.COMMAND, TokenType.CURRENT_DATE,
         TokenType.CURRENT_DATETIME, TokenType.CURRENT_SCHEMA, TokenType.CURRENT_TIMESTAMP,
         TokenType.CURRENT_TIME, TokenType.CURRENT_USER, TokenType.CURRENT_CATALOG,
+        // sqlglot: TokenType.DECLARE (allows SELECT DECLARE() after WITH FUNCTION declare())
+        TokenType.DECLARE,
         TokenType.FILTER, TokenType.FIRST, TokenType.FORMAT, TokenType.GET,
         TokenType.GLOB, TokenType.IDENTIFIER, TokenType.INDEX, TokenType.ISNULL,
         TokenType.ILIKE, TokenType.INSERT, TokenType.LIKE, TokenType.LOCALTIME,

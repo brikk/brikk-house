@@ -1,17 +1,32 @@
 package dev.brikk.house.sql.dialects
 
 import dev.brikk.house.sql.ast.AlterSet
+import dev.brikk.house.sql.ast.Block
+import dev.brikk.house.sql.ast.CaseStatement
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.CurrentCatalog
 import dev.brikk.house.sql.ast.CurrentVersion
 import dev.brikk.house.sql.ast.EQ
+import dev.brikk.house.sql.ast.EndStatement
 import dev.brikk.house.sql.ast.Expression
+import dev.brikk.house.sql.ast.FunctionSpecification
 import dev.brikk.house.sql.ast.Identifier
+import dev.brikk.house.sql.ast.If
+import dev.brikk.house.sql.ast.IfBlock
+import dev.brikk.house.sql.ast.Iterate
 import dev.brikk.house.sql.ast.JSONExtract
 import dev.brikk.house.sql.ast.JSONExtractQuote
 import dev.brikk.house.sql.ast.JSONValue
+import dev.brikk.house.sql.ast.Leave
+import dev.brikk.house.sql.ast.Literal
+import dev.brikk.house.sql.ast.LoopBlock
 import dev.brikk.house.sql.ast.OnCondition
+import dev.brikk.house.sql.ast.Properties
+import dev.brikk.house.sql.ast.RepeatBlock
+import dev.brikk.house.sql.ast.Return
+import dev.brikk.house.sql.ast.StabilityProperty
 import dev.brikk.house.sql.ast.Var
+import dev.brikk.house.sql.ast.WhileBlock
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.Parser
@@ -64,6 +79,239 @@ open class TrinoParser(
                 ),
             )
         }
+    }
+
+    // sqlglot: TrinoParser._parse_property — NOT DETERMINISTIC as text-seq (same as BigQuery)
+    override fun parseProperty(): kotlin.Any? {
+        if (matchTextSeq("NOT", "DETERMINISTIC")) {
+            return expression(StabilityProperty(args("this" to Literal.string("VOLATILE"))))
+        }
+        return super.parseProperty()
+    }
+
+    // sqlglot: TrinoParser._parse_cte — WITH FUNCTION <name> is an inline SQL UDF
+    override fun parseCte(): Expression? {
+        if (
+            match(TokenType.FUNCTION, advance = false) &&
+            nextToken.exists &&
+            nextToken.tokenType in idVarTokens
+        ) {
+            advance()
+            return parseFunctionSpecification()
+        }
+        return super.parseCte()
+    }
+
+    // sqlglot: TrinoParser._parse_function_specification
+    open fun parseFunctionSpecification(): Expression {
+        val this_ = parseUserDefinedFunction(kind = TokenType.FUNCTION)
+
+        val characteristics = mutableListOf<Expression>()
+        val properties = mutableListOf<Expression>()
+
+        while (true) {
+            if (match(TokenType.WITH)) {
+                properties.addAll(parseWrappedCsv({ parseKeyValueProperty() }))
+                continue
+            }
+
+            val characteristic = parseProperty() ?: break
+            when (characteristic) {
+                is Expression -> characteristics.add(characteristic)
+                is kotlin.collections.List<*> ->
+                    characteristics.addAll(characteristic.filterIsInstance<Expression>())
+            }
+        }
+
+        return expression(
+            FunctionSpecification(
+                args(
+                    "this" to this_,
+                    "characteristics" to if (characteristics.isNotEmpty()) {
+                        expression(Properties(args("expressions" to characteristics)))
+                    } else {
+                        null
+                    },
+                    "properties" to if (properties.isNotEmpty()) {
+                        expression(Properties(args("expressions" to properties)))
+                    } else {
+                        null
+                    },
+                    "expression" to parseRoutineStatement(),
+                )
+            )
+        )
+    }
+
+    // sqlglot: TrinoParser._parse_routine_statements
+    open fun parseRoutineStatements(vararg terminators: String): MutableList<Expression> {
+        val statements = mutableListOf<Expression>()
+        val terminatorSet = terminators.map { it.uppercase() }.toSet()
+
+        while (!matchTexts(terminatorSet)) {
+            if (!currToken.exists) {
+                if (chunkIndex >= chunks.size) {
+                    raiseError("Unexpected end of routine body")
+                    break
+                }
+                advanceChunk()
+            } else if (!match(TokenType.SEMICOLON)) {
+                val statement = parseRoutineStatement() ?: break
+                statements.add(statement)
+            }
+        }
+
+        return statements
+    }
+
+    // sqlglot: TrinoParser._parse_routine_block
+    open fun parseRoutineBlock(): Expression {
+        match(TokenType.BEGIN)
+        val statements = parseRoutineStatements("END")
+        statements.add(EndStatement())
+        return expression(Block(args("expressions" to statements, "begin" to true)))
+    }
+
+    // sqlglot: TrinoParser._parse_routine_if
+    open fun parseRoutineIf(): Expression {
+        fun parseBranch(): Expression {
+            val condition = parseDisjunction()
+            matchTextSeq("THEN")
+            val true_ = expression(
+                Block(args("expressions" to parseRoutineStatements("ELSEIF", "ELSE", "END")))
+            )
+            return expression(IfBlock(args("this" to condition, "true" to true_)))
+        }
+
+        var this_ = parseBranch()
+        var tail = this_
+        while (prevToken.text.uppercase() == "ELSEIF") {
+            val node = parseBranch()
+            tail.set("false", node)
+            tail = node
+        }
+
+        if (prevToken.text.uppercase() == "ELSE") {
+            tail.set(
+                "false",
+                expression(Block(args("expressions" to parseRoutineStatements("END")))),
+            )
+        }
+
+        matchTextSeq("IF")
+        return this_
+    }
+
+    // sqlglot: TrinoParser._parse_routine_case
+    open fun parseRoutineCase(): Expression {
+        val this_ = parseDisjunction()
+
+        fun parseBranch(): Expression {
+            val condition = parseDisjunction()
+            matchTextSeq("THEN")
+            val true_ = expression(
+                Block(args("expressions" to parseRoutineStatements("WHEN", "ELSE", "END")))
+            )
+            return expression(If(args("this" to condition, "true" to true_)))
+        }
+
+        val ifs = mutableListOf<Expression>()
+        matchTextSeq("WHEN")
+        while (prevToken.text.uppercase() == "WHEN") {
+            ifs.add(parseBranch())
+        }
+
+        var default: Expression? = null
+        if (prevToken.text.uppercase() == "ELSE") {
+            default = expression(Block(args("expressions" to parseRoutineStatements("END"))))
+        }
+
+        matchTextSeq("CASE")
+        return expression(
+            CaseStatement(args("this" to this_, "ifs" to ifs, "default" to default))
+        )
+    }
+
+    // sqlglot: TrinoParser._parse_routine_while
+    open fun parseRoutineWhile(label: Expression? = null): Expression {
+        val condition = parseDisjunction()
+        matchTextSeq("DO")
+        val body = expression(Block(args("expressions" to parseRoutineStatements("END"))))
+        matchTextSeq("WHILE")
+        return expression(WhileBlock(args("this" to condition, "body" to body, "label" to label)))
+    }
+
+    // sqlglot: TrinoParser._parse_routine_loop
+    open fun parseRoutineLoop(label: Expression? = null): Expression {
+        val body = expression(Block(args("expressions" to parseRoutineStatements("END"))))
+        matchTextSeq("LOOP")
+        return expression(LoopBlock(args("body" to body, "label" to label)))
+    }
+
+    // sqlglot: TrinoParser._parse_routine_repeat
+    open fun parseRoutineRepeat(label: Expression? = null): Expression {
+        val body = expression(Block(args("expressions" to parseRoutineStatements("UNTIL"))))
+        val until = parseDisjunction()
+        matchTextSeq("END", "REPEAT")
+        return expression(RepeatBlock(args("body" to body, "until" to until, "label" to label)))
+    }
+
+    // sqlglot: TrinoParser._parse_routine_statement
+    open fun parseRoutineStatement(): Expression? {
+        // Optional `label :` before WHILE/LOOP/REPEAT (colon lookahead first so SET/IF/etc
+        // remain valid label names).
+        var label: Expression? = null
+        if (nextToken.exists && nextToken.tokenType == TokenType.COLON) {
+            label = parseIdVar()
+            match(TokenType.COLON)
+        }
+
+        if (match(TokenType.BEGIN, advance = false)) {
+            return parseRoutineBlock()
+        }
+
+        if (matchTextSeq("RETURN")) {
+            return expression(Return(args("this" to parseDisjunction())))
+        }
+
+        if (matchTextSeq("IF")) {
+            return parseRoutineIf()
+        }
+
+        if (matchTextSeq("CASE")) {
+            return parseRoutineCase()
+        }
+
+        if (match(TokenType.DECLARE)) {
+            return parseDeclare()
+        }
+
+        if (match(TokenType.SET)) {
+            return parseSet()
+        }
+
+        if (matchTextSeq("ITERATE")) {
+            return expression(Iterate(args("this" to parseIdVar())))
+        }
+
+        if (matchTextSeq("LEAVE")) {
+            return expression(Leave(args("this" to parseIdVar())))
+        }
+
+        if (matchTextSeq("WHILE")) {
+            return parseRoutineWhile(label = label)
+        }
+
+        if (matchTextSeq("LOOP")) {
+            return parseRoutineLoop(label = label)
+        }
+
+        if (matchTextSeq("REPEAT")) {
+            return parseRoutineRepeat(label = label)
+        }
+
+        raiseError("Expected routine statement")
+        return null
     }
 
     // sqlglot: TrinoParser._parse_json_query_quote
