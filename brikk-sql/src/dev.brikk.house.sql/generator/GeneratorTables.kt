@@ -460,6 +460,8 @@ object GeneratorTables {
         reg(Update::class) { e -> updateSql(e as Update) }
         reg(Kill::class) { e -> killSql(e as Kill) }
         reg(Pragma::class) { e -> pragmaSql(e as Pragma) }
+        reg(Declare::class) { e -> declareSql(e as Declare) }
+        reg(DeclareItem::class) { e -> declareitemSql(e as DeclareItem) }
         reg(SetNode::class) { e -> setSql(e as SetNode) }
         reg(SetItem::class) { e -> setitemSql(e as SetItem) }
         reg(Use::class) { e -> useSql(e as Use) }
@@ -636,6 +638,8 @@ object GeneratorTables {
         reg(WithOperator::class) { e -> "${sql(e, "this")} WITH ${sql(e, "op")}" }
         reg(JSONBContainsAnyTopKeys::class) { e -> binary(e as Binary, "?|") }
         reg(JSONBContainsAllTopKeys::class) { e -> binary(e as Binary, "?&") }
+        // sqlglot #8156: JSONBContainsTopKey renders as the `?` operator.
+        reg(JSONBContainsTopKey::class) { e -> binary(e as Binary, "?") }
         reg(JSONBDeleteAtPath::class) { e -> binary(e as Binary, "#-") }
         reg(JSONBPathExists::class) { e -> binary(e as Binary, "@?") }
 

@@ -1,40 +1,20 @@
 {
-  "cases": [
-    {
-      "sql": "DECLARE VAR x INT",
-      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
-    },
-    {
-      "sql": "DECLARE x INT",
-      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
-    },
-    {
-      "sql": "DECLARE VARIABLE myvar INT DEFAULT 5",
-      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
-    },
-    {
-      "sql": "DECLARE x, y, z INT DEFAULT 1",
-      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
-    },
-    {
-      "sql": "DECLARE x INT = 5",
-      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
-    },
-    {
-      "sql": "DECLARE five = 5",
-      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
-    },
-    {
-      "sql": "DECLARE OR REPLACE five = 55",
-      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
-    },
-    {
-      "sql": "DECLARE VARIABLE size DEFAULT 6",
-      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
-    },
-    {
-      "sql": "DECLARE some_var STRING",
-      "reason": "DECLARE statement parsing not ported (see spark-parser ledger)"
-    }
-  ]
+    "cases": [
+        {
+            "sql": "SELECT * FROM t1 SEMI JOIN t2 ON t1.x = t2.x",
+            "reason": "type-mismatch at #22 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "DECLARE VAR x INT",
+            "reason": "type-mismatch at #8 (? k=default): expected t=null actual t=null"
+        },
+        {
+            "sql": "DECLARE x INT",
+            "reason": "type-mismatch at #8 (? k=default): expected t=null actual t=null"
+        },
+        {
+            "sql": "DECLARE some_var STRING",
+            "reason": "type-mismatch at #8 (? k=default): expected t=null actual t=null"
+        }
+    ]
 }

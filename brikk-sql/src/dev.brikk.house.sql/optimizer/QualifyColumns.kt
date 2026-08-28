@@ -254,7 +254,7 @@ private fun expandUsing(scope: Scope, resolver: Resolver): Map<String, Map<Strin
     // Mapping of automatically joined column names to an ordered set of source names.
     val columnTables = LinkedHashMap<String, LinkedHashMap<String, Any?>>()
 
-    if (joins.none { !(it.args["using"] as? List<*>).isNullOrEmpty() }) {
+    if (joins.none { !(it.args["using"] as? List<*>).isNullOrEmpty() || it.method == "NATURAL" }) {
         return columnTables
     }
 
@@ -271,12 +271,29 @@ private fun expandUsing(scope: Scope, resolver: Resolver): Map<String, Map<Strin
         val joinTable = join.aliasOrName
         ordered.add(joinTable)
 
-        val using = (join.args["using"] as? List<*>)?.filterIsInstance<Expression>()
+        val joinColumns = resolver.getSourceColumns(joinTable)
+
+        var using = (join.args["using"] as? List<*>)?.filterIsInstance<Expression>()
+        if (using.isNullOrEmpty() && join.method == "NATURAL") {
+            // A NATURAL JOIN is a USING join over the columns common to both sides; when those
+            // can't be determined (unknown schema, no common columns), NATURAL stays in place
+            // and the engine decides what it means (rather than silently widening to a cross join).
+            if (columns.isNotEmpty() && "*" !in columns &&
+                joinColumns.isNotEmpty() && "*" !in joinColumns
+            ) {
+                val naturalUsing = columns.keys
+                    .filter { it in joinColumns }
+                    .mapNotNull { toIdentifier(it) }
+                if (naturalUsing.isNotEmpty()) {
+                    using = naturalUsing
+                    join.set("method", null)
+                }
+            }
+        }
         if (using.isNullOrEmpty()) {
             continue
         }
 
-        val joinColumns = resolver.getSourceColumns(joinTable)
         val conditions = mutableListOf<Expression>()
         val usingIdentifierCount = using.size
         val isSemiOrAntiJoin = join.isSemiOrAntiJoin
@@ -982,7 +999,8 @@ private fun expandStarsInScope(
 
     val pivot = scope.pivots.getOrNull(0) as? Pivot
 
-    if (dialect.supportsStructStarExpansion && scope.stars.any { it is Dot }) {
+    val annotatedAhead = dialect.supportsStructStarExpansion && scope.stars.any { it is Dot }
+    if (annotatedAhead) {
         // Found struct expansion, annotate scope ahead of time
         annotator.annotateScope(scope)
     }
@@ -1017,20 +1035,19 @@ private fun expandStarsInScope(
                 addRenameColumns(star, tableKeys, renameColumns)
                 ilikePattern = addIlikeColumns(star)
             } else if (expression is Dot) {
-                if (dialect.supportsStructStarExpansion &&
-                    !dialect.requiresParenthesizedStructAccess
-                ) {
-                    val structFields = expandStructStarsNoParens(expression)
-                    if (structFields.isNotEmpty()) {
-                        newSelections.addAll(structFields)
-                        continue
+                val structFields = if (dialect.requiresParenthesizedStructAccess) {
+                    expandStructStarsWithParens(expression)
+                } else if (dialect.supportsStructStarExpansion) {
+                    expandStructStarsNoParens(expression)
+                } else {
+                    emptyList()
+                }
+                if (structFields.isNotEmpty()) {
+                    if (annotatedAhead) {
+                        annotator.uncache(expression)
                     }
-                } else if (dialect.requiresParenthesizedStructAccess) {
-                    val structFields = expandStructStarsWithParens(expression)
-                    if (structFields.isNotEmpty()) {
-                        newSelections.addAll(structFields)
-                        continue
-                    }
+                    newSelections.addAll(structFields)
+                    continue
                 }
             }
         }
@@ -1134,10 +1151,19 @@ private fun expandStarsInScope(
                 }
             }
         }
+
+        if (annotatedAhead) {
+            // The star projection was replaced by the expansions above
+            annotator.uncache(expression)
+        }
     }
 
     // Ensures we don't overwrite the initial selections with an empty list
     if (newSelections.isNotEmpty() && scopeExpression is Select) {
+        if (annotatedAhead) {
+            // The mutation below would otherwise be skipped by the final annotation pass
+            annotator.uncache(scopeExpression, deep = false)
+        }
         scopeExpression.set("expressions", newSelections)
     }
 }

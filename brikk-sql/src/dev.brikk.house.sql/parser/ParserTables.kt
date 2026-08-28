@@ -303,6 +303,7 @@ object BaseParserTables {
         TokenType.KEEP, TokenType.KILL, TokenType.LEFT, TokenType.LIMIT, TokenType.LOAD,
         TokenType.LOCK, TokenType.MATCH, TokenType.MERGE, TokenType.NATURAL,
         TokenType.NEXT, TokenType.OFFSET, TokenType.OPERATOR, TokenType.ORDINALITY,
+        TokenType.OUT,
         TokenType.OVER, TokenType.OVERLAPS, TokenType.OVERWRITE, TokenType.PARTITION,
         TokenType.PERCENT, TokenType.PIVOT, TokenType.PROJECTION, TokenType.PRAGMA,
         TokenType.PUT, TokenType.RANGE, TokenType.RECURSIVE, TokenType.REFERENCES,
@@ -558,8 +559,11 @@ object BaseParserTables {
                 )
             },
             TokenType.PLACEHOLDER to { parser, this_, key ->
+                // sqlglot #8156: `?` builds JSONBContainsTopKey (was JSONBContains).
                 parser.expression(
-                    dev.brikk.house.sql.ast.JSONBContains(args("this" to this_, "expression" to key))
+                    dev.brikk.house.sql.ast.JSONBContainsTopKey(
+                        args("this" to this_, "expression" to key)
+                    )
                 )
             },
         )
@@ -578,6 +582,7 @@ object BaseParserTables {
         TokenType.COMMIT to { p -> p.parseCommitOrRollback() },
         TokenType.COPY to { p -> p.parseCopy() },
         TokenType.CREATE to { p -> p.parseCreate() },
+        TokenType.DECLARE to { p -> p.parseDeclare() },
         TokenType.DELETE to { p -> p.parseDelete() },
         TokenType.DESC to { p -> p.parseDescribe() },
         TokenType.DESCRIBE to { p -> p.parseDescribe() },
@@ -795,7 +800,8 @@ object BaseParserTables {
         "BLOCKCOMPRESSION" to { p, _ -> p.parseBlockcompression() },
         "CALLED" to { p, _ -> p.parseCalledOnNullInputProperty() },
         "CHARSET" to { p, kw -> p.parseCharacterSet(default = kw.default) },
-        "CHARACTER SET" to { p, kw -> p.parseCharacterSet(default = kw.default) },
+        // sqlglot #8007: `CHARACTER SET` is no longer a single token; parsed via
+        // text-sequence in parseProperty/parsePropertyBefore/parseColumnConstraint/parseCast.
         "CHECKSUM" to { p, _ -> p.parseChecksum() },
         "CLUSTER BY" to { p, _ -> p.parseClusterProperty() },
         "CLUSTERED" to { p, _ -> p.parseClusteredBy() },
@@ -961,11 +967,8 @@ object BaseParserTables {
         "CASESPECIFIC" to { p ->
             p.expression(dev.brikk.house.sql.ast.CaseSpecificColumnConstraint(args("not_" to false)))
         },
-        "CHARACTER SET" to { p ->
-            p.expression(
-                dev.brikk.house.sql.ast.CharacterSetColumnConstraint(args("this" to p.parseVarOrString()))
-            )
-        },
+        // sqlglot #8007: `CHARACTER SET` column constraint parsed via text-sequence in
+        // parseColumnConstraint (no longer a single CHARACTER_SET-keyed token).
         "CHECK" to { p -> p.parseCheckConstraint() },
         "COLLATE" to { p ->
             p.expression(
@@ -1119,7 +1122,8 @@ object BaseParserTables {
             "sort" to parser.parseSort({ a: Args -> dev.brikk.house.sql.ast.Sort(a) }, TokenType.SORT_BY)
         },
         TokenType.CONNECT_BY to { parser -> "connect" to parser.parseConnect(skipStartToken = true) },
-        TokenType.START_WITH to { parser -> "connect" to parser.parseConnect() },
+        // sqlglot #8008: START WITH ... CONNECT BY is handled in parseQueryModifiers via
+        // text-sequence (START is no longer a single START_WITH token).
     )
 
     // sqlglot: Parser.TYPE_LITERAL_PARSERS

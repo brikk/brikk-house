@@ -17,6 +17,7 @@ import dev.brikk.house.sql.parser.Token
 import dev.brikk.house.sql.parser.Tokenizer
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
+import dev.brikk.house.sql.parser.withStrictTimeInverse
 
 /**
  * Port of sqlglot's Dialect (reference/sqlglot/sqlglot/dialects/dialect.py) — the
@@ -61,6 +62,10 @@ open class Dialect {
 
     // sqlglot: Dialect.NORMALIZATION_STRATEGY
     open val normalizationStrategy: NormalizationStrategy get() = NormalizationStrategy.LOWERCASE
+
+    // sqlglot: Dialect.ASCII_ONLY_NORMALIZATION — when true, identifier case-folding only
+    // touches ASCII A-Z/a-z (non-ASCII letters are left as-is).
+    open val asciiOnlyNormalization: Boolean get() = false
 
     // sqlglot: Dialect.EXPRESSION_METADATA (type inference & validation rules; see
     // GeneratedTypingMetadata — doris shares mysql, trino shares presto)
@@ -138,9 +143,10 @@ open class Dialect {
     // sqlglot: Dialect.TIME_MAPPING (dialect format specifier -> python strftime)
     open val timeMapping: Map<String, String> get() = emptyMap()
 
-    // sqlglot: Dialect.INVERSE_TIME_MAPPING ({v: k for k, v in TIME_MAPPING.items()})
+    // sqlglot: Dialect.INVERSE_TIME_MAPPING — auto-inverse of TIME_MAPPING, then
+    // _with_strict_time_inverse so %mstrict never leaks / pads correctly on strict dialects.
     val inverseTimeMapping: Map<String, String> by lazy {
-        timeMapping.entries.associate { (k, v) -> v to k }
+        withStrictTimeInverse(timeMapping.entries.associate { (k, v) -> v to k })
     }
 
     // sqlglot: Dialect.parser
@@ -188,18 +194,29 @@ open class Dialect {
                 )
         ) {
             val name = expression.thisArg as String
-            val normalized =
-                if (
-                    normalizationStrategy == NormalizationStrategy.UPPERCASE ||
+            val upper =
+                normalizationStrategy == NormalizationStrategy.UPPERCASE ||
                     normalizationStrategy == NormalizationStrategy.CASE_INSENSITIVE_UPPERCASE
-                ) {
-                    name.uppercase()
-                } else {
-                    name.lowercase()
-                }
+            val normalized = when {
+                upper && asciiOnlyNormalization -> asciiTranslate(name, toUpper = true)
+                upper -> name.uppercase()
+                asciiOnlyNormalization -> asciiTranslate(name, toUpper = false)
+                else -> name.lowercase()
+            }
             expression.set("this", normalized)
         }
         return expression
+    }
+
+    // sqlglot: ASCII_LOWER / ASCII_UPPER translation tables (ASCII letters only).
+    private fun asciiTranslate(s: String, toUpper: Boolean): String = buildString(s.length) {
+        for (c in s) append(
+            when {
+                toUpper && c in 'a'..'z' -> c - 32
+                !toUpper && c in 'A'..'Z' -> c + 32
+                else -> c
+            }
+        )
     }
 
     /**

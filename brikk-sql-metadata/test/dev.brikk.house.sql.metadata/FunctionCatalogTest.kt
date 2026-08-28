@@ -290,8 +290,13 @@ class FunctionCatalogTest {
         assertTrue(DUCKDB_FUNCTION_CATALOG.isKnown("coalesce"))
         assertTrue(DUCKDB_FUNCTION_CATALOG.isKnown("grouping"))
 
-        // Doris registers COALESCE/IF/GROUPING/... directly — no grammar set needed.
-        assertEquals(emptySet<String>(), DORIS_FUNCTION_CATALOG.grammarBuiltins)
+        // Doris registers COALESCE/IF/GROUPING/... directly, but parses TIMESTAMPADD/
+        // TIMESTAMPDIFF/MOD/SYSDATE/EXTRACT/CAST/CONVERT as grammar special forms / operators
+        // (absent from the Nereids registry), wired as grammarBuiltins (DorisGrammarBuiltins.kt).
+        assertEquals(DORIS_GRAMMAR_BUILTINS, DORIS_FUNCTION_CATALOG.grammarBuiltins)
+        assertTrue("EXTRACT" in DORIS_FUNCTION_CATALOG.grammarBuiltins)
+        assertTrue(DORIS_FUNCTION_CATALOG.isKnown("extract")) // grammar-level, not in registry
+        assertTrue("extract" !in DORIS_FUNCTION_CATALOG)
         assertTrue("coalesce" in DORIS_FUNCTION_CATALOG)
         assertTrue(DORIS_FUNCTION_CATALOG.isKnown("coalesce"))
     }

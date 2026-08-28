@@ -16,6 +16,34 @@ class PostgresTokenizerTest {
     private fun tokenize(sql: String): List<Pair<TokenType, String>> =
         Tokenizer(PostgresTokenizerTables.CONFIG).tokenize(sql).map { it.tokenType to it.text }
 
+    /**
+     * GENERATED-PATCH GUARD. The `U&'`/`u&'` entries in PostgresTokenizerTables.FORMAT_STRINGS
+     * (unicode string literals, sqlglot a1e3338e3) are a hand-patch applied ahead of the resync
+     * inside a GENERATED file. `gen_tokenizer_tables` at our current pin does NOT emit them, so a
+     * regen wipes them — if that happens and nobody re-applies the patch, this test fails loudly
+     * (U&'...' would tokenize as VAR/`&`/STRING instead of one UNICODE_STRING). Once the sqlglot
+     * pin is >= a1e3338e3 the entries are auto-generated and this test still passes (patch becomes
+     * redundant). Do NOT delete this guard when externalizing map-data patches that can't be
+     * moved to a hand file.
+     */
+    @Test
+    fun unicodeStringLiteralsAreTokenized_generatedPatchGuard() {
+        assertEquals(
+            listOf(
+                TokenType.SELECT to "SELECT",
+                TokenType.UNICODE_STRING to "d\\0061t\\0061",
+            ),
+            tokenize("SELECT U&'d\\0061t\\0061'"),
+        )
+        assertEquals(
+            listOf(
+                TokenType.SELECT to "SELECT",
+                TokenType.UNICODE_STRING to "abc",
+            ),
+            tokenize("SELECT u&'abc'"),
+        )
+    }
+
     @Test
     fun dollarQuotedStringsWithTag() {
         assertEquals(

@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "fixture": "dialect-corpus/spark.json",
  "dialect": "spark",
  "case_count": 101,
@@ -527,7 +527,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {
@@ -620,6 +621,11 @@
     {
      "i": 0,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
      "v": false
     }
    ]
@@ -786,11 +792,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -820,7 +821,7 @@
      "c": "sqlglot.expressions.query.Table"
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
@@ -831,17 +832,17 @@
      }
     },
     {
-     "i": 19,
+     "i": 18,
      "k": "this",
      "v": "tb2"
     },
     {
-     "i": 19,
+     "i": 18,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "db",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
@@ -852,12 +853,12 @@
      }
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "this",
      "v": "db2"
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "quoted",
      "v": false
     }
@@ -5463,7 +5464,7 @@
     {
      "i": 3,
      "k": "this",
-     "v": "%Y-%m-%d %H:%M:%S"
+     "v": "%Y-%mstrict-%dstrict %Hstrict:%Mstrict:%Sstrict"
     },
     {
      "i": 3,
@@ -9282,7 +9283,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {
@@ -9337,7 +9339,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {
@@ -9392,7 +9395,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {
@@ -9501,7 +9505,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {
@@ -9627,7 +9632,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {
@@ -9677,7 +9683,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {
@@ -9727,7 +9734,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {

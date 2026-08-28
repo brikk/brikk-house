@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "fixture": "dialect-corpus/duckdb.json",
  "dialect": "duckdb",
  "case_count": 382,
@@ -2964,11 +2964,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -2988,18 +2983,18 @@
      "c": "sqlglot.expressions.dml.Returning"
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Paren"
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "this",
      "c": "sqlglot.expressions.core.Column"
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
@@ -3010,17 +3005,17 @@
      }
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "this",
      "v": "c1"
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "into",
      "v": false
     },
@@ -4344,11 +4339,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -4368,13 +4358,13 @@
      "c": "sqlglot.expressions.query.Select"
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Alias"
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "this",
      "c": "sqlglot.expressions.core.Literal",
      "m": {
@@ -4385,17 +4375,17 @@
      }
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "alias",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
@@ -4406,12 +4396,12 @@
      }
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "quoted",
      "v": false
     },

@@ -1,4 +1,17 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": []
+    "sqlglot_version": "v30.17.0-72-gbac1a897b",
+    "cases": [
+        {
+            "sql": "SELECT 1 FROM a.b.table1 AS t UNPIVOT((c3) FOR c4 IN (a, b))",
+            "reason": "ast-mismatch: payload count expected=40 actual=39"
+        },
+        {
+            "sql": "SELECT a FROM test UNPIVOT(x FOR y IN (z, q)) AS x",
+            "reason": "ast-mismatch at #28: expected {\"i\":10,\"k\":\"value_columns_first\",\"v\":false}"
+        },
+        {
+            "sql": "SELECT a FROM test PIVOT(SUM(x) FOR y IN ('z', 'q')) UNPIVOT(x FOR y IN (z, q)) AS x",
+            "reason": "ast-mismatch at #56: expected {\"i\":38,\"k\":\"value_columns_first\",\"v\":false}"
+        }
+    ]
 }

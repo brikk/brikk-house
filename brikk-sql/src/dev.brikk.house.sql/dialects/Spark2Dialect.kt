@@ -24,6 +24,10 @@ open class Spark2Dialect : HiveDialect() {
 
     override val tokenizerConfig: TokenizerConfig get() = Spark2TokenizerTables.CONFIG
 
+    // sqlglot: Spark2.TIME_MAPPING — Spark 2.x parses MM/dd/HH/hh/mm/ss leniently
+    // (SimpleDateFormat), unlike strict Hive/Spark 3+. Revert Hive's strict tokens.
+    override val timeMapping: Map<String, String> get() = TIME_MAPPING
+
     override fun parser(errorLevel: ErrorLevel?): Parser =
         Spark2Parser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
@@ -33,5 +37,15 @@ open class Spark2Dialect : HiveDialect() {
     companion object {
         // sqlglot: Spark2.INITCAP_DEFAULT_DELIMITER_CHARS = " "
         const val INITCAP_DEFAULT_DELIMITER_CHARS: String = " "
+
+        // sqlglot: Spark2.TIME_MAPPING = {**Hive.TIME_MAPPING, MM/dd/HH/hh/mm/ss -> lax}
+        val TIME_MAPPING: Map<String, String> = HiveDialect.TIME_MAPPING + mapOf(
+            "MM" to "%m",
+            "dd" to "%d",
+            "HH" to "%H",
+            "hh" to "%I",
+            "mm" to "%M",
+            "ss" to "%S",
+        )
     }
 }

@@ -1,3 +1,44 @@
 {
- "cases": []
+    "cases": [
+        {
+            "case": "read|clickhouse|ALTER TABLE t ALTER COLUMN c TYPE Nullable(Int64)",
+            "reason": "expected `ALTER TABLE t ALTER COLUMN c TYPE Nullable(Int64)` actual `ALTER TABLE t ALTER COLUMN c SET DATA TYPE Nullable(Int64)`"
+        },
+        {
+            "case": "read|postgres|ALTER TABLE t ALTER COLUMN c TYPE Nullable(Int64)",
+            "reason": "expected `ALTER TABLE t ALTER COLUMN c TYPE Nullable(Int64)` actual `ALTER TABLE t ALTER COLUMN c SET DATA TYPE Nullable(Int64)`"
+        },
+        {
+            "case": "write|clickhouse|SELECT trimLeft(s, 'xy'), trimRight(s, 'xy'), trimBoth(s, 'xy')",
+            "reason": "expected `SELECT TRIM(LEADING 'xy' FROM s), TRIM(TRAILING 'xy' FROM s), TRIM(BOTH 'xy' FROM s)` actual `SELECT trimLeft(s, 'xy'), trimRight(s, 'xy'), trimBoth(s, 'xy')`"
+        },
+        {
+            "case": "write|duckdb|SELECT trimLeft(s, 'xy'), trimRight(s, 'xy'), trimBoth(s, 'xy')",
+            "reason": "expected `SELECT LTRIM(s, 'xy'), RTRIM(s, 'xy'), TRIM(s, 'xy')` actual `SELECT TRIMLEFT(s, 'xy'), TRIMRIGHT(s, 'xy'), TRIMBOTH(s, 'xy')`"
+        },
+        {
+            "case": "write|postgres|SELECT trimLeft(s, 'xy'), trimRight(s, 'xy'), trimBoth(s, 'xy')",
+            "reason": "expected `SELECT TRIM(LEADING 'xy' FROM s), TRIM(TRAILING 'xy' FROM s), TRIM('xy' FROM s)` actual `SELECT TRIMLEFT(s, 'xy'), TRIMRIGHT(s, 'xy'), TRIMBOTH(s, 'xy')`"
+        },
+        {
+            "case": "read|clickhouse|SELECT LTRIM(s), RTRIM(s), TRIM(s)",
+            "reason": "expected `SELECT LTRIM(s), RTRIM(s), TRIM(s)` actual `SELECT trimLeft(s), trimRight(s), trimBoth(s)`"
+        },
+        {
+            "case": "write|postgres|a / b",
+            "reason": "expected `CAST(a AS DOUBLE PRECISION) / b` actual `CAST(a AS DOUBLE PRECISION) / NULLIF(b, 0)`"
+        },
+        {
+            "case": "write|duckdb|dateTrunc('MONTH', x)",
+            "reason": "expected `DATE_TRUNC('MONTH', x)` actual `DATETRUNC('MONTH', x)`"
+        },
+        {
+            "case": "write|presto|dateTrunc('MONTH', x)",
+            "reason": "expected `DATE_TRUNC('MONTH', x)` actual `DATETRUNC('MONTH', x)`"
+        },
+        {
+            "case": "write|spark|dateTrunc('MONTH', x)",
+            "reason": "expected `TRUNC(x, 'MONTH')` actual `DATETRUNC('MONTH', x)`"
+        }
+    ]
 }

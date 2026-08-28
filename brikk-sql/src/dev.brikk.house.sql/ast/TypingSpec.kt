@@ -171,4 +171,28 @@ sealed class AnnotatorRef {
      * ARRAY<STRUCT<this.type, INT64>>.
      */
     object ApproxTopKBq : AnnotatorRef()
+
+    /**
+     * mysql/doris _annotate_bit_func (BIT_AND/BIT_OR/... family, sqlglot #8261):
+     * UNKNOWN `this` -> UNKNOWN; BINARY/VARBINARY `this` -> VARBINARY; otherwise UBIGINT.
+     */
+    object BitFunc : AnnotatorRef()
+
+    /** mysql _annotate_reverse: BINARY/VARBINARY/UNKNOWN `this` -> by args("this"); else VARCHAR. */
+    object Reverse : AnnotatorRef()
+
+    /** mysql _annotate_truncate: TEXT `this` -> DOUBLE; else by args("this"). */
+    object Truncate : AnnotatorRef()
+
+    /** mysql _annotate_regexp_replace: any UNKNOWN arg -> UNKNOWN; any BINARY arg -> LONGBLOB; else LONGTEXT. */
+    object RegexpReplace : AnnotatorRef()
+
+    /** mysql _annotate_compress: type-set dispatch of `this` -> VARBINARY / LONGBLOB / BLOB / UNKNOWN. */
+    object Compress : AnnotatorRef()
+
+    /**
+     * Fixed-type annotator: unconditionally sets a plain DType (e.g. clickhouse
+     * `_set_type(e, DataType.build("Float64", ...))` -> DOUBLE).
+     */
+    data class SetType(val dtype: DType) : AnnotatorRef()
 }

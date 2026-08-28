@@ -27,9 +27,25 @@ open class SparkDialect : Spark2Dialect() {
 
     override val tokenizerConfig: TokenizerConfig get() = SparkTokenizerTables.CONFIG
 
+    // sqlglot: Spark.TIME_MAPPING — Spark 3+ parses MM/dd/HH/hh/mm/ss strictly,
+    // unlike Spark 2 (SimpleDateFormat). Re-promote the strict tokens Spark2 stripped.
+    override val timeMapping: Map<String, String> get() = TIME_MAPPING
+
     override fun parser(errorLevel: ErrorLevel?): Parser =
         SparkParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
     override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
         SparkGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
+
+    companion object {
+        // sqlglot: Spark.TIME_MAPPING = {**Spark2.TIME_MAPPING, MM/dd/HH/hh/mm/ss -> strict}
+        val TIME_MAPPING: Map<String, String> = Spark2Dialect.TIME_MAPPING + mapOf(
+            "MM" to "%mstrict",
+            "dd" to "%dstrict",
+            "HH" to "%Hstrict",
+            "hh" to "%Istrict",
+            "mm" to "%Mstrict",
+            "ss" to "%Sstrict",
+        )
+    }
 }

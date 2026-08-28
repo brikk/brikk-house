@@ -1,120 +1,128 @@
 {
-  "cases": [
-    {
-      "case": "write|presto|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6])",
-      "reason": "presto exp.Select preprocess pipeline (explode_projection_to_unnest) is not ported (PrestoGenerator KDoc)"
-    },
-    {
-      "case": "write|presto|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6]) FROM x",
-      "reason": "presto exp.Select preprocess pipeline (explode_projection_to_unnest) is not ported (PrestoGenerator KDoc)"
-    },
-    {
-      "case": "write|spark|SELECT RANGE(1, 5)",
-      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
-    },
-    {
-      "case": "write|spark|SELECT RANGE(1, 5, 2)",
-      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
-    },
-    {
-      "case": "write|spark|SELECT RANGE(1, 1)",
-      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
-    },
-    {
-      "case": "write|spark|SELECT RANGE(5, 1, -1)",
-      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
-    },
-    {
-      "case": "write|spark|SELECT RANGE(5, 1, 0)",
-      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
-    },
-    {
-      "case": "write|spark|WITH t AS (SELECT 5 AS c) SELECT RANGE(1, c) FROM t",
-      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
-    },
-    {
-      "case": "write|spark|WITH t AS (SELECT 2 AS c) SELECT RANGE(1, c) FROM t",
-      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
-    },
-    {
-      "case": "write|spark|SELECT RANGE(1, 2)",
-      "reason": "GenerateSeries -> SEQUENCE with IF-guard lowering not ported (Spark target)"
-    },
-    {
-      "case": "read|spark|SELECT LIST(DISTINCT sample_col) FILTER(WHERE NOT sample_col IS NULL) FROM sample_table",
-      "reason": "ArrayUniqueAgg/LIST FILTER lowering not ported (Spark direction)"
-    },
-    {
-      "case": "write|bigquery|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6])",
-      "reason": "write<->bigquery UNNEST semantics differ (unnest preprocess not ported)"
-    },
-    {
-      "case": "write|bigquery|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6]) FROM x",
-      "reason": "write<->bigquery UNNEST semantics differ (unnest preprocess not ported)"
-    },
-    {
-      "case": "write|bigquery|SELECT UNNEST(x) + 1",
-      "reason": "write<->bigquery UNNEST semantics differ (unnest preprocess not ported)"
-    },
-    {
-      "case": "write|bigquery|SELECT UNNEST(x) + 1 AS y",
-      "reason": "write<->bigquery UNNEST semantics differ (unnest preprocess not ported)"
-    },
-    {
-      "case": "write|bigquery|SELECT e'Hello\nworld'",
-      "reason": "write<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT CAST(b'Hello\\nworld' AS STRING)` actua"
-    },
-    {
-      "case": "read|bigquery|SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)",
-      "reason": "read<->bigquery AT TIME ZONE rewrite differs (attimezone_sql TIMESTAMP(DATETIME(..)) not ported)"
-    },
-    {
-      "case": "read|bigquery|SELECT CAST(CAST('2016-12-25 23:59:59' AS TIMESTAMP) AS DATE)",
-      "reason": "read<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT CAST(CAST('2016-12-25 23:59:59' AS TIM"
-    },
-    {
-      "case": "read|bigquery|SELECT CAST(CAST(CAST('2016-12-25' AS TIMESTAMPTZ) AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' AS DATE)",
-      "reason": "read<->bigquery AT TIME ZONE rewrite differs (attimezone_sql TIMESTAMP(DATETIME(..)) not ported)"
-    },
-    {
-      "case": "read|bigquery|SELECT CAST(CAST('2024-01-15 23:30:00' AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Berlin' AS DATE)",
-      "reason": "read<->bigquery AT TIME ZONE rewrite differs (attimezone_sql TIMESTAMP(DATETIME(..)) not ported)"
-    },
-    {
-      "case": "read|bigquery|SELECT CAST(CAST(STRPTIME('1970 ' || '05/06/2020', '%Y ' || '%m/%d/%Y') AS DATE) AS DATE)",
-      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
-    },
-    {
-      "case": "read|bigquery|SELECT CAST(STRPTIME('14:30', '%H:%M') AS TIME)",
-      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
-    },
-    {
-      "case": "read|bigquery|SELECT CAST(STRPTIME('15:30:00.123456', '%H:%M:%S.%f') AS TIME)",
-      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
-    },
-    {
-      "case": "read|bigquery|SELECT STRPTIME('1970 ' || '2023-01-15 14:30:00', '%Y ' || '%Y-%m-%d %H:%M:%S')",
-      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
-    },
-    {
-      "case": "read|bigquery|SELECT STRPTIME('1970 ' || 'Thu Dec 25 07:30:00 2008', '%Y ' || '%a %b %-d %I:%M:%S %Y')",
-      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
-    },
-    {
-      "case": "read|bigquery|SELECT STRPTIME('1970 ' || '15:30:00.123456', '%Y ' || '%H:%M:%S.%f')",
-      "reason": "read<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
-    },
-    {
-      "case": "write|bigquery|STRFTIME(x, '%Y-%m-%d %H:%M:%S')",
-      "reason": "write<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
-    },
-    {
-      "case": "write|bigquery|STRPTIME(x, '%-m/%-d/%y %-I:%M %p')",
-      "reason": "write<->bigquery time-format rewrite differs (format-mapping / TS_OR_DS / default_year preprocess not fully ported)"
-    },
-    {
-      "case": "write|bigquery|CAST(start AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York'",
-      "reason": "write<->bigquery AT TIME ZONE rewrite differs (attimezone_sql TIMESTAMP(DATETIME(..)) not ported)"
-    }
-  ]
+    "cases": [
+        {
+            "case": "write|spark|SELECT RANGE(1, 5)",
+            "reason": "expected `SELECT SEQUENCE(1, 4)` actual `SELECT GENERATE_SERIES(1, 5)`"
+        },
+        {
+            "case": "write|spark|SELECT RANGE(1, 5, 2)",
+            "reason": "expected `SELECT SEQUENCE(1, 3, 2)` actual `SELECT GENERATE_SERIES(1, 5, 2)`"
+        },
+        {
+            "case": "write|spark|SELECT RANGE(1, 1)",
+            "reason": "expected `SELECT ARRAY()` actual `SELECT GENERATE_SERIES(1, 1)`"
+        },
+        {
+            "case": "write|spark|SELECT RANGE(5, 1, -1)",
+            "reason": "expected `SELECT SEQUENCE(5, 2, -1)` actual `SELECT GENERATE_SERIES(5, 1, -1)`"
+        },
+        {
+            "case": "write|spark|SELECT RANGE(5, 1, 0)",
+            "reason": "expected `SELECT ARRAY()` actual `SELECT GENERATE_SERIES(5, 1, 0)`"
+        },
+        {
+            "case": "write|spark|WITH t AS (SELECT 5 AS c) SELECT RANGE(1, c) FROM t",
+            "reason": "expected `WITH t AS (SELECT 5 AS c) SELECT IF((c - 1) < 1, ARRAY(), SEQUENCE(1, (c - 1))) FROM t` actual `WITH t AS (SELECT 5 AS c) SELECT GENERATE_SERIES(1, c) FROM t`"
+        },
+        {
+            "case": "write|spark|WITH t AS (SELECT 2 AS c) SELECT RANGE(1, c) FROM t",
+            "reason": "expected `WITH t AS (SELECT 2 AS c) SELECT IF((c - 1) < 1, ARRAY(), SEQUENCE(1, (c - 1))) FROM t` actual `WITH t AS (SELECT 2 AS c) SELECT GENERATE_SERIES(1, c) FROM t`"
+        },
+        {
+            "case": "write|spark|SELECT RANGE(1, 2)",
+            "reason": "expected `SELECT SEQUENCE(1, 1)` actual `SELECT GENERATE_SERIES(1, 2)`"
+        },
+        {
+            "case": "write|bigquery|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6])",
+            "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_3, col_2, NULL) AS col_2, IF(pos = pos_4, col_3, NULL) AS col_3 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([1, 2, 3]), ARRAY_LENGTH([4, 5]), ARRAY_LENGTH([6])) - 1)) AS pos CROSS JOIN UNNEST([1, 2, 3]) AS col WITH OFFSET AS pos_2 CROSS JOIN UNNEST([4, 5]) AS col_2 WITH OFFSET AS pos_3 CROSS JOIN UNNEST([6]) AS col_3 WITH OFFSET AS pos_4 WHERE ((pos = pos_2 OR (pos > (ARRAY_LENGTH([1, 2, 3]) - 1) AND pos_2 = (ARRAY_LENGTH([1, 2, 3]) - 1))) AND (pos = pos_3 OR (pos > (ARRAY_LENGTH([4, 5]) - 1) AND pos_3 = (ARRAY_LENGTH([4, 5]) - 1)))) AND (pos = pos_4 OR (pos > (ARRAY_LENGTH([6]) - 1) AND pos_4 = (ARRAY_LENGTH([6]) - 1)))` actual `SELECT EXPLODE([1, 2, 3]), EXPLODE([4, 5]), EXPLODE([6])`"
+        },
+        {
+            "case": "write|presto|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6])",
+            "reason": "expected `SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) AS col, IF(_u.pos = _u_3.pos_3, _u_3.col_2) AS col_2, IF(_u.pos = _u_4.pos_4, _u_4.col_3) AS col_3 FROM UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[1, 2, 3]), CARDINALITY(ARRAY[4, 5]), CARDINALITY(ARRAY[6])))) AS _u(pos) CROSS JOIN UNNEST(ARRAY[1, 2, 3]) WITH ORDINALITY AS _u_2(col, pos_2) CROSS JOIN UNNEST(ARRAY[4, 5]) WITH ORDINALITY AS _u_3(col_2, pos_3) CROSS JOIN UNNEST(ARRAY[6]) WITH ORDINALITY AS _u_4(col_3, pos_4) WHERE ((_u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(ARRAY[1, 2, 3]) AND _u_2.pos_2 = CARDINALITY(ARRAY[1, 2, 3]))) AND (_u.pos = _u_3.pos_3 OR (_u.pos > CARDINALITY(ARRAY[4, 5]) AND _u_3.pos_3 = CARDINALITY(ARRAY[4, 5])))) AND (_u.pos = _u_4.pos_4 OR (_u.pos > CARDINALITY(ARRAY[6]) AND _u_4.pos_4 = CARDINALITY(ARRAY[6])))` actual `SELECT EXPLODE(ARRAY[1, 2, 3]), EXPLODE(ARRAY[4, 5]), EXPLODE(ARRAY[6])`"
+        },
+        {
+            "case": "write|bigquery|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6]) FROM x",
+            "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_3, col_2, NULL) AS col_2, IF(pos = pos_4, col_3, NULL) AS col_3 FROM x CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([1, 2, 3]), ARRAY_LENGTH([4, 5]), ARRAY_LENGTH([6])) - 1)) AS pos CROSS JOIN UNNEST([1, 2, 3]) AS col WITH OFFSET AS pos_2 CROSS JOIN UNNEST([4, 5]) AS col_2 WITH OFFSET AS pos_3 CROSS JOIN UNNEST([6]) AS col_3 WITH OFFSET AS pos_4 WHERE ((pos = pos_2 OR (pos > (ARRAY_LENGTH([1, 2, 3]) - 1) AND pos_2 = (ARRAY_LENGTH([1, 2, 3]) - 1))) AND (pos = pos_3 OR (pos > (ARRAY_LENGTH([4, 5]) - 1) AND pos_3 = (ARRAY_LENGTH([4, 5]) - 1)))) AND (pos = pos_4 OR (pos > (ARRAY_LENGTH([6]) - 1) AND pos_4 = (ARRAY_LENGTH([6]) - 1)))` actual `SELECT EXPLODE([1, 2, 3]), EXPLODE([4, 5]), EXPLODE([6]) FROM x`"
+        },
+        {
+            "case": "write|presto|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6]) FROM x",
+            "reason": "expected `SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) AS col, IF(_u.pos = _u_3.pos_3, _u_3.col_2) AS col_2, IF(_u.pos = _u_4.pos_4, _u_4.col_3) AS col_3 FROM x CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[1, 2, 3]), CARDINALITY(ARRAY[4, 5]), CARDINALITY(ARRAY[6])))) AS _u(pos) CROSS JOIN UNNEST(ARRAY[1, 2, 3]) WITH ORDINALITY AS _u_2(col, pos_2) CROSS JOIN UNNEST(ARRAY[4, 5]) WITH ORDINALITY AS _u_3(col_2, pos_3) CROSS JOIN UNNEST(ARRAY[6]) WITH ORDINALITY AS _u_4(col_3, pos_4) WHERE ((_u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(ARRAY[1, 2, 3]) AND _u_2.pos_2 = CARDINALITY(ARRAY[1, 2, 3]))) AND (_u.pos = _u_3.pos_3 OR (_u.pos > CARDINALITY(ARRAY[4, 5]) AND _u_3.pos_3 = CARDINALITY(ARRAY[4, 5])))) AND (_u.pos = _u_4.pos_4 OR (_u.pos > CARDINALITY(ARRAY[6]) AND _u_4.pos_4 = CARDINALITY(ARRAY[6])))` actual `SELECT EXPLODE(ARRAY[1, 2, 3]), EXPLODE(ARRAY[4, 5]), EXPLODE(ARRAY[6]) FROM x`"
+        },
+        {
+            "case": "write|bigquery|SELECT UNNEST(x) + 1",
+            "reason": "expected `SELECT IF(pos = pos_2, col, NULL) + 1 AS col FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(x)) - 1)) AS pos CROSS JOIN UNNEST(x) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(x) - 1) AND pos_2 = (ARRAY_LENGTH(x) - 1))` actual `SELECT EXPLODE(x) + 1`"
+        },
+        {
+            "case": "write|bigquery|SELECT UNNEST(x) + 1 AS y",
+            "reason": "expected `SELECT IF(pos = pos_2, y, NULL) + 1 AS y FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(x)) - 1)) AS pos CROSS JOIN UNNEST(x) AS y WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(x) - 1) AND pos_2 = (ARRAY_LENGTH(x) - 1))` actual `SELECT EXPLODE(x) + 1 AS y`"
+        },
+        {
+            "case": "read|duckdb|SELECT a -> ('x' || 'y')",
+            "reason": "expected `SELECT a -> ('x' || 'y')` actual `SELECT a -> 'x' || 'y'`"
+        },
+        {
+            "case": "read|spark|SELECT LIST(DISTINCT sample_col) FILTER(WHERE NOT sample_col IS NULL) FROM sample_table",
+            "reason": "expected `SELECT LIST(DISTINCT sample_col) FILTER(WHERE NOT sample_col IS NULL) FROM sample_table` actual `SELECT ARRAY_UNIQUE_AGG(sample_col) FROM sample_table`"
+        },
+        {
+            "case": "write|bigquery|SELECT e'Hello\nworld'",
+            "reason": "expected `SELECT CAST(b'Hello\\nworld' AS STRING)` actual `SELECT CAST('b\\'Hello\nworld\\'' AS STRING)`"
+        },
+        {
+            "case": "read|bigquery|SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)",
+            "reason": "expected `SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)` actual `SELECT CURRENT_DATE('UTC')`"
+        },
+        {
+            "case": "read|bigquery|SELECT CAST(CAST('2016-12-25 23:59:59' AS TIMESTAMP) AS DATE)",
+            "reason": "expected `SELECT CAST(CAST('2016-12-25 23:59:59' AS TIMESTAMP) AS DATE)` actual `SELECT DATE(CAST('2016-12-25 23:59:59' AS TIMESTAMP))`"
+        },
+        {
+            "case": "read|bigquery|SELECT CAST(CAST(CAST('2016-12-25' AS TIMESTAMPTZ) AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' AS DATE)",
+            "reason": "expected `SELECT CAST(CAST(CAST('2016-12-25' AS TIMESTAMPTZ) AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' AS DATE)` actual `SELECT DATE(CAST('2016-12-25' AS TIMESTAMPTZ), 'America/Los_Angeles')`"
+        },
+        {
+            "case": "read|bigquery|SELECT CAST(CAST('2024-01-15 23:30:00' AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Berlin' AS DATE)",
+            "reason": "expected `SELECT CAST(CAST('2024-01-15 23:30:00' AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Berlin' AS DATE)` actual `SELECT DATE('2024-01-15 23:30:00', 'Europe/Berlin')`"
+        },
+        {
+            "case": "read|bigquery|SELECT CAST(CAST(STRPTIME('1970 ' || '05/06/2020', '%Y ' || '%m/%d/%Y') AS DATE) AS DATE)",
+            "reason": "expected `SELECT CAST(CAST(STRPTIME('1970 ' || '05/06/2020', '%Y ' || '%m/%d/%Y') AS DATE) AS DATE)` actual `SELECT DATE(CAST(STRPTIME('1970 ' || '05/06/2020', '%Y ' || '%m/%d/%Y') AS DATE))`"
+        },
+        {
+            "case": "read|bigquery|SELECT CAST(STRPTIME('14:30', '%H:%M') AS TIME)",
+            "reason": "expected `SELECT CAST(STRPTIME('14:30', '%H:%M') AS TIME)` actual `SELECT PARSE_TIME('14:30', '%H:%M')`"
+        },
+        {
+            "case": "read|bigquery|SELECT CAST(STRPTIME('15:30:00.123456', '%H:%M:%S.%f') AS TIME)",
+            "reason": "expected `SELECT CAST(STRPTIME('15:30:00.123456', '%H:%M:%S.%f') AS TIME)` actual `SELECT PARSE_TIME('15:30:00.123456', '%H:%M:%S.%f')`"
+        },
+        {
+            "case": "read|bigquery|SELECT STRPTIME('1970 ' || '2023-01-15 14:30:00', '%Y ' || '%Y-%m-%d %H:%M:%S')",
+            "reason": "expected `SELECT STRPTIME('1970 ' || '2023-01-15 14:30:00', '%Y ' || '%Y-%m-%d %H:%M:%S')` actual `SELECT PARSE_DATETIME('2023-01-15 14:30:00', '%Y-%m-%d %H:%M:%S', 1970)`"
+        },
+        {
+            "case": "read|bigquery|SELECT STRPTIME('1970 ' || 'Thu Dec 25 07:30:00 2008', '%Y ' || '%a %b %-d %I:%M:%S %Y')",
+            "reason": "expected `SELECT STRPTIME('1970 ' || 'Thu Dec 25 07:30:00 2008', '%Y ' || '%a %b %-d %I:%M:%S %Y')` actual `SELECT PARSE_DATETIME('Thu Dec 25 07:30:00 2008', '%a %b %-d %I:%M:%S %Y', 1970)`"
+        },
+        {
+            "case": "read|bigquery|SELECT STRPTIME('1970 ' || '15:30:00.123456', '%Y ' || '%H:%M:%S.%f')",
+            "reason": "expected `SELECT STRPTIME('1970 ' || '15:30:00.123456', '%Y ' || '%H:%M:%S.%f')` actual `SELECT PARSE_DATETIME('15:30:00.123456', '%H:%M:%S.%f', 1970)`"
+        },
+        {
+            "case": "write|bigquery|STRFTIME(x, '%Y-%m-%d %H:%M:%S')",
+            "reason": "expected `FORMAT_DATE('%F %T', x)` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', x)`"
+        },
+        {
+            "case": "write|bigquery|STRPTIME(x, '%-m/%-d/%y %-I:%M %p')",
+            "reason": "expected `PARSE_TIMESTAMP('%-m/%e/%y %-I:%M %p', x)` actual `PARSE_TIMESTAMP('%-m/%-d/%y %-I:%M %p', x)`"
+        },
+        {
+            "case": "write|bigquery|CAST(start AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York'",
+            "reason": "expected `TIMESTAMP(DATETIME(CAST(start AS TIMESTAMP), 'America/New_York'))` actual `CAST(start AS TIMESTAMP) AT TIME ZONE 'America/New_York'`"
+        },
+        {
+            "case": "write|postgres|a / b",
+            "reason": "expected `CAST(a AS DOUBLE PRECISION) / b` actual `CAST(a AS DOUBLE PRECISION) / NULLIF(b, 0)`"
+        }
+    ]
 }

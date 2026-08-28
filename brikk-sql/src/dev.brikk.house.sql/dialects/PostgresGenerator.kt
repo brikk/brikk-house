@@ -72,7 +72,8 @@ open class PostgresGenerator(
 
     override val selectKinds: Set<String> get() = emptySet()
     override val trySupported: Boolean get() = false
-    override val supportsUescape: Boolean get() = false
+    // Postgres supports U&'...' unicode string literals + the UESCAPE clause (sqlglot a1e3338e3).
+    override val supportsUescape: Boolean get() = true
     override val singleStringInterval: Boolean get() = true
     override val renameTableWithDb: Boolean get() = false
     override val lockingReadsSupported: Boolean get() = true
@@ -1243,7 +1244,8 @@ open class PostgresGenerator(
             }
             reg(JSONBExtract::class) { e -> binary(e as Binary, "#>") }
             reg(JSONBExtractScalar::class) { e -> binary(e as Binary, "#>>") }
-            reg(JSONBContains::class) { e -> binary(e as Binary, "?") }
+            // sqlglot #8156: the `?` operator now maps to JSONBContainsTopKey (base
+            // generator); JSONBContains renders as its function form.
             reg(ParseJSON::class) { e ->
                 sql(Cast(args("this" to e.thisArg, "to" to DataType(args("this" to DType.JSON)))))
             }

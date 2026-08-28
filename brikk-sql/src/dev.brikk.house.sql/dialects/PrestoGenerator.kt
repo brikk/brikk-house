@@ -13,6 +13,7 @@ import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.parser.PrestoTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
+import dev.brikk.house.sql.parser.withStrictTimeInverse
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.String
@@ -31,18 +32,10 @@ private fun unitToStr(expression: Expression, default: String = "DAY"): Expressi
     return Literal.string(unit.name)
 }
 
-// sqlglot: dialects.hive.Hive.TIME_MAPPING (needed by PrestoGenerator.strtounix_sql)
-private val HIVE_TIME_MAPPING: Map<String, String> = linkedMapOf(
-    "y" to "%Y", "Y" to "%Y", "YYYY" to "%Y", "yyyy" to "%Y", "YY" to "%y", "yy" to "%y",
-    "MMMM" to "%B", "MMM" to "%b", "MM" to "%m", "M" to "%-m", "dd" to "%d", "d" to "%-d",
-    "HH" to "%H", "H" to "%-H", "hh" to "%I", "h" to "%-I", "mm" to "%M", "m" to "%-M",
-    "ss" to "%S", "s" to "%-S", "SSSSSS" to "%f", "a" to "%p", "DD" to "%j", "D" to "%-j",
-    "E" to "%a", "EE" to "%a", "EEE" to "%a", "EEEE" to "%A", "z" to "%Z", "Z" to "%z",
-)
-
-// sqlglot: dialects.hive.Hive.INVERSE_TIME_MAPPING
+// sqlglot: dialects.hive.Hive.INVERSE_TIME_MAPPING (with _with_strict_time_inverse)
+// Used by PrestoGenerator.strtounix_sql and HiveGenerator.
 internal val HIVE_INVERSE_TIME_MAPPING: Map<String, String> =
-    HIVE_TIME_MAPPING.entries.associate { (k, v) -> v to k }
+    withStrictTimeInverse(HiveDialect.TIME_MAPPING.entries.associate { (k, v) -> v to k })
 
 /**
  * Port of sqlglot's PrestoGenerator (reference/sqlglot/sqlglot/generators/presto.py).
@@ -923,7 +916,7 @@ open class PrestoGenerator(
         val parseWithTz = func(
             "PARSE_DATETIME",
             formattedValue,
-            formatTimeString(sql(expression, "format"), HIVE_INVERSE_TIME_MAPPING),
+            formatTime(expression, HIVE_INVERSE_TIME_MAPPING),
         )
         val coalesced = func("COALESCE", func("TRY", parseWithoutTz), parseWithTz)
         return func("TO_UNIXTIME", coalesced)

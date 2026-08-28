@@ -77,6 +77,17 @@ def classify(src: str) -> str:
     # presto Rand: conditional by_args/DOUBLE
     if "_annotate_by_args(e, \"this\") if e.this else self._set_type(e, exp.DType.DOUBLE)" in src:
         return "AnnotatorRef.RandThisOrDouble"
+    # mysql typing defs (typing/mysql.py) — match by def name.
+    if "def _annotate_bit_func(" in src:
+        return "AnnotatorRef.BitFunc"
+    if "def _annotate_reverse(" in src:
+        return "AnnotatorRef.Reverse"
+    if "def _annotate_truncate(" in src:
+        return "AnnotatorRef.Truncate"
+    if "def _annotate_regexp_replace(" in src:
+        return "AnnotatorRef.RegexpReplace"
+    if "def _annotate_compress(" in src:
+        return "AnnotatorRef.Compress"
     # clickhouse MD5Digest: parametrized non-nullable type via DataType.build
     m = re.search(
         r"self\._set_type\(\s*e,\s*exp\.DataType\.build\(\"(\w+)\((\d+)\)\","
@@ -86,6 +97,20 @@ def classify(src: str) -> str:
     if m:
         dtype = exp.DType[m.group(1).upper()]
         return f"AnnotatorRef.SetSizedType(DType.{dtype.name}, {m.group(2)})"
+    # clickhouse fixed-type annotator: _set_type(e, DataType.build("Name", dialect="clickhouse"))
+    # for a plain (non-parametrized) named type, e.g. Float64 -> DOUBLE.
+    m = re.search(
+        r"self\._set_type\(\s*e,\s*exp\.DataType\.build\(\"(\w+)\","
+        r" dialect=\"clickhouse\"\)\s*\)",
+        src,
+    )
+    if m:
+        built = exp.DataType.build(m.group(1), dialect="clickhouse")
+        if built.args.get("expressions"):
+            raise SystemExit(
+                f"clickhouse fixed-type build is parametrized, needs SetDataType: {m.group(1)}"
+            )
+        return f"AnnotatorRef.SetType(DType.{built.this.name})"
     # bigquery _annotate_math_functions (CEIL/FLOOR/... family)
     if "_annotate_math_functions(self, e)" in src:
         return "AnnotatorRef.MathFunctionsBq"

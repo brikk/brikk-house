@@ -1,7 +1,7 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "dialect": "doris",
- "case_count": 977,
+ "case_count": 978,
  "skipped": [
   {
    "sql": "x LIKE '%y%' ESCAPE '\\'",
@@ -6966,7 +6966,7 @@
    ]
   },
   {
-   "sql": "INTERVAL '-1' CURRENT_DATE",
+   "sql": "INTERVAL '-1' AS CURRENT_DATE",
    "tokens": [
     {
      "type": "INTERVAL",
@@ -6987,12 +6987,21 @@
      "comments": []
     },
     {
+     "type": "ALIAS",
+     "text": "AS",
+     "line": 1,
+     "col": 16,
+     "start": 14,
+     "end": 15,
+     "comments": []
+    },
+    {
      "type": "CURRENT_DATE",
      "text": "CURRENT_DATE",
      "line": 1,
-     "col": 26,
-     "start": 14,
-     "end": 25,
+     "col": 29,
+     "start": 17,
+     "end": 28,
      "comments": []
     }
    ]
@@ -40162,6 +40171,128 @@
    ]
   },
   {
+   "sql": "WITH out AS (SELECT 1 AS c) SELECT * FROM out",
+   "tokens": [
+    {
+     "type": "WITH",
+     "text": "WITH",
+     "line": 1,
+     "col": 4,
+     "start": 0,
+     "end": 3,
+     "comments": []
+    },
+    {
+     "type": "OUT",
+     "text": "out",
+     "line": 1,
+     "col": 8,
+     "start": 5,
+     "end": 7,
+     "comments": []
+    },
+    {
+     "type": "ALIAS",
+     "text": "AS",
+     "line": 1,
+     "col": 11,
+     "start": 9,
+     "end": 10,
+     "comments": []
+    },
+    {
+     "type": "L_PAREN",
+     "text": "(",
+     "line": 1,
+     "col": 13,
+     "start": 12,
+     "end": 12,
+     "comments": []
+    },
+    {
+     "type": "SELECT",
+     "text": "SELECT",
+     "line": 1,
+     "col": 19,
+     "start": 13,
+     "end": 18,
+     "comments": []
+    },
+    {
+     "type": "NUMBER",
+     "text": "1",
+     "line": 1,
+     "col": 21,
+     "start": 20,
+     "end": 20,
+     "comments": []
+    },
+    {
+     "type": "ALIAS",
+     "text": "AS",
+     "line": 1,
+     "col": 24,
+     "start": 22,
+     "end": 23,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "c",
+     "line": 1,
+     "col": 26,
+     "start": 25,
+     "end": 25,
+     "comments": []
+    },
+    {
+     "type": "R_PAREN",
+     "text": ")",
+     "line": 1,
+     "col": 27,
+     "start": 26,
+     "end": 26,
+     "comments": []
+    },
+    {
+     "type": "SELECT",
+     "text": "SELECT",
+     "line": 1,
+     "col": 34,
+     "start": 28,
+     "end": 33,
+     "comments": []
+    },
+    {
+     "type": "STAR",
+     "text": "*",
+     "line": 1,
+     "col": 36,
+     "start": 35,
+     "end": 35,
+     "comments": []
+    },
+    {
+     "type": "FROM",
+     "text": "FROM",
+     "line": 1,
+     "col": 41,
+     "start": 37,
+     "end": 40,
+     "comments": []
+    },
+    {
+     "type": "OUT",
+     "text": "out",
+     "line": 1,
+     "col": 45,
+     "start": 42,
+     "end": 44,
+     "comments": []
+    }
+   ]
+  },
+  {
    "sql": "WITH a AS (SELECT 1) SELECT 1 UNION ALL SELECT 2",
    "tokens": [
     {
@@ -42056,92 +42187,6 @@
    ]
   },
   {
-   "sql": "VALUES (1) UNION SELECT * FROM x",
-   "tokens": [
-    {
-     "type": "VALUES",
-     "text": "VALUES",
-     "line": 1,
-     "col": 6,
-     "start": 0,
-     "end": 5,
-     "comments": []
-    },
-    {
-     "type": "L_PAREN",
-     "text": "(",
-     "line": 1,
-     "col": 8,
-     "start": 7,
-     "end": 7,
-     "comments": []
-    },
-    {
-     "type": "NUMBER",
-     "text": "1",
-     "line": 1,
-     "col": 9,
-     "start": 8,
-     "end": 8,
-     "comments": []
-    },
-    {
-     "type": "R_PAREN",
-     "text": ")",
-     "line": 1,
-     "col": 10,
-     "start": 9,
-     "end": 9,
-     "comments": []
-    },
-    {
-     "type": "UNION",
-     "text": "UNION",
-     "line": 1,
-     "col": 16,
-     "start": 11,
-     "end": 15,
-     "comments": []
-    },
-    {
-     "type": "SELECT",
-     "text": "SELECT",
-     "line": 1,
-     "col": 23,
-     "start": 17,
-     "end": 22,
-     "comments": []
-    },
-    {
-     "type": "STAR",
-     "text": "*",
-     "line": 1,
-     "col": 25,
-     "start": 24,
-     "end": 24,
-     "comments": []
-    },
-    {
-     "type": "FROM",
-     "text": "FROM",
-     "line": 1,
-     "col": 30,
-     "start": 26,
-     "end": 29,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "x",
-     "line": 1,
-     "col": 32,
-     "start": 31,
-     "end": 31,
-     "comments": []
-    }
-   ]
-  },
-  {
    "sql": "WITH a AS (SELECT 1) SELECT a.* FROM a",
    "tokens": [
     {
@@ -42746,628 +42791,6 @@
      "col": 73,
      "start": 72,
      "end": 72,
-     "comments": []
-    }
-   ]
-  },
-  {
-   "sql": "WITH RECURSIVE T(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t",
-   "tokens": [
-    {
-     "type": "WITH",
-     "text": "WITH",
-     "line": 1,
-     "col": 4,
-     "start": 0,
-     "end": 3,
-     "comments": []
-    },
-    {
-     "type": "RECURSIVE",
-     "text": "RECURSIVE",
-     "line": 1,
-     "col": 14,
-     "start": 5,
-     "end": 13,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "T",
-     "line": 1,
-     "col": 16,
-     "start": 15,
-     "end": 15,
-     "comments": []
-    },
-    {
-     "type": "L_PAREN",
-     "text": "(",
-     "line": 1,
-     "col": 17,
-     "start": 16,
-     "end": 16,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "n",
-     "line": 1,
-     "col": 18,
-     "start": 17,
-     "end": 17,
-     "comments": []
-    },
-    {
-     "type": "R_PAREN",
-     "text": ")",
-     "line": 1,
-     "col": 19,
-     "start": 18,
-     "end": 18,
-     "comments": []
-    },
-    {
-     "type": "ALIAS",
-     "text": "AS",
-     "line": 1,
-     "col": 22,
-     "start": 20,
-     "end": 21,
-     "comments": []
-    },
-    {
-     "type": "L_PAREN",
-     "text": "(",
-     "line": 1,
-     "col": 24,
-     "start": 23,
-     "end": 23,
-     "comments": []
-    },
-    {
-     "type": "VALUES",
-     "text": "VALUES",
-     "line": 1,
-     "col": 30,
-     "start": 24,
-     "end": 29,
-     "comments": []
-    },
-    {
-     "type": "L_PAREN",
-     "text": "(",
-     "line": 1,
-     "col": 32,
-     "start": 31,
-     "end": 31,
-     "comments": []
-    },
-    {
-     "type": "NUMBER",
-     "text": "1",
-     "line": 1,
-     "col": 33,
-     "start": 32,
-     "end": 32,
-     "comments": []
-    },
-    {
-     "type": "R_PAREN",
-     "text": ")",
-     "line": 1,
-     "col": 34,
-     "start": 33,
-     "end": 33,
-     "comments": []
-    },
-    {
-     "type": "UNION",
-     "text": "UNION",
-     "line": 1,
-     "col": 40,
-     "start": 35,
-     "end": 39,
-     "comments": []
-    },
-    {
-     "type": "ALL",
-     "text": "ALL",
-     "line": 1,
-     "col": 44,
-     "start": 41,
-     "end": 43,
-     "comments": []
-    },
-    {
-     "type": "SELECT",
-     "text": "SELECT",
-     "line": 1,
-     "col": 51,
-     "start": 45,
-     "end": 50,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "n",
-     "line": 1,
-     "col": 53,
-     "start": 52,
-     "end": 52,
-     "comments": []
-    },
-    {
-     "type": "PLUS",
-     "text": "+",
-     "line": 1,
-     "col": 55,
-     "start": 54,
-     "end": 54,
-     "comments": []
-    },
-    {
-     "type": "NUMBER",
-     "text": "1",
-     "line": 1,
-     "col": 57,
-     "start": 56,
-     "end": 56,
-     "comments": []
-    },
-    {
-     "type": "FROM",
-     "text": "FROM",
-     "line": 1,
-     "col": 62,
-     "start": 58,
-     "end": 61,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "t",
-     "line": 1,
-     "col": 64,
-     "start": 63,
-     "end": 63,
-     "comments": []
-    },
-    {
-     "type": "WHERE",
-     "text": "WHERE",
-     "line": 1,
-     "col": 70,
-     "start": 65,
-     "end": 69,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "n",
-     "line": 1,
-     "col": 72,
-     "start": 71,
-     "end": 71,
-     "comments": []
-    },
-    {
-     "type": "LT",
-     "text": "<",
-     "line": 1,
-     "col": 74,
-     "start": 73,
-     "end": 73,
-     "comments": []
-    },
-    {
-     "type": "NUMBER",
-     "text": "100",
-     "line": 1,
-     "col": 78,
-     "start": 75,
-     "end": 77,
-     "comments": []
-    },
-    {
-     "type": "R_PAREN",
-     "text": ")",
-     "line": 1,
-     "col": 79,
-     "start": 78,
-     "end": 78,
-     "comments": []
-    },
-    {
-     "type": "SELECT",
-     "text": "SELECT",
-     "line": 1,
-     "col": 86,
-     "start": 80,
-     "end": 85,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "SUM",
-     "line": 1,
-     "col": 90,
-     "start": 87,
-     "end": 89,
-     "comments": []
-    },
-    {
-     "type": "L_PAREN",
-     "text": "(",
-     "line": 1,
-     "col": 91,
-     "start": 90,
-     "end": 90,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "n",
-     "line": 1,
-     "col": 92,
-     "start": 91,
-     "end": 91,
-     "comments": []
-    },
-    {
-     "type": "R_PAREN",
-     "text": ")",
-     "line": 1,
-     "col": 93,
-     "start": 92,
-     "end": 92,
-     "comments": []
-    },
-    {
-     "type": "FROM",
-     "text": "FROM",
-     "line": 1,
-     "col": 98,
-     "start": 94,
-     "end": 97,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "t",
-     "line": 1,
-     "col": 100,
-     "start": 99,
-     "end": 99,
-     "comments": []
-    }
-   ]
-  },
-  {
-   "sql": "WITH RECURSIVE T(n, m) AS (VALUES (1, 2) UNION ALL SELECT n + 1, n + 2 FROM t) SELECT SUM(n) FROM t",
-   "tokens": [
-    {
-     "type": "WITH",
-     "text": "WITH",
-     "line": 1,
-     "col": 4,
-     "start": 0,
-     "end": 3,
-     "comments": []
-    },
-    {
-     "type": "RECURSIVE",
-     "text": "RECURSIVE",
-     "line": 1,
-     "col": 14,
-     "start": 5,
-     "end": 13,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "T",
-     "line": 1,
-     "col": 16,
-     "start": 15,
-     "end": 15,
-     "comments": []
-    },
-    {
-     "type": "L_PAREN",
-     "text": "(",
-     "line": 1,
-     "col": 17,
-     "start": 16,
-     "end": 16,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "n",
-     "line": 1,
-     "col": 18,
-     "start": 17,
-     "end": 17,
-     "comments": []
-    },
-    {
-     "type": "COMMA",
-     "text": ",",
-     "line": 1,
-     "col": 19,
-     "start": 18,
-     "end": 18,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "m",
-     "line": 1,
-     "col": 21,
-     "start": 20,
-     "end": 20,
-     "comments": []
-    },
-    {
-     "type": "R_PAREN",
-     "text": ")",
-     "line": 1,
-     "col": 22,
-     "start": 21,
-     "end": 21,
-     "comments": []
-    },
-    {
-     "type": "ALIAS",
-     "text": "AS",
-     "line": 1,
-     "col": 25,
-     "start": 23,
-     "end": 24,
-     "comments": []
-    },
-    {
-     "type": "L_PAREN",
-     "text": "(",
-     "line": 1,
-     "col": 27,
-     "start": 26,
-     "end": 26,
-     "comments": []
-    },
-    {
-     "type": "VALUES",
-     "text": "VALUES",
-     "line": 1,
-     "col": 33,
-     "start": 27,
-     "end": 32,
-     "comments": []
-    },
-    {
-     "type": "L_PAREN",
-     "text": "(",
-     "line": 1,
-     "col": 35,
-     "start": 34,
-     "end": 34,
-     "comments": []
-    },
-    {
-     "type": "NUMBER",
-     "text": "1",
-     "line": 1,
-     "col": 36,
-     "start": 35,
-     "end": 35,
-     "comments": []
-    },
-    {
-     "type": "COMMA",
-     "text": ",",
-     "line": 1,
-     "col": 37,
-     "start": 36,
-     "end": 36,
-     "comments": []
-    },
-    {
-     "type": "NUMBER",
-     "text": "2",
-     "line": 1,
-     "col": 39,
-     "start": 38,
-     "end": 38,
-     "comments": []
-    },
-    {
-     "type": "R_PAREN",
-     "text": ")",
-     "line": 1,
-     "col": 40,
-     "start": 39,
-     "end": 39,
-     "comments": []
-    },
-    {
-     "type": "UNION",
-     "text": "UNION",
-     "line": 1,
-     "col": 46,
-     "start": 41,
-     "end": 45,
-     "comments": []
-    },
-    {
-     "type": "ALL",
-     "text": "ALL",
-     "line": 1,
-     "col": 50,
-     "start": 47,
-     "end": 49,
-     "comments": []
-    },
-    {
-     "type": "SELECT",
-     "text": "SELECT",
-     "line": 1,
-     "col": 57,
-     "start": 51,
-     "end": 56,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "n",
-     "line": 1,
-     "col": 59,
-     "start": 58,
-     "end": 58,
-     "comments": []
-    },
-    {
-     "type": "PLUS",
-     "text": "+",
-     "line": 1,
-     "col": 61,
-     "start": 60,
-     "end": 60,
-     "comments": []
-    },
-    {
-     "type": "NUMBER",
-     "text": "1",
-     "line": 1,
-     "col": 63,
-     "start": 62,
-     "end": 62,
-     "comments": []
-    },
-    {
-     "type": "COMMA",
-     "text": ",",
-     "line": 1,
-     "col": 64,
-     "start": 63,
-     "end": 63,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "n",
-     "line": 1,
-     "col": 66,
-     "start": 65,
-     "end": 65,
-     "comments": []
-    },
-    {
-     "type": "PLUS",
-     "text": "+",
-     "line": 1,
-     "col": 68,
-     "start": 67,
-     "end": 67,
-     "comments": []
-    },
-    {
-     "type": "NUMBER",
-     "text": "2",
-     "line": 1,
-     "col": 70,
-     "start": 69,
-     "end": 69,
-     "comments": []
-    },
-    {
-     "type": "FROM",
-     "text": "FROM",
-     "line": 1,
-     "col": 75,
-     "start": 71,
-     "end": 74,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "t",
-     "line": 1,
-     "col": 77,
-     "start": 76,
-     "end": 76,
-     "comments": []
-    },
-    {
-     "type": "R_PAREN",
-     "text": ")",
-     "line": 1,
-     "col": 78,
-     "start": 77,
-     "end": 77,
-     "comments": []
-    },
-    {
-     "type": "SELECT",
-     "text": "SELECT",
-     "line": 1,
-     "col": 85,
-     "start": 79,
-     "end": 84,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "SUM",
-     "line": 1,
-     "col": 89,
-     "start": 86,
-     "end": 88,
-     "comments": []
-    },
-    {
-     "type": "L_PAREN",
-     "text": "(",
-     "line": 1,
-     "col": 90,
-     "start": 89,
-     "end": 89,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "n",
-     "line": 1,
-     "col": 91,
-     "start": 90,
-     "end": 90,
-     "comments": []
-    },
-    {
-     "type": "R_PAREN",
-     "text": ")",
-     "line": 1,
-     "col": 92,
-     "start": 91,
-     "end": 91,
-     "comments": []
-    },
-    {
-     "type": "FROM",
-     "text": "FROM",
-     "line": 1,
-     "col": 97,
-     "start": 93,
-     "end": 96,
-     "comments": []
-    },
-    {
-     "type": "VAR",
-     "text": "t",
-     "line": 1,
-     "col": 99,
-     "start": 98,
-     "end": 98,
      "comments": []
     }
    ]
@@ -58688,11 +58111,20 @@
      "comments": []
     },
     {
-     "type": "START_WITH",
-     "text": "START WITH",
+     "type": "BEGIN",
+     "text": "START",
+     "line": 1,
+     "col": 77,
+     "start": 72,
+     "end": 76,
+     "comments": []
+    },
+    {
+     "type": "WITH",
+     "text": "WITH",
      "line": 1,
      "col": 82,
-     "start": 72,
+     "start": 78,
      "end": 81,
      "comments": []
     },
@@ -58936,11 +58368,20 @@
      "comments": []
     },
     {
-     "type": "START_WITH",
-     "text": "START WITH",
+     "type": "BEGIN",
+     "text": "START",
+     "line": 1,
+     "col": 77,
+     "start": 72,
+     "end": 76,
+     "comments": []
+    },
+    {
+     "type": "WITH",
+     "text": "WITH",
      "line": 1,
      "col": 82,
-     "start": 72,
+     "start": 78,
      "end": 81,
      "comments": []
     },
@@ -59415,11 +58856,20 @@
      "comments": []
     },
     {
-     "type": "CHARACTER_SET",
-     "text": "CHARACTER SET",
+     "type": "CHAR",
+     "text": "CHARACTER",
+     "line": 1,
+     "col": 39,
+     "start": 30,
+     "end": 38,
+     "comments": []
+    },
+    {
+     "type": "SET",
+     "text": "SET",
      "line": 1,
      "col": 43,
-     "start": 30,
+     "start": 40,
      "end": 42,
      "comments": []
     },
@@ -67749,6 +67199,142 @@
    ]
   },
   {
+   "sql": "DROP TABLE a, b",
+   "tokens": [
+    {
+     "type": "DROP",
+     "text": "DROP",
+     "line": 1,
+     "col": 4,
+     "start": 0,
+     "end": 3,
+     "comments": []
+    },
+    {
+     "type": "TABLE",
+     "text": "TABLE",
+     "line": 1,
+     "col": 10,
+     "start": 5,
+     "end": 9,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "a",
+     "line": 1,
+     "col": 12,
+     "start": 11,
+     "end": 11,
+     "comments": []
+    },
+    {
+     "type": "COMMA",
+     "text": ",",
+     "line": 1,
+     "col": 13,
+     "start": 12,
+     "end": 12,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "b",
+     "line": 1,
+     "col": 15,
+     "start": 14,
+     "end": 14,
+     "comments": []
+    }
+   ]
+  },
+  {
+   "sql": "DROP TABLE a.b, c.d",
+   "tokens": [
+    {
+     "type": "DROP",
+     "text": "DROP",
+     "line": 1,
+     "col": 4,
+     "start": 0,
+     "end": 3,
+     "comments": []
+    },
+    {
+     "type": "TABLE",
+     "text": "TABLE",
+     "line": 1,
+     "col": 10,
+     "start": 5,
+     "end": 9,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "a",
+     "line": 1,
+     "col": 12,
+     "start": 11,
+     "end": 11,
+     "comments": []
+    },
+    {
+     "type": "DOT",
+     "text": ".",
+     "line": 1,
+     "col": 13,
+     "start": 12,
+     "end": 12,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "b",
+     "line": 1,
+     "col": 14,
+     "start": 13,
+     "end": 13,
+     "comments": []
+    },
+    {
+     "type": "COMMA",
+     "text": ",",
+     "line": 1,
+     "col": 15,
+     "start": 14,
+     "end": 14,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "c",
+     "line": 1,
+     "col": 17,
+     "start": 16,
+     "end": 16,
+     "comments": []
+    },
+    {
+     "type": "DOT",
+     "text": ".",
+     "line": 1,
+     "col": 18,
+     "start": 17,
+     "end": 17,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "d",
+     "line": 1,
+     "col": 19,
+     "start": 18,
+     "end": 18,
+     "comments": []
+    }
+   ]
+  },
+  {
    "sql": "DROP TABLE IF EXISTS a",
    "tokens": [
     {
@@ -67794,6 +67380,83 @@
      "col": 22,
      "start": 21,
      "end": 21,
+     "comments": []
+    }
+   ]
+  },
+  {
+   "sql": "DROP TABLE IF EXISTS a, b CASCADE",
+   "tokens": [
+    {
+     "type": "DROP",
+     "text": "DROP",
+     "line": 1,
+     "col": 4,
+     "start": 0,
+     "end": 3,
+     "comments": []
+    },
+    {
+     "type": "TABLE",
+     "text": "TABLE",
+     "line": 1,
+     "col": 10,
+     "start": 5,
+     "end": 9,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "IF",
+     "line": 1,
+     "col": 13,
+     "start": 11,
+     "end": 12,
+     "comments": []
+    },
+    {
+     "type": "EXISTS",
+     "text": "EXISTS",
+     "line": 1,
+     "col": 20,
+     "start": 14,
+     "end": 19,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "a",
+     "line": 1,
+     "col": 22,
+     "start": 21,
+     "end": 21,
+     "comments": []
+    },
+    {
+     "type": "COMMA",
+     "text": ",",
+     "line": 1,
+     "col": 23,
+     "start": 22,
+     "end": 22,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "b",
+     "line": 1,
+     "col": 25,
+     "start": 24,
+     "end": 24,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "CASCADE",
+     "line": 1,
+     "col": 33,
+     "start": 26,
+     "end": 32,
      "comments": []
     }
    ]

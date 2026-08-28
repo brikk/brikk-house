@@ -8,6 +8,7 @@ import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.ast.Set as SetNode
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
+import dev.brikk.house.sql.parser.withStrictTimeInverse
 import kotlin.Boolean
 import kotlin.String
 import kotlin.collections.List
@@ -163,6 +164,9 @@ open class Generator(
     open val unpivotAliasesAreIdentifiers: Boolean get() = true
     open val renameTableWithDb: Boolean get() = true
     open val groupingsSep: String get() = ","
+
+    // sqlglot: Generator.DECLARE_DEFAULT_ASSIGNMENT (base "="; bigquery/trino use "DEFAULT")
+    open val declareDefaultAssignment: String get() = "="
     open val indexOn: String get() = "ON"
     open val joinHints: Boolean get() = true
     open val directedJoins: Boolean get() = false
@@ -696,10 +700,44 @@ open class Generator(
     // sqlglot: Generator.too_wide
     fun tooWide(args: Iterable<String>): Boolean = args.sumOf { it.length } > maxTextWidth
 
+    // Cached inverse with strict-token degradation/padding (sqlglot metaclass
+    // _with_strict_time_inverse applied to every dialect's INVERSE_TIME_MAPPING).
+    private val effectiveInverseTimeMapping: Map<String, String> by lazy {
+        withStrictTimeInverse(inverseTimeMapping)
+    }
+
     // sqlglot: Generator.format_time — renders args["format"] and converts python
     // strftime specifiers back into this dialect's (INVERSE_TIME_MAPPING).
-    open fun formatTime(expression: Expression): String? =
-        formatTimeString(sql(expression, "format"), inverseTimeMapping)
+    // Optional [inverseTimeMappingOverride] matches upstream's inverse_time_mapping kwarg
+    // (e.g. Presto strtounix routing through Hive.INVERSE_TIME_MAPPING).
+    open fun formatTime(
+        expression: Expression,
+        inverseTimeMappingOverride: Map<String, String>? = null,
+    ): String? {
+        val mapping = if (inverseTimeMappingOverride != null) {
+            withStrictTimeInverse(inverseTimeMappingOverride)
+        } else {
+            effectiveInverseTimeMapping
+        }
+        return formatTimeString(sql(expression, "format"), mapping)
+    }
+
+    // sqlglot: Generator.declare_sql
+    open fun declareSql(expression: Declare): String {
+        val replace = if (expression.args["replace"] == true) "OR REPLACE " else ""
+        return "DECLARE $replace${expressions(expression, flat = true)}"
+    }
+
+    // sqlglot: Generator.declareitem_sql
+    open fun declareitemSql(expression: DeclareItem): String {
+        val variables = expressions(expression, key = "this")
+        var default = sql(expression, "default")
+        default = if (default.isNotEmpty()) " $declareDefaultAssignment $default" else ""
+        var kind = sql(expression, "kind")
+        if (expression.args["kind"] is Schema) kind = "TABLE $kind"
+        kind = if (kind.isNotEmpty()) " $kind" else ""
+        return "$variables$kind$default"
+    }
 
     // sqlglot: Generator.binary
     open fun binary(expression: Binary, op: String): String {
@@ -1348,7 +1386,7 @@ open class Generator(
 
     // sqlglot: Generator.drop_sql
     open fun dropSql(expression: Drop): String {
-        val thisSql = sql(expression, "this")
+        val tables = expressions(expression, key = "tables", flat = true)
         var exprs = expressions(expression, flat = true)
         if (exprs.isNotEmpty()) exprs = " ($exprs)"
         var kind = expression.args["kind"] as? String ?: ""
@@ -1366,7 +1404,8 @@ open class Generator(
         val constraints = if (expression.args["constraints"] == true) " CONSTRAINTS" else ""
         val purge = if (expression.args["purge"] == true) " PURGE" else ""
         val sync = if (expression.args["sync"] == true) " SYNC" else ""
-        return "DROP$temporary$materialized$iceberg $kind$concurrentlySql$existsSql$thisSql$onCluster$exprs$cascade$restrict$constraints$purge$sync"
+        val force = if (expression.args["force"] == true) " FORCE" else ""
+        return "DROP$temporary$materialized$iceberg $kind$concurrentlySql$existsSql$tables$onCluster$exprs$cascade$restrict$constraints$purge$sync$force"
     }
 
     // sqlglot: Generator.set_operation
@@ -4841,8 +4880,8 @@ open class Generator(
         if (options.isNotEmpty()) options = " $options"
         var kind = sql(expression, "kind")
         if (kind.isNotEmpty()) kind = " $kind"
-        var thisSql = sql(expression, "this")
-        if (thisSql.isNotEmpty()) thisSql = " $thisSql"
+        var tables = expressions(expression, key = "tables", flat = true)
+        if (tables.isNotEmpty()) tables = " $tables"
         var mode = sql(expression, "mode")
         if (mode.isNotEmpty()) mode = " $mode"
         var properties = sql(expression, "properties")
@@ -4851,7 +4890,7 @@ open class Generator(
         if (partition.isNotEmpty()) partition = " $partition"
         var innerExpression = sql(expression, "expression")
         if (innerExpression.isNotEmpty()) innerExpression = " $innerExpression"
-        return "ANALYZE$options$kind$thisSql$partition$mode$innerExpression$properties"
+        return "ANALYZE$options$kind$tables$partition$mode$innerExpression$properties"
     }
 
     // sqlglot: Generator.struct_sql

@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "fixture": "dialect-corpus/duckdb.json",
  "dialect": "duckdb",
  "case_count": 382,
@@ -2392,8 +2392,7 @@
       "line": 1,
       "col": 12,
       "start": 11,
-      "end": 11,
-      "is_table": false
+      "end": 11
      }
     },
     {
@@ -2506,8 +2505,7 @@
       "line": 1,
       "col": 22,
       "start": 21,
-      "end": 21,
-      "is_table": false
+      "end": 21
      }
     },
     {
@@ -5084,11 +5082,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -5119,7 +5112,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Paren",
@@ -5136,7 +5129,7 @@
      ]
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "this",
      "c": "sqlglot.expressions.core.Column",
      "t": [
@@ -5152,7 +5145,7 @@
      ]
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -5174,17 +5167,17 @@
      }
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "this",
      "v": "c1"
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "into",
      "v": false
     },
@@ -7370,11 +7363,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -7405,7 +7393,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Alias",
@@ -7425,7 +7413,7 @@
      }
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "this",
      "c": "sqlglot.expressions.core.Literal",
      "t": [
@@ -7448,17 +7436,17 @@
      }
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "alias",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -7480,12 +7468,12 @@
      }
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "quoted",
      "v": false
     },
@@ -9105,8 +9093,7 @@
       "line": 1,
       "col": 19,
       "start": 18,
-      "end": 18,
-      "is_table": false
+      "end": 18
      }
     },
     {
@@ -17400,8 +17387,7 @@
       "line": 1,
       "col": 61,
       "start": 59,
-      "end": 60,
-      "is_table": false
+      "end": 60
      }
     },
     {
@@ -28928,7 +28914,7 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "UNKNOWN"
+       "v": "BOOLEAN"
       }
      ]
     },
@@ -29060,7 +29046,7 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "UNKNOWN"
+       "v": "BOOLEAN"
       }
      ]
     },
@@ -29176,7 +29162,7 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "UNKNOWN"
+       "v": "BOOLEAN"
       }
      ],
      "m": {
@@ -54294,8 +54280,7 @@
       "line": 1,
       "col": 69,
       "start": 68,
-      "end": 68,
-      "is_table": false
+      "end": 68
      }
     },
     {
@@ -54659,8 +54644,7 @@
       "line": 1,
       "col": 42,
       "start": 41,
-      "end": 41,
-      "is_table": false
+      "end": 41
      }
     },
     {
@@ -70641,8 +70625,7 @@
       "line": 1,
       "col": 17,
       "start": 14,
-      "end": 16,
-      "is_table": false
+      "end": 16
      }
     },
     {
@@ -90319,7 +90302,7 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "UNKNOWN"
+       "v": "BOOLEAN"
       }
      ]
     },
@@ -90435,7 +90418,7 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "UNKNOWN"
+       "v": "BOOLEAN"
       }
      ]
     },
@@ -90551,7 +90534,7 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "UNKNOWN"
+       "v": "BOOLEAN"
       }
      ]
     },

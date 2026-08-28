@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "fixture": "dialect-corpus/bigquery.json",
  "dialect": "bigquery",
  "case_count": 272,
@@ -12555,6 +12555,11 @@
      "i": 7,
      "k": "default_on_null",
      "v": false
+    },
+    {
+     "i": 7,
+     "k": "value_columns_first",
+     "v": false
     }
    ]
   },
@@ -15232,8 +15237,7 @@
       "line": 1,
       "col": 25,
       "start": 24,
-      "end": 24,
-      "is_table": false
+      "end": 24
      }
     },
     {
@@ -18630,6 +18634,11 @@
      "v": false
     },
     {
+     "i": 11,
+     "k": "value_columns_first",
+     "v": false
+    },
+    {
      "i": 3,
      "k": "alias",
      "c": "sqlglot.expressions.query.TableAlias",
@@ -18646,7 +18655,7 @@
      ]
     },
     {
-     "i": 31,
+     "i": 32,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -18668,12 +18677,12 @@
      }
     },
     {
-     "i": 32,
+     "i": 33,
      "k": "this",
      "v": "a"
     },
     {
-     "i": 32,
+     "i": 33,
      "k": "quoted",
      "v": false
     }
@@ -34192,11 +34201,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -34227,7 +34231,7 @@
      ]
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple",
@@ -34244,7 +34248,7 @@
      ]
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.functions.Cast",
@@ -34316,7 +34320,7 @@
      ]
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "this",
      "c": "sqlglot.expressions.core.Literal",
      "t": [
@@ -34339,28 +34343,28 @@
      }
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "this",
      "v": "7"
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "to",
      "c": "sqlglot.expressions.datatypes.DataType"
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "this",
      "c": "DataType.Type",
      "v": "TEXT"
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.datatypes.DataTypeParam",
@@ -34377,7 +34381,7 @@
      ]
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "this",
      "c": "sqlglot.expressions.core.Literal",
      "t": [
@@ -34400,22 +34404,22 @@
      }
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "this",
      "v": "10"
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "nested",
      "v": false
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.functions.Cast",
@@ -34487,7 +34491,7 @@
      ]
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "this",
      "c": "sqlglot.expressions.core.Literal",
      "t": [
@@ -34510,28 +34514,28 @@
      }
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "this",
      "v": "14"
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "to",
      "c": "sqlglot.expressions.datatypes.DataType"
     },
     {
-     "i": 37,
+     "i": 36,
      "k": "this",
      "c": "DataType.Type",
      "v": "TEXT"
     },
     {
-     "i": 37,
+     "i": 36,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.datatypes.DataTypeParam",
@@ -34548,7 +34552,7 @@
      ]
     },
     {
-     "i": 39,
+     "i": 38,
      "k": "this",
      "c": "sqlglot.expressions.core.Literal",
      "t": [
@@ -34571,17 +34575,17 @@
      }
     },
     {
-     "i": 40,
+     "i": 39,
      "k": "this",
      "v": "10"
     },
     {
-     "i": 40,
+     "i": 39,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 37,
+     "i": 36,
      "k": "nested",
      "v": false
     },
@@ -56992,6 +56996,11 @@
      "i": 8,
      "k": "this",
      "v": "MONDAY"
+    },
+    {
+     "i": 0,
+     "k": "date_part_boundary",
+     "v": true
     }
    ]
   },
@@ -60500,10 +60509,7 @@
        "c": "DataType.Type",
        "v": "UNKNOWN"
       }
-     ],
-     "m": {
-      "is_table": false
-     }
+     ]
     },
     {
      "i": 2,
@@ -60720,10 +60726,7 @@
        "c": "DataType.Type",
        "v": "UNKNOWN"
       }
-     ],
-     "m": {
-      "is_table": false
-     }
+     ]
     },
     {
      "i": 2,

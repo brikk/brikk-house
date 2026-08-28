@@ -1,208 +1,216 @@
 {
- "cases": [
-  {
-   "case": "write|spark|CREATE TABLE blah (col_a INT) COMMENT \"Test comment: blah\" PARTITIONED BY (date STRING) USING ICEBERG TBLPROPERTIES('x' = '1')",
-   "reason": "Create preprocess (move_schema_columns_to_partitioned_by / ctas_to_tmp_view) not ported"
-  },
-  {
-   "case": "write|duckdb|CONCAT_WS(' ', NULL, 'Smith')",
-   "reason": "CONCAT_WS coalesce behavior differs (dialect_concat_ws_coalesce) \u2014 target-dialect gap"
-  },
-  {
-   "case": "read|duckdb|SELECT * FROM parquet.`name.parquet`",
-   "reason": "ReadParquet rendering not ported (readparquet_sql)"
-  },
-  {
-   "case": "write|duckdb|SELECT h.id, amount FROM hourlycostagg h LATERAL VIEW inline(h.costs) c",
-   "reason": "cross-dialect lowering gap (preprocess/helper not ported): expected `SELECT h.id, amount FROM hourlycostagg AS h CROSS JOIN LATERAL (SELECT"
-  },
-  {
-   "case": "write|duckdb|SELECT h.id, amount FROM hourlycostagg h LATERAL VIEW inline(h.adjustments) as type, val, curr",
-   "reason": "cross-dialect lowering gap (preprocess/helper not ported): expected `SELECT h.id, amount FROM hourlycostagg AS h CROSS JOIN LATERAL (SELECT"
-  },
-  {
-   "case": "write|duckdb|\n            WITH hourlycostagg AS (\n                SELECT\n                    101 AS id,\n                    ARRAY(\n                        STRUCT(10.0 AS amount, 'USD' AS currency),\n                        STRUCT(20.0 AS amount, 'EUR' AS currency)\n                    ) AS costs,\n                    ARRAY(\n                        STRUCT('tax' AS type, 0.15 AS val, 'EUR' AS currency),\n                        STRUCT('fee' AS type, 5.00 AS val, 'EUR' AS currency)\n                    ) AS adjustments,\n                    ARRAY(\n                        STRUCT(\n                            12.0 AS length,\n                            STRUCT('A' AS tag, 98.5 AS score) AS details\n                        ),\n                        STRUCT(\n                            23.0 AS length,\n                            STRUCT('B' AS tag, 99.5 AS score) AS details\n                        )\n                    ) AS info\n            )\n            SELECT\n                h.id,\n                amount,\n                currency,\n                type,\n                val,\n                leng\n            FROM hourlycostagg h\n            LATERAL VIEW inline(h.costs) c\n            LATERAL VIEW inline(h.adjustments) as type, val, curr\n            LATERAL VIEW inline(h.info) exploded as leng, det\n            ",
-   "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
-  },
-  {
-   "case": "write|duckdb|SELECT id_column, name, age FROM test_table LATERAL VIEW INLINE(struc_column) explode_view AS name, age",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|duckdb|SELECT ARRAY_AGG(x) FILTER (WHERE x = 5) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)",
-   "reason": "ArrayAgg FILTER lowering to target dialect not ported"
-  },
-  {
-   "case": "write|duckdb|SELECT ARRAY_AGG(DISTINCT STRUCT('a'))",
-   "reason": "struct-literal / inherit_struct_field_names preprocess not ported"
-  },
-  {
-   "case": "write|spark|SELECT ARRAY_AGG(DISTINCT STRUCT('a'))",
-   "reason": "inherit_struct_field_names preprocess not ported (STRUCT positional fields keep no colN aliases)"
-  },
-  {
-   "case": "write|duckdb|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
-   "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
-  },
-  {
-   "case": "write|postgres|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
-   "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
-  },
-  {
-   "case": "write|presto|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
-   "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
-  },
-  {
-   "case": "write|duckdb|SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30')",
-   "reason": "date-delta lowering to target dialect not fully ported"
-  },
-  {
-   "case": "write|duckdb|SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30', FALSE)",
-   "reason": "date-delta lowering to target dialect not fully ported"
-  },
-  {
-   "case": "write|spark|SELECT CAST(STRUCT('fooo') AS STRUCT<a: VARCHAR(2)>)",
-   "reason": "inherit_struct_field_names preprocess not ported (STRUCT positional fields keep no colN aliases)"
-  },
-  {
-   "case": "write|presto|SELECT LEFT(x, 2), RIGHT(x, 2)",
-   "reason": "Left/Right SUBSTRING lowering differs across target dialect (Hive-family substring form)"
-  },
-  {
-   "case": "write|hive|SELECT LEFT(x, 2), RIGHT(x, 2)",
-   "reason": "Left/Right SUBSTRING lowering differs across target dialect (Hive-family substring form)"
-  },
-  {
-   "case": "read|spark|SELECT DATE_ADD(MONTH, 20, col)",
-   "reason": "date_delta_to_binary_interval_op / timestampdiff_sql not ported (unit-form DATE_ADD/TIMESTAMPDIFF arg order)"
-  },
-  {
-   "case": "write|spark|SELECT DATE_ADD(MONTH, 20, col)",
-   "reason": "date_delta_to_binary_interval_op / timestampdiff_sql not ported (unit-form DATE_ADD/TIMESTAMPDIFF arg order)"
-  },
-  {
-   "case": "write|spark|SELECT STRUCT(1, 2)",
-   "reason": "inherit_struct_field_names preprocess not ported (STRUCT positional fields keep no colN aliases)"
-  },
-  {
-   "case": "write|presto|SELECT STRUCT(1, 2)",
-   "reason": "STRUCT<->ROW struct-field-name preprocess not ported (target-dialect)"
-  },
-  {
-   "case": "write|duckdb|SELECT STRUCT(1, 2)",
-   "reason": "struct-literal / inherit_struct_field_names preprocess not ported"
-  },
-  {
-   "case": "write|spark|SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t",
-   "reason": "inherit_struct_field_names preprocess not ported (STRUCT positional fields keep no colN aliases)"
-  },
-  {
-   "case": "write|duckdb|SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t",
-   "reason": "struct-literal / inherit_struct_field_names preprocess not ported"
-  },
-  {
-   "case": "write|spark|SELECT TIMESTAMPDIFF(MONTH, foo, bar)",
-   "reason": "date_delta_to_binary_interval_op / timestampdiff_sql not ported (unit-form DATE_ADD/TIMESTAMPDIFF arg order)"
-  },
-  {
-   "case": "write|spark|STRING_AGG(x, ', ')",
-   "reason": "GroupConcat v>=4 LISTAGG branch not modeled (we emit the Spark3 ARRAY_JOIN(COLLECT_LIST) form)"
-  },
-  {
-   "case": "write|spark|LISTAGG(x, ', ')",
-   "reason": "GroupConcat v>=4 LISTAGG branch not modeled (we emit the Spark3 ARRAY_JOIN(COLLECT_LIST) form)"
-  },
-  {
-   "case": "read|spark|WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t",
-   "reason": "move_ctes_to_top_level / WITH reordering preprocess not ported"
-  },
-  {
-   "case": "write|presto|SELECT EXPLODE(x) FROM tbl",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|presto|SELECT EXPLODE(col) FROM _u",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|presto|SELECT EXPLODE(col) AS exploded FROM schema.tbl",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|presto|SELECT EXPLODE(ARRAY(1, 2))",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|presto|SELECT POSEXPLODE(ARRAY(2, 3)) AS x",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|duckdb|SELECT POSEXPLODE(ARRAY('a'))",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|presto|SELECT POSEXPLODE(x) AS (a, b)",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|duckdb|SELECT POSEXPLODE(x) AS (a, b)",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|duckdb|SELECT * FROM POSEXPLODE(ARRAY('a'))",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|duckdb|SELECT * FROM POSEXPLODE(ARRAY('a')) AS (a, b)",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|presto|SELECT POSEXPLODE(ARRAY(2, 3)), EXPLODE(ARRAY(4, 5, 6)) FROM tbl",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|presto|SELECT col, pos, POSEXPLODE(ARRAY(2, 3)) FROM _u",
-   "reason": "unnest_to_explode / explode-projection preprocess not ported (cross-dialect UNNEST desugaring)"
-  },
-  {
-   "case": "write|spark|SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))",
-   "reason": "SET VARIABLE / declare-variable rendering not ported"
-  },
-  {
-   "case": "write|duckdb|SELECT TRY_DIVIDE(a, b)",
-   "reason": "SafeDivide/NULLIF guard lowering differs for target dialect"
-  },
-  {
-   "case": "write|bigquery|SELECT TO_UTC_TIMESTAMP('2016-08-31', 'Asia/Seoul')",
-   "reason": "write<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT DATETIME(TIMESTAMP(CAST('2016-08-31' A"
-  },
-  {
-   "case": "read|bigquery|SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))",
-   "reason": "read<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT * FROM produce AS p PIVOT(SUM(p.sales)"
-  },
-  {
-   "case": "write|bigquery|SELECT DATE_ADD(my_date_column, 1)",
-   "reason": "write<->bigquery date/interval delta rewrite differs (date_delta preprocess not ported)"
-  },
-  {
-   "case": "write|bigquery|SELECT EXPLODE(x) FROM tbl",
-   "reason": "write<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT IF(pos = pos_2, col, NULL) AS col FROM"
-  },
-  {
-   "case": "write|bigquery|SELECT EXPLODE(col) FROM _u",
-   "reason": "write<->bigquery cross-dialect rewrite gap (unported preprocess/transform): expected `SELECT IF(pos = pos_2, col_2, NULL) AS col_2 "
-  },
-  {
-   "case": "write|bigquery|SELECT EXPLODE(ARRAY(1, 2))",
-   "reason": "write<->bigquery STRUCT/ARRAY rewrite differs"
-  },
-  {
-   "case": "write|bigquery|SELECT POSEXPLODE(ARRAY(2, 3)) AS x",
-   "reason": "write<->bigquery STRUCT/ARRAY rewrite differs"
-  },
-  {
-   "case": "write|bigquery|SELECT POSEXPLODE(ARRAY(2, 3)), EXPLODE(ARRAY(4, 5, 6)) FROM tbl",
-   "reason": "write<->bigquery STRUCT/ARRAY rewrite differs"
-  }
- ]
+    "cases": [
+        {
+            "case": "write|spark|CREATE TABLE blah (col_a INT) COMMENT \"Test comment: blah\" PARTITIONED BY (date STRING) USING ICEBERG TBLPROPERTIES('x' = '1')",
+            "reason": "expected `CREATE TABLE blah (\n  col_a INT,\n  date STRING\n)\nCOMMENT 'Test comment: blah'\nPARTITIONED BY (\n  date\n)\nUSING ICEBERG\nTBLPROPERTIES (\n  'x'='1'\n)` actual `CREATE TABLE blah (\n  col_a INT\n)\nCOMMENT 'Test comment: blah'\nPARTITIONED BY (\n  date STRING\n)\nUSING ICEBERG\nTBLPROPERTIES (\n  'x'='1'\n)`"
+        },
+        {
+            "case": "write|spark|ALTER TABLE StudentInfo DROP COLUMNS (LastName, DOB)",
+            "reason": "expected `ALTER TABLE StudentInfo DROP COLUMNS (LastName, DOB)` actual `ALTER TABLE StudentInfo DROP COLUMNS`"
+        },
+        {
+            "case": "write|duckdb|CONCAT_WS(' ', NULL, 'Smith')",
+            "reason": "expected `CONCAT_WS(' ', NULL, 'Smith')` actual `CASE WHEN ' ' IS NULL OR NULL IS NULL OR 'Smith' IS NULL THEN NULL ELSE CONCAT_WS(' ', NULL, 'Smith') END`"
+        },
+        {
+            "case": "read|duckdb|SELECT * FROM parquet.`name.parquet`",
+            "reason": "expected `SELECT * FROM parquet.`name.parquet`` actual `SELECT * FROM READ_PARQUET('name.parquet')`"
+        },
+        {
+            "case": "write|duckdb|SELECT h.id, amount FROM hourlycostagg h LATERAL VIEW inline(h.costs) c",
+            "reason": "expected `SELECT h.id, amount FROM hourlycostagg AS h CROSS JOIN LATERAL (SELECT UNNEST(h.costs, max_depth => 2)) AS c` actual `SELECT h.id, amount FROM hourlycostagg AS h LATERAL VIEW INLINE(h.costs) c`"
+        },
+        {
+            "case": "write|duckdb|SELECT h.id, amount FROM hourlycostagg h LATERAL VIEW inline(h.adjustments) as type, val, curr",
+            "reason": "expected `SELECT h.id, amount FROM hourlycostagg AS h CROSS JOIN LATERAL (SELECT UNNEST(h.adjustments, max_depth => 2)) AS _u_0(type, val, curr)` actual `SELECT h.id, amount FROM hourlycostagg AS h LATERAL VIEW INLINE(h.adjustments) AS type, val, curr`"
+        },
+        {
+            "case": "write|duckdb|\n            WITH hourlycostagg AS (\n                SELECT\n                    101 AS id,\n                    ARRAY(\n                        STRUCT(10.0 AS amount, 'USD' AS currency),\n                        STRUCT(20.0 AS amount, 'EUR' AS currency)\n                    ) AS costs,\n                    ARRAY(\n                        STRUCT('tax' AS type, 0.15 AS val, 'EUR' AS currency),\n                        STRUCT('fee' AS type, 5.00 AS val, 'EUR' AS currency)\n                    ) AS adjustments,\n                    ARRAY(\n                        STRUCT(\n                            12.0 AS length,\n                            STRUCT('A' AS tag, 98.5 AS score) AS details\n                        ),\n                        STRUCT(\n                            23.0 AS length,\n                            STRUCT('B' AS tag, 99.5 AS score) AS details\n                        )\n                    ) AS info\n            )\n            SELECT\n                h.id,\n                amount,\n                currency,\n                type,\n                val,\n                leng\n            FROM hourlycostagg h\n            LATERAL VIEW inline(h.costs) c\n            LATERAL VIEW inline(h.adjustments) as type, val, curr\n            LATERAL VIEW inline(h.info) exploded as leng, det\n            ",
+            "reason": "expected `WITH hourlycostagg AS (SELECT 101 AS id, [{'amount': 10.0, 'currency': 'USD'}, {'amount': 20.0, 'currency': 'EUR'}] AS costs, [{'type': 'tax', 'val': 0.15, 'currency': 'EUR'}, {'type': 'fee', 'val': 5.00, 'currency': 'EUR'}] AS adjustments, [{'length': 12.0, 'details': {'tag': 'A', 'score': 98.5}}, {'length': 23.0, 'details': {'tag': 'B', 'score': 99.5}}] AS info) SELECT h.id, amount, currency, type, val, leng FROM hourlycostagg AS h CROSS JOIN LATERAL (SELECT UNNEST(h.costs, max_depth => 2)) AS c CROSS JOIN LATERAL (SELECT UNNEST(h.adjustments, max_depth => 2)) AS _u_1(type, val, curr) CROSS JOIN LATERAL (SELECT UNNEST(h.info, max_depth => 2)) AS exploded(leng, det)` actual `WITH hourlycostagg AS (SELECT 101 AS id, [{'amount': 10.0, 'currency': 'USD'}, {'amount': 20.0, 'currency': 'EUR'}] AS costs, [{'type': 'tax', 'val': 0.15, 'currency': 'EUR'}, {'type': 'fee', 'val': 5.00, 'currency': 'EUR'}] AS adjustments, [{'length': 12.0, 'details': {'tag': 'A', 'score': 98.5}}, {'length': 23.0, 'details': {'tag': 'B', 'score': 99.5}}] AS info) SELECT h.id, amount, currency, type, val, leng FROM hourlycostagg AS h LATERAL VIEW INLINE(h.costs) c LATERAL VIEW INLINE(h.adjustments) AS type, val, curr LATERAL VIEW INLINE(h.info) exploded AS leng, det`"
+        },
+        {
+            "case": "write|duckdb|SELECT id_column, name, age FROM test_table LATERAL VIEW INLINE(struc_column) explode_view AS name, age",
+            "reason": "expected `SELECT id_column, name, age FROM test_table CROSS JOIN LATERAL (SELECT UNNEST(struc_column, max_depth => 2)) AS explode_view(name, age)` actual `SELECT id_column, name, age FROM test_table LATERAL VIEW INLINE(struc_column) explode_view AS name, age`"
+        },
+        {
+            "case": "write|duckdb|SELECT ARRAY_AGG(x) FILTER (WHERE x = 5) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)",
+            "reason": "expected `SELECT ARRAY_AGG(x) FILTER(WHERE x = 5 AND NOT x IS NULL) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)` actual `SELECT ARRAY_AGG(x) FILTER(WHERE x = 5) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)`"
+        },
+        {
+            "case": "write|duckdb|SELECT ARRAY_AGG(DISTINCT STRUCT('a'))",
+            "reason": "expected `SELECT ARRAY_AGG(DISTINCT {'col1': 'a'})` actual `SELECT ARRAY_AGG(DISTINCT {'_0': 'a'})`"
+        },
+        {
+            "case": "write|spark|SELECT ARRAY_AGG(DISTINCT STRUCT('a'))",
+            "reason": "expected `SELECT COLLECT_LIST(DISTINCT STRUCT('a' AS col1))` actual `SELECT COLLECT_LIST(DISTINCT STRUCT('a'))`"
+        },
+        {
+            "case": "write|duckdb|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+            "reason": "expected `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NULL WHEN name IS NULL THEN NULL ELSE (id, name) END) AS cnt FROM tbl` actual `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl`"
+        },
+        {
+            "case": "write|postgres|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+            "reason": "expected `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NULL WHEN name IS NULL THEN NULL ELSE (id, name) END) AS cnt FROM tbl` actual `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl`"
+        },
+        {
+            "case": "write|presto|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
+            "reason": "expected `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NULL WHEN name IS NULL THEN NULL ELSE (id, name) END) AS cnt FROM tbl` actual `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl`"
+        },
+        {
+            "case": "write|bigquery|SELECT TO_UTC_TIMESTAMP('2016-08-31', 'Asia/Seoul')",
+            "reason": "expected `SELECT DATETIME(TIMESTAMP(CAST('2016-08-31' AS DATETIME), 'Asia/Seoul'), 'UTC')` actual `SELECT CAST('2016-08-31' AS DATETIME) AT TIME ZONE 'Asia/Seoul' AT TIME ZONE 'UTC'`"
+        },
+        {
+            "case": "write|duckdb|SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30')",
+            "reason": "expected `SELECT DATE_DIFF('MONTH', CAST('1996-10-30' AS DATE), CAST('1997-02-28 10:30:00' AS DATE)) + CASE WHEN DAY(CAST('1997-02-28 10:30:00' AS DATE)) = DAY(LAST_DAY(CAST('1997-02-28 10:30:00' AS DATE))) AND DAY(CAST('1996-10-30' AS DATE)) = DAY(LAST_DAY(CAST('1996-10-30' AS DATE))) THEN 0 ELSE (DAY(CAST('1997-02-28 10:30:00' AS DATE)) - DAY(CAST('1996-10-30' AS DATE))) / 31.0 END` actual `SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30')`"
+        },
+        {
+            "case": "write|duckdb|SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30', FALSE)",
+            "reason": "expected `SELECT DATE_DIFF('MONTH', CAST('1996-10-30' AS DATE), CAST('1997-02-28 10:30:00' AS DATE)) + CASE WHEN DAY(CAST('1997-02-28 10:30:00' AS DATE)) = DAY(LAST_DAY(CAST('1997-02-28 10:30:00' AS DATE))) AND DAY(CAST('1996-10-30' AS DATE)) = DAY(LAST_DAY(CAST('1996-10-30' AS DATE))) THEN 0 ELSE (DAY(CAST('1997-02-28 10:30:00' AS DATE)) - DAY(CAST('1996-10-30' AS DATE))) / 31.0 END` actual `SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30', FALSE)`"
+        },
+        {
+            "case": "write|bigquery|SELECT TO_DATE(x, 'MM/dd/yyyy')",
+            "reason": "expected `SELECT CAST(SAFE_CAST(x AS TIMESTAMP FORMAT 'MM/DD/YYYY') AS DATE)` actual `SELECT CAST(PARSE_TIMESTAMP('%m/%d/%Y', x) AS DATE)`"
+        },
+        {
+            "case": "write|spark|SELECT CAST(STRUCT('fooo') AS STRUCT<a: VARCHAR(2)>)",
+            "reason": "expected `SELECT CAST(STRUCT('fooo' AS col1) AS STRUCT<a: STRING>)` actual `SELECT CAST(STRUCT('fooo') AS STRUCT<a: STRING>)`"
+        },
+        {
+            "case": "read|bigquery|SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))",
+            "reason": "expected `SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))` actual `SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR p.quarter IN ('Q1' AS Q1, 'Q2' AS Q1))`"
+        },
+        {
+            "case": "write|bigquery|SELECT DATE_ADD(my_date_column, 1)",
+            "reason": "expected `SELECT DATE_ADD(CAST(CAST(my_date_column AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `SELECT TS_OR_DS_ADD(my_date_column, 1, DAY)`"
+        },
+        {
+            "case": "write|presto|SELECT LEFT(x, 2), RIGHT(x, 2)",
+            "reason": "expected `SELECT SUBSTR(x, 1, 2), SUBSTR(x, LENGTH(x) - (2 - 1))` actual `SELECT SUBSTR(x, 1, 2), SUBSTR(x, LENGTH(x) + (2 - 1) - )`"
+        },
+        {
+            "case": "write|hive|SELECT LEFT(x, 2), RIGHT(x, 2)",
+            "reason": "expected `SELECT SUBSTRING(x, 1, 2), SUBSTRING(x, LENGTH(x) - (2 - 1))` actual `SELECT SUBSTRING(x, 1, 2), SUBSTRING(x, -2)`"
+        },
+        {
+            "case": "read|spark|SELECT DATE_ADD(MONTH, 20, col)",
+            "reason": "expected `SELECT DATE_ADD(MONTH, 20, col)` actual `SELECT TIMESTAMP_ADD(col, 20, MONTH)`"
+        },
+        {
+            "case": "write|spark|SELECT DATE_ADD(MONTH, 20, col)",
+            "reason": "expected `SELECT DATE_ADD(MONTH, 20, col)` actual `SELECT TIMESTAMP_ADD(col, 20, MONTH)`"
+        },
+        {
+            "case": "write|spark|SELECT STRUCT(1, 2)",
+            "reason": "expected `SELECT STRUCT(1 AS col1, 2 AS col2)` actual `SELECT STRUCT(1, 2)`"
+        },
+        {
+            "case": "write|presto|SELECT STRUCT(1, 2)",
+            "reason": "expected `SELECT CAST(ROW(1, 2) AS ROW(col1 INTEGER, col2 INTEGER))` actual `SELECT ROW(1, 2)`"
+        },
+        {
+            "case": "write|duckdb|SELECT STRUCT(1, 2)",
+            "reason": "expected `SELECT {'col1': 1, 'col2': 2}` actual `SELECT {'_0': 1, '_1': 2}`"
+        },
+        {
+            "case": "write|spark|SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t",
+            "reason": "expected `SELECT STRUCT(x AS x, 1 AS col2, y AS col3, STRUCT(5 AS col1) AS col4) FROM t` actual `SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t`"
+        },
+        {
+            "case": "write|duckdb|SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t",
+            "reason": "expected `SELECT {'x': x, 'col2': 1, 'col3': y, 'col4': {'col1': 5}} FROM t` actual `SELECT {'x': x, '_1': 1, 'col3': y, '_3': {'_0': 5}} FROM t`"
+        },
+        {
+            "case": "write|spark|SELECT TIMESTAMPDIFF(MONTH, foo, bar)",
+            "reason": "expected `SELECT TIMESTAMPDIFF(MONTH, foo, bar)` actual `SELECT TIMESTAMPDIFF(bar, foo, MONTH)`"
+        },
+        {
+            "case": "write|spark|STRING_AGG(x, ', ')",
+            "reason": "expected `LISTAGG(x, ', ')` actual `ARRAY_JOIN(COLLECT_LIST(x), ', ')`"
+        },
+        {
+            "case": "write|spark|LISTAGG(x, ', ')",
+            "reason": "expected `LISTAGG(x, ', ')` actual `ARRAY_JOIN(COLLECT_LIST(x), ', ')`"
+        },
+        {
+            "case": "read|spark|WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t",
+            "reason": "expected `WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t` actual `WITH t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t`"
+        },
+        {
+            "case": "write|bigquery|SELECT EXPLODE(x) FROM tbl",
+            "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col FROM tbl CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(x)) - 1)) AS pos CROSS JOIN UNNEST(x) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(x) - 1) AND pos_2 = (ARRAY_LENGTH(x) - 1))` actual `SELECT EXPLODE(x) FROM tbl`"
+        },
+        {
+            "case": "write|presto|SELECT EXPLODE(x) FROM tbl",
+            "reason": "expected `SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) AS col FROM tbl CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(x)))) AS _u(pos) CROSS JOIN UNNEST(x) WITH ORDINALITY AS _u_2(col, pos_2) WHERE _u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(x) AND _u_2.pos_2 = CARDINALITY(x))` actual `SELECT EXPLODE(x) FROM tbl`"
+        },
+        {
+            "case": "write|bigquery|SELECT EXPLODE(col) FROM _u",
+            "reason": "expected `SELECT IF(pos = pos_2, col_2, NULL) AS col_2 FROM _u CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(col)) - 1)) AS pos CROSS JOIN UNNEST(col) AS col_2 WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(col) - 1) AND pos_2 = (ARRAY_LENGTH(col) - 1))` actual `SELECT EXPLODE(col) FROM _u`"
+        },
+        {
+            "case": "write|presto|SELECT EXPLODE(col) FROM _u",
+            "reason": "expected `SELECT IF(_u_2.pos = _u_3.pos_2, _u_3.col_2) AS col_2 FROM _u CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(col)))) AS _u_2(pos) CROSS JOIN UNNEST(col) WITH ORDINALITY AS _u_3(col_2, pos_2) WHERE _u_2.pos = _u_3.pos_2 OR (_u_2.pos > CARDINALITY(col) AND _u_3.pos_2 = CARDINALITY(col))` actual `SELECT EXPLODE(col) FROM _u`"
+        },
+        {
+            "case": "write|presto|SELECT EXPLODE(col) AS exploded FROM schema.tbl",
+            "reason": "expected `SELECT IF(_u.pos = _u_2.pos_2, _u_2.exploded) AS exploded FROM schema.tbl CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(col)))) AS _u(pos) CROSS JOIN UNNEST(col) WITH ORDINALITY AS _u_2(exploded, pos_2) WHERE _u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(col) AND _u_2.pos_2 = CARDINALITY(col))` actual `SELECT EXPLODE(col) AS exploded FROM schema.tbl`"
+        },
+        {
+            "case": "write|bigquery|SELECT EXPLODE(ARRAY(1, 2))",
+            "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([1, 2])) - 1)) AS pos CROSS JOIN UNNEST([1, 2]) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH([1, 2]) - 1) AND pos_2 = (ARRAY_LENGTH([1, 2]) - 1))` actual `SELECT EXPLODE([1, 2])`"
+        },
+        {
+            "case": "write|presto|SELECT EXPLODE(ARRAY(1, 2))",
+            "reason": "expected `SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) AS col FROM UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[1, 2])))) AS _u(pos) CROSS JOIN UNNEST(ARRAY[1, 2]) WITH ORDINALITY AS _u_2(col, pos_2) WHERE _u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(ARRAY[1, 2]) AND _u_2.pos_2 = CARDINALITY(ARRAY[1, 2]))` actual `SELECT EXPLODE(ARRAY[1, 2])`"
+        },
+        {
+            "case": "write|bigquery|SELECT POSEXPLODE(ARRAY(2, 3)) AS x",
+            "reason": "expected `SELECT IF(pos = pos_2, x, NULL) AS x, IF(pos = pos_2, pos_2, NULL) AS pos_2 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([2, 3])) - 1)) AS pos CROSS JOIN UNNEST([2, 3]) AS x WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH([2, 3]) - 1) AND pos_2 = (ARRAY_LENGTH([2, 3]) - 1))` actual `SELECT POSEXPLODE([2, 3]) AS x`"
+        },
+        {
+            "case": "write|presto|SELECT POSEXPLODE(ARRAY(2, 3)) AS x",
+            "reason": "expected `SELECT IF(_u.pos = _u_2.pos_2, _u_2.x) AS x, IF(_u.pos = _u_2.pos_2, _u_2.pos_2) AS pos_2 FROM UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[2, 3])))) AS _u(pos) CROSS JOIN UNNEST(ARRAY[2, 3]) WITH ORDINALITY AS _u_2(x, pos_2) WHERE _u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(ARRAY[2, 3]) AND _u_2.pos_2 = CARDINALITY(ARRAY[2, 3]))` actual `SELECT POSEXPLODE(ARRAY[2, 3]) AS x`"
+        },
+        {
+            "case": "write|duckdb|SELECT POSEXPLODE(ARRAY('a'))",
+            "reason": "expected `SELECT GENERATE_SUBSCRIPTS(['a'], 1) - 1 AS pos, UNNEST(['a']) AS col` actual `SELECT POSEXPLODE(['a'])`"
+        },
+        {
+            "case": "write|presto|SELECT POSEXPLODE(x) AS (a, b)",
+            "reason": "expected `SELECT IF(_u.pos = _u_2.a, _u_2.b) AS b, IF(_u.pos = _u_2.a, _u_2.a) AS a FROM UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(x)))) AS _u(pos) CROSS JOIN UNNEST(x) WITH ORDINALITY AS _u_2(b, a) WHERE _u.pos = _u_2.a OR (_u.pos > CARDINALITY(x) AND _u_2.a = CARDINALITY(x))` actual `SELECT POSEXPLODE(x) AS (a, b)`"
+        },
+        {
+            "case": "write|duckdb|SELECT POSEXPLODE(x) AS (a, b)",
+            "reason": "expected `SELECT GENERATE_SUBSCRIPTS(x, 1) - 1 AS a, UNNEST(x) AS b` actual `SELECT POSEXPLODE(x) AS (a, b)`"
+        },
+        {
+            "case": "write|duckdb|SELECT * FROM POSEXPLODE(ARRAY('a'))",
+            "reason": "expected `SELECT * FROM (SELECT GENERATE_SUBSCRIPTS(['a'], 1) - 1 AS pos, UNNEST(['a']) AS col)` actual `SELECT * FROM POSEXPLODE(['a'])`"
+        },
+        {
+            "case": "write|duckdb|SELECT * FROM POSEXPLODE(ARRAY('a')) AS (a, b)",
+            "reason": "expected `SELECT * FROM (SELECT GENERATE_SUBSCRIPTS(['a'], 1) - 1 AS a, UNNEST(['a']) AS b)` actual `SELECT * FROM POSEXPLODE(['a']) AS _t0(a, b)`"
+        },
+        {
+            "case": "write|bigquery|SELECT POSEXPLODE(ARRAY(2, 3)), EXPLODE(ARRAY(4, 5, 6)) FROM tbl",
+            "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2, IF(pos = pos_3, col_2, NULL) AS col_2 FROM tbl CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([2, 3]), ARRAY_LENGTH([4, 5, 6])) - 1)) AS pos CROSS JOIN UNNEST([2, 3]) AS col WITH OFFSET AS pos_2 CROSS JOIN UNNEST([4, 5, 6]) AS col_2 WITH OFFSET AS pos_3 WHERE (pos = pos_2 OR (pos > (ARRAY_LENGTH([2, 3]) - 1) AND pos_2 = (ARRAY_LENGTH([2, 3]) - 1))) AND (pos = pos_3 OR (pos > (ARRAY_LENGTH([4, 5, 6]) - 1) AND pos_3 = (ARRAY_LENGTH([4, 5, 6]) - 1)))` actual `SELECT POSEXPLODE([2, 3]), EXPLODE([4, 5, 6]) FROM tbl`"
+        },
+        {
+            "case": "write|presto|SELECT POSEXPLODE(ARRAY(2, 3)), EXPLODE(ARRAY(4, 5, 6)) FROM tbl",
+            "reason": "expected `SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) AS col, IF(_u.pos = _u_2.pos_2, _u_2.pos_2) AS pos_2, IF(_u.pos = _u_3.pos_3, _u_3.col_2) AS col_2 FROM tbl CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[2, 3]), CARDINALITY(ARRAY[4, 5, 6])))) AS _u(pos) CROSS JOIN UNNEST(ARRAY[2, 3]) WITH ORDINALITY AS _u_2(col, pos_2) CROSS JOIN UNNEST(ARRAY[4, 5, 6]) WITH ORDINALITY AS _u_3(col_2, pos_3) WHERE (_u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(ARRAY[2, 3]) AND _u_2.pos_2 = CARDINALITY(ARRAY[2, 3]))) AND (_u.pos = _u_3.pos_3 OR (_u.pos > CARDINALITY(ARRAY[4, 5, 6]) AND _u_3.pos_3 = CARDINALITY(ARRAY[4, 5, 6])))` actual `SELECT POSEXPLODE(ARRAY[2, 3]), EXPLODE(ARRAY[4, 5, 6]) FROM tbl`"
+        },
+        {
+            "case": "write|presto|SELECT col, pos, POSEXPLODE(ARRAY(2, 3)) FROM _u",
+            "reason": "expected `SELECT col, pos, IF(_u_2.pos_2 = _u_3.pos_3, _u_3.col_2) AS col_2, IF(_u_2.pos_2 = _u_3.pos_3, _u_3.pos_3) AS pos_3 FROM _u CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[2, 3])))) AS _u_2(pos_2) CROSS JOIN UNNEST(ARRAY[2, 3]) WITH ORDINALITY AS _u_3(col_2, pos_3) WHERE _u_2.pos_2 = _u_3.pos_3 OR (_u_2.pos_2 > CARDINALITY(ARRAY[2, 3]) AND _u_3.pos_3 = CARDINALITY(ARRAY[2, 3]))` actual `SELECT col, pos, POSEXPLODE(ARRAY[2, 3]) FROM _u`"
+        },
+        {
+            "case": "write|spark|SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))",
+            "reason": "expected `SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))` actual `SET VARIABLE v = (SELECT GREATEST(c1) FROM VALUES (1), (2) AS T(c1))`"
+        },
+        {
+            "case": "write|duckdb|SELECT TRY_DIVIDE(a, b)",
+            "reason": "expected `SELECT CASE WHEN b <> 0 THEN a / b ELSE NULL END` actual `SELECT SAFE_DIVIDE(a, b)`"
+        }
+    ]
 }

@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-72-gbac1a897b",
  "fixture": "dialect-corpus/presto.json",
  "dialect": "presto",
  "case_count": 44,
@@ -9865,7 +9865,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -9933,7 +9934,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {

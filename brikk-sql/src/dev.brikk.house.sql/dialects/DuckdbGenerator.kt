@@ -1655,21 +1655,24 @@ open class DuckdbGenerator(
         val TIMEZONE_PATTERN: Regex = Regex(":\\d{2}.*?[+\\-]\\d{2}(?::\\d{2})?")
 
         // sqlglot: DuckDB.INVERSE_TIME_MAPPING (auto-inverse of empty TIME_MAPPING
-        // merged with the class-level overrides)
-        val INVERSE_TIME_MAPPING: Map<String, String> = mapOf(
-            "%e" to "%-d",
-            "%:z" to "%z",
-            "%-z" to "%z",
-            "%f_zero" to "%n",
-            "%f_one" to "%n",
-            "%f_two" to "%n",
-            "%f_three" to "%g",
-            "%f_four" to "%n",
-            "%f_five" to "%n",
-            "%f_seven" to "%n",
-            "%f_eight" to "%n",
-            "%f_nine" to "%n",
-        )
+        // merged with the class-level overrides) + _with_strict_time_inverse
+        val INVERSE_TIME_MAPPING: Map<String, String> =
+            dev.brikk.house.sql.parser.withStrictTimeInverse(
+                mapOf(
+                    "%e" to "%-d",
+                    "%:z" to "%z",
+                    "%-z" to "%z",
+                    "%f_zero" to "%n",
+                    "%f_one" to "%n",
+                    "%f_two" to "%n",
+                    "%f_three" to "%g",
+                    "%f_four" to "%n",
+                    "%f_five" to "%n",
+                    "%f_seven" to "%n",
+                    "%f_eight" to "%n",
+                    "%f_nine" to "%n",
+                ),
+            )
 
         // sqlglot: generator.Generator.TYPE_MAPPING (the base entries DuckDB inherits)
         private val BASE_TYPE_MAPPING: Map<DType, String> = mapOf(

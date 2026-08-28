@@ -1377,7 +1377,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_range
-    fun parseRange(this_: Expression? = null): Expression? {
+    open fun parseRange(this_: Expression? = null): Expression? {
         var current = this_ ?: parseBitwise()
 
         while (true) {
@@ -2098,6 +2098,12 @@ open class Parser(
         // as an identifier (alias)
         if (canParseLimitOrOffset()) return null
 
+        // sqlglot #8008: START is never an implicit alias when followed by WITH, since that
+        // would swallow the start of a START WITH ... CONNECT BY clause.
+        if (currToken.text.uppercase() == "START" && nextToken.text.uppercase() == "WITH") {
+            return null
+        }
+
         val anyToken = match(TokenType.ALIAS)
         val alias = parseIdVar(anyToken = anyToken, tokens = aliasTokens ?: tableAliasTokens)
             ?: parseStringAsIdentifier()
@@ -2177,6 +2183,22 @@ open class Parser(
                                 offsetNode.set("expressions", limitByExpressions)
                             }
                         }
+                        continue
+                    }
+                }
+
+                // sqlglot #8008: START WITH ... CONNECT BY (START is no longer a token).
+                if (currToken.text.uppercase() == "START") {
+                    val modifierToken = currToken
+                    val connect = parseConnect()
+                    if (connect != null) {
+                        if (this_.args["connect"] != null) {
+                            raiseError(
+                                "Found multiple 'START WITH' clauses",
+                                token = modifierToken,
+                            )
+                        }
+                        this_.set("connect", connect)
                         continue
                     }
                 }
@@ -2901,13 +2923,26 @@ open class Parser(
         return this_
     }
 
+    // sqlglot: Parser.VERSION_PHRASES
+    private val VERSION_PHRASES: List<Pair<kotlin.Array<String>, String>> = listOf(
+        arrayOf("FOR", "SYSTEM_TIME") to "TIMESTAMP",
+        arrayOf("FOR", "SYSTEM", "TIME") to "TIMESTAMP",
+        arrayOf("FOR", "TIMESTAMP") to "TIMESTAMP",
+        arrayOf("FOR", "VERSION") to "VERSION",
+        arrayOf("TIMESTAMP", "AS", "OF") to "TIMESTAMP",
+        arrayOf("VERSION", "AS", "OF") to "VERSION",
+    )
+
     // sqlglot: Parser._parse_version
     protected fun parseVersion(): Expression? {
-        val this_ = when {
-            match(TokenType.TIMESTAMP_SNAPSHOT) -> "TIMESTAMP"
-            match(TokenType.VERSION_SNAPSHOT) -> "VERSION"
-            else -> return null
+        var this_: String? = null
+        for ((phrase, kindName) in VERSION_PHRASES) {
+            if (matchTextSeq(*phrase)) {
+                this_ = kindName
+                break
+            }
         }
+        if (this_ == null) return null
 
         val kind: String
         var expr: Expression?
@@ -4397,7 +4432,7 @@ open class Parser(
     fun parseConnect(skipStartToken: kotlin.Boolean = false): Expression? {
         var start: Expression? = if (skipStartToken) {
             null
-        } else if (match(TokenType.START_WITH)) {
+        } else if (matchTextSeq("START", "WITH")) { // sqlglot #8008
             parseDisjunction()
         } else {
             return null
@@ -4407,7 +4442,7 @@ open class Parser(
         val nocycle = matchTextSeq("NOCYCLE")
         val connect = parseConnectWithPrior()
 
-        if (start == null && match(TokenType.START_WITH)) {
+        if (start == null && matchTextSeq("START", "WITH")) { // sqlglot #8008
             start = parseDisjunction()
         }
 
@@ -5602,16 +5637,34 @@ open class Parser(
 
         val returning = parseReturning() // TSQL allows RETURNING before source
 
+        val stored = if (matchTextSeq("STORED")) parseStored() else false
+        val byName = matchTextSeq("BY", "NAME")
+        val exists = parseExists()
+
+        // sqlglot #7950: REPLACE WHERE ... / REPLACE USING (...) — both null when absent,
+        // so (like upstream) they're omitted from the serialized node rather than emitted
+        // as `false` (which previously shifted downstream arg positions).
+        var replaceWhere: Expression? = null
+        var replaceUsing: List<Expression>? = null
+        if (match(TokenType.REPLACE)) {
+            if (match(TokenType.WHERE)) {
+                replaceWhere = parseDisjunction()
+            } else if (match(TokenType.USING)) {
+                replaceUsing = parseUsingIdentifiers()
+            }
+        }
+
         return expression(
             Insert(
                 args(
                     "hint" to hint,
                     "is_function" to isFunction,
                     "this" to this_,
-                    "stored" to (if (matchTextSeq("STORED")) parseStored() else false),
-                    "by_name" to matchTextSeq("BY", "NAME"),
-                    "exists" to parseExists(),
-                    "where" to (if (matchPair(TokenType.REPLACE, TokenType.WHERE)) parseDisjunction() else false),
+                    "stored" to stored,
+                    "by_name" to byName,
+                    "exists" to exists,
+                    "where" to replaceWhere,
+                    "using" to replaceUsing,
                     "partition" to (if (match(TokenType.PARTITION_BY)) parsePartitionedBy() else false),
                     "settings" to (if (matchTextSeq("SETTINGS")) parseSettingsProperty() else false),
                     "default" to matchTextSeq("DEFAULT", "VALUES"),
@@ -5625,6 +5678,39 @@ open class Parser(
                 )
             ),
             comments = comments,
+        )
+    }
+
+    // sqlglot: Parser._parse_declareitem
+    fun parseDeclareitem(): Expression? {
+        matchTexts(setOf("VAR", "VARIABLE"))
+
+        val vars = parseCsv { parseIdVar() }
+        if (vars.isEmpty()) return null
+
+        match(TokenType.ALIAS)
+        val kind = if (match(TokenType.TABLE)) parseSchema() else parseTypes()
+        val default = if (match(TokenType.DEFAULT) || match(TokenType.EQ)) parseBitwise() else null
+
+        return expression(
+            dev.brikk.house.sql.ast.DeclareItem(
+                args("this" to vars, "kind" to kind, "default" to default)
+            )
+        )
+    }
+
+    // sqlglot: Parser._parse_declare
+    fun parseDeclare(): Expression {
+        val start = prevToken
+        val replace = matchTextSeq("OR", "REPLACE")
+        val expressions = tryParse({ parseCsv { parseDeclareitem() } })
+
+        if (expressions.isNullOrEmpty() || currToken.exists) {
+            return parseAsCommand(start)
+        }
+
+        return expression(
+            dev.brikk.house.sql.ast.Declare(args("expressions" to expressions, "replace" to replace))
         )
     }
 
@@ -5901,10 +5987,11 @@ open class Parser(
         val concurrently = matchTextSeq("CONCURRENTLY")
         val ifExists: kotlin.Any? = if (exists) true else parseExists()
 
-        val this_ = if (kind == "COLUMN") {
-            parseColumn()
-        } else {
-            parseTableParts(schema = true, isDbReference = kind == "SCHEMA")
+        // sqlglot #8229: DROP with multiple tables -> `tables` list (no `this`).
+        val tables: List<Expression> = when {
+            kind == "COLUMN" -> listOfNotNull(parseColumn())
+            kind == "TABLE" || kind == "VIEW" -> parseCsv { parseTableParts(schema = true) }
+            else -> listOfNotNull(parseTableParts(schema = true, isDbReference = kind == "SCHEMA"))
         }
 
         val cluster = if (match(TokenType.ON)) parseOnProperty() else null
@@ -5922,7 +6009,7 @@ open class Parser(
             Drop(
                 args(
                     "exists" to ifExists,
-                    "this" to this_,
+                    "tables" to tables,
                     "expressions" to expressions,
                     // sqlglot: dialect.CREATABLE_KIND_MAPPING.get(kind) or kind
                     "kind" to (creatableKindMapping[kind] ?: kind),
@@ -5936,6 +6023,8 @@ open class Parser(
                     "concurrently" to concurrently,
                     "sync" to matchTextSeq("SYNC"),
                     "iceberg" to iceberg,
+                    // sqlglot #7999: DROP TABLE ... FORCE (starrocks/doris).
+                    "force" to matchTextSeq("FORCE"),
                 )
             )
         )
@@ -6111,29 +6200,32 @@ open class Parser(
             }
         }
 
-        var this_: Expression? = null
+        // sqlglot #8229: ANALYZE with multiple tables -> `tables` list (no `this`).
+        var tables: List<Expression> = emptyList()
         var innerExpression: Expression? = null
 
         var kind: String? = if (currToken.exists) currToken.text.uppercase() else null
 
-        if (match(TokenType.TABLE) || match(TokenType.INDEX)) {
-            this_ = parseTableParts()
+        if (match(TokenType.TABLE)) {
+            tables = parseCsv { parseTableParts() }
+        } else if (match(TokenType.INDEX)) {
+            tables = listOfNotNull(parseTableParts())
         } else if (matchTextSeq("TABLES")) {
             if (matchSet(setOf(TokenType.FROM, TokenType.IN))) {
                 kind = "$kind ${prevToken.text.uppercase()}"
-                this_ = parseTable(schema = true, isDbReference = true)
+                tables = listOfNotNull(parseTable(schema = true, isDbReference = true))
             }
         } else if (matchTextSeq("DATABASE")) {
-            this_ = parseTable(schema = true, isDbReference = true)
+            tables = listOfNotNull(parseTable(schema = true, isDbReference = true))
         } else if (matchTextSeq("CLUSTER")) {
-            this_ = parseTable()
+            tables = listOfNotNull(parseTable())
         } else if (matchTexts(analyzeExpressionParsers.keys)) {
             kind = null
             innerExpression = analyzeExpressionParsers.getValue(prevToken.text.uppercase())(this)
         } else {
             // Empty kind (Presto)
             kind = null
-            this_ = parseTableParts()
+            tables = parseCsv { parseTableParts() }
         }
 
         val partition = tryParse({ parsePartition() })
@@ -6158,7 +6250,7 @@ open class Parser(
             Analyze(
                 args(
                     "kind" to kind,
-                    "this" to this_,
+                    "tables" to tables,
                     "mode" to mode,
                     "partition" to partition,
                     "properties" to properties,
@@ -6529,15 +6621,25 @@ open class Parser(
     // -----------------------------------------------------------------------
 
     // sqlglot: Parser._parse_property
-    fun parseProperty(): kotlin.Any? {
+    open fun parseProperty(): kotlin.Any? {
         if (matchTexts(propertyParsers.keys)) {
             return propertyParsers.getValue(prevToken.text.uppercase())(this, PropertyKwargs())
         }
 
-        if (match(TokenType.DEFAULT) && matchTexts(propertyParsers.keys)) {
-            return propertyParsers.getValue(prevToken.text.uppercase())(
-                this, PropertyKwargs(default = true)
-            )
+        // sqlglot #8007: CHARACTER SET as a two-token sequence.
+        if (matchTextSeq("CHARACTER", "SET")) {
+            return parseCharacterSet()
+        }
+
+        if (match(TokenType.DEFAULT)) {
+            if (matchTexts(propertyParsers.keys)) {
+                return propertyParsers.getValue(prevToken.text.uppercase())(
+                    this, PropertyKwargs(default = true)
+                )
+            }
+            if (matchTextSeq("CHARACTER", "SET")) {
+                return parseCharacterSet(default = true)
+            }
         }
 
         if (matchTextSeq("COMPOUND", "SORTKEY")) {
@@ -6575,6 +6677,11 @@ open class Parser(
 
         if (matchTexts(propertyParsers.keys)) {
             return propertyParsers.getValue(prevToken.text.uppercase())(this, kwargs)
+        }
+
+        // sqlglot #8007: CHARACTER SET as a two-token sequence.
+        if (matchTextSeq("CHARACTER", "SET")) {
+            return parseCharacterSet(default = kwargs.default)
         }
 
         return null
@@ -7420,7 +7527,8 @@ open class Parser(
                 seq.set("minvalue", parseTerm())
             } else if (matchTextSeq("MAXVALUE")) {
                 seq.set("maxvalue", parseTerm())
-            } else if (match(TokenType.START_WITH) || matchTextSeq("START")) {
+            } else if (matchTextSeq("START")) { // sqlglot #8008
+                matchTextSeq("WITH")
                 matchTextSeq("=")
                 seq.set("start", parseTerm())
             } else if (matchTextSeq("CACHE")) {
@@ -7680,7 +7788,7 @@ open class Parser(
         val identity = matchTextSeq("IDENTITY")
 
         if (match(TokenType.L_PAREN)) {
-            if (match(TokenType.START_WITH)) this_.set("start", parseBitwise())
+            if (matchTextSeq("START", "WITH")) this_.set("start", parseBitwise()) // sqlglot #8008
             if (matchTextSeq("INCREMENT", "BY")) this_.set("increment", parseBitwise())
             if (matchTextSeq("MINVALUE")) this_.set("minvalue", parseBitwise())
             if (matchTextSeq("MAXVALUE")) this_.set("maxvalue", parseBitwise())
@@ -7740,6 +7848,22 @@ open class Parser(
             }
 
             return expression(ColumnConstraint(args("this" to this_, "kind" to constraint)))
+        }
+
+        // sqlglot #8007: CHARACTER SET column constraint as a two-token sequence.
+        if (matchTextSeq("CHARACTER", "SET")) {
+            return expression(
+                ColumnConstraint(
+                    args(
+                        "this" to this_,
+                        "kind" to expression(
+                            dev.brikk.house.sql.ast.CharacterSetColumnConstraint(
+                                args("this" to parseVarOrString())
+                            )
+                        ),
+                    )
+                )
+            )
         }
 
         return this_
@@ -7904,7 +8028,7 @@ open class Parser(
 
     // sqlglot: Parser._parse_period_for_system_time
     fun parsePeriodForSystemTime(): Expression? {
-        if (!match(TokenType.TIMESTAMP_SNAPSHOT)) {
+        if (!matchTextSeq("FOR", "SYSTEM_TIME")) {
             retreat(index - 1)
             return null
         }
@@ -9029,7 +9153,10 @@ open class Parser(
             return raiseError("CAST ... FORMAT is not supported yet")
         } else if (to == null) {
             raiseError("Expected TYPE after CAST")
-        } else if (to.thisArg == DType.CHAR && match(TokenType.CHARACTER_SET)) {
+        } else if (to.thisArg == DType.CHAR &&
+            // sqlglot #8007: CHARACTER SET token OR two-token sequence.
+            (match(TokenType.CHARACTER_SET) || matchTextSeq("CHARACTER", "SET"))
+        ) {
             // sqlglot: `to = exp.DType.CHARACTER_SET.into_expr(kind=self._parse_var_or_string())`
             to = DataType(args("this" to DType.CHARACTER_SET, "kind" to parseVarOrString()))
         }
