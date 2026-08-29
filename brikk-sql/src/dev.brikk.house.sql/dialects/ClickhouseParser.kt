@@ -439,6 +439,68 @@ open class ClickhouseParser(
         )
     }
 
+    // sqlglot #7990: ClickHouseParser._parse_auto_refresh_property — refreshable MV
+    // REFRESH [EVERY|AFTER <interval>] [OFFSET <interval>] [RANDOMIZE FOR <interval>]
+    //         [DEPENDS ON t, ...] [SETTINGS ...] [APPEND]
+    open fun parseAutoRefreshProperty(): Expression? {
+        val idx = index - 1
+        val cadence = if (matchTexts(setOf("EVERY", "AFTER"))) prevToken.text.uppercase() else null
+        val interval =
+            if (cadence != null) parseInterval(requireInterval = false, parseFunctionUnit = false) else null
+        if (cadence != null && interval == null) {
+            retreat(idx)
+            return null
+        }
+
+        var offset: Expression? = null
+        if (matchTextSeq("OFFSET")) {
+            offset = parseInterval(requireInterval = false, parseFunctionUnit = false)
+            if (offset == null) {
+                retreat(idx)
+                return null
+            }
+        }
+
+        var randomize: Expression? = null
+        if (matchTextSeq("RANDOMIZE", "FOR")) {
+            randomize = parseInterval(requireInterval = false, parseFunctionUnit = false)
+            if (randomize == null) {
+                retreat(idx)
+                return null
+            }
+        }
+
+        var dependencies: List<Expression>? = null
+        if (matchTextSeq("DEPENDS", "ON")) {
+            dependencies = parseCsv { parseTableParts(schema = true) }
+            if (dependencies.isEmpty()) {
+                retreat(idx)
+                return null
+            }
+        }
+
+        if (cadence == null && dependencies == null) {
+            retreat(idx)
+            return null
+        }
+
+        val settings = if (matchTextSeq("SETTINGS")) parseSettingsProperty() else null
+
+        return expression(
+            dev.brikk.house.sql.ast.AutoRefreshProperty(
+                args(
+                    "this" to interval,
+                    "cadence" to cadence,
+                    "offset" to offset,
+                    "randomize" to randomize,
+                    "expressions" to dependencies,
+                    "settings" to settings,
+                    "append" to matchTextSeq("APPEND"),
+                )
+            )
+        )
+    }
+
     // sqlglot: ClickHouseParser._parse_user_defined_function_expression
     // https://clickhouse.com/docs/en/sql-reference/statements/create/function
     override fun parseUserDefinedFunctionExpression(): Expression? = parseLambda()
@@ -1272,6 +1334,8 @@ object ClickhouseParserTables {
         (BaseParserTables.PROPERTY_PARSERS - "DYNAMIC") +
             mapOf<String, (Parser, Parser.PropertyKwargs) -> kotlin.Any?>(
                 "ENGINE" to { p, _ -> (p as ClickhouseParser).parseEngineProperty() },
+                // sqlglot #7990: refreshable materialized views
+                "REFRESH" to { p, _ -> (p as ClickhouseParser).parseAutoRefreshProperty() },
                 "UUID" to { p, _ ->
                     p.expression(
                         dev.brikk.house.sql.ast.UuidProperty(args("this" to p.parseString()))

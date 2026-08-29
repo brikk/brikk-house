@@ -543,6 +543,37 @@ open class ClickhouseGenerator(
     override fun onclusterSql(expression: OnCluster): String =
         "ON CLUSTER ${sql(expression, "this")}"
 
+    // sqlglot #7990: ClickHouseGenerator.AUTO_REFRESH_BARE_INTERVALS = True
+    override val autoRefreshBareIntervals: Boolean get() = true
+
+    // sqlglot #7990: ClickHouseGenerator._refresh_interval_sql — a schedule interval may be a
+    // sum of bare intervals (e.g. OFFSET 5 DAY 2 HOUR -> Add(Interval, Interval)).
+    private fun refreshIntervalSql(expression: Expression): String =
+        if (expression is Add) {
+            "${refreshIntervalSql(expression.thisArg as Expression)} " +
+                refreshIntervalSql(expression.expressionArg as Expression)
+        } else {
+            sql(expression as Interval)
+        }
+
+    // sqlglot #7990: ClickHouseGenerator.autorefreshproperty_sql
+    internal fun autorefreshpropertySql(expression: AutoRefreshProperty): String {
+        val cadence = sql(expression, "cadence")
+        val interval = expression.args["this"] as? Expression
+        val schedule =
+            if (cadence.isNotEmpty() && interval != null) " $cadence ${refreshIntervalSql(interval)}" else ""
+        val offsetArg = expression.args["offset"] as? Expression
+        val offset = if (offsetArg != null) " OFFSET ${refreshIntervalSql(offsetArg)}" else ""
+        val randomizeArg = expression.args["randomize"] as? Expression
+        val randomize = if (randomizeArg != null) " RANDOMIZE FOR ${refreshIntervalSql(randomizeArg)}" else ""
+        var dependencies = expressions(expression, flat = true)
+        dependencies = if (dependencies.isNotEmpty()) " DEPENDS ON $dependencies" else ""
+        var settings = sql(expression, "settings")
+        settings = if (settings.isNotEmpty()) " $settings" else ""
+        val append = if (expression.args["append"] == true) " APPEND" else ""
+        return "REFRESH$schedule$offset$randomize$dependencies$settings$append"
+    }
+
     // sqlglot: ClickHouseGenerator.createable_sql
     override fun createableSql(
         expression: Create,
@@ -1018,6 +1049,8 @@ open class ClickhouseGenerator(
         // sqlglot: ClickHouseGenerator.PROPERTIES_LOCATION
         val PROPERTIES_LOCATION: Map<KClass<out Expression>, GeneratorTables.PropLocation> =
             GeneratorTables.PROPERTIES_LOCATION + mapOf(
+                // sqlglot #7990: refreshable MV REFRESH clause after the view name
+                AutoRefreshProperty::class to GeneratorTables.PropLocation.POST_NAME,
                 DefinerProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
                 OnCluster::class to GeneratorTables.PropLocation.POST_NAME,
                 PartitionedByProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
@@ -1031,6 +1064,8 @@ open class ClickhouseGenerator(
             fun reg(cls: KClass<out Expression>, method: GenMethod) { put(cls, method) }
             fun Generator.ch(): ClickhouseGenerator = this as ClickhouseGenerator
 
+            // sqlglot #7990: refreshable MV REFRESH clause (overrides base "AUTO REFRESH")
+            reg(AutoRefreshProperty::class) { e -> ch().autorefreshpropertySql(e as AutoRefreshProperty) }
             reg(AnyValue::class) { e -> ch().renameFuncSql("any", e) }
             reg(ApproxDistinct::class) { e -> ch().renameFuncSql("uniq", e) }
             // SOURCE-AWARE rewrites (SPIKE-source-aware-generator-transforms, now implemented

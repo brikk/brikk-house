@@ -239,8 +239,12 @@ This is normal incremental backlog, **not** a near-current blocker — we're onl
   labels+LEAVE/ITERATE, SET, DECLARE, RETURN (TrinoParser parseRoutine*; base EndStatement + chunk-continuation;
   ZONE_AWARE TIME→TIMETZ; ~13 generator methods). **48 trino cases pass across all gates + 12 bonus
   bigquery/spark fixes; 0 regressions.**
-- **clickhouse refreshable MV (#7990)** — still DEFERRED (round-trips as Command; no gate coverage; port when
-  there's AST-comparison coverage, same approach as trino above: regen the clickhouse serde corpus first).
+- **clickhouse refreshable MV (#7990)** — DONE (commit e72397e). `REFRESH [EVERY|AFTER <interval>] [OFFSET]
+  [RANDOMIZE FOR] [DEPENDS ON ...] [SETTINGS] [APPEND]` → `AutoRefreshProperty`; threaded
+  `parse_function_unit` through parseInterval/Span; `AUTO_REFRESH_BARE_INTERVALS` bare-interval generation;
+  ClickHouse autorefreshproperty_sql. The corpus extractor can't capture the reference's for-loop list of
+  cases, so coverage is 6 hand round-trip assertions in ClickhouseDialectTest (verified vs the Python oracle).
+  0 regressions.
 
 **6-commit bump to exactly-current (v30.17.0-78-g3110e151b) — ASSESSED, then reverted (not shipped).**
 Only 2 code ports needed (MOD at multiplicative precedence #8259; GRANT/REVOKE no-privileges #8271; the two
