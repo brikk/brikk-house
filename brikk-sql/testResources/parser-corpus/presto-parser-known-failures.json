@@ -1,4 +1,17 @@
 {
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": []
+    "cases": [
+        {
+            "sql": "SELECT JSON_EXTRACT(x, '$[1,0]')",
+            "reason": "ast-mismatch at #8: expected JSONPathUnion (k=expressions)"
+        },
+        {
+            "sql": "SELECT JSON_EXTRACT_SCALAR(x, '$[1,0]')",
+            "reason": "ast-mismatch at #8: expected JSONPathUnion (k=expressions)"
+        },
+        {
+            "sql": "SELECT JSON_EXTRACT(x, '$[\"a\",\"\"]')",
+            "reason": "ast-mismatch at #8: expected JSONPathUnion (k=expressions)"
+        }
+    ]
 }

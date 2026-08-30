@@ -1,8 +1,8 @@
 {
-  "cases": [
-    {
-      "sql": "SELECT * FROM t1 SEMI JOIN t2 ON t1.x = t2.x",
-      "reason": "type-mismatch at #22 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-    }
-  ]
+    "cases": [
+        {
+            "sql": "SELECT * FROM t1 SEMI JOIN t2 ON t1.x = t2.x",
+            "reason": "type-mismatch at #22 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        }
+    ]
 }

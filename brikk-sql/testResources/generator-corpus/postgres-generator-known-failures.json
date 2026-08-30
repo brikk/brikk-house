@@ -10,6 +10,42 @@
             "reason": "output mismatch: expected `WITH json_data AS (SELECT CAST('{\"field_id\": [1, 2, 3]}' AS JSON) AS data), field_ids AS (SELECT 'field_id' AS field_id)` actual `WITH json_data AS (SELECT CAST('{\"field_id\": [1, 2, 3]}' AS JSON) AS data), field_ids AS (SELECT 'field_id' AS field_id)`"
         },
         {
+            "sql": "SELECT (U&'\\FE01' || 'Test literal') AS label FROM data",
+            "reason": "UnsupportedError: Unsupported expression type UnicodeString"
+        },
+        {
+            "sql": "SELECT U&'d!0061t!+000061' UESCAPE '!' AS label",
+            "reason": "UnsupportedError: Unsupported expression type UnicodeString"
+        },
+        {
+            "sql": "SELECT u&'\\0441\\043B\\043E\\043D'",
+            "reason": "UnsupportedError: Unsupported expression type UnicodeString"
+        },
+        {
+            "sql": "SELECT U&'can''t'",
+            "reason": "UnsupportedError: Unsupported expression type UnicodeString"
+        },
+        {
+            "sql": "SELECT U&'a''b''c'",
+            "reason": "UnsupportedError: Unsupported expression type UnicodeString"
+        },
+        {
+            "sql": "SELECT U&'can''t !0061' UESCAPE '!' AS label",
+            "reason": "UnsupportedError: Unsupported expression type UnicodeString"
+        },
+        {
+            "sql": "SELECT r IS NOT NULL FROM t",
+            "reason": "output mismatch: expected `SELECT r IS NOT NULL FROM t` actual `SELECT r IS NULL FROM t`"
+        },
+        {
+            "sql": "SELECT NOT r IS NOT NULL FROM t",
+            "reason": "output mismatch: expected `SELECT NOT r IS NOT NULL FROM t` actual `SELECT NOT r IS NULL FROM t`"
+        },
+        {
+            "sql": "SELECT r NOTNULL FROM t",
+            "reason": "output mismatch: expected `SELECT r IS NOT NULL FROM t` actual `SELECT r IS NULL FROM t`"
+        },
+        {
             "sql": "x::JSON -> 'duration' ->> -1",
             "reason": "output mismatch: expected `CAST(x AS JSON) -> 'duration' ->> -1` actual `JSON_EXTRACT_PATH_TEXT(CAST(x AS JSON) -> 'duration', -1)`"
         }

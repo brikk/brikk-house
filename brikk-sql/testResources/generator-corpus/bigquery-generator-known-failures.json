@@ -6,6 +6,14 @@
             "reason": "output mismatch: expected `PARSE_TIMESTAMP('%FT%H:%M:%E*S%z', x)` actual `PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*S%z', x)`"
         },
         {
+            "sql": "SELECT ARRAY_AGG((SELECT c FROM t LIMIT 1) IGNORE NULLS) FROM u",
+            "reason": "NullPointerException: null cannot be cast to non-null type dev.brikk.house.sql.ast.Expression"
+        },
+        {
+            "sql": "SELECT ARRAY_AGG((SELECT c FROM t ORDER BY c) IGNORE NULLS LIMIT 1) FROM u",
+            "reason": "NullPointerException: null cannot be cast to non-null type dev.brikk.house.sql.ast.Expression"
+        },
+        {
             "sql": "SELECT '\\n\\r\\a\\v\\f\\t'",
             "reason": "output mismatch: expected `SELECT '\\n\\r\\a\\v\\f\\t'` actual `SELECT '\n\r\u0007\u000b\f\t'`"
         },
@@ -26,6 +34,14 @@
             "reason": "UnsupportedError: Unsupported expression type ForIn"
         },
         {
+            "sql": "FOR system_time IN (SELECT 1 AS x) DO SELECT system_time.x",
+            "reason": "UnsupportedError: Unsupported expression type ForIn"
+        },
+        {
+            "sql": "FOR timestamp IN (SELECT 1 AS x) DO SELECT timestamp.x",
+            "reason": "UnsupportedError: Unsupported expression type ForIn"
+        },
+        {
             "sql": "CREATE TABLE IF NOT EXISTS foo AS SELECT * FROM bla EXCEPT DISTINCT (SELECT * FROM bar) LIMIT 0",
             "reason": "output mismatch: expected `CREATE TABLE IF NOT EXISTS foo AS SELECT * FROM bla EXCEPT DISTINCT (SELECT * FROM bar) LIMIT 0` actual `CREATE TABLE IF NOT EXISTS foo AS SELECT * FROM bla EXCEPT (SELECT * FROM bar) LIMIT 0`"
         },
@@ -40,6 +56,14 @@
         {
             "sql": "select array_contains([1, 2, 3], 1)",
             "reason": "output mismatch: expected `SELECT EXISTS(SELECT 1 FROM UNNEST([1, 2, 3]) AS _col WHERE _col = 1)` actual `SELECT ARRAY_CONTAINS([1, 2, 3], 1)`"
+        },
+        {
+            "sql": "SELECT r\"\"\"ends with \\\"\"\"\"",
+            "reason": "output mismatch: expected `SELECT 'ends with \\\\\"'` actual `SELECT 'ends with \\\"'`"
+        },
+        {
+            "sql": "SELECT r\"\"\"a\\\"b\"\"\"",
+            "reason": "output mismatch: expected `SELECT 'a\\\\\"b'` actual `SELECT 'a\\\"b'`"
         },
         {
             "sql": "SELECT y + 1 z FROM x GROUP BY y + 1 ORDER BY z",

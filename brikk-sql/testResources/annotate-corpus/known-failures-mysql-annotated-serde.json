@@ -1,8 +1,28 @@
 {
     "cases": [
         {
+            "sql": "INSERT INTO `test_table` SET `test_col_1` = 123, `test_col_2` = '456'",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 28.\n  INSERT INTO `test_table` \u001b[4mSET\u001b[0m `test_col_1` = 123, `test_col_2` = '456'"
+        },
+        {
+            "sql": "INSERT INTO t SET a = DEFAULT, b = 2 AS new ON DUPLICATE KEY UPDATE a = new.a + 1",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 17.\n  INSERT INTO t \u001b[4mSET\u001b[0m a = DEFAULT, b = 2 AS new ON DUPLICATE KEY UPDATE a = ne"
+        },
+        {
             "sql": "CREATE OR REPLACE VIEW my_view AS SELECT column1 AS `boo`, column2 AS `foo` FROM my_table WHERE column3 = 'some_value' UNION SELECT q.* FROM fruits_table, JSON_TABLE(Fruits, '$[*]' COLUMNS(id VARCHAR(255) PATH '$.$id', value VARCHAR(255) PATH '$.value')) AS q",
             "reason": "type-mismatch at #44 (Star k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "CREATE TABLE t1 (id INT KEY AUTO_INCREMENT)",
+            "reason": "ParseError: Expecting (. Line 1, Col: 43.\n  CREATE TABLE t1 (id INT KEY AUTO_INCREMENT\u001b[4m)\u001b[0m"
+        },
+        {
+            "sql": "CREATE TABLE t1 (id INT AUTO_INCREMENT KEY)",
+            "reason": "ParseError: Expecting (. Line 1, Col: 43.\n  CREATE TABLE t1 (id INT AUTO_INCREMENT KEY\u001b[4m)\u001b[0m"
+        },
+        {
+            "sql": "CREATE TABLE t1 (id INT KEY)",
+            "reason": "ParseError: Expecting (. Line 1, Col: 28.\n  CREATE TABLE t1 (id INT KEY\u001b[4m)\u001b[0m"
         },
         {
             "sql": "SELECT e.* FROM e STRAIGHT_JOIN p ON e.x = p.y",
@@ -15,6 +35,18 @@
         {
             "sql": "SELECT DISTINCTROW tbl.col FROM tbl",
             "reason": "type-mismatch at #3 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+        },
+        {
+            "sql": "SELECT a SOUNDS LIKE b | c",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 24.\n  SELECT a SOUNDS LIKE b \u001b[4m|\u001b[0m c"
+        },
+        {
+            "sql": "SELECT a SOUNDS LIKE b IS NULL",
+            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 30.\n  SELECT a SOUNDS LIKE b IS \u001b[4mNULL\u001b[0m"
+        },
+        {
+            "sql": "SELECT DATE_FORMAT(x, '%x-%v')",
+            "reason": "type-mismatch at #8 (? k=this): expected t=null actual t=null"
         }
     ]
 }

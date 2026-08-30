@@ -1,4 +1,37 @@
 {
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": []
+    "cases": [
+        {
+            "sql": "INSERT INTO `test_table` SET `test_col_1` = 123, `test_col_2` = '456'",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 28."
+        },
+        {
+            "sql": "INSERT INTO t SET a = DEFAULT, b = 2 AS new ON DUPLICATE KEY UPDATE a = new.a + 1",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 17."
+        },
+        {
+            "sql": "CREATE TABLE t1 (id INT KEY AUTO_INCREMENT)",
+            "reason": "Expecting (. Line 1, Col: 43."
+        },
+        {
+            "sql": "CREATE TABLE t1 (id INT AUTO_INCREMENT KEY)",
+            "reason": "Expecting (. Line 1, Col: 43."
+        },
+        {
+            "sql": "CREATE TABLE t1 (id INT KEY)",
+            "reason": "Expecting (. Line 1, Col: 28."
+        },
+        {
+            "sql": "SELECT a SOUNDS LIKE b | c",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 24."
+        },
+        {
+            "sql": "SELECT a SOUNDS LIKE b IS NULL",
+            "reason": "Invalid expression / Unexpected token. Line 1, Col: 30."
+        },
+        {
+            "sql": "SELECT DATE_FORMAT(x, '%x-%v')",
+            "reason": "ast-mismatch at #8: expected {\"i\":7,\"k\":\"this\",\"v\":\"%G-%v\"}"
+        }
+    ]
 }

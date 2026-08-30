@@ -35,8 +35,8 @@ python3 tools/extract_dialect_tests.py
 |---|---|---|---|
 | athena | 52 | 1 | 0 |
 | base | 99 | 282 | 38 |
-| bigquery | 353 | 288 | 27 |
-| clickhouse | 304 | 79 | 23 |
+| bigquery | 360 | 288 | 27 |
+| clickhouse | 320 | 79 | 23 |
 | databricks | 144 | 32 | 1 |
 | doris | 44 | 18 | 0 |
 | dremio | 43 | 7 | 2 |
@@ -48,25 +48,25 @@ python3 tools/extract_dialect_tests.py
 | fabric | 45 | 2 | 0 |
 | hive | 61 | 94 | 2 |
 | materialize | 18 | 6 | 0 |
-| mysql | 306 | 103 | 34 |
-| oracle | 178 | 33 | 9 |
-| postgres | 385 | 99 | 17 |
+| mysql | 320 | 103 | 34 |
+| oracle | 184 | 33 | 9 |
+| postgres | 420 | 99 | 17 |
 | presto | 48 | 147 | 3 |
 | prql | 0 | 29 | 0 |
-| redshift | 115 | 52 | 2 |
+| redshift | 129 | 52 | 2 |
 | risingwave | 7 | 1 | 0 |
 | singlestore | 106 | 112 | 0 |
-| snowflake | 826 | 530 | 32 |
+| snowflake | 836 | 530 | 32 |
 | solr | 3 | 0 | 0 |
 | spark | 106 | 135 | 3 |
 | sqlite | 121 | 35 | 1 |
-| starrocks | 78 | 16 | 6 |
+| starrocks | 78 | 18 | 6 |
 | tableau | 0 | 7 | 0 |
 | teradata | 74 | 24 | 0 |
 | trino | 109 | 4 | 3 |
 | tsql | 224 | 212 | 21 |
-| **TOTAL** | **4335** | **2659** | **249** |
+| **TOTAL** | **4437** | **2661** | **249** |
 
-Coverage: 6994 of 7245 textual `validate_*` call sites
-(96.5%). Skipped calls use runtime-computed arguments (loops,
+Coverage: 7098 of 7245 textual `validate_*` call sites
+(98.0%). Skipped calls use runtime-computed arguments (loops,
 variables, f-string interpolation) and cannot be extracted statically.

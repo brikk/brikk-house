@@ -549,11 +549,31 @@
         "starrocks": "SELECT * FROM t WHERE a BETWEEN 1 AND 5",
         "mysql": "SELECT * FROM t WHERE a BETWEEN 1 AND 5"
       }
+    },
+    {
+      "sql": "SELECT id, t.col FROM tbl, UNNEST(scores) AS t(col)",
+      "read": {},
+      "write": {
+        "starrocks": {
+          "error": "sql"
+        },
+        "spark": "SELECT id, t.col FROM tbl LATERAL VIEW EXPLODE(scores) t AS col"
+      }
+    },
+    {
+      "sql": "SELECT id, t.col FROM tbl CROSS JOIN LATERAL UNNEST(scores) AS t(col)",
+      "read": {},
+      "write": {
+        "starrocks": {
+          "error": "sql"
+        },
+        "spark": "SELECT id, t.col FROM tbl LATERAL VIEW EXPLODE(scores) t AS col"
+      }
     }
   ],
   "stats": {
     "identity_count": 78,
-    "transpile_count": 16,
+    "transpile_count": 18,
     "skipped_dynamic": 6
   }
 }

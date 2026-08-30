@@ -1771,6 +1771,41 @@
       "sql": "WITH t AS (SELECT '{\"x-y\": \"z\"}' AS c) SELECT JSON_EXTRACT(c, '$.x-y') FROM t",
       "expected": null,
       "pretty": false
+    },
+    {
+      "sql": "LOAD DATA OVERWRITE mydataset.table1 FROM FILES(FORMAT='AVRO', uris=['gs://bucket/path/file.avro'])",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "LOAD DATA INTO TABLE mydataset.table1 FROM FILES(FORMAT='AVRO', uris=['gs://bucket/path/file.avro'])",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "LOAD DATA INTO TEMP TABLE mydataset.table1 FROM FILES(FORMAT='AVRO', uris=['gs://bucket/path/file.avro'])",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "MOD(a, b)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "MOD('a', b)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "MOD(5, 2)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "MOD((a + 1) * 8, 5 - 1)",
+      "expected": null,
+      "pretty": false
     }
   ],
   "transpile": [
@@ -4572,7 +4607,7 @@
     }
   ],
   "stats": {
-    "identity_count": 353,
+    "identity_count": 360,
     "transpile_count": 288,
     "skipped_dynamic": 27
   }

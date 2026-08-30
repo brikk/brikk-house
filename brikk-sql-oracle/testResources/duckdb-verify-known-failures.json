@@ -1,4 +1,20 @@
 {
     "engine": "duckdb",
-    "cases": []
+    "cases": [
+        {
+            "sql": "SELECT * FROM t1 AS a AT (VERSION => 3) JOIN t2 AS b AT (TIMESTAMP => NOW() - INTERVAL '1' WEEK) ON a.id = b.id",
+            "generated": "",
+            "error": "brikk parse/generate failed: ParseError: AT index expressions are not supported yet. Line 1, Col: 26.\n  SELECT * FROM t1 AS a AT \u001b[4m(\u001b[0mVERSION => 3) JOIN t2 AS b AT (TIMESTAMP =>"
+        },
+        {
+            "sql": "SELECT a -> 'it''s' FROM t",
+            "generated": "",
+            "error": "brikk parse/generate failed: TokenError: Missing ' from 1:2"
+        },
+        {
+            "sql": "SELECT a ->> 'it''s' FROM t",
+            "generated": "",
+            "error": "brikk parse/generate failed: TokenError: Missing ' from 1:2"
+        }
+    ]
 }

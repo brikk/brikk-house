@@ -1,4 +1,9 @@
 {
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": []
+    "cases": [
+        {
+            "sql": "SELECT * FROM t1 AS a AT (VERSION => 3) JOIN t2 AS b AT (TIMESTAMP => NOW() - INTERVAL '1' WEEK) ON a.id = b.id",
+            "reason": "output mismatch: expected `SELECT * FROM t1 AS a AT (VERSION => 3) JOIN t2 AS b AT (TIMESTAMP => NOW() - INTERVAL '1' WEEK) ON a.id = b.id` actual `SELECT * FROM t1 AT (VERSION => 3) AS a JOIN t2 AT (TIMESTAMP => NOW() - INTERVAL '1' WEEK) AS b ON a.id = b.id`"
+        }
+    ]
 }

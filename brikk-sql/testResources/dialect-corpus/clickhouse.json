@@ -1526,6 +1526,86 @@
       "sql": "SELECT arrayMap((a, b) -> a * b, [1, 2, 3], [10, 20, 30]) AS products",
       "expected": null,
       "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v DEFINER='alice' SQL SECURITY DEFINER AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v SQL SECURITY DEFINER DEFINER='alice' AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v SQL SECURITY DEFINER DEFINER=CURRENT_USER AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v SQL SECURITY INVOKER AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v SQL SECURITY NONE AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v TO t SQL SECURITY DEFINER DEFINER='alice' AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v TO t SQL SECURITY INVOKER AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v TO t SQL SECURITY NONE AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE v MODIFY SQL SECURITY DEFINER DEFINER='alice'",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE v MODIFY SQL SECURITY DEFINER DEFINER=CURRENT_USER",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH EVERY 30 SECOND AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH AFTER 5 MINUTE AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH DEPENDS ON db.x, db.y APPEND TO db.t AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v ON CLUSTER '{cluster}' REFRESH EVERY 1 MONTH OFFSET 5 DAY 2 HOUR RANDOMIZE FOR 1 HOUR DEPENDS ON db.x, db.y SETTINGS refresh_retries = 5 APPEND TO db.t AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH EVERY 1 HOUR (id UInt64) AS SELECT 1 AS id",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH DEPENDS ON dep (id UInt64) AS SELECT 1",
+      "expected": null,
+      "pretty": false
     }
   ],
   "transpile": [
@@ -2212,7 +2292,7 @@
     }
   ],
   "stats": {
-    "identity_count": 304,
+    "identity_count": 320,
     "transpile_count": 79,
     "skipped_dynamic": 23
   }
