@@ -43,7 +43,10 @@ private fun buildDateDiff(a: List<Expression?>): Expression {
         args(
             "this" to seqGet(a, 0),
             "expression" to seqGet(a, 1),
-            "unit" to seqGet(a, 2),
+            // sqlglot: TimeUnit.__init__ normalizes a Column/Literal/Var unit into a Var
+            // (uppercased, unabbreviated). Without this the date-part token (e.g. DAY) stays
+            // a Column and cross-dialect unit_to_str (e.g. StarRocks) can't stringify it.
+            "unit" to normalizeTimeUnit(seqGet(a, 2)),
             "date_part_boundary" to true,
         )
     )

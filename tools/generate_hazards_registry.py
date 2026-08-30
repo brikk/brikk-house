@@ -179,12 +179,14 @@ PASCAL_DIALECT = {
     "duckdb": "Duckdb",
     "doris": "Doris",
     "clickhouse": "Clickhouse",
+    "starrocks": "Starrocks",
 }
 DISPLAY_DIALECT = {
     "trino": "Trino",
     "duckdb": "DuckDB",
     "doris": "Doris",
     "clickhouse": "ClickHouse",
+    "starrocks": "StarRocks",
 }
 
 

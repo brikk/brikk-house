@@ -31,12 +31,13 @@ import kotlinx.serialization.json.Json
  *  - External tooling (e.g. the doris-intellij plugin): completion/validation source via
  *    the Kotlin API or [FunctionCatalog.toJson].
  *
- * [FunctionDef.overloads] is populated for all three catalogs: DuckDB/Trino from the
- * engine's own registry dumps (duckdb_functions(), SHOW FUNCTIONS), Doris statically
- * extracted from each function class's SIGNATURES field
+ * [FunctionDef.overloads] is populated for DuckDB/Trino/StarRocks from engine registry
+ * dumps (duckdb_functions(), SHOW FUNCTIONS, SHOW FULL BUILTIN FUNCTIONS), and for Doris
+ * statically from each function class's SIGNATURES field
  * (tools/extract_doris_signatures.py -> vendor/data/doris-signatures.json). Doris
  * functions whose class computes signatures dynamically (all table-valued functions,
- * rank-like window functions, ...) keep empty overloads.
+ * rank-like window functions, ...) keep empty overloads. ClickHouse's system.functions
+ * dump exposes names/kinds/aliases but no signatures, so its overloads are honestly empty.
  */
 enum class FunctionKind { SCALAR, AGGREGATE, WINDOW, TABLE_VALUED, TABLE_GENERATING }
 

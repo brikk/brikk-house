@@ -147,4 +147,19 @@ class HazardsRegistrySyncTest {
         assertNotNull(HazardRegistry.lookup("clickhouse", "doris", "length"))
     }
 
+    @Test
+    fun starrocksDorisJsonCarriesLiveProbePairs() {
+        // StarRocks 4.1.4 <-> Doris 4.1.3 behavior-matrix probe (common MySQL lineage).
+        assertEquals(82, loadPairCount("semantics/doris-starrocks-hazards.json"))
+        assertNotNull(HazardRegistry.lookup("starrocks", "doris", "abs"))
+        assertNotNull(HazardRegistry.lookup("doris", "starrocks", "abs"))
+        // element_at: positive index agrees, negative index diverges (StarRocks NULL vs
+        // Doris wrap-around) — a probe-verified CONDITIONALLY_EQUIVALENT verdict.
+        val elemAt = HazardRegistry.lookup("starrocks", "doris", "element_at")
+        assertNotNull(elemAt)
+        assertEquals(HazardVerdict.CONDITIONALLY_EQUIVALENT, elemAt.verdict)
+        // date_add returns DATETIME on StarRocks vs DATE on Doris — DIVERGENT.
+        assertEquals(HazardVerdict.DIVERGENT, HazardRegistry.lookup("starrocks", "doris", "date_add")!!.verdict)
+    }
+
 }

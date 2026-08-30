@@ -515,7 +515,11 @@ open class BigqueryGenerator(
             reg(UnixDate::class) { e -> bg().renameFuncSql("UNIX_DATE", e) }
             reg(Uuid::class) { _ -> "GENERATE_UUID()" }
             reg(UnixToTime::class) { e -> bg().unixToTimeSql(e as UnixToTime) }
-            reg(WeekStart::class) { e -> func("WEEK", e.args["this"]) }
+            // sqlglot: BigQueryGenerator.weekstart_sql — WEEK(SUNDAY) == WEEK (bare).
+            reg(WeekStart::class) { e ->
+                val this_ = e.args["this"] as? Expression
+                if (this_?.name?.uppercase() == "SUNDAY") "WEEK" else func("WEEK", this_)
+            }
             reg(CollateProperty::class) { e ->
                 if (e.args["default"] == true) "DEFAULT COLLATE ${sql(e, "this")}"
                 else "COLLATE ${sql(e, "this")}"

@@ -60,6 +60,26 @@ class HazardRegistryTest {
     }
 
     @Test
+    fun conceptLookupResolvesRenderedTargetNameWithoutChangingDirectionalLookup() {
+        // Directional lookup remains source-side only.
+        assertNull(HazardRegistry.lookup("duckdb", "doris", "arrays_overlap"))
+        // Certification's concept lookup also accepts the emitted target-side spelling
+        // and recovers the list_has_any -> arrays_overlap evidence entry.
+        val hazard = HazardRegistry.lookupConcept(
+            "duckdb", "doris", listOf("ARRAY_OVERLAPS", "ARRAYS_OVERLAP"),
+        )
+        assertNotNull(hazard)
+        assertEquals("list_has_any", hazard.sourceName)
+        assertEquals("arrays_overlap", hazard.targetName)
+        assertEquals(HazardVerdict.IDENTICAL, hazard.verdict)
+        assertTrue(
+            SemanticCoverage.coversConcept(
+                "duckdb", "doris", listOf("ARRAY_OVERLAPS", "ARRAYS_OVERLAP")
+            )
+        )
+    }
+
+    @Test
     fun lookupIsCaseInsensitiveOnDialectsAndNames() {
         assertEquals(
             HazardRegistry.lookup("trino", "duckdb", "lower"),

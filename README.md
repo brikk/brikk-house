@@ -17,8 +17,39 @@ consumable (hence the `-jvm` suffix on the two multiplatform modules).
 
 ### Dialects
 
-Most dialects are faithful ports of the corresponding sqlglot dialect, gated
-differentially against the Python oracle. One is **brikk-native**:
+Parse with `read=<dialect>`, generate with `write=<dialect>` (see `transpile(...)`).
+Names are case-insensitive; the `""`/`sqlglot` base dialect is the common superset every
+other dialect extends. Most dialects are **faithful ports** of the corresponding sqlglot
+dialect, gated differentially against the Python oracle; `datafusion` is **brikk-native**
+(no sqlglot counterpart).
+
+| Dialect | Aliases | Family / base | Notes |
+| --- | --- | --- | --- |
+| `sqlglot` | `""` (empty) | — | Base/superset dialect; translation-only, no engine oracle. |
+| `mysql` | | MySQL | |
+| `doris` | | MySQL → Doris | Apache Doris; ships a version-pinned function catalog. |
+| `starrocks` | | MySQL → StarRocks | Version-pinned to **StarRocks 4.1.4** (current 4.1.x). See below. |
+| `postgres` | `postgresql` | PostgreSQL | |
+| `duckdb` | | DuckDB | |
+| `presto` | | Presto/Trino | |
+| `trino` | | Presto/Trino | |
+| `clickhouse` | | ClickHouse | |
+| `hive` | | Hive/Spark | |
+| `spark2` | | Hive/Spark | |
+| `spark` | `sparksql` | Hive/Spark | |
+| `bigquery` | | BigQuery | |
+| `datafusion` | `arrow-datafusion` | DataFusion | **brikk-native** — no sqlglot oracle (see below). |
+
+- **`starrocks`** — faithful port of sqlglot's StarRocks dialect (StarRocks extends
+  MySQL, **not** Doris — following upstream inheritance), version-pinned to **StarRocks
+  4.1.4** (the current 4.1.x patch; source tag `4.1.4` → commit `4a9848e`, Docker
+  `starrocks/allin1-ubuntu:4.1.4`). Gated by the full differential suite
+  (token/parser/serde/generator/transpile/annotate) and shipped with a version-pinned
+  function catalog (820 builtins / 6242 overloads from the live `SHOW FULL BUILTIN
+  FUNCTIONS` dump), a **partial** StarRocks↔Doris live semantic behavior-matrix scope
+  (92 vectors / 82 concepts; unprobed functions refuse certification), and
+  native-grammar verification against the pinned engine. See `vendor/README.md` and
+  `docs/research/starrocks-engine-verification.md`.
 
 - **`datafusion`** (alias `arrow-datafusion`) — sqlglot has no DataFusion dialect, so
   this is not a port and has **no sqlglot oracle**. It is gated instead by

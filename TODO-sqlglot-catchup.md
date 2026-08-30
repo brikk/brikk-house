@@ -495,6 +495,16 @@ ledger addition, it's better batched into a dedicated resync. Reverted to `bac1a
   - files: dialects/dialect.py
   - APPLIED: base `toJsonPath` now also catches TokenError (sibling of ParseError) and falls back to the raw path literal. Additive robustness; gates green.
 
+## StarRocks now ported (2026-08) — previously-excluded StarRocks items reconciled
+
+The `starrocks` dialect is now a first-class ported dialect (pinned to StarRocks 4.1.4).
+Two items previously parked under "Excluded — non-ported dialects" are now PORTED:
+- `3c6d84248` feat(starrocks): parse REFRESH EXTERNAL TABLE — ported into the base
+  `parseRefresh` (EXTERNAL TABLE branch), exercised by the StarRocks parser gate.
+- `d5e3f14b1` starrocks GENERATE_SERIES parse/qualify + the `TABLE(<tvf>)`→TableFromRows
+  hoist — covered by the base `parseTable` hoist + StarRocks FUNCTIONS `TABLE`/`GENERATE_SERIES`.
+The remaining snowflake/tsql/oracle/sqlite items below stay excluded (still non-ported).
+
 ## Excluded — non-ported dialects (13), recorded so we don't re-triage
 
 - `21ebde8eb` (2026-07-13) feat(optimizer)!: type annotation for databricks REGR_SXX, REGR_SXY, REGR_SYY (#7851)

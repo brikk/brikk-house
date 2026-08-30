@@ -1,0 +1,16 @@
+{
+    "cases": [
+        {
+            "sql": "SELECT t1.id FROM t1 LEFT ANTI JOIN t2 ON t1.id = t2.id",
+            "reason": "meta-only divergence: our annotate path sets a spurious `is_table=false` meta on the ON-clause column identifier (t2.id) that the Python oracle omits. StarRocks parses LEFT ANTI/SEMI as real join types (TABLE_ALIAS_TOKENS - {ANTI,SEMI}), so the joined table's columns take a normalize-name path MySQL's ANTI-as-alias parse does not. Type inference is identical (UNKNOWN); no effect on generated SQL. Narrow to StarRocks SEMI/ANTI joins."
+        },
+        {
+            "sql": "SELECT t1.id FROM t1 LEFT SEMI JOIN t2 ON t1.id = t2.id",
+            "reason": "meta-only divergence: our annotate path sets a spurious `is_table=false` meta on the ON-clause column identifier (t2.id) that the Python oracle omits. StarRocks parses LEFT SEMI/ANTI as real join types (TABLE_ALIAS_TOKENS - {ANTI,SEMI}); type inference is identical (UNKNOWN); no effect on generated SQL. Narrow to StarRocks SEMI/ANTI joins."
+        },
+        {
+            "sql": "SELECT * FROM t, GENERATE_SERIES(t.s, t.e)",
+            "reason": "meta-only divergence: our annotate path sets a spurious `is_table=false` meta on a column identifier inside the FROM-position GENERATE_SERIES table function that the Python oracle omits. Type inference is identical (UNKNOWN); no effect on generated SQL. Narrow to StarRocks GENERATE_SERIES-in-FROM."
+        }
+    ]
+}

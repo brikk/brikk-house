@@ -437,10 +437,6 @@
             "reason": "expected `CURRENT_DATE + INTERVAL '-1 DAY'` actual `CURRENT_DATE + INTERVAL '-1 'DAY''`"
         },
         {
-            "case": "write|duckdb|DATE_DIFF('2021-01-01', '2020-01-01', DAY)",
-            "reason": "expected `DATE_DIFF('DAY', CAST('2020-01-01' AS DATE), CAST('2021-01-01' AS DATE))` actual `DATE_DIFF(DAY, CAST('2020-01-01' AS DATE), CAST('2021-01-01' AS DATE))`"
-        },
-        {
             "case": "write|duckdb|CURRENT_DATE('UTC')",
             "reason": "expected `CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)` actual `CURRENT_DATE('UTC')`"
         },
@@ -917,10 +913,6 @@
             "reason": "expected `SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(CAST(GENERATE_SERIES(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH) AS DATE[])) AS _t0(mnth)` actual `SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC(MONTH, CURRENT_DATE), INTERVAL '1' MONTH)) AS mnth`"
         },
         {
-            "case": "write|bigquery|SELECT LAST_DAY(DATE '2008-11-10', WEEK(SUNDAY))",
-            "reason": "expected `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK(SUNDAY))`"
-        },
-        {
             "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', WEEK(SUNDAY))",
             "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((13 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK_START(SUNDAY))`"
         },
@@ -937,16 +929,8 @@
             "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((7 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), ISOWEEK)`"
         },
         {
-            "case": "write|bigquery|SELECT DATE_TRUNC(d, WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATE_TRUNC(d, WEEK)` actual `SELECT DATE_TRUNC(d, WEEK(SUNDAY))`"
-        },
-        {
             "case": "write|spark|SELECT DATE_TRUNC(d, WEEK(SUNDAY))",
             "reason": "expected UnsupportedError, got `SELECT TRUNC(d, WEEK_START(SUNDAY))`"
-        },
-        {
-            "case": "write|bigquery|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
-            "reason": "expected `SELECT TIMESTAMP_TRUNC(ts, WEEK)` actual `SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))`"
         },
         {
             "case": "write|clickhouse|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
@@ -965,20 +949,8 @@
             "reason": "expected UnsupportedError, got `SELECT DATE_TRUNC(WEEK_START(SUNDAY), ts)`"
         },
         {
-            "case": "write|bigquery|SELECT DATETIME_TRUNC(dt, WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATETIME_TRUNC(dt, WEEK)` actual `SELECT DATETIME_TRUNC(dt, WEEK(SUNDAY))`"
-        },
-        {
             "case": "write|duckdb|SELECT DATETIME_TRUNC(dt, WEEK(SUNDAY))",
             "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(dt AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(dt, WEEK_START(SUNDAY))`"
-        },
-        {
-            "case": "write|bigquery|SELECT DATE_DIFF(d1, d2, WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATE_DIFF(d1, d2, WEEK)` actual `SELECT DATE_DIFF(d1, d2, WEEK(SUNDAY))`"
-        },
-        {
-            "case": "write|bigquery|SELECT LAST_DAY(d, WEEK(SUNDAY))",
-            "reason": "expected `SELECT LAST_DAY(d, WEEK)` actual `SELECT LAST_DAY(d, WEEK(SUNDAY))`"
         },
         {
             "case": "write|hive|SELECT EXTRACT(WEEK(THURSDAY) FROM d)",
@@ -987,10 +959,6 @@
         {
             "case": "write|spark|SELECT EXTRACT(WEEK(THURSDAY) FROM d)",
             "reason": "expected UnsupportedError, got `SELECT EXTRACT(THURSDAY FROM d)`"
-        },
-        {
-            "case": "write|bigquery|SELECT DATE_TRUNC(DATE '2008-11-10', WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATE_TRUNC(CAST('2008-11-10' AS DATE), WEEK)` actual `SELECT DATE_TRUNC(CAST('2008-11-10' AS DATE), WEEK(SUNDAY))`"
         },
         {
             "case": "write|duckdb|SELECT DATE_TRUNC(DATE '2008-11-10', ISOWEEK)",
@@ -1005,20 +973,12 @@
             "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ))`"
         },
         {
-            "case": "write|bigquery|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00', WEEK(SUNDAY))",
-            "reason": "expected `SELECT TIMESTAMP_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK)` actual `SELECT TIMESTAMP_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK(SUNDAY))`"
-        },
-        {
             "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00', WEEK(SUNDAY))",
             "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ))`"
         },
         {
             "case": "write|duckdb|SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK)",
             "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(CAST('2008-11-10 14:30:00' AS TIMESTAMP) AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK)`"
-        },
-        {
-            "case": "write|bigquery|SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS DATETIME), WEEK)` actual `SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS DATETIME), WEEK(SUNDAY))`"
         },
         {
             "case": "write|duckdb|SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK(SUNDAY))",
@@ -1029,40 +989,8 @@
             "reason": "expected `SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'` actual `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York'`"
         },
         {
-            "case": "write|bigquery|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00+00', WEEK(SUNDAY), 'America/New_York')",
-            "reason": "expected `SELECT TIMESTAMP_TRUNC(CAST('2008-11-10 14:30:00+00' AS TIMESTAMP), WEEK, 'America/New_York')` actual `SELECT TIMESTAMP_TRUNC(CAST('2008-11-10 14:30:00+00' AS TIMESTAMP), WEEK(SUNDAY), 'America/New_York')`"
-        },
-        {
             "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00+00', WEEK(SUNDAY), 'America/New_York')",
             "reason": "expected `SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ))`"
-        },
-        {
-            "case": "write|bigquery|SELECT DATE_DIFF('2026-01-15', '2024-01-08', WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATE_DIFF('2026-01-15', '2024-01-08', WEEK)` actual `SELECT DATE_DIFF('2026-01-15', '2024-01-08', WEEK(SUNDAY))`"
-        },
-        {
-            "case": "write|duckdb|SELECT DATE_DIFF('2024-01-15', '2024-01-08', WEEK)",
-            "reason": "expected `SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2024-01-08' AS DATE) + INTERVAL '1' DAY), DATE_TRUNC('WEEK', CAST('2024-01-15' AS DATE) + INTERVAL '1' DAY))` actual `SELECT DATE_DIFF(WEEK, CAST('2024-01-08' AS DATE), CAST('2024-01-15' AS DATE))`"
-        },
-        {
-            "case": "write|duckdb|SELECT DATE_DIFF('2024-01-07', '2024-01-06', WEEK)",
-            "reason": "expected `SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2024-01-06' AS DATE) + INTERVAL '1' DAY), DATE_TRUNC('WEEK', CAST('2024-01-07' AS DATE) + INTERVAL '1' DAY))` actual `SELECT DATE_DIFF(WEEK, CAST('2024-01-06' AS DATE), CAST('2024-01-07' AS DATE))`"
-        },
-        {
-            "case": "write|duckdb|SELECT DATE_DIFF('2024-01-15', '2024-01-08', ISOWEEK)",
-            "reason": "expected `SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2024-01-08' AS DATE)), DATE_TRUNC('WEEK', CAST('2024-01-15' AS DATE)))` actual `SELECT DATE_DIFF(ISOWEEK, CAST('2024-01-08' AS DATE), CAST('2024-01-15' AS DATE))`"
-        },
-        {
-            "case": "write|bigquery|SELECT DATE_DIFF(DATE '2024-01-01', DATE '2024-01-15', WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATE_DIFF(CAST('2024-01-01' AS DATE), CAST('2024-01-15' AS DATE), WEEK)` actual `SELECT DATE_DIFF(CAST('2024-01-01' AS DATE), CAST('2024-01-15' AS DATE), WEEK(SUNDAY))`"
-        },
-        {
-            "case": "write|duckdb|SELECT DATE_DIFF(DATE '2023-05-01', DATE '2024-01-15', ISOWEEK)",
-            "reason": "expected `SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2024-01-15' AS DATE)), DATE_TRUNC('WEEK', CAST('2023-05-01' AS DATE)))` actual `SELECT DATE_DIFF(ISOWEEK, CAST('2024-01-15' AS DATE), CAST('2023-05-01' AS DATE))`"
-        },
-        {
-            "case": "write|duckdb|SELECT DATE_DIFF(DATE '2024-01-01', DATE '2024-01-15', DAY)",
-            "reason": "expected `SELECT DATE_DIFF('DAY', CAST('2024-01-15' AS DATE), CAST('2024-01-01' AS DATE))` actual `SELECT DATE_DIFF(DAY, CAST('2024-01-15' AS DATE), CAST('2024-01-01' AS DATE))`"
         },
         {
             "case": "write|duckdb|SELECT ROUND(NUMERIC '2.25', 1, 'ROUND_HALF_AWAY_FROM_ZERO') AS value",
