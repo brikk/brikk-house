@@ -1,0 +1,23 @@
+{
+ "analysisStatus": "unavailable",
+ "sourceEvidence": "unavailable: brikk-native; no SQLGlot oracle or extracted catalog",
+ "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+ "reason": "DataFusion is brikk-native and has no SQLGlot oracle or extracted engine catalog",
+ "counts": {
+  "A": 0,
+  "B": 0,
+  "C": 0,
+  "D": 0
+ },
+ "subCounts": {
+  "A_arity_compatible": 0,
+  "A_arity_suspect": 0,
+  "A_arity_unknown": 0,
+  "A_sqlglot_translates_differently": 0,
+  "B_render_ok": 0,
+  "B_render_error": 0,
+  "C_with_c1_or_c2": 0,
+  "C_c3_hint_only": 0
+ },
+ "entries": []
+}

@@ -1,0 +1,7037 @@
+{
+ "analysisStatus": "classified",
+ "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+ "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+ "counts": {
+  "A": 146,
+  "B": 66,
+  "C": 32,
+  "D": 543
+ },
+ "subCounts": {
+  "A_arity_compatible": 135,
+  "A_arity_suspect": 2,
+  "A_arity_unknown": 9,
+  "A_sqlglot_translates_differently": 12,
+  "B_render_ok": 65,
+  "B_render_error": 1,
+  "C_with_c1_or_c2": 7,
+  "C_c3_hint_only": 25
+ },
+ "entries": [
+  {
+   "name": "__internal_compress_integral_ubigint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_compress_integral_uinteger",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_compress_integral_usmallint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_compress_integral_utinyint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_compress_string_hugeint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_compress_string_ubigint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_compress_string_uhugeint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_compress_string_uinteger",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_compress_string_usmallint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_compress_string_utinyint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_decompress_integral_bigint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_decompress_integral_hugeint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_decompress_integral_integer",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_decompress_integral_smallint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_decompress_integral_ubigint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_decompress_integral_uhugeint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_decompress_integral_uinteger",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_decompress_integral_usmallint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "__internal_decompress_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "abs",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "abs",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-unknown",
+   "nodeClass": "Abs"
+  },
+  {
+   "name": "acos",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "acos",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Acos"
+  },
+  {
+   "name": "acosh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Acosh",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "add",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-unknown"
+  },
+  {
+   "name": "age",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ago",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "alias",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "any_value",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "any_value",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "IgnoreNulls"
+  },
+  {
+   "name": "approx_count_distinct",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "approx_count_distinct",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "ApproxDistinct"
+  },
+  {
+   "name": "approx_quantile",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ApproxQuantile",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "approx_top_k",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "approx_top_k",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "ApproxTopK"
+  },
+  {
+   "name": "arg_max",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "arg_max",
+    "argmax",
+    "max_by"
+   ],
+   "nodeClass": "ArgMax",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "max_by",
+   "renderedSql": "MAX_BY(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "arg_max_null",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "arg_max_nulls_last",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "arg_min",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "arg_min",
+    "argmin",
+    "min_by"
+   ],
+   "nodeClass": "ArgMin",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "min_by",
+   "renderedSql": "MIN_BY(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "arg_min_null",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "arg_min_nulls_last",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_append",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_append",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "ArrayAppend"
+  },
+  {
+   "name": "array_cosine_distance",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_cosine_similarity",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "cosine_similarity",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_cross_product",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_distance",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "regexp_extract",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_inner_product",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_dot_product",
+    "array_inner_product"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_length",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_length",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "ArraySize"
+  },
+  {
+   "name": "array_negative_inner_product",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_negative_dot_product",
+    "array_negative_inner_product"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_pop_back",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_pop_front",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_prepend",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ArrayPrepend",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_push_back",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_push_front",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_reverse",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ArrayReverse",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "reverse",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_to_json",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "to_json",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_to_string",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ArrayToString",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "array_join",
+   "renderedSql": "ARRAY_JOIN(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "array_to_string_comma_default",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_value",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "arrow_scan",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "arrow_scan_dumb",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ascii",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "ascii",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Ascii"
+  },
+  {
+   "name": "asin",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "asin",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Asin"
+  },
+  {
+   "name": "asinh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Asinh",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "atan",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "atan",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Atan"
+  },
+  {
+   "name": "atan2",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "atan2",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Atan2"
+  },
+  {
+   "name": "atanh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Atanh",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "avg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "avg",
+    "mean"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "avg",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Avg"
+  },
+  {
+   "name": "bar",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "bar",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "bin",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "bin",
+    "to_binary"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "bin",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "bit_and",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "BitwiseAndAgg",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "bit_and",
+   "renderedSql": "BIT_AND(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "bit_count",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bit_length",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "BitLength",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bit_or",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "BitwiseOrAgg",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "bit_or",
+   "renderedSql": "BIT_OR(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "bit_position",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bit_xor",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "BitwiseXorAgg",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "bit_xor",
+   "renderedSql": "BIT_XOR(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "bitstring",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitstring_agg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bool_and",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "LogicalAnd",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "min",
+   "renderedSql": "MIN(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "bool_or",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "bool_or",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "LogicalOr",
+   "sqlglotTranslatesTo": "max",
+   "renderedSql": "MAX(a1)"
+  },
+  {
+   "name": "can_cast_implicitly",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "cardinality",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cardinality",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "cast_to_type",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "cbrt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cbrt",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Cbrt"
+  },
+  {
+   "name": "ceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "ceil",
+    "ceiling"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "ceil",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Ceil"
+  },
+  {
+   "name": "century",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "checkpoint",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "chr",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Chr",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "char",
+   "renderedSql": "CHAR(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "col_description",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "combine",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "concat",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "concat",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Concat"
+  },
+  {
+   "name": "concat_ws",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "concat_ws",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "ConcatWs"
+  },
+  {
+   "name": "constant_or_null",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "contains",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Contains",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "array_contains",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "corr",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "corr",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Corr"
+  },
+  {
+   "name": "cos",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cos",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Cos"
+  },
+  {
+   "name": "cosh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cosh",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Cosh"
+  },
+  {
+   "name": "cot",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cot",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Cot"
+  },
+  {
+   "name": "count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "count",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Count"
+  },
+  {
+   "name": "count_if",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "count_if",
+    "countif"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "count_if",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "CountIf"
+  },
+  {
+   "name": "count_star",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "covar_pop",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "covar_pop",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "CovarPop"
+  },
+  {
+   "name": "covar_samp",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "covar_samp",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "CovarSamp"
+  },
+  {
+   "name": "create_sort_key",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "cume_dist",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cume_dist",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "CumeDist"
+  },
+  {
+   "name": "current_catalog",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "CurrentCatalog",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "CURRENT_CATALOG",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "current_connection_id",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "current_database",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "CurrentDatabase",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "current_date",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "current_date",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "CurrentDate"
+  },
+  {
+   "name": "current_localtime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "current_localtimestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Localtimestamp",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "LOCALTIMESTAMP",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "current_query",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "current_query_id",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "current_role",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "CurrentRole",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "current_schema",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "CurrentSchema",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "schema",
+   "renderedSql": "SCHEMA()",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "current_schemas",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "CurrentSchemas",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "current_setting",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "current_transaction_id",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "current_user",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "CurrentUser",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "currval",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "damerau_levenshtein",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "date_add",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "date_add",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "DateAdd"
+  },
+  {
+   "name": "date_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "date_diff",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "DateDiff"
+  },
+  {
+   "name": "date_part",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "date_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "date_sub",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-suspect"
+  },
+  {
+   "name": "date_trunc",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "date_trunc",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "TimestampTrunc"
+  },
+  {
+   "name": "datediff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "datediff",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-suspect",
+   "nodeClass": "DateDiff",
+   "sqlglotTranslatesTo": "date_diff",
+   "renderedSql": "DATE_DIFF('A1', a3, a2)"
+  },
+  {
+   "name": "datepart",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "datesub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c1",
+     "target": "date_sub",
+     "via": "parsed under dialect 'clickhouse'",
+     "nodeClass": "DateSub",
+     "renderedSql": "DATE_SUB(a3, INTERVAL a2 A1)"
+    },
+    {
+     "evidence": "c3",
+     "target": "date_sub",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "datetrunc",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "TimestampTrunc",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "date_trunc",
+   "renderedSql": "DATE_TRUNC('A1', a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "day",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "day",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Day"
+  },
+  {
+   "name": "dayname",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "dayname",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Dayname"
+  },
+  {
+   "name": "dayofmonth",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "dayofmonth",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "DayOfMonth"
+  },
+  {
+   "name": "dayofweek",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "dayofweek",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "DayOfWeek"
+  },
+  {
+   "name": "dayofyear",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "dayofyear",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "DayOfYear"
+  },
+  {
+   "name": "days_in_month",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "decade",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "decode",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Decode",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "degrees",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "degrees",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Degrees"
+  },
+  {
+   "name": "dense_rank",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "dense_rank",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "DenseRank"
+  },
+  {
+   "name": "disable_logging",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "disable_profiling",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "divide",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "divide",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-unknown"
+  },
+  {
+   "name": "duckdb_approx_database_count",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_columns",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_connection_count",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_constraints",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_coordinate_systems",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_databases",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_dependencies",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_extensions",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_external_file_cache",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_functions",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_indexes",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_keywords",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_log_contexts",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_logs",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_logs_parsed",
+   "kind": "table_macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_memory",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_optimizers",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_prepared_statements",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_profiling_settings",
+   "kind": "table_macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_schemas",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_secret_types",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_secrets",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_sequences",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_settings",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_table_sample",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_tables",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_temporary_files",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_types",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_variables",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "duckdb_views",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "enable_logging",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "enable_profiling",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "encode",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Encode",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "entropy",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "enum_code",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "enum_first",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "enum_last",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "enum_range",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "enum_range_boundary",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "epoch",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "TimeToUnix",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "time_to_unix",
+   "renderedSql": "TIME_TO_UNIX(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "epoch_ms",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "UnixToTime",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "from_unixtime",
+   "renderedSql": "FROM_UNIXTIME(a1, 3)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "epoch_ns",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "epoch_us",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "equi_width_bins",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "era",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "error",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "even",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "exp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "exp",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Exp"
+  },
+  {
+   "name": "factorial",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Factorial",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "favg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "fdiv",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "fill",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "finalize",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "first",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "arbitrary",
+    "first"
+   ],
+   "nodeClass": "First",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "first_value",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "first_value",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "FirstValue"
+  },
+  {
+   "name": "flatten",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Flatten",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "array_flatten",
+   "renderedSql": "ARRAY_FLATTEN(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "floor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "floor",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Floor"
+  },
+  {
+   "name": "fmod",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "fmod",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "force_checkpoint",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "format",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Format",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "format_bytes",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "format_bytes",
+    "formatreadablesize"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "format_bytes",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "format_pg_type",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "format_type",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "formatreadabledecimalsize",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "from_base64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "from_base64",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "FromBase64"
+  },
+  {
+   "name": "from_json",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "from_json_strict",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "gamma",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "generate_series",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "generate_series",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "GenerateSeries"
+  },
+  {
+   "name": "generate_subscripts",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "geomean",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "geometric_mean",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "get_bit",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Getbit",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "getbit",
+   "renderedSql": "GETBIT(a1, a2)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "get_block_size",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "get_current_time",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "CurrentTime",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "current_time",
+   "renderedSql": "CURRENT_TIME()",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "get_current_timestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "get_current_timestamp",
+    "now",
+    "transaction_timestamp"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "now",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "get_type",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "getvariable",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "glob",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "greatest",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "greatest",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Greatest"
+  },
+  {
+   "name": "greatest_common_divisor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "gcd",
+    "greatest_common_divisor"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hamming",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "hamming",
+    "mismatches"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_any_column_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_column_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_database_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_foreign_data_wrapper_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_function_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_language_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_schema_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_sequence_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_server_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_table_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "has_tablespace_privilege",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hash",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hex",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "hex",
+    "to_hex"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "hex",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Hex"
+  },
+  {
+   "name": "histogram",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "histogram",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "histogram_exact",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "histogram_values",
+   "kind": "table_macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hour",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "hour",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Hour"
+  },
+  {
+   "name": "icu_calendar_names",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_af",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_am",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ar",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ar_sa",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_as",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_az",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_be",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_bg",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_bn",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_bo",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_br",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_bs",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ca",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ceb",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_chr",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_cs",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_cy",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_da",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_de",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_de_at",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_dsb",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_dz",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ee",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_el",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_en",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_en_us",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_eo",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_es",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_et",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_fa",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_fa_af",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_fi",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_fil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_fo",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_fr",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_fr_ca",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_fy",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ga",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_gl",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_gu",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ha",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_haw",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_he",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_he_il",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_hi",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_hr",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_hsb",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_hu",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_hy",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_id",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_id_id",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ig",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_is",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_it",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ja",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ka",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_kk",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_kl",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_km",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_kn",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ko",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_kok",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ku",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ky",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_lb",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_lij",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_lkt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ln",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_lo",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_lt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_lv",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_mk",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ml",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_mn",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_mr",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ms",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_mt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_my",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_nb",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_nb_no",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ne",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_nl",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_nn",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_noaccent",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_nso",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_om",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_or",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_pa",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_pa_in",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_pl",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ps",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_pt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ro",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ru",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_sa",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_se",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_si",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_sk",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_sl",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_smn",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_sq",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_sr",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_sr_ba",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_sr_me",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_sr_rs",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_st",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_sv",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_sw",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ta",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_te",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_th",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_tk",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_tn",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_to",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_tr",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ug",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_uk",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_ur",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_uz",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_vi",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_wae",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_wo",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_xh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_yi",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_yo",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_yue",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_yue_cn",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_zh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_zh_cn",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_zh_hk",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_zh_mo",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_zh_sg",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_zh_tw",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_collate_zu",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "icu_sort_key",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ilike_escape",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "in_search_path",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "inet_client_addr",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "inet_client_port",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "inet_server_addr",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "inet_server_port",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "instr",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "instr",
+    "position",
+    "strpos"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "instr",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "StrPosition",
+   "sqlglotTranslatesTo": "locate",
+   "renderedSql": "LOCATE(a2, a1)"
+  },
+  {
+   "name": "is_histogram_other_bin",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "isfinite",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "isinf",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "IsInf",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "is_inf",
+   "renderedSql": "IS_INF(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "isnan",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "IsNan",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "is_nan",
+   "renderedSql": "IS_NAN(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "isodow",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "DayOfWeekIso",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "dayofweek_iso",
+   "renderedSql": "DAYOFWEEK_ISO(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "isoyear",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jaccard",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jaro_similarity",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jaro_winkler_similarity",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "JarowinklerSimilarity",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "jarowinkler_similarity",
+   "renderedSql": "JAROWINKLER_SIMILARITY(a1, a2)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "json",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ParseJSON",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "parse_json",
+   "renderedSql": "PARSE_JSON(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "json_array",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "json_array",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "JSONArray"
+  },
+  {
+   "name": "json_array_length",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_contains",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "json_contains",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "json_deserialize_sql",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_each",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "json_each",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "json_execute_serialized_sql",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_exists",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "json_exists",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "json_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "JSONExtract",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "a1 -> a2",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "json_extract_path",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "JSONExtract",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "a1 -> a2",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "json_extract_path_text",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "JSONExtractScalar",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "a1 ->> a2",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "json_extract_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "JSONExtractScalar",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "a1 ->> a2",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "json_group_array",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_group_object",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_group_structure",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_keys",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "json_keys",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "JSONKeys"
+  },
+  {
+   "name": "json_merge_patch",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_object",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "json_object",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "JSONObject"
+  },
+  {
+   "name": "json_pretty",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "json_pretty",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "json_quote",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_serialize_plan",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_serialize_sql",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_structure",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_transform",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_transform_strict",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_tree",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_type",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "JSONType",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_valid",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_value",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "julian",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "kahan_sum",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "fsum",
+    "kahan_sum",
+    "sumkahan"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "kurtosis",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Kurtosis",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "kurtosis_pop",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "lag",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "lag",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Lag"
+  },
+  {
+   "name": "last",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Last",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "last_day",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "last_day",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "LastDay"
+  },
+  {
+   "name": "last_value",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "last_value",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "LastValue"
+  },
+  {
+   "name": "lead",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "lead",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Lead"
+  },
+  {
+   "name": "least",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "least",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Least"
+  },
+  {
+   "name": "least_common_multiple",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "lcm",
+    "least_common_multiple"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "left",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "left",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Left"
+  },
+  {
+   "name": "left_grapheme",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "length",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "char_length",
+    "character_length",
+    "len",
+    "length"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "length",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Length",
+   "sqlglotTranslatesTo": "char_length",
+   "renderedSql": "CHAR_LENGTH(a1)"
+  },
+  {
+   "name": "length_grapheme",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "levenshtein",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "editdist3",
+    "levenshtein"
+   ],
+   "nodeClass": "Levenshtein",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "lgamma",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "like_escape",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_agg",
+    "list"
+   ],
+   "nodeClass": "ArrayAgg",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "array_agg",
+   "renderedSql": "ARRAY_AGG(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "list_aggregate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "aggregate",
+    "array_aggr",
+    "array_aggregate",
+    "list_aggr",
+    "list_aggregate"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_any_value",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "any_value",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_append",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ArrayAppend",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "array_append",
+   "renderedSql": "ARRAY_APPEND(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "list_approx_count_distinct",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "approx_count_distinct",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_avg",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "array_avg",
+     "via": "lexical normalization (HINT ONLY)"
+    },
+    {
+     "evidence": "c3",
+     "target": "avg",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_bit_and",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "bitand",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_bit_or",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "bitor",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_bit_xor",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "bitxor",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_bool_and",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_bool_or",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "bool_or",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_concat",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_cat",
+    "array_concat",
+    "list_cat",
+    "list_concat"
+   ],
+   "nodeClass": "ArrayConcat",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "array_concat",
+   "renderedSql": "ARRAY_CONCAT(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "list_contains",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_contains",
+    "array_has",
+    "list_contains",
+    "list_has"
+   ],
+   "nodeClass": "ArrayContains",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "array_contains",
+   "renderedSql": "ARRAY_CONTAINS(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "list_cosine_distance",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "CosineDistance",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "cosine_distance",
+   "renderedSql": "COSINE_DISTANCE(a1, a2)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "list_cosine_similarity",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "cosine_similarity",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_count",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "count",
+     "via": "lexical normalization (HINT ONLY)"
+    },
+    {
+     "evidence": "c3",
+     "target": "regexp_count",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_distance",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "EuclideanDistance",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "euclidean_distance",
+   "renderedSql": "EUCLIDEAN_DISTANCE(a1, a2)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "list_distinct",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_distinct",
+    "list_distinct"
+   ],
+   "nodeClass": "ArrayDistinct",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "array_distinct",
+   "renderedSql": "ARRAY_DISTINCT(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "list_entropy",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "list_element",
+    "list_extract"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "regexp_extract",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_filter",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_filter",
+    "filter",
+    "list_filter"
+   ],
+   "nodeClass": "ArrayFilter",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "array_filter",
+   "renderedSql": "ARRAY_FILTER(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "list_first",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_grade_up",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_grade_up",
+    "grade_up",
+    "list_grade_up"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_has_all",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_has_all",
+    "list_has_all"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_has_any",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_has_any",
+    "list_has_any"
+   ],
+   "nodeClass": "ArrayOverlaps",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "a1 && a2",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "list_histogram",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "histogram",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_inner_product",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "list_dot_product",
+    "list_inner_product"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_intersect",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_intersect",
+    "list_intersect"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "array_intersect",
+     "via": "source alias set"
+    },
+    {
+     "evidence": "c3",
+     "target": "array_intersect",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_kurtosis",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_kurtosis_pop",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_last",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_mad",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_max",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ArrayMax",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "array_max",
+   "renderedSql": "ARRAY_MAX(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "list_median",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_min",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ArrayMin",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "array_min",
+   "renderedSql": "ARRAY_MIN(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "list_mode",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_negative_inner_product",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "list_negative_dot_product",
+    "list_negative_inner_product"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_position",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_indexof",
+    "array_position",
+    "list_indexof",
+    "list_position"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "array_position",
+     "via": "source alias set"
+    },
+    {
+     "evidence": "c3",
+     "target": "array_position",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_prepend",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ArrayPrepend",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "array_prepend",
+   "renderedSql": "ARRAY_PREPEND(a2, a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "list_product",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_reduce",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_reduce",
+    "list_reduce",
+    "reduce"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_resize",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_resize",
+    "list_resize"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_reverse",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "reverse",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_reverse_sort",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_reverse_sort",
+    "list_reverse_sort"
+   ],
+   "nodeClass": "SortArray",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "sort_array",
+   "renderedSql": "SORT_ARRAY(a1, FALSE)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "list_select",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_select",
+    "list_select"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_sem",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_skewness",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_slice",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_slice",
+    "list_slice"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "array_slice",
+     "via": "source alias set"
+    },
+    {
+     "evidence": "c3",
+     "target": "array_slice",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_sort",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_sort",
+    "list_sort"
+   ],
+   "nodeClass": "SortArray",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "sort_array",
+   "renderedSql": "SORT_ARRAY(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "list_stddev_pop",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "stddev_pop",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_stddev_samp",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "stddev_samp",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_string_agg",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_sum",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "array_sum",
+     "via": "lexical normalization (HINT ONLY)"
+    },
+    {
+     "evidence": "c3",
+     "target": "sum",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_transform",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "apply",
+    "array_apply",
+    "array_transform",
+    "list_apply",
+    "list_transform"
+   ],
+   "nodeClass": "Transform",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "transform",
+   "renderedSql": "TRANSFORM(a1, a2)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "list_unique",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_unique",
+    "list_unique"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_value",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "list_pack",
+    "list_value"
+   ],
+   "nodeClass": "Array",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "[]",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "list_var_pop",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "var_pop",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_var_samp",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "var_samp",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "list_where",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_where",
+    "list_where"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "list_zip",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "array_zip",
+    "list_zip"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ln",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "ln",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Ln"
+  },
+  {
+   "name": "log",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "log",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Log"
+  },
+  {
+   "name": "log10",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "log10",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Log",
+   "sqlglotTranslatesTo": "log",
+   "renderedSql": "LOG(10, a1)"
+  },
+  {
+   "name": "log2",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "log2",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Log",
+   "sqlglotTranslatesTo": "log",
+   "renderedSql": "LOG(2, a1)"
+  },
+  {
+   "name": "lower",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "lcase",
+    "lower"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "lower",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Lower"
+  },
+  {
+   "name": "lpad",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "lpad",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Pad"
+  },
+  {
+   "name": "ltrim",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "ltrim",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Trim"
+  },
+  {
+   "name": "mad",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "make_date",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "DateFromParts",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "date_from_parts",
+   "renderedSql": "DATE_FROM_PARTS(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "make_time",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "TimeFromParts",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "maketime",
+   "renderedSql": "MAKETIME(a1, a2, a3)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "make_timestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "UnixToTime",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "from_unixtime",
+   "renderedSql": "FROM_UNIXTIME(a1, 6)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "make_timestamp_ms",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "make_timestamp_ns",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "make_timestamptz",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "make_type",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Map",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "unsupported",
+   "renderCheck": "error",
+   "renderError": "UnsupportedError: Cannot convert array columns into map."
+  },
+  {
+   "name": "map_concat",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "map_concat",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "map_contains",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "array_contains",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "map_contains_entry",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map_contains_value",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map_entries",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "map_entries",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "map_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "element_at",
+    "map_extract"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "regexp_extract",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "map_extract_value",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map_from_entries",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "MapFromEntries",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map_keys",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "map_keys",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "MapKeys"
+  },
+  {
+   "name": "map_to_pg_oid",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map_values",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "map_values",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "max",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "max",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Max"
+  },
+  {
+   "name": "md5",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "md5",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "MD5"
+  },
+  {
+   "name": "md5_number",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "md5_number_lower",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "md5_number_upper",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "median",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Median",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "percentile_cont",
+   "renderedSql": "PERCENTILE_CONT(a1, 0.5)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "microsecond",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "millennium",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "millisecond",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "min",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "min",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Min"
+  },
+  {
+   "name": "minute",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "minute",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Minute"
+  },
+  {
+   "name": "mod",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "mod",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-unknown",
+   "nodeClass": "Mod"
+  },
+  {
+   "name": "mode",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Mode",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "month",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "month",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Month"
+  },
+  {
+   "name": "monthname",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "monthname",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Monthname"
+  },
+  {
+   "name": "multiply",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "multiply",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-unknown"
+  },
+  {
+   "name": "nanosecond",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "nextafter",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "nextval",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "nfc_normalize",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "normalized_interval",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "not_ilike_escape",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "not_like_escape",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "nth_value",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "NthValue",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ntile",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "ntile",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Ntile"
+  },
+  {
+   "name": "nullif",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "nullif",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Nullif"
+  },
+  {
+   "name": "obj_description",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "octet_length",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pandas_scan",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_bloom_probe",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_file_metadata",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_full_metadata",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_kv_metadata",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_metadata",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_scan",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_schema",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parse_dirname",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parse_dirpath",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parse_duckdb_log_message",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parse_filename",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parse_formatted_bytes",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parse_path",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "percent_rank",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "percent_rank",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "PercentRank"
+  },
+  {
+   "name": "pg_collation_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_conf_load_time",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_conversion_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_function_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_get_constraintdef",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_get_expr",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_get_viewdef",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_has_role",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_is_other_temp_schema",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_my_temp_schema",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_opclass_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_operator_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_opfamily_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_postmaster_start_time",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_size_pretty",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_sleep",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_table_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_timezone_names",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_ts_config_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_ts_dict_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_ts_parser_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_ts_template_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_type_is_visible",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pg_typeof",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pi",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "pi",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Pi"
+  },
+  {
+   "name": "pow",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "pow",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-unknown",
+   "nodeClass": "Pow",
+   "sqlglotTranslatesTo": "power",
+   "renderedSql": "POWER(a1, a2)"
+  },
+  {
+   "name": "power",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "power",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-unknown",
+   "nodeClass": "Pow"
+  },
+  {
+   "name": "pragma_collations",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pragma_database_size",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pragma_metadata_info",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pragma_platform",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pragma_show",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pragma_storage_info",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pragma_table_info",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pragma_user_agent",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pragma_version",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "prefix",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "printf",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "product",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "python_map_function",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quantile_cont",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "PercentileCont",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "percentile_cont",
+   "renderedSql": "PERCENTILE_CONT(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "quantile_disc",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "quantile",
+    "quantile_disc"
+   ],
+   "nodeClass": "PercentileDisc",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "percentile_disc",
+   "renderedSql": "PERCENTILE_DISC(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "quarter",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "quarter",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Quarter"
+  },
+  {
+   "name": "query",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "query_table",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "radians",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "radians",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Radians"
+  },
+  {
+   "name": "random",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "random",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Rand",
+   "sqlglotTranslatesTo": "rand",
+   "renderedSql": "RAND()"
+  },
+  {
+   "name": "range",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "GenerateSeries",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "generate_series",
+   "renderedSql": "GENERATE_SERIES(0, a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "rank",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "rank",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Rank"
+  },
+  {
+   "name": "rank_dense",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_blob",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_csv",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ReadCSV",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_csv_auto",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_duckdb",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_json",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_json_auto",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_json_objects",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_json_objects_auto",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_ndjson",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_ndjson_auto",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_ndjson_objects",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_parquet",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "ReadParquet",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "read_text",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regexp_escape",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regexp_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "regexp_extract",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "RegexpExtract"
+  },
+  {
+   "name": "regexp_extract_all",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "regexp_extract_all",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "RegexpExtractAll"
+  },
+  {
+   "name": "regexp_full_match",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegexpFullMatch",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regexp_matches",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegexpLike",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "regexp",
+   "renderedSql": "REGEXP(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "regexp_replace",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "regexp_replace",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "RegexpReplace"
+  },
+  {
+   "name": "regexp_split_to_table",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_avgx",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegrAvgx",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_avgy",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegrAvgy",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegrCount",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_intercept",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegrIntercept",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_r2",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegrR2",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_slope",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegrSlope",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_sxx",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegrSxx",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_sxy",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegrSxy",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_syy",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "RegrSyy",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "remap_struct",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "repeat",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "repeat",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Repeat"
+  },
+  {
+   "name": "repeat_row",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "replace",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "replace",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Replace"
+  },
+  {
+   "name": "replace_type",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "reservoir_quantile",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "reverse",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "reverse",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Reverse"
+  },
+  {
+   "name": "right",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "right",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Right"
+  },
+  {
+   "name": "right_grapheme",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "round",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "round",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Round"
+  },
+  {
+   "name": "round_even",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "roundbankers",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "row",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "row",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "row_number",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "row_number",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "RowNumber"
+  },
+  {
+   "name": "row_to_json",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "rpad",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "rpad",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Pad"
+  },
+  {
+   "name": "rtrim",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "rtrim",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Trim"
+  },
+  {
+   "name": "second",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "second",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Second"
+  },
+  {
+   "name": "sem",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "seq_scan",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "session_user",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "SessionUser",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "session_user",
+   "renderedSql": "SESSION_USER()",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "set_bit",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "setseed",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sha1",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "SHA",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "sha",
+   "renderedSql": "SHA(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "sha256",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "SHA2",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "sha2",
+   "renderedSql": "SHA2(a1, 256)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "shobj_description",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sign",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sign",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Sign"
+  },
+  {
+   "name": "signbit",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sin",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sin",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Sin"
+  },
+  {
+   "name": "sinh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sinh",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Sinh"
+  },
+  {
+   "name": "skewness",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Skewness",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sleep_ms",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sniff_csv",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "split_part",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "split_part",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "SplitPart"
+  },
+  {
+   "name": "sqrt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sqrt",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Sqrt"
+  },
+  {
+   "name": "st_astext",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "st_astext",
+    "st_aswkt"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_astext",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_aswkb",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "st_asbinary",
+    "st_aswkb"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_crs",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_geomfromwkb",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_intersects_extent",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_setcrs",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "starts_with",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "starts_with",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-unknown",
+   "nodeClass": "StartsWith"
+  },
+  {
+   "name": "stats",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "stddev_pop",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "stddev_pop",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "StddevPop"
+  },
+  {
+   "name": "stddev_samp",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "stddev",
+    "stddev_samp"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "stddev_samp",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "StddevSamp"
+  },
+  {
+   "name": "strftime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "TimeToStr",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "date_format",
+   "renderedSql": "DATE_FORMAT(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "string_agg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "group_concat",
+    "listagg",
+    "string_agg"
+   ],
+   "nodeClass": "GroupConcat",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "group_concat",
+   "renderedSql": "GROUP_CONCAT(a1 SEPARATOR ',')",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "string_split",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "split",
+    "str_split",
+    "string_split",
+    "string_to_array"
+   ],
+   "nodeClass": "Split",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "split",
+   "renderedSql": "SPLIT(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "string_split_regex",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "regexp_split_to_array",
+    "str_split_regex",
+    "string_split_regex"
+   ],
+   "nodeClass": "RegexpSplit",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "regexp_split",
+   "renderedSql": "REGEXP_SPLIT(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "strip_accents",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "strlen",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "strptime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "StrToTime",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "str_to_date",
+   "renderedSql": "STR_TO_DATE(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "struct_concat",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "struct_contains",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "struct_contains",
+    "struct_has"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "struct_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "StructExtract",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "struct_extract_at",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "struct_insert",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "struct_keys",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "struct_pack",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Struct",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "struct",
+   "renderedSql": "STRUCT()",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "struct_position",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "struct_indexof",
+    "struct_position"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "struct_update",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "struct_values",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "substring",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "substr",
+    "substring"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "substring",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Substring"
+  },
+  {
+   "name": "substring_grapheme",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "subtract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "subtract",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-unknown"
+  },
+  {
+   "name": "suffix",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "ends_with",
+    "suffix"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "ends_with",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "sum",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sum",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Sum"
+  },
+  {
+   "name": "sum_no_overflow",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "summary",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "switch",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "tan",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "tan",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Tan"
+  },
+  {
+   "name": "tanh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "tanh",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Tanh"
+  },
+  {
+   "name": "test_all_types",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "test_vector_types",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "time_bucket",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "DateBin",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "date_bin",
+   "renderedSql": "DATE_BIN(a1, a2)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "timetz_byte_comparable",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "timezone",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "timezone_hour",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "timezone_minute",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_base",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_base64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "base64",
+    "to_base64"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "to_base64",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "ToBase64"
+  },
+  {
+   "name": "to_centuries",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_days",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "to_days",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "ToDays"
+  },
+  {
+   "name": "to_decades",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_hours",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_json",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "to_json",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "to_microseconds",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_millennia",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_milliseconds",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_minutes",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_months",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_quarters",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_seconds",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_timestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "UnixToTime",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "from_unixtime",
+   "renderedSql": "FROM_UNIXTIME(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "to_weeks",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_years",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "today",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "CurrentDate",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "CURRENT_DATE",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "translate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "translate",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Translate"
+  },
+  {
+   "name": "trim",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "trim",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Trim"
+  },
+  {
+   "name": "trunc",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Trunc",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "truncate",
+   "renderedSql": "TRUNCATE(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "truncate_duckdb_logs",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "try_strptime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "txid_current",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "typeof",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "Typeof",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "unbin",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "from_binary",
+    "unbin"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "from_binary",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "unhex",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "from_hex",
+    "unhex"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "unhex",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Unhex"
+  },
+  {
+   "name": "unicode",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "ord",
+    "unicode"
+   ],
+   "nodeClass": "Unicode",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "ord",
+   "renderedSql": "ORD(CONVERT(a1 USING utf32))",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "union_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "union_tag",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "union_value",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "unnest",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "unnest",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Explode",
+   "sqlglotTranslatesTo": "explode",
+   "renderedSql": "EXPLODE(a1)"
+  },
+  {
+   "name": "unpivot_list",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "upper",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "ucase",
+    "upper"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "upper",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Upper"
+  },
+  {
+   "name": "url_decode",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "url_decode",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "url_encode",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "url_encode",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "user",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "uuid",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "gen_random_uuid",
+    "uuid"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "uuid",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Uuid"
+  },
+  {
+   "name": "uuid_extract_timestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "uuid_extract_version",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "uuidv4",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "uuidv7",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "uuid_v7",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "var_pop",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "var_pop",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "VariancePop",
+   "sqlglotTranslatesTo": "variance_pop",
+   "renderedSql": "VARIANCE_POP(a1)"
+  },
+  {
+   "name": "var_samp",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "aliases": [
+    "var_samp",
+    "variance"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "var_samp",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Variance",
+   "sqlglotTranslatesTo": "variance",
+   "renderedSql": "VARIANCE(a1)"
+  },
+  {
+   "name": "variant_bytes_to_variant",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "variant_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "variant_normalize",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "variant_to_parquet_variant",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "variant_typeof",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "variant_typeof",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "vector_type",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "version",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "version",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "CurrentVersion",
+   "sqlglotTranslatesTo": "current_version",
+   "renderedSql": "CURRENT_VERSION()"
+  },
+  {
+   "name": "wavg",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "week",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "week",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Week"
+  },
+  {
+   "name": "weekday",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "weekday",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "weekofyear",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "weekofyear",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "WeekOfYear"
+  },
+  {
+   "name": "weighted_avg",
+   "kind": "macro",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "which_secret",
+   "kind": "table",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "write_log",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "xor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "nodeClass": "BitwiseXor",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "a1 ^ a2",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "year",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "year",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible",
+   "nodeClass": "Year"
+  },
+  {
+   "name": "yearweek",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "yearweek",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "arity": "arity-compatible"
+  }
+ ]
+}

@@ -38,8 +38,16 @@ Raw data sources (preferred over the generated Kotlin catalogs):
 sqlglot knowledge comes from reference/sqlglot (read-only oracle).
 
 Outputs (regenerated on every run, deterministic):
-  - brikk-sql/testResources/semantics/gap-report.json
+  - brikk-sql/testResources/semantics/gap-report.json         (small manifest/index)
+  - brikk-sql/testResources/semantics/function-gaps/<src>__<tgt>.json  (per-pair detail)
   - docs/research/function-gap-report.md
+
+The monolithic detailed report was split: `gap-report.json` is now a deterministic
+manifest holding global metadata, warnings, evidence/catalog provenance, the
+registered/unavailable dialect classification, and a `pairs` map from each ordered pair
+to its counts/subCounts and its detail file. The full per-function entry lists live in
+one file per ordered pair under `function-gaps/`. Stale pair files no longer referenced
+by the manifest are removed on every run.
 
 Usage: python3 tools/function_gap_report.py
 """
@@ -618,24 +626,93 @@ def bucket_counts(entries):
     return counts, sub
 
 
-def write_json(pairs_data, pair_metadata, evidence, path):
-    out = OrderedDict()
-    out["_generated_by"] = "tools/function_gap_report.py"
-    out["_warning"] = (
-        "Bucket A (same-name) is CANDIDATE-OK only: identical names do not imply "
-        "identical semantics. Nothing in this report is verified-correct."
+WARNING_TEXT = (
+    "Bucket A (same-name) is CANDIDATE-OK only: identical names do not imply "
+    "identical semantics. Nothing in this report is verified-correct."
+)
+
+# Directory (relative to the semantics dir) holding one detail file per ordered pair.
+PAIR_DIR_NAME = "function-gaps"
+
+
+def pair_key(src, tgt):
+    return "{}->{}".format(src, tgt)
+
+
+def pair_file_name(src, tgt):
+    """Stable, filesystem-safe detail filename for an ordered pair.
+
+    `src` and `tgt` are dialect identifiers (already `[A-Za-z0-9_]+`), so a `__`
+    separator is unambiguous and needs no escaping.
+    """
+    return "{}__{}.json".format(src, tgt)
+
+
+def write_split_report(pairs_data, pair_metadata, evidence, manifest_path):
+    """Write the small manifest and the per-pair detail files.
+
+    The manifest keeps global metadata, warnings, evidence/catalog provenance, the
+    registered/unavailable dialect classification, and maps every ordered pair to its
+    counts, subCounts, entry count and detail file. Each detail file preserves the full
+    pair record (metadata + counts + subCounts + every entry) with no information loss.
+    Stale detail files not referenced by the freshly written manifest are removed.
+    """
+    semantics_dir = manifest_path.parent
+    pair_dir = semantics_dir / PAIR_DIR_NAME
+    pair_dir.mkdir(parents=True, exist_ok=True)
+
+    manifest = OrderedDict()
+    manifest["_generated_by"] = "tools/function_gap_report.py"
+    manifest["_warning"] = WARNING_TEXT
+    manifest["_layout"] = (
+        "Split report: this manifest indexes per-pair detail files under "
+        "'{}/'. Each pair's full entry list lives in its own file (see pairs[*].file). "
+        "Regenerate with: python3 tools/function_gap_report.py".format(PAIR_DIR_NAME)
     )
-    out["dialectEvidence"] = OrderedDict((d, evidence[d]) for d in ALL_REGISTERED_DIALECTS)
-    out["pairs"] = OrderedDict()
+    manifest["dialectEvidence"] = OrderedDict(
+        (d, evidence[d]) for d in ALL_REGISTERED_DIALECTS
+    )
+    # Registered vs unavailable engine classification, mirroring the analysis universe.
+    manifest["registeredDialects"] = list(ALL_REGISTERED_DIALECTS)
+    manifest["catalogEngines"] = list(CATALOG_ENGINES)
+    manifest["unavailableDialects"] = [
+        d for d in ALL_REGISTERED_DIALECTS if d not in SQLGLOT_DIALECTS
+    ]
+    manifest["pairDirectory"] = PAIR_DIR_NAME
+    manifest["pairs"] = OrderedDict()
+
+    expected_files = set()
     for (src, tgt), entries in pairs_data.items():
         counts, sub = bucket_counts(entries)
-        record = OrderedDict(pair_metadata[(src, tgt)])
-        record["counts"] = counts
-        record["subCounts"] = sub
-        record["entries"] = entries
-        out["pairs"]["{}->{}".format(src, tgt)] = record
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(out, indent=1) + "\n")
+        # Full detail record for the per-pair file.
+        detail = OrderedDict(pair_metadata[(src, tgt)])
+        detail["counts"] = counts
+        detail["subCounts"] = sub
+        detail["entries"] = entries
+
+        fname = pair_file_name(src, tgt)
+        expected_files.add(fname)
+        (pair_dir / fname).write_text(json.dumps(detail, indent=1) + "\n")
+
+        # Compact manifest entry: metadata + counts + pointer to the detail file.
+        idx = OrderedDict(pair_metadata[(src, tgt)])
+        idx["counts"] = counts
+        idx["subCounts"] = sub
+        idx["entryCount"] = len(entries)
+        idx["file"] = "{}/{}".format(PAIR_DIR_NAME, fname)
+        manifest["pairs"][pair_key(src, tgt)] = idx
+
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps(manifest, indent=1) + "\n")
+
+    # Safely remove stale generated pair files no longer referenced by the manifest.
+    removed = []
+    if pair_dir.is_dir():
+        for existing in sorted(pair_dir.glob("*.json")):
+            if existing.name not in expected_files:
+                existing.unlink()
+                removed.append(existing.name)
+    return removed
 
 
 def write_markdown(pairs_data, pair_metadata, catalogs, evidence, path):
@@ -643,8 +720,26 @@ def write_markdown(pairs_data, pair_metadata, catalogs, evidence, path):
     w = lines.append
     w("# Function relationship report: StarRocks and registered dialects")
     w("")
-    w("Generated by `tools/function_gap_report.py` (re-runnable; regenerates this file")
-    w("and `brikk-sql/testResources/semantics/gap-report.json`).")
+    w("Generated by `tools/function_gap_report.py` (re-runnable; regenerates this file,")
+    w("the manifest `brikk-sql/testResources/semantics/gap-report.json`, and the per-pair")
+    w("detail files under `brikk-sql/testResources/semantics/function-gaps/`).")
+    w("")
+    w("## Report layout")
+    w("")
+    w("The machine-readable report is split to keep reviews and merges manageable:")
+    w("")
+    w("- `brikk-sql/testResources/semantics/gap-report.json` - small deterministic")
+    w("  **manifest**: global metadata, the `_warning`, `dialectEvidence` provenance, the")
+    w("  registered/unavailable dialect classification, and a `pairs` map from each ordered")
+    w("  pair to its `counts`, `subCounts`, `entryCount` and detail `file`.")
+    w("- `brikk-sql/testResources/semantics/function-gaps/<src>__<tgt>.json` - one file per")
+    w("  ordered pair holding that pair's full record (metadata + counts + every entry).")
+    w("")
+    w("Refresh everything with a single deterministic run:")
+    w("")
+    w("```bash")
+    w("python3 tools/function_gap_report.py")
+    w("```")
     w("")
     w("## Method")
     w("")
@@ -910,7 +1005,7 @@ def main():
             "reason": "DataFusion is brikk-native and has no SQLGlot oracle or extracted engine catalog",
         }
 
-    write_json(
+    removed = write_split_report(
         pairs_data, pair_metadata, evidence,
         ROOT / "brikk-sql" / "testResources" / "semantics" / "gap-report.json",
     )
@@ -928,6 +1023,13 @@ def main():
                 counts["C"], sub["C_with_c1_or_c2"], sub["C_c3_hint_only"], counts["D"],
             )
         )
+    print(
+        "wrote manifest gap-report.json + {} pair files under {}/".format(
+            len(pairs_data), PAIR_DIR_NAME
+        )
+    )
+    if removed:
+        print("removed {} stale pair file(s): {}".format(len(removed), ", ".join(removed)))
     print("runtime: {:.1f}s".format(runtime))
 
 

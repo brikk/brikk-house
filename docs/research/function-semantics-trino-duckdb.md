@@ -9,7 +9,9 @@ REPORT-string-unicode-audit, TODO-pushdown-datetime}.md`).
 (241 pairs; verdicts: 102 identical, 52 conditionally-equivalent, 44 no-equivalent, 37 divergent,
 6 unclear).
 **Purpose:** semantic-evidence gate for the rename candidates and same-name entries in
-`docs/research/function-gap-report.md` / `brikk-sql/testResources/semantics/gap-report.json`.
+`docs/research/function-gap-report.md` / `brikk-sql/testResources/semantics/gap-report.json`
+(the latter is now a manifest indexing per-pair detail files under
+`brikk-sql/testResources/semantics/function-gaps/`).
 All verdicts here are *their* findings (Trino 481 vs DuckDB 1.5.3), not re-derived.
 
 ---

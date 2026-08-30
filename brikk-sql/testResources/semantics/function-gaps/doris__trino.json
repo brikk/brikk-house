@@ -1,0 +1,6573 @@
+{
+ "analysisStatus": "classified",
+ "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+ "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+ "counts": {
+  "A": 151,
+  "B": 62,
+  "C": 22,
+  "D": 486
+ },
+ "subCounts": {
+  "A_arity_compatible": 133,
+  "A_arity_suspect": 3,
+  "A_arity_unknown": 15,
+  "A_sqlglot_translates_differently": 10,
+  "B_render_ok": 62,
+  "B_render_error": 0,
+  "C_with_c1_or_c2": 15,
+  "C_c3_hint_only": 7
+ },
+ "entries": [
+  {
+   "name": "abs",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "abs",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Abs"
+  },
+  {
+   "name": "acos",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "acos",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Acos"
+  },
+  {
+   "name": "acosh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Acosh",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "add_time",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "aes_decrypt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "aes_encrypt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_agg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "AIAgg",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_classify",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "AIClassify",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_filter",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_fixgrammar",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_generate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "AIGenerate",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_mask",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_sentiment",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_similarity",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "AISimilarity",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_summarize",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ai_translate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "any",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "any",
+    "any_value"
+   ],
+   "nodeClass": "Any",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "any_value",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "append_trailing_char_if_absent",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "approx_count_distinct",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "approx_count_distinct",
+    "ndv"
+   ],
+   "nodeClass": "ApproxDistinct",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "approx_distinct",
+   "renderedSql": "APPROX_DISTINCT(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "array",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Array",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "ARRAY[]",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "array_agg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_agg",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArrayAgg"
+  },
+  {
+   "name": "array_apply",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_avg",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "avg",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_compact",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "ArrayCompact",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_concat",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "ArrayConcat",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "concat",
+   "renderedSql": "CONCAT(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "array_contains",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "ArrayContains",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "contains",
+   "renderedSql": "CONTAINS(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "array_contains_all",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "array_contains_all",
+    "hassubstr"
+   ],
+   "nodeClass": "ArrayContainsAll",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "a1 @> a2",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "array_count",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "count",
+     "via": "lexical normalization (HINT ONLY)"
+    },
+    {
+     "evidence": "c3",
+     "target": "regexp_count",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_cross_product",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "array_cross_product",
+    "cross_product"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_cum_sum",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_difference",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_distinct",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_distinct",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArrayDistinct"
+  },
+  {
+   "name": "array_enumerate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_enumerate_uniq",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_except",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_except",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArrayExcept"
+  },
+  {
+   "name": "array_exists",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_filter",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "ArrayFilter",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "filter",
+   "renderedSql": "FILTER(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "array_first",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_first",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArrayFirst"
+  },
+  {
+   "name": "array_first_index",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_flatten",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c1",
+     "target": "flatten",
+     "via": "parsed under dialect 'starrocks'",
+     "nodeClass": "Flatten",
+     "renderedSql": "FLATTEN(a1)"
+    },
+    {
+     "evidence": "c3",
+     "target": "flatten",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_intersect",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_intersect",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArrayIntersect"
+  },
+  {
+   "name": "array_join",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_join",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArrayToString"
+  },
+  {
+   "name": "array_last",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_last",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-suspect",
+   "nodeClass": "ArrayLast"
+  },
+  {
+   "name": "array_last_index",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_map",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "map",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_match_all",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_match_any",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_max",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_max",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArrayMax"
+  },
+  {
+   "name": "array_min",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_min",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArrayMin"
+  },
+  {
+   "name": "array_popback",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_popfront",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_position",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_position",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "ArrayPosition"
+  },
+  {
+   "name": "array_product",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_pushback",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "array_append",
+    "array_pushback"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_pushfront",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_range",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "array_range",
+    "sequence"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "sequence",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "array_remove",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_remove",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "ArrayRemove"
+  },
+  {
+   "name": "array_repeat",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "repeat",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_reverse_sort",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c1",
+     "target": "array_sort",
+     "via": "parsed under dialect 'duckdb'",
+     "nodeClass": "SortArray",
+     "renderedSql": "ARRAY_SORT(a1, (a, b) -> CASE WHEN a < b THEN 1 WHEN a > b THEN -1 ELSE 0 END)"
+    }
+   ]
+  },
+  {
+   "name": "array_reverse_split",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_shuffle",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "array_shuffle",
+    "shuffle"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "shuffle",
+     "via": "source alias set"
+    },
+    {
+     "evidence": "c3",
+     "target": "shuffle",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_size",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "array_size",
+    "cardinality",
+    "size"
+   ],
+   "nodeClass": "ArraySize",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "cardinality",
+   "renderedSql": "CARDINALITY(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "array_slice",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "ArraySlice",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "slice",
+   "renderedSql": "SLICE(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "array_sort",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_sort",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArraySort"
+  },
+  {
+   "name": "array_sortby",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_split",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "regexp_split",
+     "via": "lexical normalization (HINT ONLY)"
+    },
+    {
+     "evidence": "c3",
+     "target": "split",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "array_sum",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "ArraySum",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "reduce",
+   "renderedSql": "REDUCE(a1, 0, (acc, x) -> acc + x, acc -> acc)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "array_union",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "array_union",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "array_with_constant",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "array_zip",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "zip",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "arrays_overlap",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "arrays_overlap",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "ascii",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Ascii",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "asin",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "asin",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Asin"
+  },
+  {
+   "name": "asinh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Asinh",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "assert_true",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "atan",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "atan",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Atan"
+  },
+  {
+   "name": "atan2",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "atan2",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Atan2"
+  },
+  {
+   "name": "atanh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Atanh",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "auto_partition_name",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "avg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "avg",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Avg"
+  },
+  {
+   "name": "avg_map",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "avg_weighted",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "backends",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bin",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "binlog",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bit_count",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "bit_count",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-suspect",
+   "nodeClass": "BitwiseCount",
+   "sqlglotTranslatesTo": "bitwise_count",
+   "renderedSql": "BITWISE_COUNT(a1)"
+  },
+  {
+   "name": "bit_length",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "BitLength",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bit_shift_left",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bit_shift_right",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bit_test",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "bit_test",
+    "bit_test_all"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_agg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_and",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_and_count",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_and_not",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_and_not_count",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_andnot",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_andnot_count",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_contains",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_count",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "BitmapCount",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_empty",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_from_array",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_from_base64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_from_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_has_all",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_has_any",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_hash",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_hash64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_intersect",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_max",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_min",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_not",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_or",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_or_count",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_remove",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_subset_in_range",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_subset_limit",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_to_array",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_to_base64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_to_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_union",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_union_count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_union_int",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_xor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bitmap_xor_count",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "bool_and",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "bool_and",
+    "booland_agg"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "bool_and",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "LogicalAnd"
+  },
+  {
+   "name": "bool_or",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "bool_or",
+    "boolor_agg"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "bool_or",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "LogicalOr"
+  },
+  {
+   "name": "bool_xor",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "bool_xor",
+    "boolxor_agg"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "catalogs",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "cbrt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cbrt",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Cbrt"
+  },
+  {
+   "name": "cdc_stream",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "ceil",
+    "ceiling"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "ceil",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Ceil"
+  },
+  {
+   "name": "century",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "char",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Chr",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "chr",
+   "renderedSql": "CHR(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "char_length",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "char_length",
+    "character_length"
+   ],
+   "nodeClass": "Length",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "length",
+   "renderedSql": "LENGTH(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "coalesce",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Coalesce",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "collect_list",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "collect_list",
+    "group_array"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "collect_set",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "collect_set",
+    "group_uniq_array"
+   ],
+   "nodeClass": "ArrayUniqueAgg",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "array_agg",
+   "renderedSql": "ARRAY_AGG(DISTINCT a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "compress",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Compress",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "concat",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "concat",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Concat",
+   "sqlglotTranslatesTo": "cast",
+   "renderedSql": "CAST(a1 AS VARCHAR)"
+  },
+  {
+   "name": "concat_ws",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "concat_ws",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ConcatWs"
+  },
+  {
+   "name": "connection_id",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "conv",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "convert_to",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "convert_tz",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "ConvertTimezone",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "at_timezone",
+   "renderedSql": "AT_TIMEZONE(AT_TIMEZONE(CAST(a1 AS TIMESTAMP), a2), a3)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "corr",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "corr",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Corr"
+  },
+  {
+   "name": "corr_welford",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "cos",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cos",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Cos"
+  },
+  {
+   "name": "cosh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cosh",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Cosh"
+  },
+  {
+   "name": "cosine_distance",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cosine_distance",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "CosineDistance"
+  },
+  {
+   "name": "cosine_similarity",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cosine_similarity",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "cot",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Cot",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "count",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Count"
+  },
+  {
+   "name": "count_by_enum",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "count_map",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "count_substrings",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "countequal",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "covar",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "covar",
+    "covar_pop"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "covar_pop",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "covar_samp",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "covar_samp",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "CovarSamp"
+  },
+  {
+   "name": "crc32",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "crc32",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "crc32_internal",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "csc",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Csc",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "cume_dist",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "cume_dist",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "CumeDist"
+  },
+  {
+   "name": "curdate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "curdate",
+    "current_date"
+   ],
+   "nodeClass": "CurrentDate",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "CURRENT_DATE",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "current_catalog",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "CurrentCatalog",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "CURRENT_CATALOG",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "current_user",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "CurrentUser",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "CURRENT_USER",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "curtime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "current_time",
+    "curtime"
+   ],
+   "nodeClass": "CurrentTime",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "CURRENT_TIME",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "cut_ipv6",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "cut_to_first_significant_subdomain",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "damerau_levenshtein_distance",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "database",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "current_database",
+    "database",
+    "schema"
+   ],
+   "nodeClass": "CurrentSchema",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "current_schema",
+   "renderedSql": "CURRENT_SCHEMA()",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "datasketches_hll_union_agg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "date",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "date",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "TsOrDsToDate",
+   "sqlglotTranslatesTo": "cast",
+   "renderedSql": "CAST(CAST(a1 AS TIMESTAMP) AS DATE)"
+  },
+  {
+   "name": "date_format",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "date_format",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "TimeToStr"
+  },
+  {
+   "name": "date_trunc",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "date_trunc",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "TimestampTrunc"
+  },
+  {
+   "name": "datediff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "DateDiff",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "date_diff",
+   "renderedSql": "DATE_DIFF('DAY', DATE_TRUNC('DAY', a2), DATE_TRUNC('DAY', a1))",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "datev2",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "day",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "day",
+    "dayofmonth"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "day",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Day"
+  },
+  {
+   "name": "day_ceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "day_floor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "day_hour",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "day_microsecond",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "day_minute",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "day_second",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "dayname",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Dayname",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "dayofweek",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "dayofweek",
+    "dow"
+   ],
+   "nodeClass": "DayOfWeek",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "((DAY_OF_WEEK(CAST(CAST(a1 AS TIMESTAMP) AS DATE)) % 7) + 1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "dayofyear",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "dayofyear",
+    "doy"
+   ],
+   "nodeClass": "DayOfYear",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "day_of_year",
+   "renderedSql": "DAY_OF_YEAR(CAST(CAST(a1 AS TIMESTAMP) AS DATE))",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "days_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "adddate",
+    "date_add",
+    "days_add"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "date_add",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "days_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "days_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "date_sub",
+    "days_sub",
+    "subdate"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "dceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "decode_as_varchar",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "deduplicate_map",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "degrees",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "degrees",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Degrees"
+  },
+  {
+   "name": "dense_rank",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "dense_rank",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "DenseRank"
+  },
+  {
+   "name": "dexp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "dfloor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "dict_get",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "dict_get_many",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "digital_masking",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "dlog10",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "domain",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "domain_without_www",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "dpow",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "dround",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "dsqrt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "e",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "e",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "element_at",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "element_at",
+    "struct_element"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "element_at",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "elt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Elt",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "embed",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "encode_as_bigint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "encode_as_int",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "encode_as_largeint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "encode_as_smallint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ends_with",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "ends_with",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "EndsWith"
+  },
+  {
+   "name": "esquery",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "even",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "exp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "exp",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Exp"
+  },
+  {
+   "name": "explode",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Explode",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_bitmap",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_bitmap_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_json_array_double",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_json_array_double_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_json_array_int",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_json_array_int_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_json_array_json",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_json_array_json_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_json_array_string",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_json_array_string_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_json_object",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_json_object_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_map",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_map_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_numbers",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_numbers_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "_ExplodeOuter",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_split",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_split_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "explode_variant_array",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "exponential_moving_average",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "export_set",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "extract_url_parameter",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "factorial",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Factorial",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "field",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "file",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Aliases",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "file AS (a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "find_in_set",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "first_significant_subdomain",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "first_value",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "first_value",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "FirstValue"
+  },
+  {
+   "name": "floor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "floor",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Floor"
+  },
+  {
+   "name": "fmod",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "format",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "NumberToStr",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "number_to_str",
+   "renderedSql": "NUMBER_TO_STR(a1, a2)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "format_number",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "format_number",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "format_round",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "fpow",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "from_base64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "from_base64",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "FromBase64"
+  },
+  {
+   "name": "from_base64_binary",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "from_binary",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "from_binary",
+    "from_hex"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "from_hex",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "from_days",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "from_iso8601_date",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "from_iso8601_date",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "FromISO8601Date"
+  },
+  {
+   "name": "from_microsecond",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "from_millisecond",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "from_second",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "from_unixtime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "from_unixtime",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "UnixToTime"
+  },
+  {
+   "name": "frontends",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "frontends_disks",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "g",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "gcd",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "get_format",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "greatest",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "greatest",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "Greatest"
+  },
+  {
+   "name": "group_array_intersect",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "group_array_union",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "group_bit_and",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "group_bit_or",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "group_bit_xor",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "group_bitmap_xor",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "group_commit",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "group_concat",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "GroupConcat",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "listagg",
+   "renderedSql": "LISTAGG(a1, ',')",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "grouping",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Grouping",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "grouping_id",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "GroupingId",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hamming_distance",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "hamming_distance",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "hdfs",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hex",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Hex",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "to_hex",
+   "renderedSql": "TO_HEX(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "hist",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "hist",
+    "histogram"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "histogram",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "hll_cardinality",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hll_empty",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hll_from_base64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hll_hash",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hll_raw_agg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "hll_raw_agg",
+    "hll_union"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hll_to_base64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hll_union_agg",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hour",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "hour",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Hour"
+  },
+  {
+   "name": "hour_ceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hour_floor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hour_from_unixtime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hour_microsecond",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hour_minute",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hour_second",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hours_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hours_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hours_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "http",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "http_stream",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "hudi_meta",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "if",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "If",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "if",
+   "renderedSql": "IF(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "ifnull",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "ifnull",
+    "nvl"
+   ],
+   "nodeClass": "Coalesce",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "coalesce",
+   "renderedSql": "COALESCE(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "ignore",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "initcap",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Initcap",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "regexp_replace",
+   "renderedSql": "REGEXP_REPLACE(a1, '(\\w)(\\w*)', x -> UPPER(x[1]) || LOWER(x[2]))",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "inner_product",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "inner_product_approximate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "instr",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "StrPosition",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "strpos",
+   "renderedSql": "STRPOS(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "int_to_uuid",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "intersect_count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "interval",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Interval",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv4_cidr_to_range",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv4_num_to_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "inet_ntoa",
+    "ipv4_num_to_string"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv4_string_to_num",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv4_string_to_num_or_default",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv4_string_to_num_or_null",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "inet_aton",
+    "ipv4_string_to_num_or_null"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv4_to_ipv6",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv6_cidr_to_range",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv6_from_uint128_string_or_null",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv6_num_to_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "inet6_ntoa",
+    "ipv6_num_to_string"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv6_string_to_num",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv6_string_to_num_or_default",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ipv6_string_to_num_or_null",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "inet6_aton",
+    "ipv6_string_to_num_or_null"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "is_ip_address_in_range",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "is_ipv4_compat",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "is_ipv4_mapped",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "is_ipv4_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "is_ipv4",
+    "is_ipv4_string"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "is_ipv6_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "is_ipv6",
+    "is_ipv6_string"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "is_uuid",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "is_valid_utf8",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "is_valid_utf8",
+    "isvalidutf8"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "isinf",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "IsInf",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "is_inf",
+   "renderedSql": "IS_INF(a1)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "isnan",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "IsNan",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "is_nan",
+   "renderedSql": "IS_NAN(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "jobs",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_array",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_array",
+    "jsonb_array"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_array_ignore_null",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_array_ignore_null",
+    "jsonb_array_ignore_null"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_contains",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_each",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_each_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_each_text",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_each_text_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_exists_path",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_exists_path",
+    "jsonb_exists_path"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_extract_isnull",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_extract_isnull",
+    "jsonb_extract_isnull"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_extract_no_quotes",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_hash",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_hash",
+    "jsonb_hash"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_insert",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_insert",
+    "jsonb_insert"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_keys",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_keys",
+    "jsonb_keys"
+   ],
+   "nodeClass": "JSONKeys",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_length",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_object",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_object",
+    "jsonb_object"
+   ],
+   "nodeClass": "JSONObject",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "json_object",
+   "renderedSql": "JSON_OBJECT(a1: a2)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "json_object_flatten",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_quote",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_remove",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "JSONRemove",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_replace",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_replace",
+    "jsonb_replace"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_search",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_set",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_set",
+    "jsonb_set"
+   ],
+   "nodeClass": "JSONSet",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_type",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_type",
+    "jsonb_type"
+   ],
+   "nodeClass": "JSONType",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_unquote",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "json_valid",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_valid",
+    "jsonb_valid"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jsonb_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_extract",
+    "jsonb_extract"
+   ],
+   "nodeClass": "JSONBExtract",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "json_extract",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "jsonb_extract_bigint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "get_json_bigint",
+    "json_extract_bigint",
+    "jsonb_extract_bigint"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jsonb_extract_bool",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_extract_bool",
+    "jsonb_extract_bool"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jsonb_extract_double",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "get_json_double",
+    "json_extract_double",
+    "jsonb_extract_double"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jsonb_extract_int",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "get_json_int",
+    "json_extract_int",
+    "jsonb_extract_int"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jsonb_extract_largeint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_extract_largeint",
+    "jsonb_extract_largeint"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jsonb_extract_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "get_json_string",
+    "json_extract_string",
+    "jsonb_extract_string"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jsonb_parse",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_parse",
+    "jsonb_parse"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "json_parse",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "jsonb_parse_error_to_null",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_parse_error_to_null",
+    "jsonb_parse_error_to_null"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "jsonb_parse_error_to_value",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "json_parse_error_to_value",
+    "jsonb_parse_error_to_value"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "kurt",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "kurt",
+    "kurt_pop",
+    "kurtosis"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "kurtosis",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "l1_distance",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "l2_distance",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "EuclideanDistance",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "euclidean_distance",
+   "renderedSql": "EUCLIDEAN_DISTANCE(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "l2_distance_approximate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "lag",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "lag",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "Lag"
+  },
+  {
+   "name": "last_day",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "LastDay",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "last_day_of_month",
+   "renderedSql": "LAST_DAY_OF_MONTH(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "last_query_id",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "last_value",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "last_value",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "LastValue"
+  },
+  {
+   "name": "lcase",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "lcase",
+    "lower"
+   ],
+   "nodeClass": "Lower",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "lower",
+   "renderedSql": "LOWER(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "lcm",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "lead",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "lead",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "Lead"
+  },
+  {
+   "name": "least",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "least",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "Least"
+  },
+  {
+   "name": "left",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "left",
+    "strleft"
+   ],
+   "nodeClass": "Left",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "substr",
+   "renderedSql": "SUBSTR(a1, 1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "length",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "length",
+    "octet_length"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "length",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Length"
+  },
+  {
+   "name": "levenshtein",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "edit_distance",
+    "levenshtein",
+    "levenshtein_distance"
+   ],
+   "nodeClass": "Levenshtein",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "levenshtein_distance",
+   "renderedSql": "LEVENSHTEIN_DISTANCE(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "like",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Like",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "a2 LIKE a1",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "linear_histogram",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ln",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "dlog1",
+    "ln"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "ln",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Ln"
+  },
+  {
+   "name": "local",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "log",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "log",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Ln",
+   "sqlglotTranslatesTo": "ln",
+   "renderedSql": "LN(a1)"
+  },
+  {
+   "name": "log10",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "log10",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Log",
+   "sqlglotTranslatesTo": "log",
+   "renderedSql": "LOG(10, a1)"
+  },
+  {
+   "name": "log2",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "log2",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Log",
+   "sqlglotTranslatesTo": "log",
+   "renderedSql": "LOG(2, a1)"
+  },
+  {
+   "name": "lpad",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "lpad",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Pad"
+  },
+  {
+   "name": "ltrim",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "ltrim",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Trim"
+  },
+  {
+   "name": "ltrim_in",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "make_set",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "makedate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "maketime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "TimeFromParts",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "time_from_parts",
+   "renderedSql": "TIME_FROM_PARTS(a1, a2, a3)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "map",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "map",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Map"
+  },
+  {
+   "name": "map_agg_v1",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map_agg_v2",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "map_agg",
+    "map_agg_v2"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "map_agg",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "map_contains_entry",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map_contains_key",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "MapContainsKey",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map_contains_value",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map_entries",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "map_entries",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown"
+  },
+  {
+   "name": "map_keys",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "map_keys",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "MapKeys"
+  },
+  {
+   "name": "map_size",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "MapSize",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "map_values",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "map_values",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "mask",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "mask_first_n",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "mask_last_n",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "max",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "max",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "Max"
+  },
+  {
+   "name": "max_by",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "max_by",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArgMax"
+  },
+  {
+   "name": "max_map",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "md5",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "md5",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "MD5",
+   "sqlglotTranslatesTo": "lower",
+   "renderedSql": "LOWER(TO_HEX(MD5(a1)))"
+  },
+  {
+   "name": "md5sum",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "median",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Median",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "percentile_cont",
+   "renderedSql": "PERCENTILE_CONT(a1, 0.5)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "microsecond",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "microsecond_from_unixtime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "microsecond_timestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "microseconds_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "microseconds_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "microseconds_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "millisecond_timestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "milliseconds_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "milliseconds_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "milliseconds_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "min",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "min",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "Min"
+  },
+  {
+   "name": "min_by",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "min_by",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ArgMin"
+  },
+  {
+   "name": "min_map",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "minute",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "minute",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Minute"
+  },
+  {
+   "name": "minute_ceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "minute_floor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "minute_from_unixtime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "minute_microsecond",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "minute_second",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "minutes_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "minutes_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "minutes_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "money_format",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "month",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "month",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Month"
+  },
+  {
+   "name": "month_ceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "month_floor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "monthname",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "TimeToStr",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "date_format",
+   "renderedSql": "DATE_FORMAT(CAST(CAST(a1 AS TIMESTAMP) AS DATE), '%M')",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "months_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "add_months",
+    "months_add"
+   ],
+   "nodeClass": "AddMonths",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "add_months",
+   "renderedSql": "ADD_MONTHS(a1, a2)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "months_between",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "MonthsBetween",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "months_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "months_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "multi_distinct_count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "multi_distinct_group_concat",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "multi_distinct_sum",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "multi_distinct_sum0",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "multi_match",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "multi_match_any",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "multi_search_all_positions",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "murmur_hash3_128",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "murmur_hash3_32",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "murmur_hash3_64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "murmur_hash3_64_v2",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "murmur_hash3_u128",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "murmur_hash3_u64_v2",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "mv_infos",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "named_struct",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "negative",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Negative",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "next_day",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "NextDay",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "ngram_search",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "non_nullable",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "normal_cdf",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "normal_cdf",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "normalize_json_numbers_to_double",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "normalize_json_numbers_to_double",
+    "normalize_jsonb_numbers_to_double"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "not_null_or_empty",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "now",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "current_timestamp",
+    "localtime",
+    "localtimestamp",
+    "now"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "now",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "nth_value",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "nth_value",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "NthValue"
+  },
+  {
+   "name": "ntile",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "ntile",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Ntile"
+  },
+  {
+   "name": "null_or_empty",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "nullable",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "nullif",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Nullif",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "numbers",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "orthogonal_bitmap_expr_calculate",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "orthogonal_bitmap_expr_calculate_count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "orthogonal_bitmap_intersect",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "orthogonal_bitmap_intersect_count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "orthogonal_bitmap_union_count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "overlay",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "insert",
+    "overlay"
+   ],
+   "nodeClass": "Overlay",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_bloom_probe",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_file_metadata",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_kv_metadata",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parquet_meta",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "parse_data_size",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "parse_data_size",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "parse_url",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "ParseUrl",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "partition_values",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "partitions",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "password",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "percent_rank",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "percent_rank",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "PercentRank"
+  },
+  {
+   "name": "percentile",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "percentile",
+    "percentile_cont"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "percentile_approx",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "percentile_approx_weighted",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "percentile_array",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "percentile_reservoir",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "period_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "period_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pi",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "pi",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Pi"
+  },
+  {
+   "name": "pmod",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "posexplode",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Posexplode",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "posexplode_outer",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "PosexplodeOuter",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "position",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "locate",
+    "position"
+   ],
+   "nodeClass": "StrPosition",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "strpos",
+   "renderedSql": "STRPOS(a2, a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "positive",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "pow",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "pow",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Pow",
+   "sqlglotTranslatesTo": "power",
+   "renderedSql": "POWER(a1, a2)"
+  },
+  {
+   "name": "power",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "power",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Pow"
+  },
+  {
+   "name": "previous_day",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "PreviousDay",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "protocol",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quantile_percent",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quantile_state_empty",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quantile_state_from_base64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quantile_state_to_base64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quantile_union",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quarter",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "quarter",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Quarter"
+  },
+  {
+   "name": "quarter_ceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quarter_floor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quarters_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quarters_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quarters_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "query",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "quote",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "radians",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "radians",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Radians"
+  },
+  {
+   "name": "rand",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "rand",
+    "random"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "rand",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Rand"
+  },
+  {
+   "name": "random_bytes",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "rank",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "rank",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "Rank"
+  },
+  {
+   "name": "regexp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "RegexpLike",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "regexp_like",
+   "renderedSql": "REGEXP_LIKE(a1, a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "regexp_count",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "regexp_count",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "RegexpCount"
+  },
+  {
+   "name": "regexp_extract",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "regexp_extract",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "RegexpExtract"
+  },
+  {
+   "name": "regexp_extract_all",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "regexp_extract_all",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "RegexpExtractAll"
+  },
+  {
+   "name": "regexp_extract_or_null",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regexp_replace",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "regexp_replace",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "RegexpReplace"
+  },
+  {
+   "name": "regexp_replace_one",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_avgx",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "RegrAvgx",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_avgy",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "RegrAvgy",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "RegrCount",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_intercept",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "regr_intercept",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "RegrIntercept"
+  },
+  {
+   "name": "regr_r2",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "RegrR2",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_slope",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "regr_slope",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "RegrSlope"
+  },
+  {
+   "name": "regr_sxx",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "RegrSxx",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_sxy",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "RegrSxy",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "regr_syy",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "RegrSyy",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "repeat",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "repeat",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Repeat"
+  },
+  {
+   "name": "replace",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "replace",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Replace"
+  },
+  {
+   "name": "replace_empty",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "retention",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "reverse",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "reverse",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Reverse"
+  },
+  {
+   "name": "right",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "right",
+    "strright"
+   ],
+   "nodeClass": "Right",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "substr",
+   "renderedSql": "SUBSTR(a1, LENGTH(a1) - (a2 - 1))",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "round",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "round",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Round"
+  },
+  {
+   "name": "round_bankers",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "row_number",
+   "kind": "window",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "row_number",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-unknown",
+   "nodeClass": "RowNumber"
+  },
+  {
+   "name": "rpad",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "rpad",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Pad"
+  },
+  {
+   "name": "rtrim",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "rtrim",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Trim"
+  },
+  {
+   "name": "rtrim_in",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "s3",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "score",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "search",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Search",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sec",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Sec",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sec_to_time",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "second",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "second",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Second"
+  },
+  {
+   "name": "second_ceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "second_floor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "second_from_unixtime",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "second_microsecond",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "second_timestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "seconds_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "seconds_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "seconds_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sem",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sequence_count",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sequence_match",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "session_user",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "SessionUser",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "SESSION_USER",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "sha1",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "sha",
+    "sha1"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sha1",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "SHA"
+  },
+  {
+   "name": "sha2",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "SHA2",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "lower",
+   "renderedSql": "LOWER(TO_HEX(SHA256(a1)))",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "sign",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sign",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Sign"
+  },
+  {
+   "name": "signbit",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sin",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sin",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Sin"
+  },
+  {
+   "name": "sinh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sinh",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Sinh"
+  },
+  {
+   "name": "skew",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "skew",
+    "skew_pop",
+    "skewness"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "skewness",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "sleep",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sm3",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sm3sum",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sm4_decrypt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sm4_encrypt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sort_json_object_keys",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "sort_json_object_keys",
+    "sort_jsonb_object_keys"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "soundex",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "soundex",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Soundex"
+  },
+  {
+   "name": "space",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Space",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "repeat",
+   "renderedSql": "REPEAT(' ', a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "split_by_regexp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "regexp_split_to_array",
+    "split_by_regexp"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "split_by_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "split",
+    "split_by_string"
+   ],
+   "nodeClass": "StringToArray",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "string_to_array",
+   "renderedSql": "STRING_TO_ARRAY(a1, a2)",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "split_part",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "split_part",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "SplitPart"
+  },
+  {
+   "name": "sqrt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sqrt",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Sqrt"
+  },
+  {
+   "name": "st_angle",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_angle_sphere",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_area_square_km",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_area_square_meters",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_asbinary",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_asbinary",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_astext",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_astext",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_aswkt",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_azimuth",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_circle",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_contains",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_contains",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_disjoint",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_disjoint",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_distance",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_distance",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "StDistance"
+  },
+  {
+   "name": "st_distance_sphere",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_geometries",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_geometries",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_geometryfromtext",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_geometryfromtext",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_geometryfromwkb",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_geometrytype",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_geometrytype",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_geomfromtext",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_geomfromwkb",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_intersects",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_intersects",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_length",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_length",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_linefromtext",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_linefromtext",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_linestringfromtext",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_numgeometries",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_numgeometries",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_numpoints",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "st_npoints",
+    "st_numpoints"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_numpoints",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_point",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_point",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "StPoint"
+  },
+  {
+   "name": "st_polyfromtext",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_polygon",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_polygon",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_polygonfromtext",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "st_touches",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_touches",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_x",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_x",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "st_y",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "st_y",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "starts_with",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "starts_with",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "StartsWith"
+  },
+  {
+   "name": "stddev_pop",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "std",
+    "stddev",
+    "stddev_pop"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "stddev_pop",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "StddevPop"
+  },
+  {
+   "name": "stddev_samp",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "stddev_samp",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "StddevSamp"
+  },
+  {
+   "name": "str_to_date",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "StrToDate",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "cast",
+   "renderedSql": "CAST(DATE_PARSE(a1, a2) AS DATE)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "str_to_map",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "StrToMap",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "split_to_map",
+   "renderedSql": "SPLIT_TO_MAP(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "strcmp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "strip_null_value",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "StripNullValue",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "struct",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Struct",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "row",
+   "renderedSql": "ROW()",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "sub_binary",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sub_bitmap",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sub_replace",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sub_time",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "substr",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "mid",
+    "substr",
+    "substring"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "substr",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Substring"
+  },
+  {
+   "name": "substring_index",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "SubstringIndex",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sum",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "sum",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Sum"
+  },
+  {
+   "name": "sum0",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "sum_map",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "tan",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "tan",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Tan"
+  },
+  {
+   "name": "tanh",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "tanh",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Tanh"
+  },
+  {
+   "name": "tasks",
+   "kind": "table_valued",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "time",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Time",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "time_format",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "time_to_sec",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "timediff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "timestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Timestamp",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "cast",
+   "renderedSql": "CAST(a1 AS TIMESTAMP)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "to_base64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "to_base64",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "ToBase64"
+  },
+  {
+   "name": "to_base64_binary",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_binary",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "to_binary",
+    "to_hex"
+   ],
+   "nodeClass": "ToBinary",
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c2",
+     "target": "to_hex",
+     "via": "source alias set"
+    }
+   ]
+  },
+  {
+   "name": "to_bitmap",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_bitmap_with_check",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_date",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "to_date",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-suspect",
+   "nodeClass": "TsOrDsToDate",
+   "sqlglotTranslatesTo": "cast",
+   "renderedSql": "CAST(CAST(a1 AS TIMESTAMP) AS DATE)"
+  },
+  {
+   "name": "to_datev2",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_days",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Paren",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "(DATE_DIFF('DAY', CAST(CAST('0000-01-01' AS TIMESTAMP) AS DATE), CAST(CAST(a1 AS TIMESTAMP) AS DATE)) + 1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "to_ipv4",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_ipv4_or_default",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_ipv4_or_null",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_ipv6",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_ipv6_or_default",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_ipv6_or_null",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_iso8601",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "to_iso8601",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "to_json",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_monday",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_quantile_state",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "to_seconds",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "tokenize",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "top_level_domain",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "topn",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "topn_array",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "topn_weighted",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "translate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "translate",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Translate"
+  },
+  {
+   "name": "trim",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "trim",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Trim"
+  },
+  {
+   "name": "trim_in",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "truncate",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "truncate",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Trunc"
+  },
+  {
+   "name": "ucase",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "ucase",
+    "upper"
+   ],
+   "nodeClass": "Upper",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "upper",
+   "renderedSql": "UPPER(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "uncompress",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "unhex",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Unhex",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "from_hex",
+   "renderedSql": "FROM_HEX(a1)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "unhex_null",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "unicode_normalize",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "uniform",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Uniform",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "unix_timestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "unnest",
+   "kind": "table_generating",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Unnest",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "url_decode",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "url_decode",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "url_encode",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "url_encode",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible"
+  },
+  {
+   "name": "user",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "utc_date",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "UtcDate",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "current_date",
+   "renderedSql": "CURRENT_DATE('UTC')",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "utc_time",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "UtcTime",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "CURRENT_TIME",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "utc_timestamp",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "UtcTimestamp",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "CURRENT_TIMESTAMP",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "uuid",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "uuid",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Uuid"
+  },
+  {
+   "name": "uuid_numeric",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "uuid_to_int",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "var_pop",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "var_pop",
+    "variance",
+    "variance_pop"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "var_pop",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "VariancePop"
+  },
+  {
+   "name": "var_samp",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "var_samp",
+    "variance_samp"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "var_samp",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Variance",
+   "sqlglotTranslatesTo": "variance",
+   "renderedSql": "VARIANCE(a1)"
+  },
+  {
+   "name": "variant_type",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "version",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "CurrentVersion",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "transforms",
+   "targetRendering": "version",
+   "renderedSql": "VERSION()",
+   "renderCheck": "ok",
+   "renderedNameNotInTargetCatalog": true
+  },
+  {
+   "name": "week",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "week",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Week"
+  },
+  {
+   "name": "week_ceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "week_floor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "weekday",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "weekofyear",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "WeekOfYear",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "renamed",
+   "targetRendering": "week_of_year",
+   "renderedSql": "WEEK_OF_YEAR(CAST(CAST(a1 AS TIMESTAMP) AS DATE))",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "weeks_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "weeks_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "weeks_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "width_bucket",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "width_bucket",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "WidthBucket"
+  },
+  {
+   "name": "window_funnel_v1",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "window_funnel_v2",
+   "kind": "aggregate",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "window_funnel",
+    "window_funnel_v2"
+   ],
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "xor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "nodeClass": "Xor",
+   "bucket": "B",
+   "classification": "typed-rewrite",
+   "specialVia": "expression-render",
+   "renderedSql": "(a1 AND (NOT a2)) OR ((NOT a1) AND a2)",
+   "renderCheck": "ok"
+  },
+  {
+   "name": "xpath_string",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "xxhash_32",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "xxhash_64",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "xxhash3_64",
+    "xxhash_64"
+   ],
+   "bucket": "C",
+   "classification": "rename-candidate",
+   "candidates": [
+    {
+     "evidence": "c3",
+     "target": "xxhash64",
+     "via": "lexical normalization (HINT ONLY)"
+    }
+   ]
+  },
+  {
+   "name": "year",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "year",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "Year"
+  },
+  {
+   "name": "year_ceil",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "year_floor",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "year_month",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "year_of_week",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "aliases": [
+    "year_of_week",
+    "yow"
+   ],
+   "bucket": "A",
+   "classification": "same-name",
+   "targetName": "year_of_week",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "arity": "arity-compatible",
+   "nodeClass": "YearOfWeek"
+  },
+  {
+   "name": "years_add",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "years_diff",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "years_sub",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  },
+  {
+   "name": "yearweek",
+   "kind": "scalar",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "bucket": "D",
+   "classification": "no-equivalent-evidence"
+  }
+ ]
+}
