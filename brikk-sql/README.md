@@ -6,7 +6,7 @@ extension: **BigQuery/GoogleSQL pipe syntax (`|>`) is kept first-class in the AS
 of being desugared away at parse time.
 
 Parity with sqlglot is enforced by differential test gates against the pinned upstream
-(`v30.12.0-44-g93d16591`): token streams, AST structure (serde-compared), and generated SQL
+(`v30.17.0-72-gbac1a897b`): token streams, AST structure (serde-compared), and generated SQL
 are verified byte-for-byte against the Python implementation across thousands of corpus
 cases. See `docs/parsing-research-and-plan.md` at the repo root for architecture and status.
 
@@ -235,7 +235,10 @@ there is no silent misparsing.
   enforced two-directionally (a stale ledger entry fails the build). Remaining entries
   are few and documented (e.g. UPDATE ... FROM rewrites, `explode_projection_to_unnest`).
 - Deliberate divergences from upstream sqlglot are registered in
-  `docs/brikk-extensions.md` (15 entries, most upstream-PR candidates).
+  `docs/brikk-extensions.md` (18 entries, most upstream-PR candidates).
+  Verifier-backed entries there are intentional and must not be copied into
+  actionable TODO inventories or "fixed" toward SQLGlot unless that policy is
+  reversed.
 
 ## Attribution
 

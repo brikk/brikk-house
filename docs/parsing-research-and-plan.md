@@ -2,7 +2,7 @@
 
 Status: research complete, plan is rough/for discussion.
 Scope: SQL parsing side of brikk (pipe-stage parsing first, sqlglot-level parity as the horizon).
-Reference repos live in `reference/` (sqlglot @ `v30.12.0-44-g93d16591` — all sqlglot claims
+Reference repos live in `reference/` (sqlglot @ `v30.17.0-72-gbac1a897b` — all sqlglot claims
 below are pinned to that version; the pipe operator table in particular grows most releases —
 plus polyglot, sql-glot-rust, trino, doris, datafusion, calcite, googlesql).
 

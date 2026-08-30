@@ -1,14 +1,22 @@
 package dev.brikk.house.sql
 
+import dev.brikk.house.sql.ast.Cast
+import dev.brikk.house.sql.ast.JSONExtract
+import dev.brikk.house.sql.ast.Literal
+import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.dialects.transpile
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 
 /**
  * Hand assertions for the Postgres dialect wiring, each verified against the Python
- * oracle (reference/sqlglot v30.12.0-44-g93d16591): :: casts, JSON arrow operators,
+ * oracle (reference/sqlglot v30.17.0-72-gbac1a897b): :: casts, JSON arrow operators,
  * regex operators, TO_CHAR time mapping, SERIAL-to-GENERATED, array slices with the
  * bracket-paren rule, GENERATE_SERIES transpilation and ON CONFLICT ... RETURNING.
  */
@@ -30,6 +38,32 @@ class PostgresDialectTest {
             "SELECT x ? 'k'",
             transpile("SELECT x ? 'k'", read = "postgres", write = ""),
         )
+    }
+
+    @Test
+    fun dynamicJsonArrowFromLiteralCastsSource() {
+        assertEquals(
+            "SELECT CAST('{\"a\": 1}' AS JSON) -> key FROM t",
+            roundTrip("SELECT '{\"a\": 1}' -> key FROM t"),
+        )
+    }
+
+    @Test
+    fun literalJsonArrowPreservesOwnershipWithCopyFalse() {
+        val extract = assertIs<JSONExtract>(parseOne("'{\"a\": 1}' -> key", "postgres"))
+        val originalLiteral = assertIs<Literal>(extract.thisArg)
+
+        assertEquals(
+            "CAST('{\"a\": 1}' AS JSON) -> key",
+            Dialects.POSTGRES.generate(extract, copy = false),
+        )
+
+        val cast = assertIs<Cast>(extract.thisArg)
+        val castLiteral = assertIs<Literal>(cast.thisArg)
+        assertSame(extract, cast.parent)
+        assertSame(cast, castLiteral.parent)
+        assertNotSame(originalLiteral, castLiteral)
+        assertNull(originalLiteral.parent)
     }
 
     @Test

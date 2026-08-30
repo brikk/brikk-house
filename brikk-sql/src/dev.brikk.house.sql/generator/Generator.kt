@@ -262,6 +262,10 @@ open class Generator(
     open val supportsUescape: Boolean get() = true
     open val supportsAlterColumnIfExists: Boolean get() = false
     open val historicalDataPostAlias: Boolean get() = false
+    // sqlglot: Dialect.SET_OP_DISTINCT_BY_DEFAULT (base: all true)
+    open fun setOpDistinctByDefault(expression: SetOperation): Boolean? = true
+    // sqlglot: Generator.SAFE_JSON_PATH_KEY_RE
+    open val safeJsonPathKeyRegex: Regex get() = SAFE_IDENTIFIER_RE
 
     // --- Dialect-level flags (base dialect values) ---
     // sqlglot: Generator.dialect (the umbrella Dialect object; used by annotate_types-
@@ -746,6 +750,14 @@ open class Generator(
         val rowFormatAfter = sql(expression, "row_format_after").let { if (it.isNotEmpty()) " $it" else "" }
         val recordReader = sql(expression, "record_reader").let { if (it.isNotEmpty()) " RECORDREADER $it" else "" }
         return "$transform$rowFormatBefore$recordWriter$using$schema$rowFormatAfter$recordReader"
+    }
+
+    // sqlglot bac1a897b: Generator.export_sql.
+    open fun exportSql(expression: Export): String {
+        val connection = sql(expression, "connection").let {
+            if (it.isNotEmpty()) "WITH CONNECTION $it " else ""
+        }
+        return "EXPORT DATA $connection${sql(expression, "options")} AS ${sql(expression, "this")}"
     }
 
     // sqlglot: Generator.declareitem_sql
@@ -1529,12 +1541,14 @@ open class Generator(
             unsupported("$opName ALL is not supported")
         }
 
-        // sqlglot: Dialect.SET_OP_DISTINCT_BY_DEFAULT (base: all true)
-        val defaultDistinct = true
+        val defaultDistinct = setOpDistinctByDefault(expression)
 
-        if (distinct == null) distinct = defaultDistinct
+        if (distinct == null) {
+            distinct = defaultDistinct
+            if (distinct == null) unsupported("$opName requires DISTINCT or ALL to be specified")
+        }
 
-        val distinctOrAll = if (distinct == defaultDistinct) "" else if (distinct) " DISTINCT" else " ALL"
+        val distinctOrAll = if (distinct == defaultDistinct) "" else if (distinct == true) " DISTINCT" else " ALL"
 
         var sideKind = listOf(expression.text("side").uppercase(), expression.text("kind").uppercase())
             .filter { it.isNotEmpty() }
@@ -3473,7 +3487,7 @@ open class Generator(
         val quoted = expression.args["quoted"] == true
         if (
             !(quoted && jsonPathKeyQuotedForcesBrackets) &&
-            thisArg is String && SAFE_IDENTIFIER_RE.matches(thisArg)
+            thisArg is String && safeJsonPathKeyRegex.matches(thisArg)
         ) {
             return ".$thisArg"
         }
@@ -5155,6 +5169,68 @@ open class Generator(
             expression.sqlName()
         }
         return func(name, *args.toTypedArray())
+    }
+
+    // sqlglot bac1a897b: Generator._ml_sql and specialized BigQuery ML/AI TVFs.
+    open fun mlSql(expression: Expression, name: String): String {
+        val model = "MODEL ${sql(expression, "this")}"
+        val expressionArg = expression.args["expression"]
+        val expressionSql = if (expressionArg != null && expressionArg != false) {
+            val rendered = sql(expression, "expression")
+            if (expressionArg is Table) "TABLE $rendered" else rendered
+        } else null
+        val parameters = sql(expression, "params_struct").ifEmpty { null }
+        return func(name, model, expressionSql, parameters)
+    }
+
+    open fun predictSql(expression: Predict): String = mlSql(expression, "PREDICT")
+
+    open fun generateembeddingSql(expression: GenerateEmbedding): String =
+        mlSql(expression, if (expression.args["is_text"] == true) "GENERATE_TEXT_EMBEDDING" else "GENERATE_EMBEDDING")
+
+    open fun generatetextSql(expression: GenerateText): String = mlSql(expression, "GENERATE_TEXT")
+    open fun generatetableSql(expression: GenerateTable): String = mlSql(expression, "GENERATE_TABLE")
+    open fun generateboolSql(expression: GenerateBool): String = mlSql(expression, "GENERATE_BOOL")
+    open fun generateintSql(expression: GenerateInt): String = mlSql(expression, "GENERATE_INT")
+    open fun generatedoubleSql(expression: GenerateDouble): String = mlSql(expression, "GENERATE_DOUBLE")
+    open fun mltranslateSql(expression: MLTranslate): String = mlSql(expression, "TRANSLATE")
+    open fun mlforecastSql(expression: MLForecast): String = mlSql(expression, "FORECAST")
+
+    open fun aiforecastSql(expression: AIForecast): String {
+        val thisArg = expression.args["this"]
+        val thisSql = (if (thisArg is Table) "TABLE " else "") + sql(expression, "this")
+        return func(
+            "FORECAST", thisSql, expression.args["data_col"], expression.args["timestamp_col"],
+            expression.args["model"], expression.args["id_cols"], expression.args["horizon"],
+            expression.args["forecast_end_timestamp"], expression.args["confidence_level"],
+            expression.args["output_historical_time_series"], expression.args["context_window"],
+        )
+    }
+
+    open fun featuresattimeSql(expression: FeaturesAtTime): String {
+        val thisArg = expression.args["this"]
+        val thisSql = (if (thisArg is Table) "TABLE " else "") + sql(expression, "this")
+        return func(
+            "FEATURES_AT_TIME", thisSql, expression.args["time"], expression.args["num_rows"],
+            expression.args["ignore_feature_nulls"],
+        )
+    }
+
+    open fun vectorsearchSql(expression: VectorSearch): String {
+        val thisArg = expression.args["this"]
+        val queryArg = expression.args["query_table"]
+        val thisSql = (if (thisArg is Table) "TABLE " else "") + sql(expression, "this")
+        val querySql = (if (queryArg is Table) "TABLE " else "") + sql(expression, "query_table")
+        return func(
+            "VECTOR_SEARCH", thisSql, expression.args["column_to_search"], querySql,
+            expression.args["query_column_to_search"], expression.args["top_k"],
+            expression.args["distance_type"], expression.args["options"],
+        )
+    }
+
+    open fun gapfillSql(expression: GapFill): String {
+        val rest = expression.args.entries.filter { it.key != "this" }.map { it.value }.toTypedArray()
+        return func("GAP_FILL", "TABLE ${sql(expression, "this")}", *rest)
     }
 
     // sqlglot: Generator.parameterizedagg_sql

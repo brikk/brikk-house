@@ -415,6 +415,20 @@ object GeneratorTables {
         reg(Rand::class) { e -> randSql(e as Rand) }
         reg(ParseJSON::class) { e -> parsejsonSql(e as ParseJSON) }
         reg(Struct::class) { e -> structSql(e as Struct) }
+        // sqlglot bac1a897b: grammar-shaped ML/AI and table-valued functions.
+        reg(Predict::class) { e -> predictSql(e as Predict) }
+        reg(GenerateEmbedding::class) { e -> generateembeddingSql(e as GenerateEmbedding) }
+        reg(GenerateText::class) { e -> generatetextSql(e as GenerateText) }
+        reg(GenerateTable::class) { e -> generatetableSql(e as GenerateTable) }
+        reg(GenerateBool::class) { e -> generateboolSql(e as GenerateBool) }
+        reg(GenerateInt::class) { e -> generateintSql(e as GenerateInt) }
+        reg(GenerateDouble::class) { e -> generatedoubleSql(e as GenerateDouble) }
+        reg(MLTranslate::class) { e -> mltranslateSql(e as MLTranslate) }
+        reg(MLForecast::class) { e -> mlforecastSql(e as MLForecast) }
+        reg(AIForecast::class) { e -> aiforecastSql(e as AIForecast) }
+        reg(FeaturesAtTime::class) { e -> featuresattimeSql(e as FeaturesAtTime) }
+        reg(VectorSearch::class) { e -> vectorsearchSql(e as VectorSearch) }
+        reg(GapFill::class) { e -> gapfillSql(e as GapFill) }
         reg(Ceil::class) { e -> ceilFloor(e) } // sqlglot: TRANSFORMS[Ceil]
         reg(Floor::class) { e -> ceilFloor(e) } // sqlglot: TRANSFORMS[Floor]
         reg(VarMap::class) { e -> func("MAP", e.args["keys"], e.args["values"]) }
@@ -465,6 +479,7 @@ object GeneratorTables {
         reg(Declare::class) { e -> declareSql(e as Declare) }
         reg(DeclareItem::class) { e -> declareitemSql(e as DeclareItem) }
         reg(QueryTransform::class) { e -> querytransformSql(e as QueryTransform) }
+        reg(Export::class) { e -> exportSql(e as Export) }
         reg(SetNode::class) { e -> setSql(e as SetNode) }
         reg(SetItem::class) { e -> setitemSql(e as SetItem) }
         reg(Use::class) { e -> useSql(e as Use) }
@@ -712,6 +727,10 @@ object GeneratorTables {
             "ON COMMIT ${if (e.args["delete"] == true) "DELETE" else "PRESERVE"} ROWS"
         }
         reg(OutputModelProperty::class) { e -> "OUTPUT${sql(e, "this")}" }
+        // sqlglot bac1a897b: reusable model property renderers.
+        reg(RemoteWithConnectionModelProperty::class) { e ->
+            "REMOTE WITH CONNECTION ${sql(e, "this")}"
+        }
         reg(ReturnsProperty::class) { e ->
             // sqlglot: TRANSFORMS[ReturnsProperty]
             if (e.args["null"] == true) "RETURNS NULL ON NULL INPUT" else nakedProperty(e as Property)
@@ -736,6 +755,9 @@ object GeneratorTables {
         reg(Tags::class) { e -> "TAG (${expressions(e, flat = true)})" }
         reg(TemporaryProperty::class) { _ -> "TEMPORARY" }
         reg(ToTableProperty::class) { e -> "TO ${sql(e.thisArg)}" }
+        reg(TransformModelProperty::class) { e ->
+            func("TRANSFORM", *e.expressionsArg.toTypedArray())
+        }
         reg(TransientProperty::class) { _ -> "TRANSIENT" }
         reg(UnloggedProperty::class) { _ -> "UNLOGGED" }
         reg(UppercaseColumnConstraint::class) { _ -> "UPPERCASE" }

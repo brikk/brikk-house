@@ -32,14 +32,12 @@ private fun unitToVar(expression: Expression, default: String = "DAY"): Expressi
  * method overrides are handed to the base constructor as a dispatch overlay; flag
  * overrides are open-val overrides.
  *
- * NOT PORTED (ledgered — need transform/annotate infrastructure the port lacks):
- *  - the exp.Select preprocess pipeline (explode_projection_to_unnest, unqualify_unnest,
- *    eliminate_distinct_on, _alias_ordered_group, eliminate_semi_and_anti_joins);
- *  - exp.CTE _pushdown_cte_column_names, exp.Create _create_sql (TABLE FUNCTION), the
- *    exp.Values -> UNNEST(ARRAY<STRUCT>) rewrite, exp.ArrayContains -> EXISTS(UNNEST),
+ * NOT PORTED (need transform/annotate infrastructure the port lacks):
+ *  - the remaining exp.Select preprocess steps (explode_projection_to_unnest and
+ *    unqualify_unnest);
+ *  - exp.CTE _pushdown_cte_column_names, the exp.Values -> UNNEST(ARRAY<STRUCT>) rewrite,
  *    ArrayFilter/ArrayRemove filter_array_using_unnest;
  *  - annotate_types-dependent branches of bracket_sql (STRUCT field access);
- *  - the AFTER_HAVING_MODIFIER ordering (QUALIFY before WINDOW).
  */
 // sqlglot: generators.bigquery.BigQueryGenerator
 open class BigqueryGenerator(
@@ -91,6 +89,15 @@ open class BigqueryGenerator(
     override val supportsExplodingProjections: Boolean get() = false
     override val exceptIntersectSupportAllClause: Boolean get() = false
     override val reservedKeywords: Set<String> get() = RESERVED_KEYWORDS
+
+    // sqlglot: BigQuery dialect-level generator settings.
+    override val dialectAliasPostVersion: Boolean get() = false
+    override val dialectPreserveOriginalNames: Boolean get() = true
+    override val dialectStringsSupportEscapedSequences: Boolean get() = true
+    override val dialectByteStringsSupportEscapedSequences: Boolean get() = true
+    override val escapedSequences: Map<String, String> get() = ESCAPED_SEQUENCES
+    override fun setOpDistinctByDefault(expression: SetOperation): Boolean? = null
+    override val safeJsonPathKeyRegex: Regex get() = SAFE_JSON_PATH_KEY_RE
 
     override val typeMapping: Map<DType, String> get() = TYPE_MAPPING
 
@@ -212,6 +219,61 @@ open class BigqueryGenerator(
     override fun versionSql(expression: Version): String {
         if (expression.name == "TIMESTAMP") expression.set("this", "SYSTEM_TIME")
         return super.versionSql(expression)
+    }
+
+    // sqlglot bac1a897b: BigQuery requires QUALIFY before WINDOW.
+    override fun afterHavingModifierSqls(expression: Expression): List<String> = listOf(
+        sql(expression, "qualify"),
+        windowsModifierSql(expression),
+    )
+
+    // sqlglot bac1a897b: BigQuery TABLE FUNCTION normalization.
+    override fun createSql(expression: Create): String {
+        val returns = expression.find(ReturnsProperty::class) as? ReturnsProperty
+        if (expression.text("kind") == "FUNCTION" && returns?.args?.get("is_table") == true) {
+            expression.set("kind", "TABLE FUNCTION")
+            val body = expression.args["expression"]
+            if (body is Subquery || body is Literal) expression.set("expression", body.thisArg)
+        }
+        return super.createSql(expression)
+    }
+
+    // sqlglot bac1a897b: BigQuery renders RETURNS TABLE schemas with angle brackets.
+    fun returnspropertySql(expression: ReturnsProperty): String {
+        val thisArg = expression.args["this"]
+        val rendered = if (thisArg is Schema) {
+            "${sql(thisArg, "this")} <${expressions(thisArg)}>"
+        } else {
+            sql(thisArg)
+        }
+        return "RETURNS $rendered"
+    }
+
+    // sqlglot bac1a897b: _array_contains_sql lowers to EXISTS over UNNEST.
+    fun arrayContainsSql(expression: ArrayContains): String {
+        val unnest = Unnest(
+            args(
+                "expressions" to listOf((expression.args["this"] as Expression).copy()),
+                "alias" to TableAlias(args("this" to toIdentifier("_col"))),
+            )
+        )
+        val select = Select(
+            args(
+                "expressions" to listOf(Literal.number("1")),
+                "from_" to From(args("this" to unnest)),
+                "where" to Where(
+                    args(
+                        "this" to EQ(
+                            args(
+                                "this" to column("_col"),
+                                "expression" to (expression.args["expression"] as Expression).copy(),
+                            )
+                        )
+                    )
+                ),
+            )
+        )
+        return sql(Exists(args("this" to select)))
     }
 
     // sqlglot: BigQueryGenerator.clusterproperty_sql
@@ -359,6 +421,15 @@ open class BigqueryGenerator(
         val INVERSE_FORMAT_MAPPING: Map<String, String> =
             BigqueryDialect.FORMAT_MAPPING.entries.associate { (k, v) -> v to k }
 
+        // sqlglot: BigQuery.ESCAPED_SEQUENCES, inverted from UNESCAPED_SEQUENCES.
+        val ESCAPED_SEQUENCES: Map<String, String> =
+            BigqueryTokenizerTables.UNESCAPED_SEQUENCES.entries.associate { (escaped, value) ->
+                value to escaped
+            }
+
+        // sqlglot bac1a897b: BigQueryGenerator.SAFE_JSON_PATH_KEY_RE.
+        val SAFE_JSON_PATH_KEY_RE = Regex("(?U)^[\\-\\w]*$")
+
         // sqlglot: BigQueryGenerator.TYPE_MAPPING (base generator.Generator.TYPE_MAPPING
         // defaults + BigQuery overrides)
         val TYPE_MAPPING: Map<DType, String> = buildMap {
@@ -435,6 +506,7 @@ open class BigqueryGenerator(
                     ) + "]"
                 }
             }
+            reg(ArrayContains::class) { e -> bg().arrayContainsSql(e as ArrayContains) }
             reg(AIEmbed::class) { e -> bg().renameFuncSql("EMBED", e) }
             reg(AIGenerate::class) { e -> bg().renameFuncSql("GENERATE", e) }
             reg(AISimilarity::class) { e -> bg().renameFuncSql("SIMILARITY", e) }
@@ -482,7 +554,9 @@ open class BigqueryGenerator(
                     e.args["options"],
                 )
             }
-            reg(JSONKeysAtDepth::class) { e -> bg().renameFuncSql("JSON_KEYS", e) }
+            reg(JSONKeysAtDepth::class) { e ->
+                func("JSON_KEYS", e.args["this"], e.args["expression"], e.args["mode"])
+            }
             reg(JSONValueArray::class) { e -> bg().renameFuncSql("JSON_VALUE_ARRAY", e) }
             reg(MD5::class) { e -> func("TO_HEX", func("MD5", e.args["this"])) }
             reg(MD5Digest::class) { e -> bg().renameFuncSql("MD5", e) }
@@ -510,18 +584,34 @@ open class BigqueryGenerator(
             reg(ParseDatetime::class) { e -> func("PARSE_DATETIME", bg().formatTime(e), e.args["this"]) }
             // sqlglot bigquery order: [explode_projection_to_unnest(), unqualify_unnest,
             // eliminate_distinct_on, _alias_ordered_group, eliminate_semi_and_anti_joins].
-            // explode_projection_to_unnest and _alias_ordered_group remain NOT PORTED
-            // (ledgered). unqualify_unnest is also NOT wired here: our parser stores an
+            // explode_projection_to_unnest remains NOT PORTED. unqualify_unnest is also
+            // not wired here: our parser stores an
             // explicit UNNEST alias in TableAlias.this (sqlglot's bigquery parser moves it
             // to TableAlias.columns via _implicit_unnests_to_explicit), so sqlglot's
             // .alias-based unnest-alias collection is a no-op there while ours would
             // over-strip `h.c2` -> `c2`. Porting it cleanly needs the parser-side implicit
-            // unnest rewrite; left ledgered.
+            // unnest rewrite, so it remains unported.
             reg(Select::class) { e ->
                 var s = eliminateDistinctOn(e)
+                // sqlglot bac1a897b: _alias_ordered_group works around BigQuery's grouped
+                // expression + ordered alias bug by grouping on the projection alias.
+                val select = s as Select
+                val group = select.args["group"] as? Group
+                val order = select.args["order"] as? Order
+                if (group != null && order != null) {
+                    val aliases = select.expressionsArg.filterIsInstance<Alias>().associate {
+                        (it.args["this"] as Expression) to (it.args["alias"] as Expression)
+                    }
+                    for (grouped in group.expressionsArg.filterIsInstance<Expression>()) {
+                        if (!grouped.isInt) {
+                            aliases[grouped]?.let { grouped.replace(column(it)) }
+                        }
+                    }
+                }
                 s = eliminateSemiAndAntiJoins(s)
                 selectSql(s as Select)
             }
+            reg(ReturnsProperty::class) { e -> bg().returnspropertySql(e as ReturnsProperty) }
             reg(SHA::class) { e -> bg().renameFuncSql("SHA1", e) }
             reg(SHA1Digest::class) { e -> bg().renameFuncSql("SHA1", e) }
             reg(StabilityProperty::class) { e ->

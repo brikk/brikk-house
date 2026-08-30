@@ -389,6 +389,9 @@ open class BigqueryParser(
     // sqlglot: BigQuery.PRESERVE_ORIGINAL_NAMES = True
     override val preserveOriginalNames: Boolean get() = true
 
+    // sqlglot: BigQuery.SET_OP_DISTINCT_BY_DEFAULT maps every set operation to None.
+    override fun setOpDistinctByDefault(setOpToken: TokenType): Boolean? = null
+
     // sqlglot: BigQuery.ALIAS_POST_VERSION = False
     override val aliasPostVersion: Boolean get() = false
 

@@ -619,7 +619,9 @@ open class PostgresGenerator(
     open fun arrowJsonExtractSql(expression: Binary, op: String? = null): String {
         val this_ = expression.thisArg
         if (this_ is Literal && this_.isString) {
-            this_.replace(Cast(args("this" to this_, "to" to DataType(args("this" to DType.JSON)))))
+            this_.replace(
+                Cast(args("this" to this_.copy(), "to" to DataType(args("this" to DType.JSON))))
+            )
         }
         val pathExpr = expression.args["expression"]
         if (pathExpr is Binary || pathExpr is Predicate || pathExpr is Not) {

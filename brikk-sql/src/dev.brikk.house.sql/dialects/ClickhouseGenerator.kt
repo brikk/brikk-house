@@ -112,6 +112,12 @@ open class ClickhouseGenerator(
     override val queryHints: Boolean get() = false
     override val structDelimiter: Pair<String, String> get() = "(" to ")"
     override val nvl2Supported: Boolean get() = false
+    // sqlglot: ClickHouse.SET_OP_DISTINCT_BY_DEFAULT (Except/Intersect false, Union null)
+    override fun setOpDistinctByDefault(expression: SetOperation): Boolean? = when (expression) {
+        is Except, is Intersect -> false
+        is Union -> null
+        else -> true
+    }
     override val tablesampleRequiresParens: Boolean get() = false
     override val tablesampleSizeIsRows: Boolean get() = false
     override val tablesampleKeywords: String get() = "SAMPLE"

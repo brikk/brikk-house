@@ -1,6 +1,6 @@
 # brikk-sql extensions registry — deliberate divergences from sqlglot
 
-brikk-sql is a faithful port of sqlglot (pinned: `v30.12.0-44-g93d16591`), verified by
+brikk-sql is a faithful port of sqlglot (pinned: `v30.17.0-72-gbac1a897b`), verified by
 differential gates. This file registers every place where brikk **deliberately diverges**
 from or **extends beyond** sqlglot, so that upstream syncs know exactly where conflicts
 can arise: when a future sqlglot version adds its own handling for one of these, the
@@ -8,6 +8,17 @@ sync MUST reconcile here (adopt upstream, keep ours, or merge) and update this r
 
 All divergence sites are marked in code with the greppable phrase **`brikk extension`**
 (`rg "brikk extension" brikk-sql/src`).
+
+**Protected policy.** Verifier-backed intentional divergences registered here must
+**never** be copied into actionable TODO/problem inventories (e.g. `TODO-BUGS-*.md`)
+or "fixed" toward SQLGlot unless this policy is explicitly reversed in this registry.
+Their parity ledger entries are **expected and protected**. Generation-ledger
+exceptions today:
+
+- **4 Doris** in `brikk-sql/testResources/generator-corpus/doris-generator-known-failures.json`
+  — §9 (3× `PARTITION BY` clause completion) and §10 (1× MV column list).
+- **1 Trino** in `brikk-sql/testResources/generator-corpus/trino-generator-known-failures.json`
+  — §8 (`JSON_QUERY` wrapper clause).
 
 ## 1. First-class pipe syntax (Phase 4)
 
@@ -79,7 +90,7 @@ All divergence sites are marked in code with the greppable phrase **`brikk exten
 ## 7. Doris: first-class arrays
 
 - **What:** sqlglot's Doris dialect inherits MySQL's array rejection wholesale, but Doris
-  supports arrays natively. Divergences from the Python oracle (v30.12.0-44-g93d16591),
+  supports arrays natively. Divergences from the Python oracle (v30.17.0-72-gbac1a897b),
   each rendering pinned against the real Doris FE parser
   (`SqlVerifierTest.dorisAcceptsBrikkArrayRenderings`):
   - **Array literals** render as the canonical constructor `ARRAY(1, 2, 3)` — the same
@@ -143,7 +154,7 @@ All divergence sites are marked in code with the greppable phrase **`brikk exten
   `parseSetPropertyAssignment`), `parser/Parser.kt` (`parseAlterTableSet` opened).
   Tests: `TrinoDialectTest.kt` (common),
   `SqlVerifierTest.trinoAcceptsBrikkGrammarLegalityRenderings` (JVM, real trino-parser
-  481, which also pins that the replaced forms are indeed rejected).
+  483, which also pins that the replaced forms are indeed rejected).
 - **Corpus/ledger impact:** trino-verify-known-failures.json is now empty (both rejects
   resolved). Divergences from the oracle are ledgered in
   `generator-corpus/trino-generator-known-failures.json` (1: JSON_QUERY case),
@@ -410,3 +421,6 @@ datafusion (brikk-native) remain explicit non-engine classifications. Regenerate
    (especially `parser.py` pipe handlers and `generators/doris.py`).
 3. For each conflict: adopt upstream / keep ours / merge — then update this registry and
    the affected gate expectations in the same commit.
+4. Do **not** treat remaining ledger entries for registered intentional divergences as
+   bugs to close toward SQLGlot, and do **not** copy them into `TODO-BUGS-*.md`, unless
+   step 3 explicitly reverses the policy here.

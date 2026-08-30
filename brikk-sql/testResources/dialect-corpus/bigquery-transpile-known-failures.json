@@ -33,10 +33,6 @@
             "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`"
         },
         {
-            "case": "write|bigquery|EDIT_DISTANCE(a, b)",
-            "reason": "expected `EDIT_DISTANCE(a, b)` actual `LEVENSHTEIN(a, b)`"
-        },
-        {
             "case": "write|duckdb|SELECT t.c1, h.c2, s.c3 FROM t1 AS t, UNNEST(t.t2) AS h, UNNEST(h.t3) AS s",
             "reason": "expected `SELECT t.c1, h.c2, s.c3 FROM t1 AS t CROSS JOIN UNNEST(t.t2) AS _t0(h) CROSS JOIN UNNEST(h.t3) AS _t1(s)` actual `SELECT t.c1, h.c2, s.c3 FROM t1 AS t CROSS JOIN UNNEST(t.t2) AS h CROSS JOIN UNNEST(h.t3) AS s`"
         },
@@ -151,14 +147,6 @@
         {
             "case": "write|duckdb|SELECT * FROM t WHERE EXISTS(SELECT * FROM unnest(nums) AS x WHERE x > 1)",
             "reason": "expected `SELECT * FROM t WHERE EXISTS(SELECT * FROM UNNEST(nums) AS _t0(x) WHERE x > 1)` actual `SELECT * FROM t WHERE EXISTS(SELECT * FROM UNNEST(nums) AS x WHERE x > 1)`"
-        },
-        {
-            "case": "read|bigquery|SELECT '\\n'",
-            "reason": "expected `SELECT '\\n'` actual `SELECT '\n'`"
-        },
-        {
-            "case": "write|bigquery|SELECT '\\n'",
-            "reason": "expected `SELECT '\\n'` actual `SELECT '\n'`"
         },
         {
             "case": "write|presto|SELECT DATETIME_DIFF(DATETIME '2021-02-01 00:00:00', DATETIME '2021-01-31 00:00:00', MONTH)",
@@ -293,18 +281,6 @@
             "reason": "expected `SELECT {'y': ARRAY(SELECT {'b': 1} FROM x)} FROM z` actual `SELECT AS STRUCT ARRAY(SELECT AS STRUCT 1 AS b FROM x) AS y FROM z`"
         },
         {
-            "case": "write|bigquery|'\\\\'",
-            "reason": "expected `'\\\\'` actual `'\\'`"
-        },
-        {
-            "case": "write|bigquery|r\"\"\"a\n\"\"\"",
-            "reason": "expected `'a\\n'` actual `'a\n'`"
-        },
-        {
-            "case": "write|bigquery|\"\"\"a\n\"\"\"",
-            "reason": "expected `'a\\n'` actual `'a\n'`"
-        },
-        {
             "case": "read|spark|SELECT * FROM UNNEST(['7', '14']) AS x",
             "reason": "expected `SELECT * FROM UNNEST(['7', '14']) AS x` actual `SELECT * FROM UNNEST(['7', '14']) AS _t0`"
         },
@@ -347,10 +323,6 @@
         {
             "case": "read|postgres|SELECT * FROM UNNEST([STRUCT(1 AS id)]) AS t1 CROSS JOIN UNNEST([STRUCT(1 AS id)]) AS t2",
             "reason": "expected `SELECT * FROM UNNEST([STRUCT(1 AS id)]) AS t1 CROSS JOIN UNNEST([STRUCT(1 AS id)]) AS t2` actual `SELECT * FROM (VALUES (1)) AS t1 CROSS JOIN (VALUES (1)) AS t2`"
-        },
-        {
-            "case": "read|bigquery|GENERATE_ARRAY(1, 4)",
-            "reason": "expected `GENERATE_ARRAY(1, 4)` actual `GENERATE_SERIES(1, 4)`"
         },
         {
             "case": "read||SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL",
@@ -457,20 +429,12 @@
             "reason": "expected `SELECT CAST('{\"arr\": [1, \"a\"]}' -> '$.arr' AS TEXT[])` actual `SELECT J_S_O_N_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')`"
         },
         {
-            "case": "write|bigquery|SELECT INSTR('foo@example.com', '@')",
-            "reason": "expected `SELECT INSTR('foo@example.com', '@')` actual `SELECT STR_POSITION('foo@example.com', '@')`"
-        },
-        {
             "case": "write|duckdb|SELECT INSTR('foo@example.com', '@')",
             "reason": "expected `SELECT STRPOS('foo@example.com', '@')` actual `SELECT STR_POSITION('foo@example.com', '@')`"
         },
         {
             "case": "write|duckdb|SELECT ts + MAKE_INTERVAL(1, 2, minute => 5, day => 3)",
             "reason": "expected `SELECT ts + INTERVAL '1 year 2 month 5 minute 3 day'` actual `SELECT ts + MAKE_INTERVAL(1, 2, day => 3, minute => 5)`"
-        },
-        {
-            "case": "write|bigquery|SELECT INT64(JSON_QUERY(JSON '{\"key\": 2000}', '$.key'))",
-            "reason": "expected `SELECT INT64(JSON_QUERY(PARSE_JSON('{\"key\": 2000}'), '$.key'))` actual `SELECT INT64(JSON_EXTRACT(PARSE_JSON('{\"key\": 2000}'), '$.key'))`"
         },
         {
             "case": "write|duckdb|SELECT INT64(JSON_QUERY(JSON '{\"key\": 2000}', '$.key'))",
@@ -627,14 +591,6 @@
         {
             "case": "write|trino|SELECT * FROM UNNEST([STRUCT('Alice' AS name, 85 AS score), STRUCT('Bob', 92), STRUCT('Diana', 95)])",
             "reason": "expected `SELECT * FROM UNNEST(ARRAY[CAST(ROW('Alice', 85) AS ROW(name VARCHAR, score INTEGER)), CAST(ROW('Bob', 92) AS ROW(name VARCHAR, score INTEGER)), CAST(ROW('Diana', 95) AS ROW(name VARCHAR, score INTEGER))])` actual `SELECT * FROM UNNEST(ARRAY[CAST(ROW('Alice', 85) AS ROW(name VARCHAR, score INTEGER)), ROW('Bob', 92), ROW('Diana', 95)])`"
-        },
-        {
-            "case": "write|bigquery|SELECT JSON_QUERY('{\"class\": {\"students\": []}}', '$.class')",
-            "reason": "expected `SELECT JSON_QUERY('{\"class\": {\"students\": []}}', '$.class')` actual `SELECT JSON_EXTRACT('{\"class\": {\"students\": []}}', '$.class')`"
-        },
-        {
-            "case": "write|bigquery|SELECT JSON_QUERY(foo, '$.class')",
-            "reason": "expected `SELECT JSON_QUERY(foo, '$.class')` actual `SELECT JSON_EXTRACT(foo, '$.class')`"
         },
         {
             "case": "write|duckdb|SELECT UNIX_SECONDS('2008-12-25 15:30:00+00')",
