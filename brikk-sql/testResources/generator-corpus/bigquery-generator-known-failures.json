@@ -2,20 +2,8 @@
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
     "cases": [
         {
-            "sql": "PARSE_TIMESTAMP('%FT%H:%M:%E*S%z', x)",
-            "reason": "output mismatch: expected `PARSE_TIMESTAMP('%FT%H:%M:%E*S%z', x)` actual `PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*S%z', x)`"
-        },
-        {
             "sql": "SELECT '\\n\\r\\a\\v\\f\\t'",
             "reason": "output mismatch: expected `SELECT '\\n\\r\\a\\v\\f\\t'` actual `SELECT '\n\r\u0007\u000b\f\t'`"
-        },
-        {
-            "sql": "SELECT PARSE_TIMESTAMP('%c', 'Thu Dec 25 07:30:00 2008', 'UTC')",
-            "reason": "output mismatch: expected `SELECT PARSE_TIMESTAMP('%c', 'Thu Dec 25 07:30:00 2008', 'UTC')` actual `SELECT PARSE_TIMESTAMP('%a %b %e %H:%M:%S %Y', 'Thu Dec 25 07:30:00 2008', 'UTC')`"
-        },
-        {
-            "sql": "SELECT FORMAT_TIMESTAMP('%F %T', CURRENT_TIMESTAMP(), 'Europe/Berlin') AS ts",
-            "reason": "output mismatch: expected `SELECT FORMAT_TIMESTAMP('%F %T', CURRENT_TIMESTAMP(), 'Europe/Berlin') AS ts` actual `SELECT FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S', CURRENT_TIMESTAMP(), 'Europe/Berlin') AS ts`"
         },
         {
             "sql": "SELECT * FROM test QUALIFY a IS DISTINCT FROM b WINDOW c AS (PARTITION BY d)",
@@ -48,10 +36,6 @@
         {
             "sql": "EXPORT DATA WITH CONNECTION myproject.us.myconnection OPTIONS (URI='gs://path*.csv.gz', FORMAT='CSV') AS SELECT * FROM all_rows",
             "reason": "UnsupportedError: Unsupported expression type Export"
-        },
-        {
-            "sql": "SELECT PARSE_DATETIME('%a %b %e %I:%M:%S %Y', 'Thu Dec 25 07:30:00 2008')",
-            "reason": "output mismatch: expected `SELECT PARSE_DATETIME('%a %b %e %I:%M:%S %Y', 'Thu Dec 25 07:30:00 2008')` actual `SELECT PARSE_DATETIME('%a %b %-d %I:%M:%S %Y', 'Thu Dec 25 07:30:00 2008')`"
         },
         {
             "sql": "JSON_KEYS(PARSE_JSON('{\"a\": {\"b\":1}}'), 1, mode => 'lax')",
@@ -170,10 +154,6 @@
             "reason": "output mismatch: expected `SELECT AI.GENERATE_BOOL(MODEL `mydataset.gemini_model`, 'Is sky blue?')` actual `SELECT AI.GENERATE_BOOL(`mydataset.gemini_model`, 'Is sky blue?')`"
         },
         {
-            "sql": "SELECT CAST(date AS TIMESTAMP FORMAT ('YYYY-MM-DD HH24:MI:SS'))",
-            "reason": "output mismatch: expected `SELECT PARSE_TIMESTAMP('%F %T', date)` actual `SELECT PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S', date)`"
-        },
-        {
             "sql": "SELECT * FROM UNNEST(x) WITH OFFSET EXCEPT DISTINCT SELECT * FROM UNNEST(y) WITH OFFSET",
             "reason": "output mismatch: expected `SELECT * FROM UNNEST(x) WITH OFFSET AS offset EXCEPT DISTINCT SELECT * FROM UNNEST(y) WITH OFFSET AS offset` actual `SELECT * FROM UNNEST(x) WITH OFFSET AS offset EXCEPT SELECT * FROM UNNEST(y) WITH OFFSET AS offset`"
         },
@@ -188,18 +168,6 @@
         {
             "sql": "SAFE.SUBSTR('foo', 0, -2)",
             "reason": "output mismatch: expected `SAFE.SUBSTR('foo', 0, -2)` actual `SAFE.SUBSTRING('foo', 0, -2)`"
-        },
-        {
-            "sql": "SAFE.PARSE_DATE('%Y-%m-%d', '2024-01-15')",
-            "reason": "output mismatch: expected `SAFE.PARSE_DATE('%F', '2024-01-15')` actual `SAFE.PARSE_DATE('%Y-%m-%d', '2024-01-15')`"
-        },
-        {
-            "sql": "SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', '2024-01-15 10:30:00')",
-            "reason": "output mismatch: expected `SAFE.PARSE_DATETIME('%F %T', '2024-01-15 10:30:00')` actual `SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', '2024-01-15 10:30:00')`"
-        },
-        {
-            "sql": "SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S', '2024-01-15 10:30:00')",
-            "reason": "output mismatch: expected `SAFE.PARSE_TIMESTAMP('%F %T', '2024-01-15 10:30:00')` actual `SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S', '2024-01-15 10:30:00')`"
         },
         {
             "sql": "WITH t AS (SELECT '{\"x-y\": \"z\"}' AS c) SELECT JSON_EXTRACT(c, '$.x-y') FROM t",

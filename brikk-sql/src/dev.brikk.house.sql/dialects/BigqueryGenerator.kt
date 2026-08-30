@@ -94,6 +94,10 @@ open class BigqueryGenerator(
 
     override val typeMapping: Map<DType, String> get() = TYPE_MAPPING
 
+    // sqlglot: BigQuery.INVERSE_TIME_MAPPING — canonicalizes format strings on
+    // generation (%Y-%m-%d -> %F, %H:%M:%S -> %T, etc.).
+    override val inverseTimeMapping: Map<String, String> get() = BigqueryDialect.INVERSE_TIME_MAPPING
+
     // sqlglot: BigQuery.BYTE_START/BYTE_END (from tokenizer BYTE_STRINGS b'..') and
     // BYTE_STRING_IS_BYTES_TYPE (renders b'..' rather than casting to BYTES).
     override val byteStart: String? get() = "b'"

@@ -149,6 +149,17 @@ open class BigqueryDialect : Dialect() {
             "%c" to "%a %b %e %H:%M:%S %Y",
         )
 
+        // sqlglot: BigQuery.INVERSE_TIME_MAPPING — auto-inverse of TIME_MAPPING merged
+        // with the class-level override (%E6S is preserved rather than expanded to
+        // %T.%f, since the two are semantically different in BigQuery), then
+        // _with_strict_time_inverse. Drives canonical format-string generation
+        // (e.g. %Y-%m-%d -> %F, %H:%M:%S -> %T).
+        val INVERSE_TIME_MAPPING: Map<String, String> =
+            dev.brikk.house.sql.parser.withStrictTimeInverse(
+                TIME_MAPPING.entries.associate { (k, v) -> v to k } +
+                    mapOf("%H:%M:%S.%f" to "%H:%M:%E6S"),
+            )
+
         // sqlglot: BigQuery.FORMAT_MAPPING
         val FORMAT_MAPPING: Map<String, String> = mapOf(
             "dd" to "%d", "DD" to "%d",

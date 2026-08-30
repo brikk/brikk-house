@@ -17,10 +17,6 @@
             "reason": "expected `SELECT purchases, LAST_VALUE(item) OVER (PARTITION BY purchases ORDER BY purchases NULLS FIRST ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS most_popular FROM Produce` actual `SELECT purchases, LAST_VALUE(item) OVER item_window AS most_popular FROM Produce WINDOW item_window AS (PARTITION BY purchases ORDER BY purchases NULLS FIRST ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)`"
         },
         {
-            "case": "write|bigquery|PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E6S%z', x)",
-            "reason": "expected `PARSE_TIMESTAMP('%FT%H:%M:%E6S%z', x)` actual `PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S.%f%z', x)`"
-        },
-        {
             "case": "write|bigquery|EDIT_DISTANCE(col1, col2, max_distance => 3)",
             "reason": "expected `EDIT_DISTANCE(col1, col2, max_distance => 3)` actual `LEVENSHTEIN(col1, col2, 3)`"
         },
@@ -453,14 +449,6 @@
             "reason": "expected `SELECT GENERATE_SERIES(CAST('2016-10-05 00:00:00' AS TIMESTAMP), CAST('2016-10-07 00:00:00' AS TIMESTAMP), INTERVAL '1' DAY)` actual `SELECT GENERATE_TIMESTAMP_ARRAY('2016-10-05 00:00:00', '2016-10-07 00:00:00', INTERVAL '1' DAY)`"
         },
         {
-            "case": "write|bigquery|SELECT PARSE_DATE('%A %b %e %Y', 'Thursday Dec 25 2008')",
-            "reason": "expected `SELECT PARSE_DATE('%A %b %e %Y', 'Thursday Dec 25 2008')` actual `SELECT PARSE_DATE('%A %b %-d %Y', 'Thursday Dec 25 2008')`"
-        },
-        {
-            "case": "write|bigquery|SELECT PARSE_TIMESTAMP('%m-%d %H:%M:%S', '12-25 07:30:00')",
-            "reason": "expected `SELECT PARSE_TIMESTAMP('%m-%d %T', '12-25 07:30:00')` actual `SELECT PARSE_TIMESTAMP('%m-%d %H:%M:%S', '12-25 07:30:00')`"
-        },
-        {
             "case": "write|duckdb|SELECT ARRAY_TO_STRING(['cake', 'pie', NULL], '--', 'MISSING') AS text",
             "reason": "expected `SELECT ARRAY_TO_STRING(LIST_TRANSFORM(['cake', 'pie', NULL], x -> COALESCE(x, 'MISSING')), '--') AS text` actual `SELECT ARRAY_TO_STRING(['cake', 'pie', NULL], '--', 'MISSING') AS text`"
         },
@@ -809,40 +797,20 @@
             "reason": "expected `REGEXP_EXTRACT_ALL('a1_a2a3_a4A5a6', '(a)[0-9]')` actual `REGEXP_EXTRACT_ALL('a1_a2a3_a4A5a6', '(a)[0-9]', 0)`"
         },
         {
-            "case": "write|bigquery|SELECT FORMAT_DATETIME('%Y%m%d %H:%M:%S', DATETIME '2023-12-25 15:30:00')",
-            "reason": "expected `SELECT FORMAT_DATETIME('%Y%m%d %T', CAST('2023-12-25 15:30:00' AS DATETIME))` actual `SELECT FORMAT_DATETIME('%Y%m%d %H:%M:%S', CAST('2023-12-25 15:30:00' AS DATETIME))`"
-        },
-        {
             "case": "write|duckdb|SELECT FORMAT_DATETIME('%Y%m%d %H:%M:%S', DATETIME '2023-12-25 15:30:00')",
             "reason": "expected `SELECT STRFTIME(CAST('2023-12-25 15:30:00' AS TIMESTAMP), '%Y%m%d %H:%M:%S')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2023-12-25 15:30:00' AS TIMESTAMP)), '%Y%m%d %H:%M:%S')`"
-        },
-        {
-            "case": "write|bigquery|SELECT FORMAT_DATETIME('%x', '2023-12-25 15:30:00')",
-            "reason": "expected `SELECT FORMAT_DATETIME('%D', '2023-12-25 15:30:00')` actual `SELECT FORMAT_DATETIME('%m/%d/%y', '2023-12-25 15:30:00')`"
         },
         {
             "case": "write|duckdb|SELECT FORMAT_DATETIME('%x', '2023-12-25 15:30:00')",
             "reason": "expected `SELECT STRFTIME(CAST('2023-12-25 15:30:00' AS TIMESTAMP), '%m/%d/%y')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME('2023-12-25 15:30:00'), '%m/%d/%y')`"
         },
         {
-            "case": "write|bigquery|SELECT FORMAT_DATETIME('%F %T', DATETIME '2023-10-15 14:30:45')",
-            "reason": "expected `SELECT FORMAT_DATETIME('%F %T', CAST('2023-10-15 14:30:45' AS DATETIME))` actual `SELECT FORMAT_DATETIME('%Y-%m-%d %H:%M:%S', CAST('2023-10-15 14:30:45' AS DATETIME))`"
-        },
-        {
             "case": "write|duckdb|SELECT FORMAT_DATETIME('%F %T', DATETIME '2023-10-15 14:30:45')",
             "reason": "expected `SELECT STRFTIME(CAST('2023-10-15 14:30:45' AS TIMESTAMP), '%Y-%m-%d %H:%M:%S')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2023-10-15 14:30:45' AS TIMESTAMP)), '%Y-%m-%d %H:%M:%S')`"
         },
         {
-            "case": "write|bigquery|SELECT FORMAT_DATETIME('%c', DATETIME '2008-12-25 15:30:00')",
-            "reason": "expected `SELECT FORMAT_DATETIME('%c', CAST('2008-12-25 15:30:00' AS DATETIME))` actual `SELECT FORMAT_DATETIME('%a %b %e %H:%M:%S %Y', CAST('2008-12-25 15:30:00' AS DATETIME))`"
-        },
-        {
             "case": "write|duckdb|SELECT FORMAT_DATETIME('%c', DATETIME '2008-12-25 15:30:00')",
             "reason": "expected `SELECT STRFTIME(CAST('2008-12-25 15:30:00' AS TIMESTAMP), '%a %b %-d %H:%M:%S %Y')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2008-12-25 15:30:00' AS TIMESTAMP)), '%a %b %-d %H:%M:%S %Y')`"
-        },
-        {
-            "case": "write|bigquery|SELECT FORMAT_DATETIME('%Y-%m-%e', DATETIME '2020-09-09 10:15:30')",
-            "reason": "expected `SELECT FORMAT_DATETIME('%Y-%m-%e', CAST('2020-09-09 10:15:30' AS DATETIME))` actual `SELECT FORMAT_DATETIME('%Y-%m-%-d', CAST('2020-09-09 10:15:30' AS DATETIME))`"
         },
         {
             "case": "write|duckdb|SELECT FORMAT_DATETIME('%Y-%m-%e', DATETIME '2020-09-09 10:15:30')",

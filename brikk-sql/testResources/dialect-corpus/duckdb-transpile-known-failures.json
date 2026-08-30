@@ -109,14 +109,6 @@
             "reason": "expected `SELECT STRPTIME('1970 ' || '15:30:00.123456', '%Y ' || '%H:%M:%S.%f')` actual `SELECT PARSE_DATETIME('15:30:00.123456', '%H:%M:%S.%f', 1970)`"
         },
         {
-            "case": "write|bigquery|STRFTIME(x, '%Y-%m-%d %H:%M:%S')",
-            "reason": "expected `FORMAT_DATE('%F %T', x)` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', x)`"
-        },
-        {
-            "case": "write|bigquery|STRPTIME(x, '%-m/%-d/%y %-I:%M %p')",
-            "reason": "expected `PARSE_TIMESTAMP('%-m/%e/%y %-I:%M %p', x)` actual `PARSE_TIMESTAMP('%-m/%-d/%y %-I:%M %p', x)`"
-        },
-        {
             "case": "write|bigquery|CAST(start AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York'",
             "reason": "expected `TIMESTAMP(DATETIME(CAST(start AS TIMESTAMP), 'America/New_York'))` actual `CAST(start AS TIMESTAMP) AT TIME ZONE 'America/New_York'`"
         },
