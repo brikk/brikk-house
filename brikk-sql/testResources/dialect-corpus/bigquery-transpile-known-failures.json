@@ -349,52 +349,8 @@
             "reason": "ParseError: CAST ... FORMAT is not supported yet. Line 1, Col: 46.\n  cast(x as time format \u001b[4m'YYYY.MM.DD HH:MI:SSTZH'\u001b[0m)"
         },
         {
-            "case": "write|bigquery|r'x\\''",
-            "reason": "expected `'x\\\\\\''` actual `'x\\''`"
-        },
-        {
-            "case": "write|duckdb|r'x\\''",
-            "reason": "expected `'x\\'''` actual `'x'''`"
-        },
-        {
-            "case": "write|hive|r'x\\''",
-            "reason": "expected `'x\\\\\\''` actual `'x\\''`"
-        },
-        {
-            "case": "write|bigquery|r'x\\y'",
-            "reason": "expected `'x\\\\y'` actual `'x\\y'`"
-        },
-        {
-            "case": "write|hive|r'x\\y'",
-            "reason": "expected `'x\\\\y'` actual `'x\\y'`"
-        },
-        {
             "case": "write|bigquery|'\\\\'",
             "reason": "expected `'\\\\'` actual `'\\'`"
-        },
-        {
-            "case": "write|bigquery|r\"\"\"/\\*.*\\*/\"\"\"",
-            "reason": "expected `'/\\\\*.*\\\\*/'` actual `'/\\*.*\\*/'`"
-        },
-        {
-            "case": "write|hive|r\"\"\"/\\*.*\\*/\"\"\"",
-            "reason": "expected `'/\\\\*.*\\\\*/'` actual `'/\\*.*\\*/'`"
-        },
-        {
-            "case": "write|spark|r\"\"\"/\\*.*\\*/\"\"\"",
-            "reason": "expected `'/\\\\*.*\\\\*/'` actual `'/\\*.*\\*/'`"
-        },
-        {
-            "case": "write|bigquery|R\"\"\"/\\*.*\\*/\"\"\"",
-            "reason": "expected `'/\\\\*.*\\\\*/'` actual `'/\\*.*\\*/'`"
-        },
-        {
-            "case": "write|hive|R\"\"\"/\\*.*\\*/\"\"\"",
-            "reason": "expected `'/\\\\*.*\\\\*/'` actual `'/\\*.*\\*/'`"
-        },
-        {
-            "case": "write|spark|R\"\"\"/\\*.*\\*/\"\"\"",
-            "reason": "expected `'/\\\\*.*\\\\*/'` actual `'/\\*.*\\*/'`"
         },
         {
             "case": "write|bigquery|r\"\"\"a\n\"\"\"",

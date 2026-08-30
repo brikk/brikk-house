@@ -386,6 +386,9 @@ open class Parser(
     // sqlglot: Dialect.INDEX_OFFSET
     open val indexOffset: Int get() = 0
 
+    // sqlglot: Parser.SUPPORTS_DIGIT_PREFIXED_FIELD_NAMES
+    open val supportsDigitPrefixedFieldNames: kotlin.Boolean get() = false
+
     // sqlglot: Dialect.NORMALIZE_NOT_NULL
     open val normalizeNotNull: kotlin.Boolean get() = true
 
@@ -2674,7 +2677,12 @@ open class Parser(
         if (aliasPostTablesample) this_.set("sample", parseTableSample())
 
         val alias = parseTableAlias(aliasTokens = aliasTokens ?: tableAliasTokens)
-        if (alias != null) this_.set("alias", alias)
+        if (alias != null) {
+            this_.set("alias", alias)
+            if (this_ is Table && this_.args["when"] == null) {
+                this_.set("when", parseHistoricalData())
+            }
+        }
 
         if (match(TokenType.INDEXED_BY)) {
             this_.set("indexed", parseTableParts())
@@ -3793,10 +3801,18 @@ open class Parser(
 
         val expr = parseSelect(nested = true, parseSetOperation = false, consumePipe = consumePipe)
 
+        var left = this_
+        if (left is Alias && left.thisArg is Subquery) {
+            val subquery = left.thisArg as Subquery
+            subquery.set("alias", TableAlias(args("this" to left.args["alias"])))
+            subquery.addComments(left.popComments())
+            left = subquery
+        }
+
         return expression(
             operation(
                 args(
-                    "this" to this_,
+                    "this" to left,
                     "distinct" to distinct,
                     "by_name" to byName,
                     "expression" to expr,
@@ -8718,12 +8734,20 @@ open class Parser(
         tokens: Collection<TokenType>? = null,
         anonymousFunc: kotlin.Boolean = false,
     ): Expression? {
-        val field = if (anonymousFunc) {
+        val afterDot = supportsDigitPrefixedFieldNames && prevToken.tokenType == TokenType.DOT
+        var field = if (anonymousFunc) {
             parseFunction(anonymous = anonymousFunc, anyToken = anyToken) ?: parsePrimary()
         } else {
             parsePrimary() ?: parseFunction(anonymous = anonymousFunc, anyToken = anyToken)
         }
-        return field ?: parseIdVar(anyToken = anyToken, tokens = tokens)
+        field = field ?: parseIdVar(anyToken = anyToken, tokens = tokens)
+
+        if (afterDot && field is Literal && field.isNumber) {
+            var name = field.name
+            if (isConnected() && parseVar(anyToken = true) != null) name += prevToken.text
+            field = Identifier(args("this" to name, "quoted" to true)).updatePositions(field)
+        }
+        return field
     }
 
     // sqlglot: Parser._parse_function

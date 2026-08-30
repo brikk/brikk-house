@@ -1,9 +1,4 @@
 {
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": [
-        {
-            "sql": "SELECT $$a\\$b$$",
-            "reason": "output mismatch: expected `SELECT 'a\\\\$b'` actual `SELECT 'a\\$b'`"
-        }
-    ]
+    "cases": []
 }

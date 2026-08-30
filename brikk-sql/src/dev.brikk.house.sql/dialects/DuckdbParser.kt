@@ -98,6 +98,7 @@ import dev.brikk.house.sql.parser.NodeFactory
 import dev.brikk.house.sql.parser.Parser
 import dev.brikk.house.sql.parser.ParseError
 import dev.brikk.house.sql.parser.TokenType
+import dev.brikk.house.sql.parser.TokenError
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.applyTimeUnitCoercion
 import dev.brikk.house.sql.parser.binaryRangeParser
@@ -167,6 +168,8 @@ internal fun duckdbToJsonPath(path: Expression?): Expression? {
             return parseJsonPath(text)
         } catch (e: ParseError) {
             // sqlglot: STRICT_JSON_PATH_SYNTAX=False — no warning, fall through
+        } catch (e: TokenError) {
+            // A string key containing quote characters is valid DuckDB JSON syntax.
         }
     }
     return path

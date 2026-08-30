@@ -61,6 +61,7 @@ open class DuckdbGenerator(
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
     override val dialect: Dialect get() = Dialects.DUCKDB
+    override val historicalDataPostAlias: Boolean get() = true
 
     // ------------------------------------------------------------------
     // Flags (sqlglot: DuckDBGenerator class attributes)

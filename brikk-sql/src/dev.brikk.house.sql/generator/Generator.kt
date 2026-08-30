@@ -261,6 +261,7 @@ open class Generator(
     open val inoutSeparator: String get() = " "
     open val supportsUescape: Boolean get() = true
     open val supportsAlterColumnIfExists: Boolean get() = false
+    open val historicalDataPostAlias: Boolean get() = false
 
     // --- Dialect-level flags (base dialect values) ---
     // sqlglot: Generator.dialect (the umbrella Dialect object; used by annotate_types-
@@ -1357,7 +1358,9 @@ open class Generator(
 
     // sqlglot: Generator.rawstring_sql (base: no backslash escapes)
     open fun rawstringSql(expression: RawString): String {
-        val string = escapeStr(expression.thisArg as? String ?: "", escapeBackslash = false)
+        var string = expression.thisArg as? String ?: ""
+        if ('\\' in tokenizerConfig.stringEscapes) string = string.replace("\\", "\\\\")
+        string = escapeStr(string, escapeBackslash = false)
         return "$quoteStart$string$quoteEnd"
     }
 
@@ -2102,7 +2105,9 @@ open class Generator(
         }
 
         val whenSql = sql(expression, "when")
-        if (whenSql.isNotEmpty()) table = "$table $whenSql"
+        if (whenSql.isNotEmpty()) {
+            if (historicalDataPostAlias) alias = "$alias $whenSql" else table = "$table $whenSql"
+        }
 
         var changes = sql(expression, "changes")
         if (changes.isNotEmpty()) changes = " $changes"
@@ -4861,6 +4866,10 @@ open class Generator(
         }
         return arrayAgg
     }
+
+    // sqlglot: Generator.forin_sql
+    open fun forinSql(expression: ForIn): String =
+        "FOR ${sql(expression, "this")} DO ${sql(expression, "expression")}"
 
     // sqlglot: Generator.slice_sql
     open fun sliceSql(expression: Slice): String {

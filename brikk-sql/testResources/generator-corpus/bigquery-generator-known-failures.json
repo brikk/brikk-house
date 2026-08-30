@@ -22,18 +22,6 @@
             "reason": "output mismatch: expected `SELECT * FROM test QUALIFY a IS DISTINCT FROM b WINDOW c AS (PARTITION BY d)` actual `SELECT * FROM test WINDOW c AS (PARTITION BY d) QUALIFY a IS DISTINCT FROM b`"
         },
         {
-            "sql": "FOR record IN (SELECT word, word_count FROM bigquery-public-data.samples.shakespeare LIMIT 5) DO SELECT record.word, record.word_count",
-            "reason": "UnsupportedError: Unsupported expression type ForIn"
-        },
-        {
-            "sql": "FOR system_time IN (SELECT 1 AS x) DO SELECT system_time.x",
-            "reason": "UnsupportedError: Unsupported expression type ForIn"
-        },
-        {
-            "sql": "FOR timestamp IN (SELECT 1 AS x) DO SELECT timestamp.x",
-            "reason": "UnsupportedError: Unsupported expression type ForIn"
-        },
-        {
             "sql": "CREATE TABLE IF NOT EXISTS foo AS SELECT * FROM bla EXCEPT DISTINCT (SELECT * FROM bar) LIMIT 0",
             "reason": "output mismatch: expected `CREATE TABLE IF NOT EXISTS foo AS SELECT * FROM bla EXCEPT DISTINCT (SELECT * FROM bar) LIMIT 0` actual `CREATE TABLE IF NOT EXISTS foo AS SELECT * FROM bla EXCEPT (SELECT * FROM bar) LIMIT 0`"
         },
@@ -42,20 +30,8 @@
             "reason": "output mismatch: expected `SELECT * FROM foo AS t0 FOR SYSTEM_TIME AS OF '2026-02-12T23:22:21.743416+00:00'` actual `SELECT * FROM foo FOR SYSTEM_TIME AS OF '2026-02-12T23:22:21.743416+00:00' AS t0`"
         },
         {
-            "sql": "SELECT r\"\\t\"",
-            "reason": "output mismatch: expected `SELECT '\\\\t'` actual `SELECT '\\t'`"
-        },
-        {
             "sql": "select array_contains([1, 2, 3], 1)",
             "reason": "output mismatch: expected `SELECT EXISTS(SELECT 1 FROM UNNEST([1, 2, 3]) AS _col WHERE _col = 1)` actual `SELECT ARRAY_CONTAINS([1, 2, 3], 1)`"
-        },
-        {
-            "sql": "SELECT r\"\"\"ends with \\\"\"\"\"",
-            "reason": "output mismatch: expected `SELECT 'ends with \\\\\"'` actual `SELECT 'ends with \\\"'`"
-        },
-        {
-            "sql": "SELECT r\"\"\"a\\\"b\"\"\"",
-            "reason": "output mismatch: expected `SELECT 'a\\\\\"b'` actual `SELECT 'a\\\"b'`"
         },
         {
             "sql": "SELECT y + 1 z FROM x GROUP BY y + 1 ORDER BY z",
@@ -192,10 +168,6 @@
         {
             "sql": "SELECT AI.GENERATE_BOOL(MODEL `mydataset.gemini_model`, 'Is sky blue?')",
             "reason": "output mismatch: expected `SELECT AI.GENERATE_BOOL(MODEL `mydataset.gemini_model`, 'Is sky blue?')` actual `SELECT AI.GENERATE_BOOL(`mydataset.gemini_model`, 'Is sky blue?')`"
-        },
-        {
-            "sql": "REGEXP_EXTRACT(svc_plugin_output, r'\\\\\\((.*)')",
-            "reason": "output mismatch: expected `REGEXP_EXTRACT(svc_plugin_output, '\\\\\\\\\\\\((.*)')` actual `REGEXP_EXTRACT(svc_plugin_output, '\\\\\\((.*)')`"
         },
         {
             "sql": "SELECT CAST(date AS TIMESTAMP FORMAT ('YYYY-MM-DD HH24:MI:SS'))",

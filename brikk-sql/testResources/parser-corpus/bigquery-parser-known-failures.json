@@ -38,26 +38,6 @@
             "reason": "ast-mismatch at #10: expected Table (k=this)"
         },
         {
-            "sql": "SELECT data.144A_FLAG FROM t",
-            "reason": "ast-mismatch at #1: expected Column (k=expressions)"
-        },
-        {
-            "sql": "SELECT t.1a FROM t",
-            "reason": "ast-mismatch at #1: expected Column (k=expressions)"
-        },
-        {
-            "sql": "SELECT STRING(data.144) FROM t",
-            "reason": "ast-mismatch at #3: expected Identifier (k=this)"
-        },
-        {
-            "sql": "SELECT STRING(data.1e10) FROM t",
-            "reason": "ast-mismatch at #3: expected Identifier (k=this)"
-        },
-        {
-            "sql": "SELECT t.144 A_FLAG FROM t",
-            "reason": "ast-mismatch at #3: expected Identifier (k=this)"
-        },
-        {
             "sql": "SELECT `p.d.UdF`(data).* FROM `p.d.t`",
             "reason": "ast-mismatch at #12: expected Table (k=this)"
         },
@@ -122,18 +102,6 @@
             "reason": "ast-mismatch at #13: expected Array (k=expressions)"
         },
         {
-            "sql": "FOR record IN (SELECT word, word_count FROM bigquery-public-data.samples.shakespeare LIMIT 5) DO SELECT record.word, record.word_count",
-            "reason": "Required keyword: 'this' missing for Comprehension. Line 1, Col: 96."
-        },
-        {
-            "sql": "FOR system_time IN (SELECT 1 AS x) DO SELECT system_time.x",
-            "reason": "Required keyword: 'this' missing for Comprehension. Line 1, Col: 37."
-        },
-        {
-            "sql": "FOR timestamp IN (SELECT 1 AS x) DO SELECT timestamp.x",
-            "reason": "Required keyword: 'this' missing for Comprehension. Line 1, Col: 35."
-        },
-        {
             "sql": "CREATE TABLE x (a STRING OPTIONS (description='x')) OPTIONS (table_expiration_days=1)",
             "reason": "Expecting ). Line 1, Col: 32."
         },
@@ -168,22 +136,6 @@
         {
             "sql": "CREATE VIEW `d.v` OPTIONS (expiration_timestamp=TIMESTAMP '2020-01-02T04:05:06.007Z') AS SELECT 1 AS c",
             "reason": "ast-mismatch at #1: expected Table (k=this)"
-        },
-        {
-            "sql": "SELECT \"\"\"ends with \\\"word\\\"\"\"\"",
-            "reason": "TokenError: Missing \" from 1:30"
-        },
-        {
-            "sql": "SELECT '''ends with \\'word\\''''",
-            "reason": "TokenError: Missing ' from 1:30"
-        },
-        {
-            "sql": "SELECT \"\"\"a\\\"b\"\"\"",
-            "reason": "ast-mismatch at #2: expected {\"i\":1,\"k\":\"this\",\"v\":\"a\\\"b\"}"
-        },
-        {
-            "sql": "SELECT r\"\"\"ends with \\\"\"\"\"",
-            "reason": "TokenError: Missing \" from 1:25"
         },
         {
             "sql": "EXPORT DATA OPTIONS (URI='gs://bucket/folder/*.csv') AS (SELECT 1)",
@@ -364,18 +316,6 @@
         {
             "sql": "SELECT CAST(date AS TIMESTAMP FORMAT ('YYYY-MM-DD HH24:MI:SS'))",
             "reason": "CAST ... FORMAT is not supported yet. Line 1, Col: 38."
-        },
-        {
-            "sql": "(SELECT 1 AS foo) FULL OUTER UNION ALL BY NAME (SELECT 2 AS foo, 3 AS bar)",
-            "reason": "ast-mismatch at #1: expected Subquery (k=this)"
-        },
-        {
-            "sql": "(SELECT 1 AS foo) FULL UNION ALL BY NAME (SELECT 2 AS foo)",
-            "reason": "ast-mismatch at #1: expected Subquery (k=this)"
-        },
-        {
-            "sql": "(SELECT 1) AS x UNION ALL (SELECT 2)",
-            "reason": "ast-mismatch at #1: expected Subquery (k=this)"
         },
         {
             "sql": "SELECT * FROM UNNEST(x) WITH OFFSET EXCEPT DISTINCT SELECT * FROM UNNEST(y) WITH OFFSET",

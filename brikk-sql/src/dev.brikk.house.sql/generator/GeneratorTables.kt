@@ -202,6 +202,7 @@ object GeneratorTables {
         reg(National::class) { e -> nationalSql(e as National) }
         reg(RawString::class) { e -> rawstringSql(e as RawString) }
         reg(UnicodeString::class) { e -> unicodestringSql(e as UnicodeString) }
+        reg(ForIn::class) { e -> forinSql(e as ForIn) }
         reg(Null::class) { e -> nullSql(e as Null) }
         reg(BooleanNode::class) { e -> booleanSql(e as BooleanNode) }
         reg(Star::class) { e -> starSql(e as Star) }

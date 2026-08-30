@@ -29,18 +29,6 @@
             "reason": "type-mismatch at #10 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
         {
-            "sql": "SELECT data.144A_FLAG FROM t",
-            "reason": "type-mismatch at #1 (Column k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "SELECT t.1a FROM t",
-            "reason": "type-mismatch at #1 (Column k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "SELECT t.144 A_FLAG FROM t",
-            "reason": "type-mismatch at #3 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
             "sql": "SELECT `p.d.UdF`(data).* FROM `p.d.t`",
             "reason": "type-mismatch at #12 (Table k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
@@ -91,22 +79,6 @@
         {
             "sql": "LOG(n, b)",
             "reason": "type-mismatch at #3 (? k=this): expected t=null actual t=null"
-        },
-        {
-            "sql": "SELECT * FROM x WHERE x.y >= (SELECT MAX(a) FROM b-c) - 20",
-            "reason": "type-mismatch at #10 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "FOR record IN (SELECT word, word_count FROM bigquery-public-data.samples.shakespeare LIMIT 5) DO SELECT record.word, record.word_count",
-            "reason": "ParseError: Required keyword: 'this' missing for Comprehension. Line 1, Col: 96.\n  FOR record IN (SELECT word, word_count FROM bigquery-public-data.samp"
-        },
-        {
-            "sql": "FOR system_time IN (SELECT 1 AS x) DO SELECT system_time.x",
-            "reason": "ParseError: Required keyword: 'this' missing for Comprehension. Line 1, Col: 37.\n  FOR system_time IN (SELECT 1 AS x) \u001b[4mDO\u001b[0m SELECT system_time.x"
-        },
-        {
-            "sql": "FOR timestamp IN (SELECT 1 AS x) DO SELECT timestamp.x",
-            "reason": "ParseError: Required keyword: 'this' missing for Comprehension. Line 1, Col: 35.\n  FOR timestamp IN (SELECT 1 AS x) \u001b[4mDO\u001b[0m SELECT timestamp.x"
         },
         {
             "sql": "CREATE TABLE x (a STRING OPTIONS (description='x')) OPTIONS (table_expiration_days=1)",

@@ -618,19 +618,22 @@ class Tokenizer(private val config: TokenizerConfig = TokenizerConfig.BASE) {
 
             val isValidCustomEscape =
                 escapeFollowChars.isNotEmpty() && char == '\\' && peek !in escapeFollowChars
+            val escapedDelimiter =
+                peek.toString() == delimiter ||
+                    (delimSize > 1 && peek == delimiter[0] && quotes.containsKey(peek.toString()))
 
             if (
                 (config.stringEscapesAllowedInRawStrings || !rawString) &&
                 char in esc &&
                 (
-                    (delimSize == 1 && peek == delimiter[0]) ||
+                    escapedDelimiter ||
                         peek in esc ||
                         isValidCustomEscape
                     ) &&
                 (!quotes.containsKey(char.toString()) || char == peek)
             ) {
-                if (delimSize == 1 && peek == delimiter[0]) {
-                    text.append(peek)
+                if (escapedDelimiter) {
+                    if (rawString) text.append(char).append(peek) else text.append(peek)
                 } else if (isValidCustomEscape && char != peek) {
                     text.append(peek)
                 } else {

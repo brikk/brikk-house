@@ -5,10 +5,6 @@
             "reason": "type-mismatch at #23 (? k=safe): expected t=null actual t=null"
         },
         {
-            "sql": "SELECT event_id FROM \"analytics\".\"uniqExactIf\"(final = 1)",
-            "reason": "type-mismatch at #7 (CombinedAggFunc k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
             "sql": "SELECT and(1, 2)",
             "reason": "type-mismatch at #1 (Paren k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
@@ -31,18 +27,6 @@
         {
             "sql": "CREATE TABLE data5 (\"x\" UInt32, \"y\" UInt32) ENGINE=MergeTree ORDER BY (round(y / 1000000000), cityHash64(x)) SAMPLE BY cityHash64(x)",
             "reason": "type-mismatch at #45 (? k=safe): expected t=null actual t=null"
-        },
-        {
-            "sql": "SELECT * FROM arrays_test ARRAY JOIN arr1, arrays_test.arr2 AS foo, ['a', 'b', 'c'] AS elem",
-            "reason": "type-mismatch at #14 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "SELECT col.^nested, t.col2.^nested, t.col3.^nested.twice FROM t",
-            "reason": "type-mismatch at #12 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "SELECT quantileExactInclusive(0.25)(number) AS x FROM numbers(5)",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 46.\n  SELECT quantileExactInclusive(0.25)(number) \u001b[4mAS\u001b[0m x FROM numbers(5)"
         }
     ]
 }

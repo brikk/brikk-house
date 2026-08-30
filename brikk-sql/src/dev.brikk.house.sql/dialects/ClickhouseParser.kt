@@ -793,7 +793,7 @@ open class ClickhouseParser(
 
         // Aggregate functions can be split in 2 parts: <func_name><suffix[es]>
         val parts = if (func is Anonymous) {
-            (func.thisArg as? String)?.let { resolveClickhouseAgg(it) }
+            resolveClickhouseAgg(func.name)
         } else {
             null
         }
@@ -1139,7 +1139,7 @@ open class ClickhouseParser(
             "groupBitmapOr", "groupBitmapXor", "sumWithOverflow", "sumMap", "minMap",
             "maxMap", "skewSamp", "skewPop", "kurtSamp", "kurtPop", "uniq", "uniqExact",
             "uniqCombined", "uniqCombined64", "uniqHLL12", "uniqTheta", "quantile",
-            "quantiles", "quantileExact", "quantilesExact", "quantilesExactExclusive",
+            "quantiles", "quantileExact", "quantileExactInclusive", "quantilesExact", "quantilesExactExclusive",
             "quantileExactLow", "quantilesExactLow", "quantileExactHigh",
             "quantilesExactHigh", "quantileExactWeighted", "quantilesExactWeighted",
             "quantileTiming", "quantilesTiming", "quantileTimingWeighted",

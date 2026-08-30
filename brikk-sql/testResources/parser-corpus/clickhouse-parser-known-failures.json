@@ -6,10 +6,6 @@
             "reason": "ast-mismatch at #23: expected {\"i\":15,\"k\":\"safe\",\"v\":false}"
         },
         {
-            "sql": "SELECT event_id FROM \"analytics\".\"uniqExactIf\"(final = 1)",
-            "reason": "ast-mismatch at #7: expected CombinedAggFunc (k=this)"
-        },
-        {
             "sql": "SELECT and(1, 2)",
             "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
         },
@@ -32,10 +28,6 @@
         {
             "sql": "CREATE TABLE data5 (\"x\" UInt32, \"y\" UInt32) ENGINE=MergeTree ORDER BY (round(y / 1000000000), cityHash64(x)) SAMPLE BY cityHash64(x)",
             "reason": "ast-mismatch at #45: expected {\"i\":36,\"k\":\"safe\",\"v\":false}"
-        },
-        {
-            "sql": "SELECT quantileExactInclusive(0.25)(number) AS x FROM numbers(5)",
-            "reason": "Invalid expression / Unexpected token. Line 1, Col: 46."
         }
     ]
 }

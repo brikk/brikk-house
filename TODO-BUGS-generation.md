@@ -36,10 +36,10 @@
 ---
 
 
-**67 items** across 5 groups.
+**64 items** across 5 groups.
 
 
-## bigquery  (54)
+## bigquery  (51)
 
 - [bigquery] `CREATE MODEL project_id.mydataset.mymodel
 INPUT(
@@ -56,11 +56,9 @@ TRANSFORM(
 - [bigquery] `EXPORT DATA OPTIONS (URI='gs://bucket/folder/*.csv') AS (SELECT 1)` :: UnsupportedError: Unsupported expression type Export
 - [bigquery] `EXPORT DATA OPTIONS (URI='gs://path*.csv.gz', FORMAT='CSV') AS SELECT * FROM all_rows` :: UnsupportedError: Unsupported expression type Export
 - [bigquery] `EXPORT DATA WITH CONNECTION myproject.us.myconnection OPTIONS (URI='gs://path*.csv.gz', FORMAT='CSV'` :: UnsupportedError: Unsupported expression type Export
-- [bigquery] `FOR record IN (SELECT word, word_count FROM bigquery-public-data.samples.shakespeare LIMIT 5) DO SEL` :: UnsupportedError: Unsupported expression type ForIn
 - [bigquery] `JSON_KEYS(PARSE_JSON('{"a": {"b":1}}'), 1, mode => 'lax')` :: output mismatch: expected `JSON_KEYS(PARSE_JSON('{"a": {"b":1}}'), 1, mode => 'lax')` actual `JSON_KEYS(PARSE_JSON('{"a": {"b":1}}'), 1)`
 - [bigquery] `LAST_DAY(DATETIME '2008-11-10 15:30:00', WEEK(SUNDAY))` :: output mismatch: expected `LAST_DAY(CAST('2008-11-10 15:30:00' AS DATETIME), WEEK)` actual `LAST_DAY(CAST('2008-11-10 15:30:00' AS DATETIME), WEEK(SUN
 - [bigquery] `PARSE_TIMESTAMP('%FT%H:%M:%E*S%z', x)` :: output mismatch: expected `PARSE_TIMESTAMP('%FT%H:%M:%E*S%z', x)` actual `PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*S%z', x)`
-- [bigquery] `REGEXP_EXTRACT(svc_plugin_output, r'\\\((.*)')` :: output mismatch: expected `REGEXP_EXTRACT(svc_plugin_output, '\\\\\\((.*)')` actual `REGEXP_EXTRACT(svc_plugin_output, '\\\((.*)')`
 - [bigquery] `SAFE.PARSE_DATE('%Y-%m-%d', '2024-01-15')` :: output mismatch: expected `SAFE.PARSE_DATE('%F', '2024-01-15')` actual `SAFE.PARSE_DATE('%Y-%m-%d', '2024-01-15')`
 - [bigquery] `SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', '2024-01-15 10:30:00')` :: output mismatch: expected `SAFE.PARSE_DATETIME('%F %T', '2024-01-15 10:30:00')` actual `SAFE.PARSE_DATETIME('%Y-%m-%d %H:%M:%S', '2024-01-15 10:30:00'
 - [bigquery] `SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S', '2024-01-15 10:30:00')` :: output mismatch: expected `SAFE.PARSE_TIMESTAMP('%F %T', '2024-01-15 10:30:00')` actual `SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S', '2024-01-15 10:30:0
@@ -99,7 +97,6 @@ TRANSFORM(
 - [bigquery] `SELECT PARSE_TIMESTAMP('%c', 'Thu Dec 25 07:30:00 2008', 'UTC')` :: output mismatch: expected `SELECT PARSE_TIMESTAMP('%c', 'Thu Dec 25 07:30:00 2008', 'UTC')` actual `SELECT PARSE_TIMESTAMP('%a %b %e %H:%M:%S %Y', 'Th
 - [bigquery] `SELECT a, b, c, d, e FROM GAP_FILL(TABLE foo, ts_column => 'b', partitioning_columns => ['a'], value` :: output mismatch: expected `SELECT a, b, c, d, e FROM GAP_FILL(TABLE foo, ts_column => 'b', partitioning_columns => ['a'], value_columns => [('c', '` a
 - [bigquery] `SELECT label, predicted_label1, predicted_label AS predicted_label2 FROM ML.PREDICT(MODEL mydataset.` :: output mismatch: expected `SELECT label, predicted_label1, predicted_label AS predicted_label2 FROM ML.PREDICT(MODEL mydataset.mymodel2, (SELECT * ` a
-- [bigquery] `SELECT r"\t"` :: output mismatch: expected `SELECT '\\t'` actual `SELECT '\t'`
 - [bigquery] `SELECT y + 1 z FROM x GROUP BY y + 1 ORDER BY z` :: output mismatch: expected `SELECT y + 1 AS z FROM x GROUP BY z ORDER BY z` actual `SELECT y + 1 AS z FROM x GROUP BY y + 1 ORDER BY z`
 - [bigquery] `WITH t AS (SELECT '{"x-y": "z"}' AS c) SELECT JSON_EXTRACT(c, '$.x-y') FROM t` :: output mismatch: expected `WITH t AS (SELECT '{"x-y": "z"}' AS c) SELECT JSON_EXTRACT(c, '$.x-y') FROM t` actual `WITH t AS (SELECT '{"x-y": "z"}' AS 
 - [bigquery] `select array_contains([1, 2, 3], 1)` :: output mismatch: expected `SELECT EXISTS(SELECT 1 FROM UNNEST([1, 2, 3]) AS _col WHERE _col = 1)` actual `SELECT ARRAY_CONTAINS([1, 2, 3], 1)`

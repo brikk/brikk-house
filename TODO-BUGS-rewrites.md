@@ -39,10 +39,10 @@
 ---
 
 
-**459 items** across 54 groups.
+**448 items** across 54 groups.
 
 
-## bigquery->duckdb  (117)
+## bigquery->duckdb  (116)
 
 - [bigquery -> duckdb] `APPROX_QUANTILES(DISTINCT x, 2)` :: expected `APPROX_QUANTILE(DISTINCT x, [0, 0.5, 1])` actual `APPROX_QUANTILES(DISTINCT x, 2)`
 - [bigquery -> duckdb] `APPROX_QUANTILES(x, 1)` :: expected `APPROX_QUANTILE(x, [0, 1])` actual `APPROX_QUANTILES(x, 1)`
@@ -160,9 +160,8 @@
 - [bigquery -> duckdb] `WITH sample AS (SELECT * FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:0` :: expected `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) S
 - [bigquery -> duckdb] `WITH sample AS (SELECT * FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:0` :: expected `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) S
 - [bigquery -> duckdb] `WITH sample AS (SELECT ts FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:` :: expected `WITH sample AS (SELECT ts FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) 
-- [bigquery -> duckdb] `r'x\''` :: expected `'x\'''` actual `'x'''`
 
-## bigquery->bigquery  (54)
+## bigquery->bigquery  (50)
 
 - [bigquery -> bigquery] `"""a
 """` :: expected `'a\n'` actual `'a '`
@@ -171,7 +170,6 @@
 - [bigquery -> bigquery] `EDIT_DISTANCE(col1, col2, max_distance => 3)` :: expected `EDIT_DISTANCE(col1, col2, max_distance => 3)` actual `LEVENSHTEIN(col1, col2, 3)`
 - [bigquery -> bigquery] `GENERATE_ARRAY(1, 4)` :: expected `GENERATE_ARRAY(1, 4)` actual `GENERATE_SERIES(1, 4)`
 - [bigquery -> bigquery] `PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E6S%z', x)` :: expected `PARSE_TIMESTAMP('%FT%H:%M:%E6S%z', x)` actual `PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S.%f%z', x)`
-- [bigquery -> bigquery] `R"""/\*.*\*/"""` :: expected `'/\\*.*\\*/'` actual `'/\*.*\*/'`
 - [bigquery -> bigquery] `SELECT '\n'` :: expected `SELECT '\n'` actual `SELECT ' '`
 - [bigquery -> bigquery] `SELECT '\n'` :: expected `SELECT '\n'` actual `SELECT ' '`
 - [bigquery -> bigquery] `SELECT * FROM UNNEST(ARRAY<STRUCT<device_id INT64, time DATETIME, signal INT64, state STRING>>[STRUC` :: expected `SELECT * FROM UNNEST(ARRAY<STRUCT<device_id INT64, time DATETIME, signal INT64, state STRING>>[STRUCT(1, CAST('2023-11-01 09:34:01' AS DATET
@@ -215,11 +213,8 @@
 - [bigquery -> bigquery] `SHA512(x)` :: expected `SHA512(x)` actual `S_H_A2_DIGEST(x, 512)`
 - [bigquery -> bigquery] `STRING('2008-12-25 15:30:00', 'America/New_York')` :: expected `STRING('2008-12-25 15:30:00', 'America/New_York')` actual `STRING('2008-12-25 15:30:00')`
 - [bigquery -> bigquery] `TIMESTAMP_DIFF(a, b, MONTH)` :: expected `TIMESTAMP_DIFF(a, b, MONTH)` actual `TIMESTAMP_DIFF(a, b)`
-- [bigquery -> bigquery] `r"""/\*.*\*/"""` :: expected `'/\\*.*\\*/'` actual `'/\*.*\*/'`
 - [bigquery -> bigquery] `r"""a
 """` :: expected `'a\n'` actual `'a '`
-- [bigquery -> bigquery] `r'x\''` :: expected `'x\\\''` actual `'x\''`
-- [bigquery -> bigquery] `r'x\y'` :: expected `'x\\y'` actual `'x\y'`
 
 ## datafusion  (35)
 
@@ -259,11 +254,10 @@
 - [datafusion] `identity|SELECT x::INT FROM t` :: expected `SELECT x::INT FROM t` actual `SELECT CAST(x AS INT) FROM t`
 - [datafusion] `identity|SELECT x::VARCHAR FROM t` :: expected `SELECT x::VARCHAR FROM t` actual `SELECT CAST(x AS VARCHAR) FROM t`
 
-## bigquery->spark  (18)
+## bigquery->spark  (16)
 
 - [bigquery -> spark] `EDIT_DISTANCE(col1, col2, max_distance => 3)` :: expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`
 - [bigquery -> spark] `LOWER(TO_HEX(x))` :: expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`
-- [bigquery -> spark] `R"""/\*.*\*/"""` :: expected `'/\\*.*\\*/'` actual `'/\*.*\*/'`
 - [bigquery -> spark] `REGEXP_EXTRACT_ALL('a1_a2a3_a4A5a6', '(a)[0-9]')` :: expected `REGEXP_EXTRACT_ALL('a1_a2a3_a4A5a6', '(a)[0-9]')` actual `REGEXP_EXTRACT_ALL('a1_a2a3_a4A5a6', '(a)[0-9]', 0)`
 - [bigquery -> spark] `SELECT * FROM UNNEST(['7', '14']) AS x` :: expected `SELECT * FROM EXPLODE(ARRAY('7', '14')) AS _t0(x)` actual `SELECT * FROM EXPLODE(ARRAY('7', '14')) AS x`
 - [bigquery -> spark] `SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))` :: expected `SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))` actual `SELECT * FROM produce AS p PIVOT(SU
@@ -278,7 +272,6 @@
 - [bigquery -> spark] `SELECT TIMESTAMP_SUB(TIMESTAMP "2008-12-25 15:30:00+00", INTERVAL 10 MINUTE)` :: expected `SELECT CAST('2008-12-25 15:30:00+00' AS TIMESTAMP) - INTERVAL '10' MINUTE` actual `SELECT TIMESTAMP_SUB(CAST('2008-12-25 15:30:00+00' AS TIM
 - [bigquery -> spark] `SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))` :: expected UnsupportedError, got `SELECT DATE_TRUNC(WEEK_START(SUNDAY), ts)`
 - [bigquery -> spark] `TO_HEX(x)` :: expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`
-- [bigquery -> spark] `r"""/\*.*\*/"""` :: expected `'/\\*.*\\*/'` actual `'/\*.*\*/'`
 
 ## spark->duckdb  (18)
 
@@ -404,18 +397,14 @@ world'` :: expected `SELECT CAST(b'Hello\nworld' AS STRING)` actual `SELECT CAST
 - [spark -> presto] `SELECT col, pos, POSEXPLODE(ARRAY(2, 3)) FROM _u` :: expected `SELECT col, pos, IF(_u_2.pos_2 = _u_3.pos_3, _u_3.col_2) AS col_2, IF(_u_2.pos_2 = _u_3.pos_3, _u_3.pos_3) AS pos_3 FROM _u CROSS JOIN UNNES
 - [spark -> presto] `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUN` :: expected `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NUL
 
-## bigquery->hive  (10)
+## bigquery->hive  (6)
 
 - [bigquery -> hive] `EDIT_DISTANCE(col1, col2, max_distance => 3)` :: expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`
 - [bigquery -> hive] `LOWER(TO_HEX(x))` :: expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`
-- [bigquery -> hive] `R"""/\*.*\*/"""` :: expected `'/\\*.*\\*/'` actual `'/\*.*\*/'`
 - [bigquery -> hive] `SAFE_DIVIDE(x + 1, 2 * y)` :: expected `IF((2 * y) <> 0, (x + 1) / (2 * y), NULL)` actual `SAFE_DIVIDE(x + 1, 2 * y)`
 - [bigquery -> hive] `SAFE_DIVIDE(x, y)` :: expected `IF(y <> 0, x / y, NULL)` actual `SAFE_DIVIDE(x, y)`
 - [bigquery -> hive] `SELECT EXTRACT(WEEK(THURSDAY) FROM d)` :: expected UnsupportedError, got `SELECT EXTRACT(THURSDAY FROM d)`
 - [bigquery -> hive] `TO_HEX(x)` :: expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`
-- [bigquery -> hive] `r"""/\*.*\*/"""` :: expected `'/\\*.*\\*/'` actual `'/\*.*\*/'`
-- [bigquery -> hive] `r'x\''` :: expected `'x\\\''` actual `'x\''`
-- [bigquery -> hive] `r'x\y'` :: expected `'x\\y'` actual `'x\y'`
 
 ## presto->bigquery  (10)
 

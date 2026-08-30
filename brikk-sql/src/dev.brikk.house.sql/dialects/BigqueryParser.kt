@@ -218,6 +218,7 @@ open class BigqueryParser(
 ) : Parser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig) {
 
     override val dialect: Dialect get() = Dialects.BIGQUERY
+    override val supportsDigitPrefixedFieldNames: Boolean get() = true
 
     // sqlglot: BigQueryParser.PREFIXED_PIVOT_COLUMNS = True
     override val prefixedPivotColumns: Boolean get() = true
@@ -249,7 +250,8 @@ open class BigqueryParser(
 
     // sqlglot: BigQueryParser.ALIAS_TOKENS
     override val aliasTokens: Set<TokenType>
-        get() = (BaseParserTables.ALIAS_TOKENS + TokenType.GRANT) - setOf(TokenType.ASC, TokenType.DESC)
+        get() = (BaseParserTables.ALIAS_TOKENS + TokenType.GRANT) -
+            (setOf(TokenType.ASC, TokenType.DESC) + BaseParserTables.JOIN_SIDES)
 
     // sqlglot: BigQueryParser.TABLE_ALIAS_TOKENS
     override val tableAliasTokens: Set<TokenType>
@@ -320,8 +322,21 @@ open class BigqueryParser(
         get() = super.statementParsers + mapOf<TokenType, (Parser) -> Expression>(
             TokenType.ELSE to { p -> p.parseAsCommand(p.prevToken) },
             TokenType.END to { p -> p.parseAsCommand(p.prevToken) },
+            TokenType.FOR to { p -> (p as BigqueryParser).parseForIn() },
             TokenType.EXPORT to { p -> (p as BigqueryParser).parseExportData() },
         )
+
+    // sqlglot: BigQueryParser._parse_for_in
+    open fun parseForIn(): Expression {
+        val startIndex = index
+        val this_ = parseRange()
+        matchTextSeq("DO")
+        if (match(TokenType.COMMAND)) {
+            retreat(startIndex)
+            return parseAsCommand(prevToken)
+        }
+        return expression(ForIn(args("this" to this_, "expression" to parseStatement())))
+    }
 
     // sqlglot: BigQueryParser.PROPERTY_PARSERS
     override val propertyParsers: Map<String, (Parser, Parser.PropertyKwargs) -> kotlin.Any?>

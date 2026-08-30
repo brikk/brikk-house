@@ -38,10 +38,10 @@
 ---
 
 
-**163 items** across 10 groups.
+**162 items** across 10 groups.
 
 
-## bigquery  (98)
+## bigquery  (97)
 
 - [bigquery] `ARRAY(SELECT AS STRUCT e.x AS y, e.z AS bla FROM UNNEST(bob))::ARRAY<STRUCT<y STRING, bro NUMERIC>>` :: ast-mismatch at #28: expected Column (k=expressions) _(gates: parser)_
 - [bigquery] `CAST(STRUCT<a INT64>(1) AS STRUCT<a INT64>)` :: ParseError: Expected AS after CAST. Line 1, Col: 19. CAST(STRUCT<a INT64>(1) AS STRUCT<a INT64>) _(gates: transpile)_
@@ -57,7 +57,6 @@
 - [bigquery] `DATE_TRUNC(col, MONTH, 'UTC+8')` :: ast-mismatch at #1: expected Literal (k=unit) _(gates: parser)_
 - [bigquery] `EXPORT DATA OPTIONS (URI='gs://bucket/folder/*.csv') AS (SELECT 1)` :: ast-mismatch at #1: expected {"i":0,"k":"connection","v":false} _(gates: parser)_
 - [bigquery] `EXPORT DATA OPTIONS (URI='gs://path*.csv.gz', FORMAT='CSV') AS SELECT * FROM all_rows` :: ast-mismatch at #1: expected {"i":0,"k":"connection","v":false} _(gates: parser)_
-- [bigquery] `FOR record IN (SELECT word, word_count FROM bigquery-public-data.samples.shakespeare LIMIT 5) DO SEL` :: Required keyword: 'this' missing for Comprehension. Line 1, Col: 96. _(gates: annotate,parser)_
 - [bigquery] `JSON_EXTRACT_STRING_ARRAY(PARSE_JSON('{"fruits": ["apples", "oranges", "grapes"]}'), '$.fruits')` :: ast-mismatch at #5: expected JSONPath (k=expression) _(gates: parser)_
 - [bigquery] `JSON_KEYS(PARSE_JSON('{"a": {"b":1}}'), 1, mode => 'lax')` :: ast-mismatch: payload count expected=14 actual=8 _(gates: annotate,parser)_
 - [bigquery] `LOG(n, b)` :: ast-mismatch at #2: expected Identifier (k=this) _(gates: parser)_
