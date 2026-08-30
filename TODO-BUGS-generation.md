@@ -6,9 +6,10 @@
 > a read-only reference clone of that exact version lives at **`reference/sqlglot/`** — treat
 > its behaviour as the oracle for every item here.
 >
-> **In-scope dialects** (the only ones that matter): base (`""`), mysql, doris, presto, trino,
-> duckdb, postgres, clickhouse, hive, spark2, spark, bigquery, plus brikk-native datafusion.
-> Non-ported dialects (snowflake, tsql, oracle, sqlite, redshift, databricks, starrocks, …)
+> **In-scope dialects** (the only ones that matter): base (`""`), mysql, doris, starrocks,
+> presto, trino, duckdb, postgres, clickhouse, hive, spark2, spark, bigquery, plus
+> brikk-native datafusion. Non-ported dialects (snowflake, tsql, oracle, sqlite,
+> redshift, databricks, …)
 > are **out of scope** and already skipped by the gates — never touch them.
 >
 > **Every actionable item below is IN SCOPE**: it involves only ported dialects and is a real
