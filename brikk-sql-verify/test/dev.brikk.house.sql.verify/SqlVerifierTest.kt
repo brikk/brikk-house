@@ -123,6 +123,39 @@ class SqlVerifierTest {
         )
     }
 
+    @Test
+    fun trinoAccepts483ParityRenderings() {
+        val verifier = SqlVerifiers.forEngine("trino")!!
+
+        for (sql in listOf(
+            "ts AT LOCAL",
+            "ROW(1) MATCH SIMPLE (SELECT 1)",
+            "ROW(1) MATCH UNIQUE FULL (SELECT 1)",
+            "UNIQUE (SELECT 1)",
+            "CASE ROW(1) WHEN MATCH PARTIAL (SELECT 1) THEN TRUE ELSE FALSE END",
+            "ROW(1 AS a, 2 AS b, 3)",
+            "CAST(value AS NUMBER)",
+            "CAST(value AS VARIANT)",
+        )) {
+            val result = verifier.verifyExpression(sql)
+            assertTrue(result.accepted, "Trino parser rejected `$sql`: ${result.error}")
+        }
+
+        for (sql in listOf(
+            "CREATE TABLE metrics (value INTEGER DEFAULT 0)",
+            "ALTER TABLE metrics ADD COLUMN value INTEGER DEFAULT 0",
+            "ALTER TABLE metrics ALTER COLUMN value SET DEFAULT 1",
+            "ALTER TABLE metrics ALTER COLUMN value DROP DEFAULT",
+            "INSERT INTO orders@dev SELECT 1",
+            "DELETE FROM orders@dev WHERE id = 1",
+            "UPDATE orders@dev SET value = 1",
+            "MERGE INTO target@dev USING source ON target.id = source.id WHEN MATCHED THEN DELETE",
+        )) {
+            val result = verifier.verify(sql)
+            assertTrue(result.accepted, "Trino parser rejected `$sql`: ${result.error}")
+        }
+    }
+
     // -- duckdb ---------------------------------------------------------------------------
 
     @Test

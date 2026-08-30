@@ -387,6 +387,9 @@ object GeneratorTables {
         reg(Lambda::class) { e -> lambdaSql(e as Lambda) }
         reg(AtIndex::class) { e -> atindexSql(e as AtIndex) }
         reg(AtTimeZone::class) { e -> attimezoneSql(e as AtTimeZone) }
+        reg(AtLocal::class) { e -> atlocalSql(e as AtLocal) }
+        reg(MatchPredicate::class) { e -> matchpredicateSql(e as MatchPredicate) }
+        reg(UniquePredicate::class) { e -> uniquepredicateSql(e as UniquePredicate) }
         reg(FromTimeZone::class) { e -> fromtimezoneSql(e as FromTimeZone) }
         reg(NextValueFor::class) { e -> nextvalueforSql(e as NextValueFor) }
         reg(Comprehension::class) { e -> comprehensionSql(e as Comprehension) }

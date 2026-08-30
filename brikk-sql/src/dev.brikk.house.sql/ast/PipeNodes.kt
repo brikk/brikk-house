@@ -276,4 +276,5 @@ val NATIVE_EXPRESSION_CLASSES: kotlin.collections.Set<String> = setOf(
     "PipeDistinct", "PipeOrderBy", "PipeLimit", "PipeOffset", "PipeTableSample",
     "PipePivot", "PipeUnpivot", "PipeJoin", "PipeSetOperation",
     "PipeSet", "PipeDrop", "PipeRename", "PipeCall", "PipeWindow",
+    "AtLocal", "MatchPredicate", "UniquePredicate",
 )

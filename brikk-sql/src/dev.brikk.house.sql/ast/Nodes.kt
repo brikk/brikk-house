@@ -466,6 +466,7 @@ class Table(initArgs: Args = emptyMap()) : Expression(initArgs), Selectable {
             "system_time" to false, "version" to false, "format" to false, "pattern" to false,
             "ordinality" to false, "when" to false, "only" to false, "partition" to false,
             "changes" to false, "rows_from" to false, "sample" to false, "indexed" to false,
+            "branch" to false,
         )
     }
 }

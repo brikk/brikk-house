@@ -6556,7 +6556,8 @@
     "changes": false,
     "rows_from": false,
     "sample": false,
-    "indexed": false
+    "indexed": false,
+    "branch": false
    }
   },
   "TableAlias": {

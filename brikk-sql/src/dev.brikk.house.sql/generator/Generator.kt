@@ -321,7 +321,7 @@ open class Generator(
         val REAL_TYPES: Set<DType> = setOf(
             DType.DOUBLE, DType.FLOAT, DType.BIGDECIMAL, DType.DECIMAL, DType.DECIMAL32,
             DType.DECIMAL64, DType.DECIMAL128, DType.DECIMAL256, DType.DECFLOAT,
-            DType.MONEY, DType.SMALLMONEY, DType.UDECIMAL, DType.UDOUBLE,
+            DType.MONEY, DType.NUMBER, DType.SMALLMONEY, DType.UDECIMAL, DType.UDOUBLE,
         )
 
         // sqlglot: expressions.datatypes.DataType.TEXT_TYPES
@@ -2091,6 +2091,8 @@ open class Generator(
     // sqlglot: Generator.table_sql
     open fun tableSql(expression: Table, sep: String = " AS "): String {
         var table = tableParts(expression)
+        val branch = sql(expression, "branch")
+        if (branch.isNotEmpty()) table = "$table@$branch"
         val only = if (expression.args["only"] == true) "ONLY " else ""
         var partition = sql(expression, "partition")
         if (partition.isNotEmpty()) partition = " $partition"
@@ -3713,6 +3715,19 @@ open class Generator(
     // sqlglot: Generator.attimezone_sql
     open fun attimezoneSql(expression: AtTimeZone): String =
         "${sql(expression, "this")} AT TIME ZONE ${sql(expression, "zone")}"
+
+    open fun atlocalSql(expression: AtLocal): String =
+        "${sql(expression, "this")} AT LOCAL"
+
+    open fun matchpredicateSql(expression: MatchPredicate): String {
+        val operand = sql(expression, "this").let { if (it.isEmpty()) "" else "$it " }
+        val unique = if (expression.args["unique"] == true) " UNIQUE" else ""
+        val matchType = expression.text("match_type").let { if (it.isEmpty()) "" else " $it" }
+        return "${operand}MATCH$unique$matchType ${wrap(sql(expression, "query"))}"
+    }
+
+    open fun uniquepredicateSql(expression: UniquePredicate): String =
+        "UNIQUE ${wrap(expression)}"
 
     // sqlglot: Generator.fromtimezone_sql
     open fun fromtimezoneSql(expression: FromTimeZone): String =

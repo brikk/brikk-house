@@ -60,6 +60,21 @@ open class TrinoGenerator(
     override fun logSql(expression: Log): String =
         func("LOG", expression.thisArg, expression.args["expression"])
 
+    override fun structSql(expression: Struct): String {
+        if (expression.args["trino_row_syntax"] != true ||
+            expression.expressionsArg.none { it is PropertyEQ }
+        ) return super.structSql(expression)
+
+        val fields = expression.expressionsArg.joinToString(", ") { field ->
+            if (field is PropertyEQ) {
+                "${sql(field, "expression")} AS ${sql(field, "this")}"
+            } else {
+                sql(field)
+            }
+        }
+        return "ROW($fields)"
+    }
+
     // Reverse direction (ClickHouse -> Trino): ClickHouse camelCase names that reach the
     // generator as an unmapped Anonymous, rewritten to the Trino spelling. Key = ClickHouse
     // name UPPERCASED, value = Trino name. Live-verified value-equal on Trino 481 +

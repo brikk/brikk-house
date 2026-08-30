@@ -132,6 +132,7 @@ object ExpressionRegistry {
         // NATIVE section: brikk-original nodes with no Python counterpart (module
         // "brikk.pipes"); see PipeNodes.kt.
         registerNativePipeNodes(m)
+        registerNativeTrinoNodes(m)
     }
 
     fun newInstance(simpleName: String): Expression =

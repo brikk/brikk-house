@@ -1669,7 +1669,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_unary
-    fun parseUnary(): Expression? {
+    open fun parseUnary(): Expression? {
         if (matchSet(unaryParsers.keys)) {
             return unaryParsers.getValue(prevToken.tokenType)(this)
         }
@@ -1677,7 +1677,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_at_time_zone
-    fun parseAtTimeZone(this_: Expression?): Expression? {
+    open fun parseAtTimeZone(this_: Expression?): Expression? {
         if (!matchTextSeq("AT", "TIME", "ZONE")) return this_
         return parseAtTimeZone(
             expression(AtTimeZone(args("this" to this_, "zone" to parseUnary())))
@@ -5877,12 +5877,24 @@ open class Parser(
 
     // sqlglot: Parser._parse_insert_table
     protected fun parseInsertTable(): Expression? {
-        val this_ = parseTable(schema = true, parsePartition = true)
+        val this_ = parseDmlTarget(schema = true, parsePartition = true)
         if (this_ is Table && match(TokenType.ALIAS, advance = false)) {
             this_.set("alias", parseTableAlias())
         }
         return this_
     }
+
+    protected open fun parseDmlTarget(
+        schema: kotlin.Boolean = false,
+        joins: kotlin.Boolean = false,
+        aliasTokens: Collection<TokenType>? = null,
+        parsePartition: kotlin.Boolean = false,
+    ): Expression? = parseTable(
+        schema = schema,
+        joins = joins,
+        aliasTokens = aliasTokens,
+        parsePartition = parsePartition,
+    )
 
     // sqlglot: Parser._parse_returning
     fun parseReturning(): Expression? {
@@ -5959,7 +5971,7 @@ open class Parser(
                 args(
                     "hint" to hint,
                     "tables" to tables,
-                    "this" to (if (match(TokenType.FROM)) parseTable(joins = true) else false),
+                    "this" to (if (match(TokenType.FROM)) parseDmlTarget(joins = true) else false),
                     "using" to (if (match(TokenType.USING)) parseCsv { parseTable(joins = true) } else false),
                     "cluster" to (if (match(TokenType.ON)) parseOnProperty() else false),
                     "where" to parseWhere(),
@@ -5976,7 +5988,7 @@ open class Parser(
         val hint = parseHint()
         val kwargs = args(
             "hint" to hint,
-            "this" to parseTable(joins = true, aliasTokens = updateAliasTokens),
+            "this" to parseDmlTarget(joins = true, aliasTokens = updateAliasTokens),
         ).toMutableMap()
         while (currToken.exists) {
             if (match(TokenType.SET)) {
@@ -6254,7 +6266,7 @@ open class Parser(
     // sqlglot: Parser._parse_merge
     fun parseMerge(): Expression {
         match(TokenType.INTO)
-        val target = parseTable()
+        val target = parseDmlTarget()
 
         if (target != null && match(TokenType.ALIAS, advance = false)) {
             target.set("alias", parseTableAlias())
