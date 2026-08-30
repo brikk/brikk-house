@@ -9,18 +9,6 @@
             "reason": "expected `SELECT TRIM(x, 'ab')` actual `SELECT BTRIM(x, 'ab')`"
         },
         {
-            "case": "read|mysql|SELECT JSON_EXTRACT_PATH(a, VARIADIC '{}') FROM t",
-            "reason": "expected `SELECT JSON_EXTRACT_PATH(a, VARIADIC '{}') FROM t` actual `SELECT JSON_EXTRACT_PATH(a) FROM t`"
-        },
-        {
-            "case": "read|mysql|SELECT JSON_EXTRACT_PATH_TEXT(a, VARIADIC '{}') FROM t",
-            "reason": "expected `SELECT JSON_EXTRACT_PATH_TEXT(a, VARIADIC '{}') FROM t` actual `SELECT JSON_EXTRACT_PATH_TEXT(a) FROM t`"
-        },
-        {
-            "case": "read|postgres|SELECT 'prefix' || JSON_EXTRACT_PATH_TEXT(a, VARIADIC '{}') FROM t",
-            "reason": "expected `SELECT 'prefix' || JSON_EXTRACT_PATH_TEXT(a, VARIADIC '{}') FROM t` actual `SELECT 'prefix' || JSON_EXTRACT_PATH_TEXT(a) FROM t`"
-        },
-        {
             "case": "write|spark|SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount)",
             "reason": "expected `SELECT PERCENTILE_APPROX(amount, 0.5)` actual `SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount NULLS LAST)`"
         },
@@ -86,19 +74,7 @@
         },
         {
             "case": "write|bigquery|SELECT U&'a\nb'",
-            "reason": "UnsupportedError: Unsupported expression type UnicodeString"
-        },
-        {
-            "case": "read|postgres|SELECT a -> ('x' || 'y')",
-            "reason": "expected `SELECT a -> ('x' || 'y')` actual `SELECT JSON_EXTRACT_PATH(a, 'x' || 'y')`"
-        },
-        {
-            "case": "read|postgres|SELECT a -> (1 + 2)",
-            "reason": "expected `SELECT a -> (1 + 2)` actual `SELECT JSON_EXTRACT_PATH(a, 1 + 2)`"
-        },
-        {
-            "case": "read|postgres|SELECT a -> (NOT x)",
-            "reason": "expected `SELECT a -> (NOT x)` actual `SELECT JSON_EXTRACT_PATH(a, NOT x)`"
+            "reason": "expected `SELECT 'a\\nb'` actual `SELECT 'a\nb'`"
         },
         {
             "case": "read|postgres|SELECT a #> (n IN (1, 2))",

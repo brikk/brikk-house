@@ -615,8 +615,35 @@ open class PostgresGenerator(
         return func(name, expression.thisArg, *segments.toTypedArray())
     }
 
+    // sqlglot: dialect.arrow_json_extract_sql (postgres JSON_TYPE_REQUIRED_FOR_EXTRACTION = true)
+    open fun arrowJsonExtractSql(expression: Binary, op: String? = null): String {
+        val this_ = expression.thisArg
+        if (this_ is Literal && this_.isString) {
+            this_.replace(Cast(args("this" to this_, "to" to DataType(args("this" to DType.JSON)))))
+        }
+        val pathExpr = expression.args["expression"]
+        if (pathExpr is Binary || pathExpr is Predicate || pathExpr is Not) {
+            expression.set("expression", paren(pathExpr as Expression, copy = false))
+        }
+        val realOp = op ?: if (expression is JSONExtract) "->" else "->>"
+        return binary(expression, realOp)
+    }
+
     // sqlglot: generators.postgres._json_extract_sql
     open fun postgresJsonExtractSql(expression: Expression, name: String, op: String): String {
+        val path = expression.args["expression"]
+        // Single non-JSONPath segment (e.g. a negative array index) with no `expressions`:
+        // render as the infix arrow operator, not JSON_EXTRACT_PATH[_TEXT] (jsonb-unsafe).
+        if (path !is JSONPath && path !is Variadic && expression.expressionsArg.isEmpty()) {
+            return arrowJsonExtractSql(expression as Binary, op)
+        }
+        // JSON_EXTRACT_PATH requires a key, so use an empty variadic array for the root path.
+        if (path is JSONPath && path.expressionsArg.size == 1 && path.expressionsArg[0] is JSONPathRoot) {
+            expression.set(
+                "expression",
+                Variadic(args("this" to Literal(args("this" to "{}", "is_string" to true)))),
+            )
+        }
         if (expression.args["only_json_types"] == true) {
             return jsonExtractSegments(expression, name, quotedIndex = false, op = op)
         }

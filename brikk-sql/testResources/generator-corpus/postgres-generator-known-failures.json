@@ -1,13 +1,4 @@
 {
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": [
-        {
-            "sql": "\n            WITH\n              json_data AS (SELECT '{\"field_id\": [1, 2, 3]}'::JSON AS data),\n              field_ids AS (SELECT 'field_id' AS field_id)\n\n            SELECT\n                JSON_ARRAY_ELEMENTS(json_data.data -> field_ids.field_id) AS element\n            FROM json_data, field_ids\n            ",
-            "reason": "output mismatch: expected `WITH json_data AS (SELECT CAST('{\"field_id\": [1, 2, 3]}' AS JSON) AS data), field_ids AS (SELECT 'field_id' AS field_id)` actual `WITH json_data AS (SELECT CAST('{\"field_id\": [1, 2, 3]}' AS JSON) AS data), field_ids AS (SELECT 'field_id' AS field_id)`"
-        },
-        {
-            "sql": "x::JSON -> 'duration' ->> -1",
-            "reason": "output mismatch: expected `CAST(x AS JSON) -> 'duration' ->> -1` actual `JSON_EXTRACT_PATH_TEXT(CAST(x AS JSON) -> 'duration', -1)`"
-        }
-    ]
+    "cases": []
 }
