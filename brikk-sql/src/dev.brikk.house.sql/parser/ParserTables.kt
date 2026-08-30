@@ -80,7 +80,8 @@ internal fun binaryRangeParser(
 
 /**
  * sqlglot: Func.from_arg_list — positional args zipped against arg_types keys;
- * for var-len functions the remaining args land in the last key as a list.
+ * for var-len functions the remaining args land in the `expressions` key (or the
+ * final key for nodes such as VarMap whose custom variadic key is `values`).
  */
 internal fun fromArgList(
     argKeys: List<String>,
@@ -89,9 +90,9 @@ internal fun fromArgList(
 ): (List<Expression?>) -> Expression = { argsList ->
     val kwargs = LinkedHashMap<String, kotlin.Any?>()
     if (isVarLenArgs) {
-        val nonVarKeys = argKeys.dropLast(1)
-        for ((arg, key) in argsList.zip(nonVarKeys)) kwargs[key] = arg
-        kwargs[argKeys.last()] = argsList.drop(nonVarKeys.size)
+        val varLenIndex = argKeys.indexOf("expressions").takeIf { it >= 0 } ?: argKeys.lastIndex
+        for ((arg, key) in argsList.zip(argKeys.take(varLenIndex))) kwargs[key] = arg
+        kwargs[argKeys[varLenIndex]] = argsList.drop(varLenIndex)
     } else {
         for ((arg, key) in argsList.zip(argKeys)) kwargs[key] = arg
     }
@@ -745,8 +746,8 @@ object BaseParserTables {
     // sqlglot: Parser.FUNCTIONS_WITH_ALIASED_ARGS
     val FUNCTIONS_WITH_ALIASED_ARGS: Set<String> = setOf("STRUCT")
 
-    // sqlglot: Parser.FUNCTION_PARSERS (GAP_FILL, OPENJSON, XMLELEMENT, XMLTABLE not
-    // ported yet — no base-corpus coverage).
+    // sqlglot: Parser.FUNCTION_PARSERS (OPENJSON not ported yet — no base-corpus
+    // coverage).
     val FUNCTION_PARSERS: Map<String, (Parser) -> Expression?> = buildMap {
         put("CONVERT") { parser -> parser.parseConvert(parser.strictCast) }
         put("STRING_AGG") { parser -> parser.parseStringAgg() }
@@ -764,6 +765,7 @@ object BaseParserTables {
         put("DECODE") { parser -> parser.parseDecode() }
         put("EXTRACT") { parser -> parser.parseExtract() }
         put("FLOOR") { parser -> parser.parseCeilFloor { a: Args -> dev.brikk.house.sql.ast.Floor(a) } }
+        put("GAP_FILL") { parser -> parser.parseGapFill() }
         put("JSON_OBJECT") { parser -> parser.parseJsonObject() }
         put("JSON_OBJECTAGG") { parser -> parser.parseJsonObject(agg = true) }
         put("JSON_TABLE") { parser -> parser.parseJsonTable() }

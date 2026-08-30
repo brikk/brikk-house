@@ -306,9 +306,6 @@ open class ClickhouseParser(
     // sqlglot: ClickHouse.NULL_ORDERING = "nulls_are_last"
     override val nullOrdering: String get() = "nulls_are_last"
 
-    // sqlglot: ClickHouse.SAFE_DIVISION = True
-    override val safeDivision: Boolean get() = true
-
     // sqlglot: ClickHouse.SUPPORTS_USER_DEFINED_TYPES = False
     override val supportsUserDefinedTypes: Boolean get() = false
 
@@ -793,7 +790,7 @@ open class ClickhouseParser(
 
         // Aggregate functions can be split in 2 parts: <func_name><suffix[es]>
         val parts = if (func is Anonymous) {
-            (func.thisArg as? String)?.let { resolveClickhouseAgg(it) }
+            resolveClickhouseAgg(func.name)
         } else {
             null
         }
@@ -977,15 +974,20 @@ open class ClickhouseParser(
         )
     }
 
-    // sqlglot: ClickHouseParser._parse_alter_table_modify
+    // sqlglot: ClickHouseParser._parse_alter_table_alter
     open fun parseAlterTableModify(): Expression? {
-        val properties = parseProperties()
-        if (properties != null) {
-            return expression(
-                AlterModifySqlSecurity(args("expressions" to properties.expressionsArg))
-            )
+        if (!match(TokenType.COLUMN, advance = false)) {
+            val properties = parseProperties()
+            if (properties != null) {
+                return expression(
+                    AlterModifySqlSecurity(args("expressions" to properties.expressionsArg))
+                )
+            }
+            return null
         }
-        return null
+
+        val alter = parseAlterTableAlter()
+        return if (currToken.exists) null else alter
     }
 
     // sqlglot: ClickHouseParser._parse_definer
@@ -1059,7 +1061,7 @@ open class ClickhouseParser(
             value.set(
                 "expressions",
                 expressions.map { expr ->
-                    expression(Tuple(args("expressions" to listOf(expr))))
+                    expression(Tuple(args("expressions" to listOf((expr as Expression).unnest()))))
                 },
             )
         }
@@ -1098,6 +1100,15 @@ open class ClickhouseParser(
     internal fun clickhouseFunctionArgs(alias: Boolean): MutableList<Expression> =
         parseFunctionArgs(alias = alias)
 
+    // sqlglot: Parser._parse_connector_function (used by the AND/OR FUNCTION_PARSERS)
+    internal fun parseConnectorFunction(factory: (Args) -> Expression): Expression {
+        val fnArgs = clickhouseFunctionArgs(alias = false)
+        if (fnArgs.isEmpty()) raiseError("Expected at least one argument")
+
+        // Wrapped so the connector keeps its precedence in the parent context
+        return Paren(args("this" to combineConnector(factory, fnArgs)))
+    }
+
     // sqlglot: ClickHouseParser SETTINGS query-modifier body (the lambda advances past
     // the SETTINGS token before parsing the assignment list)
     internal fun parseSettingsModifier(): List<Expression> {
@@ -1134,7 +1145,7 @@ open class ClickhouseParser(
             "groupBitmapOr", "groupBitmapXor", "sumWithOverflow", "sumMap", "minMap",
             "maxMap", "skewSamp", "skewPop", "kurtSamp", "kurtPop", "uniq", "uniqExact",
             "uniqCombined", "uniqCombined64", "uniqHLL12", "uniqTheta", "quantile",
-            "quantiles", "quantileExact", "quantilesExact", "quantilesExactExclusive",
+            "quantiles", "quantileExact", "quantileExactInclusive", "quantilesExact", "quantilesExactExclusive",
             "quantileExactLow", "quantilesExactLow", "quantileExactHigh",
             "quantilesExactHigh", "quantileExactWeighted", "quantilesExactWeighted",
             "quantileTiming", "quantilesTiming", "quantileTimingWeighted",
@@ -1208,10 +1219,12 @@ object ClickhouseParserTables {
         put("ARRAYREVERSE", fromArgList(listOf("this"), false) { ArrayReverse(it) })
         put("ARRAYSLICE", fromArgList(listOf("this", "start", "end", "step", "zero_based"), false) { ArraySlice(it) })
         put("ARRAYFILTER") { a ->
-            ArrayFilter(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
+            if (a.size > 2) Anonymous(args("this" to "arrayFilter", "expressions" to a))
+            else ArrayFilter(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
         }
         put("ARRAYMAP") { a ->
-            Transform(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
+            if (a.size > 2) Anonymous(args("this" to "arrayMap", "expressions" to a))
+            else Transform(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
         }
         put("CURRENTDATABASE", fromArgList(listOf(), false) { CurrentDatabase(it) })
         put("CURRENTSCHEMAS", fromArgList(listOf("this"), false) { CurrentSchemas(it) })
@@ -1319,10 +1332,10 @@ object ClickhouseParserTables {
                 Struct(args("expressions" to (p as ClickhouseParser).clickhouseFunctionArgs(alias = true)))
             },
             "AND" to { p ->
-                combineConnector({ a: Args -> And(a) }, (p as ClickhouseParser).clickhouseFunctionArgs(alias = false))
+                (p as ClickhouseParser).parseConnectorFunction { a: Args -> And(a) }
             },
             "OR" to { p ->
-                combineConnector({ a: Args -> Or(a) }, (p as ClickhouseParser).clickhouseFunctionArgs(alias = false))
+                (p as ClickhouseParser).parseConnectorFunction { a: Args -> Or(a) }
             },
             "XOR" to { p ->
                 combineConnector({ a: Args -> Xor(a) }, (p as ClickhouseParser).clickhouseFunctionArgs(alias = false))

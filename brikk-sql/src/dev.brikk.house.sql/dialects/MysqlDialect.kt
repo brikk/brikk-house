@@ -45,8 +45,10 @@ class MysqlDialect : Dialect() {
             "%u" to "%W",
             "%k" to "%-H",
             "%l" to "%-I",
+            "%r" to "%I:%M:%S %p",
             "%T" to "%H:%M:%S",
             "%W" to "%A",
+            "%x" to "%G",
         )
 
         // sqlglot: MySQL.INVERSE_TIME_MAPPING (+ _with_strict_time_inverse)

@@ -64,15 +64,25 @@ internal val JSONPATH_VAR_TOKENS: Set<TokenType> = setOf(TokenType.VAR)
 /**
  * Takes in a JSON path string and parses it into a JSONPath expression.
  *
- * sqlglot: jsonpath.parse (dialect fixed to the base "sqlglot" dialect)
+ * sqlglot: jsonpath.parse — [varTokens] mirrors the dialect's JSONPathTokenizer
+ * VAR_TOKENS (BigQuery adds DASH/NUMBER) and [singleDotIsWildcard] mirrors
+ * Dialect.JSON_PATH_SINGLE_DOT_IS_WILDCARD.
  */
-fun parseJsonPath(path: String): JSONPath = JsonPathParser(path).parse()
+fun parseJsonPath(
+    path: String,
+    varTokens: Set<TokenType> = JSONPATH_VAR_TOKENS,
+    singleDotIsWildcard: kotlin.Boolean = false,
+): JSONPath = JsonPathParser(path, varTokens, singleDotIsWildcard).parse()
 
 /**
  * State holder for one jsonpath.parse call (Python uses closures over `i`; Kotlin needs
  * a class because _parse_literal and _parse_bracket are mutually recursive).
  */
-private class JsonPathParser(private val path: String) {
+private class JsonPathParser(
+    private val path: String,
+    private val varTokens: Set<TokenType> = JSONPATH_VAR_TOKENS,
+    private val singleDotIsWildcard: kotlin.Boolean = false,
+) {
 
     private val tokens: List<Token> = Tokenizer(JSONPATH_TOKENIZER_CONFIG).tokenize(path)
     private val size: Int = tokens.size
@@ -176,13 +186,13 @@ private class JsonPathParser(private val path: String) {
             while (match(TokenType.COMMA) != null) {
                 literal = parseSlice()
 
-                if (truthy(literal)) indexes.add(literal)
+                if (literal is String || literal != false) indexes.add(literal)
             }
 
             node = if (indexes.size == 1) {
                 when {
-                    literal is String -> JSONPathKey(args("this" to indexes[0]))
-                    literal is JSONPathScript || literal is JSONPathFilter ->
+                    indexes[0] is String -> JSONPathKey(args("this" to indexes[0]))
+                    indexes[0] is JSONPathScript || indexes[0] is JSONPathFilter ->
                         JSONPathSelector(args("this" to indexes[0]))
                     else -> JSONPathSubscript(args("this" to indexes[0]))
                 }
@@ -209,7 +219,7 @@ private class JsonPathParser(private val path: String) {
     private fun parseVarText(): String {
         val prevIndex = i - 2
 
-        while (matchSet(JSONPATH_VAR_TOKENS) != null) {
+        while (matchSet(varTokens) != null) {
             // keep consuming consecutive vars
         }
 
@@ -235,7 +245,7 @@ private class JsonPathParser(private val path: String) {
                 val recursive = prev().text == ".."
 
                 val value: kotlin.Any? = when {
-                    matchSet(JSONPATH_VAR_TOKENS) != null -> parseVarText()
+                    matchSet(varTokens) != null -> parseVarText()
                     match(TokenType.IDENTIFIER) != null -> prev().text
                     match(TokenType.STAR) != null -> JSONPathWildcard()
                     else -> null
@@ -245,13 +255,13 @@ private class JsonPathParser(private val path: String) {
                     expressions.add(JSONPathRecursive(args("this" to value)))
                 } else if (truthy(value)) {
                     expressions.add(JSONPathKey(args("this" to value)))
-                } else {
-                    // base dialect: JSON_PATH_SINGLE_DOT_IS_WILDCARD=false
+                } else if (!singleDotIsWildcard) {
+                    // sqlglot: dialect.JSON_PATH_SINGLE_DOT_IS_WILDCARD (BigQuery: true)
                     throw ParseError(error("Expected key name or * after DOT"))
                 }
             } else if (match(TokenType.L_BRACKET) != null) {
                 expressions.add(parseBracket())
-            } else if (matchSet(JSONPATH_VAR_TOKENS) != null) {
+            } else if (matchSet(varTokens) != null) {
                 expressions.add(JSONPathKey(args("this" to parseVarText())))
             } else if (match(TokenType.IDENTIFIER) != null) {
                 expressions.add(JSONPathKey(args("this" to prev().text)))

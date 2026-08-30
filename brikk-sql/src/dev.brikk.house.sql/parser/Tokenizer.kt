@@ -61,7 +61,33 @@ class Tokenizer(private val config: TokenizerConfig = TokenizerConfig.BASE) {
             throw TokenError("Error tokenizing '$context'", e)
         }
 
-        return tokens
+        // brikk-native: Python counts offsets/columns in code points while Kotlin
+        // strings are UTF-16, so astral (surrogate-pair) characters would shift every
+        // subsequent token position off the Python oracle. Remap when they occur.
+        return if (sql.any { it.isHighSurrogate() }) remapAstralPositions(sql, tokens) else tokens
+    }
+
+    // brikk-native: rewrite each token's char-offset/column fields from UTF-16 code
+    // units to code points (lines are unaffected: newlines are BMP characters).
+    private fun remapAstralPositions(sql: String, tokens: List<Token>): List<Token> {
+        fun cp(index: Int): Int = sql.codePointCount(0, index.coerceIn(0, sql.length))
+
+        return tokens.map { t ->
+            val newlineBeforeEnd = sql.lastIndexOf('\n', t.end)
+            val newlineBeforeStart = if (t.start > 0) sql.lastIndexOf('\n', t.start - 1) else -1
+            Token(
+                tokenType = t.tokenType,
+                text = t.text,
+                line = t.line,
+                col = cp(t.end + 1) - (if (newlineBeforeEnd == -1) 0 else cp(newlineBeforeEnd + 1)),
+                start = cp(t.start),
+                end = cp(t.end + 1) - 1,
+                comments = t.comments,
+                lineStart = t.lineStart,
+                colStart = cp(t.start) -
+                    (if (newlineBeforeStart == -1) 0 else cp(newlineBeforeStart + 1)) + 1,
+            )
+        }
     }
 
     // sqlglot: TokenizerCore._scan
@@ -618,19 +644,22 @@ class Tokenizer(private val config: TokenizerConfig = TokenizerConfig.BASE) {
 
             val isValidCustomEscape =
                 escapeFollowChars.isNotEmpty() && char == '\\' && peek !in escapeFollowChars
+            val escapedDelimiter =
+                peek.toString() == delimiter ||
+                    (delimSize > 1 && peek == delimiter[0] && quotes.containsKey(peek.toString()))
 
             if (
                 (config.stringEscapesAllowedInRawStrings || !rawString) &&
                 char in esc &&
                 (
-                    (delimSize == 1 && peek == delimiter[0]) ||
+                    escapedDelimiter ||
                         peek in esc ||
                         isValidCustomEscape
                     ) &&
                 (!quotes.containsKey(char.toString()) || char == peek)
             ) {
-                if (delimSize == 1 && peek == delimiter[0]) {
-                    text.append(peek)
+                if (escapedDelimiter) {
+                    if (rawString) text.append(char).append(peek) else text.append(peek)
                 } else if (isValidCustomEscape && char != peek) {
                     text.append(peek)
                 } else {

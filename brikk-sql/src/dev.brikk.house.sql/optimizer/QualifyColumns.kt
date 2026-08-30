@@ -120,6 +120,10 @@ fun <E : Expression> qualifyColumns(
             allowPartialQualification = allowPartialQualification,
         )
 
+        // Refresh classification caches: a column just qualified in place may have been
+        // cached as external
+        scope.clearColumnCache()
+
         if (!resolvedSchema.empty && expandAliasRefs) {
             expandAliasRefsInScope(scope, resolver, resolvedDialect)
         }
@@ -435,9 +439,17 @@ private fun expandAliasRefsInScope(
             val (aliasExpr, i) = aliasToExpression[column.name] ?: (null to 1)
 
             if (aliasExpr != null) {
-                skipReplace = aliasExpr.walk().any { it is AggFunc } &&
-                    findAncestor(column) { it is AggFunc } != null &&
-                    findAncestor(column) { it is Window || it is Select } !is Window
+                // An aggregate alias must not be expanded into a GROUP BY or another
+                // (non-window) aggregate.
+                skipReplace = walkInScope(aliasExpr).any { it is AggFunc } &&
+                    (
+                        isGroupBy ||
+                            (
+                                findAncestor(column) { it is AggFunc } != null &&
+                                    findAncestor(column) { it is Window || it is Select }
+                                        !is Window
+                                )
+                        )
 
                 // BigQuery's having clause gets confused if an alias matches a source.
                 // SELECT x.a, max(x.b) as x FROM x GROUP BY 1 HAVING x > 1;
@@ -475,10 +487,23 @@ private fun expandAliasRefsInScope(
                     }
                 } else {
                     replaced = true
-                    val newColumn = column.replace(paren(aliasExpr)) as Expression
+                    var newColumn = column.replace(paren(aliasExpr)) as Expression
                     val simplified = simplifyParens(newColumn, dialect)
                     if (simplified !== newColumn) {
                         newColumn.replace(simplified)
+                        newColumn = simplified
+                    }
+
+                    if (resolveTable && resolver.schema.empty) {
+                        // resolve alias spliced into QUALIFY/HAVING with unqualified columns
+                        for (inner in walkInScope(newColumn)) {
+                            if (inner is Column && inner.table.isEmpty()) {
+                                val innerTable = resolver.getTable(inner)
+                                if (innerTable != null) {
+                                    inner.set("table", innerTable)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -493,16 +518,19 @@ private fun expandAliasRefsInScope(
         }
     }
 
+    var childScope: Scope = scope
     var parentScope: Scope? = scope
     var onRightSubTree = false
     while (parentScope != null && !parentScope.isCte) {
+        childScope = parentScope
         parentScope = parentScope.parent
         if (parentScope != null) {
             val parentExpr = parentScope.expression
             if (parentExpr is Union) {
-                // NOTE: ported verbatim from Python, where this comparison also never
-                // holds (the Union's right child is compared against the Union itself)
-                onRightSubTree = parentExpr.right === parentExpr
+                // Access the arg directly instead of the right property, because set
+                // operation operands aren't guaranteed to be Query nodes. Unnest to see
+                // through parenthesized operands, whose scope is the inner query
+                onRightSubTree = parentExpr.right.unnest() === childScope.expression
             }
         }
     }
@@ -775,11 +803,14 @@ private fun qualifyColumnsInScope(
         if (columnTable.isNotEmpty() && columnTable in scope.sources) {
             val columnSource = scope.sources[columnTable]
             var sourceColumns: Collection<String> = resolver.getSourceColumns(columnTable)
-            // For pivoted sources, source_columns are pre-pivot; validate against the
-            // post-pivot set.
-            val pivots = (columnSource as? Table)?.args?.get("pivots") as? List<*>
-            if (!pivots.isNullOrEmpty()) {
-                sourceColumns = (pivots[0] as Pivot).outputColumns(sourceColumns).keys
+            val pivots = ((columnSource as? Table)?.args?.get("pivots") as? List<*>)
+                ?.filterIsInstance<Pivot>()
+                ?: emptyList()
+            if (pivots.isNotEmpty() && sourceColumns.isNotEmpty() && "*" !in sourceColumns) {
+                // Each operator's input is the previous one's output
+                for (pivot in pivots) {
+                    sourceColumns = pivot.outputColumns(sourceColumns).keys.toList()
+                }
             }
             if (!allowPartialQualification &&
                 sourceColumns.isNotEmpty() &&
@@ -794,7 +825,7 @@ private fun qualifyColumnsInScope(
             if (scope.pivots.isNotEmpty() && column.findAncestor(Pivot::class) == null) {
                 // If the column is under the Pivot expression, we need to qualify it
                 // using the name of the pivoted source instead of the pivot's alias
-                column.set("table", toIdentifier(scope.pivots[0].alias))
+                column.set("table", toIdentifier(scope.pivots.last().alias))
                 continue
             }
 
@@ -821,14 +852,38 @@ private fun qualifyColumnsInScope(
         }
     }
 
-    for (pivot in scope.pivots) {
+    val pivots = scope.pivots.filterIsInstance<Pivot>()
+
+    // A chained operator's IN-list may name columns produced by earlier operators, which
+    // no source exposes; track the chain's accumulated output to resolve them.
+    // Attribution is only unambiguous when all pivots share one parent, i.e. there's a
+    // single pivoted source.
+    val singleChain = pivots.isNotEmpty() && pivots.first().parent === pivots.last().parent
+    val produced = mutableSetOf<String>()
+    val pivotedSource = if (singleChain) pivots.last().alias else ""
+    var available: Collection<String> =
+        if (pivotedSource in scope.sources) resolver.getSourceColumns(pivotedSource)
+        else emptyList()
+
+    for (pivot in pivots) {
         for (column in pivot.findAll(Column::class)) {
-            if ((column as Column).table.isEmpty() && column.name in resolver.allColumns) {
+            column as Column
+            if (column.table.isNotEmpty()) {
+                continue
+            }
+            if (column.name in resolver.allColumns) {
                 val table = resolver.getTable(column.name)
                 if (table != null) {
                     column.set("table", table)
                 }
+            } else if (singleChain && column.name in produced) {
+                column.set("table", toIdentifier(pivotedSource))
             }
+        }
+
+        if (singleChain) {
+            available = pivot.outputColumns(available).keys.toList()
+            produced.addAll(available)
         }
     }
 }
@@ -997,8 +1052,6 @@ private fun expandStarsInScope(
     val coalescedColumns = mutableSetOf<String>()
     val dialect = resolver.dialect
 
-    val pivot = scope.pivots.getOrNull(0) as? Pivot
-
     val annotatedAhead = dialect.supportsStructStarExpansion && scope.stars.any { it is Dot }
     if (annotatedAhead) {
         // Found struct expansion, annotate scope ahead of time
@@ -1021,7 +1074,7 @@ private fun expandStarsInScope(
                 tables.add(name to name)
             }
             val tableKeys = tables.map { it.second }
-            addExceptColumns(expression, tableKeys, exceptColumns)
+            addExceptColumns(expression, tables, exceptColumns)
             addReplaceColumns(expression, tableKeys, replaceColumns)
             addRenameColumns(expression, tableKeys, renameColumns)
             ilikePattern = addIlikeColumns(expression)
@@ -1030,7 +1083,7 @@ private fun expandStarsInScope(
                 tables.add(expression.table to Any())
                 val tableKeys = tables.map { it.second }
                 val star = expression.thisArg as Expression
-                addExceptColumns(star, tableKeys, exceptColumns)
+                addExceptColumns(star, tables, exceptColumns)
                 addReplaceColumns(star, tableKeys, replaceColumns)
                 addRenameColumns(star, tableKeys, renameColumns)
                 ilikePattern = addIlikeColumns(star)
@@ -1058,10 +1111,37 @@ private fun expandStarsInScope(
         }
 
         for ((table, tableId) in tables) {
-            val source = scope.sources[table]
-                ?: throw OptimizeError("Unknown table: $table")
+            var source = scope.sources[table]
+            var pivots: List<Pivot>? = null
+            var sourceTable = table
 
-            var columns = resolver.getSourceColumns(table, onlyVisible = true)
+            if (source == null) {
+                // The chain's final alias names the resulting source, but only the
+                // underlying source is registered in `scope.sources`, so resolve through
+                // the chain's parent. Attribution is only unambiguous for a single chain
+                // (all pivots share a parent)
+                val chain = scope.pivots.filterIsInstance<Pivot>()
+                val parent =
+                    if (chain.isNotEmpty() &&
+                        chain.first().parent === chain.last().parent &&
+                        chain.last().alias == table
+                    ) {
+                        chain.last().parent
+                    } else {
+                        null
+                    }
+                if (parent != null) {
+                    pivots = chain
+                    sourceTable = parent.aliasOrName
+                    source = scope.sources[sourceTable]
+                }
+
+                if (source == null) {
+                    throw OptimizeError("Unknown table: $table")
+                }
+            }
+
+            var columns = resolver.getSourceColumns(sourceTable, onlyVisible = true)
             if (columns.isEmpty()) {
                 columns = scope.outerColumns
             }
@@ -1070,7 +1150,10 @@ private fun expandStarsInScope(
                 columns = columns.filter { it.uppercase() !in pseudocolumns }
             }
 
-            if (columns.isEmpty() || "*" in columns) {
+            // If a source exposes duplicate output names (e.g. a derived table re-exposing
+            // colliding star-expanded columns), expanding this star would produce ambiguous
+            // projections, so we leave it unexpanded.
+            if (columns.isEmpty() || "*" in columns || columns.size != columns.toSet().size) {
                 return
             }
 
@@ -1091,10 +1174,27 @@ private fun expandStarsInScope(
                     emptySet()
                 }
 
-            if (pivot != null) {
-                var pivotColumns: Collection<String> = pivot.outputColumns(columns).keys
-                if (pivotColumns.isEmpty()) {
-                    pivotColumns = pivot.aliasColumnNames
+            // The operators belong to a specific source, so a star over a source joined
+            // alongside it must expand from that source's own columns
+            if (pivots == null) {
+                var selectedNode: Expression? = scope.selectedSources[table]?.first
+                if (selectedNode == null && source is Table) {
+                    // A pivoted CTE reference is registered under the pivot's alias, a
+                    // name `references` doesn't know, so it's absent from
+                    // `selected_sources`
+                    selectedNode = source
+                }
+
+                pivots = (selectedNode?.args?.get("pivots") as? List<*>)
+                    ?.filterIsInstance<Pivot>()
+            }
+
+            if (!pivots.isNullOrEmpty()) {
+                // Each operator consumes the previous one's output, so fold them in order
+                var pivotColumns: Collection<String> = columns
+                for (pivot in pivots) {
+                    pivotColumns = pivot.outputColumns(pivotColumns).keys.toList()
+                        .ifEmpty { pivot.aliasColumnNames }
                 }
 
                 if (pivotColumns.isNotEmpty()) {
@@ -1105,7 +1205,7 @@ private fun expandStarsInScope(
                                 aliasExpression(
                                     column(
                                         name,
-                                        table = pivot.alias.takeIf { it.isNotEmpty() },
+                                        table = pivots.last().alias.takeIf { it.isNotEmpty() },
                                     ),
                                     name,
                                     copy = false,
@@ -1196,7 +1296,7 @@ private fun addIlikeColumns(expression: Expression): String? {
 // sqlglot: qualify_columns._add_except_columns
 private fun addExceptColumns(
     expression: Expression,
-    tables: List<Any>,
+    tables: List<Pair<String, Any>>,
     exceptColumns: MutableMap<Any, Set<String>>,
 ) {
     val except = (expression.args["except_"] as? List<*>)?.filterIsInstance<Expression>()
@@ -1205,10 +1305,25 @@ private fun addExceptColumns(
         return
     }
 
-    val columns = except.map { it.name }.toSet()
+    val columns = mutableSetOf<String>()
+    val qualifiedColumns = mutableMapOf<String, MutableSet<String>>()
 
-    for (table in tables) {
-        exceptColumns[table] = columns
+    for (e in except) {
+        // A qualified exclusion only applies to the source it references
+        if (e is Column && e.table.isNotEmpty()) {
+            qualifiedColumns.getOrPut(e.table) { mutableSetOf() }.add(e.name)
+        } else {
+            columns.add(e.name)
+        }
+    }
+
+    for ((tableName, tableKey) in tables) {
+        val tableQualified = qualifiedColumns[tableName]
+        val tableColumns = if (tableQualified != null) columns + tableQualified else columns
+
+        if (tableColumns.isNotEmpty()) {
+            exceptColumns[tableKey] = tableColumns
+        }
     }
 }
 

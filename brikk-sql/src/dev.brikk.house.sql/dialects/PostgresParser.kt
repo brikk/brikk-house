@@ -229,6 +229,7 @@ open class PostgresParser(
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
     override val dialect: Dialect get() = Dialects.POSTGRES
+    override val normalizeNotNull: Boolean get() = false
 
     // sqlglot: PostgresParser.SUPPORTS_OMITTED_INTERVAL_SPAN_UNIT = True
     override val supportsOmittedIntervalSpanUnit: Boolean get() = true
@@ -241,6 +242,9 @@ open class PostgresParser(
 
     // sqlglot: Postgres.TYPED_DIVISION = True
     override val typedDivision: Boolean get() = true
+
+    // sqlglot: Postgres.CONCAT_COALESCE = True
+    override val concatCoalesce: Boolean get() = true
 
     // sqlglot: Postgres.NULL_ORDERING = "nulls_are_large"
     override val nullOrdering: String get() = "nulls_are_large"

@@ -1540,6 +1540,90 @@
       "sql": "TRUNC(3.14159, 2)",
       "expected": "TRUNCATE(3.14159, 2)",
       "pretty": false
+    },
+    {
+      "sql": "GRANT 'role1', 'role2' TO 'user1'@'localhost', 'user2'@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT SELECT ON world.* TO 'role3'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT SELECT ON db2.invoice TO 'jeffrey'@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT INSERT ON `d%`.* TO u",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT ALL ON test.* TO ''@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT SELECT (col1), INSERT (col1, col2) ON mydb.mytbl TO 'someuser'@'somehost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT SELECT, INSERT, UPDATE ON *.* TO u2",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE 'role1', 'role2' FROM 'user1'@'localhost', 'user2'@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT ON world.* FROM 'role3'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT ON db2.invoice FROM 'jeffrey'@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE INSERT ON `d%`.* FROM u",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE ALL ON test.* FROM ''@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT (col1), INSERT (col1, col2) ON mydb.mytbl FROM 'someuser'@'somehost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT, INSERT, UPDATE ON *.* FROM u2",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
     }
   ],
   "transpile": [
@@ -2445,7 +2529,7 @@
     }
   ],
   "stats": {
-    "identity_count": 306,
+    "identity_count": 320,
     "transpile_count": 103,
     "skipped_dynamic": 34
   }

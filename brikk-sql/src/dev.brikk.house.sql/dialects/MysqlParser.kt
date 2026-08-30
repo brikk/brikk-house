@@ -11,6 +11,7 @@ import dev.brikk.house.sql.ast.BitwiseOrAgg
 import dev.brikk.house.sql.ast.BitwiseXorAgg
 import dev.brikk.house.sql.ast.Cast
 import dev.brikk.house.sql.ast.Column
+import dev.brikk.house.sql.ast.ColumnConstraint
 import dev.brikk.house.sql.ast.ColumnDef
 import dev.brikk.house.sql.ast.ColumnPrefix
 import dev.brikk.house.sql.ast.ComputedColumnConstraint
@@ -280,18 +281,29 @@ open class MysqlParser(
     // sqlglot #8006: MySQLParser._parse_range — `x SOUNDS LIKE y` -> SOUNDEX(x) = SOUNDEX(y)
     // via text-sequence matching (no longer a single SOUNDS_LIKE token).
     override fun parseRange(this_: Expression?): Expression? {
-        val current = this_ ?: parseBitwise()
+        var current = this_ ?: parseBitwise()
         if (matchTextSeq("SOUNDS", "LIKE")) {
-            return expression(
+            current = expression(
                 EQ(
                     args(
                         "this" to expression(Soundex(args("this" to current))),
-                        "expression" to expression(Soundex(args("this" to parseTerm()))),
+                        "expression" to expression(Soundex(args("this" to parseBitwise()))),
                     )
                 )
             )
+            if (match(TokenType.IS, advance = false)) {
+                current = expression(Paren(args("this" to current)))
+            }
         }
         return super.parseRange(current)
+    }
+
+    // sqlglot: MySQLParser._parse_column_constraint
+    override fun parseColumnConstraint(): Expression? {
+        if (match(TokenType.KEY)) {
+            return expression(ColumnConstraint(args("kind" to parsePrimaryKey())))
+        }
+        return super.parseColumnConstraint()
     }
 
     // sqlglot: MySQLParser._parse_alter_drop_action

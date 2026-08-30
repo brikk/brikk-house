@@ -201,6 +201,8 @@ object GeneratorTables {
         reg(Literal::class) { e -> literalSql(e as Literal) }
         reg(National::class) { e -> nationalSql(e as National) }
         reg(RawString::class) { e -> rawstringSql(e as RawString) }
+        reg(UnicodeString::class) { e -> unicodestringSql(e as UnicodeString) }
+        reg(ForIn::class) { e -> forinSql(e as ForIn) }
         reg(Null::class) { e -> nullSql(e as Null) }
         reg(BooleanNode::class) { e -> booleanSql(e as BooleanNode) }
         reg(Star::class) { e -> starSql(e as Star) }
@@ -462,6 +464,7 @@ object GeneratorTables {
         reg(Pragma::class) { e -> pragmaSql(e as Pragma) }
         reg(Declare::class) { e -> declareSql(e as Declare) }
         reg(DeclareItem::class) { e -> declareitemSql(e as DeclareItem) }
+        reg(QueryTransform::class) { e -> querytransformSql(e as QueryTransform) }
         reg(SetNode::class) { e -> setSql(e as SetNode) }
         reg(SetItem::class) { e -> setitemSql(e as SetItem) }
         reg(Use::class) { e -> useSql(e as Use) }
@@ -552,6 +555,7 @@ object GeneratorTables {
         reg(PartitionByRangeProperty::class) { e -> partitionbyrangepropertySql(e as PartitionByRangeProperty) }
         reg(AddConstraint::class) { e -> addconstraintSql(e as AddConstraint) }
         reg(AddPartition::class) { e -> addpartitionSql(e as AddPartition) }
+        reg(AlterModifySqlSecurity::class) { e -> altermodifysqlsecuritySql(e as AlterModifySqlSecurity) }
 
         // --- schema objects ---
         reg(ColumnDef::class) { e -> columndefSql(e as ColumnDef) }

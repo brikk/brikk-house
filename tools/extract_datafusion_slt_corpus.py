@@ -79,7 +79,9 @@ def extract_file(path, source_name):
 
         # header lines
         m_stmt = re.match(r"^statement\s+(\w+)", stripped)
-        m_query = re.match(r"^query\b", stripped)
+        # `query error <...>` blocks are negative tests (the engine REJECTS the SQL),
+        # so they must be skipped just like `statement error`.
+        m_query = re.match(r"^query\b(?!\s+error\b)", stripped)
 
         if m_stmt and m_stmt.group(1) == "ok":
             start_line = i + 1  # 1-based header line

@@ -1932,6 +1932,187 @@
       "sql": "x::JSON -> 'duration' ->> -1",
       "expected": "CAST(x AS JSON) -> 'duration' ->> -1",
       "pretty": false
+    },
+    {
+      "sql": "GRANT SELECT ON TABLE users TO role1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT INSERT, DELETE ON TABLE orders TO user1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT SELECT ON employees TO manager WITH GRANT OPTION",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT USAGE ON SCHEMA finance TO user2",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT ALL PRIVILEGES ON DATABASE mydb TO PUBLIC",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT CREATE ON SCHEMA public TO developer",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT CONNECT ON DATABASE testdb TO readonly_user",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT TEMPORARY ON DATABASE testdb TO temp_user",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT TRIGGER ON orders TO audit_role",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT REFERENCES ON products TO foreign_key_user",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT TRUNCATE ON logs TO admin_role",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT UPDATE(salary) ON employees TO hr_manager",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT SELECT(id, name), UPDATE(email) ON customers TO customer_service",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "GRANT INSERT, DELETE ON ALL TABLES IN SCHEMA myschema TO user1",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT developer_role TO john",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT admin_role TO mary WITH ADMIN OPTION",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT ON TABLE users FROM role1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE INSERT, DELETE ON TABLE orders FROM user1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE USAGE ON SCHEMA finance FROM user2",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE ALL PRIVILEGES ON DATABASE mydb FROM PUBLIC",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE CREATE ON SCHEMA public FROM developer",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE CONNECT ON DATABASE testdb FROM readonly_user",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE TEMPORARY ON DATABASE testdb FROM temp_user",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE TRIGGER ON orders FROM audit_role",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE REFERENCES ON products FROM foreign_key_user",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE TRUNCATE ON logs FROM admin_role",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE USAGE ON SCHEMA finance FROM user2 CASCADE",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE SELECT ON TABLE orders FROM user1 RESTRICT",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE GRANT OPTION FOR SELECT ON employees FROM manager",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE GRANT OPTION FOR SELECT ON employees FROM manager RESTRICT",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE UPDATE(salary) ON employees FROM hr_manager",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE SELECT(id, name), UPDATE(email) ON customers FROM customer_service",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "REVOKE INSERT, DELETE ON ALL TABLES IN SCHEMA myschema FROM user1",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE developer_role FROM john",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE admin_role FROM mary",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
     }
   ],
   "transpile": [
@@ -2879,7 +3060,7 @@
     }
   ],
   "stats": {
-    "identity_count": 385,
+    "identity_count": 420,
     "transpile_count": 99,
     "skipped_dynamic": 17
   }

@@ -5,10 +5,6 @@
             "reason": "expected `INSTR(haystack, needle, 1, occurrence)` actual `STR_POSITION(haystack, needle, occurrence)`"
         },
         {
-            "case": "write|bigquery|DATE_FORMAT(x, '%Y-%m-%d %H:%i:%S')",
-            "reason": "expected `FORMAT_DATE('%F %T', x)` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', x)`"
-        },
-        {
             "case": "read|spark|SELECT AT_TIMEZONE(CAST('2012-10-31 00:00' AS TIMESTAMP WITH TIME ZONE), 'America/Sao_Paulo')",
             "reason": "expected `SELECT AT_TIMEZONE(CAST('2012-10-31 00:00' AS TIMESTAMP WITH TIME ZONE), 'America/Sao_Paulo')` actual `SELECT AT_TIMEZONE(CAST(CAST('2012-10-31 00:00' AS TIMESTAMP WITH TIME ZONE) AS TIMESTAMP), 'America/Sao_Paulo')`"
         },

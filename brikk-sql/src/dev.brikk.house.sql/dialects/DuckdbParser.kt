@@ -88,6 +88,7 @@ import dev.brikk.house.sql.ast.TimeToUnix
 import dev.brikk.house.sql.ast.TimestampFromParts
 import dev.brikk.house.sql.ast.ToMap
 import dev.brikk.house.sql.ast.Transform
+import dev.brikk.house.sql.ast.Unhex
 import dev.brikk.house.sql.ast.UnixToTime
 import dev.brikk.house.sql.ast.Var
 import dev.brikk.house.sql.ast.args
@@ -97,6 +98,7 @@ import dev.brikk.house.sql.parser.NodeFactory
 import dev.brikk.house.sql.parser.Parser
 import dev.brikk.house.sql.parser.ParseError
 import dev.brikk.house.sql.parser.TokenType
+import dev.brikk.house.sql.parser.TokenError
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.applyTimeUnitCoercion
 import dev.brikk.house.sql.parser.binaryRangeParser
@@ -166,6 +168,8 @@ internal fun duckdbToJsonPath(path: Expression?): Expression? {
             return parseJsonPath(text)
         } catch (e: ParseError) {
             // sqlglot: STRICT_JSON_PATH_SYNTAX=False — no warning, fall through
+        } catch (e: TokenError) {
+            // A string key containing quote characters is valid DuckDB JSON syntax.
         }
     }
     return path
@@ -212,8 +216,8 @@ open class DuckdbParser(
     // sqlglot: DuckDB.NULL_ORDERING = "nulls_are_last"
     override val nullOrdering: String get() = "nulls_are_last"
 
-    // sqlglot: DuckDB.SAFE_DIVISION = True
-    override val safeDivision: Boolean get() = true
+    // sqlglot: DuckDB.CONCAT_COALESCE = True
+    override val concatCoalesce: Boolean get() = true
 
     // sqlglot: DuckDB.INDEX_OFFSET = 1
     override val indexOffset: Int get() = 1
@@ -565,6 +569,7 @@ object DuckdbParserTables {
         put("BIT_AND", fromArgList(listOf("this"), false) { BitwiseAndAgg(it) })
         put("BIT_OR", fromArgList(listOf("this"), false) { BitwiseOrAgg(it) })
         put("BIT_XOR", fromArgList(listOf("this"), false) { BitwiseXorAgg(it) })
+        put("FROM_HEX", fromArgList(listOf("this", "expression"), false) { Unhex(it) })
         // sqlglot: parser.py FUNCTIONS["CONCAT"/"CONCAT_WS"] bake in
         // safe=not dialect.STRICT_STRING_CONCAT (DuckDB: False -> safe=true) and
         // coalesce=dialect.CONCAT[_WS]_COALESCE (DuckDB: true)

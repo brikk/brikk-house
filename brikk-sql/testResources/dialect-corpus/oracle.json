@@ -894,6 +894,42 @@
       "sql": "UTC_TIMESTAMP(6)",
       "expected": null,
       "pretty": false
+    },
+    {
+      "sql": "GRANT purchases_reader_role TO george, maria",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT USAGE ON TYPE price TO finance_role",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT USAGE ON DERBY AGGREGATE types.maxPrice TO sales_role",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE purchases_reader_role FROM george, maria",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE USAGE ON TYPE price FROM finance_role",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE USAGE ON DERBY AGGREGATE types.maxPrice FROM sales_role",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
     }
   ],
   "transpile": [
@@ -1227,7 +1263,7 @@
     }
   ],
   "stats": {
-    "identity_count": 178,
+    "identity_count": 184,
     "transpile_count": 33,
     "skipped_dynamic": 9
   }
