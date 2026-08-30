@@ -15,13 +15,13 @@
 
 ---
 
-**111 items across 32 source-to-target routes.**
+**96 items across 27 source-to-target routes.**
 
 | Route | Items |
 |---|---:|
-| spark -> duckdb | 18 |
-| spark -> spark | 13 |
-| spark -> presto | 12 |
+| spark -> duckdb | 15 |
+| spark -> presto | 11 |
+| spark -> spark | 9 |
 | hive -> duckdb | 9 |
 | duckdb -> spark | 9 |
 | presto -> spark | 5 |
@@ -37,8 +37,6 @@
 | hive -> trino | 2 |
 | hive -> spark | 2 |
 | duckdb -> presto | 2 |
-| clickhouse -> duckdb | 2 |
-| clickhouse -> clickhouse | 2 |
 | spark -> postgres | 1 |
 | spark -> hive | 1 |
 | presto -> presto | 1 |
@@ -48,9 +46,6 @@
 | mysql -> presto | 1 |
 | mysql -> postgres | 1 |
 | duckdb -> duckdb | 1 |
-| clickhouse -> spark | 1 |
-| clickhouse -> presto | 1 |
-| clickhouse -> postgres | 1 |
 
 ## Workflow
 

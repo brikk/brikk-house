@@ -37,14 +37,6 @@
             "reason": "expected `SELECT ARRAY_AGG(x) FILTER(WHERE x = 5 AND NOT x IS NULL) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)` actual `SELECT ARRAY_AGG(x) FILTER(WHERE x = 5) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)`"
         },
         {
-            "case": "write|duckdb|SELECT ARRAY_AGG(DISTINCT STRUCT('a'))",
-            "reason": "expected `SELECT ARRAY_AGG(DISTINCT {'col1': 'a'})` actual `SELECT ARRAY_AGG(DISTINCT {'_0': 'a'})`"
-        },
-        {
-            "case": "write|spark|SELECT ARRAY_AGG(DISTINCT STRUCT('a'))",
-            "reason": "expected `SELECT COLLECT_LIST(DISTINCT STRUCT('a' AS col1))` actual `SELECT COLLECT_LIST(DISTINCT STRUCT('a'))`"
-        },
-        {
             "case": "write|duckdb|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
             "reason": "expected `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NULL WHEN name IS NULL THEN NULL ELSE (id, name) END) AS cnt FROM tbl` actual `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl`"
         },
@@ -69,10 +61,6 @@
             "reason": "expected `SELECT DATE_DIFF('MONTH', CAST('1996-10-30' AS DATE), CAST('1997-02-28 10:30:00' AS DATE)) + CASE WHEN DAY(CAST('1997-02-28 10:30:00' AS DATE)) = DAY(LAST_DAY(CAST('1997-02-28 10:30:00' AS DATE))) AND DAY(CAST('1996-10-30' AS DATE)) = DAY(LAST_DAY(CAST('1996-10-30' AS DATE))) THEN 0 ELSE (DAY(CAST('1997-02-28 10:30:00' AS DATE)) - DAY(CAST('1996-10-30' AS DATE))) / 31.0 END` actual `SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30', FALSE)`"
         },
         {
-            "case": "write|spark|SELECT CAST(STRUCT('fooo') AS STRUCT<a: VARCHAR(2)>)",
-            "reason": "expected `SELECT CAST(STRUCT('fooo' AS col1) AS STRUCT<a: STRING>)` actual `SELECT CAST(STRUCT('fooo') AS STRUCT<a: STRING>)`"
-        },
-        {
             "case": "read|bigquery|SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))",
             "reason": "expected `SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))` actual `SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR p.quarter IN ('Q1' AS Q1, 'Q2' AS Q1))`"
         },
@@ -95,26 +83,6 @@
         {
             "case": "write|spark|SELECT DATE_ADD(MONTH, 20, col)",
             "reason": "expected `SELECT DATE_ADD(MONTH, 20, col)` actual `SELECT TIMESTAMP_ADD(col, 20, MONTH)`"
-        },
-        {
-            "case": "write|spark|SELECT STRUCT(1, 2)",
-            "reason": "expected `SELECT STRUCT(1 AS col1, 2 AS col2)` actual `SELECT STRUCT(1, 2)`"
-        },
-        {
-            "case": "write|presto|SELECT STRUCT(1, 2)",
-            "reason": "expected `SELECT CAST(ROW(1, 2) AS ROW(col1 INTEGER, col2 INTEGER))` actual `SELECT ROW(1, 2)`"
-        },
-        {
-            "case": "write|duckdb|SELECT STRUCT(1, 2)",
-            "reason": "expected `SELECT {'col1': 1, 'col2': 2}` actual `SELECT {'_0': 1, '_1': 2}`"
-        },
-        {
-            "case": "write|spark|SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t",
-            "reason": "expected `SELECT STRUCT(x AS x, 1 AS col2, y AS col3, STRUCT(5 AS col1) AS col4) FROM t` actual `SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t`"
-        },
-        {
-            "case": "write|duckdb|SELECT STRUCT(x, 1, y AS col3, STRUCT(5)) FROM t",
-            "reason": "expected `SELECT {'x': x, 'col2': 1, 'col3': y, 'col4': {'col1': 5}} FROM t` actual `SELECT {'x': x, '_1': 1, 'col3': y, '_3': {'_0': 5}} FROM t`"
         },
         {
             "case": "write|spark|SELECT TIMESTAMPDIFF(MONTH, foo, bar)",
