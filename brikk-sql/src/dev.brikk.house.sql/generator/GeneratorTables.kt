@@ -464,6 +464,7 @@ object GeneratorTables {
         reg(Pragma::class) { e -> pragmaSql(e as Pragma) }
         reg(Declare::class) { e -> declareSql(e as Declare) }
         reg(DeclareItem::class) { e -> declareitemSql(e as DeclareItem) }
+        reg(QueryTransform::class) { e -> querytransformSql(e as QueryTransform) }
         reg(SetNode::class) { e -> setSql(e as SetNode) }
         reg(SetItem::class) { e -> setitemSql(e as SetItem) }
         reg(Use::class) { e -> useSql(e as Use) }

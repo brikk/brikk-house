@@ -736,6 +736,18 @@ open class Generator(
         return "DECLARE $replace${expressions(expression, flat = true)}"
     }
 
+    // sqlglot: Generator.querytransform_sql
+    open fun querytransformSql(expression: QueryTransform): String {
+        val transform = func("TRANSFORM", *expression.expressionsArg.toTypedArray())
+        val rowFormatBefore = sql(expression, "row_format_before").let { if (it.isNotEmpty()) " $it" else "" }
+        val recordWriter = sql(expression, "record_writer").let { if (it.isNotEmpty()) " RECORDWRITER $it" else "" }
+        val using = " USING ${sql(expression, "command_script")}"
+        val schema = sql(expression, "schema").let { if (it.isNotEmpty()) " AS $it" else "" }
+        val rowFormatAfter = sql(expression, "row_format_after").let { if (it.isNotEmpty()) " $it" else "" }
+        val recordReader = sql(expression, "record_reader").let { if (it.isNotEmpty()) " RECORDREADER $it" else "" }
+        return "$transform$rowFormatBefore$recordWriter$using$schema$rowFormatAfter$recordReader"
+    }
+
     // sqlglot: Generator.declareitem_sql
     open fun declareitemSql(expression: DeclareItem): String {
         val variables = expressions(expression, key = "this")
