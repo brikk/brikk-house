@@ -977,15 +977,20 @@ open class ClickhouseParser(
         )
     }
 
-    // sqlglot: ClickHouseParser._parse_alter_table_modify
+    // sqlglot: ClickHouseParser._parse_alter_table_alter
     open fun parseAlterTableModify(): Expression? {
-        val properties = parseProperties()
-        if (properties != null) {
-            return expression(
-                AlterModifySqlSecurity(args("expressions" to properties.expressionsArg))
-            )
+        if (!match(TokenType.COLUMN, advance = false)) {
+            val properties = parseProperties()
+            if (properties != null) {
+                return expression(
+                    AlterModifySqlSecurity(args("expressions" to properties.expressionsArg))
+                )
+            }
+            return null
         }
-        return null
+
+        val alter = parseAlterTableAlter()
+        return if (currToken.exists) null else alter
     }
 
     // sqlglot: ClickHouseParser._parse_definer
@@ -1059,7 +1064,7 @@ open class ClickhouseParser(
             value.set(
                 "expressions",
                 expressions.map { expr ->
-                    expression(Tuple(args("expressions" to listOf(expr))))
+                    expression(Tuple(args("expressions" to listOf((expr as Expression).unnest()))))
                 },
             )
         }
@@ -1208,10 +1213,12 @@ object ClickhouseParserTables {
         put("ARRAYREVERSE", fromArgList(listOf("this"), false) { ArrayReverse(it) })
         put("ARRAYSLICE", fromArgList(listOf("this", "start", "end", "step", "zero_based"), false) { ArraySlice(it) })
         put("ARRAYFILTER") { a ->
-            ArrayFilter(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
+            if (a.size > 2) Anonymous(args("this" to "arrayFilter", "expressions" to a))
+            else ArrayFilter(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
         }
         put("ARRAYMAP") { a ->
-            Transform(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
+            if (a.size > 2) Anonymous(args("this" to "arrayMap", "expressions" to a))
+            else Transform(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
         }
         put("CURRENTDATABASE", fromArgList(listOf(), false) { CurrentDatabase(it) })
         put("CURRENTSCHEMAS", fromArgList(listOf("this"), false) { CurrentSchemas(it) })

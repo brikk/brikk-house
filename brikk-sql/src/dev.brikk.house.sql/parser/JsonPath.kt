@@ -176,7 +176,7 @@ private class JsonPathParser(private val path: String) {
             while (match(TokenType.COMMA) != null) {
                 literal = parseSlice()
 
-                if (truthy(literal)) indexes.add(literal)
+                if (literal is String || literal != false) indexes.add(literal)
             }
 
             node = if (indexes.size == 1) {

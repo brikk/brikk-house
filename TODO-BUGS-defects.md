@@ -38,7 +38,7 @@
 ---
 
 
-**166 items** across 10 groups.
+**163 items** across 10 groups.
 
 
 ## bigquery  (98)
@@ -189,25 +189,22 @@
 - [qualify] `qualify_tables::SELECT t.a, x FROM t, UNNEST(t.arr) AS x` :: output mismatch: expected: SELECT _0.a, x FROM c.db.t AS _0, UNNEST(_0.arr) AS _1 actual: SELECT t.a, x FROM c.db.t AS _1, UNNEST(t.arr) AS _2 _(gates: qualify)_
 - [qualify] `qualify_tables::SELECT t.a, x, z FROM t, UNNEST(t.arr) AS x, UNNEST(x.b) AS z` :: output mismatch: expected: SELECT _0.a, x, z FROM c.db.t AS _0, UNNEST(_0.arr) AS _1, UNNEST(_1.b) AS _2 actual: SELECT t.a, x, z FROM c.db.t AS _3, U _(gates: qualify)_
 
-## clickhouse  (9)
+## clickhouse  (7)
 
 - [clickhouse] `CREATE TABLE data5 ("x" UInt32, "y" UInt32) ENGINE=MergeTree ORDER BY (round(y / 1000000000), cityHa` :: ast-mismatch at #45: expected {"i":36,"k":"safe","v":false} _(gates: parser)_
 - [clickhouse] `SELECT * FROM (SELECT a FROM b SAMPLE 1 / 10 OFFSET 1 / 2)` :: ast-mismatch at #23: expected {"i":15,"k":"safe","v":false} _(gates: parser)_
 - [clickhouse] `SELECT and(1, 2)` :: ast-mismatch at #1: expected Paren (k=expressions) _(gates: parser)_
 - [clickhouse] `SELECT and(1, 2, 3)` :: ast-mismatch at #1: expected Paren (k=expressions) _(gates: parser)_
-- [clickhouse] `SELECT arrayConcat([1, 2], [3, 4])` :: ast-mismatch at #9: expected Array (k=expressions) _(gates: parser)_
 - [clickhouse] `SELECT or(0, 1, -2)` :: ast-mismatch at #1: expected Paren (k=expressions) _(gates: parser)_
 - [clickhouse] `SELECT or(1, 2)` :: ast-mismatch at #1: expected Paren (k=expressions) _(gates: parser)_
 - [clickhouse] `SELECT or(and(3, 0), 5)` :: ast-mismatch at #1: expected Paren (k=expressions) _(gates: parser)_
-- [clickhouse] `arrayConcat([1, 2], [3, 4])` :: ast-mismatch at #8: expected Array (k=expressions) _(gates: parser)_
 
-## postgres  (7)
+## postgres  (6)
 
 - [postgres] `'x' 'y' 'z'` :: Adjacent string literals are not supported yet. Line 1, Col: 7. _(gates: annotate,parser)_
 - [postgres] `SELECT * FROM ROWS FROM (FUNC1(col1) AS alias1("col1" TEXT), FUNC2(col2) AS alias2("col2" INT)) WITH` :: ROWS FROM is not supported yet. Line 1, Col: 18. _(gates: annotate,parser)_
 - [postgres] `SELECT * FROM ROWS FROM (FUNC1(col1, col2))` :: ROWS FROM is not supported yet. Line 1, Col: 18. _(gates: annotate,parser)_
 - [postgres] `SELECT * FROM table1, ROWS FROM (FUNC1(col1) AS alias1("col1" TEXT)) WITH ORDINALITY AS alias3("col3` :: Invalid expression / Unexpected token. Line 1, Col: 26. _(gates: annotate,parser)_
-- [postgres] `SELECT id, email, CAST(deleted AS TEXT) FROM users WHERE deleted NOTNULL` :: ast-mismatch at #23: expected Is (k=this) _(gates: parser)_
 - [postgres] `WITH RECURSIVE search_graph(id, link, data, depth) AS (SELECT g.id, g.link, g.data, 1 FROM graph AS ` :: WITH ... SEARCH is not supported yet. Line 1, Col: 220. _(gates: annotate,parser)_
 - [postgres] `WITH t(c) AS (SELECT 1) SELECT * INTO UNLOGGED foo FROM (SELECT c AS c FROM t) AS temp` :: SELECT INTO is not supported yet. Line 1, Col: 46. _(gates: annotate,parser)_
 

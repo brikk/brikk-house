@@ -108,6 +108,7 @@ open class ClickhouseGenerator(
     override val selectKinds: Set<String> get() = emptySet()
     override val trySupported: Boolean get() = false
     override val supportsUescape: Boolean get() = false
+    override val supportsAlterColumnIfExists: Boolean get() = true
     override val queryHints: Boolean get() = false
     override val structDelimiter: Pair<String, String> get() = "(" to ")"
     override val nvl2Supported: Boolean get() = false
@@ -138,6 +139,7 @@ open class ClickhouseGenerator(
 
     // sqlglot: ClickHouse STRING_ESCAPES include "\\" -> ESCAPED_SEQUENCES active
     override val dialectStringsSupportEscapedSequences: Boolean get() = true
+    override val alterSetType: String get() = "TYPE"
     override val escapedSequences: Map<String, String> get() = ESCAPED_SEQUENCES
 
     // sqlglot: ClickHouseGenerator.TYPE_MAPPING

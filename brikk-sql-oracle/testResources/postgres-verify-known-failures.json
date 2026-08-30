@@ -97,36 +97,6 @@
             "error": "statement: 42601: syntax error at or near \"table\" (line 1, col 27) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
         },
         {
-            "sql": "SELECT (U&'\\FE01' || 'Test literal') AS label FROM data",
-            "generated": "",
-            "error": "brikk parse/generate failed: UnsupportedError: Unsupported expression type UnicodeString"
-        },
-        {
-            "sql": "SELECT U&'d!0061t!+000061' UESCAPE '!' AS label",
-            "generated": "",
-            "error": "brikk parse/generate failed: UnsupportedError: Unsupported expression type UnicodeString"
-        },
-        {
-            "sql": "SELECT u&'\\0441\\043B\\043E\\043D'",
-            "generated": "",
-            "error": "brikk parse/generate failed: UnsupportedError: Unsupported expression type UnicodeString"
-        },
-        {
-            "sql": "SELECT U&'can''t'",
-            "generated": "",
-            "error": "brikk parse/generate failed: UnsupportedError: Unsupported expression type UnicodeString"
-        },
-        {
-            "sql": "SELECT U&'a''b''c'",
-            "generated": "",
-            "error": "brikk parse/generate failed: UnsupportedError: Unsupported expression type UnicodeString"
-        },
-        {
-            "sql": "SELECT U&'can''t !0061' UESCAPE '!' AS label",
-            "generated": "",
-            "error": "brikk parse/generate failed: UnsupportedError: Unsupported expression type UnicodeString"
-        },
-        {
             "sql": "SELECT * FROM ROWS FROM (FUNC1(col1, col2))",
             "generated": "",
             "error": "brikk parse/generate failed: ParseError: ROWS FROM is not supported yet. Line 1, Col: 18.\n  SELECT * FROM \u001b[4mROWS\u001b[0m FROM (FUNC1(col1, col2))"

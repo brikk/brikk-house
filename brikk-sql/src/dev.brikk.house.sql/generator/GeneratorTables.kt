@@ -201,6 +201,7 @@ object GeneratorTables {
         reg(Literal::class) { e -> literalSql(e as Literal) }
         reg(National::class) { e -> nationalSql(e as National) }
         reg(RawString::class) { e -> rawstringSql(e as RawString) }
+        reg(UnicodeString::class) { e -> unicodestringSql(e as UnicodeString) }
         reg(Null::class) { e -> nullSql(e as Null) }
         reg(BooleanNode::class) { e -> booleanSql(e as BooleanNode) }
         reg(Star::class) { e -> starSql(e as Star) }
@@ -552,6 +553,7 @@ object GeneratorTables {
         reg(PartitionByRangeProperty::class) { e -> partitionbyrangepropertySql(e as PartitionByRangeProperty) }
         reg(AddConstraint::class) { e -> addconstraintSql(e as AddConstraint) }
         reg(AddPartition::class) { e -> addpartitionSql(e as AddPartition) }
+        reg(AlterModifySqlSecurity::class) { e -> altermodifysqlsecuritySql(e as AlterModifySqlSecurity) }
 
         // --- schema objects ---
         reg(ColumnDef::class) { e -> columndefSql(e as ColumnDef) }

@@ -5,10 +5,6 @@
             "reason": "expected `SELECT STRFTIME(CAST('2021-01-01 22:23:00' AS TIMESTAMP), '%G')` actual `SELECT STRFTIME(TS_OR_DS_TO_TIMESTAMP('2021-01-01 22:23:00'), '%x')`"
         },
         {
-            "case": "read|duckdb|SELECT DATE_FORMAT(CAST('2021-01-01 22:23:00' AS DATETIME), '%x')",
-            "reason": "expected `SELECT DATE_FORMAT(CAST('2021-01-01 22:23:00' AS DATETIME), '%x')` actual `SELECT DATE_FORMAT(CAST('2021-01-01 22:23:00' AS DATETIME), '%G')`"
-        },
-        {
             "case": "write|duckdb|SELECT DATE_FORMAT('2007-10-04 22:23:00', '%r')",
             "reason": "expected `SELECT STRFTIME(CAST('2007-10-04 22:23:00' AS TIMESTAMP), '%I:%M:%S %p')` actual `SELECT STRFTIME(TS_OR_DS_TO_TIMESTAMP('2007-10-04 22:23:00'), '%r')`"
         },

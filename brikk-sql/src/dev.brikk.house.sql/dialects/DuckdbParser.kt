@@ -88,6 +88,7 @@ import dev.brikk.house.sql.ast.TimeToUnix
 import dev.brikk.house.sql.ast.TimestampFromParts
 import dev.brikk.house.sql.ast.ToMap
 import dev.brikk.house.sql.ast.Transform
+import dev.brikk.house.sql.ast.Unhex
 import dev.brikk.house.sql.ast.UnixToTime
 import dev.brikk.house.sql.ast.Var
 import dev.brikk.house.sql.ast.args
@@ -565,6 +566,7 @@ object DuckdbParserTables {
         put("BIT_AND", fromArgList(listOf("this"), false) { BitwiseAndAgg(it) })
         put("BIT_OR", fromArgList(listOf("this"), false) { BitwiseOrAgg(it) })
         put("BIT_XOR", fromArgList(listOf("this"), false) { BitwiseXorAgg(it) })
+        put("FROM_HEX", fromArgList(listOf("this", "expression"), false) { Unhex(it) })
         // sqlglot: parser.py FUNCTIONS["CONCAT"/"CONCAT_WS"] bake in
         // safe=not dialect.STRICT_STRING_CONCAT (DuckDB: False -> safe=true) and
         // coalesce=dialect.CONCAT[_WS]_COALESCE (DuckDB: true)

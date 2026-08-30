@@ -6,14 +6,6 @@
             "reason": "output mismatch: expected `PARSE_TIMESTAMP('%FT%H:%M:%E*S%z', x)` actual `PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*S%z', x)`"
         },
         {
-            "sql": "SELECT ARRAY_AGG((SELECT c FROM t LIMIT 1) IGNORE NULLS) FROM u",
-            "reason": "NullPointerException: null cannot be cast to non-null type dev.brikk.house.sql.ast.Expression"
-        },
-        {
-            "sql": "SELECT ARRAY_AGG((SELECT c FROM t ORDER BY c) IGNORE NULLS LIMIT 1) FROM u",
-            "reason": "NullPointerException: null cannot be cast to non-null type dev.brikk.house.sql.ast.Expression"
-        },
-        {
             "sql": "SELECT '\\n\\r\\a\\v\\f\\t'",
             "reason": "output mismatch: expected `SELECT '\\n\\r\\a\\v\\f\\t'` actual `SELECT '\n\r\u0007\u000b\f\t'`"
         },

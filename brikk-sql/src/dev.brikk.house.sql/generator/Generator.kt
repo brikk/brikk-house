@@ -6,9 +6,11 @@ import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.ast.Any as AnyNode
 import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.ast.Set as SetNode
+import dev.brikk.house.sql.parser.TokenType
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
 import dev.brikk.house.sql.parser.withStrictTimeInverse
+import dev.brikk.house.sql.optimizer.findAllInScope
 import kotlin.Boolean
 import kotlin.String
 import kotlin.collections.List
@@ -258,6 +260,7 @@ open class Generator(
     open val expressionPrecedesPropertiesCreatables: Set<String> get() = emptySet()
     open val inoutSeparator: String get() = " "
     open val supportsUescape: Boolean get() = true
+    open val supportsAlterColumnIfExists: Boolean get() = false
 
     // --- Dialect-level flags (base dialect values) ---
     // sqlglot: Generator.dialect (the umbrella Dialect object; used by annotate_types-
@@ -1356,6 +1359,33 @@ open class Generator(
     open fun rawstringSql(expression: RawString): String {
         val string = escapeStr(expression.thisArg as? String ?: "", escapeBackslash = false)
         return "$quoteStart$string$quoteEnd"
+    }
+
+    // sqlglot: Generator.unicodestring_sql
+    open fun unicodestringSql(expression: UnicodeString): String {
+        var text = sql(expression, "this")
+        val escape = expression.args["escape"] as? Expression
+        val unicodeFormat = tokenizerConfig.formatStrings.entries
+            .firstOrNull { it.value.tokenType == TokenType.UNICODE_STRING }
+        val unicodeStart = unicodeFormat?.key
+        val unicodeEnd = unicodeFormat?.value?.end.orEmpty()
+
+        val escapeSql = if (escape != null && supportsUescape) " UESCAPE ${sql(escape)}" else ""
+        if (unicodeStart == null || (escape != null && !supportsUescape)) {
+            val pattern = if (escape != null) {
+                Regex("${Regex.escape(escape.name)}(\\d+)")
+            } else {
+                Regex("""\\(\d+)""")
+            }
+            text = pattern.replace(text) { "\\u${it.groupValues[1]}" }
+        }
+
+        text = if (unicodeStart != null) {
+            replaceLineBreaks(text).replace(unicodeEnd, unicodeEnd + unicodeEnd)
+        } else {
+            escapeStr(text, escapeBackslash = false)
+        }
+        return "${unicodeStart ?: quoteStart}$text${if (unicodeStart != null) unicodeEnd else quoteEnd}$escapeSql"
     }
 
     // sqlglot: Generator.datatypeparam_sql
@@ -3747,6 +3777,13 @@ open class Generator(
     protected fun baseAltercolumnSql(expression: AlterColumn): String {
         val thisSql = sql(expression, "this")
 
+        val exists = if (expression.args["exists"] == true) {
+            if (supportsAlterColumnIfExists) " IF EXISTS" else {
+                unsupported("ALTER COLUMN IF EXISTS is not supported by this dialect")
+                ""
+            }
+        } else ""
+
         val dtype = sql(expression, "dtype")
         if (dtype.isNotEmpty()) {
             var collate = sql(expression, "collate")
@@ -3754,17 +3791,17 @@ open class Generator(
             var using = sql(expression, "using")
             if (using.isNotEmpty()) using = " USING $using"
             val alterSetTypeSql = if (alterSetType.isNotEmpty()) "$alterSetType " else ""
-            return "ALTER COLUMN $thisSql $alterSetTypeSql$dtype$collate$using"
+            return "ALTER COLUMN$exists $thisSql $alterSetTypeSql$dtype$collate$using"
         }
 
         val default = sql(expression, "default")
-        if (default.isNotEmpty()) return "ALTER COLUMN $thisSql SET DEFAULT $default"
+        if (default.isNotEmpty()) return "ALTER COLUMN$exists $thisSql SET DEFAULT $default"
 
         val comment = sql(expression, "comment")
-        if (comment.isNotEmpty()) return "ALTER COLUMN $thisSql COMMENT $comment"
+        if (comment.isNotEmpty()) return "ALTER COLUMN$exists $thisSql COMMENT $comment"
 
         val visible = expression.args["visible"] as? String
-        if (!visible.isNullOrEmpty()) return "ALTER COLUMN $thisSql SET $visible"
+        if (!visible.isNullOrEmpty()) return "ALTER COLUMN$exists $thisSql SET $visible"
 
         val allowNull = expression.args["allow_null"]
         val drop = expression.args["drop"]
@@ -3775,10 +3812,10 @@ open class Generator(
 
         if (allowNull != null) {
             val keyword = if (drop == true) "DROP" else "SET"
-            return "ALTER COLUMN $thisSql $keyword NOT NULL"
+            return "ALTER COLUMN$exists $thisSql $keyword NOT NULL"
         }
 
-        return "ALTER COLUMN $thisSql DROP DEFAULT"
+        return "ALTER COLUMN$exists $thisSql DROP DEFAULT"
     }
 
     // sqlglot: Generator.alterrename_sql (base: RENAME_TABLE_WITH_DB=true)
@@ -3901,6 +3938,10 @@ open class Generator(
         val visible = if (expression.args["visible"] == true) "VISIBLE" else "INVISIBLE"
         return "ALTER INDEX $thisSql $visible"
     }
+
+    // sqlglot: Generator.altermodifysqlsecurity_sql
+    open fun altermodifysqlsecuritySql(expression: AlterModifySqlSecurity): String =
+        "MODIFY ${expressions(expression, sep = " ")}"
 
     // sqlglot: Generator.renameindex_sql
     open fun renameindexSql(expression: RenameIndex): String {
@@ -4532,7 +4573,7 @@ open class Generator(
         if (ignoreNullsInFunc && expression.metaOrNull?.get("inline") != true) {
             if (ignoreNullsBeforeOrder) {
                 // The first modifier here will be the one closest to the AggFunc's arg
-                val mods = expression.findAll(HavingMax::class, Order::class, Limit::class)
+                val mods = findAllInScope(expression, HavingMax::class, Order::class, Limit::class)
                     .sortedBy { if (it is HavingMax) 0 else if (it is Order) 1 else 2 }
                     .toList()
 
@@ -4652,12 +4693,14 @@ open class Generator(
 
     // sqlglot: Generator.is_sql (base: IS_BOOL_ALLOWED=true)
     open fun isSql(expression: Is): String {
+        val negate = expression.args["negate"] == true
         if (!isBoolAllowed && expression.expressionArg is BooleanNode) {
             val rhs = expression.expressionArg as BooleanNode
-            return if (rhs.thisArg == true) sql(expression, "this")
+            val positive = (rhs.thisArg == true) != negate
+            return if (positive) sql(expression, "this")
             else sql(Not(args("this" to expression.args["this"])))
         }
-        return binary(expression, "IS")
+        return binary(expression, if (negate) "IS NOT" else "IS")
     }
 
     // sqlglot: Generator._like_sql (base: SUPPORTS_LIKE_QUANTIFIERS=true -> plain binary)

@@ -18,18 +18,6 @@
             "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
         },
         {
-            "sql": "ALTER TABLE t MODIFY COLUMN IF EXISTS c Int64",
-            "reason": "ast-mismatch at #0: expected Alter"
-        },
-        {
-            "sql": "ALTER TABLE t ALTER COLUMN IF EXISTS c TYPE Int64",
-            "reason": "ast-mismatch at #8: expected Identifier (k=this)"
-        },
-        {
-            "sql": "SELECT arrayConcat([1, 2], [3, 4])",
-            "reason": "ast-mismatch at #9: expected Array (k=expressions)"
-        },
-        {
             "sql": "SELECT or(0, 1, -2)",
             "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
         },
@@ -42,40 +30,12 @@
             "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
         },
         {
-            "sql": "INSERT INTO t (col1, col2) VALUES (('abcd'), (1234))",
-            "reason": "ast-mismatch at #22: expected Literal (k=expressions)"
-        },
-        {
-            "sql": "SELECT * FROM VALUES ((1), (2), (3))",
-            "reason": "ast-mismatch at #6: expected Literal (k=expressions)"
-        },
-        {
             "sql": "CREATE TABLE data5 (\"x\" UInt32, \"y\" UInt32) ENGINE=MergeTree ORDER BY (round(y / 1000000000), cityHash64(x)) SAMPLE BY cityHash64(x)",
             "reason": "ast-mismatch at #45: expected {\"i\":36,\"k\":\"safe\",\"v\":false}"
         },
         {
-            "sql": "arrayMap((x, y, z) -> x + y + z, [1, 2], [3, 4], [5, 6])",
-            "reason": "ast-mismatch at #0: expected Anonymous"
-        },
-        {
-            "sql": "ALTER TABLE t MODIFY COLUMN c Int64",
-            "reason": "ast-mismatch at #0: expected Alter"
-        },
-        {
-            "sql": "arrayConcat([1, 2], [3, 4])",
-            "reason": "ast-mismatch at #8: expected Array (k=expressions)"
-        },
-        {
-            "sql": "arrayFilter((x, y) -> y, [1, 2, 3], [1, 0, 1])",
-            "reason": "ast-mismatch at #0: expected Anonymous"
-        },
-        {
             "sql": "SELECT quantileExactInclusive(0.25)(number) AS x FROM numbers(5)",
             "reason": "Invalid expression / Unexpected token. Line 1, Col: 46."
-        },
-        {
-            "sql": "SELECT arrayMap((a, b) -> a * b, [1, 2, 3], [10, 20, 30]) AS products",
-            "reason": "ast-mismatch at #2: expected Anonymous (k=this)"
         }
     ]
 }

@@ -2,10 +2,6 @@
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
     "cases": [
         {
-            "sql": "FROM_HEX('AA')",
-            "reason": "ast-mismatch at #0: expected Unhex"
-        },
-        {
             "sql": "SELECT * FROM t1 AS a AT (VERSION => 3) JOIN t2 AS b AT (TIMESTAMP => NOW() - INTERVAL '1' WEEK) ON a.id = b.id",
             "reason": "AT index expressions are not supported yet. Line 1, Col: 26."
         },

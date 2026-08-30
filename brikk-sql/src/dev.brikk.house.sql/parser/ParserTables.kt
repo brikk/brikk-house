@@ -80,7 +80,8 @@ internal fun binaryRangeParser(
 
 /**
  * sqlglot: Func.from_arg_list — positional args zipped against arg_types keys;
- * for var-len functions the remaining args land in the last key as a list.
+ * for var-len functions the remaining args land in the `expressions` key (or the
+ * final key for nodes such as VarMap whose custom variadic key is `values`).
  */
 internal fun fromArgList(
     argKeys: List<String>,
@@ -89,9 +90,9 @@ internal fun fromArgList(
 ): (List<Expression?>) -> Expression = { argsList ->
     val kwargs = LinkedHashMap<String, kotlin.Any?>()
     if (isVarLenArgs) {
-        val nonVarKeys = argKeys.dropLast(1)
-        for ((arg, key) in argsList.zip(nonVarKeys)) kwargs[key] = arg
-        kwargs[argKeys.last()] = argsList.drop(nonVarKeys.size)
+        val varLenIndex = argKeys.indexOf("expressions").takeIf { it >= 0 } ?: argKeys.lastIndex
+        for ((arg, key) in argsList.zip(argKeys.take(varLenIndex))) kwargs[key] = arg
+        kwargs[argKeys[varLenIndex]] = argsList.drop(varLenIndex)
     } else {
         for ((arg, key) in argsList.zip(argKeys)) kwargs[key] = arg
     }

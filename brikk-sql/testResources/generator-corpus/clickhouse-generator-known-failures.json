@@ -4,34 +4,6 @@
         {
             "sql": "SELECT $$a\\$b$$",
             "reason": "output mismatch: expected `SELECT 'a\\\\$b'` actual `SELECT 'a\\$b'`"
-        },
-        {
-            "sql": "ALTER TABLE t MODIFY COLUMN IF EXISTS c Int64",
-            "reason": "output mismatch: expected `ALTER TABLE t ALTER COLUMN IF EXISTS c TYPE Int64` actual `ALTER TABLE t ALTER COLUMN c SET DATA TYPE Int64`"
-        },
-        {
-            "sql": "ALTER TABLE t ALTER COLUMN IF EXISTS c TYPE Int64",
-            "reason": "output mismatch: expected `ALTER TABLE t ALTER COLUMN IF EXISTS c TYPE Int64` actual `ALTER TABLE t ALTER COLUMN c SET DATA TYPE Int64`"
-        },
-        {
-            "sql": "ALTER TABLE t MODIFY TTL d + INTERVAL 1 DAY",
-            "reason": "UnsupportedError: Unsupported expression type AlterModifySqlSecurity"
-        },
-        {
-            "sql": "ALTER TABLE t MODIFY COMMENT 'hi'",
-            "reason": "UnsupportedError: Unsupported expression type AlterModifySqlSecurity"
-        },
-        {
-            "sql": "ALTER TABLE t MODIFY COLUMN c Int64",
-            "reason": "output mismatch: expected `ALTER TABLE t ALTER COLUMN c TYPE Int64` actual `ALTER TABLE t ALTER COLUMN c SET DATA TYPE Int64`"
-        },
-        {
-            "sql": "ALTER TABLE v MODIFY SQL SECURITY DEFINER DEFINER='alice'",
-            "reason": "UnsupportedError: Unsupported expression type AlterModifySqlSecurity"
-        },
-        {
-            "sql": "ALTER TABLE v MODIFY SQL SECURITY DEFINER DEFINER=CURRENT_USER",
-            "reason": "UnsupportedError: Unsupported expression type AlterModifySqlSecurity"
         }
     ]
 }

@@ -39,7 +39,7 @@
 ---
 
 
-**470 items** across 57 groups.
+**459 items** across 54 groups.
 
 
 ## bigquery->duckdb  (117)
@@ -341,7 +341,7 @@
 - [spark -> bigquery] `WITH cte AS (SELECT 1 AS foo) SELECT foo FROM cte` :: expected `WITH cte AS (SELECT 1 AS foo) SELECT foo FROM cte` actual `WITH cte AS (SELECT 1 AS bar) SELECT foo FROM cte`
 - [spark -> bigquery] `WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN U` :: expected `WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_L
 
-## postgres->bigquery  (13)
+## postgres->bigquery  (12)
 
 - [postgres -> bigquery] `SELECT * FROM UNNEST([STRUCT(1 AS _c0)]) AS t1` :: expected `SELECT * FROM UNNEST([STRUCT(1 AS _c0)]) AS t1` actual `SELECT * FROM (VALUES (1)) AS t1`
 - [postgres -> bigquery] `SELECT * FROM UNNEST([STRUCT(1 AS id)]) AS t1 CROSS JOIN UNNEST([STRUCT(1 AS id)]) AS t2` :: expected `SELECT * FROM UNNEST([STRUCT(1 AS id)]) AS t1 CROSS JOIN UNNEST([STRUCT(1 AS id)]) AS t2` actual `SELECT * FROM (VALUES (1)) AS t1 CROSS JOI
@@ -351,7 +351,6 @@
 - [postgres -> bigquery] `SELECT GENERATE_SERIES(1, 5)` :: expected `SELECT _gen_series_value FROM UNNEST(GENERATE_ARRAY(1, 5)) AS _gen_series_value` actual `SELECT GENERATE_SERIES(1, 5)`
 - [postgres -> bigquery] `SELECT U&'a
 b'` :: UnsupportedError: Unsupported expression type UnicodeString
-- [postgres -> bigquery] `SELECT U&'can''t'` :: UnsupportedError: Unsupported expression type UnicodeString
 - [postgres -> bigquery] `SELECT y, GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b FROM t` :: expected `SELECT y, a, b FROM t CROSS JOIN UNNEST(GENERATE_ARRAY(1, 2)) AS a CROSS JOIN UNNEST(GENERATE_ARRAY(11, 13)) AS b` actual `SELECT y, GENERAT
 - [postgres -> bigquery] `SELECT y, GENERATE_SERIES(1, 3) AS g FROM t` :: expected `SELECT y, g FROM t CROSS JOIN UNNEST(GENERATE_ARRAY(1, 3)) AS g` actual `SELECT y, GENERATE_SERIES(1, 3) AS g FROM t`
 - [postgres -> bigquery] `SHA256(x)` :: expected `SHA256(x)` actual `SHA2(x, 256)`
@@ -467,13 +466,10 @@ world'` :: expected `SELECT CAST(b'Hello\nworld' AS STRING)` actual `SELECT CAST
 - [hive -> duckdb] `SELECT a, b FROM x LATERAL VIEW EXPLODE(y) t AS a LATERAL VIEW EXPLODE(z) u AS b` :: expected `SELECT a, b FROM x CROSS JOIN UNNEST(y) AS t(a) CROSS JOIN UNNEST(z) AS u(b)` actual `SELECT a, b FROM x LATERAL VIEW UNNEST(y) t AS a LATER
 - [hive -> duckdb] `from_unixtime(x, "yyyy-MM-dd'T'HH")` :: expected `STRFTIME(TO_TIMESTAMP(x), '%Y-%m-%d''T''%H')` actual `UNIX_TO_STR(x, '%Y-%mstrict-%dstrict''T''%Hstrict')`
 
-## postgres->postgres  (8)
+## postgres->postgres  (6)
 
 - [postgres -> postgres] `SELECT 'prefix' || JSON_EXTRACT_PATH_TEXT(a, VARIADIC '{}') FROM t` :: expected `SELECT 'prefix' || JSON_EXTRACT_PATH_TEXT(a, VARIADIC '{}') FROM t` actual `SELECT 'prefix' || JSON_EXTRACT_PATH_TEXT(a) FROM t`
 - [postgres -> postgres] `SELECT BTRIM(x, 'ab')` :: expected `SELECT TRIM('ab' FROM x)` actual `SELECT BTRIM(x, 'ab')`
-- [postgres -> postgres] `SELECT U&'a
-b'` :: UnsupportedError: Unsupported expression type UnicodeString
-- [postgres -> postgres] `SELECT U&'can''t'` :: UnsupportedError: Unsupported expression type UnicodeString
 - [postgres -> postgres] `SELECT a #> (n IN (1, 2))` :: expected `SELECT a #> (n IN (1, 2))` actual `SELECT a #> n IN (1, 2)`
 - [postgres -> postgres] `SELECT a -> ('x' || 'y')` :: expected `SELECT a -> ('x' || 'y')` actual `SELECT JSON_EXTRACT_PATH(a, 'x' || 'y')`
 - [postgres -> postgres] `SELECT a -> (1 + 2)` :: expected `SELECT a -> (1 + 2)` actual `SELECT JSON_EXTRACT_PATH(a, 1 + 2)`
@@ -535,16 +531,13 @@ b'` :: UnsupportedError: Unsupported expression type UnicodeString
 - [hive -> bigquery] `DATE_SUB('2020-01-01', 1)` :: expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL (1 * -1) DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1 * -1, DAY)`
 - [hive -> bigquery] `SELECT REPEAT(' ', 2)` :: expected `SELECT REPEAT(' ', 2)` actual `SELECT SPACE(2)`
 
-## postgres->presto  (4)
+## postgres->presto  (2)
 
-- [postgres -> presto] `SELECT U&'Hello winter \2603 !'` :: UnsupportedError: Unsupported expression type UnicodeString
-- [postgres -> presto] `SELECT U&'can''t'` :: UnsupportedError: Unsupported expression type UnicodeString
 - [postgres -> presto] `SELECT UNNEST(ARRAY[1])` :: expected `SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) AS col FROM UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[1])))) AS _u(pos) CROSS JOIN UNNEST(ARRAY
 - [postgres -> presto] `SELECT UNNEST(c) FROM t` :: expected `SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) AS col FROM t CROSS JOIN UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(c)))) AS _u(pos) CROSS JOIN UNNEST
 
-## clickhouse->clickhouse  (3)
+## clickhouse->clickhouse  (2)
 
-- [clickhouse -> clickhouse] `ALTER TABLE t ALTER COLUMN c TYPE Nullable(Int64)` :: expected `ALTER TABLE t ALTER COLUMN c TYPE Nullable(Int64)` actual `ALTER TABLE t ALTER COLUMN c SET DATA TYPE Nullable(Int64)`
 - [clickhouse -> clickhouse] `SELECT LTRIM(s), RTRIM(s), TRIM(s)` :: expected `SELECT LTRIM(s), RTRIM(s), TRIM(s)` actual `SELECT trimLeft(s), trimRight(s), trimBoth(s)`
 - [clickhouse -> clickhouse] `SELECT trimLeft(s, 'xy'), trimRight(s, 'xy'), trimBoth(s, 'xy')` :: expected `SELECT TRIM(LEADING 'xy' FROM s), TRIM(TRAILING 'xy' FROM s), TRIM(BOTH 'xy' FROM s)` actual `SELECT trimLeft(s, 'xy'), trimRight(s, 'xy'), 
 
@@ -566,12 +559,9 @@ b'` :: UnsupportedError: Unsupported expression type UnicodeString
 - [mysql -> postgres] `SELECT JSON_EXTRACT_PATH(a, VARIADIC '{}') FROM t` :: expected `SELECT JSON_EXTRACT_PATH(a, VARIADIC '{}') FROM t` actual `SELECT JSON_EXTRACT_PATH(a) FROM t`
 - [mysql -> postgres] `SELECT JSON_EXTRACT_PATH_TEXT(a, VARIADIC '{}') FROM t` :: expected `SELECT JSON_EXTRACT_PATH_TEXT(a, VARIADIC '{}') FROM t` actual `SELECT JSON_EXTRACT_PATH_TEXT(a) FROM t`
 
-## postgres->duckdb  (3)
+## postgres->duckdb  (1)
 
 - [postgres -> duckdb] `SELECT BTRIM(x, 'ab')` :: expected `SELECT TRIM(x, 'ab')` actual `SELECT BTRIM(x, 'ab')`
-- [postgres -> duckdb] `SELECT U&'a
-b'` :: UnsupportedError: Unsupported expression type UnicodeString
-- [postgres -> duckdb] `SELECT U&'can''t'` :: UnsupportedError: Unsupported expression type UnicodeString
 
 ## postgres->spark  (3)
 
@@ -648,10 +638,6 @@ b'` :: UnsupportedError: Unsupported expression type UnicodeString
 
 - [duckdb -> duckdb] `SELECT a -> ('x' || 'y')` :: expected `SELECT a -> ('x' || 'y')` actual `SELECT a -> 'x' || 'y'`
 
-## duckdb->mysql  (1)
-
-- [duckdb -> mysql] `SELECT DATE_FORMAT(CAST('2021-01-01 22:23:00' AS DATETIME), '%x')` :: expected `SELECT DATE_FORMAT(CAST('2021-01-01 22:23:00' AS DATETIME), '%x')` actual `SELECT DATE_FORMAT(CAST('2021-01-01 22:23:00' AS DATETIME), '%G')
-
 ## duckdb->postgres  (1)
 
 - [duckdb -> postgres] `a / b` :: expected `CAST(a AS DOUBLE PRECISION) / b` actual `CAST(a AS DOUBLE PRECISION) / NULLIF(b, 0)`
@@ -668,10 +654,6 @@ b'` :: UnsupportedError: Unsupported expression type UnicodeString
 
 - [mysql -> presto] `SELECT DATEDIFF(x, y)` :: expected `SELECT DATE_DIFF('DAY', DATE_TRUNC('DAY', y), DATE_TRUNC('DAY', x))` actual `SELECT DATE_DIFF('DAY', y, x)`
 
-## postgres->clickhouse  (1)
-
-- [postgres -> clickhouse] `ALTER TABLE t ALTER COLUMN c TYPE Nullable(Int64)` :: expected `ALTER TABLE t ALTER COLUMN c TYPE Nullable(Int64)` actual `ALTER TABLE t ALTER COLUMN c SET DATA TYPE Nullable(Int64)`
-
 ## postgres->doris  (1)
 
 - [postgres -> doris] `SELECT JSON_EXTRACT(CAST('{"key": 1}' AS JSONB), '$.key')` :: expected `SELECT JSON_EXTRACT(CAST('{"key": 1}' AS JSONB), '$.key')` actual `SELECT JSON_UNQUOTE(JSON_EXTRACT(CAST('{"key": 1}' AS JSONB), '$.key'))`
@@ -679,10 +661,6 @@ b'` :: UnsupportedError: Unsupported expression type UnicodeString
 ## presto->hive  (1)
 
 - [presto -> hive] `CREATE TABLE x (w VARCHAR, y INTEGER, z INTEGER) WITH (PARTITIONED_BY=ARRAY['y', 'z'])` :: expected `CREATE TABLE x (w STRING) PARTITIONED BY (y INT, z INT)` actual `CREATE TABLE x (w STRING, y INT, z INT) PARTITIONED BY ARRAY('y', 'z')`
-
-## presto->postgres  (1)
-
-- [presto -> postgres] `SELECT U&'Hello winter \2603 !'` :: UnsupportedError: Unsupported expression type UnicodeString
 
 ## presto->presto  (1)
 

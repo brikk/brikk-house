@@ -386,6 +386,9 @@ open class Parser(
     // sqlglot: Dialect.INDEX_OFFSET
     open val indexOffset: Int get() = 0
 
+    // sqlglot: Dialect.NORMALIZE_NOT_NULL
+    open val normalizeNotNull: kotlin.Boolean get() = true
+
     // sqlglot: Dialect.TYPED_DIVISION
     open val typedDivision: kotlin.Boolean get() = false
 
@@ -1394,8 +1397,12 @@ open class Parser(
                 current = expression(Is(args("this" to current, "expression" to Null())))
             } else if (match(TokenType.NOTNULL)) {
                 // Postgres supports ISNULL and NOTNULL for conditions.
-                current = expression(Is(args("this" to current, "expression" to Null())))
-                current = expression(Not(args("this" to current)))
+                current = if (normalizeNotNull) {
+                    val isNull = expression(Is(args("this" to current, "expression" to Null())))
+                    expression(Not(args("this" to isNull)))
+                } else {
+                    expression(Is(args("this" to current, "expression" to Null(), "negate" to true)))
+                }
             } else {
                 if (negate) retreat(index - 1)
                 break
@@ -1464,8 +1471,13 @@ open class Parser(
             }
         }
 
-        var result: Expression = expression(Is(args("this" to this_, "expression" to expr)))
-        if (negate) result = expression(Not(args("this" to result)))
+        var result: Expression
+        if (negate && expr is Null && !normalizeNotNull) {
+            result = expression(Is(args("this" to this_, "expression" to expr, "negate" to true)))
+        } else {
+            result = expression(Is(args("this" to this_, "expression" to expr)))
+            if (negate) result = expression(Not(args("this" to result)))
+        }
         return parseColumnOps(result)
     }
 
@@ -5185,45 +5197,47 @@ open class Parser(
         // Many dialects support the ALTER [COLUMN] syntax, so if there is no
         // keyword after ALTER we default to parsing this statement
         match(TokenType.COLUMN)
+        val exists = parseExists()
         val column = parseField(anyToken = true)
 
+        fun alterColumn(vararg entries: Pair<String, kotlin.Any?>): AlterColumn =
+            AlterColumn(args(*entries, "exists" to if (exists) true else null))
+
         if (matchPair(TokenType.DROP, TokenType.DEFAULT)) {
-            return expression(AlterColumn(args("this" to column, "drop" to true)))
+            return expression(alterColumn("this" to column, "drop" to true))
         }
         if (matchPair(TokenType.SET, TokenType.DEFAULT)) {
             return expression(
-                AlterColumn(args("this" to column, "default" to parseDisjunction()))
+                alterColumn("this" to column, "default" to parseDisjunction())
             )
         }
         if (match(TokenType.COMMENT)) {
-            return expression(AlterColumn(args("this" to column, "comment" to parseString())))
+            return expression(alterColumn("this" to column, "comment" to parseString()))
         }
         if (matchTextSeq("DROP", "NOT", "NULL")) {
             return expression(
-                AlterColumn(args("this" to column, "drop" to true, "allow_null" to true))
+                alterColumn("this" to column, "drop" to true, "allow_null" to true)
             )
         }
         if (matchTextSeq("SET", "NOT", "NULL")) {
-            return expression(AlterColumn(args("this" to column, "allow_null" to false)))
+            return expression(alterColumn("this" to column, "allow_null" to false))
         }
 
         if (matchTextSeq("SET", "VISIBLE")) {
-            return expression(AlterColumn(args("this" to column, "visible" to "VISIBLE")))
+            return expression(alterColumn("this" to column, "visible" to "VISIBLE"))
         }
         if (matchTextSeq("SET", "INVISIBLE")) {
-            return expression(AlterColumn(args("this" to column, "visible" to "INVISIBLE")))
+            return expression(alterColumn("this" to column, "visible" to "INVISIBLE"))
         }
 
         matchTextSeq("SET", "DATA")
         matchTextSeq("TYPE")
         return expression(
-            AlterColumn(
-                args(
-                    "this" to column,
-                    "dtype" to parseTypes(),
-                    "collate" to (if (match(TokenType.COLLATE)) parseTerm() else false),
-                    "using" to (if (match(TokenType.USING)) parseDisjunction() else false),
-                )
+            alterColumn(
+                "this" to column,
+                "dtype" to parseTypes(),
+                "collate" to (if (match(TokenType.COLLATE)) parseTerm() else false),
+                "using" to (if (match(TokenType.USING)) parseDisjunction() else false),
             )
         )
     }
@@ -5631,7 +5645,7 @@ open class Parser(
         var alternative: String? = null
         var isFunction: kotlin.Boolean? = null
 
-        val this_: Expression?
+        var this_: Expression?
         if (matchTextSeq("DIRECTORY")) {
             this_ = expression(
                 Directory(
@@ -5659,6 +5673,42 @@ open class Parser(
             isFunction = match(TokenType.FUNCTION)
 
             this_ = if (isFunction) parseFunction() else parseInsertTable()
+        }
+
+        // MySQL's INSERT ... SET is normalized into INSERT ... (cols) VALUES (vals).
+        var setValues: Values? = null
+        if (match(TokenType.SET)) {
+            val columns = mutableListOf<Expression>()
+            val values = mutableListOf<Expression>()
+
+            fun parseSetAssignment(): Expression? {
+                val target = parseColumn()
+                if (target is Column && match(TokenType.EQ)) {
+                    val value = if (supportsValuesDefault && match(TokenType.DEFAULT)) {
+                        Var(args("this" to prevToken.text.uppercase()))
+                    } else {
+                        parseDisjunction()
+                    }
+                    if (value != null) {
+                        (target.thisArg as? Expression)?.let { columns.add(it) }
+                        values.add(value)
+                        return value
+                    }
+                }
+                raiseError("Expected column assignment in INSERT ... SET")
+                return null
+            }
+
+            parseCsv { parseSetAssignment() }
+            this_ = expression(Schema(args("this" to this_, "expressions" to columns)))
+            setValues = expression(
+                Values(
+                    args(
+                        "expressions" to listOf(Tuple(args("expressions" to values))),
+                        "alias" to parseTableAlias(),
+                    )
+                )
+            )
         }
 
         val returning = parseReturning() // TSQL allows RETURNING before source
@@ -5694,7 +5744,7 @@ open class Parser(
                     "partition" to (if (match(TokenType.PARTITION_BY)) parsePartitionedBy() else false),
                     "settings" to (if (matchTextSeq("SETTINGS")) parseSettingsProperty() else false),
                     "default" to matchTextSeq("DEFAULT", "VALUES"),
-                    "expression" to (parseDerivedTableValues() ?: parseDdlSelect()),
+                    "expression" to (setValues ?: parseDerivedTableValues() ?: parseDdlSelect()),
                     "conflict" to parseOnConflict(),
                     "returning" to (returning ?: parseReturning()),
                     "overwrite" to overwrite,
@@ -7865,7 +7915,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_column_constraint (PROCEDURE_OPTIONS={} in the base parser)
-    fun parseColumnConstraint(): Expression? {
+    open fun parseColumnConstraint(): Expression? {
         val this_ = if (match(TokenType.CONSTRAINT)) parseIdVar() else null
 
         if (matchTexts(constraintParsers.keys)) {

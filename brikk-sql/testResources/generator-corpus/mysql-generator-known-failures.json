@@ -1,9 +1,4 @@
 {
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": [
-        {
-            "sql": "SELECT DATE_FORMAT(x, '%x-%v')",
-            "reason": "output mismatch: expected `SELECT DATE_FORMAT(x, '%x-%v')` actual `SELECT DATE_FORMAT(x, '%G-%v')`"
-        }
-    ]
+    "cases": []
 }

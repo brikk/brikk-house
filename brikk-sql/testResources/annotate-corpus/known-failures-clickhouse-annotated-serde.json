@@ -17,18 +17,6 @@
             "reason": "type-mismatch at #1 (Paren k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
         {
-            "sql": "ALTER TABLE t MODIFY COLUMN IF EXISTS c Int64",
-            "reason": "type-mismatch at #0 (Alter): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "ALTER TABLE t ALTER COLUMN IF EXISTS c TYPE Int64",
-            "reason": "type-mismatch at #8 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "SELECT arrayConcat([1, 2], [3, 4])",
-            "reason": "type-mismatch at #9 (Array k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
             "sql": "SELECT or(0, 1, -2)",
             "reason": "type-mismatch at #1 (Paren k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
@@ -41,14 +29,6 @@
             "reason": "type-mismatch at #1 (Paren k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
         {
-            "sql": "INSERT INTO t (col1, col2) VALUES (('abcd'), (1234))",
-            "reason": "type-mismatch at #22 (Literal k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "SELECT * FROM VALUES ((1), (2), (3))",
-            "reason": "type-mismatch at #6 (Literal k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
             "sql": "CREATE TABLE data5 (\"x\" UInt32, \"y\" UInt32) ENGINE=MergeTree ORDER BY (round(y / 1000000000), cityHash64(x)) SAMPLE BY cityHash64(x)",
             "reason": "type-mismatch at #45 (? k=safe): expected t=null actual t=null"
         },
@@ -57,32 +37,12 @@
             "reason": "type-mismatch at #14 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
         {
-            "sql": "arrayMap((x, y, z) -> x + y + z, [1, 2], [3, 4], [5, 6])",
-            "reason": "type-mismatch at #0 (Anonymous): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "ALTER TABLE t MODIFY COLUMN c Int64",
-            "reason": "type-mismatch at #0 (Alter): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "arrayConcat([1, 2], [3, 4])",
-            "reason": "type-mismatch at #8 (Array k=expressions): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
-            "sql": "arrayFilter((x, y) -> y, [1, 2, 3], [1, 0, 1])",
-            "reason": "type-mismatch at #0 (Anonymous): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
-        },
-        {
             "sql": "SELECT col.^nested, t.col2.^nested, t.col3.^nested.twice FROM t",
             "reason": "type-mismatch at #12 (Identifier k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         },
         {
             "sql": "SELECT quantileExactInclusive(0.25)(number) AS x FROM numbers(5)",
             "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 46.\n  SELECT quantileExactInclusive(0.25)(number) \u001b[4mAS\u001b[0m x FROM numbers(5)"
-        },
-        {
-            "sql": "SELECT arrayMap((a, b) -> a * b, [1, 2, 3], [10, 20, 30]) AS products",
-            "reason": "type-mismatch at #2 (Anonymous k=this): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
         }
     ]
 }

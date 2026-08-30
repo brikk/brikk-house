@@ -36,7 +36,7 @@
 ---
 
 
-**68 items** across 5 groups.
+**67 items** across 5 groups.
 
 
 ## bigquery  (54)
@@ -120,13 +120,12 @@ TRANSFORM(
 - [doris] `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2)` :: output mismatch: expected `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2)` actual `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITIO
 - [doris] `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)` :: output mismatch: expected `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)` actual `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY
 
-## postgres  (3)
+## postgres  (2)
 
 - [postgres] `
             WITH
               json_data AS (SELECT '{"field_id": [1, 2, 3]}'::JSON AS data),
      ` :: output mismatch: expected `WITH json_data AS (SELECT CAST('{"field_id": [1, 2, 3]}' AS JSON) AS data), field_ids AS (SELECT 'field_id' AS field_id)` a
-- [postgres] `SELECT id, email, CAST(deleted AS TEXT) FROM users WHERE deleted NOTNULL` :: output mismatch: expected `SELECT id, email, CAST(deleted AS TEXT) FROM users WHERE deleted IS NOT NULL` actual `SELECT id, email, CAST(deleted AS TEX
 - [postgres] `x::JSON -> 'duration' ->> -1` :: output mismatch: expected `CAST(x AS JSON) -> 'duration' ->> -1` actual `JSON_EXTRACT_PATH_TEXT(CAST(x AS JSON) -> 'duration', -1)`
 
 ## trino  (1)
