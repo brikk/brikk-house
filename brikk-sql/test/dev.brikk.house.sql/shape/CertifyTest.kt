@@ -29,7 +29,7 @@ class CertifyTest {
     fun unmappableFunctionIsRefused() {
         val r = report("SELECT * FROM read_parquet('f.parquet')", "duckdb", "doris")
         assertTrue(!r.ok)
-        val f = refusals(r).single()
+        val f = refusals(r).single { it.kind == FindingKind.UNMAPPABLE_FUNCTION }
         assertEquals(FindingKind.UNMAPPABLE_FUNCTION, f.kind)
         assertEquals("READ_PARQUET", f.subject)
     }
@@ -38,7 +38,7 @@ class CertifyTest {
     fun unsupportedTranslationIsRefused() {
         val r = report("SELECT unnest([1, 2, 3])", "duckdb", "doris")
         assertTrue(!r.ok)
-        val f = refusals(r).single()
+        val f = refusals(r).single { it.kind == FindingKind.UNSUPPORTED_TRANSLATION }
         assertEquals(FindingKind.UNSUPPORTED_TRANSLATION, f.kind)
         assertTrue("EXPLODE is only valid in LATERAL VIEW" in f.detail, f.detail)
     }
@@ -47,7 +47,7 @@ class CertifyTest {
     fun rawPassthroughStatementIsRefused() {
         val r = report("PRAGMA database_size", "duckdb", "trino")
         assertTrue(!r.ok)
-        val f = refusals(r).single()
+        val f = refusals(r).single { it.kind == FindingKind.RAW_PASSTHROUGH_STATEMENT }
         assertEquals(FindingKind.RAW_PASSTHROUGH_STATEMENT, f.kind)
         assertEquals("Pragma", f.subject)
     }
@@ -55,12 +55,75 @@ class CertifyTest {
     @Test
     fun catalogLessTargetIsRefusedNotThrown() {
         // unmappableFunctions throws ShapeError for mysql; certify converts that hole
-        // into a single NO_TARGET_CATALOG refusal ("cannot certify capability").
+        // into a NO_TARGET_CATALOG refusal ("cannot certify capability"). duckdb->mysql
+        // is ALSO an unresearched real-engine pair, so a SEMANTIC_COVERAGE_UNKNOWN
+        // refusal accompanies it — both are conservative refusals (no throw).
         val r = report("SELECT a FROM t", "duckdb", "mysql")
         assertTrue(!r.ok)
-        val f = refusals(r).single()
-        assertEquals(FindingKind.NO_TARGET_CATALOG, f.kind)
-        assertEquals("mysql", f.subject)
+        val kinds = refusals(r).map { it.kind }.toSet()
+        assertTrue(FindingKind.NO_TARGET_CATALOG in kinds, "$kinds")
+        assertTrue(FindingKind.SEMANTIC_COVERAGE_UNKNOWN in kinds, "$kinds")
+        val catalog = refusals(r).single { it.kind == FindingKind.NO_TARGET_CATALOG }
+        assertEquals("mysql", catalog.subject)
+    }
+
+    // ------------------------------------------------------ semantic-coverage gate
+
+    @Test
+    fun unresearchedRealEnginePairIsRefusedForCoverage() {
+        // trino->starrocks: both real engines, but NO live-probe hazard file exists yet
+        // -> SEMANTIC_COVERAGE_UNKNOWN refusal (certification cannot silently pass an
+        // unresearched pair). A trivially-clean query still refuses on coverage alone.
+        val r = report("SELECT o_orderkey FROM orders", "trino", "starrocks")
+        assertTrue(!r.ok)
+        val f = refusals(r).single { it.kind == FindingKind.SEMANTIC_COVERAGE_UNKNOWN }
+        assertEquals("trino->starrocks", f.subject)
+        assertTrue("no researched semantic coverage" in f.detail, f.detail)
+    }
+
+    @Test
+    fun partialStarrocksDorisPairDoesNotRefuseAFunctionFreeQuery() {
+        // The pair is PARTIAL, not complete. A function-free query has no uncovered
+        // function concept, so it needs no per-concept refusal.
+        val r = report("SELECT o_orderkey FROM orders", "starrocks", "doris")
+        assertTrue(r.findings.none { it.kind == FindingKind.SEMANTIC_COVERAGE_UNKNOWN })
+    }
+
+    @Test
+    fun probedStarrocksFunctionGetsItsRecordedVerdict() {
+        val r = report("SELECT date_add(d, INTERVAL 1 DAY) FROM t", "starrocks", "doris")
+        val hazard = r.findings.single { it.kind == FindingKind.SEMANTIC_HAZARD }
+        assertTrue(hazard.detail.startsWith("divergent:"), hazard.detail)
+        assertNotNull(hazard.provenance)
+        assertTrue("starrocks-doris" in hazard.provenance, hazard.provenance)
+        assertTrue(r.findings.none { it.kind == FindingKind.SEMANTIC_COVERAGE_UNKNOWN })
+    }
+
+    @Test
+    fun unprobedStarrocksFunctionInPartialDorisPairRefuses() {
+        // ACOS exists in both catalogs but was not among the 82 probed concepts.
+        val r = report("SELECT acos(x) FROM t", "starrocks", "doris")
+        assertTrue(!r.ok)
+        val finding = refusals(r).single { it.kind == FindingKind.SEMANTIC_COVERAGE_UNKNOWN }
+        assertEquals("ACOS", finding.subject)
+        assertTrue("PARTIAL" in finding.detail, finding.detail)
+    }
+
+    @Test
+    fun aliasesAndRenderedNamesResolveToCoveredConcept() {
+        // CHARACTER_LENGTH parses to the canonical Length node and StarRocks renders it
+        // as CHAR_LENGTH. The scope has CHAR_LENGTH/LENGTH evidence, so the source alias
+        // must resolve rather than producing an uncovered-concept refusal.
+        val r = report("SELECT character_length(x) FROM t", "starrocks", "doris")
+        assertTrue(r.findings.none { it.kind == FindingKind.SEMANTIC_COVERAGE_UNKNOWN }, "${r.findings}")
+    }
+
+    @Test
+    fun translationOnlySourceCarriesNoCoverageFinding() {
+        // base/sqlglot source -> real engine is the canonical translation case (no source
+        // engine semantics to preserve); no coverage finding is emitted.
+        val r = SqlFragment("SELECT o_orderkey FROM orders").certify("starrocks")
+        assertTrue(r.findings.none { it.kind == FindingKind.SEMANTIC_COVERAGE_UNKNOWN }, "${r.findings}")
     }
 
     // ------------------------------------------------------------ semantic hazards
@@ -72,7 +135,7 @@ class CertifyTest {
         val r = report("SELECT lower(x) FROM t", "duckdb", "trino")
         assertEquals("SELECT LOWER(x) FROM t", r.result.sql)
         assertTrue(!r.ok)
-        val f = refusals(r).single()
+        val f = refusals(r).single { it.kind == FindingKind.SEMANTIC_HAZARD }
         assertEquals(FindingKind.SEMANTIC_HAZARD, f.kind)
         assertEquals("LOWER", f.subject)
         assertTrue("İ" in f.detail, f.detail)
@@ -308,7 +371,7 @@ class CertifyTest {
         // is false for it -> okAccepting stays false. The consumer only waived unicode.
         val r = report("SELECT * FROM read_parquet('f.parquet')", "duckdb", "doris")
         assertTrue(!r.ok)
-        val f = refusals(r).single()
+        val f = refusals(r).single { it.kind == FindingKind.UNMAPPABLE_FUNCTION }
         assertEquals(FindingKind.UNMAPPABLE_FUNCTION, f.kind)
         assertEquals(emptyList(), f.areas)
         assertTrue(!r.okAccepting { "unicode" in it.areas })

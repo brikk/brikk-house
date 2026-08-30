@@ -14,8 +14,11 @@ import dev.brikk.house.sql.ast.sqlName
 import dev.brikk.house.sql.ast.sqlNames
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.metadata.FunctionHazard
+import dev.brikk.house.sql.metadata.EngineClass
 import dev.brikk.house.sql.metadata.HazardRegistry
 import dev.brikk.house.sql.metadata.HazardVerdict
+import dev.brikk.house.sql.metadata.PairCoverage
+import dev.brikk.house.sql.metadata.SemanticCoverage
 
 /*
  * BRIKK-NATIVE: "verified-correct transpilation" consumption modes.
@@ -76,6 +79,14 @@ enum class FindingKind {
 
     /** The target dialect ships no function catalog — capability cannot be certified. */
     NO_TARGET_CATALOG,
+
+    /**
+     * The (source → target) real-engine pair has no researched semantic coverage, so
+     * cross-dialect semantics cannot be certified — conservatively refuse rather than
+     * silently pass. Distinct from a per-function hazard: it flags the whole pair as
+     * unresearched. See [dev.brikk.house.sql.metadata.SemanticCoverage].
+     */
+    SEMANTIC_COVERAGE_UNKNOWN,
 }
 
 /** One certification finding: [subject] is the function name / construct, [detail] the
@@ -240,21 +251,60 @@ fun SqlFragment.certify(
 
     // 4. Probe-verified semantic hazards (multi-key, verdict-driven — see file header).
     val targetGenerator = Dialects.forName(target).generator()
+    val semanticScope = SemanticCoverage.scope(dialect, target)
+
+    // Entirely unresearched real-engine pairs refuse at pair scope, even when the query
+    // happens not to call a function. PARTIAL pairs are checked per encountered concept
+    // below; a file's existence never clears unknown functions.
+    if (semanticScope.coverage == PairCoverage.UNRESEARCHED) {
+        findings.add(
+            Finding(
+                Severity.REFUSAL, FindingKind.SEMANTIC_COVERAGE_UNKNOWN, "$dialect->$target",
+                "the '$dialect'->'$target' engine pair has no researched semantic coverage; " +
+                    "cross-dialect semantics cannot be certified",
+            )
+        )
+    } else if (
+        semanticScope.coverage == PairCoverage.NOT_APPLICABLE &&
+        SemanticCoverage.engineClass[dialect.lowercase().trim()] == EngineClass.REAL_ENGINE &&
+        dialect.lowercase().trim() != target.lowercase().trim()
+    ) {
+        findings.add(
+            Finding(
+                Severity.WARNING, FindingKind.SEMANTIC_COVERAGE_UNKNOWN, "$dialect->$target",
+                "the target is translation-only or brikk-native; pairwise engine semantics " +
+                    "are not researchable for this direction",
+            )
+        )
+    }
+
     for (node in ast.walk(bfs = false)) {
         if (node !is Func) continue
         val keys = functionHazardKeys(node, target)
         if (keys.isEmpty()) continue
+
+        if (
+            semanticScope.coverage == PairCoverage.PARTIAL &&
+            !SemanticCoverage.coversConcept(dialect, target, keys)
+        ) {
+            val sourceName = leadingCallName(
+                runCatching { Dialects.forName(dialect).generate(node as Expression) }.getOrNull()
+            ) ?: keys.first()
+            findings.add(
+                Finding(
+                    Severity.REFUSAL, FindingKind.SEMANTIC_COVERAGE_UNKNOWN,
+                    sourceName.uppercase(),
+                    "function concept is not covered by the PARTIAL '$dialect'->'$target' " +
+                        "semantic scope (${semanticScope.scope}); evidence: ${semanticScope.evidence}",
+                    provenance = semanticScope.evidence,
+                )
+            )
+            continue
+        }
         // Multi-key lookup (A): try every name the node is known by for this pair and
         // keep the WORST verdict (conservative), tracking a stable subject for it.
-        var hazard: FunctionHazard? = null
-        var subject: String? = null
-        for (key in keys) {
-            val hit = HazardRegistry.lookup(dialect, target, key) ?: continue
-            if (hazard == null || verdictRank(hit.verdict) < verdictRank(hazard.verdict)) {
-                hazard = hit
-                subject = key
-            }
-        }
+        val hazard: FunctionHazard? = HazardRegistry.lookupConcept(dialect, target, keys)
+        val subject: String? = keys.firstOrNull()
         if (hazard == null) continue
         // Policy #2 (dedicated-renderer refinement of the verdict-driven rule B):
         // whether the TARGET generator has a dedicated renderer for this node (a real

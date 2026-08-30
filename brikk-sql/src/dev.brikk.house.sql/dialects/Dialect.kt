@@ -285,6 +285,7 @@ object Dialects {
     val BASE: Dialect = Dialect()
     val MYSQL: Dialect = MysqlDialect()
     val DORIS: Dialect = DorisDialect()
+    val STARROCKS: Dialect = StarrocksDialect()
     val PRESTO: Dialect = PrestoDialect()
     val TRINO: Dialect = TrinoDialect()
     val DUCKDB: Dialect = DuckdbDialect()
@@ -302,6 +303,7 @@ object Dialects {
         "", "sqlglot" -> BASE
         "mysql" -> MYSQL
         "doris" -> DORIS
+        "starrocks" -> STARROCKS
         "presto" -> PRESTO
         "trino" -> TRINO
         "duckdb" -> DUCKDB

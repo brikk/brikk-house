@@ -9,6 +9,21 @@ import kotlin.test.assertTrue
 
 class FunctionCatalogTest {
 
+    // ------------------------------------------------------------ clickhouse
+
+    @Test
+    fun clickhouseCatalogLoadsVendoredSystemFunctions() {
+        assertEquals(1570, CLICKHOUSE_FUNCTION_CATALOG.size)
+        assertTrue("length" in CLICKHOUSE_FUNCTION_CATALOG)
+        assertEquals(FunctionKind.AGGREGATE, CLICKHOUSE_FUNCTION_CATALOG["groupBitAnd"]!!.kind)
+        assertEquals(
+            CLICKHOUSE_FUNCTION_CATALOG["groupBitAnd"],
+            CLICKHOUSE_FUNCTION_CATALOG["BIT_AND"],
+        )
+        // system.functions exposes no signatures; do not fabricate overloads.
+        assertTrue(CLICKHOUSE_FUNCTION_CATALOG["length"]!!.overloads.isEmpty())
+    }
+
     // ---------------------------------------------------------------- doris
 
     @Test
@@ -48,6 +63,61 @@ class FunctionCatalogTest {
             ),
             count.overloads,
         )
+    }
+
+    // ---------------------------------------------------------------- starrocks
+
+    @Test
+    fun starrocksCatalogLoadsWithExpectedSurface() {
+        // Pinned to StarRocks 4.1.4 (SHOW FULL BUILTIN FUNCTIONS live dump).
+        assertEquals(820, STARROCKS_FUNCTION_CATALOG.size)
+        assertTrue("ABS" in STARROCKS_FUNCTION_CATALOG)
+        // case-insensitive lookup
+        assertEquals(STARROCKS_FUNCTION_CATALOG["abs"], STARROCKS_FUNCTION_CATALOG["ABS"])
+        // scalar/aggregate/window/table kinds are all represented
+        assertEquals(FunctionKind.SCALAR, STARROCKS_FUNCTION_CATALOG["abs"]!!.kind)
+        assertEquals(FunctionKind.AGGREGATE, STARROCKS_FUNCTION_CATALOG["sum"]!!.kind)
+        assertEquals(FunctionKind.WINDOW, STARROCKS_FUNCTION_CATALOG["row_number"]!!.kind)
+    }
+
+    @Test
+    fun starrocksTableFunctionsAreClassified() {
+        // From TableFunction.java initBuiltins() (live Function Type = Table).
+        assertTrue(STARROCKS_FUNCTION_CATALOG.isTableFunction("unnest"))
+        assertTrue(STARROCKS_FUNCTION_CATALOG.isTableFunction("generate_series"))
+        assertTrue(STARROCKS_FUNCTION_CATALOG.isTableFunction("json_each"))
+        assertTrue(!STARROCKS_FUNCTION_CATALOG.isTableFunction("abs"))
+    }
+
+    @Test
+    fun starrocksWindowFunctionsAreClassified() {
+        // onlyAnalyticUsedFunctions (FunctionSet.java): reported as "Aggregate" by the live
+        // dump, reclassified WINDOW.
+        for (w in listOf("lead", "lag", "dense_rank", "rank", "cume_dist", "percent_rank",
+                "ntile", "row_number", "first_value", "last_value")) {
+            assertEquals(FunctionKind.WINDOW, STARROCKS_FUNCTION_CATALOG[w]!!.kind, "kind of $w")
+        }
+    }
+
+    @Test
+    fun starrocksVariadicsAreFlagged() {
+        // Live dump: concat(VARCHAR, ...) -> normalized to variadic=true (sentinel dropped).
+        val concat = STARROCKS_FUNCTION_CATALOG["concat"]!!
+        assertTrue(concat.overloads.any { it.variadic && it.argTypes == listOf("VARCHAR") })
+        // No literal "..." sentinel leaks into any overload arg list.
+        assertTrue(
+            STARROCKS_FUNCTION_CATALOG.functions.none { d -> d.overloads.any { "..." in it.argTypes } }
+        )
+    }
+
+    @Test
+    fun starrocksAbsOverloadsMatchLiveEngine() {
+        // Pinned to the 4.1.4 live dump: widening integer returns (abs(BIGINT) -> LARGEINT).
+        val abs = STARROCKS_FUNCTION_CATALOG["abs"]!!
+        assertTrue(FunctionOverload(listOf("DOUBLE"), "DOUBLE") in abs.overloads)
+        assertTrue(FunctionOverload(listOf("BIGINT"), "LARGEINT") in abs.overloads)
+        // LARGEINT (INT128) is a StarRocks-native type; abs(LARGEINT) -> LARGEINT.
+        assertTrue(FunctionOverload(listOf("LARGEINT"), "LARGEINT") in abs.overloads)
     }
 
     @Test

@@ -277,6 +277,7 @@ import dev.brikk.house.sql.ast.Substring
 import dev.brikk.house.sql.ast.SwapTable
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.TableAlias
+import dev.brikk.house.sql.ast.TableFromRows
 import dev.brikk.house.sql.ast.TableSample
 import dev.brikk.house.sql.ast.ToTableProperty
 import dev.brikk.house.sql.ast.Transaction
@@ -2757,6 +2758,17 @@ open class Parser(
             this_.set("alias", parseTableAlias())
         }
 
+        // sqlglot: TABLE(<tvf>) is parsed into a Table wrapping exp.TableFromRows, so we
+        // hoist the table args (alias/joins/pivots/sample) onto the latter and return it
+        // instead. Exercised by StarRocks' TABLE(GENERATE_SERIES(...)) table function.
+        val inner = this_.thisArg
+        if (this_ is Table && inner is TableFromRows) {
+            for (arg in listOf("alias", "joins", "pivots", "sample")) {
+                inner.set(arg, this_.args[arg])
+            }
+            return inner
+        }
+
         return this_
     }
 
@@ -4853,7 +4865,7 @@ open class Parser(
 
     // sqlglot: Parser._parse_create (macro-overload branch gated:
     // no base-corpus coverage; CREATABLE_KIND_MAPPING={} in the base dialect)
-    fun parseCreate(): Expression {
+    open fun parseCreate(): Expression {
         // Note: this can't be None because we've matched a statement parser
         val start = prevToken
 
@@ -6107,7 +6119,10 @@ open class Parser(
 
     // sqlglot: Parser._parse_refresh
     fun parseRefresh(): Expression {
+        // sqlglot 3c6d84248 (feat(starrocks): parse REFRESH EXTERNAL TABLE): the
+        // EXTERNAL TABLE branch is exercised by the StarRocks dialect (now ported).
         val kind = when {
+            matchTextSeq("EXTERNAL", "TABLE") -> "EXTERNAL TABLE"
             match(TokenType.TABLE) -> "TABLE"
             matchTextSeq("MATERIALIZED", "VIEW") -> "MATERIALIZED VIEW"
             else -> ""

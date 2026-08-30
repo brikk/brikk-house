@@ -3,6 +3,7 @@ package dev.brikk.house.sql
 import dev.brikk.house.sql.parser.BigqueryTokenizerTables
 import dev.brikk.house.sql.parser.ClickhouseTokenizerTables
 import dev.brikk.house.sql.parser.DorisTokenizerTables
+import dev.brikk.house.sql.parser.StarrocksTokenizerTables
 import dev.brikk.house.sql.parser.DuckdbTokenizerTables
 import dev.brikk.house.sql.parser.HiveTokenizerTables
 import dev.brikk.house.sql.parser.MysqlTokenizerTables
@@ -114,6 +115,10 @@ class TokenCorpusDifferentialTest {
 
     @Test
     fun dorisCorpusMatchesPythonOracle() = runCorpus("doris.json", DorisTokenizerTables.CONFIG)
+
+    @Test
+    fun starrocksCorpusMatchesPythonOracle() =
+        runCorpus("starrocks.json", StarrocksTokenizerTables.CONFIG)
 
     @Test
     fun prestoCorpusMatchesPythonOracle() = runCorpus("presto.json", PrestoTokenizerTables.CONFIG)

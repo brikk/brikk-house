@@ -3,6 +3,8 @@ package dev.brikk.house.sql
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.metadata.DORIS_FUNCTION_CATALOG
 import dev.brikk.house.sql.metadata.DUCKDB_FUNCTION_CATALOG
+import dev.brikk.house.sql.metadata.CLICKHOUSE_FUNCTION_CATALOG
+import dev.brikk.house.sql.metadata.STARROCKS_FUNCTION_CATALOG
 import dev.brikk.house.sql.metadata.TRINO_FUNCTION_CATALOG
 import dev.brikk.house.sql.shape.SqlFragment
 import kotlin.test.Test
@@ -20,6 +22,8 @@ class FunctionCatalogTest {
         assertEquals(DORIS_FUNCTION_CATALOG, Dialects.forName("doris").functionCatalog)
         assertEquals(DUCKDB_FUNCTION_CATALOG, Dialects.forName("duckdb").functionCatalog)
         assertEquals(TRINO_FUNCTION_CATALOG, Dialects.forName("trino").functionCatalog)
+        assertEquals(STARROCKS_FUNCTION_CATALOG, Dialects.forName("starrocks").functionCatalog)
+        assertEquals(CLICKHOUSE_FUNCTION_CATALOG, Dialects.forName("clickhouse").functionCatalog)
         assertEquals(null, Dialects.forName("mysql").functionCatalog)
         // Presto does NOT inherit Trino's catalog: the surfaces differ per engine.
         assertEquals(null, Dialects.forName("presto").functionCatalog)

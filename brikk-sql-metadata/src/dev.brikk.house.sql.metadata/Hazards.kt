@@ -78,8 +78,10 @@ data class FunctionHazard(
  *    ties: first entry in the JSON) — a hazard registry must be conservative.
  *
  * Wired pairs today: trino↔duckdb, duckdb↔doris, trino↔doris, duckdb↔clickhouse,
- * trino↔clickhouse and doris↔clickhouse (all live-probe-filled). Lookups for unknown
- * pairs simply return null.
+ * trino↔clickhouse, doris↔clickhouse and starrocks↔doris (all live-probe-filled).
+ * Lookups for unknown pairs simply return null (see SemanticCoverage for the explicit
+ * pair/scope coverage metadata that certification consults so an unresearched pair is
+ * conservatively refused rather than silently treated as safe).
  */
 object HazardRegistry {
 
@@ -96,6 +98,10 @@ object HazardRegistry {
         ("clickhouse" to "trino") to CLICKHOUSE_TO_TRINO_HAZARDS,
         ("doris" to "clickhouse") to DORIS_TO_CLICKHOUSE_HAZARDS,
         ("clickhouse" to "doris") to CLICKHOUSE_TO_DORIS_HAZARDS,
+        // StarRocks<->Doris (common MySQL lineage; live behavior-matrix probe of
+        // StarRocks 4.1.4 vs Doris 4.1.3 — see doris-starrocks-hazards.json).
+        ("starrocks" to "doris") to STARROCKS_TO_DORIS_HAZARDS,
+        ("doris" to "starrocks") to DORIS_TO_STARROCKS_HAZARDS,
     )
 
     /**
@@ -106,4 +112,49 @@ object HazardRegistry {
     fun lookup(sourceDialect: String, targetDialect: String, functionName: String): FunctionHazard? =
         pairs[sourceDialect.lowercase() to targetDialect.lowercase()]
             ?.get(functionName.trim().uppercase())
+
+    /**
+     * Resolve a semantic concept from every name a parsed function can carry. Unlike
+     * [lookup], which intentionally remains source-side directional, this also matches
+     * the evidence entry's target-side name so a typed rewrite such as DuckDB
+     * `list_has_any` -> Doris `arrays_overlap` receives its recorded verdict when the
+     * canonical/source rendering is operator-shaped. Collisions choose the worst verdict.
+     */
+    fun lookupConcept(
+        sourceDialect: String,
+        targetDialect: String,
+        functionKeys: Iterable<String>,
+    ): FunctionHazard? {
+        val pair = pairs[sourceDialect.lowercase() to targetDialect.lowercase()] ?: return null
+        val keys = functionKeys.map { it.trim().uppercase() }.toSet()
+        if (keys.isEmpty()) return null
+
+        val candidates = LinkedHashSet<FunctionHazard>()
+        for (key in keys) pair[key]?.let { candidates.add(it) }
+        for (hazard in pair.values) {
+            if (hazard.targetName?.let(::nameKeys)?.any { it in keys } == true) {
+                candidates.add(hazard)
+            }
+        }
+        return candidates.minByOrNull { verdictRank(it.verdict) }
+    }
+
+    private fun nameKeys(name: String): Set<String> = buildSet {
+        add(name.trim().uppercase())
+        for (raw in name.split('/')) {
+            var piece = raw.trim()
+            if (piece.endsWith("()")) piece = piece.dropLast(2)
+            if (piece.isNotEmpty() && piece.all { it == '_' || it.isLetterOrDigit() }) {
+                add(piece.uppercase())
+            }
+        }
+    }
+
+    private fun verdictRank(verdict: HazardVerdict): Int = when (verdict) {
+        HazardVerdict.DIVERGENT -> 0
+        HazardVerdict.UNCLEAR -> 1
+        HazardVerdict.CONDITIONALLY_EQUIVALENT -> 2
+        HazardVerdict.NO_EQUIVALENT -> 3
+        HazardVerdict.IDENTICAL -> 4
+    }
 }
