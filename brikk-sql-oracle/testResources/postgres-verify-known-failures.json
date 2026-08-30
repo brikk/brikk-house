@@ -22,11 +22,6 @@
             "error": "statement: 42601: syntax error at or near \"CAST\" (line 1, col 16) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
         },
         {
-            "sql": "'x' 'y' 'z'",
-            "generated": "",
-            "error": "brikk parse/generate failed: ParseError: Adjacent string literals are not supported yet. Line 1, Col: 7.\n  'x' \u001b[4m'y'\u001b[0m 'z'"
-        },
-        {
             "sql": "MERGE INTO x USING (SELECT id) AS y ON a = b WHEN MATCHED THEN UPDATE SET x.a = y.b WHEN NOT MATCHED THEN INSERT (a, b) VALUES (y.a, y.b)",
             "generated": "MERGE INTO x USING (SELECT id) AS y ON a = b WHEN MATCHED THEN UPDATE SET a = y.b WHEN NOT MATCHED THEN INSERT (a, b) VALUES (y.a, y.b)",
             "error": "statement: 42601: syntax error at or near \"MERGE\" (line 1, col 1) | expression: 42601: syntax error at or near \"USING\" (line 1, col 14)"
@@ -77,11 +72,6 @@
             "error": "statement: 42601: syntax error at or near \"CONSTRAINT\" (line 1, col 34) | expression: 42601: syntax error at or near \"CREATE\" (line 1, col 1)"
         },
         {
-            "sql": "WITH t(c) AS (SELECT 1) SELECT * INTO UNLOGGED foo FROM (SELECT c AS c FROM t) AS temp",
-            "generated": "",
-            "error": "brikk parse/generate failed: ParseError: SELECT INTO is not supported yet. Line 1, Col: 46.\n  WITH t(c) AS (SELECT 1) SELECT * INTO \u001b[4mUNLOGGED\u001b[0m foo FROM (SELECT c AS c FROM t) "
-        },
-        {
             "sql": "CREATE TABLE tbl (col INT UNIQUE NULLS NOT DISTINCT DEFAULT 9.99)",
             "generated": "CREATE TABLE tbl (col INT UNIQUE NULLS NOT DISTINCT DEFAULT 9.99)",
             "error": "statement: 42601: syntax error at or near \"NULLS\" (line 1, col 34) | expression: 42601: syntax error at or near \"CREATE\" (line 1, col 1)"
@@ -95,11 +85,6 @@
             "sql": "SELECT a, LOGICAL_OR(b) FROM table GROUP BY a",
             "generated": "SELECT a, BOOL_OR(b) FROM table GROUP BY a",
             "error": "statement: 42601: syntax error at or near \"table\" (line 1, col 27) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
-        },
-        {
-            "sql": "SELECT * FROM ROWS FROM (FUNC1(col1, col2))",
-            "generated": "",
-            "error": "brikk parse/generate failed: ParseError: ROWS FROM is not supported yet. Line 1, Col: 18.\n  SELECT * FROM \u001b[4mROWS\u001b[0m FROM (FUNC1(col1, col2))"
         },
         {
             "sql": "SELECT * FROM ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT), FUNC2(col2) AS alias2(\"col2\" INT)) WITH ORDINALITY",
@@ -120,11 +105,6 @@
             "sql": "ANALYZE BUFFER_USAGE_LIMIT 1337 TBL",
             "generated": "ANALYZE BUFFER_USAGE_LIMIT 1337 TBL",
             "error": "statement: 42601: syntax error at or near \"1337\" (line 1, col 28) | expression: 42601: syntax error at or near \"ANALYZE\" (line 1, col 1)"
-        },
-        {
-            "sql": "WITH RECURSIVE search_graph(id, link, data, depth) AS (SELECT g.id, g.link, g.data, 1 FROM graph AS g UNION ALL SELECT g.id, g.link, g.data, sg.depth + 1 FROM graph AS g, search_graph AS sg WHERE g.id = sg.link) CYCLE id SET is_cycle USING path SELECT * FROM search_graph",
-            "generated": "",
-            "error": "brikk parse/generate failed: ParseError: WITH ... SEARCH is not supported yet. Line 1, Col: 220.\n   g.id, g.link, g.data, sg.depth + 1 FROM graph AS g, search_graph AS sg WHERE g.id"
         }
     ]
 }

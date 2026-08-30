@@ -31,14 +31,6 @@
         {
             "case": "read|postgres|SELECT * FROM t1 LEFT OUTER JOIN t2 USING (x, y) UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 USING (x, y) WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x AND t1.y = t2.y)",
             "reason": "expected `SELECT * FROM t1 LEFT OUTER JOIN t2 USING (x, y) UNION ALL SELECT * FROM t1 RIGHT OUTER JOIN t2 USING (x, y) WHERE NOT EXISTS(SELECT 1 FROM t1 WHERE t1.x = t2.x AND t1.y = t2.y)` actual `SELECT * FROM t1 FULL OUTER JOIN t2 USING (x, y)`"
-        },
-        {
-            "case": "write|clickhouse|a / b",
-            "reason": "expected `a / nullIf(b, 0)` actual `a / b`"
-        },
-        {
-            "case": "write|duckdb|a / b",
-            "reason": "expected `a / NULLIF(b, 0)` actual `a / b`"
         }
     ]
 }

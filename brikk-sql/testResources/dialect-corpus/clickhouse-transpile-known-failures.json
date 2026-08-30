@@ -17,10 +17,6 @@
             "reason": "expected `SELECT LTRIM(s), RTRIM(s), TRIM(s)` actual `SELECT trimLeft(s), trimRight(s), trimBoth(s)`"
         },
         {
-            "case": "write|postgres|a / b",
-            "reason": "expected `CAST(a AS DOUBLE PRECISION) / b` actual `CAST(a AS DOUBLE PRECISION) / NULLIF(b, 0)`"
-        },
-        {
             "case": "write|duckdb|dateTrunc('MONTH', x)",
             "reason": "expected `DATE_TRUNC('MONTH', x)` actual `DATETRUNC('MONTH', x)`"
         },

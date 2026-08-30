@@ -1,33 +1,4 @@
 {
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": [
-        {
-            "sql": "SELECT * FROM (SELECT a FROM b SAMPLE 1 / 10 OFFSET 1 / 2)",
-            "reason": "ast-mismatch at #23: expected {\"i\":15,\"k\":\"safe\",\"v\":false}"
-        },
-        {
-            "sql": "SELECT and(1, 2)",
-            "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
-        },
-        {
-            "sql": "SELECT or(1, 2)",
-            "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
-        },
-        {
-            "sql": "SELECT or(0, 1, -2)",
-            "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
-        },
-        {
-            "sql": "SELECT and(1, 2, 3)",
-            "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
-        },
-        {
-            "sql": "SELECT or(and(3, 0), 5)",
-            "reason": "ast-mismatch at #1: expected Paren (k=expressions)"
-        },
-        {
-            "sql": "CREATE TABLE data5 (\"x\" UInt32, \"y\" UInt32) ENGINE=MergeTree ORDER BY (round(y / 1000000000), cityHash64(x)) SAMPLE BY cityHash64(x)",
-            "reason": "ast-mismatch at #45: expected {\"i\":36,\"k\":\"safe\",\"v\":false}"
-        }
-    ]
+    "cases": []
 }

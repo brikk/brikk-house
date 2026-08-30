@@ -69,10 +69,6 @@
             "reason": "expected `SELECT DATE_DIFF('MONTH', CAST('1996-10-30' AS DATE), CAST('1997-02-28 10:30:00' AS DATE)) + CASE WHEN DAY(CAST('1997-02-28 10:30:00' AS DATE)) = DAY(LAST_DAY(CAST('1997-02-28 10:30:00' AS DATE))) AND DAY(CAST('1996-10-30' AS DATE)) = DAY(LAST_DAY(CAST('1996-10-30' AS DATE))) THEN 0 ELSE (DAY(CAST('1997-02-28 10:30:00' AS DATE)) - DAY(CAST('1996-10-30' AS DATE))) / 31.0 END` actual `SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30', FALSE)`"
         },
         {
-            "case": "write|bigquery|SELECT TO_DATE(x, 'MM/dd/yyyy')",
-            "reason": "expected `SELECT CAST(SAFE_CAST(x AS TIMESTAMP FORMAT 'MM/DD/YYYY') AS DATE)` actual `SELECT CAST(PARSE_TIMESTAMP('%m/%d/%Y', x) AS DATE)`"
-        },
-        {
             "case": "write|spark|SELECT CAST(STRUCT('fooo') AS STRUCT<a: VARCHAR(2)>)",
             "reason": "expected `SELECT CAST(STRUCT('fooo' AS col1) AS STRUCT<a: STRING>)` actual `SELECT CAST(STRUCT('fooo') AS STRUCT<a: STRING>)`"
         },

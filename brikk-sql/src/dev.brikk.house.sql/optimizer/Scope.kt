@@ -115,6 +115,14 @@ class Scope(
         this.sources.putAll(this.cteSources)
     }
 
+    // sqlglot: Scope.clear_column_cache — invalidate the column-classification caches
+    // after columns are qualified in place.
+    fun clearColumnCache() {
+        columnsCache = null
+        externalColumnsCache = null
+        localColumnsCache = null
+    }
+
     // sqlglot: Scope.clear_cache
     fun clearCache() {
         collected = false
@@ -173,6 +181,11 @@ class Scope(
         semiAntiJoinTables = mutableSetOf()
         columnIndexList = mutableListOf()
 
+        // The inner query of a Subquery-rooted scope is scoped as a derived table by
+        // `_traverse_tables`, so it must not also be collected as a subquery
+        val innerQuery: Expression? =
+            if (expression is Subquery) expression.unnest() else null
+
         for (node in walk()) {
             // sqlglot: COLLECTIBLE_TYPES gate (Column, Dot, Table, Query, UDTF, CTE, Star,
             // TableColumn, JoinHint)
@@ -200,7 +213,8 @@ class Scope(
                 node is CTE -> ctesList.add(node)
                 isDerivedTableNode(node) && isFromOrJoin(node) -> derivedTablesList.add(node)
                 // sqlglot: exp.UNWRAPPED_QUERIES = (Select, SetOperation)
-                (node is Select || node is SetOperation) && !isFromOrJoin(node) ->
+                (node is Select || node is SetOperation) && !isFromOrJoin(node) &&
+                    node !== innerQuery ->
                     subqueriesList.add(node)
                 node is TableColumn -> tableColumnsList.add(node)
                 // sqlglot: ROW_LEVEL_AGG_FUNCS = (exp.Count,)
@@ -538,11 +552,51 @@ private fun traverseScopeInner(scope: Scope, acc: MutableList<Scope>) {
         }
         expression is DML -> {
             traverseCtes(scope, acc)
+
+            // Bare tables in relation position (e.g. UPDATE ... FROM t, DELETE / MERGE ...
+            // USING t) aren't part of any query, so they're scoped as standalone tables;
+            // `_traverse_tables` also picks up any joins hanging off of them
+            val relations = mutableListOf<Expression>()
+            val from_ = expression.args["from_"]
+            if (from_ is From) {
+                relations.add(from_.thisArg as Expression)
+            }
+
+            val using = expression.args["using"]
+            if (using is List<*>) {
+                for (u in using) if (u is Expression) relations.add(u)
+            } else if (using is Expression) {
+                relations.add(using)
+            }
+
+            for (relation in relations) {
+                if (relation is Table) {
+                    traverseScopeInner(Scope(relation, cteSources = scope.cteSources), acc)
+                }
+            }
+
             for (query in findAllInScope(expression)) {
                 if (query !is Query) continue
                 // This check ensures we don't yield the CTE/nested queries twice
-                if (query.parent !is CTE && query.parent !is Subquery) {
+                if (query.parent is CTE || query.parent is Subquery) continue
+
+                if (isFromOrJoin(query)) {
+                    val parent = query.parent
+                    if (parent is Join && (parent.parent is Subquery || parent.parent is Table)) {
+                        // Scoped by the FROM-position relation (wrapper or table) it's
+                        // joined to
+                        continue
+                    }
+
+                    // A query in FROM/JOIN position (e.g. UPDATE ... FROM (SELECT ...) AS s)
+                    // acts like a derived table, so its scope stays rooted at the Subquery
+                    // wrapper to pick up the wrapper's alias, column list and joins
                     traverseScopeInner(Scope(query, cteSources = scope.cteSources), acc)
+                } else {
+                    // Queries in value position (SET, WHERE, USING, ...) are scoped as
+                    // subqueries, e.g. so their columns can be correlated to the DML's
+                    // target table
+                    traverseScopeInner(scope.branch(query, scopeType = ScopeType.SUBQUERY), acc)
                 }
             }
             return
@@ -693,7 +747,10 @@ private fun traverseTables(scope: Scope, acc: MutableList<Scope>) {
         if (join is Expression) expressions.add(join.thisArg as Expression)
     }
 
-    if (scope.expression is Table) {
+    if (scope.expression is Table || scope.expression is Subquery) {
+        // A Subquery-rooted scope, e.g., the FROM clause of a DML statement, a DDL source
+        // or a parenthesized query like (SELECT ...) LIMIT 1, scopes its own inner query
+        // as a derived table
         expressions.add(scope.expression)
     }
 
@@ -720,7 +777,7 @@ private fun traverseTables(scope: Scope, acc: MutableList<Scope>) {
                 // hence a new source.
                 val pivots = expression.args["pivots"] as? List<*>
                 if (!pivots.isNullOrEmpty()) {
-                    sources[(pivots[0] as Expression).alias] = expression
+                    sources[(pivots.last() as Expression).alias] = expression
                 } else {
                     sources[sourceName] = scope.sources.getValue(tableName)
                 }
@@ -755,14 +812,19 @@ private fun traverseTables(scope: Scope, acc: MutableList<Scope>) {
             lateralSources = null
             scopeType = ScopeType.DERIVED_TABLE
             scopes = scope.derivedTableScopes
-            for (join in (node.args["joins"] as? List<*>).orEmpty()) {
-                if (join is Expression) expressions.add(join.thisArg as Expression)
+            if (node !== scope.expression) {
+                // The scope expression's own joins were already added above
+                for (join in (node.args["joins"] as? List<*>).orEmpty()) {
+                    if (join is Expression) expressions.add(join.thisArg as Expression)
+                }
             }
         } else {
             // Makes sure we check for possible sources in nested table constructs
             expressions.add(node.thisArg as Expression)
-            for (join in (node.args["joins"] as? List<*>).orEmpty()) {
-                if (join is Expression) expressions.add(join.thisArg as Expression)
+            if (node !== scope.expression) {
+                for (join in (node.args["joins"] as? List<*>).orEmpty()) {
+                    if (join is Expression) expressions.add(join.thisArg as Expression)
+                }
             }
             continue
         }

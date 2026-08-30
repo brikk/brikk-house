@@ -104,7 +104,6 @@ open class DuckdbGenerator(
     // sqlglot: DuckDB dialect-level flags read by the generator
     override val dialectNullOrdering: String get() = "nulls_are_last"
     override val dialectIndexOffset: Int get() = 1
-    override val dialectSafeDivision: Boolean get() = true
     override val dialectConcatCoalesce: Boolean get() = true
     override val dialectConcatWsCoalesce: Boolean get() = true
     override val inverseTimeMapping: Map<String, String> get() = INVERSE_TIME_MAPPING

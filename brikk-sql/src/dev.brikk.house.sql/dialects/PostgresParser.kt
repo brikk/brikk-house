@@ -243,6 +243,9 @@ open class PostgresParser(
     // sqlglot: Postgres.TYPED_DIVISION = True
     override val typedDivision: Boolean get() = true
 
+    // sqlglot: Postgres.CONCAT_COALESCE = True
+    override val concatCoalesce: Boolean get() = true
+
     // sqlglot: Postgres.NULL_ORDERING = "nulls_are_large"
     override val nullOrdering: String get() = "nulls_are_large"
 
