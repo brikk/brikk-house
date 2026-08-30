@@ -1,12 +1,3 @@
 {
-    "cases": [
-        {
-            "key": "test_chained_pivots_consuming_alias_columns#1",
-            "reason": "graph mismatch:\n      expected: {\"downstream\": [{\"downstream\": [], \"expression\": \"sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales\", \"name\": \"sales.north\", \"reference_node_name\": \"\", \"source\": \"sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales\", \"source_name\": \"\"}], \"expression\": \"sales.hi AS hi\", \"name\": \"hi\", \"reference_node_name\": \"\", \"source\": \"SELECT sales.hi AS hi FROM sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales\", \"source_name\": \"\"}\n      actual:   {\"downstream\": [{\"downstream\": [], \"expression\": \"?\", \"name\": \"u1.hi\", \"reference_node_name\": \"\", \"source\": \"?\", \"source_name\": \"\"}], \"expression\": \"u1.hi AS hi\", \"name\": \"hi\", \"reference_node_name\": \"\", \"source\": \"SELECT u1.hi AS hi FROM sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c)))\", \"source_name\": \"\"}"
-        },
-        {
-            "key": "test_chained_pivots_consuming_alias_columns#2",
-            "reason": "graph mismatch:\n      expected: {\"downstream\": [{\"downstream\": [], \"expression\": \"sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales\", \"name\": \"sales.south\", \"reference_node_name\": \"\", \"source\": \"sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales\", \"source_name\": \"\"}], \"expression\": \"sales.lo AS lo\", \"name\": \"lo\", \"reference_node_name\": \"\", \"source\": \"SELECT sales.lo AS lo FROM sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales\", \"source_name\": \"\"}\n      actual:   {\"downstream\": [{\"downstream\": [], \"expression\": \"?\", \"name\": \"u1.lo\", \"reference_node_name\": \"\", \"source\": \"?\", \"source_name\": \"\"}], \"expression\": \"u1.lo AS lo\", \"name\": \"lo\", \"reference_node_name\": \"\", \"source\": \"SELECT u1.lo AS lo FROM sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c)))\", \"source_name\": \"\"}"
-        }
-    ]
+    "cases": []
 }

@@ -111,10 +111,6 @@
         {
             "case": "write|bigquery|CAST(start AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York'",
             "reason": "expected `TIMESTAMP(DATETIME(CAST(start AS TIMESTAMP), 'America/New_York'))` actual `CAST(start AS TIMESTAMP) AT TIME ZONE 'America/New_York'`"
-        },
-        {
-            "case": "write|postgres|a / b",
-            "reason": "expected `CAST(a AS DOUBLE PRECISION) / b` actual `CAST(a AS DOUBLE PRECISION) / NULLIF(b, 0)`"
         }
     ]
 }

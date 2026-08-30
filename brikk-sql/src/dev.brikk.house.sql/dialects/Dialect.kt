@@ -143,6 +143,10 @@ open class Dialect {
     // sqlglot: Dialect.TIME_MAPPING (dialect format specifier -> python strftime)
     open val timeMapping: Map<String, String> get() = emptyMap()
 
+    // sqlglot: Dialect.FORMAT_MAPPING (CAST ... FORMAT specifier -> python strftime;
+    // empty = fall back to TIME_MAPPING in _parse_cast)
+    open val formatMapping: Map<String, String> get() = emptyMap()
+
     // sqlglot: Dialect.INVERSE_TIME_MAPPING — auto-inverse of TIME_MAPPING, then
     // _with_strict_time_inverse so %mstrict never leaks / pads correctly on strict dialects.
     val inverseTimeMapping: Map<String, String> by lazy {

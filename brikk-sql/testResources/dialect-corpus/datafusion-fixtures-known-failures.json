@@ -37,14 +37,6 @@
             "reason": "expected `SELECT x != 1 FROM t` actual `SELECT x <> 1 FROM t`"
         },
         {
-            "case": "identity|SELECT x ~ 'pattern' FROM t",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 10.\n  SELECT x \u001b[4m~\u001b[0m 'pattern' FROM t"
-        },
-        {
-            "case": "identity|SELECT x ~* 'pattern' FROM t",
-            "reason": "expected `SELECT x ~* 'pattern' FROM t` actual `SELECT regexp_i_like(x, 'pattern') FROM t`"
-        },
-        {
             "case": "identity|SELECT CAST(x AS INTEGER) FROM t",
             "reason": "expected `SELECT CAST(x AS INTEGER) FROM t` actual `SELECT CAST(x AS INT) FROM t`"
         },

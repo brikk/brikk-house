@@ -112,13 +112,32 @@ fun <E : Expression> qualifyTables(
     }
 
     for (scope in traverseScope(expression)) {
+        val parent = scope.parent
         val localColumns = scope.localColumns
         val canonicalAliases = mutableMapOf<String, String>()
 
-        for (query in scope.subqueries) {
+        val queries = mutableListOf<Expression>()
+        queries.addAll(scope.subqueries)
+
+        // Subquery wrappers around a DML / DDL query fragment, e.g., a CREATE FUNCTION
+        // body or an UPDATE's SET subquery, don't belong to any scope, so they aren't
+        // collected above
+        if (scope.isRoot && scope.expression is Subquery) {
+            queries.add(scope.expression.unnest())
+        } else if (scope.isSubquery) {
+            queries.add(scope.expression)
+        }
+
+        for (query in queries) {
             val subquery = query.parent
             if (subquery is Subquery) {
                 val unwrapped = subquery.unwrap()
+                if (unwrapped.parent is From || unwrapped.parent is Join) {
+                    // We can reach this from a wrapped derived table, which must keep its
+                    // alias
+                    continue
+                }
+
                 if (unwrapped.parent is Create && unwrapped !== subquery) {
                     // Function bodies may require wrapping parentheses, e.g. in BigQuery
                     // `... AS ((SELECT 1))` the outer parens delimit the body itself
@@ -139,7 +158,7 @@ fun <E : Expression> qualifyTables(
             }
 
             setAlias(derivedTable, canonicalAliases, scope = scope)
-            val pivot = (derivedTable.args["pivots"] as? List<*>)?.getOrNull(0) as? Expression
+            val pivot = (derivedTable.args["pivots"] as? List<*>)?.lastOrNull() as? Expression
             if (pivot != null) {
                 setAlias(pivot, canonicalAliases)
             }
@@ -149,12 +168,21 @@ fun <E : Expression> qualifyTables(
 
         for ((sourceName, source) in scope.sources.entries.toList()) {
             var name = sourceName
+
+            // A source can appear in many scopes, e.g. as a lateral source of a UDTF
+            // scope or as a CTE propagated to inner scopes. Deferring to the parent scope
+            // when it contains the same source ensures each source is processed once, in
+            // the outermost scope that contains it
+            if (parent != null && parent.sources[name] === source) {
+                continue
+            }
+
             if (source is Table) {
                 // When the name is empty, it means that we have a non-table source,
                 // e.g. a pivoted cte
                 val isRealTableSource = name.isNotEmpty()
 
-                val pivot = (source.args["pivots"] as? List<*>)?.getOrNull(0)
+                val pivot = (source.args["pivots"] as? List<*>)?.lastOrNull()
                     as? dev.brikk.house.sql.ast.Pivot
                 if (pivot != null) {
                     name = source.name
@@ -249,8 +277,8 @@ fun <E : Expression> qualifyTables(
                     column.set("table", tableAlias.copy())
                 }
             } else if (canonicalAliases.isNotEmpty() && columnTable.isNotEmpty()) {
-                val canonicalTable = canonicalAliases[columnTable] ?: ""
-                if (canonicalTable != columnTable) {
+                val canonicalTable = canonicalAliases[columnTable]
+                if (!canonicalTable.isNullOrEmpty() && canonicalTable != columnTable) {
                     // Amend existing aliases, e.g. t.c -> _0.c if t is aliased to _0
                     column.set("table", toIdentifier(canonicalTable))
                 }

@@ -1,28 +1,3 @@
 {
-    "cases": [
-        {
-            "sql": "'x' 'y' 'z'",
-            "reason": "ParseError: Adjacent string literals are not supported yet. Line 1, Col: 7.\n  'x' \u001b[4m'y'\u001b[0m 'z'"
-        },
-        {
-            "sql": "WITH t(c) AS (SELECT 1) SELECT * INTO UNLOGGED foo FROM (SELECT c AS c FROM t) AS temp",
-            "reason": "ParseError: SELECT INTO is not supported yet. Line 1, Col: 46.\n  WITH t(c) AS (SELECT 1) SELECT * INTO \u001b[4mUNLOGGED\u001b[0m foo FROM (SELECT c AS c FROM t) "
-        },
-        {
-            "sql": "SELECT * FROM ROWS FROM (FUNC1(col1, col2))",
-            "reason": "ParseError: ROWS FROM is not supported yet. Line 1, Col: 18.\n  SELECT * FROM \u001b[4mROWS\u001b[0m FROM (FUNC1(col1, col2))"
-        },
-        {
-            "sql": "SELECT * FROM ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT), FUNC2(col2) AS alias2(\"col2\" INT)) WITH ORDINALITY",
-            "reason": "ParseError: ROWS FROM is not supported yet. Line 1, Col: 18.\n  SELECT * FROM \u001b[4mROWS\u001b[0m FROM (FUNC1(col1) AS alias1(\"col1\" TEXT), FUNC2(col2) AS alias"
-        },
-        {
-            "sql": "SELECT * FROM table1, ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT)) WITH ORDINALITY AS alias3(\"col3\" INT, \"col4\" TEXT)",
-            "reason": "ParseError: Invalid expression / Unexpected token. Line 1, Col: 26.\n  SELECT * FROM table1, \u001b[4mROWS\u001b[0m FROM (FUNC1(col1) AS alias1(\"col1\" TEXT)) WITH "
-        },
-        {
-            "sql": "WITH RECURSIVE search_graph(id, link, data, depth) AS (SELECT g.id, g.link, g.data, 1 FROM graph AS g UNION ALL SELECT g.id, g.link, g.data, sg.depth + 1 FROM graph AS g, search_graph AS sg WHERE g.id = sg.link) CYCLE id SET is_cycle USING path SELECT * FROM search_graph",
-            "reason": "ParseError: WITH ... SEARCH is not supported yet. Line 1, Col: 220.\n   g.id, g.link, g.data, sg.depth + 1 FROM graph AS g, search_graph AS sg WHERE g.id"
-        }
-    ]
+    "cases": []
 }

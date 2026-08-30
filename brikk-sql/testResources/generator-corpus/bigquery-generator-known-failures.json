@@ -158,10 +158,6 @@
             "reason": "output mismatch: expected `SELECT * FROM UNNEST(x) WITH OFFSET AS offset EXCEPT DISTINCT SELECT * FROM UNNEST(y) WITH OFFSET AS offset` actual `SELECT * FROM UNNEST(x) WITH OFFSET AS offset EXCEPT SELECT * FROM UNNEST(y) WITH OFFSET AS offset`"
         },
         {
-            "sql": "LAST_DAY(DATETIME '2008-11-10 15:30:00', WEEK(SUNDAY))",
-            "reason": "output mismatch: expected `LAST_DAY(CAST('2008-11-10 15:30:00' AS DATETIME), WEEK)` actual `LAST_DAY(CAST('2008-11-10 15:30:00' AS DATETIME), WEEK(SUNDAY))`"
-        },
-        {
             "sql": "SELECT * FROM ML.TRANSLATE(MODEL `mydataset.mymodel`, (SELECT comment AS text_content FROM mydataset.mytable), STRUCT('translate_text' AS translate_mode, 'en' AS target_language_code))",
             "reason": "output mismatch: expected `SELECT * FROM ML.TRANSLATE(MODEL `mydataset.mymodel`, (SELECT comment AS text_content FROM mydataset.mytable), STRUCT('t` actual `SELECT * FROM ML.M_L_TRANSLATE(`mydataset.mymodel`, (SELECT comment AS text_content FROM mydataset.mytable), STRUCT('tra`"
         },

@@ -306,9 +306,6 @@ open class ClickhouseParser(
     // sqlglot: ClickHouse.NULL_ORDERING = "nulls_are_last"
     override val nullOrdering: String get() = "nulls_are_last"
 
-    // sqlglot: ClickHouse.SAFE_DIVISION = True
-    override val safeDivision: Boolean get() = true
-
     // sqlglot: ClickHouse.SUPPORTS_USER_DEFINED_TYPES = False
     override val supportsUserDefinedTypes: Boolean get() = false
 
@@ -1103,6 +1100,15 @@ open class ClickhouseParser(
     internal fun clickhouseFunctionArgs(alias: Boolean): MutableList<Expression> =
         parseFunctionArgs(alias = alias)
 
+    // sqlglot: Parser._parse_connector_function (used by the AND/OR FUNCTION_PARSERS)
+    internal fun parseConnectorFunction(factory: (Args) -> Expression): Expression {
+        val fnArgs = clickhouseFunctionArgs(alias = false)
+        if (fnArgs.isEmpty()) raiseError("Expected at least one argument")
+
+        // Wrapped so the connector keeps its precedence in the parent context
+        return Paren(args("this" to combineConnector(factory, fnArgs)))
+    }
+
     // sqlglot: ClickHouseParser SETTINGS query-modifier body (the lambda advances past
     // the SETTINGS token before parsing the assignment list)
     internal fun parseSettingsModifier(): List<Expression> {
@@ -1326,10 +1332,10 @@ object ClickhouseParserTables {
                 Struct(args("expressions" to (p as ClickhouseParser).clickhouseFunctionArgs(alias = true)))
             },
             "AND" to { p ->
-                combineConnector({ a: Args -> And(a) }, (p as ClickhouseParser).clickhouseFunctionArgs(alias = false))
+                (p as ClickhouseParser).parseConnectorFunction { a: Args -> And(a) }
             },
             "OR" to { p ->
-                combineConnector({ a: Args -> Or(a) }, (p as ClickhouseParser).clickhouseFunctionArgs(alias = false))
+                (p as ClickhouseParser).parseConnectorFunction { a: Args -> Or(a) }
             },
             "XOR" to { p ->
                 combineConnector({ a: Args -> Xor(a) }, (p as ClickhouseParser).clickhouseFunctionArgs(alias = false))

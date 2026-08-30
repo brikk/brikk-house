@@ -126,6 +126,10 @@ open class DatafusionGenerator(
             reg(GroupConcat::class) { e -> func("string_agg", *flattenArgs(e)) }
             // brikk: TIME_TO_STR -> to_char (dedicated exp.TimeToStr node)
             reg(TimeToStr::class) { e -> func("to_char", *flattenArgs(e)) }
+            // brikk: postgres-style regex-match operators (sqlparser-rs PGRegexMatch);
+            // DataFusion renders them as operators, not function calls
+            reg(RegexpLike::class) { e -> binary(e as Binary, "~") }
+            reg(RegexpILike::class) { e -> binary(e as Binary, "~*") }
         }
     }
 }

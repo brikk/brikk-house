@@ -1,9 +1,4 @@
 {
     "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": [
-        {
-            "sql": "SELECT $🦆$foo$🦆$",
-            "reason": "ast-mismatch at #1: expected RawString (k=expressions)"
-        }
-    ]
+    "cases": []
 }

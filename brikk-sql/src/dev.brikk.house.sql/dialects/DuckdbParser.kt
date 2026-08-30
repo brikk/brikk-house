@@ -216,8 +216,8 @@ open class DuckdbParser(
     // sqlglot: DuckDB.NULL_ORDERING = "nulls_are_last"
     override val nullOrdering: String get() = "nulls_are_last"
 
-    // sqlglot: DuckDB.SAFE_DIVISION = True
-    override val safeDivision: Boolean get() = true
+    // sqlglot: DuckDB.CONCAT_COALESCE = True
+    override val concatCoalesce: Boolean get() = true
 
     // sqlglot: DuckDB.INDEX_OFFSET = 1
     override val indexOffset: Int get() = 1

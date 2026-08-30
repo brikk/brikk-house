@@ -1,8 +1,3 @@
 {
-    "cases": [
-        {
-            "case": "select.slt:856",
-            "reason": "ParseError: Required keyword: 'expression' missing for Mul. Line 1, Col: 26.\n  SELECT DISTINCT ALL * \u001b[4mFROM\u001b[0m aggregate_simple  |sql=SELECT DISTINCT ALL * FROM aggregate_simple"
-        }
-    ]
+    "cases": []
 }

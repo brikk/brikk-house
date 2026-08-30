@@ -79,6 +79,9 @@ open class BigqueryDialect : Dialect() {
     // sqlglot: BigQuery.TIME_MAPPING (dialect format specifier -> python strftime)
     override val timeMapping: Map<String, String> get() = TIME_MAPPING
 
+    // sqlglot: BigQuery.FORMAT_MAPPING
+    override val formatMapping: Map<String, String> get() = FORMAT_MAPPING
+
     override val tokenizerConfig: TokenizerConfig get() = BigqueryTokenizerTables.CONFIG
 
     override fun parser(errorLevel: ErrorLevel?): Parser =

@@ -126,7 +126,6 @@ open class ClickhouseGenerator(
     // sqlglot: ClickHouse dialect-level flags read by the generator
     override val dialectNullOrdering: String get() = "nulls_are_last"
     override val dialectIndexOffset: Int get() = 1
-    override val dialectSafeDivision: Boolean get() = true
     override val dialectPreserveOriginalNames: Boolean get() = true
     override val hexStringIsIntegerType: Boolean get() = true
     override val dialectIdentifiersCanStartWithDigit: Boolean get() = true

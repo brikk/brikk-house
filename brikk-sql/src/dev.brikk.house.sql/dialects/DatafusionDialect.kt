@@ -1,8 +1,10 @@
 package dev.brikk.house.sql.dialects
 
 import dev.brikk.house.sql.generator.Generator
+import dev.brikk.house.sql.parser.BaseTokenizerTables
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.Parser
+import dev.brikk.house.sql.parser.TokenType
 import dev.brikk.house.sql.parser.TokenizerConfig
 
 /**
@@ -40,9 +42,11 @@ open class DatafusionDialect : Dialect() {
     // brikk: DataFusion folds unquoted identifiers to lowercase (== BASE default).
     override val normalizationStrategy get() = NormalizationStrategy.LOWERCASE
 
-    // brikk: tokenizer delta verdict is NONE — double-quote identifiers + nested
-    // comments + `|>` are all already BASE-true. Use BASE unchanged.
-    override val tokenizerConfig: TokenizerConfig get() = TokenizerConfig.BASE
+    // brikk: single tokenizer delta — sqlparser-rs GenericDialect accepts the binary
+    // `~` regex-match operator (PGRegexMatch), so `~` is remapped from TILDA to RLIKE
+    // exactly like the Postgres tokenizer does; everything else is BASE unchanged
+    // (double-quote identifiers, nested comments, `|>` are all already BASE-true).
+    override val tokenizerConfig: TokenizerConfig get() = TOKENIZER_CONFIG
 
     // brikk: no dialect parser hooks are required by the polyglot fixture corpus or
     // the curated SLT parse subset — the BASE parser accepts them all (`::` casts,
@@ -54,4 +58,11 @@ open class DatafusionDialect : Dialect() {
 
     override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
         DatafusionGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
+
+    companion object {
+        // brikk: BASE tables with `~` remapped to RLIKE (see [tokenizerConfig] KDoc).
+        val TOKENIZER_CONFIG: TokenizerConfig = TokenizerConfig(
+            keywords = BaseTokenizerTables.KEYWORDS + ("~" to TokenType.RLIKE),
+        )
+    }
 }

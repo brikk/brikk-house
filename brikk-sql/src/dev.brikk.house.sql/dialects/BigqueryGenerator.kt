@@ -98,6 +98,14 @@ open class BigqueryGenerator(
     // generation (%Y-%m-%d -> %F, %H:%M:%S -> %T, etc.).
     override val inverseTimeMapping: Map<String, String> get() = BigqueryDialect.INVERSE_TIME_MAPPING
 
+    // sqlglot: BigQueryGenerator.PROPERTIES_LOCATION (+ PartitionedByProperty POST_SCHEMA,
+    // VolatileProperty UNSUPPORTED)
+    override val propertiesLocation: Map<kotlin.reflect.KClass<out Expression>, GeneratorTables.PropLocation>
+        get() = super.propertiesLocation + mapOf(
+            PartitionedByProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
+            VolatileProperty::class to GeneratorTables.PropLocation.UNSUPPORTED,
+        )
+
     // sqlglot: BigQuery.BYTE_START/BYTE_END (from tokenizer BYTE_STRINGS b'..') and
     // BYTE_STRING_IS_BYTES_TYPE (renders b'..' rather than casting to BYTES).
     override val byteStart: String? get() = "b'"
@@ -300,11 +308,21 @@ open class BigqueryGenerator(
         return "STRING_AGG($argsSql$modifiers)"
     }
 
-    // sqlglot: bigquery _str_to_datetime_sql (StrToDate/StrToTime -> PARSE_DATE/PARSE_TIMESTAMP)
+    // sqlglot: bigquery _str_to_datetime_sql (StrToDate/StrToTime -> PARSE_DATE/
+    // PARSE_TIMESTAMP, or SAFE_CAST ... FORMAT when the parse was a safe cast)
     fun strToDatetimeSql(expression: Expression): String {
         val this0 = expression.args["this"]
         val dtype = if (expression is StrToDate) "DATE" else "TIMESTAMP"
-        // safe branch (SAFE_CAST ... FORMAT) not ported; plain PARSE_ path.
+
+        if (expression.args["safe"] == true) {
+            // sqlglot: format_time(INVERSE_FORMAT_MAPPING, INVERSE_FORMAT_TRIE)
+            val fmt = formatTime(
+                expression,
+                inverseTimeMappingOverride = INVERSE_FORMAT_MAPPING,
+            )
+            return "SAFE_CAST(${sql(expression, "this")} AS $dtype FORMAT $fmt)"
+        }
+
         val fmt = formatTime(expression)
         return func("PARSE_$dtype", fmt, this0, expression.args["zone"])
     }
@@ -336,6 +354,11 @@ open class BigqueryGenerator(
     }
 
     companion object {
+        // sqlglot: BigQuery.INVERSE_FORMAT_MAPPING = {v: k for k, v in FORMAT_MAPPING.items()}
+        // (the strict-time inverse fixup is applied inside Generator.formatTime).
+        val INVERSE_FORMAT_MAPPING: Map<String, String> =
+            BigqueryDialect.FORMAT_MAPPING.entries.associate { (k, v) -> v to k }
+
         // sqlglot: BigQueryGenerator.TYPE_MAPPING (base generator.Generator.TYPE_MAPPING
         // defaults + BigQuery overrides)
         val TYPE_MAPPING: Map<DType, String> = buildMap {
@@ -519,7 +542,11 @@ open class BigqueryGenerator(
             reg(UnixDate::class) { e -> bg().renameFuncSql("UNIX_DATE", e) }
             reg(Uuid::class) { _ -> "GENERATE_UUID()" }
             reg(UnixToTime::class) { e -> bg().unixToTimeSql(e as UnixToTime) }
-            reg(WeekStart::class) { e -> func("WEEK", e.args["this"]) }
+            reg(WeekStart::class) { e ->
+                // sqlglot: BigQueryGenerator.weekstart_sql — WEEK(SUNDAY) == WEEK
+                if ((e.args["this"] as? Expression)?.name?.uppercase() == "SUNDAY") "WEEK"
+                else func("WEEK", e.args["this"])
+            }
             reg(CollateProperty::class) { e ->
                 if (e.args["default"] == true) "DEFAULT COLLATE ${sql(e, "this")}"
                 else "COLLATE ${sql(e, "this")}"
