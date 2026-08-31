@@ -8,6 +8,7 @@ import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.eliminateQualify
 import dev.brikk.house.sql.generator.eliminateDistinctOn
 import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
+import dev.brikk.house.sql.generator.explodeProjectionToUnnest
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.parser.PrestoTokenizerTables
@@ -479,7 +480,7 @@ open class PrestoGenerator(
             val subquery = Subquery(
                 args(
                     "this" to Select(
-                        args("expressions" to selectCols, "from" to From(args("this" to unnest)))
+                        args("expressions" to selectCols, "from_" to From(args("this" to unnest)))
                     )
                 )
             )
@@ -1253,11 +1254,11 @@ open class PrestoGenerator(
             // sqlglot presto order: [eliminate_window_clause, eliminate_qualify,
             // eliminate_distinct_on, explode_projection_to_unnest(1),
             // eliminate_semi_and_anti_joins, amend_exploded_column_table].
-            // eliminate_window_clause, explode_projection_to_unnest and
-            // amend_exploded_column_table remain NOT PORTED (ledgered).
+            // eliminate_window_clause and amend_exploded_column_table remain NOT PORTED.
             reg(Select::class) { e ->
                 var s = eliminateQualify(e)
                 s = eliminateDistinctOn(s)
+                s = explodeProjectionToUnnest(s, indexOffset = 1)
                 s = eliminateSemiAndAntiJoins(s)
                 selectSql(s as Select)
             }

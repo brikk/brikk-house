@@ -515,6 +515,157 @@ open class DuckdbGenerator(
         )
     }
 
+    // sqlglot: generators.duckdb._explode_to_unnest_sql
+    open fun explodeToUnnestSql(expression: Lateral): String {
+        val explode = expression.thisArg as? Expression ?: return lateralSql(expression)
+        val alias = expression.args["alias"] as? TableAlias
+
+        if (explode is Inline) {
+            val unnest = Unnest(
+                args(
+                    "expressions" to listOf(
+                        explode.thisArg,
+                        Kwarg(
+                            args(
+                                "this" to Var(args("this" to "max_depth")),
+                                "expression" to Literal.number("2"),
+                            )
+                        ),
+                    )
+                )
+            )
+            val subquery = Subquery(
+                args("this" to Select(args("expressions" to listOf(unnest))))
+            )
+            if (alias != null && alias.thisArg == null) {
+                alias.set("this", toIdentifier("_u_${expression.index ?: 0}"))
+            }
+            return sql(
+                Join(
+                    args(
+                        "this" to Lateral(args("this" to subquery, "alias" to alias)),
+                        "kind" to "CROSS",
+                    )
+                )
+            )
+        }
+
+        val aliasColumns = alias?.columns?.filterIsInstance<Expression>().orEmpty()
+        val crossJoinExpression: Expression? = when {
+            explode is Posexplode && alias != null && aliasColumns.isNotEmpty() -> {
+                val pos = aliasColumns.first()
+                val columns = aliasColumns.drop(1)
+                val selectExpressions = listOf(
+                    Alias(
+                        args(
+                            "this" to Sub(
+                                args(
+                                    "this" to column(pos.name),
+                                    "expression" to Literal.number("1"),
+                                )
+                            ),
+                            "alias" to toIdentifier(pos.name),
+                        )
+                    )
+                ) + columns.map { column(it.name) }
+                val unnest = Unnest(
+                    args(
+                        "expressions" to listOf((explode.thisArg as Expression).copy()),
+                        "offset" to true,
+                        "alias" to TableAlias(
+                            args(
+                                "this" to (alias.thisArg as? Expression)?.copy(),
+                                "columns" to (columns.map { it.copy() } + pos.copy()),
+                            )
+                        ),
+                    )
+                )
+                val subquery = Subquery(
+                    args(
+                        "this" to Select(
+                            args(
+                                "expressions" to selectExpressions,
+                                "from_" to From(args("this" to unnest)),
+                            )
+                        )
+                    )
+                )
+                Lateral(args("this" to subquery))
+            }
+            explode is Explode -> Unnest(
+                args("expressions" to listOf(explode.thisArg), "alias" to alias)
+            )
+            else -> null
+        }
+
+        return if (crossJoinExpression != null) {
+            sql(Join(args("this" to crossJoinExpression, "kind" to "CROSS")))
+        } else {
+            lateralSql(expression)
+        }
+    }
+
+    override fun aliasesSql(expression: Aliases): String {
+        val thisExpression = expression.thisArg
+        return if (thisExpression is Posexplode) posexplodeSql(thisExpression)
+        else super.aliasesSql(expression)
+    }
+
+    // sqlglot: DuckDBGenerator.posexplode_sql
+    open fun posexplodeSql(expression: Posexplode): String {
+        val array = expression.thisArg as Expression
+        val parent = expression.parent
+        var pos: Expression = toIdentifier("pos")!!
+        var col: Expression = toIdentifier("col")!!
+
+        if (parent is Aliases) {
+            val aliases = parent.expressionsArg.filterIsInstance<Expression>()
+            pos = aliases.getOrNull(0) ?: pos
+            col = aliases.getOrNull(1) ?: col
+        } else if (parent is Table) {
+            val alias = parent.args["alias"] as? TableAlias
+            val columns = alias?.columns?.filterIsInstance<Expression>().orEmpty()
+            if (columns.isNotEmpty()) {
+                pos = columns.getOrNull(0) ?: pos
+                col = columns.getOrNull(1) ?: col
+            }
+            alias?.pop()
+        }
+
+        val unnestSql = sql(
+            Unnest(
+                args(
+                    "expressions" to listOf(array.copy()),
+                    "alias" to TableAlias(args("this" to col.copy())),
+                )
+            )
+        )
+        val generateSubscripts = sql(
+            Alias(
+                args(
+                    "this" to Sub(
+                        args(
+                            "this" to Anonymous(
+                                args(
+                                    "this" to "GENERATE_SUBSCRIPTS",
+                                    "expressions" to listOf(array.copy(), Literal.number("1")),
+                                )
+                            ),
+                            "expression" to Literal.number("1"),
+                        )
+                    ),
+                    "alias" to pos.copy(),
+                )
+            )
+        )
+        val result = formatArgs(generateSubscripts, unnestSql)
+        return if (parent is From || parent?.parent is From) {
+            sql(Subquery(args("this" to Select(args("expressions" to listOf(result))))))
+        } else {
+            result
+        }
+    }
+
     // sqlglot: dialect.date_delta_to_binary_interval_op wrapped by
     // generators.duckdb._date_delta_to_binary_interval_op (nanosecond and
     // float-interval branches; the float branch is annotate_types-driven and
@@ -2040,6 +2191,7 @@ open class DuckdbGenerator(
                 ""
             }
             reg(IcebergProperty::class) { _ -> "" }
+            reg(Lateral::class) { e -> dg().explodeToUnnestSql(e as Lateral) }
             reg(ArrayCompact::class) { e -> dg().arraycompactSql(e as ArrayCompact) }
             reg(ArrayConstructCompact::class) { e ->
                 sql(ArrayCompact(args("this" to ArrayNode(args("expressions" to e.expressionsArg)))))
@@ -2054,6 +2206,7 @@ open class DuckdbGenerator(
             }
             reg(PercentileCont::class) { e -> dg().renameFuncSql("QUANTILE_CONT", e) }
             reg(PercentileDisc::class) { e -> dg().renameFuncSql("QUANTILE_DISC", e) }
+            reg(Posexplode::class) { e -> dg().posexplodeSql(e as Posexplode) }
             reg(RegexpExtract::class) { e -> dg().regexpExtractSql(e) }
             reg(RegexpExtractAll::class) { e -> dg().regexpExtractSql(e) }
             reg(RegexpILike::class) { e ->

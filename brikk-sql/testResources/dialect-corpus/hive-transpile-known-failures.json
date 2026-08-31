@@ -5,38 +5,6 @@
             "reason": "expected `ALTER TABLE x ALTER COLUMN a TYPE VARCHAR(10)` actual `ALTER TABLE x ALTER COLUMN a TYPE VARCHAR(10) CASCADE`"
         },
         {
-            "case": "write|duckdb|SELECT a, b FROM x LATERAL VIEW EXPLODE(y) t AS a LATERAL VIEW EXPLODE(z) u AS b",
-            "reason": "expected `SELECT a, b FROM x CROSS JOIN UNNEST(y) AS t(a) CROSS JOIN UNNEST(z) AS u(b)` actual `SELECT a, b FROM x LATERAL VIEW UNNEST(y) t AS a LATERAL VIEW UNNEST(z) u AS b`"
-        },
-        {
-            "case": "write|duckdb|SELECT a FROM x LATERAL VIEW EXPLODE(y) t AS a",
-            "reason": "expected `SELECT a FROM x CROSS JOIN UNNEST(y) AS t(a)` actual `SELECT a FROM x LATERAL VIEW UNNEST(y) t AS a`"
-        },
-        {
-            "case": "write|presto|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
-            "reason": "expected `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col FROM UNNEST(y) WITH ORDINALITY AS t(col, pos))` actual `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col)`"
-        },
-        {
-            "case": "write|trino|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
-            "reason": "expected `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col FROM UNNEST(y) WITH ORDINALITY AS t(col, pos))` actual `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col)`"
-        },
-        {
-            "case": "write|duckdb|SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col",
-            "reason": "expected `SELECT a FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, col FROM UNNEST(y) WITH ORDINALITY AS t(col, pos))` actual `SELECT a FROM x LATERAL VIEW POSEXPLODE(y) t AS pos, col`"
-        },
-        {
-            "case": "write|presto|SELECT * FROM x LATERAL VIEW POSEXPLODE(MAP(col, 'val')) t AS pos, key, value",
-            "reason": "expected `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value FROM UNNEST(MAP(ARRAY[col], ARRAY['val'])) WITH ORDINALITY AS t(key, value, pos))` actual `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value)`"
-        },
-        {
-            "case": "write|trino|SELECT * FROM x LATERAL VIEW POSEXPLODE(MAP(col, 'val')) t AS pos, key, value",
-            "reason": "expected `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value FROM UNNEST(MAP(ARRAY[col], ARRAY['val'])) WITH ORDINALITY AS t(key, value, pos))` actual `SELECT * FROM x CROSS JOIN LATERAL (SELECT pos - 1 AS pos, key, value)`"
-        },
-        {
-            "case": "write|duckdb|SELECT a FROM x LATERAL VIEW EXPLODE(ARRAY(y)) t AS a",
-            "reason": "expected `SELECT a FROM x CROSS JOIN UNNEST([y]) AS t(a)` actual `SELECT a FROM x LATERAL VIEW UNNEST([y]) t AS a`"
-        },
-        {
             "case": "write|duckdb|from_unixtime(x, \"yyyy-MM-dd'T'HH\")",
             "reason": "expected `STRFTIME(TO_TIMESTAMP(x), '%Y-%m-%d''T''%H')` actual `UNIX_TO_STR(x, '%Y-%mstrict-%dstrict''T''%Hstrict')`"
         },
