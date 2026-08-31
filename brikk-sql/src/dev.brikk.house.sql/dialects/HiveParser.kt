@@ -430,6 +430,8 @@ object HiveParserTables {
     // sqlglot: HiveParser.FUNCTIONS
     val FUNCTIONS: Map<String, (List<Expression?>) -> Expression> = buildMap {
         putAll(BaseParserTables.FUNCTIONS)
+        put("ARRAYAGG") { a -> ArrayAgg(args("this" to seqGet(a, 0), "nulls_excluded" to true)) }
+        put("ARRAY_AGG", getValue("ARRAYAGG"))
         put("BASE64") { a -> ToBase64(args("this" to seqGet(a, 0))) }
         put("COLLECT_LIST") { a -> ArrayAgg(args("this" to seqGet(a, 0), "nulls_excluded" to true)) }
         put("COLLECT_SET") { a -> ArrayUniqueAgg(args("this" to seqGet(a, 0))) }

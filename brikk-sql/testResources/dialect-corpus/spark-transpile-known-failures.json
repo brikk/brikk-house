@@ -1,10 +1,6 @@
 {
     "cases": [
         {
-            "case": "write|spark|CREATE TABLE blah (col_a INT) COMMENT \"Test comment: blah\" PARTITIONED BY (date STRING) USING ICEBERG TBLPROPERTIES('x' = '1')",
-            "reason": "expected `CREATE TABLE blah (\n  col_a INT,\n  date STRING\n)\nCOMMENT 'Test comment: blah'\nPARTITIONED BY (\n  date\n)\nUSING ICEBERG\nTBLPROPERTIES (\n  'x'='1'\n)` actual `CREATE TABLE blah (\n  col_a INT\n)\nCOMMENT 'Test comment: blah'\nPARTITIONED BY (\n  date STRING\n)\nUSING ICEBERG\nTBLPROPERTIES (\n  'x'='1'\n)`"
-        },
-        {
             "case": "write|spark|ALTER TABLE StudentInfo DROP COLUMNS (LastName, DOB)",
             "reason": "expected `ALTER TABLE StudentInfo DROP COLUMNS (LastName, DOB)` actual `ALTER TABLE StudentInfo DROP COLUMNS`"
         },
@@ -31,10 +27,6 @@
         {
             "case": "write|duckdb|SELECT id_column, name, age FROM test_table LATERAL VIEW INLINE(struc_column) explode_view AS name, age",
             "reason": "expected `SELECT id_column, name, age FROM test_table CROSS JOIN LATERAL (SELECT UNNEST(struc_column, max_depth => 2)) AS explode_view(name, age)` actual `SELECT id_column, name, age FROM test_table LATERAL VIEW INLINE(struc_column) explode_view AS name, age`"
-        },
-        {
-            "case": "write|duckdb|SELECT ARRAY_AGG(x) FILTER (WHERE x = 5) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)",
-            "reason": "expected `SELECT ARRAY_AGG(x) FILTER(WHERE x = 5 AND NOT x IS NULL) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)` actual `SELECT ARRAY_AGG(x) FILTER(WHERE x = 5) FROM (SELECT 1 UNION ALL SELECT NULL) AS t(x)`"
         },
         {
             "case": "write|duckdb|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
@@ -69,32 +61,12 @@
             "reason": "expected `SELECT DATE_ADD(CAST(CAST(my_date_column AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `SELECT TS_OR_DS_ADD(my_date_column, 1, DAY)`"
         },
         {
-            "case": "write|presto|SELECT LEFT(x, 2), RIGHT(x, 2)",
-            "reason": "expected `SELECT SUBSTR(x, 1, 2), SUBSTR(x, LENGTH(x) - (2 - 1))` actual `SELECT SUBSTR(x, 1, 2), SUBSTR(x, LENGTH(x) + (2 - 1) - )`"
-        },
-        {
-            "case": "write|hive|SELECT LEFT(x, 2), RIGHT(x, 2)",
-            "reason": "expected `SELECT SUBSTRING(x, 1, 2), SUBSTRING(x, LENGTH(x) - (2 - 1))` actual `SELECT SUBSTRING(x, 1, 2), SUBSTRING(x, -2)`"
-        },
-        {
             "case": "read|spark|SELECT DATE_ADD(MONTH, 20, col)",
             "reason": "expected `SELECT DATE_ADD(MONTH, 20, col)` actual `SELECT TIMESTAMP_ADD(col, 20, MONTH)`"
         },
         {
             "case": "write|spark|SELECT DATE_ADD(MONTH, 20, col)",
             "reason": "expected `SELECT DATE_ADD(MONTH, 20, col)` actual `SELECT TIMESTAMP_ADD(col, 20, MONTH)`"
-        },
-        {
-            "case": "write|spark|SELECT TIMESTAMPDIFF(MONTH, foo, bar)",
-            "reason": "expected `SELECT TIMESTAMPDIFF(MONTH, foo, bar)` actual `SELECT TIMESTAMPDIFF(bar, foo, MONTH)`"
-        },
-        {
-            "case": "write|spark|STRING_AGG(x, ', ')",
-            "reason": "expected `LISTAGG(x, ', ')` actual `ARRAY_JOIN(COLLECT_LIST(x), ', ')`"
-        },
-        {
-            "case": "write|spark|LISTAGG(x, ', ')",
-            "reason": "expected `LISTAGG(x, ', ')` actual `ARRAY_JOIN(COLLECT_LIST(x), ', ')`"
         },
         {
             "case": "read|spark|WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t",
@@ -171,10 +143,6 @@
         {
             "case": "write|spark|SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))",
             "reason": "expected `SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))` actual `SET VARIABLE v = (SELECT GREATEST(c1) FROM VALUES (1), (2) AS T(c1))`"
-        },
-        {
-            "case": "write|duckdb|SELECT TRY_DIVIDE(a, b)",
-            "reason": "expected `SELECT CASE WHEN b <> 0 THEN a / b ELSE NULL END` actual `SELECT SAFE_DIVIDE(a, b)`"
         }
     ]
 }

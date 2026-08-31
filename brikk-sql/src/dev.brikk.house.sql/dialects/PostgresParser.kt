@@ -56,6 +56,7 @@ import dev.brikk.house.sql.ast.TimeFromParts
 import dev.brikk.house.sql.ast.TimeToStr
 import dev.brikk.house.sql.ast.TimestampFromParts
 import dev.brikk.house.sql.ast.TimestampTrunc
+import dev.brikk.house.sql.ast.Trim
 import dev.brikk.house.sql.ast.UnixToTime
 import dev.brikk.house.sql.ast.Uuid
 import dev.brikk.house.sql.ast.Var
@@ -471,6 +472,7 @@ object PostgresParserTables {
         put("BIT_AND", fromArgList(listOf("this"), false) { BitwiseAndAgg(it) })
         put("BIT_OR", fromArgList(listOf("this"), false) { BitwiseOrAgg(it) })
         put("BIT_XOR", fromArgList(listOf("this"), false) { BitwiseXorAgg(it) })
+        put("BTRIM", fromArgList(listOf("this", "expression", "position", "collation"), false) { Trim(it) })
         put("VERSION", fromArgList(listOf(), false) { CurrentVersion(it) })
         // sqlglot: dialect.build_timestamp_trunc
         put("DATE_TRUNC") { a ->

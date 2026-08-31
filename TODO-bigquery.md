@@ -10,22 +10,22 @@
 
 ---
 
-**234 transpile items across 20 source-to-target routes.**
+**228 transpile items across 20 source-to-target routes.**
 
-## BigQuery as source (180)
+## BigQuery as source (174)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 103 |
+| bigquery -> duckdb | 101 |
 | bigquery -> spark | 15 |
-| bigquery -> presto | 13 |
+| bigquery -> presto | 12 |
 | bigquery -> bigquery | 12 |
-| bigquery -> trino | 8 |
-| bigquery -> postgres | 7 |
+| bigquery -> trino | 7 |
+| bigquery -> postgres | 6 |
 | bigquery -> hive | 6 |
 | bigquery -> mysql | 5 |
 | bigquery -> clickhouse | 5 |
-| bigquery -> spark2 | 4 |
+| bigquery -> spark2 | 3 |
 | bigquery -> base | 2 |
 
 ## BigQuery as target (54)

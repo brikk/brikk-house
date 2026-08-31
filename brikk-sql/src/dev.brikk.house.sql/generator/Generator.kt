@@ -4721,6 +4721,20 @@ open class Generator(
         return binary(expression, "/")
     }
 
+    // sqlglot: Generator.safedivide_sql
+    open fun safedivideSql(expression: SafeDivide): String {
+        val denominator = expression.expressionArg as Expression
+        return sql(
+            If(
+                args(
+                    "this" to NEQ(args("this" to denominator.copy(), "expression" to Literal.number("0"))),
+                    "true" to Div(args("this" to expression.thisArg, "expression" to denominator)),
+                    "false" to Null(),
+                )
+            )
+        )
+    }
+
     // sqlglot: Expression.is_type — only Cast carries syntactic type info in untyped ASTs
     protected fun isCastToType(expression: Expression?, types: kotlin.collections.Set<DType>): Boolean {
         val cast = expression as? Cast ?: return false
@@ -4898,12 +4912,43 @@ open class Generator(
         return func("${prefix}PAD", expression.thisArg, expression.expressionArg, fillPattern)
     }
 
-    // sqlglot: Generator.arrayagg_sql (base: ARRAY_AGG_INCLUDES_NULLS=true; the NULL
-    // filter only fires when nulls_excluded is set, which base parsing doesn't do)
+    // sqlglot: Generator.arrayagg_sql / _add_arrayagg_null_filter
     open fun arrayaggSql(expression: ArrayAgg): String {
         val arrayAgg = functionFallbackSql(expression)
-        if (dialectArrayAggIncludesNulls && expression.args["nulls_excluded"] == true) {
-            unsupported("ARRAY_AGG null filtering is not supported")
+        if (!dialectArrayAggIncludesNulls || expression.args["nulls_excluded"] != true) {
+            return arrayAgg
+        }
+
+        val columnExpression = ((expression.thisArg as? Order)?.thisArg ?: expression.thisArg) as? Expression
+            ?: return arrayAgg
+        val parent = expression.parent
+        if (parent is Filter) {
+            val where = parent.expressionArg as? Where
+            val condition = where?.thisArg as? Expression
+            if (condition != null) {
+                where.set(
+                    "this",
+                    And(
+                        args(
+                            "this" to condition,
+                            "expression" to Not(
+                                args(
+                                    "this" to Is(
+                                        args("this" to columnExpression.copy(), "expression" to Null())
+                                    )
+                                )
+                            ),
+                        )
+                    ),
+                )
+            }
+        } else if (columnExpression.find(Column::class) != null) {
+            val columnSql = if (columnExpression is Distinct) {
+                expressions(columnExpression)
+            } else {
+                sql(columnExpression)
+            }
+            return "$arrayAgg FILTER(WHERE $columnSql IS NOT NULL)"
         }
         return arrayAgg
     }

@@ -590,22 +590,17 @@ open class PrestoGenerator(
                     "this" to expression.thisArg,
                     "start" to Sub(
                         args(
-                            "this" to Add(
+                            "this" to Length(args("this" to expression.thisArg)),
+                            "expression" to Paren(
                                 args(
-                                    "this" to Length(args("this" to expression.thisArg)),
-                                    "expression" to Paren(
+                                    "this" to Sub(
                                         args(
-                                            "this" to Sub(
-                                                args(
-                                                    "this" to expression.args["expression"],
-                                                    "expression" to Literal.number("1"),
-                                                )
-                                            )
+                                            "this" to expression.args["expression"],
+                                            "expression" to Literal.number("1"),
                                         )
-                                    ),
+                                    )
                                 )
                             ),
-                            "expression" to null,
                         )
                     ),
                 )

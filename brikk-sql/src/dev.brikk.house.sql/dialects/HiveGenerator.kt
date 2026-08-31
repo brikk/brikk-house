@@ -12,6 +12,8 @@ import dev.brikk.house.sql.generator.eliminateDistinctOn
 import dev.brikk.house.sql.generator.unnestToExplode
 import dev.brikk.house.sql.generator.anyToExists
 import dev.brikk.house.sql.generator.inheritStructFieldNames
+import dev.brikk.house.sql.generator.moveSchemaColumnsToPartitionedBy
+import dev.brikk.house.sql.generator.unnestGenerateSeries
 import dev.brikk.house.sql.parser.HiveTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
@@ -411,10 +413,29 @@ open class HiveGenerator(
         )
 
     // sqlglot: dialect.right_to_substring_sql
-    internal fun rightToSubstringSql(expression: Right): String {
-        val start = Neg(args("this" to expression.args["expression"]))
-        return sql(Substring(args("this" to expression.thisArg, "start" to start)))
-    }
+    internal fun rightToSubstringSql(expression: Right): String =
+        sql(
+            Substring(
+                args(
+                    "this" to expression.thisArg,
+                    "start" to Sub(
+                        args(
+                            "this" to Length(args("this" to expression.thisArg)),
+                            "expression" to Paren(
+                                args(
+                                    "this" to Sub(
+                                        args(
+                                            "this" to expression.args["expression"],
+                                            "expression" to Literal.number("1"),
+                                        )
+                                    )
+                                )
+                            ),
+                        )
+                    ),
+                )
+            )
+        )
 
     // sqlglot: dialect.no_ilike_sql
     internal fun noIlikeSql(expression: ILike): String =
@@ -490,6 +511,91 @@ open class HiveGenerator(
         } else {
             func("LOCATE", substr, this_)
         }
+    }
+
+    // sqlglot: dialect.sequence_sql
+    internal fun sequenceSql(expression: GenerateSeries): String {
+        var start = expression.args["start"] as? Expression
+        var end = expression.args["end"] as? Expression
+        val step = expression.args["step"] as? Expression
+
+        val targetType = ((start as? Cast)?.args?.get("to")
+            ?: (end as? Cast)?.args?.get("to")) as? Expression
+        if (targetType != null && targetType.thisArg in setOf(DType.DATE, DType.TIMESTAMP)) {
+            if (start is Cast && targetType === start.args["to"]) {
+                end = Cast(args("this" to end, "to" to targetType.copy()))
+            } else {
+                start = Cast(args("this" to start, "to" to targetType.copy()))
+            }
+        }
+
+        if (expression.args["is_end_exclusive"] != true || start == null || end == null) {
+            return func("SEQUENCE", start, end, step)
+        }
+
+        fun numericValue(value: Expression?): Long? = when (value) {
+            is Literal -> if (value.isString) null else value.name.toLongOrNull()
+            is Neg -> -((value.thisArg as? Literal)?.name?.toLongOrNull() ?: return null)
+            else -> null
+        }
+
+        val stepValue = step ?: Literal.number("1")
+        val endNumber = numericValue(end)
+        val stepNumber = numericValue(stepValue)
+        val adjustedEnd = if (endNumber != null && stepNumber != null) {
+            Literal.number((endNumber - stepNumber).toString())
+        } else {
+            Paren(args("this" to Sub(args("this" to end, "expression" to stepValue))))
+        }
+
+        val startNumber = numericValue(start)
+        val adjustedEndNumber = numericValue(adjustedEnd)
+        if (startNumber != null && stepNumber != null && adjustedEndNumber != null) {
+            val empty = stepNumber == 0L ||
+                (stepNumber > 0L && startNumber > adjustedEndNumber) ||
+                (stepNumber < 0L && startNumber < adjustedEndNumber)
+            if (empty) return func("ARRAY")
+            return func("SEQUENCE", start, adjustedEnd, step)
+        }
+
+        val emptyCondition = when {
+            stepNumber != null && stepNumber > 0L ->
+                LT(args("this" to adjustedEnd.copy(), "expression" to start.copy()))
+            stepNumber != null && stepNumber < 0L ->
+                GT(args("this" to adjustedEnd.copy(), "expression" to start.copy()))
+            else -> Or(
+                args(
+                    "this" to EQ(args("this" to stepValue.copy(), "expression" to Literal.number("0"))),
+                    "expression" to Or(
+                        args(
+                            "this" to And(
+                                args(
+                                    "this" to GT(args("this" to stepValue.copy(), "expression" to Literal.number("0"))),
+                                    "expression" to GT(args("this" to start.copy(), "expression" to adjustedEnd.copy())),
+                                )
+                            ),
+                            "expression" to And(
+                                args(
+                                    "this" to LT(args("this" to stepValue.copy(), "expression" to Literal.number("0"))),
+                                    "expression" to LT(args("this" to start.copy(), "expression" to adjustedEnd.copy())),
+                                )
+                            ),
+                        )
+                    ),
+                )
+            )
+        }
+        return sql(
+            If(
+                args(
+                    "this" to emptyCondition,
+                    "true" to ArrayNode(args("expressions" to emptyList<Expression>())),
+                    "false" to Anonymous(
+                        args("this" to "SEQUENCE", "expressions" to listOfNotNull(start, adjustedEnd, step))
+                    ),
+                )
+            )
+        )
     }
 
     // ------------------------------------------------------------------
@@ -748,6 +854,7 @@ open class HiveGenerator(
                 func("SORT_ARRAY", e.thisArg)
             }
             reg(With::class) { e -> hg().noRecursiveCteSql(e as With) }
+            reg(Create::class) { e -> createSql(moveSchemaColumnsToPartitionedBy(e) as Create) }
             // sqlglot: hive exp.Array preprocess [inherit_struct_field_names]
             reg(ArrayNode::class) { e -> functionFallbackSql(inheritStructFieldNames(e) as ArrayNode) }
             // sqlglot: hive exp.Select preprocess pipeline
@@ -770,6 +877,7 @@ open class HiveGenerator(
             }
             reg(StorageHandlerProperty::class) { e -> "STORED BY ${sql(e, "this")}" }
             reg(FromBase64::class) { e -> hg().renameFuncSql("UNBASE64", e) }
+            reg(GenerateSeries::class) { e -> hg().sequenceSql(e as GenerateSeries) }
             reg(If::class) { e -> ifSql(e as If) }
             reg(ILike::class) { e -> hg().noIlikeSql(e as ILike) }
             reg(IntDiv::class) { e -> binary(e as Binary, "DIV") }
@@ -809,6 +917,10 @@ open class HiveGenerator(
             reg(TimeStrToDate::class) { e -> hg().renameFuncSql("TO_DATE", e) }
             reg(TimeStrToTime::class) { e -> hg().timestrtotimeSql(e as TimeStrToTime) }
             reg(TimeStrToUnix::class) { e -> hg().renameFuncSql("UNIX_TIMESTAMP", e) }
+            reg(Table::class) { e ->
+                val transformed = unnestGenerateSeries(e)
+                if (transformed === e) tableSql(e as Table) else sql(transformed)
+            }
             reg(TimestampTrunc::class) { e -> func("TRUNC", e.thisArg, hiveUnitToStr(e)) }
             reg(TimeToUnix::class) { e -> hg().renameFuncSql("UNIX_TIMESTAMP", e) }
             reg(ToBase64::class) { e -> hg().renameFuncSql("BASE64", e) }

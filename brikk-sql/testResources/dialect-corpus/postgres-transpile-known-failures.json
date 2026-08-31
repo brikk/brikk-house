@@ -1,14 +1,6 @@
 {
     "cases": [
         {
-            "case": "write|postgres|SELECT BTRIM(x, 'ab')",
-            "reason": "expected `SELECT TRIM('ab' FROM x)` actual `SELECT BTRIM(x, 'ab')`"
-        },
-        {
-            "case": "write|duckdb|SELECT BTRIM(x, 'ab')",
-            "reason": "expected `SELECT TRIM(x, 'ab')` actual `SELECT BTRIM(x, 'ab')`"
-        },
-        {
             "case": "write|spark|SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount)",
             "reason": "expected `SELECT PERCENTILE_APPROX(amount, 0.5)` actual `SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount NULLS LAST)`"
         },
@@ -35,30 +27,6 @@
         {
             "case": "write|bigquery|SELECT y, GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b FROM t",
             "reason": "expected `SELECT y, a, b FROM t CROSS JOIN UNNEST(GENERATE_ARRAY(1, 2)) AS a CROSS JOIN UNNEST(GENERATE_ARRAY(11, 13)) AS b` actual `SELECT y, GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b FROM t`"
-        },
-        {
-            "case": "write|hive|GENERATE_SERIES('2019-01-01'::TIMESTAMP, NOW(), '1day')",
-            "reason": "expected `EXPLODE(SEQUENCE(CAST('2019-01-01' AS TIMESTAMP), CAST(CURRENT_TIMESTAMP() AS TIMESTAMP), INTERVAL '1' DAY))` actual `EXPLODE(GENERATE_SERIES(CAST('2019-01-01' AS TIMESTAMP), CURRENT_TIMESTAMP(), INTERVAL '1' DAY))`"
-        },
-        {
-            "case": "write|spark|GENERATE_SERIES('2019-01-01'::TIMESTAMP, NOW(), '1day')",
-            "reason": "expected `EXPLODE(SEQUENCE(CAST('2019-01-01' AS TIMESTAMP), CAST(CURRENT_TIMESTAMP() AS TIMESTAMP), INTERVAL '1' DAY))` actual `EXPLODE(GENERATE_SERIES(CAST('2019-01-01' AS TIMESTAMP), CURRENT_TIMESTAMP(), INTERVAL '1' DAY))`"
-        },
-        {
-            "case": "write|spark2|GENERATE_SERIES('2019-01-01'::TIMESTAMP, NOW(), '1day')",
-            "reason": "expected `EXPLODE(SEQUENCE(CAST('2019-01-01' AS TIMESTAMP), CAST(CURRENT_TIMESTAMP() AS TIMESTAMP), INTERVAL '1' DAY))` actual `EXPLODE(GENERATE_SERIES(CAST('2019-01-01' AS TIMESTAMP), CURRENT_TIMESTAMP(), INTERVAL '1' DAY))`"
-        },
-        {
-            "case": "write|hive|SELECT * FROM GENERATE_SERIES(a, b)",
-            "reason": "expected `SELECT * FROM EXPLODE(SEQUENCE(a, b))` actual `SELECT * FROM GENERATE_SERIES(a, b)`"
-        },
-        {
-            "case": "write|spark|SELECT * FROM GENERATE_SERIES(a, b)",
-            "reason": "expected `SELECT * FROM EXPLODE(SEQUENCE(a, b))` actual `SELECT * FROM GENERATE_SERIES(a, b)`"
-        },
-        {
-            "case": "write|spark2|SELECT * FROM GENERATE_SERIES(a, b)",
-            "reason": "expected `SELECT * FROM EXPLODE(SEQUENCE(a, b))` actual `SELECT * FROM GENERATE_SERIES(a, b)`"
         },
         {
             "case": "write|mysql|UPDATE foo SET a = bar.a, b = bar.b FROM bar WHERE foo.id = bar.id",
