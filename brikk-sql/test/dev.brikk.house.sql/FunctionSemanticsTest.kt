@@ -304,13 +304,12 @@ class FunctionSemanticsTest {
     }
 
     @Test
-    fun duckdbScalarUnnestToTrinoIsFlaggedNotSilent() {
-        // brikk extension 13: explode_projection_to_unnest is not ported, and Trino has
-        // no EXPLODE function — flag instead of silently emitting an unresolvable call.
+    fun duckdbScalarUnnestToTrinoUsesOrdinalityRewrite() {
         val result = SqlFragment("SELECT UNNEST([1, 2, 3]) + 1", "duckdb").transpileTo("trino")
-        assertTrue(
-            result.unsupportedMessages.any { "EXPLODE" in it },
-            "expected flag: ${result.unsupportedMessages}",
+        assertEquals(
+            "SELECT IF(_u.pos = _u_2.pos_2, _u_2.col) + 1 AS col FROM UNNEST(SEQUENCE(1, GREATEST(CARDINALITY(ARRAY[1, 2, 3])))) AS _u(pos) CROSS JOIN UNNEST(ARRAY[1, 2, 3]) WITH ORDINALITY AS _u_2(col, pos_2) WHERE _u.pos = _u_2.pos_2 OR (_u.pos > CARDINALITY(ARRAY[1, 2, 3]) AND _u_2.pos_2 = CARDINALITY(ARRAY[1, 2, 3]))",
+            result.sql,
         )
+        assertTrue(result.unsupportedMessages.isEmpty(), result.unsupportedMessages.toString())
     }
 }

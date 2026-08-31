@@ -5,9 +5,11 @@ package dev.brikk.house.sql.generator
 // pipelines remain NOT PORTED (see the dialect generator class docs).
 
 import dev.brikk.house.sql.ast.Alias
+import dev.brikk.house.sql.ast.Aliases
 import dev.brikk.house.sql.ast.And
 import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.Array as ArrayNode
+import dev.brikk.house.sql.ast.ArraySize
 import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.ColumnDef
@@ -19,7 +21,10 @@ import dev.brikk.house.sql.ast.Explode
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.From
 import dev.brikk.house.sql.ast.GenerateSeries
+import dev.brikk.house.sql.ast.Greatest
+import dev.brikk.house.sql.ast.GT
 import dev.brikk.house.sql.ast.Identifier
+import dev.brikk.house.sql.ast.If
 import dev.brikk.house.sql.ast.Inline
 import dev.brikk.house.sql.ast.Join
 import dev.brikk.house.sql.ast.Lambda
@@ -29,6 +34,7 @@ import dev.brikk.house.sql.ast.ILike
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Not
 import dev.brikk.house.sql.ast.Order
+import dev.brikk.house.sql.ast.Or
 import dev.brikk.house.sql.ast.Posexplode
 import dev.brikk.house.sql.ast.PartitionedByProperty
 import dev.brikk.house.sql.ast.PropertyEQ
@@ -40,6 +46,7 @@ import dev.brikk.house.sql.ast.Qualify
 import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.SetOperation
 import dev.brikk.house.sql.ast.Schema
+import dev.brikk.house.sql.ast.Sub
 import dev.brikk.house.sql.ast.Star
 import dev.brikk.house.sql.ast.Struct
 import dev.brikk.house.sql.ast.Table
@@ -51,6 +58,7 @@ import dev.brikk.house.sql.ast.With
 import dev.brikk.house.sql.ast.aliasExpression
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.ast.column
+import dev.brikk.house.sql.ast.combineAnd
 import dev.brikk.house.sql.ast.isStar
 import dev.brikk.house.sql.ast.namedSelects
 import dev.brikk.house.sql.ast.outputName
@@ -58,6 +66,7 @@ import dev.brikk.house.sql.ast.subquery
 import dev.brikk.house.sql.ast.toIdentifier
 import dev.brikk.house.sql.optimizer.findAllInScope
 import dev.brikk.house.sql.optimizer.findNewName
+import dev.brikk.house.sql.optimizer.Scope
 
 /**
  * sqlglot: transforms.eliminate_qualify — converts SELECT statements that contain the
@@ -604,4 +613,185 @@ fun movePartitionedByToSchemaColumns(expression: Expression): Expression {
 fun unnestGenerateSeries(expression: Expression): Expression {
     if (expression !is Table || expression.thisArg !is GenerateSeries) return expression
     return Unnest(args("expressions" to listOf(expression.thisArg)))
+}
+
+/** sqlglot: transforms.explode_projection_to_unnest. */
+fun explodeProjectionToUnnest(expression: Expression, indexOffset: Int = 0): Expression {
+    if (expression !is Select) return expression
+
+    val takenSelectNames = expression.namedSelects.toMutableSet()
+    val takenSourceNames = Scope(expression).references.map { it.first }.toMutableSet()
+    fun newName(names: MutableSet<String>, base: String): String =
+        findNewName(names, base).also { names.add(it) }
+
+    val arrays = mutableListOf<Expression>()
+    val seriesAlias = newName(takenSelectNames, "pos")
+    val seriesSourceAlias = newName(takenSourceNames, "_u")
+    val seriesExpression = GenerateSeries(args("start" to Literal.number(indexOffset.toString())))
+    val series = aliasExpression(
+        Unnest(args("expressions" to listOf(seriesExpression))),
+        seriesSourceAlias,
+        tableColumns = listOf(seriesAlias),
+        copy = false,
+    )
+
+    val selections = mutableListOf<Expression>()
+    for (selection in expression.selects.filterIsInstance<Expression>()) {
+        var explode = selection.find(Explode::class) as? Explode
+        if (explode == null) {
+            selections.add(selection)
+            continue
+        }
+
+        var posAlias: Identifier? = null
+        var explodeAlias: Identifier? = null
+        val alias = when (selection) {
+            is Alias -> {
+                explodeAlias = selection.args["alias"] as? Identifier
+                selection
+            }
+            is Aliases -> {
+                val aliases = selection.expressionsArg.filterIsInstance<Identifier>()
+                posAlias = aliases.getOrNull(0)
+                explodeAlias = aliases.getOrNull(1)
+                Alias(args("this" to selection.thisArg))
+            }
+            else -> Alias(args("this" to selection))
+        }
+        explode = alias.find(Explode::class) as Explode
+        val isPosexplode = explode is Posexplode
+        val explodeArg = explode.thisArg as Expression
+        if (explodeArg is Column) takenSelectNames.add(explodeArg.outputName)
+
+        val unnestSourceAlias = newName(takenSourceNames, "_u")
+        if (explodeAlias == null || explodeAlias.name.isEmpty()) {
+            explodeAlias = toIdentifier(newName(takenSelectNames, "col"))
+            if (isPosexplode) posAlias = toIdentifier(newName(takenSelectNames, "pos"))
+        }
+        if (posAlias == null || posAlias.name.isEmpty()) {
+            posAlias = toIdentifier(newName(takenSelectNames, "pos"))
+        }
+        val finalExplodeAlias = requireNotNull(explodeAlias)
+        val finalPosAlias = requireNotNull(posAlias)
+        val explodedName = finalExplodeAlias.name
+        val positionName = finalPosAlias.name
+        alias.set("alias", finalExplodeAlias)
+
+        fun qualified(name: String, table: String): Expression = column(name, table = table)
+        val positionMatches = EQ(
+            args(
+                "this" to qualified(seriesAlias, seriesSourceAlias),
+                "expression" to qualified(positionName, unnestSourceAlias),
+            )
+        )
+        explode.replace(
+            If(
+                args(
+                    "this" to positionMatches,
+                    "true" to qualified(explodedName, unnestSourceAlias),
+                )
+            )
+        )
+        selections.add(alias)
+
+        if (isPosexplode) {
+            selections.add(
+                Alias(
+                    args(
+                        "this" to If(
+                            args(
+                                "this" to EQ(
+                                    args(
+                                        "this" to qualified(seriesAlias, seriesSourceAlias),
+                                        "expression" to qualified(positionName, unnestSourceAlias),
+                                    )
+                                ),
+                                "true" to qualified(positionName, unnestSourceAlias),
+                            )
+                        ),
+                        "alias" to finalPosAlias,
+                    )
+                )
+            )
+        }
+
+        if (arrays.isEmpty()) {
+            if (expression.args["from_"] != null) {
+                expression.append("joins", Join(args("this" to series, "kind" to "CROSS")))
+            } else {
+                expression.set("from_", From(args("this" to series)))
+            }
+        }
+
+        var size: Expression = ArraySize(args("this" to explodeArg.copy()))
+        arrays.add(size)
+        val unnest = aliasExpression(
+            Unnest(
+                args(
+                    "expressions" to listOf(explodeArg.copy()),
+                    "offset" to finalPosAlias.copy(),
+                )
+            ),
+            unnestSourceAlias,
+            tableColumns = listOf(finalExplodeAlias.copy()),
+            copy = false,
+        )
+        expression.append("joins", Join(args("this" to unnest, "kind" to "CROSS")))
+
+        if (indexOffset != 1) {
+            size = Sub(args("this" to size, "expression" to Literal.number("1")))
+        }
+        val lastPosition = EQ(
+            args(
+                "this" to qualified(positionName, unnestSourceAlias),
+                "expression" to size.copy(),
+            )
+        )
+        val condition = Or(
+            args(
+                "this" to EQ(
+                    args(
+                        "this" to qualified(seriesAlias, seriesSourceAlias),
+                        "expression" to qualified(positionName, unnestSourceAlias),
+                    )
+                ),
+                "expression" to dev.brikk.house.sql.ast.Paren(
+                    args(
+                        "this" to And(
+                            args(
+                                "this" to GT(
+                                    args(
+                                        "this" to qualified(seriesAlias, seriesSourceAlias),
+                                        "expression" to size.copy(),
+                                    )
+                                ),
+                                "expression" to lastPosition,
+                            )
+                        )
+                    )
+                ),
+            )
+        )
+        val where = expression.args["where"] as? Where
+        if (where == null) {
+            expression.set("where", Where(args("this" to condition)))
+        } else {
+            where.set(
+                "this",
+                combineAnd(listOf(where.thisArg as Expression, condition)),
+            )
+        }
+    }
+
+    expression.set("expressions", selections)
+    if (arrays.isNotEmpty()) {
+        var end: Expression = Greatest(
+            args("this" to arrays.first(), "expressions" to arrays.drop(1))
+        )
+        if (indexOffset != 1) {
+            end = Sub(args("this" to end, "expression" to Literal.number((1 - indexOffset).toString())))
+        }
+        seriesExpression.set("end", end)
+    }
+    return expression
 }
