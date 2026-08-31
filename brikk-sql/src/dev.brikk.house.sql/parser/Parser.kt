@@ -9008,15 +9008,17 @@ open class Parser(
         return parseWindow(result)
     }
 
-    // sqlglot: Parser._kv_to_prop_eq (KEY_VALUE_DEFINITIONS = Alias/EQ/PropertyEQ/Slice;
-    // Parser._to_prop_eq is the identity in the base parser)
+    // sqlglot: Parser._to_prop_eq
+    protected open fun toPropEq(expression: Expression, index: Int): Expression = expression
+
+    // sqlglot: Parser._kv_to_prop_eq (KEY_VALUE_DEFINITIONS = Alias/EQ/PropertyEQ/Slice)
     protected fun kvToPropEq(
         expressions: MutableList<Expression>,
         parseMap: kotlin.Boolean = false,
     ): MutableList<Expression> {
         val transformed = mutableListOf<Expression>()
 
-        for (e in expressions) {
+        for ((index, e) in expressions.withIndex()) {
             var current = e
             if (current is Alias || current is EQ || current is PropertyEQ || current is Slice) {
                 if (current is Alias) {
@@ -9046,6 +9048,8 @@ open class Parser(
                 if (currentThis is Column) {
                     currentThis.replace(currentThis.args["this"])
                 }
+            } else {
+                current = toPropEq(current, index)
             }
 
             transformed.add(current)

@@ -377,28 +377,8 @@
             "reason": "expected `CAST(CAST('2008-12-25 15:30:00' AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS TEXT)` actual `STRING('2008-12-25 15:30:00', 'America/New_York')`"
         },
         {
-            "case": "write|duckdb|SAFE_DIVIDE(x, y)",
-            "reason": "expected `CASE WHEN y <> 0 THEN x / y ELSE NULL END` actual `SAFE_DIVIDE(x, y)`"
-        },
-        {
-            "case": "write|presto|SAFE_DIVIDE(x, y)",
-            "reason": "expected `IF(y <> 0, CAST(x AS DOUBLE) / y, NULL)` actual `SAFE_DIVIDE(x, y)`"
-        },
-        {
-            "case": "write|trino|SAFE_DIVIDE(x, y)",
-            "reason": "expected `IF(y <> 0, CAST(x AS DOUBLE) / y, NULL)` actual `SAFE_DIVIDE(x, y)`"
-        },
-        {
             "case": "write|hive|SAFE_DIVIDE(x, y)",
             "reason": "expected `IF(y <> 0, x / y, NULL)` actual `SAFE_DIVIDE(x, y)`"
-        },
-        {
-            "case": "write|spark2|SAFE_DIVIDE(x, y)",
-            "reason": "expected `IF(y <> 0, x / y, NULL)` actual `SAFE_DIVIDE(x, y)`"
-        },
-        {
-            "case": "write|postgres|SAFE_DIVIDE(x, y)",
-            "reason": "expected `CASE WHEN y <> 0 THEN CAST(x AS DOUBLE PRECISION) / y ELSE NULL END` actual `SAFE_DIVIDE(x, y)`"
         },
         {
             "case": "write|duckdb|SAFE_DIVIDE(x + 1, 2 * y)",
@@ -427,10 +407,6 @@
         {
             "case": "write|duckdb|SELECT JSON_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')",
             "reason": "expected `SELECT CAST('{\"arr\": [1, \"a\"]}' -> '$.arr' AS TEXT[])` actual `SELECT J_S_O_N_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')`"
-        },
-        {
-            "case": "write|duckdb|SELECT INSTR('foo@example.com', '@')",
-            "reason": "expected `SELECT STRPOS('foo@example.com', '@')` actual `SELECT STR_POSITION('foo@example.com', '@')`"
         },
         {
             "case": "write|duckdb|SELECT ts + MAKE_INTERVAL(1, 2, minute => 5, day => 3)",

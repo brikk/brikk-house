@@ -5,6 +5,7 @@ import dev.brikk.house.sql.ast.ApproxQuantile
 import dev.brikk.house.sql.ast.ArrayAgg
 import dev.brikk.house.sql.ast.ArraySize
 import dev.brikk.house.sql.ast.ArrayUniqueAgg
+import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.CurrentTimestamp
 import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.DType
@@ -49,6 +50,8 @@ import dev.brikk.house.sql.ast.UnixToStr
 import dev.brikk.house.sql.ast.UsingProperty
 import dev.brikk.house.sql.ast.Year
 import dev.brikk.house.sql.ast.args
+import dev.brikk.house.sql.ast.isStar
+import dev.brikk.house.sql.ast.toIdentifier
 import dev.brikk.house.sql.parser.BaseParserTables
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.Parser
@@ -221,6 +224,18 @@ open class HiveParser(
     // sqlglot: HiveParser.PROPERTY_PARSERS (+ SERDEPROPERTIES / USING)
     override val propertyParsers: Map<String, (Parser, Parser.PropertyKwargs) -> Any?>
         get() = HiveParserTables.PROPERTY_PARSERS
+
+    // sqlglot: HiveParser._to_prop_eq — Spark inherits Hive's STRUCT field naming.
+    override fun toPropEq(expression: Expression, index: Int): Expression {
+        if (expression.isStar) return expression
+
+        val key = if (expression is Column) {
+            expression.thisArg
+        } else {
+            toIdentifier("col${index + 1}")
+        }
+        return this.expression(PropertyEQ(args("this" to key, "expression" to expression)))
+    }
 
     // sqlglot: HiveParser.ALTER_PARSERS (+ CHANGE)
     override val alterParsers: Map<String, (Parser) -> Any?>
@@ -415,6 +430,8 @@ object HiveParserTables {
     // sqlglot: HiveParser.FUNCTIONS
     val FUNCTIONS: Map<String, (List<Expression?>) -> Expression> = buildMap {
         putAll(BaseParserTables.FUNCTIONS)
+        put("ARRAYAGG") { a -> ArrayAgg(args("this" to seqGet(a, 0), "nulls_excluded" to true)) }
+        put("ARRAY_AGG", getValue("ARRAYAGG"))
         put("BASE64") { a -> ToBase64(args("this" to seqGet(a, 0))) }
         put("COLLECT_LIST") { a -> ArrayAgg(args("this" to seqGet(a, 0), "nulls_excluded" to true)) }
         put("COLLECT_SET") { a -> ArrayUniqueAgg(args("this" to seqGet(a, 0))) }

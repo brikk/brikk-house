@@ -4,6 +4,7 @@ package dev.brikk.house.sql.dialects
 import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
+import dev.brikk.house.sql.generator.movePartitionedByToSchemaColumns
 import dev.brikk.house.sql.parser.SparkTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -23,8 +24,6 @@ private fun sparkUnitToVar(expression: Expression, default: String = "DAY"): Exp
  * Port of sqlglot's SparkGenerator (reference/sqlglot/sqlglot/generators/spark.py class
  * SparkGenerator(Spark2Generator)). TRANSFORMS entries live in [TRANSFORMS], passed
  * through Spark2Generator's dispatch overlay; flag overrides are open-val overrides.
- *
- * We model Spark 3 (dialect version < 4): GroupConcat rewrites to ARRAY_JOIN(COLLECT_LIST).
  *
  * NOT PORTED (no Kotlin equivalents of the underlying transforms/helpers yet, ledgered):
  * exp.Create preprocess (remove_unique_constraints / ctas_with_tmp_tables_to_create_tmp_view
@@ -103,15 +102,21 @@ open class SparkGenerator(
         return "{${expression.name}}"
     }
 
-    // sqlglot: SparkGenerator TRANSFORMS[exp.GroupConcat] (_groupconcat_sql, version < 4)
-    internal fun groupConcatSpark(expression: GroupConcat): String {
-        val expr = ArrayToString(
-            args(
-                "this" to ArrayAgg(args("this" to expression.thisArg)),
-                "expression" to (expression.args["separator"] ?: Literal.string("")),
-            )
-        )
-        return sql(expr)
+    // sqlglot: SparkGenerator TRANSFORMS[exp.GroupConcat] (_groupconcat_sql, latest version)
+    internal fun groupConcatSpark(expression: GroupConcat): String =
+        func("LISTAGG", expression.thisArg, expression.args["separator"] ?: Literal.string(""))
+
+    // sqlglot: dialect.timestampdiff_sql
+    internal fun timestampdiffSpark(expression: TimestampDiff): String =
+        func("TIMESTAMPDIFF", sparkUnitToVar(expression), expression.args["expression"], expression.thisArg)
+
+    // sqlglot: SparkGenerator TRANSFORMS[exp.PartitionedByProperty]
+    internal fun partitionedBySpark(expression: PartitionedByProperty): String {
+        val value = expression.thisArg as? Expression ?: return "PARTITIONED BY ()"
+        val normalized = value.expressionsArg.filterIsInstance<Expression>().map {
+            if (it is Literal) toIdentifier(it.name) else it
+        }
+        return "PARTITIONED BY ${wrap(expressions(sqls = normalized, skipFirst = true))}"
     }
 
     companion object {
@@ -142,16 +147,19 @@ open class SparkGenerator(
             reg(BitwiseXorAgg::class) { e -> sg().renameFuncSql("BIT_XOR", e) }
             reg(BitwiseCount::class) { e -> sg().renameFuncSql("BIT_COUNT", e) }
             reg(CurrentVersion::class) { e -> sg().renameFuncSql("VERSION", e) }
+            reg(Create::class) { e -> createSql(movePartitionedByToSchemaColumns(e) as Create) }
             reg(DateFromUnixDate::class) { e -> sg().renameFuncSql("DATE_FROM_UNIX_DATE", e) }
             reg(GroupConcat::class) { e -> sg().groupConcatSpark(e as GroupConcat) }
             reg(EndsWith::class) { e -> sg().renameFuncSql("ENDSWITH", e) }
             reg(JSONKeys::class) { e -> sg().renameFuncSql("JSON_OBJECT_KEYS", e) }
+            reg(PartitionedByProperty::class) { e -> sg().partitionedBySpark(e as PartitionedByProperty) }
             reg(SafeAdd::class) { e -> sg().renameFuncSql("TRY_ADD", e) }
             reg(SafeDivide::class) { e -> sg().renameFuncSql("TRY_DIVIDE", e) }
             reg(SafeMultiply::class) { e -> sg().renameFuncSql("TRY_MULTIPLY", e) }
             reg(SafeSubtract::class) { e -> sg().renameFuncSql("TRY_SUBTRACT", e) }
             reg(StartsWith::class) { e -> sg().renameFuncSql("STARTSWITH", e) }
             reg(TimestampFromParts::class) { e -> sg().renameFuncSql("MAKE_TIMESTAMP", e) }
+            reg(TimestampDiff::class) { e -> sg().timestampdiffSpark(e as TimestampDiff) }
             reg(DateDiff::class) { e -> sg().datediffSpark(e as DateDiff) }
             reg(TryCast::class) { e ->
                 if (e.args["safe"] == true) sg().trycastSql(e as TryCast) else sg().castSql(e as Cast)

@@ -40,6 +40,7 @@ import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.DateAdd
 import dev.brikk.house.sql.ast.DateDiff
 import dev.brikk.house.sql.ast.DateSub
+import dev.brikk.house.sql.ast.DateTrunc
 import dev.brikk.house.sql.ast.DefinerProperty
 import dev.brikk.house.sql.ast.Detach
 import dev.brikk.house.sql.ast.Dot
@@ -104,6 +105,7 @@ import dev.brikk.house.sql.ast.TimestampAdd
 import dev.brikk.house.sql.ast.TimestampSub
 import dev.brikk.house.sql.ast.TimestampTrunc
 import dev.brikk.house.sql.ast.Transform
+import dev.brikk.house.sql.ast.Trim
 import dev.brikk.house.sql.ast.Tuple
 import dev.brikk.house.sql.ast.Typeof
 import dev.brikk.house.sql.ast.UtcTimestamp
@@ -121,6 +123,7 @@ import dev.brikk.house.sql.parser.TokenType
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.applyTimeUnitCoercion
 import dev.brikk.house.sql.parser.buildVarMap
+import dev.brikk.house.sql.parser.buildTrim
 import dev.brikk.house.sql.parser.fromArgList
 import dev.brikk.house.sql.ast.Array as ArrayNode
 
@@ -1239,6 +1242,7 @@ object ClickhouseParserTables {
         put("DATE_FORMAT", buildDatetimeFormat { a: Args -> TimeToStr(a) })
         put("DATE_SUB", buildDateDelta({ a: Args -> DateSub(a) }))
         put("DATESUB", buildDateDelta({ a: Args -> DateSub(a) }))
+        put("DATETRUNC", fromArgList(listOf("unit", "this", "zone", "input_type_preserved"), false) { DateTrunc(it) })
         put("FORMATDATETIME", buildDatetimeFormat { a: Args -> TimeToStr(a) })
         put("HAS", fromArgList(listOf("this", "expression", "ensure_variant", "check_null"), false) { ArrayContains(it) })
         put("ILIKE", buildDialectLike({ a: Args -> ILike(a) }))
@@ -1275,6 +1279,9 @@ object ClickhouseParserTables {
             fromArgList(listOf("this", "delimiter", "count"), false) { SubstringIndex(it) },
         )
         put("TOTYPENAME", fromArgList(listOf("this"), false) { Typeof(it) })
+        put("TRIMBOTH", fromArgList(listOf("this", "expression", "position", "collation"), false) { Trim(it) })
+        put("TRIMLEFT", ::buildTrim)
+        put("TRIMRIGHT") { a -> buildTrim(a, isLeft = false) }
         put(
             "EDITDISTANCE",
             fromArgList(

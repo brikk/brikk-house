@@ -486,6 +486,35 @@ open class DuckdbGenerator(
         return func("LISTAGG", "$argsSql$modifiers")
     }
 
+    // sqlglot: DuckDBGenerator.strposition_sql (VARCHAR path)
+    open fun strpositionSql(expression: StrPosition): String {
+        var string = expression.thisArg as? Expression
+        val substr = expression.args["substr"]
+        val position = expression.args["position"] as? Expression
+        if (position != null) {
+            string = Substring(args("this" to string, "start" to position))
+        }
+
+        val strpos = Anonymous(args("this" to "STRPOS", "expressions" to listOfNotNull(string, substr)))
+        if (position == null) return sql(strpos)
+
+        val zero = Literal.number("0")
+        return sql(
+            If(
+                args(
+                    "this" to EQ(args("this" to strpos.copy(), "expression" to zero.copy())),
+                    "true" to zero,
+                    "false" to Sub(
+                        args(
+                            "this" to Add(args("this" to strpos, "expression" to position)),
+                            "expression" to Literal.number("1"),
+                        )
+                    ),
+                )
+            )
+        )
+    }
+
     // sqlglot: dialect.date_delta_to_binary_interval_op wrapped by
     // generators.duckdb._date_delta_to_binary_interval_op (nanosecond and
     // float-interval branches; the float branch is annotate_types-driven and
@@ -2037,6 +2066,7 @@ open class DuckdbGenerator(
             reg(StrToUnix::class) { e ->
                 func("EPOCH", func("STRPTIME", e.thisArg, formatTime(e)))
             }
+            reg(StrPosition::class) { e -> dg().strpositionSql(e as StrPosition) }
             reg(Struct::class) { e -> dg().duckdbStructSql(e as Struct) }
             reg(Transform::class) { e -> dg().renameFuncSql("LIST_TRANSFORM", e) }
             reg(TimeToStr::class) { e -> func("STRFTIME", e.thisArg, formatTime(e)) }

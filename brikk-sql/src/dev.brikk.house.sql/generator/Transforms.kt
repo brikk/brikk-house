@@ -10,12 +10,15 @@ import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.Column
+import dev.brikk.house.sql.ast.ColumnDef
+import dev.brikk.house.sql.ast.Create
 import dev.brikk.house.sql.ast.Distinct
 import dev.brikk.house.sql.ast.EQ
 import dev.brikk.house.sql.ast.Exists
 import dev.brikk.house.sql.ast.Explode
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.From
+import dev.brikk.house.sql.ast.GenerateSeries
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.Inline
 import dev.brikk.house.sql.ast.Join
@@ -27,6 +30,7 @@ import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Not
 import dev.brikk.house.sql.ast.Order
 import dev.brikk.house.sql.ast.Posexplode
+import dev.brikk.house.sql.ast.PartitionedByProperty
 import dev.brikk.house.sql.ast.PropertyEQ
 import dev.brikk.house.sql.ast.RowNumber
 import dev.brikk.house.sql.ast.Tuple
@@ -35,6 +39,7 @@ import dev.brikk.house.sql.ast.Query
 import dev.brikk.house.sql.ast.Qualify
 import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.SetOperation
+import dev.brikk.house.sql.ast.Schema
 import dev.brikk.house.sql.ast.Star
 import dev.brikk.house.sql.ast.Struct
 import dev.brikk.house.sql.ast.Table
@@ -551,4 +556,52 @@ fun inheritStructFieldNames(expression: Expression): Expression {
     }
 
     return expression
+}
+
+/** sqlglot: transforms.move_schema_columns_to_partitioned_by. */
+fun moveSchemaColumnsToPartitionedBy(expression: Expression): Expression {
+    if (expression !is Create || expression.args["kind"] !in setOf("TABLE", "VIEW")) {
+        return expression
+    }
+
+    val schema = expression.thisArg as? Schema ?: return expression
+    val property = expression.find(PartitionedByProperty::class) as? PartitionedByProperty
+        ?: return expression
+    val partitionValue = property.thisArg as? Expression ?: return expression
+    if (partitionValue is Schema) return expression
+
+    val names = partitionValue.expressionsArg
+        .filterIsInstance<Expression>()
+        .map { it.name.uppercase() }
+        .toSet()
+    val columns = schema.expressionsArg.filterIsInstance<Expression>()
+    val partitions = columns.filter { it.name.uppercase() in names }
+    schema.set("expressions", columns.filterNot { it in partitions })
+    property.set("this", Schema(args("expressions" to partitions)))
+    return expression
+}
+
+/** sqlglot: transforms.move_partitioned_by_to_schema_columns. */
+fun movePartitionedByToSchemaColumns(expression: Expression): Expression {
+    if (expression !is Create) return expression
+
+    val property = expression.find(PartitionedByProperty::class) as? PartitionedByProperty
+        ?: return expression
+    val partitionSchema = property.thisArg as? Schema ?: return expression
+    val partitions = partitionSchema.expressionsArg.filterIsInstance<Expression>()
+    if (partitions.any { it !is ColumnDef || it.args["kind"] == null }) return expression
+
+    val schema = expression.thisArg as? Schema ?: return expression
+    for (partition in partitions) schema.append("expressions", partition)
+    property.set(
+        "this",
+        Tuple(args("expressions" to partitions.mapNotNull { toIdentifier(it.thisArg) })),
+    )
+    return expression
+}
+
+/** sqlglot: transforms.unnest_generate_series. */
+fun unnestGenerateSeries(expression: Expression): Expression {
+    if (expression !is Table || expression.thisArg !is GenerateSeries) return expression
+    return Unnest(args("expressions" to listOf(expression.thisArg)))
 }

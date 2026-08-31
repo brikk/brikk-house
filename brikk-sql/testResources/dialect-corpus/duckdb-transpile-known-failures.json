@@ -1,38 +1,6 @@
 {
     "cases": [
         {
-            "case": "write|spark|SELECT RANGE(1, 5)",
-            "reason": "expected `SELECT SEQUENCE(1, 4)` actual `SELECT GENERATE_SERIES(1, 5)`"
-        },
-        {
-            "case": "write|spark|SELECT RANGE(1, 5, 2)",
-            "reason": "expected `SELECT SEQUENCE(1, 3, 2)` actual `SELECT GENERATE_SERIES(1, 5, 2)`"
-        },
-        {
-            "case": "write|spark|SELECT RANGE(1, 1)",
-            "reason": "expected `SELECT ARRAY()` actual `SELECT GENERATE_SERIES(1, 1)`"
-        },
-        {
-            "case": "write|spark|SELECT RANGE(5, 1, -1)",
-            "reason": "expected `SELECT SEQUENCE(5, 2, -1)` actual `SELECT GENERATE_SERIES(5, 1, -1)`"
-        },
-        {
-            "case": "write|spark|SELECT RANGE(5, 1, 0)",
-            "reason": "expected `SELECT ARRAY()` actual `SELECT GENERATE_SERIES(5, 1, 0)`"
-        },
-        {
-            "case": "write|spark|WITH t AS (SELECT 5 AS c) SELECT RANGE(1, c) FROM t",
-            "reason": "expected `WITH t AS (SELECT 5 AS c) SELECT IF((c - 1) < 1, ARRAY(), SEQUENCE(1, (c - 1))) FROM t` actual `WITH t AS (SELECT 5 AS c) SELECT GENERATE_SERIES(1, c) FROM t`"
-        },
-        {
-            "case": "write|spark|WITH t AS (SELECT 2 AS c) SELECT RANGE(1, c) FROM t",
-            "reason": "expected `WITH t AS (SELECT 2 AS c) SELECT IF((c - 1) < 1, ARRAY(), SEQUENCE(1, (c - 1))) FROM t` actual `WITH t AS (SELECT 2 AS c) SELECT GENERATE_SERIES(1, c) FROM t`"
-        },
-        {
-            "case": "write|spark|SELECT RANGE(1, 2)",
-            "reason": "expected `SELECT SEQUENCE(1, 1)` actual `SELECT GENERATE_SERIES(1, 2)`"
-        },
-        {
             "case": "write|bigquery|SELECT UNNEST(ARRAY[1, 2, 3]), UNNEST(ARRAY[4, 5]), UNNEST(ARRAY[6])",
             "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_3, col_2, NULL) AS col_2, IF(pos = pos_4, col_3, NULL) AS col_3 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([1, 2, 3]), ARRAY_LENGTH([4, 5]), ARRAY_LENGTH([6])) - 1)) AS pos CROSS JOIN UNNEST([1, 2, 3]) AS col WITH OFFSET AS pos_2 CROSS JOIN UNNEST([4, 5]) AS col_2 WITH OFFSET AS pos_3 CROSS JOIN UNNEST([6]) AS col_3 WITH OFFSET AS pos_4 WHERE ((pos = pos_2 OR (pos > (ARRAY_LENGTH([1, 2, 3]) - 1) AND pos_2 = (ARRAY_LENGTH([1, 2, 3]) - 1))) AND (pos = pos_3 OR (pos > (ARRAY_LENGTH([4, 5]) - 1) AND pos_3 = (ARRAY_LENGTH([4, 5]) - 1)))) AND (pos = pos_4 OR (pos > (ARRAY_LENGTH([6]) - 1) AND pos_4 = (ARRAY_LENGTH([6]) - 1)))` actual `SELECT EXPLODE([1, 2, 3]), EXPLODE([4, 5]), EXPLODE([6])`"
         },

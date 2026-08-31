@@ -15,42 +15,32 @@
 
 ---
 
-**111 items across 32 source-to-target routes.**
+**65 items across 22 source-to-target routes.**
 
 | Route | Items |
 |---|---:|
-| spark -> duckdb | 18 |
-| spark -> spark | 13 |
-| spark -> presto | 12 |
-| hive -> duckdb | 9 |
-| duckdb -> spark | 9 |
-| presto -> spark | 5 |
+| spark -> duckdb | 13 |
+| spark -> presto | 10 |
+| hive -> duckdb | 6 |
+| spark -> spark | 5 |
 | postgres -> mysql | 5 |
-| postgres -> spark | 3 |
-| hive -> presto | 3 |
+| presto -> spark | 4 |
 | starrocks -> starrocks | 2 |
-| postgres -> spark2 | 2 |
 | postgres -> presto | 2 |
-| postgres -> postgres | 2 |
-| postgres -> hive | 2 |
 | mysql -> duckdb | 2 |
 | hive -> trino | 2 |
-| hive -> spark | 2 |
+| hive -> presto | 2 |
 | duckdb -> presto | 2 |
-| clickhouse -> duckdb | 2 |
-| clickhouse -> clickhouse | 2 |
 | spark -> postgres | 1 |
-| spark -> hive | 1 |
 | presto -> presto | 1 |
-| presto -> hive | 1 |
-| postgres -> duckdb | 1 |
+| postgres -> postgres | 1 |
+| postgres -> spark | 1 |
 | postgres -> doris | 1 |
 | mysql -> presto | 1 |
 | mysql -> postgres | 1 |
 | duckdb -> duckdb | 1 |
-| clickhouse -> spark | 1 |
-| clickhouse -> presto | 1 |
-| clickhouse -> postgres | 1 |
+| hive -> spark | 1 |
+| duckdb -> spark | 1 |
 
 ## Workflow
 
