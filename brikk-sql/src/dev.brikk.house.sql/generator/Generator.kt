@@ -4621,9 +4621,15 @@ open class Generator(
         return "ADD $exists${sql(expression.thisArg)}$location"
     }
 
-    // sqlglot: Generator.distinct_sql (base: MULTI_ARG_DISTINCT=true)
+    // sqlglot: Generator.distinct_sql
     open fun distinctSql(expression: Distinct): String {
         var thisSql = expressions(expression, flat = true)
+        if (!multiArgDistinct && expression.expressionsArg.size > 1) {
+            val nullCases = expression.expressionsArg.filterIsInstance<Expression>().joinToString(" ") {
+                "WHEN ${sql(Is(args("this" to it.copy(), "expression" to Null())))} THEN NULL"
+            }
+            thisSql = "CASE $nullCases ELSE ($thisSql) END"
+        }
         if (thisSql.isNotEmpty()) thisSql = " $thisSql"
         var on = sql(expression, "on")
         if (on.isNotEmpty()) on = " ON $on"
