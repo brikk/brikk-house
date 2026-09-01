@@ -2,7 +2,7 @@
   "provenance": {
     "source": "Apache DataFusion sqllogictest test_files (reference/datafusion)",
     "source_repo": "https://github.com/apache/datafusion",
-    "commit": "4f63ada24056d9ec9b8decc04f128512bcdd735e",
+    "commit": "fefc227edb894a469f06037b111ec1057e04bcc7",
     "license": "Apache-2.0 \u2014 see ATTRIBUTIONS.md",
     "files": [
       "select.slt",
@@ -12,7 +12,25 @@
       "group_by.slt",
       "order.slt",
       "limit.slt",
-      "pipe_operator.slt"
+      "pipe_operator.slt",
+      "aggregate_any_value.slt",
+      "aggregate_filter_selection.slt",
+      "aggregate_memory_spill.slt",
+      "array/array_first.slt",
+      "array_agg.slt",
+      "first_last_nested.slt",
+      "functional_dependencies.slt",
+      "mark_join_matrix.slt",
+      "merge_into.slt",
+      "null_aware_mark_join.slt",
+      "ordered_aggregate_spill.slt",
+      "parquet_nested_schema_pruning.slt",
+      "piecewise_merge_join_batches.slt",
+      "piecewise_merge_join_matrix.slt",
+      "range_sorted_time_bin_agg.slt",
+      "sort_merge_join_batches.slt",
+      "sort_merge_join_matrix.slt",
+      "sort_merge_join_spill.slt"
     ],
     "note": "Real-engine parse-acceptance corpus: SQL that DataFusion itself accepts. The brikk gate only checks that each statement parses under 'datafusion' without a ParseError (no round-trip / result check \u2014 that is phase 2's engine verifier). Failures are honest parser gaps and are ledgered."
   },
@@ -831,203 +849,307 @@
     },
     {
       "sql": "select * from hashjoin_datatype_table_t1 t1 right join hashjoin_datatype_table_t2 t2 on t1.c3 = t2.c3",
-      "source": "joins.slt:2854"
+      "source": "joins.slt:2853"
+    },
+    {
+      "sql": "select t1.c1, t2.c1, t2.c3 from hashjoin_datatype_table_t1 t1 right join hashjoin_datatype_table_t2 t2 on t1.c1 = t2.c1 and t1.c2 < t2.c2",
+      "source": "joins.slt:2883"
+    },
+    {
+      "sql": "select t1.column2 as left_b1, t2.column2 as right_b1\nfrom (values (100, 1, 0)) t1\njoin (values (10, 1)) t2\n  on t1.column2 = t2.column2\n and t1.column1 > t2.column1;",
+      "source": "joins.slt:2920"
+    },
+    {
+      "sql": "select t1.column2 as left_b1, t2.column2 as right_b1\nfrom (values (100, 1, 0), (5, 2, 0)) t1\nleft join (values (10, 1), (20, 2)) t2\n  on t1.column2 = t2.column2\n and t1.column1 > t2.column1;",
+      "source": "joins.slt:2931"
     },
     {
       "sql": "SELECT t1_id, t1_name FROM left_semi_anti_join_table_t1 t1 WHERE t1_id IN (SELECT t2_id FROM left_semi_anti_join_table_t2 t2) ORDER BY t1_id",
-      "source": "joins.slt:2910"
+      "source": "joins.slt:2989"
     },
     {
       "sql": "SELECT t1_id, t1_name FROM left_semi_anti_join_table_t1 t1 WHERE EXISTS (SELECT 1 FROM left_semi_anti_join_table_t2 t2 WHERE t1_id = t2_id) ORDER BY t1_id",
-      "source": "joins.slt:2918"
+      "source": "joins.slt:2997"
     },
     {
       "sql": "SELECT t1_id FROM left_semi_anti_join_table_t1 t1 INTERSECT SELECT t2_id FROM left_semi_anti_join_table_t2 t2 ORDER BY t1_id",
-      "source": "joins.slt:2926"
+      "source": "joins.slt:3005"
     },
     {
       "sql": "SELECT t1_id, t1_name FROM left_semi_anti_join_table_t1 t1 LEFT SEMI JOIN left_semi_anti_join_table_t2 t2 ON (t1_id = t2_id) ORDER BY t1_id",
-      "source": "joins.slt:2946"
+      "source": "joins.slt:3025"
     },
     {
       "sql": "SELECT t1_id, t1_name, t1_int FROM right_semi_anti_join_table_t1 t1 WHERE EXISTS (SELECT * FROM right_semi_anti_join_table_t2 t2 where t2.t2_id = t1.t1_id and t2.t2_name <> t1.t1_name) ORDER BY t1_id",
-      "source": "joins.slt:3097"
+      "source": "joins.slt:3176"
     },
     {
       "sql": "SELECT t1_id, t1_name, t1_int FROM right_semi_anti_join_table_t2 t2 RIGHT SEMI JOIN right_semi_anti_join_table_t1 t1 on (t2.t2_id = t1.t1_id and t2.t2_name <> t1.t1_name) ORDER BY t1_id",
-      "source": "joins.slt:3114"
+      "source": "joins.slt:3193"
     },
     {
       "sql": "select * from ((select 1 as a, 2 as b) c INNER JOIN (select 1 as c, 3 as d) e on c.a = e.c) f;",
-      "source": "joins.slt:3587"
+      "source": "joins.slt:3666"
     },
     {
       "sql": "SELECT t1_id, t1_name FROM join_test_left WHERE t1_id NOT IN (SELECT t2_id FROM join_test_right) ORDER BY t1_id;",
-      "source": "joins.slt:3616"
+      "source": "joins.slt:3695"
     },
     {
       "sql": "SELECT 1 FROM join_partitioned_table JOIN (SELECT c1 AS id1 FROM join_partitioned_table) AS a ON c1=id1;",
-      "source": "joins.slt:3632"
+      "source": "joins.slt:3711"
     },
     {
       "sql": "SELECT * FROM (\n    SELECT 1 as c, 2 as d\n    UNION ALL\n    SELECT 1 as c, 3 AS d\n) as a FULL JOIN (SELECT 1 as e, 3 AS f) AS rhs ON a.c=rhs.e;",
-      "source": "joins.slt:3684"
+      "source": "joins.slt:3763"
     },
     {
       "sql": "SELECT * FROM (\n    SELECT * from left_table_no_nulls\n) as lhs RIGHT JOIN (\n    SELECT * from right_table_no_nulls\n    ORDER BY b\n    LIMIT 10\n) AS rhs ON lhs.b=rhs.b",
-      "source": "joins.slt:3896"
+      "source": "joins.slt:3975"
     },
     {
       "sql": "SELECT * FROM (\n    SELECT * from left_table_missing_probe\n) as lhs RIGHT JOIN (\n    SELECT * from right_table_missing_probe\n    ORDER BY b\n    LIMIT 10\n) AS rhs ON lhs.b=rhs.b",
-      "source": "joins.slt:3953"
+      "source": "joins.slt:4032"
     },
     {
       "sql": "SELECT * FROM (\n    SELECT * from left_table_append_null_build\n) as lhs RIGHT JOIN (\n    SELECT * from right_table_append_null_build\n    ORDER BY b\n    LIMIT 10\n) AS rhs ON lhs.b=rhs.b",
-      "source": "joins.slt:4007"
+      "source": "joins.slt:4086"
     },
     {
       "sql": "select * from t1 LEFT JOIN t2 ON t1.a = t2.b LIMIT 2;",
-      "source": "joins.slt:4325"
+      "source": "joins.slt:4404"
     },
     {
       "sql": "select * from t1 RIGHT JOIN t2 ON t1.a = t2.b LIMIT 2;",
-      "source": "joins.slt:4359"
-    },
-    {
-      "sql": "select * from t1 FULL JOIN t2 ON t1.a = t2.b;",
-      "source": "joins.slt:4391"
-    },
-    {
-      "sql": "select * from t1 FULL JOIN t2 ON t1.a = t2.b LIMIT 2;",
-      "source": "joins.slt:4403"
-    },
-    {
-      "sql": "select * from table1 as t1 natural join table1_stringview as t2;",
       "source": "joins.slt:4438"
     },
     {
-      "sql": "select * from test where a in (select a from test where b > 3) order by c desc nulls first;",
+      "sql": "select * from t1 FULL JOIN t2 ON t1.a = t2.b;",
+      "source": "joins.slt:4470"
+    },
+    {
+      "sql": "select * from t1 FULL JOIN t2 ON t1.a = t2.b LIMIT 2;",
+      "source": "joins.slt:4482"
+    },
+    {
+      "sql": "select * from table1 as t1 natural join table1_stringview as t2;",
       "source": "joins.slt:4517"
     },
     {
+      "sql": "select * from test where a in (select a from test where b > 3) order by c desc nulls first;",
+      "source": "joins.slt:4596"
+    },
+    {
       "sql": "select * from test where a in (select a from test where b > 3) order by c desc nulls last;",
-      "source": "joins.slt:4523"
+      "source": "joins.slt:4602"
     },
     {
       "sql": "SELECT * FROM j1, (j2 CROSS JOIN LATERAL (SELECT * FROM j3 WHERE j1_id + j2_id = j3_id) AS j3_lat);",
-      "source": "joins.slt:4741"
+      "source": "joins.slt:4820"
     },
     {
       "sql": "SELECT * FROM compound_field_table_t tee JOIN compound_field_table_u you ON tee.column1['r'] = you.column1['r']",
-      "source": "joins.slt:4826"
+      "source": "joins.slt:4905"
     },
     {
       "sql": "SELECT * FROM compound_field_table_t JOIN compound_field_table_u ON compound_field_table_t.column1['r'] = compound_field_table_u.column1['r']",
-      "source": "joins.slt:4833"
+      "source": "joins.slt:4912"
     },
     {
       "sql": "SELECT * FROM compound_field_table_t tee JOIN compound_field_table_u you ON tee.column1['c'] = you.column1['c']",
-      "source": "joins.slt:4840"
+      "source": "joins.slt:4919"
     },
     {
       "sql": "SELECT * FROM compound_field_table_t tee JOIN compound_field_table_u you ON tee.column1['r'] = you.column1['r'] AND tee.column1['c'] = you.column1['c']",
-      "source": "joins.slt:4847"
+      "source": "joins.slt:4926"
     },
     {
       "sql": "SELECT *\nFROM t1\nLEFT ANTI JOIN t2 ON t1.k = t2.k\nORDER BY t1.k\nLIMIT 2;",
-      "source": "joins.slt:4896"
+      "source": "joins.slt:4975"
     },
     {
       "sql": "SELECT sum(k1), sum(v1), sum(k2), sum(v2)\nFROM t1\nJOIN t2 ON k1 = k2",
-      "source": "joins.slt:4959"
+      "source": "joins.slt:5038"
     },
     {
       "sql": "SELECT sum(k1), sum(v1), sum(k2), sum(v2)\nFROM t1\nLEFT JOIN t2 ON k1 = k2",
-      "source": "joins.slt:4978"
+      "source": "joins.slt:5057"
     },
     {
       "sql": "SELECT sum(k1), sum(v1), sum(k2), sum(v2)\nFROM t1\nRIGHT JOIN t2 ON k1 = k2",
-      "source": "joins.slt:4997"
+      "source": "joins.slt:5076"
     },
     {
       "sql": "SELECT sum(k1), sum(v1)\nFROM t1\nLEFT SEMI JOIN t2 ON k1 = k2",
-      "source": "joins.slt:5016"
+      "source": "joins.slt:5095"
     },
     {
       "sql": "SELECT sum(k2), sum(v2)\nFROM t1\nRIGHT SEMI JOIN t2 ON k1 = k2",
-      "source": "joins.slt:5035"
+      "source": "joins.slt:5114"
     },
     {
       "sql": "SELECT sum(k1), sum(v1)\nFROM t1\nLEFT ANTI JOIN t2 ON k1 = k2",
-      "source": "joins.slt:5054"
+      "source": "joins.slt:5133"
     },
     {
       "sql": "SELECT sum(k2), sum(v2)\nFROM t1\nRIGHT ANTI JOIN t2 ON k1 = k2",
-      "source": "joins.slt:5073"
+      "source": "joins.slt:5152"
     },
     {
       "sql": "SELECT sum(k1), sum(v1), sum(k2), sum(v2)\nFROM t1\nFULL JOIN t2 ON k1 = k2",
-      "source": "joins.slt:5092"
+      "source": "joins.slt:5171"
     },
     {
       "sql": "SELECT *\nFROM t2\nWHERE k2 > 0\n    OR EXISTS (\n        SELECT *\n        FROM t1\n        WHERE k2 = k1\n    )",
-      "source": "joins.slt:5117"
-    },
-    {
-      "sql": "SELECT distinct(v1)\nFROM t1\nLEFT ANTI JOIN t2 ON k1 = k2",
-      "source": "joins.slt:5141"
-    },
-    {
-      "sql": "SELECT *\nFROM t1\nLEFT ANTI JOIN t2 ON k1 = k2\nWHERE k1 < 0",
-      "source": "joins.slt:5163"
-    },
-    {
-      "sql": "WITH t1 (k) AS (\n    VALUES (1), (2)\n), t2 (k) AS (\n    VALUES (1)\n)\nSELECT *\nFROM t1\nLEFT ANTI JOIN (\n    SELECT *\n    FROM t2\n    WHERE k <> 1\n) t2 ON t1.k = t2.k;",
       "source": "joins.slt:5196"
     },
     {
+      "sql": "SELECT distinct(v1)\nFROM t1\nLEFT ANTI JOIN t2 ON k1 = k2",
+      "source": "joins.slt:5220"
+    },
+    {
+      "sql": "SELECT *\nFROM t1\nLEFT ANTI JOIN t2 ON k1 = k2\nWHERE k1 < 0",
+      "source": "joins.slt:5242"
+    },
+    {
+      "sql": "WITH t1 (k) AS (\n    VALUES (1), (2)\n), t2 (k) AS (\n    VALUES (1)\n)\nSELECT *\nFROM t1\nLEFT ANTI JOIN (\n    SELECT *\n    FROM t2\n    WHERE k <> 1\n) t2 ON t1.k = t2.k;",
+      "source": "joins.slt:5275"
+    },
+    {
       "sql": "SELECT c\n  FROM t1\n WHERE c > d\n    OR EXISTS(SELECT 1 FROM t1 AS x WHERE x.b<t1.b)\n    OR (c <= d-2 OR c >= d+2)",
-      "source": "joins.slt:5228"
+      "source": "joins.slt:5307"
     },
     {
       "sql": "SELECT t1.c0, t1.c1, t1.c2\nFROM t1_c t1\nINNER JOIN t2_c t2 ON t1.c0 = t2.c0;",
-      "source": "joins.slt:5324"
+      "source": "joins.slt:5403"
     },
     {
       "sql": "SELECT t1.c0, t1.c1, t1.c2\nFROM t1_c t1\nINNER JOIN t2_c t2 ON t1.c0 = t2.c0 AND t1.c1 = t2.c1;",
-      "source": "joins.slt:5333"
+      "source": "joins.slt:5412"
     },
     {
       "sql": "SELECT\n  l.id,\n  l.join_key as left_key,\n  r.join_key as right_key,\n  r.value\nFROM issue_19067_left l\nLEFT JOIN issue_19067_right r ON l.join_key = r.join_key\nORDER BY l.id;",
-      "source": "joins.slt:5379"
+      "source": "joins.slt:5458"
     },
     {
       "sql": "SELECT count(1) FROM empty_proj_left RIGHT JOIN empty_proj_right ON empty_proj_left.column1 = empty_proj_right.column1;",
-      "source": "joins.slt:5432"
+      "source": "joins.slt:5511"
     },
     {
       "sql": "SELECT count(1) FROM empty_proj_left FULL JOIN empty_proj_right ON empty_proj_left.column1 = empty_proj_right.column1;",
-      "source": "joins.slt:5437"
+      "source": "joins.slt:5516"
     },
     {
       "sql": "SELECT s.id, s.region, l.value\nFROM issue_20437_small s\nJOIN issue_20437_large l ON s.id = l.id AND s.region = l.region\nORDER BY s.id;",
-      "source": "joins.slt:5461"
+      "source": "joins.slt:5540"
     },
     {
       "sql": "WITH t AS (\n    SELECT *\n    FROM t1\n    LEFT ANTI JOIN t2 ON t1.k = t2.k\n)\nSELECT count(*)\nFROM t;",
-      "source": "joins.slt:5491"
+      "source": "joins.slt:5570"
     },
     {
       "sql": "WITH t AS (\n    SELECT *\n    FROM t1\n    LEFT SEMI JOIN t2 ON t1.k = t2.k\n)\nSELECT count(*)\nFROM t;",
-      "source": "joins.slt:5502"
+      "source": "joins.slt:5581"
     },
     {
       "sql": "SELECT sub.a, sub.b FROM (\n  SELECT * FROM t1 ORDER BY b LIMIT 1\n) sub\nJOIN t2 ON sub.a = t2.c;",
-      "source": "joins.slt:5556"
+      "source": "joins.slt:5635"
     },
     {
       "sql": "SELECT id, v, w FROM nlj_left LEFT JOIN nlj_right ON nlj_left.v < nlj_right.w ORDER BY id, w;",
-      "source": "joins.slt:5585"
+      "source": "joins.slt:5664"
+    },
+    {
+      "sql": "SELECT order_id, amount FROM elim_orders LEFT JOIN elim_users ON user_id = id;",
+      "source": "joins.slt:5724"
+    },
+    {
+      "sql": "SELECT order_id FROM elim_orders LEFT JOIN elim_users ON user_id = id WHERE amount > 100;",
+      "source": "joins.slt:5743"
+    },
+    {
+      "sql": "SELECT order_id FROM elim_orders LEFT JOIN elim_users ON user_id = id AND name <> 'bob';",
+      "source": "joins.slt:5757"
+    },
+    {
+      "sql": "SELECT count(*) FROM elim_orders LEFT JOIN elim_users ON user_id = id;",
+      "source": "joins.slt:5777"
+    },
+    {
+      "sql": "SELECT o.order_id FROM elim_orders o LEFT JOIN (SELECT DISTINCT user_id FROM elim_orders) d ON o.user_id = d.user_id;",
+      "source": "joins.slt:5792"
+    },
+    {
+      "sql": "SELECT elim_users.id FROM elim_users LEFT JOIN elim_orders ON elim_users.id = elim_orders.user_id;",
+      "source": "joins.slt:5830"
+    },
+    {
+      "sql": "SELECT DISTINCT name FROM elim_users LEFT JOIN elim_orders ON elim_users.id = elim_orders.user_id;",
+      "source": "joins.slt:5853"
+    },
+    {
+      "sql": "SELECT count(*) FROM elim_users LEFT JOIN elim_orders ON elim_users.id = elim_orders.user_id;",
+      "source": "joins.slt:5882"
+    },
+    {
+      "sql": "SELECT DISTINCT order_id FROM elim_orders LEFT JOIN elim_users ON true;",
+      "source": "joins.slt:5902"
+    },
+    {
+      "sql": "SELECT order_id FROM elim_orders LEFT JOIN elim_users ON true;",
+      "source": "joins.slt:5923"
+    },
+    {
+      "sql": "SELECT order_id FROM elim_orders LEFT JOIN elim_users ON user_id = id LIMIT 2;",
+      "source": "joins.slt:5947"
+    },
+    {
+      "sql": "SELECT DISTINCT id FROM (SELECT elim_users.id FROM elim_users LEFT JOIN elim_orders ON elim_users.id = elim_orders.user_id LIMIT 5);",
+      "source": "joins.slt:5976"
+    },
+    {
+      "sql": "SELECT order_id FROM elim_orders LEFT JOIN LATERAL (SELECT * FROM elim_users WHERE id = user_id) AS u ON true;",
+      "source": "joins.slt:5992"
+    },
+    {
+      "sql": "SELECT DISTINCT order_id FROM elim_orders LEFT JOIN LATERAL (SELECT * FROM elim_users WHERE id > user_id) AS u ON true;",
+      "source": "joins.slt:6013"
+    },
+    {
+      "sql": "SELECT order_id FROM elim_orders LEFT JOIN LATERAL (SELECT * FROM elim_users WHERE id > user_id) AS u ON true;",
+      "source": "joins.slt:6037"
+    },
+    {
+      "sql": "SELECT order_id, amount FROM elim_users RIGHT JOIN elim_orders ON id = user_id;",
+      "source": "joins.slt:6058"
+    },
+    {
+      "sql": "SELECT order_id FROM elim_users RIGHT JOIN elim_orders ON id = user_id AND name <> 'bob';",
+      "source": "joins.slt:6074"
+    },
+    {
+      "sql": "SELECT count(*) FROM elim_users RIGHT JOIN elim_orders ON id = user_id;",
+      "source": "joins.slt:6094"
+    },
+    {
+      "sql": "SELECT DISTINCT name FROM elim_orders RIGHT JOIN elim_users ON elim_orders.user_id = elim_users.id;",
+      "source": "joins.slt:6114"
+    },
+    {
+      "sql": "SELECT elim_users.id FROM elim_orders RIGHT JOIN elim_users ON elim_orders.user_id = elim_users.id;",
+      "source": "joins.slt:6152"
+    },
+    {
+      "sql": "SELECT id FROM elim_null_keys LEFT JOIN elim_null_lookup ON k = ukey;",
+      "source": "joins.slt:6192"
+    },
+    {
+      "sql": "SELECT id FROM elim_null_keys LEFT JOIN elim_null_lookup ON k IS NOT DISTINCT FROM ukey;",
+      "source": "joins.slt:6217"
+    },
+    {
+      "sql": "SELECT a.id\nFROM collect_left a\nLEFT JOIN (SELECT DISTINCT ON (id) id, ts FROM collect_left ORDER BY id, ts) f\n  ON a.id = f.id\nORDER BY a.id;",
+      "source": "joins.slt:6273"
     },
     {
       "sql": "select * from (WITH source AS (select 1 as e) SELECT * FROM source) t1,   (WITH source AS (select 1 as e) SELECT * FROM source) t2",
@@ -1398,216 +1520,256 @@
       "source": "subquery.slt:1367"
     },
     {
-      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id > 40 or not exists (select * from t2 where t1.t1_id = t2.t2_id)",
-      "source": "subquery.slt:1377"
+      "sql": "SELECT t1_name, t1_id FROM t1\nWHERE t1_id > 40 OR t1_id IN (SELECT t2_id FROM t2 WHERE t1_int > 0)",
+      "source": "subquery.slt:1404"
     },
     {
-      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id in (select t3.t3_id from t3) and (t1.t1_id > 40 or t1.t1_id in (select t2.t2_id from t2 where t1.t1_int > 0))",
-      "source": "subquery.slt:1406"
-    },
-    {
-      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id > 40 or exists (select * from t2 cross join t3 where t1.t1_id = t2.t2_id)",
-      "source": "subquery.slt:1418"
-    },
-    {
-      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere exists (\n    select * from t2 where t1.t1_id = t2.t2_id OR exists (\n        select * from t3 where t2.t2_id = t3.t3_id\n    )\n)",
+      "sql": "SELECT t1_int, t1_name FROM t1\nWHERE t1_id < 20 OR NOT EXISTS (SELECT 1 FROM t2 WHERE t1.t1_id = t2.t2_id)",
       "source": "subquery.slt:1430"
     },
     {
+      "sql": "SELECT t1_name FROM t1\nWHERE t1_id > 40 OR EXISTS (SELECT 1 FROM t2 WHERE t1.t1_int > t2.t2_int)",
+      "source": "subquery.slt:1456"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id > 40 or not exists (select * from t2 where t1.t1_id = t2.t2_id)",
+      "source": "subquery.slt:1467"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id in (select t3.t3_id from t3) and (t1.t1_id > 40 or t1.t1_id in (select t2.t2_id from t2 where t1.t1_int > 0))",
+      "source": "subquery.slt:1496"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere t1.t1_id > 40 or exists (select * from t2 cross join t3 where t1.t1_id = t2.t2_id)",
+      "source": "subquery.slt:1508"
+    },
+    {
+      "sql": "select t1.t1_id,\n       t1.t1_name,\n       t1.t1_int\nfrom t1\nwhere exists (\n    select * from t2 where t1.t1_id = t2.t2_id OR exists (\n        select * from t3 where t2.t2_id = t3.t3_id\n    )\n)",
+      "source": "subquery.slt:1520"
+    },
+    {
       "sql": "SELECT * FROM\n    (VALUES ('catan-prod1-daily', 'success')) as jobs(cron_job_name, status)\n  JOIN\n    (VALUES ('catan-prod1-daily', 'high')) as severity(cron_job_name, level)\n  ON (severity.cron_job_name = jobs.cron_job_name);",
-      "source": "subquery.slt:1447"
+      "source": "subquery.slt:1537"
     },
     {
       "sql": "select struct(1, 'b')",
-      "source": "subquery.slt:1516"
+      "source": "subquery.slt:1606"
     },
     {
       "sql": "select (select struct(1, 'b')['c1']);",
-      "source": "subquery.slt:1521"
+      "source": "subquery.slt:1611"
     },
     {
       "sql": "select 'foo' || (select struct(1, 'b')['c1']);",
-      "source": "subquery.slt:1526"
+      "source": "subquery.slt:1616"
     },
     {
       "sql": "SELECT  * FROM (VALUES (1), (2))\nWHERE column1  IN (SELECT struct(1, 'b')['c0']);",
-      "source": "subquery.slt:1531"
+      "source": "subquery.slt:1621"
     },
     {
       "sql": "SELECT  * FROM (VALUES (1), (2))\nWHERE 1+2 = 3 AND column1  IN (SELECT struct(1, 'b')['c0']);",
-      "source": "subquery.slt:1538"
+      "source": "subquery.slt:1628"
     },
     {
       "sql": "SELECT  * FROM foo\nWHERE EXISTS (SELECT * FROM (values (1)) WHERE column1 = foo.x AND struct(1, 'b')['c0'] = 1);",
-      "source": "subquery.slt:1544"
+      "source": "subquery.slt:1634"
     },
     {
       "sql": "SELECT  * FROM foo\nWHERE 1+2 = 3 AND EXISTS (SELECT * FROM (values (1)) WHERE column1 = foo.x AND struct(1, 'b')['c0'] = 1);",
-      "source": "subquery.slt:1551"
+      "source": "subquery.slt:1641"
     },
     {
       "sql": "WITH SubQuery AS (\n    SELECT\n        a.column1,\n        a.column2 AS ts_column,\n        a.column3,\n        SUM(a.column3) OVER (\n            PARTITION BY a.column1\n            ORDER BY a.column2 RANGE BETWEEN INTERVAL '10 minutes' PRECEDING AND CURRENT ROW\n        ) AS moving_sum\n    FROM source_table a\n)\nSELECT\n    column1,\n    ts_column,\n    moving_sum\nFROM SubQuery\nWHERE moving_sum > 60;",
-      "source": "subquery.slt:1578"
-    },
-    {
-      "sql": "SELECT a FROM t1 WHERE EXISTS (SELECT count(*) FROM t2)",
-      "source": "subquery.slt:1618"
-    },
-    {
-      "sql": "select v from set_cmp_t where v > any(select v from set_cmp_s);",
       "source": "subquery.slt:1668"
     },
     {
+      "sql": "SELECT a FROM t1 WHERE EXISTS (SELECT count(*) FROM t2)",
+      "source": "subquery.slt:1708"
+    },
+    {
+      "sql": "select v from set_cmp_t where v > any(select v from set_cmp_s);",
+      "source": "subquery.slt:1758"
+    },
+    {
       "sql": "select v from set_cmp_t where v < all(select v from set_cmp_empty);",
-      "source": "subquery.slt:1674"
+      "source": "subquery.slt:1764"
     },
     {
       "sql": "select id from set_cmp_self where age = any(select age from set_cmp_self);",
-      "source": "subquery.slt:1722"
+      "source": "subquery.slt:1812"
     },
     {
       "sql": "select id from set_cmp_self where age <> all(select age from set_cmp_self);",
-      "source": "subquery.slt:1729"
+      "source": "subquery.slt:1819"
     },
     {
       "sql": "SELECT (SELECT v FROM sq_values LIMIT 1);",
-      "source": "subquery.slt:1906"
+      "source": "subquery.slt:1996"
     },
     {
       "sql": "SELECT x FROM sq_main WHERE x > (SELECT v FROM sq_values LIMIT 1);",
-      "source": "subquery.slt:1912"
+      "source": "subquery.slt:2002"
     },
     {
       "sql": "SELECT (SELECT v FROM sq_empty);",
-      "source": "subquery.slt:1919"
+      "source": "subquery.slt:2009"
+    },
+    {
+      "sql": "SELECT (SELECT 1 WHERE FALSE);",
+      "source": "subquery.slt:2015"
+    },
+    {
+      "sql": "SELECT (SELECT 1 WHERE FALSE) IS NULL;",
+      "source": "subquery.slt:2021"
+    },
+    {
+      "sql": "SELECT (SELECT 1 WHERE FALSE) IS NOT NULL;",
+      "source": "subquery.slt:2027"
     },
     {
       "sql": "SELECT x + (SELECT v FROM sq_empty) FROM sq_main;",
-      "source": "subquery.slt:1925"
+      "source": "subquery.slt:2033"
     },
     {
       "sql": "SELECT x FROM sq_main WHERE x > (SELECT v FROM sq_empty);",
-      "source": "subquery.slt:1932"
+      "source": "subquery.slt:2040"
     },
     {
       "sql": "SELECT (SELECT count(*) FROM sq_empty);",
-      "source": "subquery.slt:1937"
+      "source": "subquery.slt:2045"
     },
     {
       "sql": "SELECT (SELECT max(v) FROM sq_values);",
-      "source": "subquery.slt:1943"
+      "source": "subquery.slt:2051"
+    },
+    {
+      "sql": "SELECT (SELECT count(*) FROM sq_empty) IS NULL;",
+      "source": "subquery.slt:2070"
     },
     {
       "sql": "SELECT x, count(*) AS cnt FROM sq_main GROUP BY x\nHAVING count(*) > (SELECT min(v) FROM sq_values);",
-      "source": "subquery.slt:1957"
+      "source": "subquery.slt:2084"
     },
     {
       "sql": "SELECT CASE WHEN x > (SELECT min(v) FROM sq_values)\n            THEN 'big' ELSE 'small' END AS label\nFROM sq_main;",
-      "source": "subquery.slt:1963"
+      "source": "subquery.slt:2090"
     },
     {
       "sql": "SELECT x FROM sq_main ORDER BY x + (SELECT max(v) FROM sq_values);",
-      "source": "subquery.slt:1972"
+      "source": "subquery.slt:2099"
     },
     {
       "sql": "SELECT i\nFROM generate_series(1, 10) AS t(i)\nWHERE i > (\n  SELECT avg(j) FROM generate_series(1, 10) AS u(j)\n)\nORDER BY i;",
-      "source": "subquery.slt:2013"
+      "source": "subquery.slt:2140"
     },
     {
       "sql": "SELECT sum(x + (SELECT max(v) FROM sq_values)) AS s FROM sq_main;",
-      "source": "subquery.slt:2028"
+      "source": "subquery.slt:2155"
     },
     {
       "sql": "SELECT l.x, r.x AS rx\nFROM sq_main AS l JOIN sq_main AS r\nON l.x = r.x + (SELECT min(v) FROM sq_values);",
-      "source": "subquery.slt:2034"
+      "source": "subquery.slt:2161"
     },
     {
       "sql": "SELECT (SELECT max(v) + (SELECT min(v) FROM sq_values) FROM sq_values);",
-      "source": "subquery.slt:2041"
+      "source": "subquery.slt:2168"
     },
     {
       "sql": "SELECT (SELECT s FROM (WITH cte AS (SELECT max(v) AS s FROM sq_values) SELECT s FROM cte));",
-      "source": "subquery.slt:2073"
+      "source": "subquery.slt:2200"
     },
     {
       "sql": "SELECT x, sum(x + (SELECT max(v) FROM sq_values)) OVER () AS win_sum FROM sq_main;",
-      "source": "subquery.slt:2079"
+      "source": "subquery.slt:2206"
     },
     {
       "sql": "SELECT count(DISTINCT r) = 1 FROM (\n  SELECT (SELECT random()) AS r\n  FROM (VALUES (1), (2), (3)) AS t(x)\n);",
-      "source": "subquery.slt:2127"
+      "source": "subquery.slt:2254"
     },
     {
       "sql": "SELECT (SELECT 42) AS k, max(x) FROM (VALUES (1), (2), (3)) AS t(x) GROUP BY k;",
-      "source": "subquery.slt:2137"
+      "source": "subquery.slt:2264"
     },
     {
       "sql": "SELECT x, max((SELECT 42)) FROM (VALUES (1), (2), (3)) AS t(x) GROUP BY x ORDER BY x;",
-      "source": "subquery.slt:2144"
+      "source": "subquery.slt:2271"
     },
     {
       "sql": "SELECT (SELECT (SELECT 42));",
-      "source": "subquery.slt:2153"
+      "source": "subquery.slt:2280"
     },
     {
       "sql": "SELECT (SELECT (SELECT (SELECT 99)));",
-      "source": "subquery.slt:2159"
+      "source": "subquery.slt:2286"
     },
     {
       "sql": "SELECT (SELECT * FROM (VALUES (1)) AS t(x));",
-      "source": "subquery.slt:2166"
+      "source": "subquery.slt:2293"
     },
     {
       "sql": "SELECT x FROM (VALUES (1), (2), (3), (4), (5)) AS t(x)\nWHERE x BETWEEN (SELECT 2) AND (SELECT 4)\nORDER BY x;",
-      "source": "subquery.slt:2176"
+      "source": "subquery.slt:2303"
     },
     {
       "sql": "SELECT (SELECT DISTINCT 42 FROM (VALUES (1), (2), (3)) AS t(x));",
-      "source": "subquery.slt:2186"
+      "source": "subquery.slt:2313"
     },
     {
       "sql": "SELECT 1 = (SELECT CAST(NULL AS INT));",
-      "source": "subquery.slt:2197"
+      "source": "subquery.slt:2324"
     },
     {
       "sql": "SELECT CAST(NULL AS INT) = (SELECT 1);",
-      "source": "subquery.slt:2202"
+      "source": "subquery.slt:2329"
     },
     {
       "sql": "SELECT (WITH cte1 AS (WITH cte2 AS (SELECT 42) SELECT * FROM cte2) SELECT * FROM cte1);",
-      "source": "subquery.slt:2209"
+      "source": "subquery.slt:2336"
     },
     {
       "sql": "SELECT (SELECT v FROM (SELECT 1 AS v UNION ALL SELECT 2) AS t ORDER BY v LIMIT 1);",
-      "source": "subquery.slt:2224"
+      "source": "subquery.slt:2351"
     },
     {
       "sql": "SELECT * FROM dup_filter_t1 WHERE dup_filter_t1.id IN (\n    SELECT dup_filter_t2.id FROM dup_filter_t2 WHERE dup_filter_t2.id > dup_filter_t1.id\n);",
-      "source": "subquery.slt:2334"
+      "source": "subquery.slt:2476"
     },
     {
       "sql": "SELECT sq_name_t1.id,\n  (SELECT count(*) AS id FROM sq_name_t2 WHERE sq_name_t2.outer_id = sq_name_t1.id) AS cnt\nFROM sq_name_t1\nORDER BY sq_name_t1.id;",
-      "source": "subquery.slt:2353"
+      "source": "subquery.slt:2495"
     },
     {
       "sql": "SELECT sq_name_t1.id\nFROM sq_name_t1\nWHERE sq_name_t1.id > (\n  SELECT count(*) AS id\n  FROM sq_name_t2\n  WHERE sq_name_t2.outer_id = sq_name_t1.id\n)\nORDER BY sq_name_t1.id;",
-      "source": "subquery.slt:2363"
+      "source": "subquery.slt:2505"
     },
     {
       "sql": "SELECT sq_name_t1.id * 10 + (\n  SELECT count(*) AS id\n  FROM sq_name_t2\n  WHERE sq_name_t2.outer_id = sq_name_t1.id\n) AS total\nFROM sq_name_t1\nORDER BY sq_name_t1.id;",
-      "source": "subquery.slt:2376"
+      "source": "subquery.slt:2518"
     },
     {
       "sql": "SELECT column1, column2 FROM subquery_partitioned\nWHERE part = (SELECT 1)\nORDER BY column1;",
-      "source": "subquery.slt:2418"
+      "source": "subquery.slt:2560"
     },
     {
       "sql": "select cntrycode, count(*) as numcust, sum(c_acctbal) as totacctbal\nfrom (\n    select substring(c_phone from 1 for 2) as cntrycode, c_acctbal\n    from sq_count_customer\n    where c_acctbal > (\n        select avg(c_acctbal) from sq_count_customer where c_acctbal > 0.00\n    )\n      and not exists (\n        select * from sq_count_orders where o_custkey = c_custkey\n      )\n) as custsale\ngroup by cntrycode\norder by cntrycode;",
-      "source": "subquery.slt:2471"
+      "source": "subquery.slt:2613"
     },
     {
       "sql": "select count(*) from (\n    select cntrycode, count(*) as numcust, sum(c_acctbal) as totacctbal\n    from (\n        select substring(c_phone from 1 for 2) as cntrycode, c_acctbal\n        from sq_count_customer\n        where c_acctbal > (\n            select avg(c_acctbal) from sq_count_customer where c_acctbal > 0.00\n        )\n          and not exists (\n            select * from sq_count_orders where o_custkey = c_custkey\n          )\n    ) as custsale\n    group by cntrycode\n) as q;",
-      "source": "subquery.slt:2490"
+      "source": "subquery.slt:2632"
+    },
+    {
+      "sql": "SELECT x FROM nia_left WHERE x NOT IN (SELECT y FROM nia_right_with_null) ORDER BY x;",
+      "source": "subquery.slt:2676"
+    },
+    {
+      "sql": "SELECT x FROM nia_left WHERE x NOT IN (SELECT y FROM nia_right_no_null) ORDER BY x;",
+      "source": "subquery.slt:2697"
+    },
+    {
+      "sql": "SELECT m.host, m.bytes_sent\nFROM metrics m\nWHERE m.bytes_sent > (\n    WITH avg_per_host AS (\n        SELECT avg(bytes_sent) AS avg_bytes\n        FROM metrics\n        WHERE host = m.host\n    )\n    SELECT avg_bytes FROM avg_per_host\n)\nORDER BY m.host;",
+      "source": "subquery.slt:2723"
     },
     {
       "sql": "SELECT - tab1.col0 * 84 + + 38 AS col2 FROM tab1 GROUP BY tab1.col0",
@@ -3198,6 +3360,38 @@
       "source": "group_by.slt:5561"
     },
     {
+      "sql": "SELECT DISTINCT u.id\n  FROM users_with_pk u\n  LEFT JOIN user_orders o ON u.id = o.user_id\n  ORDER BY u.id;",
+      "source": "group_by.slt:5660"
+    },
+    {
+      "sql": "SELECT column2, count(*) FROM duration_group_test GROUP BY column2 ORDER BY column2;",
+      "source": "group_by.slt:5701"
+    },
+    {
+      "sql": "SELECT column1, column2, count(*)\nFROM duration_group_test GROUP BY column1, column2 ORDER BY column1, column2;",
+      "source": "group_by.slt:5708"
+    },
+    {
+      "sql": "SELECT count(*) FROM (SELECT column1 FROM float16_group_test GROUP BY column1);",
+      "source": "group_by.slt:5729"
+    },
+    {
+      "sql": "SELECT count(*) FROM (SELECT column1, column2 FROM float16_group_test GROUP BY column1, column2);",
+      "source": "group_by.slt:5735"
+    },
+    {
+      "sql": "SELECT count(*) FROM interval_group_test GROUP BY column2 ORDER BY count(*);",
+      "source": "group_by.slt:5752"
+    },
+    {
+      "sql": "SELECT column1, count(*)\nFROM interval_group_test GROUP BY column1, column2 ORDER BY column1, count(*);",
+      "source": "group_by.slt:5759"
+    },
+    {
+      "sql": "select k, d, count(*) from decimal256_multi_group group by k, d order by k, d;",
+      "source": "group_by.slt:5775"
+    },
+    {
       "sql": "SELECT id FROM alltypes_plain ORDER BY int_col, double_col",
       "source": "order.slt:44"
     },
@@ -3331,111 +3525,131 @@
     },
     {
       "sql": "SELECT a FROM repeat_much ORDER BY a LIMIT 20;",
-      "source": "order.slt:853"
-    },
-    {
-      "sql": "SELECT * FROM t1 ORDER BY id DESC, id, name, id ASC;",
-      "source": "order.slt:933"
-    },
-    {
-      "sql": "SELECT * FROM t1 ORDER BY id ASC, id, name, id DESC;",
       "source": "order.slt:952"
     },
     {
+      "sql": "SELECT * FROM t1 ORDER BY id DESC, id, name, id ASC;",
+      "source": "order.slt:1032"
+    },
+    {
+      "sql": "SELECT * FROM t1 ORDER BY id ASC, id, name, id DESC;",
+      "source": "order.slt:1051"
+    },
+    {
       "sql": "WITH\n    m0(t) AS (\n        VALUES (0), (1), (2)),\n    m1(t) AS (\n        VALUES (0), (1)),\n    u AS (\n        SELECT 0 as m, t FROM m0 GROUP BY 1, 2),\n    v AS (\n        SELECT 1 as m, t FROM m1 GROUP BY 1, 2)\nSELECT * FROM u\nUNION ALL\nSELECT * FROM v\nORDER BY 1, 2;",
-      "source": "order.slt:981"
+      "source": "order.slt:1080"
     },
     {
       "sql": "select column1, column2 from foo ORDER BY column1, column2;",
-      "source": "order.slt:1057"
+      "source": "order.slt:1156"
     },
     {
       "sql": "select column1, column2 from foo ORDER BY column1 desc, column2;",
-      "source": "order.slt:1069"
+      "source": "order.slt:1168"
     },
     {
       "sql": "select column1, column2 from foo ORDER BY column1, column2 desc;",
-      "source": "order.slt:1081"
-    },
-    {
-      "sql": "select column1, column2 from foo ORDER BY column1 desc, column2 desc;",
-      "source": "order.slt:1093"
-    },
-    {
-      "sql": "select column2, column1 from foo ORDER BY column2, column1;",
-      "source": "order.slt:1105"
-    },
-    {
-      "sql": "select column2, column1 from foo ORDER BY column2 desc, column1;",
-      "source": "order.slt:1117"
-    },
-    {
-      "sql": "select column2, column1 from foo ORDER BY column2, column1 desc;",
-      "source": "order.slt:1129"
-    },
-    {
-      "sql": "select column2, column1 from foo ORDER BY column2 desc, column1 desc;",
-      "source": "order.slt:1141"
-    },
-    {
-      "sql": "SELECT\n   SUM(column1)\nFROM foo\nHAVING SUM(column1) > 0\nORDER BY SUM(column1)",
-      "source": "order.slt:1155"
-    },
-    {
-      "sql": "SELECT SUM(column1)\n  FROM foo\nGROUP BY column2\nORDER BY SUM(column1)",
-      "source": "order.slt:1165"
-    },
-    {
-      "sql": "SELECT\n  SUM(column1)\nFROM foo\nGROUP BY column2\nHAVING SUM(column1) < 3\nORDER BY SUM(column1)",
       "source": "order.slt:1180"
     },
     {
+      "sql": "select column1, column2 from foo ORDER BY column1 desc, column2 desc;",
+      "source": "order.slt:1192"
+    },
+    {
+      "sql": "select column2, column1 from foo ORDER BY column2, column1;",
+      "source": "order.slt:1204"
+    },
+    {
+      "sql": "select column2, column1 from foo ORDER BY column2 desc, column1;",
+      "source": "order.slt:1216"
+    },
+    {
+      "sql": "select column2, column1 from foo ORDER BY column2, column1 desc;",
+      "source": "order.slt:1228"
+    },
+    {
+      "sql": "select column2, column1 from foo ORDER BY column2 desc, column1 desc;",
+      "source": "order.slt:1240"
+    },
+    {
+      "sql": "SELECT\n   SUM(column1)\nFROM foo\nHAVING SUM(column1) > 0\nORDER BY SUM(column1)",
+      "source": "order.slt:1254"
+    },
+    {
+      "sql": "SELECT SUM(column1)\n  FROM foo\nGROUP BY column2\nORDER BY SUM(column1)",
+      "source": "order.slt:1264"
+    },
+    {
+      "sql": "SELECT\n  SUM(column1)\nFROM foo\nGROUP BY column2\nHAVING SUM(column1) < 3\nORDER BY SUM(column1)",
+      "source": "order.slt:1279"
+    },
+    {
       "sql": "SELECT SUM(column1) FROM foo ORDER BY SUM(column1)",
-      "source": "order.slt:1194"
+      "source": "order.slt:1293"
     },
     {
       "sql": "select a as b, b as c2 from ambiguity_test order by b",
-      "source": "order.slt:1207"
+      "source": "order.slt:1306"
     },
     {
       "sql": "select * from (select c, a, NULL::int as a0, b from t order by a, c) t1\nunion all\nselect * from (select c, NULL::int as a, a0, b from t order by a0, c) t2\norder by c, a, a0, b\nlimit 2;",
-      "source": "order.slt:1227"
+      "source": "order.slt:1326"
     },
     {
       "sql": "select * from (select c, a, NULL::int as a0 from t order by a, c) t1\nunion all\nselect * from (select c, NULL::int as a, a0 from t order by a0, c) t2\norder by c, a, a0\nlimit 2;",
-      "source": "order.slt:1237"
+      "source": "order.slt:1336"
     },
     {
       "sql": "SELECT CAST(c as VARCHAR) as c_str\nFROM ordered_table\nORDER BY c_str\nlimit 5;",
-      "source": "order.slt:1261"
+      "source": "order.slt:1360"
     },
     {
       "sql": "SELECT CAST(c as BIGINT) as c_bigint\nFROM ordered_table\nORDER BY c_bigint\nlimit 5;",
-      "source": "order.slt:1292"
+      "source": "order.slt:1391"
     },
     {
-      "sql": "SELECT (SELECT c from ordered_table ORDER BY c LIMIT 1) UNION ALL (SELECT 23 as c from ordered_table ORDER BY c LIMIT 1) ORDER BY c;",
-      "source": "order.slt:1417"
+      "sql": "SELECT a + b AS s FROM mixed_null_placement ORDER BY s;",
+      "source": "order.slt:1566"
     },
     {
-      "sql": "select * from (select b, c, a, NULL::int as a0, d from ordered_table order by a, c) t1\nunion all\nselect * from (select b, c, NULL::int as a, a0, d from ordered_table order by a0, c) t2\norder by d, c, a, a0, b\nlimit 2;",
-      "source": "order.slt:1505"
+      "sql": "SELECT a AND b AS c FROM kleene_nulls_first ORDER BY c ASC NULLS FIRST;",
+      "source": "order.slt:1617"
     },
     {
-      "sql": "SELECT\n    CASE\n        WHEN name = 'name1' THEN 0.0\n        WHEN name = 'name2' THEN 0.5\n    END AS a\nFROM (\n    SELECT 'name1' AS name\n    UNION ALL\n    SELECT 'name2'\n)\nORDER BY a DESC;",
-      "source": "order.slt:1549"
-    },
-    {
-      "sql": "SELECT * FROM addresses ORDER BY ALL;",
-      "source": "order.slt:1634"
-    },
-    {
-      "sql": "SELECT * FROM addresses ORDER BY ALL DESC;",
+      "sql": "SELECT a OR b AS c FROM kleene_nulls_first ORDER BY c ASC NULLS FIRST;",
       "source": "order.slt:1642"
     },
     {
+      "sql": "SELECT (SELECT c from ordered_table ORDER BY c LIMIT 1) UNION ALL (SELECT 23 as c from ordered_table ORDER BY c LIMIT 1) ORDER BY c;",
+      "source": "order.slt:1667"
+    },
+    {
+      "sql": "select * from (select b, c, a, NULL::int as a0, d from ordered_table order by a, c) t1\nunion all\nselect * from (select b, c, NULL::int as a, a0, d from ordered_table order by a0, c) t2\norder by d, c, a, a0, b\nlimit 2;",
+      "source": "order.slt:1755"
+    },
+    {
+      "sql": "SELECT\n    CASE\n        WHEN name = 'name1' THEN 0.0\n        WHEN name = 'name2' THEN 0.5\n    END AS a\nFROM (\n    SELECT 'name1' AS name\n    UNION ALL\n    SELECT 'name2'\n)\nORDER BY a DESC;",
+      "source": "order.slt:1799"
+    },
+    {
+      "sql": "SELECT * FROM addresses ORDER BY ALL;",
+      "source": "order.slt:1884"
+    },
+    {
+      "sql": "SELECT * FROM addresses ORDER BY ALL DESC;",
+      "source": "order.slt:1892"
+    },
+    {
       "sql": "SELECT address, zip FROM addresses ORDER BY ALL;",
-      "source": "order.slt:1650"
+      "source": "order.slt:1900"
+    },
+    {
+      "sql": "SELECT (a + b) AS result FROM ordered_u8 ORDER BY result ASC;",
+      "source": "order.slt:2022"
+    },
+    {
+      "sql": "SELECT * FROM sort_key_sink;",
+      "source": "order.slt:2111"
     },
     {
       "sql": "SELECT c1 FROM aggregate_test_100 LIMIT 2",
@@ -3644,19 +3858,1045 @@
     {
       "sql": "select * from range(0,10)\n|> EXCEPT DISTINCT (select * from range(5,10));",
       "source": "pipe_operator.slt:126"
+    },
+    {
+      "sql": "SELECT any_value(column2) IN (10, 20) FROM any_value_test;",
+      "source": "aggregate_any_value.slt:28"
+    },
+    {
+      "sql": "SELECT\n  column1,\n  any_value(column2) IN (10, 20, 30),\n  any_value(column3) IN ('first', 'second', 'third')\nFROM any_value_test\nGROUP BY column1;",
+      "source": "aggregate_any_value.slt:33"
+    },
+    {
+      "sql": "SELECT arrow_typeof(any_value(column3)) FROM any_value_test;",
+      "source": "aggregate_any_value.slt:45"
+    },
+    {
+      "sql": "SELECT any_value(column2) FROM any_value_test WHERE false;",
+      "source": "aggregate_any_value.slt:50"
+    },
+    {
+      "sql": "SELECT any_value(column2) FROM any_value_test WHERE column1 = 2;",
+      "source": "aggregate_any_value.slt:55"
+    },
+    {
+      "sql": "SELECT g, SUM(10 / v) FILTER (WHERE v <> 0)\nFROM aggregate_filter_selection\nGROUP BY g\nORDER BY g;",
+      "source": "aggregate_filter_selection.slt:37"
+    },
+    {
+      "sql": "SELECT g, SUM(10 / v) FILTER (WHERE v <> 0)\nFROM aggregate_filter_selection_skip\nGROUP BY g\nORDER BY g;",
+      "source": "aggregate_filter_selection.slt:72"
+    },
+    {
+      "sql": "SELECT count(*), sum(total)\nFROM (\n  SELECT (v * 7) % 100000 AS k, sum(v) AS total\n  FROM generate_series(1, 100000) AS t(v)\n  GROUP BY (v * 7) % 100000\n)",
+      "source": "aggregate_memory_spill.slt:44"
+    },
+    {
+      "sql": "SELECT count(*), sum(total)\nFROM (\n  SELECT (v * 7) % 100000 AS a, (v * 13) % 100000 AS b, sum(v) AS total\n  FROM generate_series(1, 100000) AS t(v)\n  GROUP BY (v * 7) % 100000, (v * 13) % 100000\n)",
+      "source": "aggregate_memory_spill.slt:70"
+    },
+    {
+      "sql": "SELECT count(*), sum(d)\nFROM (\n  SELECT (v * 7) % 100000 AS k, count(DISTINCT v) AS d\n  FROM generate_series(1, 100000) AS t(v)\n  GROUP BY (v * 7) % 100000\n)",
+      "source": "aggregate_memory_spill.slt:96"
+    },
+    {
+      "sql": "SELECT count(*), sum(s), min(mn), max(mx)\nFROM (\n  SELECT (v * 7) % 100000 AS k, sum(v) AS s, min(v) AS mn, max(v) AS mx\n  FROM generate_series(1, 100000) AS t(v)\n  GROUP BY (v * 7) % 100000\n)",
+      "source": "aggregate_memory_spill.slt:122"
+    },
+    {
+      "sql": "SELECT count(*), min(a), max(a)\nFROM (\n  SELECT (v * 7) % 100000 AS k, avg(v) AS a\n  FROM generate_series(1, 100000) AS t(v)\n  GROUP BY (v * 7) % 100000\n)",
+      "source": "aggregate_memory_spill.slt:148"
+    },
+    {
+      "sql": "SELECT count(*), sum(l)\nFROM (\n  SELECT (v * 7) % 100000 AS k, array_length(array_agg(v)) AS l\n  FROM generate_series(1, 100000) AS t(v)\n  GROUP BY (v * 7) % 100000\n)",
+      "source": "aggregate_memory_spill.slt:174"
+    },
+    {
+      "sql": "SELECT array_first([1, 2, 3, 4], x -> x > 2);",
+      "source": "array/array_first.slt:34"
+    },
+    {
+      "sql": "SELECT array_first([1, 2, 3], x -> x > 5);",
+      "source": "array/array_first.slt:40"
+    },
+    {
+      "sql": "SELECT array_first(arrow_cast(make_array(), 'List(Int32)'), x -> x > 0);",
+      "source": "array/array_first.slt:46"
+    },
+    {
+      "sql": "SELECT array_first(arrow_cast(NULL, 'List(Int32)'), x -> x > 0);",
+      "source": "array/array_first.slt:52"
+    },
+    {
+      "sql": "SELECT array_first([1, 2, NULL, 4], x -> x > 2);",
+      "source": "array/array_first.slt:58"
+    },
+    {
+      "sql": "SELECT array_first(arrow_cast([NULL, 2], 'List(Int32)'), x -> x IS NULL);",
+      "source": "array/array_first.slt:64"
+    },
+    {
+      "sql": "SELECT array_first([1, 2, 3], x -> NULL::boolean);",
+      "source": "array/array_first.slt:70"
+    },
+    {
+      "sql": "SELECT array_first([10, 20, 30], x -> true);",
+      "source": "array/array_first.slt:76"
+    },
+    {
+      "sql": "SELECT array_first(['a', 'bb', 'ccc'], x -> length(x) > 1);",
+      "source": "array/array_first.slt:82"
+    },
+    {
+      "sql": "SELECT array_first(list, x -> x > 5) FROM t;",
+      "source": "array/array_first.slt:88"
+    },
+    {
+      "sql": "SELECT array_first(list, x -> x > number) FROM t;",
+      "source": "array/array_first.slt:96"
+    },
+    {
+      "sql": "SELECT array_first(arrow_cast([1, 2, 3, 4], 'LargeList(Int32)'), x -> x > 2);",
+      "source": "array/array_first.slt:104"
+    },
+    {
+      "sql": "SELECT\n  array_first(arrow_cast([1, 2, 3, 4], 'FixedSizeList(4, Int32)'), x -> x > 2),\n  array_first(arrow_cast([1, 2, 3, 4], 'ListView(Int32)'), x -> x > 2),\n  array_first(arrow_cast([1, 2, 3, 4], 'LargeListView(Int32)'), x -> x > 2);",
+      "source": "array/array_first.slt:110"
+    },
+    {
+      "sql": "SELECT list_first([1, 2, 3, 4], x -> x > 2);",
+      "source": "array/array_first.slt:119"
+    },
+    {
+      "sql": "SELECT array_agg(c13) FROM (SELECT * FROM aggregate_test_100 ORDER BY c13 LIMIT 2) test",
+      "source": "array_agg.slt:56"
+    },
+    {
+      "sql": "SELECT array_agg(c13) FROM (SELECT * FROM aggregate_test_100 LIMIT 0) test",
+      "source": "array_agg.slt:62"
+    },
+    {
+      "sql": "SELECT array_agg(c13) FROM (SELECT * FROM aggregate_test_100 ORDER BY c13 LIMIT 1) test",
+      "source": "array_agg.slt:68"
+    },
+    {
+      "sql": "SELECT ARRAY_AGG([])",
+      "source": "array_agg.slt:74"
+    },
+    {
+      "sql": "SELECT ARRAY_AGG([1])",
+      "source": "array_agg.slt:80"
+    },
+    {
+      "sql": "select array_agg(a) from t where a > 2;",
+      "source": "array_agg.slt:90"
+    },
+    {
+      "sql": "select array_agg(b) from t where b > 3.1;",
+      "source": "array_agg.slt:95"
+    },
+    {
+      "sql": "select array_agg(c) from t where c > 3;",
+      "source": "array_agg.slt:100"
+    },
+    {
+      "sql": "select array_agg(c), count(1) from t where c > 3;",
+      "source": "array_agg.slt:105"
+    },
+    {
+      "sql": "select array_agg(a) from t where a > 3 group by a;",
+      "source": "array_agg.slt:111"
+    },
+    {
+      "sql": "select array_agg(a), count(1) from t where a > 3 group by a;",
+      "source": "array_agg.slt:115"
+    },
+    {
+      "sql": "select array_agg(distinct a) from t where a > 3;",
+      "source": "array_agg.slt:120"
+    },
+    {
+      "sql": "select array_agg(distinct a), count(1) from t where a > 3;",
+      "source": "array_agg.slt:125"
+    },
+    {
+      "sql": "select array_agg(distinct a) from t where a > 3 group by a;",
+      "source": "array_agg.slt:131"
+    },
+    {
+      "sql": "select array_agg(distinct a), count(1) from t where a > 3 group by a;",
+      "source": "array_agg.slt:135"
+    },
+    {
+      "sql": "select array_agg(a order by a) from t where a > 3;",
+      "source": "array_agg.slt:140"
+    },
+    {
+      "sql": "select array_agg(a order by a) from t where a > 3 group by a;",
+      "source": "array_agg.slt:145"
+    },
+    {
+      "sql": "select array_agg(a order by a), count(1) from t where a > 3 group by a;",
+      "source": "array_agg.slt:149"
+    },
+    {
+      "sql": "select array_agg(a) from t;",
+      "source": "array_agg.slt:160"
+    },
+    {
+      "sql": "select array_agg(b) from t;",
+      "source": "array_agg.slt:165"
+    },
+    {
+      "sql": "select array_agg(c) from t;",
+      "source": "array_agg.slt:170"
+    },
+    {
+      "sql": "select array_agg(distinct a), count(1) from t;",
+      "source": "array_agg.slt:175"
+    },
+    {
+      "sql": "select array_agg(distinct b), count(1) from t;",
+      "source": "array_agg.slt:180"
+    },
+    {
+      "sql": "select array_agg(c1) from t;",
+      "source": "array_agg.slt:198"
+    },
+    {
+      "sql": "select array_agg(column1) from t;",
+      "source": "array_agg.slt:210"
+    },
+    {
+      "sql": "select array_agg(column1) ignore nulls as c1 from t;",
+      "source": "array_agg.slt:222"
+    },
+    {
+      "sql": "select count(*), array_length(array_agg(distinct column2) ignore nulls) from t;",
+      "source": "array_agg.slt:227"
+    },
+    {
+      "sql": "select array_agg(column2 order by column1) ignore nulls from t;",
+      "source": "array_agg.slt:232"
+    },
+    {
+      "sql": "select array_agg(DISTINCT column2 order by column2) ignore nulls from t;",
+      "source": "array_agg.slt:237"
+    },
+    {
+      "sql": "SELECT array_agg(c13 ORDER BY c13)\nFROM\n  (SELECT *\n  FROM aggregate_test_100\n  ORDER BY c13\n  LIMIT 5) as t1",
+      "source": "array_agg.slt:250"
+    },
+    {
+      "sql": "SELECT array_agg(DISTINCT c13 ORDER BY c13)\nFROM\n  (SELECT *\n  FROM aggregate_test_100\n  ORDER BY c13\n  LIMIT 5) as t1",
+      "source": "array_agg.slt:261"
+    },
+    {
+      "sql": "with tbl as (SELECT * FROM (VALUES ('xxx', 'yyy'), ('xxx', 'yyy'), ('xxx2', 'yyy2')) AS t(x, y))\nselect\n    array_agg(x order by x) as x_agg,\n    array_agg(y order by y) as y_agg\nfrom tbl\ngroup by all",
+      "source": "array_agg.slt:279"
+    },
+    {
+      "sql": "SELECT\n    (SELECT array_agg(c12 ORDER BY c12) FROM aggregate_test_100),\n    (SELECT array_agg(c13 ORDER BY c13) FROM aggregate_test_100)",
+      "source": "array_agg.slt:289"
+    },
+    {
+      "sql": "SELECT\n    array_agg(c12 ORDER BY c12),\n    array_agg(c13 ORDER BY c13)\nFROM aggregate_test_100",
+      "source": "array_agg.slt:296"
+    },
+    {
+      "sql": "with tbl as (SELECT * FROM (VALUES ('xxx', 'yyy'), ('xxx', 'yyy'), ('xxx2', 'yyy2')) AS t(x, y))\nselect\n    array_agg(distinct x order by x) as x_agg,\n    array_agg(distinct y order by y) as y_agg\nfrom tbl\ngroup by all",
+      "source": "array_agg.slt:304"
+    },
+    {
+      "sql": "SELECT\n    (SELECT array_agg(DISTINCT c12 ORDER BY c12) FROM aggregate_test_100),\n    (SELECT array_agg(DISTINCT c13 ORDER BY c13) FROM aggregate_test_100)",
+      "source": "array_agg.slt:314"
+    },
+    {
+      "sql": "SELECT\n    array_agg(DISTINCT c12 ORDER BY c12),\n    array_agg(DISTINCT c13 ORDER BY c13)\nFROM aggregate_test_100",
+      "source": "array_agg.slt:321"
+    },
+    {
+      "sql": "select array_agg(c1 order by c2 desc, c3) from agg_order;",
+      "source": "array_agg.slt:340"
+    },
+    {
+      "sql": "select array_agg(c1 order by c1), array_agg(c1 order by c1 desc) from agg_order;",
+      "source": "array_agg.slt:379"
+    },
+    {
+      "sql": "select column1, array_agg(column3 order by column2, column4 desc) from array_agg_order_list_table group by column1;",
+      "source": "array_agg.slt:394"
+    },
+    {
+      "sql": "select column1, first_value(column3 order by column2, column4 desc), last_value(column3 order by column2, column4 desc) from array_agg_order_list_table group by column1;",
+      "source": "array_agg.slt:400"
+    },
+    {
+      "sql": "select column1, nth_value(column3, 2 order by column2, column4 desc) from array_agg_order_list_table group by column1;",
+      "source": "array_agg.slt:406"
+    },
+    {
+      "sql": "select array_agg(DISTINCT column2 order by column2) from array_agg_order_list_table;",
+      "source": "array_agg.slt:412"
+    },
+    {
+      "sql": "select array_agg(DISTINCT column2 order by column2 desc) from array_agg_order_list_table;",
+      "source": "array_agg.slt:417"
+    },
+    {
+      "sql": "select array_agg(DISTINCT column2 + 1 order by column2 + 1 desc) from array_agg_order_list_table;",
+      "source": "array_agg.slt:422"
+    },
+    {
+      "sql": "select array_agg(DISTINCT column2 order by column2) from array_agg_order_list_table GROUP BY column1;",
+      "source": "array_agg.slt:427"
+    },
+    {
+      "sql": "SELECT array_sort(array_agg(distinct c2)), count(1) FROM aggregate_test_100",
+      "source": "array_agg.slt:445"
+    },
+    {
+      "sql": "select array_sort(c1), array_sort(c2) from (\n  select array_agg(distinct column1) as c1, array_agg(distinct column2) ignore nulls as c2 from array_agg_distinct_list_table\n);",
+      "source": "array_agg.slt:466"
+    },
+    {
+      "sql": "SELECT array_sort(ARRAY_AGG(DISTINCT x IGNORE NULLS)) as result\nFROM (VALUES (1), (2), (NULL), (2), (NULL), (1)) AS t(x);",
+      "source": "array_agg.slt:478"
+    },
+    {
+      "sql": "with A as (\n    select 1 as id, 2 as foo\n    UNION ALL\n    select 1, null\n    UNION ALL\n    select 1, null\n    UNION ALL\n    select 1, 3\n    UNION ALL\n    select 1, 2\n    ---- The order is non-deterministic, verify with length\n) select array_length(array_agg(distinct a.foo)), sum(distinct 1) from A a group by a.id;",
+      "source": "array_agg.slt:485"
+    },
+    {
+      "sql": "select array_sort(c1), array_sort(c2) from (\n  select array_agg(distinct arrow_cast(column1, 'Dictionary(Int32, Utf8)')) as c1,\n         array_agg(distinct arrow_cast(column2, 'Dictionary(Int8, Int64)')) ignore nulls as c2\n  from array_agg_distinct_dict_table\n);",
+      "source": "array_agg.slt:581"
+    },
+    {
+      "sql": "select arrow_typeof(array_agg(distinct arrow_cast(column1, 'Dictionary(Int32, Utf8)')))\nfrom array_agg_distinct_dict_table;",
+      "source": "array_agg.slt:592"
+    },
+    {
+      "sql": "select array_sort(c) from (\n  select array_agg(distinct struct(arrow_cast(column1, 'Dictionary(Int32, Utf8)') as f)) as c\n  from array_agg_distinct_dict_table\n);",
+      "source": "array_agg.slt:599"
+    },
+    {
+      "sql": "select array_agg(distinct arrow_cast(column1, 'Dictionary(Int32, Utf8)'))\nfrom array_agg_distinct_dict_table where column2 > 100;",
+      "source": "array_agg.slt:608"
+    },
+    {
+      "sql": "select arrow_typeof(array_agg(distinct arrow_cast(column1, 'Dictionary(Int32, Utf8)')))\nfrom array_agg_distinct_dict_table where column2 > 100;",
+      "source": "array_agg.slt:614"
+    },
+    {
+      "sql": "select column1, first_value(column3 order by column2), last_value(column3 order by column2)\nfrom first_last_struct group by column1 order by column1;",
+      "source": "first_last_nested.slt:43"
+    },
+    {
+      "sql": "select column1, first_value(column3 order by column2 desc), last_value(column3 order by column2 desc)\nfrom first_last_struct group by column1 order by column1;",
+      "source": "first_last_nested.slt:51"
+    },
+    {
+      "sql": "select column1, first_value(column3 order by column2), last_value(column3 order by column2)\nfrom first_last_map group by column1 order by column1;",
+      "source": "first_last_nested.slt:73"
+    },
+    {
+      "sql": "SELECT x, y FROM t_uniq;",
+      "source": "functional_dependencies.slt:56"
+    },
+    {
+      "sql": "SELECT DISTINCT x FROM t_uniq ORDER BY x NULLS LAST;",
+      "source": "functional_dependencies.slt:77"
+    },
+    {
+      "sql": "SELECT DISTINCT p.x FROM t_pk p LEFT JOIN t_orders o ON p.x = o.x ORDER BY p.x;",
+      "source": "functional_dependencies.slt:95"
+    },
+    {
+      "sql": "SELECT DISTINCT x FROM (SELECT x FROM t_uniq GROUP BY x) ORDER BY x NULLS LAST;",
+      "source": "functional_dependencies.slt:114"
+    },
+    {
+      "sql": "SELECT x, y FROM t_uniq ORDER BY x NULLS LAST, y;",
+      "source": "functional_dependencies.slt:143"
+    },
+    {
+      "sql": "SELECT x FROM t_uniq GROUP BY x, y;",
+      "source": "functional_dependencies.slt:184"
+    },
+    {
+      "sql": "SELECT x, y FROM t_uniq GROUP BY x, y;",
+      "source": "functional_dependencies.slt:199"
+    },
+    {
+      "sql": "SELECT x, y FROM t_pk GROUP BY x;",
+      "source": "functional_dependencies.slt:208"
+    },
+    {
+      "sql": "SELECT x, y FROM t_uniq GROUP BY x;",
+      "source": "functional_dependencies.slt:229"
+    },
+    {
+      "sql": "SELECT g.x, count(*) AS c\n  FROM t_probe a\n  LEFT JOIN (SELECT x, count(*) AS cnt FROM t_null GROUP BY x) g\n    ON a.z = g.cnt\n  GROUP BY g.x, g.cnt\n  ORDER BY c;",
+      "source": "functional_dependencies.slt:252"
+    },
+    {
+      "sql": "SELECT g.x, g.cnt\n  FROM t_probe a\n  LEFT JOIN (SELECT x, count(*) AS cnt FROM t_null GROUP BY x) g\n    ON a.z = g.cnt\n  ORDER BY g.x, g.cnt;",
+      "source": "functional_dependencies.slt:284"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM mk_l l\nWHERE l.v > 35 OR EXISTS (SELECT 1 FROM mk_r r WHERE l.k = r.k);",
+      "source": "mark_join_matrix.slt:64"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM mk_l l\nWHERE l.v > 35 OR NOT EXISTS (SELECT 1 FROM mk_r r WHERE l.k = r.k);",
+      "source": "mark_join_matrix.slt:74"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM mk_l l\nWHERE l.k < 0 OR EXISTS (SELECT 1 FROM mk_r r WHERE l.k = r.k);",
+      "source": "mark_join_matrix.slt:85"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM mk_l l\nWHERE l.k < 0 OR NOT EXISTS (SELECT 1 FROM mk_r r WHERE l.k = r.k);",
+      "source": "mark_join_matrix.slt:94"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM mk_l l\nWHERE l.v > 35 OR l.k IN (SELECT r.k FROM mk_r r);",
+      "source": "mark_join_matrix.slt:104"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM mk_l l\nWHERE l.v > 35 OR l.k NOT IN (SELECT r.k FROM mk_r_nn r);",
+      "source": "mark_join_matrix.slt:114"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM mk_l l\nWHERE l.v > 35 OR EXISTS (SELECT 1 FROM mk_empty r WHERE l.k = r.k);",
+      "source": "mark_join_matrix.slt:131"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM mk_l l\nWHERE l.k < 0 OR NOT EXISTS (SELECT 1 FROM mk_empty r WHERE l.k = r.k);",
+      "source": "mark_join_matrix.slt:139"
+    },
+    {
+      "sql": "SELECT l.k1, l.k2, l.v FROM mk2_l l\nWHERE l.v > 35 OR EXISTS (SELECT 1 FROM mk2_r r WHERE l.k1 = r.k1 AND l.k2 = r.k2);",
+      "source": "mark_join_matrix.slt:157"
+    },
+    {
+      "sql": "SELECT l.k, l.d FROM mkf_l l\nWHERE l.d < 0 OR EXISTS (SELECT 1 FROM mkf_r r WHERE l.k = r.k AND r.d <> l.d);",
+      "source": "mark_join_matrix.slt:175"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM mk_l l\nWHERE l.v > 100 OR EXISTS (SELECT 1 FROM mk_r r WHERE l.k > r.k);",
+      "source": "mark_join_matrix.slt:189"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM mk_l l\nWHERE l.k < 0 OR NOT EXISTS (SELECT 1 FROM mk_r r WHERE l.k > r.k);",
+      "source": "mark_join_matrix.slt:198"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_table\nWHERE (id NOT IN (SELECT id FROM inner_table_with_null)) IS NULL;",
+      "source": "null_aware_mark_join.slt:98"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_table\nWHERE (id NOT IN (SELECT id FROM inner_table_no_null)) IS NULL;",
+      "source": "null_aware_mark_join.slt:128"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_table\nWHERE (id NOT IN (SELECT id FROM empty_table)) IS TRUE;",
+      "source": "null_aware_mark_join.slt:135"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_corr_table\nWHERE (id NOT IN (\n  SELECT id\n  FROM inner_corr_table\n  WHERE inner_corr_table.grp = outer_corr_table.grp\n)) IS NULL;",
+      "source": "null_aware_mark_join.slt:147"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_corr_table\nWHERE (id NOT IN (\n  SELECT id\n  FROM inner_corr_table\n  WHERE inner_corr_table.grp = outer_corr_table.grp\n)) IS TRUE;",
+      "source": "null_aware_mark_join.slt:161"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_corr_all_null_keys\nWHERE (id NOT IN (\n  SELECT id\n  FROM inner_corr_table\n  WHERE inner_corr_table.grp = outer_corr_all_null_keys.grp\n)) IS NULL;",
+      "source": "null_aware_mark_join.slt:174"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_corr_all_null_keys\nWHERE (id NOT IN (\n  SELECT id\n  FROM inner_corr_table\n  WHERE inner_corr_table.grp = outer_corr_all_null_keys.grp\n)) IS TRUE;",
+      "source": "null_aware_mark_join.slt:186"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_corr_all_null_keys\nWHERE (id NOT IN (\n  SELECT id\n  FROM inner_corr_table\n  WHERE inner_corr_table.grp = outer_corr_all_null_keys.grp\n)) IS FALSE;",
+      "source": "null_aware_mark_join.slt:197"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_table\nWHERE EXISTS (\n    SELECT *\n    FROM inner_table_with_null\n    WHERE inner_table_with_null.id = outer_table.id\n) OR value = 'e';",
+      "source": "null_aware_mark_join.slt:237"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_table\nWHERE NOT EXISTS (\n    SELECT *\n    FROM inner_table_with_null\n    WHERE inner_table_with_null.id = outer_table.id\n) OR value = 'b';",
+      "source": "null_aware_mark_join.slt:276"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_table\nWHERE (id = ANY (SELECT id FROM inner_table_with_null)) IS NULL;",
+      "source": "null_aware_mark_join.slt:325"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_table\nWHERE (id = ANY (SELECT id FROM inner_table_no_null)) IS TRUE;",
+      "source": "null_aware_mark_join.slt:365"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_table\nWHERE (id = ANY (SELECT id FROM inner_table_no_null)) IS NULL;",
+      "source": "null_aware_mark_join.slt:375"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_table\nWHERE (id IN (SELECT id FROM inner_table_with_null)) IS NULL;",
+      "source": "null_aware_mark_join.slt:404"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_table\nWHERE (EXISTS (\n    SELECT 1\n    FROM inner_table_no_null\n    WHERE outer_table.id < inner_table_no_null.id\n)) IS TRUE;",
+      "source": "null_aware_mark_join.slt:472"
+    },
+    {
+      "sql": "SELECT value\nFROM outer_pushdown_table\nWHERE id NOT IN (\n  SELECT id\n  FROM inner_pushdown_table\n  WHERE inner_pushdown_table.grp = outer_pushdown_table.grp\n) OR value = 'zzz';",
+      "source": "null_aware_mark_join.slt:541"
+    },
+    {
+      "sql": "SELECT v1, sum(v1 * 2)\nFROM generate_series(20000) AS t1(v1)\nGROUP BY v1",
+      "source": "ordered_aggregate_spill.slt:59"
+    },
+    {
+      "sql": "SELECT round(v1, -4), v1 % 5000, sum(v1 * 2)\nFROM generate_series(20000) AS t1(v1)\nGROUP BY round(v1, -4), v1 % 5000",
+      "source": "ordered_aggregate_spill.slt:105"
+    },
+    {
+      "sql": "SELECT round(v1, -4), v1 % 5000, min(v1 * 2), avg(v1)\nFROM generate_series(20000) AS t1(v1)\nGROUP BY round(v1, -4), v1 % 5000",
+      "source": "ordered_aggregate_spill.slt:203"
+    },
+    {
+      "sql": "SELECT id, events, s FROM narrow ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:59"
+    },
+    {
+      "sql": "SELECT id, events IS NULL, s IS NULL FROM narrow ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:68"
+    },
+    {
+      "sql": "SELECT id, s['x'] FROM narrow ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:75"
+    },
+    {
+      "sql": "SELECT id, e['x'] FROM (SELECT id, unnest(events) AS e FROM narrow) ORDER BY id, e['x'];",
+      "source": "parquet_nested_schema_pruning.slt:82"
+    },
+    {
+      "sql": "SELECT * FROM narrow ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:151"
+    },
+    {
+      "sql": "SELECT id, s, s['y'] FROM narrow ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:160"
+    },
+    {
+      "sql": "SELECT count(*), sum(s['x']), string_agg(s['y'], ',' ORDER BY id) FROM narrow;",
+      "source": "parquet_nested_schema_pruning.slt:168"
+    },
+    {
+      "sql": "SELECT id, s FROM narrow WHERE s['x'] = 200 ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:174"
+    },
+    {
+      "sql": "SELECT id, events, s FROM reordered ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:190"
+    },
+    {
+      "sql": "SELECT id, n FROM nested_narrow ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:240"
+    },
+    {
+      "sql": "SELECT id, n IS NULL, n['inner'] IS NULL FROM nested_narrow ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:247"
+    },
+    {
+      "sql": "SELECT id, events FROM two_level_narrow ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:329"
+    },
+    {
+      "sql": "SELECT id, i['group_id'], i['entity_id']\nFROM (SELECT id, unnest(e['items']) AS i\n      FROM (SELECT id, unnest(events) AS e FROM two_level_narrow))\nORDER BY id, i['group_id'];",
+      "source": "parquet_nested_schema_pruning.slt:336"
+    },
+    {
+      "sql": "SELECT id, s FROM map_sibling ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:387"
+    },
+    {
+      "sql": "SELECT id, s FROM mixed_files ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:427"
+    },
+    {
+      "sql": "SELECT id, s FROM narrow WHERE id >= 2 ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:450"
+    },
+    {
+      "sql": "SELECT CAST(s AS STRUCT<y VARCHAR>) FROM exact ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:486"
+    },
+    {
+      "sql": "SELECT CAST(s AS STRUCT<x BIGINT>) AS q0,\n       CAST(s AS STRUCT<pad VARCHAR>) AS q1\nFROM exact ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:494"
+    },
+    {
+      "sql": "SELECT CAST(s AS STRUCT<x BIGINT>) AS q0,\n       CAST(s AS STRUCT<x BIGINT, y VARCHAR>) AS q1\nFROM exact ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:504"
+    },
+    {
+      "sql": "SELECT CAST(s AS STRUCT<x BIGINT>) AS q0, s['y'] AS q1\nFROM exact ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:514"
+    },
+    {
+      "sql": "SELECT CAST(events AS ARRAY<STRUCT<x BIGINT>>) AS q0,\n       CAST(events AS ARRAY<STRUCT<y VARCHAR>>) AS q1\nFROM exact ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:523"
+    },
+    {
+      "sql": "SELECT CAST(s AS STRUCT<x BIGINT>) AS q0,\n       CAST(s AS STRUCT<x BIGINT>) AS q1\nFROM exact ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:533"
+    },
+    {
+      "sql": "SELECT CAST(s AS STRUCT<x BIGINT>) AS q0, s\nFROM exact ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:543"
+    },
+    {
+      "sql": "SELECT CAST(s AS STRUCT<y VARCHAR>) FROM narrow ORDER BY id;",
+      "source": "parquet_nested_schema_pruning.slt:579"
+    },
+    {
+      "sql": "SELECT count(*) FROM pb_l l WHERE EXISTS (SELECT 1 FROM range(3, 8) r WHERE l.v > r.value);",
+      "source": "piecewise_merge_join_batches.slt:64"
+    },
+    {
+      "sql": "SELECT count(*) FROM pb_l l JOIN range(3, 8) r ON l.v < r.value;",
+      "source": "piecewise_merge_join_batches.slt:95"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_l l JOIN cj_r r ON l.lv < r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:49"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_l l JOIN cj_r r ON l.lv <= r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:56"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_l l JOIN cj_r r ON l.lv > r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:65"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_l l JOIN cj_r r ON l.lv >= r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:70"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_l l LEFT JOIN cj_r r ON l.lv < r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:79"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_l l RIGHT JOIN cj_r r ON l.lv < r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:90"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_l l RIGHT JOIN cj_r r ON l.lv >= r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:100"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_l l FULL JOIN cj_r r ON l.lv < r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:110"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_l l JOIN cj_empty r ON l.lv < r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:124"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_l l LEFT JOIN cj_empty r ON l.lv < r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:128"
+    },
+    {
+      "sql": "SELECT l.rid, l.rv, r.rid, r.rv FROM cj_empty l RIGHT JOIN cj_r r ON l.rv < r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:138"
+    },
+    {
+      "sql": "SELECT l.lid, l.lv, r.rid, r.rv FROM cj_dup_l l JOIN cj_dup_r r ON l.lv < r.rv;",
+      "source": "piecewise_merge_join_matrix.slt:160"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE EXISTS (SELECT 1 FROM ej_r r WHERE l.v < r.v);",
+      "source": "piecewise_merge_join_matrix.slt:196"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE NOT EXISTS (SELECT 1 FROM ej_r r WHERE l.v < r.v);",
+      "source": "piecewise_merge_join_matrix.slt:202"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE EXISTS (SELECT 1 FROM ej_r r WHERE l.v <= r.v);",
+      "source": "piecewise_merge_join_matrix.slt:209"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE NOT EXISTS (SELECT 1 FROM ej_r r WHERE l.v <= r.v);",
+      "source": "piecewise_merge_join_matrix.slt:216"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE EXISTS (SELECT 1 FROM ej_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:222"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE NOT EXISTS (SELECT 1 FROM ej_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:228"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE EXISTS (SELECT 1 FROM ej_r r WHERE l.v >= r.v);",
+      "source": "piecewise_merge_join_matrix.slt:235"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE NOT EXISTS (SELECT 1 FROM ej_r r WHERE l.v >= r.v);",
+      "source": "piecewise_merge_join_matrix.slt:242"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE EXISTS (SELECT 1 FROM ej_r r WHERE r.v < l.v);",
+      "source": "piecewise_merge_join_matrix.slt:252"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE EXISTS (SELECT 1 FROM ej_r r WHERE l.v < r.v + 1);",
+      "source": "piecewise_merge_join_matrix.slt:259"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_ln l WHERE EXISTS (SELECT 1 FROM ej_rn r WHERE l.v < r.v);",
+      "source": "piecewise_merge_join_matrix.slt:284"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_ln l WHERE NOT EXISTS (SELECT 1 FROM ej_rn r WHERE l.v < r.v);",
+      "source": "piecewise_merge_join_matrix.slt:289"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_ln l WHERE EXISTS (SELECT 1 FROM ej_rn r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:297"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_ln l WHERE NOT EXISTS (SELECT 1 FROM ej_rn r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:302"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE EXISTS (SELECT 1 FROM ej_empty r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:317"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE NOT EXISTS (SELECT 1 FROM ej_empty r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:321"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_lempty l WHERE EXISTS (SELECT 1 FROM ej_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:333"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_lempty l WHERE NOT EXISTS (SELECT 1 FROM ej_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:337"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l_allnull l WHERE EXISTS (SELECT 1 FROM ej_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:352"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l_allnull l WHERE NOT EXISTS (SELECT 1 FROM ej_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:356"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE EXISTS (SELECT 1 FROM ej_r_allnull r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:370"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE NOT EXISTS (SELECT 1 FROM ej_r_allnull r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:374"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_dup_l l WHERE EXISTS (SELECT 1 FROM ej_dup_r r WHERE l.v < r.v);",
+      "source": "piecewise_merge_join_matrix.slt:402"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_dup_l l WHERE EXISTS (SELECT 1 FROM ej_dup_r r WHERE l.v <= r.v);",
+      "source": "piecewise_merge_join_matrix.slt:408"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_dup_l l WHERE EXISTS (SELECT 1 FROM ej_dup_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:416"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_dup_l l WHERE EXISTS (SELECT 1 FROM ej_dup_r r WHERE l.v >= r.v);",
+      "source": "piecewise_merge_join_matrix.slt:423"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_dup_l l WHERE NOT EXISTS (SELECT 1 FROM ej_dup_r r WHERE l.v >= r.v);",
+      "source": "piecewise_merge_join_matrix.slt:431"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE EXISTS (SELECT 1 FROM ej_r r WHERE l.v > r.v AND r.v > 0);",
+      "source": "piecewise_merge_join_matrix.slt:442"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE NOT EXISTS (SELECT 1 FROM ej_r r WHERE l.v > r.v AND r.v > 0);",
+      "source": "piecewise_merge_join_matrix.slt:448"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_dl l WHERE EXISTS (SELECT 1 FROM ej_dr r WHERE l.d > r.d);",
+      "source": "piecewise_merge_join_matrix.slt:471"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_dl l WHERE NOT EXISTS (SELECT 1 FROM ej_dr r WHERE l.d > r.d);",
+      "source": "piecewise_merge_join_matrix.slt:477"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_fl l WHERE EXISTS (SELECT 1 FROM ej_fr r WHERE l.v < r.v);",
+      "source": "piecewise_merge_join_matrix.slt:497"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_fl l WHERE EXISTS (SELECT 1 FROM ej_fr r WHERE l.v <= r.v);",
+      "source": "piecewise_merge_join_matrix.slt:501"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_sl l WHERE EXISTS (SELECT 1 FROM ej_sr r WHERE l.s > r.s);",
+      "source": "piecewise_merge_join_matrix.slt:519"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_sl l WHERE NOT EXISTS (SELECT 1 FROM ej_sr r WHERE l.s > r.s);",
+      "source": "piecewise_merge_join_matrix.slt:525"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_dict_l l WHERE EXISTS (SELECT 1 FROM ej_dict_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:541"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_dict_l l WHERE NOT EXISTS (SELECT 1 FROM ej_dict_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:546"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_dict_l l WHERE EXISTS (SELECT 1 FROM ej_dict_r r WHERE l.v <= r.v);",
+      "source": "piecewise_merge_join_matrix.slt:553"
+    },
+    {
+      "sql": "SELECT count(*) FROM ej_range_l l WHERE EXISTS (SELECT 1 FROM range(3, 8) r WHERE l.v > r.value);",
+      "source": "piecewise_merge_join_matrix.slt:571"
+    },
+    {
+      "sql": "SELECT count(*) FROM ej_range_l l WHERE NOT EXISTS (SELECT 1 FROM range(3, 8) r WHERE l.v > r.value);",
+      "source": "piecewise_merge_join_matrix.slt:576"
+    },
+    {
+      "sql": "SELECT count(*) FROM ej_range_l l WHERE EXISTS (SELECT 1 FROM range(3, 8) r WHERE l.v < r.value);",
+      "source": "piecewise_merge_join_matrix.slt:582"
+    },
+    {
+      "sql": "SELECT count(*) FROM ej_range_l l WHERE NOT EXISTS (SELECT 1 FROM range(3, 8) r WHERE l.v < r.value);",
+      "source": "piecewise_merge_join_matrix.slt:587"
+    },
+    {
+      "sql": "SELECT count(*) FROM ej_range_l l WHERE EXISTS (SELECT 1 FROM range(3, 8) r WHERE l.v >= r.value AND r.value > 0);",
+      "source": "piecewise_merge_join_matrix.slt:594"
+    },
+    {
+      "sql": "SELECT count(*) FROM ej_range_l l WHERE NOT EXISTS (SELECT 1 FROM range(3, 8) r WHERE l.v >= r.value AND r.value > 0);",
+      "source": "piecewise_merge_join_matrix.slt:599"
+    },
+    {
+      "sql": "SELECT count(*) FROM ej_range_l l JOIN range(3, 8) r ON l.v < r.value;",
+      "source": "piecewise_merge_join_matrix.slt:606"
+    },
+    {
+      "sql": "SELECT count(*) FROM ej_range_l l LEFT JOIN range(3, 8) r ON l.v < r.value;",
+      "source": "piecewise_merge_join_matrix.slt:612"
+    },
+    {
+      "sql": "SELECT count(*) FROM ej_l l WHERE EXISTS (SELECT 1 FROM ej_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:619"
+    },
+    {
+      "sql": "SELECT r.id FROM ej_rs_l l RIGHT SEMI JOIN ej_rs_r r ON l.v > r.v;",
+      "source": "piecewise_merge_join_matrix.slt:643"
+    },
+    {
+      "sql": "SELECT r.id FROM ej_rs_l l RIGHT ANTI JOIN ej_rs_r r ON l.v > r.v;",
+      "source": "piecewise_merge_join_matrix.slt:650"
+    },
+    {
+      "sql": "SELECT l.id FROM ej_l l WHERE l.id = 4 OR EXISTS (SELECT 1 FROM ej_r r WHERE l.v > r.v);",
+      "source": "piecewise_merge_join_matrix.slt:657"
+    },
+    {
+      "sql": "SELECT key, date_bin(INTERVAL '60 seconds', timestamp) AS time_bin, sum(value)\nFROM range_sorted_time_bin\nWHERE col4 = 'a'\nGROUP BY key, time_bin\nORDER BY key, time_bin;",
+      "source": "range_sorted_time_bin_agg.slt:107"
+    },
+    {
+      "sql": "SELECT key, date_bin(INTERVAL '60 seconds', timestamp) AS time_bin, sum(value)\nFROM range_sorted_time_bin\nGROUP BY key, time_bin\nORDER BY key, time_bin;",
+      "source": "range_sorted_time_bin_agg.slt:137"
+    },
+    {
+      "sql": "SELECT count(*) FROM smj_dup_l l JOIN smj_dup_r r ON l.k = r.k;",
+      "source": "sort_merge_join_batches.slt:57"
+    },
+    {
+      "sql": "SELECT l.k, l.v, r.w FROM smj_l l JOIN smj_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:53"
+    },
+    {
+      "sql": "SELECT l.k, l.v, r.w FROM smj_l l LEFT JOIN smj_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:63"
+    },
+    {
+      "sql": "SELECT l.v, r.k, r.w FROM smj_l l RIGHT JOIN smj_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:75"
+    },
+    {
+      "sql": "SELECT l.k, l.v, r.w FROM smj_l l FULL JOIN smj_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:87"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM smj_l l WHERE EXISTS (SELECT 1 FROM smj_r r WHERE l.k = r.k);",
+      "source": "sort_merge_join_matrix.slt:105"
+    },
+    {
+      "sql": "SELECT l.k, l.v FROM smj_l l WHERE NOT EXISTS (SELECT 1 FROM smj_r r WHERE l.k = r.k);",
+      "source": "sort_merge_join_matrix.slt:113"
+    },
+    {
+      "sql": "SELECT r.k, r.w FROM smj_l l RIGHT SEMI JOIN smj_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:120"
+    },
+    {
+      "sql": "SELECT r.k, r.w FROM smj_l l RIGHT ANTI JOIN smj_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:128"
+    },
+    {
+      "sql": "SELECT l.k, l.v, r.w FROM smj_l l JOIN smj_r r ON l.k IS NOT DISTINCT FROM r.k;",
+      "source": "sort_merge_join_matrix.slt:138"
+    },
+    {
+      "sql": "SELECT l.k1, l.k2, l.v, r.w\nFROM smj_mk_l l JOIN smj_mk_r r ON l.k1 = r.k1 AND l.k2 = r.k2;",
+      "source": "sort_merge_join_matrix.slt:159"
+    },
+    {
+      "sql": "SELECT l.k1, l.k2, l.v, r.w\nFROM smj_mk_l l LEFT JOIN smj_mk_r r ON l.k1 = r.k1 AND l.k2 = r.k2;",
+      "source": "sort_merge_join_matrix.slt:167"
+    },
+    {
+      "sql": "SELECT l.k, l.x, r.k, r.y FROM smj_a l JOIN smj_b r ON l.k = r.k AND l.x < r.y;",
+      "source": "sort_merge_join_matrix.slt:186"
+    },
+    {
+      "sql": "SELECT l.k, l.x, r.y FROM smj_a l LEFT JOIN smj_b r ON l.k = r.k AND l.x < r.y;",
+      "source": "sort_merge_join_matrix.slt:195"
+    },
+    {
+      "sql": "SELECT l.k, l.x, r.k, r.y FROM smj_a l FULL JOIN smj_b r ON l.k = r.k AND l.x < r.y;",
+      "source": "sort_merge_join_matrix.slt:205"
+    },
+    {
+      "sql": "SELECT l.k, l.v, r.w FROM smj_sk_l l JOIN smj_sk_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:225"
+    },
+    {
+      "sql": "SELECT l.k, l.v, r.w FROM smj_sk_l l FULL JOIN smj_sk_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:231"
+    },
+    {
+      "sql": "SELECT l.k, l.v, r.w FROM smj_l l JOIN smj_empty r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:246"
+    },
+    {
+      "sql": "SELECT l.k, l.v, r.w FROM smj_l l LEFT JOIN smj_empty r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:250"
+    },
+    {
+      "sql": "SELECT l.k, r.k, r.w FROM smj_empty l RIGHT JOIN smj_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:260"
+    },
+    {
+      "sql": "SELECT count(*) FROM smj_dup_l l LEFT JOIN smj_dup_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:289"
+    },
+    {
+      "sql": "SELECT count(*) FROM smj_dup_l l RIGHT JOIN smj_dup_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:295"
+    },
+    {
+      "sql": "SELECT count(*) FROM smj_dup_l l FULL JOIN smj_dup_r r ON l.k = r.k;",
+      "source": "sort_merge_join_matrix.slt:301"
+    },
+    {
+      "sql": "SELECT count(*) FROM smj_dup_l l WHERE EXISTS (SELECT 1 FROM smj_dup_r r WHERE l.k = r.k);",
+      "source": "sort_merge_join_matrix.slt:307"
+    },
+    {
+      "sql": "SELECT count(*) FROM smj_dup_l l WHERE NOT EXISTS (SELECT 1 FROM smj_dup_r r WHERE l.k = r.k);",
+      "source": "sort_merge_join_matrix.slt:313"
+    },
+    {
+      "sql": "SELECT p.k, w.v, length(w.p) FROM probe p JOIN wide w ON p.k = w.k",
+      "source": "sort_merge_join_spill.slt:67"
+    },
+    {
+      "sql": "SELECT p.k, w.v, length(w.p) FROM probe p LEFT JOIN wide w ON p.k = w.k",
+      "source": "sort_merge_join_spill.slt:72"
+    },
+    {
+      "sql": "SELECT p.k, w.v, length(w.p) FROM wide w RIGHT JOIN probe p ON p.k = w.k",
+      "source": "sort_merge_join_spill.slt:77"
+    },
+    {
+      "sql": "SELECT p.k, w.v, length(w.p) FROM probe p FULL JOIN wide w ON p.k = w.k",
+      "source": "sort_merge_join_spill.slt:82"
+    },
+    {
+      "sql": "SELECT p.k, w.v, length(w.p) FROM probe p\nJOIN wide w ON p.k = w.k AND p.x < w.x",
+      "source": "sort_merge_join_spill.slt:88"
+    },
+    {
+      "sql": "SELECT p.k, w.v, length(w.p) FROM probe p\nLEFT JOIN wide w ON p.k = w.k AND p.x < w.x",
+      "source": "sort_merge_join_spill.slt:94"
+    },
+    {
+      "sql": "SELECT p.k, w.v, length(w.p) FROM wide w\nRIGHT JOIN probe p ON p.k = w.k AND p.x < w.x",
+      "source": "sort_merge_join_spill.slt:100"
+    },
+    {
+      "sql": "SELECT p.k, w.v, length(w.p) FROM probe p\nFULL JOIN wide w ON p.k = w.k AND p.x < w.x",
+      "source": "sort_merge_join_spill.slt:106"
+    },
+    {
+      "sql": "SELECT p.k, w.v, length(w.p) FROM probe_nomatch p FULL JOIN wide w ON p.k = w.k",
+      "source": "sort_merge_join_spill.slt:112"
+    },
+    {
+      "sql": "SELECT pr.k\nFROM probe pr\nWHERE EXISTS (\n  SELECT 1\n  FROM bitwise_wide wi\n  WHERE pr.k = wi.k\n    AND wi.v <= pr.x - 300\n)",
+      "source": "sort_merge_join_spill.slt:118"
     }
   ],
   "stats": {
-    "case_count": 907,
+    "case_count": 1208,
     "per_file": {
       "select.slt": 135,
-      "joins.slt": 149,
+      "joins.slt": 175,
       "cte.slt": 50,
-      "subquery.slt": 108,
-      "group_by.slt": 409,
-      "order.slt": 69,
+      "subquery.slt": 120,
+      "group_by.slt": 417,
+      "order.slt": 74,
       "limit.slt": 43,
-      "pipe_operator.slt": 10
+      "pipe_operator.slt": 10,
+      "aggregate_any_value.slt": 5,
+      "aggregate_filter_selection.slt": 2,
+      "aggregate_memory_spill.slt": 7,
+      "array/array_first.slt": 14,
+      "array_agg.slt": 56,
+      "first_last_nested.slt": 3,
+      "functional_dependencies.slt": 11,
+      "mark_join_matrix.slt": 12,
+      "merge_into.slt": 0,
+      "null_aware_mark_join.slt": 16,
+      "ordered_aggregate_spill.slt": 6,
+      "parquet_nested_schema_pruning.slt": 24,
+      "piecewise_merge_join_batches.slt": 2,
+      "piecewise_merge_join_matrix.slt": 62,
+      "range_sorted_time_bin_agg.slt": 2,
+      "sort_merge_join_batches.slt": 1,
+      "sort_merge_join_matrix.slt": 25,
+      "sort_merge_join_spill.slt": 20
     }
   }
 }

@@ -21,10 +21,8 @@ class DatafusionDialectTest {
         parseOne(sqlText, "datafusion").sql("datafusion")
 
     @Test
-    fun doubleColonCastRendersAsCast() {
-        // brikk: DataFusion parses `::` (GenericDialect) — brikk's AST has no `::` node,
-        // so it canonicalizes to CAST(...). Both are legal DataFusion.
-        assertEquals("SELECT CAST(x AS INT) FROM t", roundTrip("SELECT x::INT FROM t"))
+    fun doubleColonCastRoundTrips() {
+        assertEquals("SELECT x::INT FROM t", roundTrip("SELECT x::INT FROM t"))
     }
 
     @Test
@@ -37,7 +35,7 @@ class DatafusionDialectTest {
     fun qualifyPassesThrough() {
         // brikk: DataFusion supports QUALIFY natively — it is preserved, not eliminated.
         assertEquals(
-            "SELECT * FROM t QUALIFY row_number() OVER (ORDER BY x) = 1",
+            "SELECT * FROM t QUALIFY ROW_NUMBER() OVER (ORDER BY x) = 1",
             roundTrip("SELECT * FROM t QUALIFY ROW_NUMBER() OVER (ORDER BY x) = 1"),
         )
     }
@@ -75,6 +73,14 @@ class DatafusionDialectTest {
         assertEquals(
             "SELECT * FROM a LEFT SEMI JOIN b ON a.id = b.id",
             roundTrip("SELECT * FROM a LEFT SEMI JOIN b ON a.id = b.id"),
+        )
+    }
+
+    @Test
+    fun oneArgumentGenerateSeriesRoundTrips() {
+        assertEquals(
+            "SELECT * FROM generate_series(20000) AS t(v)",
+            roundTrip("SELECT * FROM generate_series(20000) AS t(v)"),
         )
     }
 }

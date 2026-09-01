@@ -517,6 +517,12 @@ open class Parser(
 
     open val quotedTypesToPreserve: Set<String> get() = emptySet()
 
+    open val preserveOperatorSpelling: kotlin.Boolean get() = false
+
+    open val preserveSelectAll: kotlin.Boolean get() = false
+
+    open val preserveExplicitNullOrdering: kotlin.Boolean get() = false
+
     // sqlglot: Dialect.CREATABLE_KIND_MAPPING (empty on the base dialect; ClickHouse
     // maps DATABASE -> SCHEMA)
     open val creatableKindMapping: Map<String, String> get() = emptyMap()
@@ -1375,6 +1381,7 @@ open class Parser(
     fun parseEquality(): Expression? {
         var this_ = parseComparison()
         while (matchSet(equality.keys)) {
+            val operator = prevToken.text
             val comments = prevComments
             this_ = expression(
                 equality.getValue(prevToken.tokenType)(
@@ -1382,6 +1389,7 @@ open class Parser(
                 ),
                 comments = comments,
             )
+            if (preserveOperatorSpelling) this_.meta["operator"] = operator
         }
         return this_
     }
@@ -1881,6 +1889,10 @@ open class Parser(
             }
 
             val projections = parseProjections()
+
+            if (all && preserveSelectAll) {
+                opMods.add(0, Var(args("this" to "ALL")))
+            }
 
             this_ = expression(
                 Select(
@@ -3654,11 +3666,15 @@ open class Parser(
             null
         }
 
-        return expression(
+        val ordered = expression(
             Ordered(
                 args("this" to this_, "desc" to desc, "nulls_first" to nullsFirst, "with_fill" to withFill)
             )
         )
+        if (preserveExplicitNullOrdering && explicitlyNullOrdered) {
+            ordered.meta["explicit_null_ordering"] = if (isNullsFirst) "FIRST" else "LAST"
+        }
+        return ordered
     }
 
     // sqlglot: Parser._parse_interpolate

@@ -2,6 +2,7 @@ package dev.brikk.house.sql.dialects
 
 // Explicit kotlin imports shield builtins from same-named ast classes.
 import dev.brikk.house.sql.ast.*
+import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
@@ -22,8 +23,8 @@ import kotlin.reflect.KClass
  *
  * MOST of polyglot's GeneratorConfig knobs already coincide with brikk's BASE
  * Generator defaults, so the explicit overrides below are only the genuine deltas:
- *  - normalize_functions = Lower  -> constructor default flipped to "lower"
- *    (DataFusion renders function names in lowercase)
+ *  - normalize_functions = Lower  -> constructor default flipped to "lower";
+ *    recognized source aliases retain their spelling for readable round trips
  *  - supports_window_exclude = false (BASE default is false -> pinned for docs)
  *  - copy_has_into_keyword = false -> [copyHasIntoKeyword] = false (COPY ... TO)
  *  - supports_like_quantifiers = false -> [supportsLikeQuantifiers] = false
@@ -43,8 +44,9 @@ import kotlin.reflect.KClass
  *   DATE_FORMAT / TIME_TO_STR -> to_char
  *   GROUP_CONCAT / LISTAGG    -> string_agg
  *
- * NOT WIRED (deferred to phase 2): typing metadata / EXPRESSION_METADATA (annotate
- * falls back to BASE), a FunctionCatalog, and any engine verifier.
+ * Parser metadata also preserves DataFusion's equivalent surface forms (`::`, type
+ * aliases, predicate spellings, function aliases, SELECT ALL, explicit NULL ordering)
+ * without changing shared generators.
  */
 // brikk: no sqlglot oracle — flags per polyglot datafusion.rs + DataFusion SQL docs
 open class DatafusionGenerator(
@@ -85,6 +87,66 @@ open class DatafusionGenerator(
 
     // brikk: window frame EXCLUDE unsupported — polyglot supports_window_exclude=false
     override val supportsWindowExclude: Boolean get() = false
+
+    override val dialectNullOrdering: String get() = "nulls_are_last"
+
+    override fun castSql(expression: Cast, safePrefix: String?): String =
+        if (expression.meta["datafusion_cast_style"] == "dcolon") {
+            "${sql(expression, "this")}::${sql(expression, "to")}"
+        } else {
+            super.castSql(expression, safePrefix)
+        }
+
+    override fun datatypeSql(expression: DataType): String {
+        val sourceName = expression.meta["datafusion_type_name"] as? String ?: return super.datatypeSql(expression)
+        val preserved = expression.copy() as DataType
+        preserved.set("this", DType.USERDEFINED)
+        preserved.set("kind", Var(args("this" to sourceName)))
+        return super.datatypeSql(preserved)
+    }
+
+    override fun notSql(expression: Not): String {
+        val predicate = expression.thisArg as? Expression
+        return when (predicate) {
+            is Between -> betweenSql(predicate).replaceFirst(" BETWEEN ", " NOT BETWEEN ")
+            is In -> inSql(predicate).replaceFirst(" IN ", " NOT IN ")
+            is Is -> isSql(predicate).replaceFirst(" IS ", " IS NOT ")
+            else -> super.notSql(expression)
+        }
+    }
+
+    override fun orderedSql(expression: Ordered): String {
+        val rendered = super.orderedSql(expression)
+        val explicit = expression.meta["explicit_null_ordering"] as? String ?: return rendered
+        return if (" NULLS " in rendered) rendered else "$rendered NULLS $explicit"
+    }
+
+    private fun sourceFunctionSql(expression: Expression): String {
+        val sourceName = expression.meta["datafusion_function_name"] as? String
+        val functionName = sourceName ?: (expression as Func).sqlName()
+        val args = expression.args.values.flatMap { value ->
+            if (value is List<*>) value else listOf(value)
+        }
+        if (expression is DateTrunc) {
+            val unit = (expression.args["unit"] as? Literal)?.copy()
+            if (unit != null) unit.set("this", unit.name.lowercase())
+            return func(functionName, unit, expression.thisArg, normalize = sourceName == null)
+        }
+        if (expression is Log && sourceName?.uppercase() in setOf("LOG2", "LOG10")) {
+            return func(functionName, expression.expressionArg, normalize = false)
+        }
+        return func(functionName, *args.toTypedArray(), normalize = sourceName == null)
+    }
+
+    private fun datafusionUnnestSql(expression: Unnest): String =
+        super.unnestSql(expression).replaceFirst("UNNEST", "unnest")
+
+    private fun generateSeriesSql(expression: GenerateSeries): String =
+        if (expression.meta["datafusion_omitted_series_start"] == true) {
+            func("generate_series", expression.args["end"], normalize = false)
+        } else {
+            sourceFunctionSql(expression)
+        }
 
     // ------------------------------------------------------------------
     // Renames for generic (Anonymous) function nodes
@@ -130,6 +192,34 @@ open class DatafusionGenerator(
             // DataFusion renders them as operators, not function calls
             reg(RegexpLike::class) { e -> binary(e as Binary, "~") }
             reg(RegexpILike::class) { e -> binary(e as Binary, "~*") }
+            reg(NEQ::class) { e -> binary(e as Binary, e.meta["operator"] as? String ?: "!=") }
+            reg(ArrayNode::class) { e -> "ARRAY[${expressions(e)}]" }
+            reg(Unnest::class) { e -> (this as DatafusionGenerator).datafusionUnnestSql(e as Unnest) }
+            reg(GenerateSeries::class) { e -> (this as DatafusionGenerator).generateSeriesSql(e as GenerateSeries) }
+
+            for (cls in listOf(
+                ArrayContains::class,
+                CurrentDate::class,
+                DateTrunc::class,
+                DenseRank::class,
+                FirstValue::class,
+                Lag::class,
+                LastValue::class,
+                Lead::class,
+                Length::class,
+                Log::class,
+                LogicalAnd::class,
+                LogicalOr::class,
+                NthValue::class,
+                Ntile::class,
+                Rand::class,
+                Rank::class,
+                RowNumber::class,
+                StrPosition::class,
+                Substring::class,
+            )) {
+                reg(cls) { e -> (this as DatafusionGenerator).sourceFunctionSql(e) }
+            }
         }
     }
 }

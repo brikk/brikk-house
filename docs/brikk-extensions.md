@@ -356,10 +356,10 @@ exceptions today:
 - **Where:** `dialects/DatafusionDialect.kt`, `DatafusionParser.kt`, `DatafusionGenerator.kt`;
   registered in `dialects/Dialect.kt` (`Dialects.DATAFUSION`).
 - **Gates (oracle-less — stated in each test's KDoc):**
-  `DatafusionFixtureTest` (polyglot-derived fixtures, `dialect-corpus/datafusion-fixtures.json`
-  via `tools/import_polyglot_datafusion_fixtures.py`, ledgered),
+  `DatafusionFixtureTest` (275/275 polyglot-derived identity fixtures plus transpile cases,
+  `dialect-corpus/datafusion-fixtures.json` via `tools/import_polyglot_datafusion_fixtures.py`),
   `DatafusionSltParseTest` (real-engine parse-acceptance from DataFusion's own
-  sqllogictest suite, `tools/extract_datafusion_slt_corpus.py`, ledgered),
+  sqllogictest suite, `tools/extract_datafusion_slt_corpus.py`, 1208/1208 parsed),
   `DatafusionPipeSmokeTest` and `DatafusionDialectTest`. An engine verifier is
   **phase 2** (not built).
 - **Upstream-conflict note:** if a future sqlglot version ADDS its own `datafusion`

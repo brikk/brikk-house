@@ -2,7 +2,7 @@
   "provenance": {
     "source": "polyglot (reference/polyglot) custom_fixtures/datafusion/*.json",
     "source_repo": "https://github.com/tobilg/polyglot",
-    "commit": "43a44589b6640b8f322a8ffddc653d3264133d34",
+    "commit": "44ab8f9473039f143a2907e0e64001606b3c05e4",
     "license": "MIT (Copyright (c) 2026 TobiLG) \u2014 see ATTRIBUTIONS.md",
     "note": "DataFusion has no sqlglot dialect; this corpus is hand-authored by polyglot, not machine-derived from a Python oracle. Identity cases assert datafusion parse->generate round-trips; transpile cases assert another dialect's SQL renders to the datafusion canonical form."
   },

@@ -34,7 +34,9 @@ OUT = os.path.join(
     ROOT, "brikk-sql/testResources/dialect-corpus/datafusion-slt-parse.json"
 )
 
-# ~8 mainstream files covering the core SELECT surface.
+# Mainstream files covering the core SELECT surface, plus every new SLT file added
+# since the previously imported DataFusion revision. Non-query setup statements are
+# still excluded by KEEP_LEADING below.
 FILES = [
     "select.slt",
     "joins.slt",
@@ -44,6 +46,24 @@ FILES = [
     "order.slt",
     "limit.slt",
     "pipe_operator.slt",
+    "aggregate_any_value.slt",
+    "aggregate_filter_selection.slt",
+    "aggregate_memory_spill.slt",
+    "array/array_first.slt",
+    "array_agg.slt",
+    "first_last_nested.slt",
+    "functional_dependencies.slt",
+    "mark_join_matrix.slt",
+    "merge_into.slt",
+    "null_aware_mark_join.slt",
+    "ordered_aggregate_spill.slt",
+    "parquet_nested_schema_pruning.slt",
+    "piecewise_merge_join_batches.slt",
+    "piecewise_merge_join_matrix.slt",
+    "range_sorted_time_bin_agg.slt",
+    "sort_merge_join_batches.slt",
+    "sort_merge_join_matrix.slt",
+    "sort_merge_join_spill.slt",
 ]
 
 KEEP_LEADING = ("SELECT", "WITH", "VALUES", "TABLE", "FROM")  # FROM => pipe queries
