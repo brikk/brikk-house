@@ -622,10 +622,6 @@ private fun traverseUnion(scope: Scope, acc: MutableList<Scope>) {
     val setOp = scope.expression as SetOperation
     val expressionStack = mutableListOf(setOp.right, setOp.left)
 
-    // Mirrors Python's `scope` loop-variable reuse (falls back to the argument when the
-    // inner traversal yields nothing).
-    var currentScope: Scope = scope
-
     while (expressionStack.isNotEmpty()) {
         val expression = expressionStack.removeLast()
         val unionScope = unionScopeStack.last()
@@ -647,19 +643,18 @@ private fun traverseUnion(scope: Scope, acc: MutableList<Scope>) {
 
         val yielded = mutableListOf<Scope>()
         traverseScopeInner(newScope, yielded)
-        for (s in yielded) {
-            acc.add(s)
-            currentScope = s
-        }
+        acc.addAll(yielded)
+        val branchScope = yielded.lastOrNull()
+            ?: throw OptimizeError("Cannot build a scope for set operation operand: $expression")
 
         if (prevScope != null) {
             unionScopeStack.removeLast()
-            unionScope.unionScopes = mutableListOf(prevScope, currentScope)
+            unionScope.unionScopes = mutableListOf(prevScope, branchScope)
             prevScope = unionScope
 
             acc.add(unionScope)
         } else {
-            prevScope = currentScope
+            prevScope = branchScope
         }
     }
 }

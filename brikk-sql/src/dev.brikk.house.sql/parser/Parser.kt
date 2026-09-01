@@ -515,6 +515,8 @@ open class Parser(
     // sqlglot: Dialect.SUPPORTS_USER_DEFINED_TYPES
     open val supportsUserDefinedTypes: kotlin.Boolean get() = true
 
+    open val quotedTypesToPreserve: Set<String> get() = emptySet()
+
     // sqlglot: Dialect.CREATABLE_KIND_MAPPING (empty on the base dialect; ClickHouse
     // maps DATABASE -> SCHEMA)
     open val creatableKindMapping: Map<String, String> get() = emptyMap()
@@ -1596,13 +1598,13 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_term
-    fun parseTerm(): Expression? {
-        var this_ = parseFactor()
+    fun parseTerm(parseMod: kotlin.Boolean = true): Expression? {
+        var this_ = parseFactor(parseMod)
 
         while (matchSet(term.keys)) {
             val factory = term.getValue(prevToken.tokenType)
             val comments = prevComments
-            val expr = parseFactor()
+            val expr = parseFactor(parseMod)
 
             this_ = expression(factory(args("this" to this_, "expression" to expr)), comments = comments)
 
@@ -1626,12 +1628,15 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_factor
-    fun parseFactor(): Expression? {
+    fun parseFactor(parseMod: kotlin.Boolean = true): Expression? {
         val parseMethod: () -> Expression? =
             if (exponent.isNotEmpty()) ::parseExponent else ::parseUnary
         var this_ = parseAtTimeZone(parseMethod())
 
-        while (matchSet(factor.keys)) {
+        while (matchSet(factor.keys, advance = false)) {
+            if (!parseMod && currToken.tokenType == TokenType.MOD) break
+
+            advance()
             val factorToken = prevToken.tokenType
             val factory = factor.getValue(factorToken)
             val comments = prevComments
@@ -3083,7 +3088,7 @@ open class Parser(
         } else {
             expressions = null
             num = if (match(TokenType.NUMBER, advance = false)) {
-                parseFactor()
+                parseFactor(parseMod = false)
             } else {
                 parsePrimary() ?: parsePlaceholder()
             }
@@ -3494,14 +3499,12 @@ open class Parser(
             elements["all"] = false
         }
 
-        if (matchSet(queryModifierTokens, advance = false)) {
-            return expression(Group(elements), comments = comments)
-        }
-
         val expressions = mutableListOf<Expression>()
 
         while (true) {
             val iterationIndex = index
+
+            if (matchSet(queryModifierTokens, advance = false)) break
 
             elements["expressions"] = expressions
             expressions.addAll(
@@ -3697,17 +3700,7 @@ open class Parser(
             } else {
                 if (supportsLimitAll && match(TokenType.ALL)) return this_
 
-                // Parsing LIMIT x% (i.e x PERCENT) as a term leads to an error, since
-                // we try to build an exp.Mod expr. For that matter, we backtrack and instead
-                // consume the factor plus parse the percentage separately
-                val startIndex = index
-                expr = tryParse({ parseTerm() })
-                if (expr is Mod) {
-                    retreat(startIndex)
-                    expr = parseFactor()
-                } else if (expr == null) {
-                    expr = parseFactor()
-                }
+                expr = parseTerm(parseMod = false)
             }
             val limitOptions = parseLimitOptions()
 
@@ -4179,28 +4172,36 @@ open class Parser(
                 null
             }
             if (identifier is Identifier) {
-                val identTokens = try {
-                    Tokenizer(tokenizerConfig).tokenize(identifier.name)
-                } catch (e: Exception) {
-                    null
-                }
-
-                val firstType = identTokens?.firstOrNull()?.tokenType
-                if (firstType != null && firstType in typeTokens) {
-                    typeToken = firstType
-                    if (identTokens.size > 1) {
-                        // sqlglot: exp.DataType.from_str(identifier.name, dialect=self.dialect)
-                        // — re-parse the multi-token type string with a fresh parser of
-                        // the same dialect
-                        return dialect.parser()
-                            .parseIntoDataType(identTokens, identifier.name)
-                    }
-                } else if (supportsUserDefinedTypes) {
-                    return parseUserDefinedType(identifier)
+                if (
+                    identifier.quoted &&
+                    supportsUserDefinedTypes &&
+                    identifier.name in quotedTypesToPreserve
+                ) {
+                    this_ = DataType(args("this" to DType.USERDEFINED, "kind" to identifier))
                 } else {
-                    // sqlglot: `self._retreat(self._index - 1); return None`
-                    retreat(index - 1)
-                    return null
+                    val identTokens = try {
+                        Tokenizer(tokenizerConfig).tokenize(identifier.name)
+                    } catch (e: Exception) {
+                        null
+                    }
+
+                    val firstType = identTokens?.firstOrNull()?.tokenType
+                    if (firstType != null && firstType in typeTokens) {
+                        typeToken = firstType
+                        if (identTokens.size > 1) {
+                            // sqlglot: exp.DataType.from_str(identifier.name, dialect=self.dialect)
+                            // — re-parse the multi-token type string with a fresh parser of
+                            // the same dialect
+                            return dialect.parser()
+                                .parseIntoDataType(identTokens, identifier.name)
+                        }
+                    } else if (supportsUserDefinedTypes) {
+                        this_ = parseUserDefinedType(identifier)
+                    } else {
+                        // sqlglot: `self._retreat(self._index - 1); return None`
+                        retreat(index - 1)
+                        return null
+                    }
                 }
             } else {
                 return null
@@ -6601,6 +6602,11 @@ open class Parser(
         ) {
             privilegeParts.add(currToken.text.uppercase())
             advance()
+        }
+
+        if (privilegeParts.isEmpty()) {
+            raiseError("Expected privilege")
+            return null
         }
 
         val this_ = Var(args("this" to privilegeParts.joinToString(" ")))

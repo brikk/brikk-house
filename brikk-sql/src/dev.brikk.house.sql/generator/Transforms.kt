@@ -15,6 +15,7 @@ import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.ColumnDef
 import dev.brikk.house.sql.ast.Create
+import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.Distinct
 import dev.brikk.house.sql.ast.EQ
 import dev.brikk.house.sql.ast.Exists
@@ -681,7 +682,11 @@ fun unnestGenerateSeries(expression: Expression): Expression {
 }
 
 /** sqlglot: transforms.explode_projection_to_unnest. */
-fun explodeProjectionToUnnest(expression: Expression, indexOffset: Int = 0): Expression {
+fun explodeProjectionToUnnest(
+    expression: Expression,
+    indexOffset: Int = 0,
+    unnestMap: kotlin.Boolean = false,
+): Expression {
     if (expression !is Select) return expression
 
     val takenSelectNames = expression.namedSelects.toMutableSet()
@@ -708,6 +713,42 @@ fun explodeProjectionToUnnest(expression: Expression, indexOffset: Int = 0): Exp
             continue
         }
 
+        val explodeArg = explode.thisArg as Expression
+        if (
+            unnestMap &&
+            explode::class == Explode::class &&
+            explodeArg.isType(DType.MAP) &&
+            (selection === explode || selection is Aliases)
+        ) {
+            val aliases = if (selection is Aliases) {
+                selection.expressionsArg.filterIsInstance<Identifier>()
+            } else {
+                listOf(
+                    toIdentifier(newName(takenSelectNames, "key"))!!,
+                    toIdentifier(newName(takenSelectNames, "value"))!!,
+                )
+            }
+            val keyAlias = aliases[0]
+            val valueAlias = aliases[1]
+            val sourceAlias = newName(takenSourceNames, "_u")
+
+            selections.add(aliasExpression(column(keyAlias, table = sourceAlias), keyAlias, copy = false))
+            selections.add(aliasExpression(column(valueAlias, table = sourceAlias), valueAlias, copy = false))
+
+            val unnest = aliasExpression(
+                Unnest(args("expressions" to listOf(explodeArg.copy()))),
+                sourceAlias,
+                tableColumns = listOf(keyAlias, valueAlias),
+                copy = false,
+            )
+            if (expression.args["from_"] != null) {
+                expression.append("joins", Join(args("this" to unnest, "kind" to "CROSS")))
+            } else {
+                expression.set("from_", From(args("this" to unnest)))
+            }
+            continue
+        }
+
         var posAlias: Identifier? = null
         var explodeAlias: Identifier? = null
         val alias = when (selection) {
@@ -725,7 +766,6 @@ fun explodeProjectionToUnnest(expression: Expression, indexOffset: Int = 0): Exp
         }
         explode = alias.find(Explode::class) as Explode
         val isPosexplode = explode is Posexplode
-        val explodeArg = explode.thisArg as Expression
         if (explodeArg is Column) takenSelectNames.add(explodeArg.outputName)
 
         val unnestSourceAlias = newName(takenSourceNames, "_u")

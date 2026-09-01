@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "postgres",
   "identity": [
     {
@@ -904,6 +904,26 @@
       "pretty": false
     },
     {
+      "sql": "CAST(65 AS \"char\")",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "65::\"char\"",
+      "expected": "CAST(65 AS \"char\")",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS \"char\"[])",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS \"CHAR\")",
+      "expected": "CAST(x AS CHAR)",
+      "pretty": false
+    },
+    {
       "sql": "COPY tbl (col1, col2) FROM 'file' WITH (FORMAT format, HEADER MATCH, FREEZE TRUE)",
       "expected": null,
       "pretty": false
@@ -1802,6 +1822,18 @@
       "sql": "CREATE TABLE foo (data XML)",
       "expected": null,
       "pretty": false
+    },
+    {
+      "sql": "LOCK TABLE foo, bar IN SHARE ROW EXCLUSIVE MODE",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "LOCK foo IN ACCESS EXCLUSIVE MODE NOWAIT",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
     },
     {
       "sql": "GRANT EXECUTE ON FUNCTION calculate_bonus(integer) TO analyst",
@@ -3060,7 +3092,7 @@
     }
   ],
   "stats": {
-    "identity_count": 420,
+    "identity_count": 426,
     "transpile_count": 99,
     "skipped_dynamic": 17
   }

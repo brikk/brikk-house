@@ -1,6 +1,6 @@
 # brikk-sql extensions registry — deliberate divergences from sqlglot
 
-brikk-sql is a faithful port of sqlglot (pinned: `v30.17.0-72-gbac1a897b`), verified by
+brikk-sql is a faithful port of sqlglot (pinned: `v30.17.0-93-gdcc36544a`), verified by
 differential gates. This file registers every place where brikk **deliberately diverges**
 from or **extends beyond** sqlglot, so that upstream syncs know exactly where conflicts
 can arise: when a future sqlglot version adds its own handling for one of these, the
@@ -90,7 +90,7 @@ exceptions today:
 ## 7. Doris: first-class arrays
 
 - **What:** sqlglot's Doris dialect inherits MySQL's array rejection wholesale, but Doris
-  supports arrays natively. Divergences from the Python oracle (v30.17.0-72-gbac1a897b),
+  supports arrays natively. Divergences from the Python oracle (v30.17.0-93-gdcc36544a),
   each rendering pinned against the real Doris FE parser
   (`SqlVerifierTest.dorisAcceptsBrikkArrayRenderings`):
   - **Array literals** render as the canonical constructor `ARRAY(1, 2, 3)` — the same

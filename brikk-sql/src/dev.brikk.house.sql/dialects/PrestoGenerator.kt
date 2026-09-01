@@ -1268,7 +1268,7 @@ open class PrestoGenerator(
             reg(Select::class) { e ->
                 var s = eliminateQualify(e)
                 s = eliminateDistinctOn(s)
-                s = explodeProjectionToUnnest(s, indexOffset = 1)
+                s = explodeProjectionToUnnest(s, indexOffset = 1, unnestMap = true)
                 s = eliminateSemiAndAntiJoins(s)
                 selectSql(s as Select)
             }

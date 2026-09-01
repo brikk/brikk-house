@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "redshift",
   "identity": [
     {
@@ -546,6 +546,21 @@
     {
       "sql": "ANALYZE TBL ALL COLUMNS",
       "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CAST(65 AS \"char\")",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "65::\"char\"",
+      "expected": "CAST(65 AS \"char\")",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS \"CHAR\")",
+      "expected": "CAST(x AS CHAR)",
       "pretty": false
     },
     {
@@ -1149,7 +1164,7 @@
     }
   ],
   "stats": {
-    "identity_count": 129,
+    "identity_count": 132,
     "transpile_count": 52,
     "skipped_dynamic": 2
   }

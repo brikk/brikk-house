@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "clickhouse",
   "identity": [
     {
@@ -204,6 +204,11 @@
     },
     {
       "sql": "SELECT x, COUNT() FROM y GROUP BY x WITH TOTALS",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT x, COUNT() FROM y GROUP BY x WITH TOTALS LIMIT 1",
       "expected": null,
       "pretty": false
     },
@@ -1337,6 +1342,16 @@
       "pretty": false
     },
     {
+      "sql": "SELECT x FROM view(SELECT 1 AS x)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT country, sum(installs) AS installs FROM cluster('default', view(SELECT 'US' AS country, count() AS installs FROM numbers(1) GROUP BY country)) GROUP BY country",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "trunc(3.14159, 2)",
       "expected": null,
       "pretty": false
@@ -2292,7 +2307,7 @@
     }
   ],
   "stats": {
-    "identity_count": 320,
+    "identity_count": 323,
     "transpile_count": 79,
     "skipped_dynamic": 23
   }

@@ -6,7 +6,7 @@ extension: **BigQuery/GoogleSQL pipe syntax (`|>`) is kept first-class in the AS
 of being desugared away at parse time.
 
 Parity with sqlglot is enforced by differential test gates against the pinned upstream
-(`v30.17.0-72-gbac1a897b`): token streams, AST structure (serde-compared), and generated SQL
+(`v30.17.0-93-gdcc36544a`): token streams, AST structure (serde-compared), and generated SQL
 are verified byte-for-byte against the Python implementation across thousands of corpus
 cases. See `docs/parsing-research-and-plan.md` at the repo root for architecture and status.
 

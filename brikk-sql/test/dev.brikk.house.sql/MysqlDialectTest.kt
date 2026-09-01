@@ -42,6 +42,14 @@ class MysqlDialectTest {
     }
 
     @Test
+    fun binaryColumnAttributeRoundTrips() {
+        assertEquals(
+            "CREATE TABLE foo (a VARCHAR(16) BINARY NOT NULL)",
+            roundTrip("CREATE TABLE foo (a VARCHAR(16) BINARY NOT NULL)"),
+        )
+    }
+
+    @Test
     fun transpileBaseToMysql() {
         // base TIMESTAMP type maps to DATETIME in MySQL
         assertEquals(

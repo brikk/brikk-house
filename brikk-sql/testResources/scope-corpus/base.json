@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.17.0-72-gbac1a897b",
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
  "cases": [
   {
    "sql": "SUM(1)",
@@ -4791,6 +4791,136 @@
       "z"
      ],
      "unqualified_column_count": 5,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY GROUPING SETS ((x)) LIMIT 5",
+   "scopes": [
+    {
+     "expression_class": "Select",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "test",
+       "table"
+      ]
+     ],
+     "selected_source_names": [
+      "test"
+     ],
+     "column_names": [
+      "a",
+      "x"
+     ],
+     "external_column_names": [
+      "a",
+      "x"
+     ],
+     "unqualified_column_count": 2,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY ROLLUP (x) LIMIT 5",
+   "scopes": [
+    {
+     "expression_class": "Select",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "test",
+       "table"
+      ]
+     ],
+     "selected_source_names": [
+      "test"
+     ],
+     "column_names": [
+      "a",
+      "x"
+     ],
+     "external_column_names": [
+      "a",
+      "x"
+     ],
+     "unqualified_column_count": 2,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY CUBE (x) OFFSET 5",
+   "scopes": [
+    {
+     "expression_class": "Select",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "test",
+       "table"
+      ]
+     ],
+     "selected_source_names": [
+      "test"
+     ],
+     "column_names": [
+      "a",
+      "x"
+     ],
+     "external_column_names": [
+      "a",
+      "x"
+     ],
+     "unqualified_column_count": 2,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY ROLLUP (x) WINDOW w AS (ORDER BY x)",
+   "scopes": [
+    {
+     "expression_class": "Select",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "test",
+       "table"
+      ]
+     ],
+     "selected_source_names": [
+      "test"
+     ],
+     "column_names": [
+      "a",
+      "x",
+      "x"
+     ],
+     "external_column_names": [
+      "a",
+      "x",
+      "x"
+     ],
+     "unqualified_column_count": 3,
      "subquery_count": 0,
      "cte_count": 0,
      "derived_count": 0,

@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "mysql",
   "identity": [
     {
@@ -105,6 +105,21 @@
     },
     {
       "sql": "CREATE TABLE foo (a INT UNSIGNED ZEROFILL)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (a VARCHAR(16) BINARY)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (a CHAR(16) BINARY NOT NULL)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (a VARCHAR(16) CHARACTER SET utf8mb4 BINARY)",
       "expected": null,
       "pretty": false
     },
@@ -574,6 +589,11 @@
     {
       "sql": "CREATE TABLE t1 (id INT KEY)",
       "expected": "CREATE TABLE t1 (id INT PRIMARY KEY)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT a, SUM(b) FROM t GROUP BY a WITH ROLLUP LIMIT 2",
+      "expected": null,
       "pretty": false
     },
     {
@@ -2529,7 +2549,7 @@
     }
   ],
   "stats": {
-    "identity_count": 320,
+    "identity_count": 324,
     "transpile_count": 103,
     "skipped_dynamic": 34
   }

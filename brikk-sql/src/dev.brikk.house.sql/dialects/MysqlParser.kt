@@ -1055,6 +1055,7 @@ object MysqlParserTables {
     // sqlglot: MySQLParser.CONSTRAINT_PARSERS
     val CONSTRAINT_PARSERS: Map<String, (Parser) -> Expression?> =
         BaseParserTables.CONSTRAINT_PARSERS + mapOf<String, (Parser) -> Expression?>(
+            "BINARY" to { p -> p.expression(dev.brikk.house.sql.ast.BinaryColumnConstraint()) },
             "FULLTEXT" to { p -> (p as MysqlParser).parseIndexConstraint(kind = "FULLTEXT") },
             "INDEX" to { p -> (p as MysqlParser).parseIndexConstraint() },
             "KEY" to { p -> (p as MysqlParser).parseIndexConstraint() },

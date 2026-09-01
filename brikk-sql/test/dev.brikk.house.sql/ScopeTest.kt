@@ -4,6 +4,9 @@ import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.Where
+import dev.brikk.house.sql.ast.Union
+import dev.brikk.house.sql.ast.args
+import dev.brikk.house.sql.optimizer.OptimizeError
 import dev.brikk.house.sql.optimizer.Scope
 import dev.brikk.house.sql.optimizer.ScopeType
 import dev.brikk.house.sql.optimizer.buildScope
@@ -13,6 +16,7 @@ import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /** Hand assertions against sqlglot's tests/test_optimizer.py::test_scope oracle. */
@@ -100,6 +104,17 @@ class ScopeTest {
         assertEquals(2, root.unionScopes.size)
         assertTrue(root.unionScopes[0] === scopes[0])
         assertTrue(root.unionScopes[1] === scopes[1])
+    }
+
+    @Test
+    fun invalidUnionOperandRaisesInsteadOfCreatingRecursiveScope() {
+        val invalid = Union(
+            args(
+                "this" to Column(args("this" to "a")),
+                "expression" to parseOne("SELECT 1"),
+            )
+        )
+        assertFailsWith<OptimizeError> { traverseScope(invalid) }
     }
 
     @Test
