@@ -316,6 +316,10 @@ open class DuckdbGenerator(
     // sqlglot: generators.duckdb._arrow_json_extract_sql (+ dialect.arrow_json_extract_sql)
     open fun arrowJsonExtractSql(expression: Binary): String {
         val op = if (expression is JSONExtract) "->" else "->>"
+        val path = expression.expressionArg
+        if (path is Binary || path is Predicate || path is Not) {
+            expression.set("expression", Paren(args("this" to path)))
+        }
         var arrowSql = binary(expression, op)
         val parent = expression.parent
         val sameParent = parent != null && parent::class == expression::class

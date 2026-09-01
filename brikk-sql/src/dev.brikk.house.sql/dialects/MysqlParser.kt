@@ -858,6 +858,15 @@ object MysqlParserTables {
         put("CURDATE", BaseParserTables.FUNCTIONS.getValue("CURRENT_DATE"))
         put("CURTIME", BaseParserTables.FUNCTIONS.getValue("CURRENT_TIME"))
         put("DATE") { a -> TsOrDsToDate(args("this" to seqGet(a, 0))) }
+        put("DATEDIFF") {
+            a -> DateDiff(
+                args(
+                    "this" to seqGet(a, 0),
+                    "expression" to seqGet(a, 1),
+                    "date_part_boundary" to true,
+                )
+            )
+        }
         put("DATE_ADD", buildDateDeltaWithInterval { a -> DateAdd(a) })
         put("DATE_FORMAT") { a ->
             TimeToStr(

@@ -1,12 +1,3 @@
 {
-    "cases": [
-        {
-            "case": "write|postgres|SELECT DATEDIFF(x, y)",
-            "reason": "expected `SELECT (CAST(x AS DATE) - CAST(y AS DATE))` actual `SELECT CAST(AGE(CAST(x AS TIMESTAMP), CAST(y AS TIMESTAMP)) AS BIGINT)`"
-        },
-        {
-            "case": "write|presto|SELECT DATEDIFF(x, y)",
-            "reason": "expected `SELECT DATE_DIFF('DAY', DATE_TRUNC('DAY', y), DATE_TRUNC('DAY', x))` actual `SELECT DATE_DIFF('DAY', y, x)`"
-        }
-    ]
+    "cases": []
 }

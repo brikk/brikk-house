@@ -10,6 +10,7 @@ import dev.brikk.house.sql.generator.eliminateQualify
 import dev.brikk.house.sql.generator.eliminateDistinctOn
 import dev.brikk.house.sql.generator.unnestToExplode
 import dev.brikk.house.sql.generator.anyToExists
+import dev.brikk.house.sql.generator.removeWithinGroupForPercentiles
 import dev.brikk.house.sql.parser.Spark2TokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -28,7 +29,8 @@ private fun spark2UnitToStr(expression: Expression, default: String = "DAY"): Ex
 
 // sqlglot: dialect.is_parse_json
 private fun isParseJson(expression: Expression?): Boolean =
-    expression is ParseJSON || (expression is Cast && expression.isType(DType.JSON))
+    expression is ParseJSON ||
+        (expression is Cast && (expression.args["to"] as? DataType)?.isType(DType.JSON) == true)
 
 private const val HIVE_DATE_FORMAT = "'yyyy-MM-dd'"
 
@@ -82,6 +84,9 @@ open class Spark2Generator(
 
     // sqlglot: Spark2Generator.CREATE_FUNCTION_RETURN_AS = False
     override val createFunctionReturnAs: Boolean get() = false
+
+    // sqlglot: Spark2.ALTER_TABLE_SUPPORTS_CASCADE = False
+    override val dialectAlterTableSupportsCascade: Boolean get() = false
 
     // sqlglot: Spark2Generator.PROPERTIES_LOCATION
     override val propertiesLocation: Map<KClass<out Expression>, GeneratorTables.PropLocation>
@@ -287,6 +292,10 @@ open class Spark2Generator(
             reg(UnixToTime::class) { e -> sg().unixToTimeSpark(e as UnixToTime) }
             reg(VariancePop::class) { e -> sg().renameFuncSql("VAR_POP", e) }
             reg(WeekOfYear::class) { e -> sg().renameFuncSql("WEEKOFYEAR", e) }
+            reg(WithinGroup::class) { e ->
+                val transformed = removeWithinGroupForPercentiles(e as WithinGroup)
+                if (transformed is WithinGroup) withingroupSql(transformed) else sql(transformed)
+            }
             // sqlglot: Spark2Generator TRANSFORMS removals (= None) — restore base rendering,
             // overriding HiveGenerator's SORT_ARRAY / no-ILIKE / SUBSTRING / MONTHS_BETWEEN.
             reg(ArraySort::class) { e -> functionFallbackSql(e as Func) }

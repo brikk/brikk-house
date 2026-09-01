@@ -10,6 +10,7 @@ import dev.brikk.house.sql.ast.And
 import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.ast.ArraySize
+import dev.brikk.house.sql.ast.ApproxQuantile
 import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.ColumnDef
@@ -34,9 +35,12 @@ import dev.brikk.house.sql.ast.ILike
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Not
 import dev.brikk.house.sql.ast.Order
+import dev.brikk.house.sql.ast.Ordered
 import dev.brikk.house.sql.ast.Or
 import dev.brikk.house.sql.ast.Posexplode
 import dev.brikk.house.sql.ast.PartitionedByProperty
+import dev.brikk.house.sql.ast.PercentileCont
+import dev.brikk.house.sql.ast.PercentileDisc
 import dev.brikk.house.sql.ast.PropertyEQ
 import dev.brikk.house.sql.ast.RowNumber
 import dev.brikk.house.sql.ast.Tuple
@@ -56,6 +60,7 @@ import dev.brikk.house.sql.ast.Union
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.Window
 import dev.brikk.house.sql.ast.With
+import dev.brikk.house.sql.ast.WithinGroup
 import dev.brikk.house.sql.ast.aliasExpression
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.ast.column
@@ -265,6 +270,17 @@ fun eliminateFullOuterJoin(expression: Expression): Expression {
     expression.set("order", null)
 
     return Union(args("this" to expression, "expression" to expressionCopy, "distinct" to false))
+}
+
+/** sqlglot: transforms.remove_within_group_for_percentiles. */
+fun removeWithinGroupForPercentiles(expression: WithinGroup): Expression {
+    val percentile = expression.thisArg
+    val order = expression.expressionArg
+    if ((percentile is PercentileCont || percentile is PercentileDisc) && order is Order) {
+        val input = (expression.find(Ordered::class) as? Ordered)?.thisArg
+        return ApproxQuantile(args("this" to input, "quantile" to percentile.thisArg))
+    }
+    return expression
 }
 
 /**

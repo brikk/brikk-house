@@ -1,10 +1,6 @@
 {
     "cases": [
         {
-            "case": "write|spark|ALTER TABLE x CHANGE COLUMN a a VARCHAR(10) CASCADE",
-            "reason": "expected `ALTER TABLE x ALTER COLUMN a TYPE VARCHAR(10)` actual `ALTER TABLE x ALTER COLUMN a TYPE VARCHAR(10) CASCADE`"
-        },
-        {
             "case": "write|bigquery|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
             "reason": "expected `FORMAT_DATE('%Y-%m-%d %H:%M:%S', CAST('2020-01-01' AS DATETIME))` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', TIME_STR_TO_TIME('2020-01-01'))`"
         },

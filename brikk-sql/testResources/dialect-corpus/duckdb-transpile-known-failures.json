@@ -17,10 +17,6 @@
             "reason": "expected `SELECT IF(pos = pos_2, y, NULL) + 1 AS y FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(x)) - 1)) AS pos CROSS JOIN UNNEST(x) AS y WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(x) - 1) AND pos_2 = (ARRAY_LENGTH(x) - 1))` actual `SELECT EXPLODE(x) + 1 AS y`"
         },
         {
-            "case": "read|duckdb|SELECT a -> ('x' || 'y')",
-            "reason": "expected `SELECT a -> ('x' || 'y')` actual `SELECT a -> 'x' || 'y'`"
-        },
-        {
             "case": "read|spark|SELECT LIST(DISTINCT sample_col) FILTER(WHERE NOT sample_col IS NULL) FROM sample_table",
             "reason": "expected `SELECT LIST(DISTINCT sample_col) FILTER(WHERE NOT sample_col IS NULL) FROM sample_table` actual `SELECT ARRAY_UNIQUE_AGG(sample_col) FROM sample_table`"
         },

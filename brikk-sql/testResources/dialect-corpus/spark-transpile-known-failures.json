@@ -1,10 +1,6 @@
 {
     "cases": [
         {
-            "case": "write|spark|ALTER TABLE StudentInfo DROP COLUMNS (LastName, DOB)",
-            "reason": "expected `ALTER TABLE StudentInfo DROP COLUMNS (LastName, DOB)` actual `ALTER TABLE StudentInfo DROP COLUMNS`"
-        },
-        {
             "case": "write|duckdb|CONCAT_WS(' ', NULL, 'Smith')",
             "reason": "expected `CONCAT_WS(' ', NULL, 'Smith')` actual `CASE WHEN ' ' IS NULL OR NULL IS NULL OR 'Smith' IS NULL THEN NULL ELSE CONCAT_WS(' ', NULL, 'Smith') END`"
         },

@@ -4821,8 +4821,14 @@ open class Generator(
     // sqlglot: Generator.trycast_sql
     open fun trycastSql(expression: TryCast): String = castSql(expression, safePrefix = "TRY_")
 
-    // sqlglot: Generator.try_sql (base: TRY_SUPPORTED=true)
-    open fun trySql(expression: Try): String = func("TRY", expression.thisArg)
+    // sqlglot: Generator.try_sql
+    open fun trySql(expression: Try): String {
+        if (!trySupported) {
+            unsupported("Unsupported TRY function")
+            return sql(expression, "this")
+        }
+        return func("TRY", expression.thisArg)
+    }
 
     // sqlglot: Generator.log_sql (base: LOG_BASE_FIRST=true)
     open fun logSql(expression: Log): String =

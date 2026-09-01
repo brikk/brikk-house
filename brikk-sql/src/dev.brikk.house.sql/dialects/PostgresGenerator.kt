@@ -550,7 +550,16 @@ open class PostgresGenerator(
 
     // sqlglot: generators.postgres._date_diff_sql
     open fun dateDiffSql(expression: Expression): String {
-        val unit = ((expression.args["unit"] as? Expression)?.name ?: "").uppercase()
+        val unit = ((expression.args["unit"] as? Expression)?.name ?: "DAY").uppercase()
+        if (unit == "DAY" && expression.args["date_part_boundary"] == true) {
+            val endDate = Cast(
+                args("this" to expression.thisArg, "to" to DataType(args("this" to DType.DATE)))
+            )
+            val startDate = Cast(
+                args("this" to expression.args["expression"], "to" to DataType(args("this" to DType.DATE)))
+            )
+            return sql(Paren(args("this" to Sub(args("this" to endDate, "expression" to startDate)))))
+        }
         val factor = DATE_DIFF_FACTOR[unit]
 
         val end = "CAST(${sql(expression, "this")} AS TIMESTAMP)"
@@ -1271,8 +1280,8 @@ open class PostgresGenerator(
             reg(JSONExtractScalar::class) { e ->
                 pg().postgresJsonExtractSql(e, "JSON_EXTRACT_PATH_TEXT", "->>")
             }
-            reg(JSONBExtract::class) { e -> binary(e as Binary, "#>") }
-            reg(JSONBExtractScalar::class) { e -> binary(e as Binary, "#>>") }
+            reg(JSONBExtract::class) { e -> pg().arrowJsonExtractSql(e as Binary, "#>") }
+            reg(JSONBExtractScalar::class) { e -> pg().arrowJsonExtractSql(e as Binary, "#>>") }
             // sqlglot #8156: the `?` operator now maps to JSONBContainsTopKey (base
             // generator); JSONBContains renders as its function form.
             reg(ParseJSON::class) { e ->

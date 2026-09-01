@@ -81,7 +81,7 @@ open class Spark2Parser(
         if (matchTextSeq("DROP", "COLUMNS", advance = false)) {
             match(TokenType.DROP)
             matchTextSeq("COLUMNS")
-            return expression(Drop(args("this" to parseSchema(), "kind" to "COLUMNS")))
+            return expression(Drop(args("tables" to listOf(parseSchema()), "kind" to "COLUMNS")))
         }
         return super.parseAlterDropAction()
     }
