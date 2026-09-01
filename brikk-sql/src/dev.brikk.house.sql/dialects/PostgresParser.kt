@@ -228,6 +228,8 @@ open class PostgresParser(
     tokenizerConfig: TokenizerConfig = dev.brikk.house.sql.parser.PostgresTokenizerTables.CONFIG,
 ) : Parser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig) {
 
+    override val quotedTypesToPreserve: Set<String> get() = setOf("char")
+
     // sqlglot: dialect back-reference for annotate_types-driven paths
     override val dialect: Dialect get() = Dialects.POSTGRES
     override val normalizeNotNull: Boolean get() = false

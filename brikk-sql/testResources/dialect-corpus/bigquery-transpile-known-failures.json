@@ -165,10 +165,6 @@
             "reason": "expected `SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2017-10-14 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY), DATE_TRUNC('WEEK', CAST('2017-10-15 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY))` actual `SELECT DATETIME_DIFF(CAST('2017-10-15 00:00:00' AS TIMESTAMP), CAST('2017-10-14 00:00:00' AS TIMESTAMP), WEEK_START(SUNDAY))`"
         },
         {
-            "case": "write|spark|SELECT TIMESTAMP_ADD(TIMESTAMP \"2008-12-25 15:30:00+00\", INTERVAL 10 MINUTE)",
-            "reason": "expected `SELECT DATE_ADD(MINUTE, '10', CAST('2008-12-25 15:30:00+00' AS TIMESTAMP))` actual `SELECT TIMESTAMP_ADD(CAST('2008-12-25 15:30:00+00' AS TIMESTAMP), '10', 'MINUTE')`"
-        },
-        {
             "case": "write|spark|SELECT TIMESTAMP_SUB(TIMESTAMP \"2008-12-25 15:30:00+00\", INTERVAL 10 MINUTE)",
             "reason": "expected `SELECT CAST('2008-12-25 15:30:00+00' AS TIMESTAMP) - INTERVAL '10' MINUTE` actual `SELECT TIMESTAMP_SUB(CAST('2008-12-25 15:30:00+00' AS TIMESTAMP), '10', 'MINUTE')`"
         },
@@ -615,10 +611,6 @@
         {
             "case": "write|duckdb|SELECT FORMAT_DATETIME('%Y-%m-%e', DATETIME '2020-09-09 10:15:30')",
             "reason": "expected `SELECT STRFTIME(CAST('2020-09-09 10:15:30' AS TIMESTAMP), '%Y-%m-%-d')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2020-09-09 10:15:30' AS TIMESTAMP)), '%Y-%m-%-d')`"
-        },
-        {
-            "case": "write|duckdb|SELECT FORMAT_TIMESTAMP(\"%b-%d-%Y\", TIMESTAMP \"2050-12-25 15:30:55+00\")",
-            "reason": "expected `SELECT STRFTIME(CAST(CAST('2050-12-25 15:30:55+00' AS TIMESTAMPTZ) AS TIMESTAMP), '%b-%d-%Y')` actual `SELECT STRFTIME(TS_OR_DS_TO_TIMESTAMP(CAST('2050-12-25 15:30:55+00' AS TIMESTAMPTZ)), '%b-%d-%Y')`"
         },
         {
             "case": "write|duckdb|SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08')",

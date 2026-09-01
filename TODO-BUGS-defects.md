@@ -1,7 +1,7 @@
 # TODO - in-scope defects (parse failures / mis-parses / crashes / bad analysis)
 
 > `brikk-sql` is a Kotlin port of Python `sqlglot`, pinned to
-> `v30.17.0-72-gbac1a897b`. The read-only reference clone at `reference/sqlglot/`
+> `v30.17.0-93-gdcc36544a`. The read-only reference clone at `reference/sqlglot/`
 > is the structural and behavioral oracle.
 >
 > The corpus gates under `brikk-sql/test@jvm/` compare parser ASTs and semantic

@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "sqlite",
   "identity": [
     {
@@ -69,6 +69,21 @@
     },
     {
       "sql": "SELECT RANK() OVER (RANGE CURRENT ROW) FROM tbl",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT RANK() OVER (RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) FROM tbl",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT RANK() OVER (RANGE BETWEEN CURRENT ROW AND CURRENT ROW) FROM tbl",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT RANK() OVER (ORDER BY x RANGE BETWEEN CURRENT ROW AND 1 + 1 FOLLOWING) FROM tbl",
       "expected": null,
       "pretty": false
     },
@@ -675,6 +690,23 @@
       "write": {}
     },
     {
+      "sql": "SELECT COALESCE(a, '') || COALESCE(b, '') FROM t",
+      "read": {
+        "duckdb": "SELECT CONCAT(a, b) FROM t",
+        "postgres": "SELECT CONCAT(a, b) FROM t",
+        "tsql": "SELECT CONCAT(a, b) FROM t"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT a || b FROM t",
+      "read": {
+        "mysql": "SELECT CONCAT(a, b) FROM t",
+        "snowflake": "SELECT CONCAT(a, b) FROM t"
+      },
+      "write": {}
+    },
+    {
       "sql": "SELECT JSON_GROUP_ARRAY(name) FROM t",
       "read": {
         "postgres": "SELECT JSON_AGG(name) FROM t",
@@ -899,8 +931,8 @@
     }
   ],
   "stats": {
-    "identity_count": 121,
-    "transpile_count": 35,
+    "identity_count": 124,
+    "transpile_count": 37,
     "skipped_dynamic": 1
   }
 }

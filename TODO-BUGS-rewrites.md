@@ -1,7 +1,7 @@
 # TODO - mixed-dialect transpile rewrites (in scope)
 
 > `brikk-sql` is a Kotlin port of Python `sqlglot`, pinned to
-> `v30.17.0-72-gbac1a897b`. The reference clone at `reference/sqlglot/` is the
+> `v30.17.0-93-gdcc36544a`. The reference clone at `reference/sqlglot/` is the
 > oracle for this backlog.
 >
 > This file tracks only transpile parity cases that do not involve BigQuery.
@@ -15,28 +15,9 @@
 
 ---
 
-**37 items across 18 source-to-target routes.**
+**0 items across 0 source-to-target routes.**
 
-| Route | Items |
-|---|---:|
-| spark -> duckdb | 5 |
-| spark -> spark | 5 |
-| postgres -> mysql | 5 |
-| presto -> spark | 4 |
-| spark -> presto | 2 |
-| hive -> duckdb | 2 |
-| starrocks -> starrocks | 2 |
-| mysql -> duckdb | 2 |
-| spark -> postgres | 1 |
-| presto -> presto | 1 |
-| postgres -> postgres | 1 |
-| postgres -> spark | 1 |
-| postgres -> doris | 1 |
-| mysql -> presto | 1 |
-| mysql -> postgres | 1 |
-| duckdb -> duckdb | 1 |
-| hive -> spark | 1 |
-| duckdb -> spark | 1 |
+The non-BigQuery mixed-dialect rewrite backlog is complete for the pinned SQLGlot version.
 
 ## Workflow
 

@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
 // sqlglot: dialect.unit_to_var
 private fun sparkUnitToVar(expression: Expression, default: String = "DAY"): Expression? {
     val unit = expression.args["unit"] as? Expression ?: return if (default.isNotEmpty()) Var(args("this" to default)) else null
-    if (unit is Var) return unit
+    if (unit is Var || unit is Placeholder || unit is WeekStart || unit is Column) return unit
     return Var(args("this" to unit.name))
 }
 
@@ -29,7 +29,7 @@ private fun sparkUnitToVar(expression: Expression, default: String = "DAY"): Exp
  * exp.Create preprocess (remove_unique_constraints / ctas_with_tmp_tables_to_create_tmp_view
  * / move_partitioned_by_to_schema_columns), the interval-op rewrites for Datetime/Time/
  * Timestamp Add/Sub (date_delta_to_binary_interval_op), TimestampDiff/DatetimeDiff
- * (timestampdiff_sql), ArrayAppend/ArrayPrepend (array_append_sql), ReadParquet, IfBlock.
+ * (timestampdiff_sql), ArrayAppend/ArrayPrepend (array_append_sql), IfBlock.
  */
 // sqlglot: generators.spark.SparkGenerator
 open class SparkGenerator(
@@ -96,6 +96,37 @@ open class SparkGenerator(
         return func("DATEDIFF", end, start)
     }
 
+    // sqlglot: generators.spark._dateadd_sql
+    internal fun dateaddSpark(expression: Expression): String {
+        val unit = expression.args["unit"] as? Expression
+        if (unit == null || (expression is TsOrDsAdd && unit.name.uppercase() == "DAY")) {
+            return func("DATE_ADD", expression.thisArg, expression.args["expression"])
+        }
+
+        var rendered = func(
+            "DATE_ADD",
+            sparkUnitToVar(expression),
+            expression.args["expression"],
+            expression.thisArg,
+        )
+        if (expression is TsOrDsAdd) {
+            val returnType = expression.args["return_type"] as? DataType ?: DataType.build(DType.DATE)
+            if (!returnType.isType(DType.TIMESTAMP, DType.DATETIME)) {
+                rendered = "CAST($rendered AS ${sql(returnType)})"
+            }
+        }
+        return rendered
+    }
+
+    // sqlglot: SparkGenerator.readparquet_sql
+    internal fun readparquetSpark(expression: ReadParquet): String {
+        if (expression.expressionsArg.size != 1) {
+            unsupported("READ_PARQUET with multiple arguments is not supported")
+            return ""
+        }
+        return "parquet.`${(expression.expressionsArg[0] as Expression).name}`"
+    }
+
     // sqlglot: SparkGenerator.placeholder_sql
     override fun placeholderSql(expression: Placeholder): String {
         if (expression.args["widget"] != true) return super.placeholderSql(expression)
@@ -158,9 +189,13 @@ open class SparkGenerator(
             reg(SafeMultiply::class) { e -> sg().renameFuncSql("TRY_MULTIPLY", e) }
             reg(SafeSubtract::class) { e -> sg().renameFuncSql("TRY_SUBTRACT", e) }
             reg(StartsWith::class) { e -> sg().renameFuncSql("STARTSWITH", e) }
+            reg(TsOrDsAdd::class) { e -> sg().dateaddSpark(e) }
+            reg(TimestampAdd::class) { e -> sg().dateaddSpark(e) }
             reg(TimestampFromParts::class) { e -> sg().renameFuncSql("MAKE_TIMESTAMP", e) }
             reg(TimestampDiff::class) { e -> sg().timestampdiffSpark(e as TimestampDiff) }
             reg(DateDiff::class) { e -> sg().datediffSpark(e as DateDiff) }
+            reg(ReadParquet::class) { e -> sg().readparquetSpark(e as ReadParquet) }
+            reg(With::class) { e -> withSql(e as With) }
             reg(TryCast::class) { e ->
                 if (e.args["safe"] == true) sg().trycastSql(e as TryCast) else sg().castSql(e as Cast)
             }

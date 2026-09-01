@@ -435,7 +435,6 @@ object BaseParserTables {
     val TERM: Map<TokenType, NodeFactory> = mapOf(
         TokenType.DASH to { Sub(it) },
         TokenType.PLUS to { Add(it) },
-        TokenType.MOD to { Mod(it) },
         TokenType.COLLATE to { Collate(it) },
     )
 
@@ -444,6 +443,7 @@ object BaseParserTables {
         TokenType.DIV to { IntDiv(it) },
         TokenType.LR_ARROW to { dev.brikk.house.sql.ast.Distance(it) },
         TokenType.LLRR_ARROW to { dev.brikk.house.sql.ast.DistanceNd(it) },
+        TokenType.MOD to { Mod(it) },
         TokenType.SLASH to { Div(it) },
         TokenType.STAR to { Mul(it) },
     )

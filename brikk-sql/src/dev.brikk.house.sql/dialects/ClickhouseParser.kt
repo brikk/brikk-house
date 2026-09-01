@@ -1315,7 +1315,7 @@ object ClickhouseParserTables {
 
     // sqlglot: ClickHouseParser.FUNC_TOKENS
     val FUNC_TOKENS: Set<TokenType> = BaseParserTables.FUNC_TOKENS + setOf(
-        TokenType.AND, TokenType.FILE, TokenType.OR, TokenType.SET,
+        TokenType.AND, TokenType.FILE, TokenType.OR, TokenType.SET, TokenType.VIEW,
     )
 
     // sqlglot: ClickHouseParser.RESERVED_TOKENS = base - {SELECT}
@@ -1346,6 +1346,16 @@ object ClickhouseParserTables {
             },
             "XOR" to { p ->
                 combineConnector({ a: Args -> Xor(a) }, (p as ClickhouseParser).clickhouseFunctionArgs(alias = false))
+            },
+            "VIEW" to { p ->
+                p.expression(
+                    Anonymous(
+                        args(
+                            "this" to "view",
+                            "expressions" to listOf((p as ClickhouseParser).parseSelect()),
+                        )
+                    )
+                )
             },
         )
 

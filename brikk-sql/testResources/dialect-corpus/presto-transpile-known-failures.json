@@ -5,10 +5,6 @@
             "reason": "expected `INSTR(haystack, needle, 1, occurrence)` actual `STR_POSITION(haystack, needle, occurrence)`"
         },
         {
-            "case": "read|spark|SELECT AT_TIMEZONE(CAST('2012-10-31 00:00' AS TIMESTAMP WITH TIME ZONE), 'America/Sao_Paulo')",
-            "reason": "expected `SELECT AT_TIMEZONE(CAST('2012-10-31 00:00' AS TIMESTAMP WITH TIME ZONE), 'America/Sao_Paulo')` actual `SELECT AT_TIMEZONE(CAST(CAST('2012-10-31 00:00' AS TIMESTAMP WITH TIME ZONE) AS TIMESTAMP), 'America/Sao_Paulo')`"
-        },
-        {
             "case": "write|bigquery|SELECT SHA256(x)",
             "reason": "expected `SELECT SHA256(x)` actual `SELECT S_H_A2_DIGEST(x, 256)`"
         },
@@ -27,26 +23,6 @@
         {
             "case": "write|bigquery|SELECT * FROM UNNEST(ARRAY['7', '14']) AS x(y)",
             "reason": "expected `SELECT * FROM UNNEST(['7', '14']) AS y` actual `SELECT * FROM UNNEST(['7', '14']) AS x`"
-        },
-        {
-            "case": "write|presto|WITH RECURSIVE t(n) AS (VALUES (1) UNION ALL SELECT n+1 FROM t WHERE n < 100 ) SELECT SUM(n) FROM t",
-            "reason": "expected `WITH RECURSIVE t(n) AS (SELECT * FROM (VALUES (1)) AS _values UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t` actual `WITH RECURSIVE t(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t`"
-        },
-        {
-            "case": "write|spark|WITH RECURSIVE t(n) AS (VALUES (1) UNION ALL SELECT n+1 FROM t WHERE n < 100 ) SELECT SUM(n) FROM t",
-            "reason": "expected `WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t` actual `WITH t(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t`"
-        },
-        {
-            "case": "write|spark|JSON_FORMAT(CAST(MAP_FROM_ENTRIES(ARRAY[('action_type', 'at')]) AS JSON))",
-            "reason": "expected `TO_JSON(MAP_FROM_ENTRIES(ARRAY(('action_type', 'at'))))` actual `TO_JSON(CAST(MAP_FROM_ENTRIES(ARRAY(('action_type', 'at'))) AS JSON))`"
-        },
-        {
-            "case": "write|spark|SELECT CAST(ARRAY [1, 23, 456] AS JSON)",
-            "reason": "expected `SELECT TO_JSON(ARRAY(1, 23, 456))` actual `SELECT CAST(ARRAY(1, 23, 456) AS JSON)`"
-        },
-        {
-            "case": "write|spark|SELECT JSON_EXTRACT_SCALAR(TRY(FILTER(CAST(JSON_EXTRACT('{\"k1\": [{\"k2\": \"{\\\"k3\\\": 1}\", \"k4\": \"v\"}]}', '$.k1') AS ARRAY(MAP(VARCHAR, VARCHAR))), x -> x['k4'] = 'v')[1]['k2']), '$.k3')",
-            "reason": "expected `SELECT GET_JSON_OBJECT(FILTER(FROM_JSON(GET_JSON_OBJECT('{\"k1\": [{\"k2\": \"{\\\\\"k3\\\\\": 1}\", \"k4\": \"v\"}]}', '$.k1'), 'ARRAY<MAP<STRING, STRING>>'), x -> x['k4'] = 'v')[0]['k2'], '$.k3')` actual `SELECT GET_JSON_OBJECT(TRY(FILTER(FROM_JSON(GET_JSON_OBJECT('{\"k1\": [{\"k2\": \"{\\\\\"k3\\\\\": 1}\", \"k4\": \"v\"}]}', '$.k1'), 'ARRAY<MAP<STRING, STRING>>'), x -> x['k4'] = 'v')[0]['k2']), '$.k3')`"
         }
     ]
 }

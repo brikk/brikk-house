@@ -48,11 +48,8 @@ open class DatafusionDialect : Dialect() {
     // (double-quote identifiers, nested comments, `|>` are all already BASE-true).
     override val tokenizerConfig: TokenizerConfig get() = TOKENIZER_CONFIG
 
-    // brikk: no dialect parser hooks are required by the polyglot fixture corpus or
-    // the curated SLT parse subset — the BASE parser accepts them all (`::` casts,
-    // QUALIFY, star EXCEPT/EXCLUDE, semi/anti joins, aggregate FILTER, `|>` pipe,
-    // TRY_CAST, arrow_cast as an anonymous func). DatafusionParser is therefore a
-    // near-empty passthrough; see its KDoc for what was deliberately NOT added.
+    // brikk: BASE supplies the grammar; DatafusionParser adds regex token handling,
+    // one-argument generate_series, and source-spelling metadata for readable identity.
     override fun parser(errorLevel: ErrorLevel?): Parser =
         DatafusionParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 

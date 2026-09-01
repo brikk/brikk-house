@@ -9,7 +9,7 @@ import kotlin.test.assertFails
 /**
  * Hand assertions for the BigQuery dialect port (reference/sqlglot/sqlglot/dialects/
  * bigquery.py). Expected values are pinned to the Python oracle
- * (parse_one(sql, read="bigquery").sql("bigquery")) at sqlglot v30.17.0-72-gbac1a897b,
+ * (parse_one(sql, read="bigquery").sql("bigquery")) at sqlglot v30.17.0-93-gdcc36544a,
  * except the pipe-syntax case which is a brikk-native behavior (pipes kept first-class
  * rather than sqlglot's CTE rewrite).
  */

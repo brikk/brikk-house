@@ -432,6 +432,18 @@ open class PrestoGenerator(
         return func(name, unitToStr(expression), finalInterval, expression.thisArg)
     }
 
+    // sqlglot: generators.presto._date_diff_sql
+    open fun dateDiffSql(expression: Expression): String {
+        var thisExpression = expression.thisArg as Expression
+        var startExpression = expression.expressionArg as Expression
+        val unit = unitToStr(expression)
+        if (unit != null && expression.args["date_part_boundary"] == true) {
+            thisExpression = DateTrunc(args("unit" to unit.copy(), "this" to thisExpression))
+            startExpression = DateTrunc(args("unit" to unit.copy(), "this" to startExpression))
+        }
+        return func("DATE_DIFF", unit, startExpression, thisExpression)
+    }
+
     // sqlglot: dialect.explode_to_unnest_sql + generators.presto._explode_to_unnest_sql
     // (the annotate_types-driven struct-array alias fix is not ported)
     open fun explodeToUnnestSql(expression: Lateral): String {
@@ -1153,9 +1165,7 @@ open class PrestoGenerator(
             reg(CurrentTimestamp::class) { _ -> "CURRENT_TIMESTAMP" }
             reg(CurrentUser::class) { _ -> "CURRENT_USER" }
             reg(DateAdd::class) { e -> pg().dateDeltaSql("DATE_ADD", e) }
-            reg(DateDiff::class) { e ->
-                func("DATE_DIFF", unitToStr(e), e.args["expression"], e.thisArg)
-            }
+            reg(DateDiff::class) { e -> pg().dateDiffSql(e) }
             reg(DateStrToDate::class) { e -> pg().datestrtodateSql(e as DateStrToDate) }
             reg(DateToDi::class) { e ->
                 "CAST(DATE_FORMAT(${sql(e, "this")}, ${pg().dialectDateintFormat}) AS INT)"
@@ -1258,7 +1268,7 @@ open class PrestoGenerator(
             reg(Select::class) { e ->
                 var s = eliminateQualify(e)
                 s = eliminateDistinctOn(s)
-                s = explodeProjectionToUnnest(s, indexOffset = 1)
+                s = explodeProjectionToUnnest(s, indexOffset = 1, unnestMap = true)
                 s = eliminateSemiAndAntiJoins(s)
                 selectSql(s as Select)
             }

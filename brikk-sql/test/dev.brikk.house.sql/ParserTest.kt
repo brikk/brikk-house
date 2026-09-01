@@ -12,10 +12,13 @@ import dev.brikk.house.sql.ast.JSONPathRoot
 import dev.brikk.house.sql.ast.JSONPathSubscript
 import dev.brikk.house.sql.ast.JSONPathWildcard
 import dev.brikk.house.sql.ast.Literal
+import dev.brikk.house.sql.ast.Add
+import dev.brikk.house.sql.ast.Mod
 import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.Union
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.With
+import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.parser.ParseError
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
@@ -51,6 +54,26 @@ class ParserTest {
         val info = error.errors.first()
         assertEquals(1, info.line)
         assertEquals(10, info.col)
+    }
+
+    @Test
+    fun modUsesMultiplicativePrecedence() {
+        val select = assertIs<Select>(parseOne("SELECT 1 + 2 % 3"))
+        val add = assertIs<Add>(select.selects.single())
+        assertIs<Mod>(add.expressionArg)
+    }
+
+    @Test
+    fun grantWithoutPrivilegesRaisesParseError() {
+        assertFailsWith<ParseError> { parseOne("GRANT ON TABLE tbl TO bob") }
+    }
+
+    @Test
+    fun groupByStopsBeforeQueryModifiers() {
+        assertEquals(
+            "SELECT a FROM t GROUP BY ROLLUP (a) LIMIT 2",
+            parseOne("SELECT a FROM t GROUP BY ROLLUP (a) LIMIT 2").sql(),
+        )
     }
 
     @Test

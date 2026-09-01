@@ -27,11 +27,9 @@ import kotlinx.serialization.json.put
  *    the datafusion-canonical `sql`. Directions whose read dialect is unregistered in
  *    brikk are skipped (counted, not failed).
  *
- * HONEST CAVEAT: polyglot's DataFusion dialect semantics do not perfectly coincide
- * with brikk's sqlglot-derived AST/generator (e.g. type spelling, quoting, star-modifier
- * rendering). Genuine, understood mismatches are recorded in
- * datafusion-fixtures-known-failures.json with a reason; the target is >=80% identity
- * pass. The full actual failure set is always written to build/ for easy regeneration.
+ * The full actual failure set is always written to build/ for diagnosis. The committed
+ * ledger is exact and currently empty: every imported identity and available transpile
+ * case must pass.
  */
 class DatafusionFixtureTest {
 

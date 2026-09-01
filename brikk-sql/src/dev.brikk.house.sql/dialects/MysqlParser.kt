@@ -858,6 +858,15 @@ object MysqlParserTables {
         put("CURDATE", BaseParserTables.FUNCTIONS.getValue("CURRENT_DATE"))
         put("CURTIME", BaseParserTables.FUNCTIONS.getValue("CURRENT_TIME"))
         put("DATE") { a -> TsOrDsToDate(args("this" to seqGet(a, 0))) }
+        put("DATEDIFF") {
+            a -> DateDiff(
+                args(
+                    "this" to seqGet(a, 0),
+                    "expression" to seqGet(a, 1),
+                    "date_part_boundary" to true,
+                )
+            )
+        }
         put("DATE_ADD", buildDateDeltaWithInterval { a -> DateAdd(a) })
         put("DATE_FORMAT") { a ->
             TimeToStr(
@@ -1046,6 +1055,7 @@ object MysqlParserTables {
     // sqlglot: MySQLParser.CONSTRAINT_PARSERS
     val CONSTRAINT_PARSERS: Map<String, (Parser) -> Expression?> =
         BaseParserTables.CONSTRAINT_PARSERS + mapOf<String, (Parser) -> Expression?>(
+            "BINARY" to { p -> p.expression(dev.brikk.house.sql.ast.BinaryColumnConstraint()) },
             "FULLTEXT" to { p -> (p as MysqlParser).parseIndexConstraint(kind = "FULLTEXT") },
             "INDEX" to { p -> (p as MysqlParser).parseIndexConstraint() },
             "KEY" to { p -> (p as MysqlParser).parseIndexConstraint() },

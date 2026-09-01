@@ -11,22 +11,14 @@
 
 ---
 
-**34 identity items.** The two available transpile fixtures already pass.
+**0 identity or transpile items.** All 275 Polyglot-derived identity fixtures
+and both available transpile directions pass exactly. The refreshed curated
+DataFusion SLT corpus also parses 1208/1208 accepted statements with no ledger.
 
-| Theme | Items | Representative difference |
-|---|---:|---|
-| Window-function capitalization | 11 | `ROW_NUMBER()` -> `row_number()` |
-| Function aliases and spelling | 11 | `bool_and(x)` -> `logical_and(x)` |
-| Cast and type spelling | 5 | `x::INT` -> `CAST(x AS INT)` |
-| Negation and operator rendering | 4 | `x != 1` -> `x <> 1` |
-| Explicit null ordering | 1 | `NULLS FIRST` is omitted |
-| Explicit select quantifier | 1 | `SELECT ALL` -> `SELECT` |
-| Array/unnest syntax | 1 | `UNNEST(ARRAY[...])` is normalized |
-
-Most entries are exact-spelling or canonicalization decisions, not known
-semantic failures. Preserve semantics first; decide and document DataFusion's
-canonical output before changing generator-wide normalization. The explicit
-`NULLS FIRST` case is the first semantic-risk item to investigate.
+DataFusion-specific parser metadata preserves readable source choices that the
+shared SQLGlot AST otherwise canonicalizes, including function aliases, `::`
+casts, type spellings, predicate/operator spellings, `SELECT ALL`, and explicit
+null ordering. These rules are isolated to the Brikk-native DataFusion dialect.
 
 Primary implementation areas:
 

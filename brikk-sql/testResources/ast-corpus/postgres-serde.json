@@ -1,8 +1,8 @@
 {
- "sqlglot_version": "v30.17.0-72-gbac1a897b",
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
  "fixture": "dialect-corpus/postgres.json",
  "dialect": "postgres",
- "case_count": 420,
+ "case_count": 426,
  "skipped": [],
  "cases": [
   {
@@ -19252,6 +19252,394 @@
     {
      "i": 18,
      "k": "is_string",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "CAST(65 AS \"char\")",
+   "generated": "CAST(65 AS \"char\")",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.functions.Cast",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "USER-DEFINED"
+      },
+      {
+       "i": 0,
+       "k": "kind",
+       "c": "sqlglot.expressions.core.Identifier",
+       "m": {
+        "line": 1,
+        "col": 17,
+        "start": 11,
+        "end": 16
+       }
+      },
+      {
+       "i": 2,
+       "k": "this",
+       "v": "char"
+      },
+      {
+       "i": 2,
+       "k": "quoted",
+       "v": true
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 7,
+      "start": 5,
+      "end": 6
+     }
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "v": "65"
+    },
+    {
+     "i": 1,
+     "k": "is_string",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "to",
+     "c": "sqlglot.expressions.datatypes.DataType"
+    },
+    {
+     "i": 4,
+     "k": "this",
+     "c": "DataType.Type",
+     "v": "USER-DEFINED"
+    },
+    {
+     "i": 4,
+     "k": "kind",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 17,
+      "start": 11,
+      "end": 16
+     }
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "v": "char"
+    },
+    {
+     "i": 6,
+     "k": "quoted",
+     "v": true
+    }
+   ]
+  },
+  {
+   "sql": "65::\"char\"",
+   "generated": "CAST(65 AS \"char\")",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.functions.Cast",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "USER-DEFINED"
+      },
+      {
+       "i": 0,
+       "k": "kind",
+       "c": "sqlglot.expressions.core.Identifier",
+       "m": {
+        "line": 1,
+        "col": 10,
+        "start": 4,
+        "end": 9
+       }
+      },
+      {
+       "i": 2,
+       "k": "this",
+       "v": "char"
+      },
+      {
+       "i": 2,
+       "k": "quoted",
+       "v": true
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 2,
+      "start": 0,
+      "end": 1
+     }
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "v": "65"
+    },
+    {
+     "i": 1,
+     "k": "is_string",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "to",
+     "c": "sqlglot.expressions.datatypes.DataType"
+    },
+    {
+     "i": 4,
+     "k": "this",
+     "c": "DataType.Type",
+     "v": "USER-DEFINED"
+    },
+    {
+     "i": 4,
+     "k": "kind",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 10,
+      "start": 4,
+      "end": 9
+     }
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "v": "char"
+    },
+    {
+     "i": 6,
+     "k": "quoted",
+     "v": true
+    }
+   ]
+  },
+  {
+   "sql": "CAST(x AS \"char\"[])",
+   "generated": "CAST(x AS \"char\"[])",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.functions.Cast",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "ARRAY"
+      },
+      {
+       "i": 0,
+       "k": "expressions",
+       "a": true,
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 2,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "USER-DEFINED"
+      },
+      {
+       "i": 2,
+       "k": "kind",
+       "c": "sqlglot.expressions.core.Identifier",
+       "m": {
+        "line": 1,
+        "col": 16,
+        "start": 10,
+        "end": 15
+       }
+      },
+      {
+       "i": 4,
+       "k": "this",
+       "v": "char"
+      },
+      {
+       "i": 4,
+       "k": "quoted",
+       "v": true
+      },
+      {
+       "i": 0,
+       "k": "nested",
+       "v": true
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 6,
+      "start": 5,
+      "end": 5
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "to",
+     "c": "sqlglot.expressions.datatypes.DataType"
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "c": "DataType.Type",
+     "v": "ARRAY"
+    },
+    {
+     "i": 5,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.datatypes.DataType"
+    },
+    {
+     "i": 7,
+     "k": "this",
+     "c": "DataType.Type",
+     "v": "USER-DEFINED"
+    },
+    {
+     "i": 7,
+     "k": "kind",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 16,
+      "start": 10,
+      "end": 15
+     }
+    },
+    {
+     "i": 9,
+     "k": "this",
+     "v": "char"
+    },
+    {
+     "i": 9,
+     "k": "quoted",
+     "v": true
+    },
+    {
+     "i": 5,
+     "k": "nested",
+     "v": true
+    }
+   ]
+  },
+  {
+   "sql": "CAST(x AS \"CHAR\")",
+   "generated": "CAST(x AS CHAR)",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.functions.Cast",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "CHAR"
+      },
+      {
+       "i": 0,
+       "k": "nested",
+       "v": false
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 6,
+      "start": 5,
+      "end": 5
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "to",
+     "c": "sqlglot.expressions.datatypes.DataType"
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "c": "DataType.Type",
+     "v": "CHAR"
+    },
+    {
+     "i": 5,
+     "k": "nested",
      "v": false
     }
    ]
@@ -50923,6 +51311,76 @@
      "i": 0,
      "k": "concurrently",
      "v": false
+    }
+   ]
+  },
+  {
+   "sql": "LOCK TABLE foo, bar IN SHARE ROW EXCLUSIVE MODE",
+   "generated": "LOCK TABLE foo, bar IN SHARE ROW EXCLUSIVE MODE",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.ddl.Command"
+    },
+    {
+     "i": 0,
+     "k": "this",
+     "v": "LOCK"
+    },
+    {
+     "i": 0,
+     "k": "expression",
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 47,
+      "start": 43,
+      "end": 46
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "TABLE foo, bar IN SHARE ROW EXCLUSIVE MODE"
+    },
+    {
+     "i": 2,
+     "k": "is_string",
+     "v": true
+    }
+   ]
+  },
+  {
+   "sql": "LOCK foo IN ACCESS EXCLUSIVE MODE NOWAIT",
+   "generated": "LOCK foo IN ACCESS EXCLUSIVE MODE NOWAIT",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.ddl.Command"
+    },
+    {
+     "i": 0,
+     "k": "this",
+     "v": "LOCK"
+    },
+    {
+     "i": 0,
+     "k": "expression",
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 40,
+      "start": 34,
+      "end": 39
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "foo IN ACCESS EXCLUSIVE MODE NOWAIT"
+    },
+    {
+     "i": 2,
+     "k": "is_string",
+     "v": true
     }
    ]
   },

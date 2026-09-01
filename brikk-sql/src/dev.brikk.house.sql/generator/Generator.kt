@@ -2247,11 +2247,48 @@ open class Generator(
     open fun tupleSql(expression: Tuple): String =
         "(${expressions(expression, dynamic = true, newLine = true, skipFirst = true, skipLast = true)})"
 
-    // sqlglot: Generator.update_sql (base: UPDATE_STATEMENT_SUPPORTS_FROM=true)
+    // sqlglot: Generator._update_from_joins_sql
+    protected open fun updateFromJoinsSql(expression: Update): Pair<String, String> {
+        val from = expression.args["from_"] as? From
+        if (updateStatementSupportsFrom || from == null) {
+            return "" to sql(expression, "from_")
+        }
+
+        val target = expression.thisArg as? Table
+        if (target != null) {
+            val targetName = toIdentifier(target.aliasOrName)
+            for (assignment in expression.expressionsArg.filterIsInstance<EQ>()) {
+                val column = assignment.thisArg as? Column
+                if (column != null && column.table.isEmpty()) column.set("table", targetName?.copy())
+            }
+        }
+
+        val table = from.thisArg as? Expression ?: return "" to ""
+        val nestedJoins = (table.args["joins"] as? List<*>)?.filterIsInstance<Join>().orEmpty()
+        if (nestedJoins.isNotEmpty()) table.set("joins", null)
+
+        var joinsSql = sql(
+            Join(
+                args(
+                    "this" to table,
+                    "on" to BooleanNode(args("this" to true)),
+                )
+            )
+        )
+        for (nested in nestedJoins) {
+            if (nested.args["on"] == null && nested.args["using"] == null) {
+                nested.set("on", BooleanNode(args("this" to true)))
+            }
+            joinsSql += sql(nested)
+        }
+        return joinsSql to ""
+    }
+
+    // sqlglot: Generator.update_sql
     open fun updateSql(expression: Update): String {
         val hint = sql(expression, "hint")
         val thisSql = sql(expression, "this")
-        val fromSql = sql(expression, "from_")
+        val (joinSql, fromSql) = updateFromJoinsSql(expression)
         val setSql = expressions(expression, flat = true)
         val whereSql = sql(expression, "where")
         val returning = sql(expression, "returning")
@@ -2264,7 +2301,7 @@ open class Generator(
         }
         var options = expressions(expression, key = "options")
         if (options.isNotEmpty()) options = " OPTION($options)"
-        val sqlText = "UPDATE$hint $thisSql SET $setSql$expressionSql$order$limit$options"
+        val sqlText = "UPDATE$hint $thisSql$joinSql SET $setSql$expressionSql$order$limit$options"
         return prependCtes(expression, sqlText)
     }
 
@@ -4584,9 +4621,15 @@ open class Generator(
         return "ADD $exists${sql(expression.thisArg)}$location"
     }
 
-    // sqlglot: Generator.distinct_sql (base: MULTI_ARG_DISTINCT=true)
+    // sqlglot: Generator.distinct_sql
     open fun distinctSql(expression: Distinct): String {
         var thisSql = expressions(expression, flat = true)
+        if (!multiArgDistinct && expression.expressionsArg.size > 1) {
+            val nullCases = expression.expressionsArg.filterIsInstance<Expression>().joinToString(" ") {
+                "WHEN ${sql(Is(args("this" to it.copy(), "expression" to Null())))} THEN NULL"
+            }
+            thisSql = "CASE $nullCases ELSE ($thisSql) END"
+        }
         if (thisSql.isNotEmpty()) thisSql = " $thisSql"
         var on = sql(expression, "on")
         if (on.isNotEmpty()) on = " ON $on"
@@ -4778,8 +4821,14 @@ open class Generator(
     // sqlglot: Generator.trycast_sql
     open fun trycastSql(expression: TryCast): String = castSql(expression, safePrefix = "TRY_")
 
-    // sqlglot: Generator.try_sql (base: TRY_SUPPORTED=true)
-    open fun trySql(expression: Try): String = func("TRY", expression.thisArg)
+    // sqlglot: Generator.try_sql
+    open fun trySql(expression: Try): String {
+        if (!trySupported) {
+            unsupported("Unsupported TRY function")
+            return sql(expression, "this")
+        }
+        return func("TRY", expression.thisArg)
+    }
 
     // sqlglot: Generator.log_sql (base: LOG_BASE_FIRST=true)
     open fun logSql(expression: Log): String =

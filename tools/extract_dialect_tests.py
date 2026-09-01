@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import copy
 import json
 import random
 import re
@@ -280,11 +281,13 @@ def expand_loops(
             if not (call.args and isinstance(call.args[0], ast.Name) and call.args[0].id == var):
                 continue
             for lit in literals:
-                synth = ast.Call(
-                    func=call.func,
-                    args=[ast.Constant(value=lit)] + list(call.args[1:]),
-                    keywords=call.keywords,
-                )
+                class SubstituteLoopVariable(ast.NodeTransformer):
+                    def visit_Name(self, node: ast.Name) -> ast.AST:
+                        if node.id == var:
+                            return ast.copy_location(ast.Constant(value=lit), node)
+                        return node
+
+                synth = SubstituteLoopVariable().visit(copy.deepcopy(call))
                 try:
                     if func.attr == "validate_identity":
                         bucket["identity"].append(extract_identity(synth))

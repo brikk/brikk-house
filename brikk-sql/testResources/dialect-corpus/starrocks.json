@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "starrocks",
   "identity": [
     {
@@ -554,9 +554,7 @@
       "sql": "SELECT id, t.col FROM tbl, UNNEST(scores) AS t(col)",
       "read": {},
       "write": {
-        "starrocks": {
-          "error": "sql"
-        },
+        "starrocks": "SELECT id, t.col FROM tbl, UNNEST(scores) AS t(col)",
         "spark": "SELECT id, t.col FROM tbl LATERAL VIEW EXPLODE(scores) t AS col"
       }
     },
@@ -564,9 +562,7 @@
       "sql": "SELECT id, t.col FROM tbl CROSS JOIN LATERAL UNNEST(scores) AS t(col)",
       "read": {},
       "write": {
-        "starrocks": {
-          "error": "sql"
-        },
+        "starrocks": "SELECT id, t.col FROM tbl CROSS JOIN LATERAL UNNEST(scores) AS t(col)",
         "spark": "SELECT id, t.col FROM tbl LATERAL VIEW EXPLODE(scores) t AS col"
       }
     }

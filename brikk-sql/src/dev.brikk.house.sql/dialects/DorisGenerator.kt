@@ -633,9 +633,12 @@ open class DorisGenerator(
             // to a RAW scalar, but Doris JSON_EXTRACT keeps JSON quotes on string scalars
             // (`'"hi"'` vs `'hi'`). Wrap in JSON_UNQUOTE so string scalars come back
             // unquoted, matching Trino (numeric scalars are unaffected). Verified live =
-            // 'hi' (REPORT batch11-bucketb trino). Was previously bare JSON_EXTRACT.
+            // 'hi' (REPORT batch11-bucketb trino). PostgreSQL's JSON-only arrow nodes keep
+            // the pinned SQLGlot bare JSON_EXTRACT rendering; other scalar sources retain
+            // the semantic JSON_UNQUOTE correction.
             reg(JSONExtractScalar::class) { e ->
-                func("JSON_UNQUOTE", func("JSON_EXTRACT", e.thisArg, e.args["expression"]))
+                val extracted = func("JSON_EXTRACT", e.thisArg, e.args["expression"])
+                if (e.args["only_json_types"] == true) extracted else func("JSON_UNQUOTE", extracted)
             }
             // BUGS-doris-generator-mappings row 5 (P1): trino json_array_contains(j,v)
             // parses to JSONArrayContains, whose inherited MySQL rendering is

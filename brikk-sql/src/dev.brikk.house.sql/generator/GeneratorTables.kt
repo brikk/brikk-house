@@ -225,6 +225,7 @@ object GeneratorTables {
         }
         // sqlglot: TRANSFORMS[exp.AssumeColumnConstraint]
         reg(AssumeColumnConstraint::class) { e -> "ASSUME (${sql(e, "this")})" }
+        reg(BinaryColumnConstraint::class) { _ -> "BINARY" }
         reg(Parameter::class) { e -> parameterSql(e as Parameter) }
         reg(SessionParameter::class) { e -> sessionparameterSql(e as SessionParameter) }
         reg(Placeholder::class) { e -> placeholderSql(e as Placeholder) }

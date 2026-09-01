@@ -192,6 +192,7 @@ open class HiveGenerator(
 
     // sqlglot: Hive dialect-level flags read by the generator
     override val dialectTimeFormat: String get() = HIVE_TIME_FORMAT
+    override val dialectConcatWsCoalesce: Boolean get() = true
     // Prefer the live dialect inverse (Spark2/Spark override TIME_MAPPING) so each
     // member of the Hive hierarchy gets the correct strict/lax inverse.
     override val inverseTimeMapping: Map<String, String> get() = dialect.inverseTimeMapping
@@ -379,14 +380,14 @@ open class HiveGenerator(
 
     // sqlglot: dialect.max_or_greatest / min_or_least
     internal fun maxOrGreatestSql(expression: Max): String =
-        if (expression.args["expressions"] != null || expression.args["expression"] != null) {
+        if (expression.expressionsArg.isNotEmpty()) {
             renameFuncSql("GREATEST", expression)
         } else {
             renameFuncSql("MAX", expression)
         }
 
     internal fun minOrLeastSql(expression: Min): String =
-        if (expression.args["expressions"] != null || expression.args["expression"] != null) {
+        if (expression.expressionsArg.isNotEmpty()) {
             renameFuncSql("LEAST", expression)
         } else {
             renameFuncSql("MIN", expression)

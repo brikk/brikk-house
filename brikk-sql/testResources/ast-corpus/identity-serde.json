@@ -1,8 +1,8 @@
 {
- "sqlglot_version": "v30.17.0-72-gbac1a897b",
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
  "fixture": "tests/fixtures/identity.sql",
  "dialect": "",
- "case_count": 980,
+ "case_count": 984,
  "skipped": [],
  "cases": [
   {
@@ -28572,6 +28572,578 @@
      "i": 26,
      "k": "quoted",
      "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY GROUPING SETS ((x)) LIMIT 5",
+   "generated": "SELECT a FROM test GROUP BY GROUPING SETS ((x)) LIMIT 5",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 7,
+      "end": 7
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "limit",
+     "c": "sqlglot.expressions.query.Limit"
+    },
+    {
+     "i": 5,
+     "k": "expression",
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 55,
+      "start": 54,
+      "end": 54
+     }
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "v": "5"
+    },
+    {
+     "i": 6,
+     "k": "is_string",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From"
+    },
+    {
+     "i": 9,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table"
+    },
+    {
+     "i": 10,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 18,
+      "start": 14,
+      "end": 17
+     }
+    },
+    {
+     "i": 11,
+     "k": "this",
+     "v": "test"
+    },
+    {
+     "i": 11,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group"
+    },
+    {
+     "i": 14,
+     "k": "grouping_sets",
+     "a": true,
+     "c": "sqlglot.expressions.query.GroupingSets"
+    },
+    {
+     "i": 15,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Paren"
+    },
+    {
+     "i": 16,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 17,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 45,
+      "start": 44,
+      "end": 44
+     }
+    },
+    {
+     "i": 18,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 18,
+     "k": "quoted",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY ROLLUP (x) LIMIT 5",
+   "generated": "SELECT a FROM test GROUP BY ROLLUP (x) LIMIT 5",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 7,
+      "end": 7
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "limit",
+     "c": "sqlglot.expressions.query.Limit"
+    },
+    {
+     "i": 5,
+     "k": "expression",
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 46,
+      "start": 45,
+      "end": 45
+     }
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "v": "5"
+    },
+    {
+     "i": 6,
+     "k": "is_string",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From"
+    },
+    {
+     "i": 9,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table"
+    },
+    {
+     "i": 10,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 18,
+      "start": 14,
+      "end": 17
+     }
+    },
+    {
+     "i": 11,
+     "k": "this",
+     "v": "test"
+    },
+    {
+     "i": 11,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group"
+    },
+    {
+     "i": 14,
+     "k": "rollup",
+     "a": true,
+     "c": "sqlglot.expressions.query.Rollup"
+    },
+    {
+     "i": 15,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 16,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 37,
+      "start": 36,
+      "end": 36
+     }
+    },
+    {
+     "i": 17,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 17,
+     "k": "quoted",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY CUBE (x) OFFSET 5",
+   "generated": "SELECT a FROM test GROUP BY CUBE (x) OFFSET 5",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 7,
+      "end": 7
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From"
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table"
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 18,
+      "start": 14,
+      "end": 17
+     }
+    },
+    {
+     "i": 7,
+     "k": "this",
+     "v": "test"
+    },
+    {
+     "i": 7,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group"
+    },
+    {
+     "i": 10,
+     "k": "cube",
+     "a": true,
+     "c": "sqlglot.expressions.query.Cube"
+    },
+    {
+     "i": 11,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 12,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 35,
+      "start": 34,
+      "end": 34
+     }
+    },
+    {
+     "i": 13,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 13,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "offset",
+     "c": "sqlglot.expressions.query.Offset"
+    },
+    {
+     "i": 16,
+     "k": "expression",
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 45,
+      "start": 44,
+      "end": 44
+     }
+    },
+    {
+     "i": 17,
+     "k": "this",
+     "v": "5"
+    },
+    {
+     "i": 17,
+     "k": "is_string",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY ROLLUP (x) WINDOW w AS (ORDER BY x)",
+   "generated": "SELECT a FROM test GROUP BY ROLLUP (x) WINDOW w AS (ORDER BY x)",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 7,
+      "end": 7
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From"
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table"
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 18,
+      "start": 14,
+      "end": 17
+     }
+    },
+    {
+     "i": 7,
+     "k": "this",
+     "v": "test"
+    },
+    {
+     "i": 7,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group"
+    },
+    {
+     "i": 10,
+     "k": "rollup",
+     "a": true,
+     "c": "sqlglot.expressions.query.Rollup"
+    },
+    {
+     "i": 11,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 12,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 37,
+      "start": 36,
+      "end": 36
+     }
+    },
+    {
+     "i": 13,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 13,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "windows",
+     "a": true,
+     "c": "sqlglot.expressions.query.Window"
+    },
+    {
+     "i": 16,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 47,
+      "start": 46,
+      "end": 46
+     }
+    },
+    {
+     "i": 17,
+     "k": "this",
+     "v": "w"
+    },
+    {
+     "i": 17,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 16,
+     "k": "order",
+     "c": "sqlglot.expressions.query.Order"
+    },
+    {
+     "i": 20,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Ordered"
+    },
+    {
+     "i": 21,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 22,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 62,
+      "start": 61,
+      "end": 61
+     }
+    },
+    {
+     "i": 23,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 23,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 21,
+     "k": "nulls_first",
+     "v": true
     }
    ]
   },

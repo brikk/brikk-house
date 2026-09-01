@@ -2,7 +2,7 @@
 
 > This file owns every current SQLGlot parity case whose source or target is
 > BigQuery. The oracle is the pinned SQLGlot reference at
-> `v30.17.0-72-gbac1a897b` in `reference/sqlglot/`.
+> `v30.17.0-93-gdcc36544a` in `reference/sqlglot/`.
 >
 > The authoritative cases remain in
 > `brikk-sql/testResources/dialect-corpus/*-transpile-known-failures.json`.
@@ -10,14 +10,14 @@
 
 ---
 
-**228 transpile items across 20 source-to-target routes.**
+**226 transpile items across 20 source-to-target routes.**
 
-## BigQuery as source (174)
+## BigQuery as source (172)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 101 |
-| bigquery -> spark | 15 |
+| bigquery -> duckdb | 100 |
+| bigquery -> spark | 14 |
 | bigquery -> presto | 12 |
 | bigquery -> bigquery | 12 |
 | bigquery -> trino | 7 |

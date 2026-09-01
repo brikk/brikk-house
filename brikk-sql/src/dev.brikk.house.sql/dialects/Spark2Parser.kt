@@ -44,7 +44,23 @@ private fun buildAsCast(toType: String): (List<Expression?>) -> Expression = { a
 // sqlglot: exp.cast(x, exp.DType.TIMESTAMP)
 private fun timestampDataType(): DataType = DataType.build(DType.TIMESTAMP)
 
-
+private fun castSparkTimestamp(expression: Expression?): Expression {
+    val value = expression ?: Var(args("this" to ""))
+    val castType = (value as? Cast)?.args?.get("to") as? DataType
+    return if (castType?.isType(
+            DType.DATETIME,
+            DType.DATETIME2,
+            DType.SMALLDATETIME,
+            DType.TIME,
+            DType.TIMESTAMP,
+            DType.TIMESTAMPTZ,
+        ) == true
+    ) {
+        value
+    } else {
+        Cast(args("this" to value, "to" to timestampDataType()))
+    }
+}
 
 /**
  * Port of sqlglot's Spark2Parser (reference/sqlglot/sqlglot/parsers/spark2.py class
@@ -81,7 +97,7 @@ open class Spark2Parser(
         if (matchTextSeq("DROP", "COLUMNS", advance = false)) {
             match(TokenType.DROP)
             matchTextSeq("COLUMNS")
-            return expression(Drop(args("this" to parseSchema(), "kind" to "COLUMNS")))
+            return expression(Drop(args("tables" to listOf(parseSchema()), "kind" to "COLUMNS")))
         }
         return super.parseAlterDropAction()
     }
@@ -129,7 +145,7 @@ object Spark2ParserTables {
         put("FROM_UTC_TIMESTAMP") { a ->
             AtTimeZone(
                 args(
-                    "this" to Cast(args("this" to (seqGet(a, 0) ?: Var(args("this" to ""))), "to" to timestampDataType())),
+                    "this" to castSparkTimestamp(seqGet(a, 0)),
                     "zone" to seqGet(a, 1),
                 )
             )
@@ -155,7 +171,7 @@ object Spark2ParserTables {
         put("TO_UTC_TIMESTAMP") { a ->
             FromTimeZone(
                 args(
-                    "this" to Cast(args("this" to (seqGet(a, 0) ?: Var(args("this" to ""))), "to" to timestampDataType())),
+                    "this" to castSparkTimestamp(seqGet(a, 0)),
                     "zone" to seqGet(a, 1),
                 )
             )

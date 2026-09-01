@@ -83,6 +83,11 @@ class ClickhouseDialectTest {
     }
 
     @Test
+    fun viewTableFunctionRoundTrips() {
+        assertEquals("SELECT x FROM view(SELECT 1 AS x)", roundTrip("SELECT x FROM view(SELECT 1 AS x)"))
+    }
+
+    @Test
     fun refreshableMaterializedViews() {
         // sqlglot #7990: AutoRefreshProperty (REFRESH EVERY/AFTER/OFFSET/RANDOMIZE/DEPENDS/
         // SETTINGS/APPEND) with bare (keyword-less) schedule intervals. Verified against the

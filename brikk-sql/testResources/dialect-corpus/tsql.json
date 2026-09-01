@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "tsql",
   "identity": [
     {
@@ -753,8 +753,23 @@
       "pretty": false
     },
     {
+      "sql": "JSON_QUERY(x, '$.a')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "JSON_VALUE(x, '$.a')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ISNULL(JSON_QUERY(x, '$.a'), JSON_VALUE(x, '$.a'))",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "JSON_QUERY(REPLACE(REPLACE(x , '''', '\"'), '\"\"', '\"'))",
-      "expected": "ISNULL(JSON_QUERY(REPLACE(REPLACE(x, '''', '\"'), '\"\"', '\"'), '$'), JSON_VALUE(REPLACE(REPLACE(x, '''', '\"'), '\"\"', '\"'), '$'))",
+      "expected": "JSON_QUERY(REPLACE(REPLACE(x, '''', '\"'), '\"\"', '\"'), '$')",
       "pretty": false
     },
     {
@@ -2178,11 +2193,44 @@
       }
     },
     {
+      "sql": "JSON_EXTRACT(x, '$.a')",
+      "read": {},
+      "write": {
+        "tsql": "ISNULL(JSON_QUERY(x, '$.a'), JSON_VALUE(x, '$.a'))"
+      }
+    },
+    {
+      "sql": "JSON_VALUE(x, '$.a')",
+      "read": {
+        "bigquery": "JSON_EXTRACT_SCALAR(x, '$.a')"
+      },
+      "write": {
+        "duckdb": "JSON_VALUE(x, '$.a') ->> '$'"
+      }
+    },
+    {
+      "sql": "ISNULL(JSON_QUERY(x, '$.a'), JSON_VALUE(x, '$.a'))",
+      "read": {
+        "sqlite": "x ->> '$.a'",
+        "spark": "GET_JSON_OBJECT(x, '$.a')"
+      },
+      "write": {}
+    },
+    {
+      "sql": "JSON_QUERY(x, '$.a')",
+      "read": {
+        "tsql": "JSON_QUERY(x, '$.a')"
+      },
+      "write": {
+        "trino": "JSON_QUERY(x, '$.a')"
+      }
+    },
+    {
       "sql": "JSON_QUERY(r.JSON, '$.Attr_INT')",
       "read": {},
       "write": {
         "spark": "GET_JSON_OBJECT(r.JSON, '$.Attr_INT')",
-        "tsql": "ISNULL(JSON_QUERY(r.JSON, '$.Attr_INT'), JSON_VALUE(r.JSON, '$.Attr_INT'))"
+        "tsql": "JSON_QUERY(r.JSON, '$.Attr_INT')"
       }
     },
     {
@@ -2190,7 +2238,7 @@
       "read": {},
       "write": {
         "spark": "GET_JSON_OBJECT(r.JSON, '$.Attr_INT')",
-        "tsql": "ISNULL(JSON_QUERY(r.JSON, '$.Attr_INT'), JSON_VALUE(r.JSON, '$.Attr_INT'))"
+        "tsql": "JSON_VALUE(r.JSON, '$.Attr_INT')"
       }
     },
     {
@@ -2944,8 +2992,8 @@
     }
   ],
   "stats": {
-    "identity_count": 224,
-    "transpile_count": 212,
+    "identity_count": 227,
+    "transpile_count": 216,
     "skipped_dynamic": 21
   }
 }

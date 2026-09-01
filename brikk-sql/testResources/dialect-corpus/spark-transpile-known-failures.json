@@ -1,40 +1,8 @@
 {
     "cases": [
         {
-            "case": "write|spark|ALTER TABLE StudentInfo DROP COLUMNS (LastName, DOB)",
-            "reason": "expected `ALTER TABLE StudentInfo DROP COLUMNS (LastName, DOB)` actual `ALTER TABLE StudentInfo DROP COLUMNS`"
-        },
-        {
-            "case": "write|duckdb|CONCAT_WS(' ', NULL, 'Smith')",
-            "reason": "expected `CONCAT_WS(' ', NULL, 'Smith')` actual `CASE WHEN ' ' IS NULL OR NULL IS NULL OR 'Smith' IS NULL THEN NULL ELSE CONCAT_WS(' ', NULL, 'Smith') END`"
-        },
-        {
-            "case": "read|duckdb|SELECT * FROM parquet.`name.parquet`",
-            "reason": "expected `SELECT * FROM parquet.`name.parquet`` actual `SELECT * FROM READ_PARQUET('name.parquet')`"
-        },
-        {
-            "case": "write|duckdb|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
-            "reason": "expected `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NULL WHEN name IS NULL THEN NULL ELSE (id, name) END) AS cnt FROM tbl` actual `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl`"
-        },
-        {
-            "case": "write|postgres|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
-            "reason": "expected `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NULL WHEN name IS NULL THEN NULL ELSE (id, name) END) AS cnt FROM tbl` actual `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl`"
-        },
-        {
-            "case": "write|presto|WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl",
-            "reason": "expected `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT CASE WHEN id IS NULL THEN NULL WHEN name IS NULL THEN NULL ELSE (id, name) END) AS cnt FROM tbl` actual `WITH tbl AS (SELECT 1 AS id, 'eggy' AS name UNION ALL SELECT NULL AS id, 'jake' AS name) SELECT COUNT(DISTINCT id, name) AS cnt FROM tbl`"
-        },
-        {
             "case": "write|bigquery|SELECT TO_UTC_TIMESTAMP('2016-08-31', 'Asia/Seoul')",
             "reason": "expected `SELECT DATETIME(TIMESTAMP(CAST('2016-08-31' AS DATETIME), 'Asia/Seoul'), 'UTC')` actual `SELECT CAST('2016-08-31' AS DATETIME) AT TIME ZONE 'Asia/Seoul' AT TIME ZONE 'UTC'`"
-        },
-        {
-            "case": "write|duckdb|SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30')",
-            "reason": "expected `SELECT DATE_DIFF('MONTH', CAST('1996-10-30' AS DATE), CAST('1997-02-28 10:30:00' AS DATE)) + CASE WHEN DAY(CAST('1997-02-28 10:30:00' AS DATE)) = DAY(LAST_DAY(CAST('1997-02-28 10:30:00' AS DATE))) AND DAY(CAST('1996-10-30' AS DATE)) = DAY(LAST_DAY(CAST('1996-10-30' AS DATE))) THEN 0 ELSE (DAY(CAST('1997-02-28 10:30:00' AS DATE)) - DAY(CAST('1996-10-30' AS DATE))) / 31.0 END` actual `SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30')`"
-        },
-        {
-            "case": "write|duckdb|SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30', FALSE)",
-            "reason": "expected `SELECT DATE_DIFF('MONTH', CAST('1996-10-30' AS DATE), CAST('1997-02-28 10:30:00' AS DATE)) + CASE WHEN DAY(CAST('1997-02-28 10:30:00' AS DATE)) = DAY(LAST_DAY(CAST('1997-02-28 10:30:00' AS DATE))) AND DAY(CAST('1996-10-30' AS DATE)) = DAY(LAST_DAY(CAST('1996-10-30' AS DATE))) THEN 0 ELSE (DAY(CAST('1997-02-28 10:30:00' AS DATE)) - DAY(CAST('1996-10-30' AS DATE))) / 31.0 END` actual `SELECT MONTHS_BETWEEN('1997-02-28 10:30:00', '1996-10-30', FALSE)`"
         },
         {
             "case": "read|bigquery|SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))",
@@ -43,18 +11,6 @@
         {
             "case": "write|bigquery|SELECT DATE_ADD(my_date_column, 1)",
             "reason": "expected `SELECT DATE_ADD(CAST(CAST(my_date_column AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `SELECT TS_OR_DS_ADD(my_date_column, 1, DAY)`"
-        },
-        {
-            "case": "read|spark|SELECT DATE_ADD(MONTH, 20, col)",
-            "reason": "expected `SELECT DATE_ADD(MONTH, 20, col)` actual `SELECT TIMESTAMP_ADD(col, 20, MONTH)`"
-        },
-        {
-            "case": "write|spark|SELECT DATE_ADD(MONTH, 20, col)",
-            "reason": "expected `SELECT DATE_ADD(MONTH, 20, col)` actual `SELECT TIMESTAMP_ADD(col, 20, MONTH)`"
-        },
-        {
-            "case": "read|spark|WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t",
-            "reason": "expected `WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t` actual `WITH t(n) AS (SELECT * FROM VALUES (1) AS _values) SELECT n FROM t`"
         },
         {
             "case": "write|bigquery|SELECT EXPLODE(x) FROM tbl",
@@ -75,10 +31,6 @@
         {
             "case": "write|bigquery|SELECT POSEXPLODE(ARRAY(2, 3)), EXPLODE(ARRAY(4, 5, 6)) FROM tbl",
             "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2, IF(pos = pos_3, col_2, NULL) AS col_2 FROM tbl CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([2, 3]), ARRAY_LENGTH([4, 5, 6])) - 1)) AS pos CROSS JOIN UNNEST([2, 3]) AS col WITH OFFSET AS pos_2 CROSS JOIN UNNEST([4, 5, 6]) AS col_2 WITH OFFSET AS pos_3 WHERE (pos = pos_2 OR (pos > (ARRAY_LENGTH([2, 3]) - 1) AND pos_2 = (ARRAY_LENGTH([2, 3]) - 1))) AND (pos = pos_3 OR (pos > (ARRAY_LENGTH([4, 5, 6]) - 1) AND pos_3 = (ARRAY_LENGTH([4, 5, 6]) - 1)))` actual `SELECT POSEXPLODE([2, 3]), EXPLODE([4, 5, 6]) FROM tbl`"
-        },
-        {
-            "case": "write|spark|SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))",
-            "reason": "expected `SET VARIABLE v = (SELECT MAX(c1) FROM VALUES (1), (2) AS T(c1))` actual `SET VARIABLE v = (SELECT GREATEST(c1) FROM VALUES (1), (2) AS T(c1))`"
         }
     ]
 }

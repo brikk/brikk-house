@@ -2,6 +2,7 @@ package dev.brikk.house.sql
 
 import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.parser.parseOne
+import dev.brikk.house.sql.optimizer.annotateTypes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -44,5 +45,17 @@ class SparkDialectTest {
     @Test
     fun tryCastSupported() {
         assertEquals("SELECT TRY_CAST(x AS INT)", roundTrip("SELECT TRY_CAST(x AS INT)"))
+    }
+
+    @Test
+    fun mapExplodeBecomesTwoColumnUnnestForPresto() {
+        val expression = annotateTypes(
+            parseOne("SELECT EXPLODE(MAP(1, 'a')) AS (k, v)", "spark"),
+            dialect = "spark",
+        )
+        assertEquals(
+            "SELECT _u_2.k AS k, _u_2.v AS v FROM UNNEST(MAP(ARRAY[1], ARRAY['a'])) AS _u_2(k, v)",
+            expression.sql("presto"),
+        )
     }
 }

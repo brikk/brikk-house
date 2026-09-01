@@ -1,20 +1,8 @@
 {
     "cases": [
         {
-            "case": "write|spark|ALTER TABLE x CHANGE COLUMN a a VARCHAR(10) CASCADE",
-            "reason": "expected `ALTER TABLE x ALTER COLUMN a TYPE VARCHAR(10)` actual `ALTER TABLE x ALTER COLUMN a TYPE VARCHAR(10) CASCADE`"
-        },
-        {
-            "case": "write|duckdb|from_unixtime(x, \"yyyy-MM-dd'T'HH\")",
-            "reason": "expected `STRFTIME(TO_TIMESTAMP(x), '%Y-%m-%d''T''%H')` actual `UNIX_TO_STR(x, '%Y-%mstrict-%dstrict''T''%Hstrict')`"
-        },
-        {
             "case": "write|bigquery|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
             "reason": "expected `FORMAT_DATE('%Y-%m-%d %H:%M:%S', CAST('2020-01-01' AS DATETIME))` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', TIME_STR_TO_TIME('2020-01-01'))`"
-        },
-        {
-            "case": "write|duckdb|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
-            "reason": "expected `STRFTIME(CAST('2020-01-01' AS TIMESTAMP), '%Y-%m-%d %H:%M:%S')` actual `STRFTIME(TIME_STR_TO_TIME('2020-01-01'), '%Y-%m-%d %H:%M:%S')`"
         },
         {
             "case": "write|bigquery|DATE_ADD('2020-01-01', 1)",

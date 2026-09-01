@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-72-gbac1a897b",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "snowflake",
   "identity": [
     {
@@ -1336,6 +1336,31 @@
     },
     {
       "sql": "OBJECT_CONSTRUCT(*)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "OBJECT_CONSTRUCT(t.*)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "OBJECT_CONSTRUCT_KEEP_NULL(*)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "OBJECT_CONSTRUCT_KEEP_NULL(t.*)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "OBJECT_CONSTRUCT_KEEP_NULL(t.* ILIKE 'col1%')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "OBJECT_CONSTRUCT_KEEP_NULL(t.* EXCLUDE (col1, col2))",
       "expected": null,
       "pretty": false
     },
@@ -8720,7 +8745,7 @@
     }
   ],
   "stats": {
-    "identity_count": 836,
+    "identity_count": 841,
     "transpile_count": 530,
     "skipped_dynamic": 32
   }

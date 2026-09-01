@@ -1,6 +1,6 @@
 {
- "sqlglot_version": "v30.17.0-72-gbac1a897b",
- "class_count": 1030,
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
+ "class_count": 1031,
  "traits": [
   "AggFunc",
   "Binary",
@@ -858,6 +858,10 @@
     "high": true,
     "symmetric": false
    }
+  },
+  "BinaryColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {}
   },
   "BitLength": {
    "module": "sqlglot.expressions.string",

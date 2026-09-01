@@ -6,6 +6,7 @@ import dev.brikk.house.sql.ast.ArrayAgg
 import dev.brikk.house.sql.ast.ArraySize
 import dev.brikk.house.sql.ast.ArrayUniqueAgg
 import dev.brikk.house.sql.ast.Column
+import dev.brikk.house.sql.ast.ConcatWs
 import dev.brikk.house.sql.ast.CurrentTimestamp
 import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.DType
@@ -435,6 +436,9 @@ object HiveParserTables {
         put("BASE64") { a -> ToBase64(args("this" to seqGet(a, 0))) }
         put("COLLECT_LIST") { a -> ArrayAgg(args("this" to seqGet(a, 0), "nulls_excluded" to true)) }
         put("COLLECT_SET") { a -> ArrayUniqueAgg(args("this" to seqGet(a, 0))) }
+        put("CONCAT_WS") { a ->
+            ConcatWs(args("expressions" to a, "safe" to true, "coalesce" to true))
+        }
         put("DATE_ADD") { a ->
             dev.brikk.house.sql.parser.applyTimeUnitCoercion(
                 TsOrDsAdd(

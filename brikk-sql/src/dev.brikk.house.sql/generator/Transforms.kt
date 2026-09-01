@@ -10,10 +10,12 @@ import dev.brikk.house.sql.ast.And
 import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.ast.ArraySize
+import dev.brikk.house.sql.ast.ApproxQuantile
 import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.ColumnDef
 import dev.brikk.house.sql.ast.Create
+import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.Distinct
 import dev.brikk.house.sql.ast.EQ
 import dev.brikk.house.sql.ast.Exists
@@ -34,9 +36,12 @@ import dev.brikk.house.sql.ast.ILike
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Not
 import dev.brikk.house.sql.ast.Order
+import dev.brikk.house.sql.ast.Ordered
 import dev.brikk.house.sql.ast.Or
 import dev.brikk.house.sql.ast.Posexplode
 import dev.brikk.house.sql.ast.PartitionedByProperty
+import dev.brikk.house.sql.ast.PercentileCont
+import dev.brikk.house.sql.ast.PercentileDisc
 import dev.brikk.house.sql.ast.PropertyEQ
 import dev.brikk.house.sql.ast.RowNumber
 import dev.brikk.house.sql.ast.Tuple
@@ -52,9 +57,11 @@ import dev.brikk.house.sql.ast.Struct
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.TableAlias
 import dev.brikk.house.sql.ast.Unnest
+import dev.brikk.house.sql.ast.Union
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.Window
 import dev.brikk.house.sql.ast.With
+import dev.brikk.house.sql.ast.WithinGroup
 import dev.brikk.house.sql.ast.aliasExpression
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.ast.column
@@ -215,6 +222,65 @@ fun eliminateSemiAndAntiJoins(expression: Expression): Expression {
         }
     }
 
+    return expression
+}
+
+/** sqlglot: transforms.eliminate_full_outer_join. */
+fun eliminateFullOuterJoin(expression: Expression): Expression {
+    if (expression !is Select) return expression
+
+    val joins = expression.args["joins"] as? List<*> ?: return expression
+    val fullOuterJoins = joins.filterIsInstance<Join>().mapIndexedNotNull { index, join ->
+        if (join.side == "FULL") index to join else null
+    }
+    if (fullOuterJoins.size != 1) return expression
+
+    val expressionCopy = expression.copy() as Select
+    expression.set("limit", null)
+    val (index, fullOuterJoin) = fullOuterJoins.single()
+    val from = expression.args["from_"] as? From ?: return expression
+    val leftTable = from.aliasOrName
+    val rightTable = fullOuterJoin.aliasOrName
+    val joinConditions = (fullOuterJoin.args["on"] as? Expression)?.copy() ?: run {
+        val using = (fullOuterJoin.args["using"] as? List<*>)?.filterIsInstance<Identifier>().orEmpty()
+        val conditions = using.map { identifier ->
+            EQ(
+                args(
+                    "this" to column(identifier.name, table = leftTable),
+                    "expression" to column(identifier.name, table = rightTable),
+                )
+            )
+        }
+        if (conditions.isEmpty()) return expression
+        combineAnd(conditions)
+    }
+
+    fullOuterJoin.set("side", "left")
+    val antiJoin = Select(
+        args(
+            "expressions" to listOf(Literal.number("1")),
+            "from_" to From(args("this" to (from.thisArg as Expression).copy())),
+            "where" to Where(args("this" to joinConditions)),
+        )
+    )
+    val copiedJoins = expressionCopy.args["joins"] as? List<*> ?: return expression
+    val copiedFullJoin = copiedJoins.filterIsInstance<Join>().getOrNull(index) ?: return expression
+    copiedFullJoin.set("side", "right")
+    addWhere(expressionCopy, Not(args("this" to Exists(args("this" to antiJoin)))))
+    expressionCopy.set("with_", null)
+    expression.set("order", null)
+
+    return Union(args("this" to expression, "expression" to expressionCopy, "distinct" to false))
+}
+
+/** sqlglot: transforms.remove_within_group_for_percentiles. */
+fun removeWithinGroupForPercentiles(expression: WithinGroup): Expression {
+    val percentile = expression.thisArg
+    val order = expression.expressionArg
+    if ((percentile is PercentileCont || percentile is PercentileDisc) && order is Order) {
+        val input = (expression.find(Ordered::class) as? Ordered)?.thisArg
+        return ApproxQuantile(args("this" to input, "quantile" to percentile.thisArg))
+    }
     return expression
 }
 
@@ -616,7 +682,11 @@ fun unnestGenerateSeries(expression: Expression): Expression {
 }
 
 /** sqlglot: transforms.explode_projection_to_unnest. */
-fun explodeProjectionToUnnest(expression: Expression, indexOffset: Int = 0): Expression {
+fun explodeProjectionToUnnest(
+    expression: Expression,
+    indexOffset: Int = 0,
+    unnestMap: kotlin.Boolean = false,
+): Expression {
     if (expression !is Select) return expression
 
     val takenSelectNames = expression.namedSelects.toMutableSet()
@@ -643,6 +713,42 @@ fun explodeProjectionToUnnest(expression: Expression, indexOffset: Int = 0): Exp
             continue
         }
 
+        val explodeArg = explode.thisArg as Expression
+        if (
+            unnestMap &&
+            explode::class == Explode::class &&
+            explodeArg.isType(DType.MAP) &&
+            (selection === explode || selection is Aliases)
+        ) {
+            val aliases = if (selection is Aliases) {
+                selection.expressionsArg.filterIsInstance<Identifier>()
+            } else {
+                listOf(
+                    toIdentifier(newName(takenSelectNames, "key"))!!,
+                    toIdentifier(newName(takenSelectNames, "value"))!!,
+                )
+            }
+            val keyAlias = aliases[0]
+            val valueAlias = aliases[1]
+            val sourceAlias = newName(takenSourceNames, "_u")
+
+            selections.add(aliasExpression(column(keyAlias, table = sourceAlias), keyAlias, copy = false))
+            selections.add(aliasExpression(column(valueAlias, table = sourceAlias), valueAlias, copy = false))
+
+            val unnest = aliasExpression(
+                Unnest(args("expressions" to listOf(explodeArg.copy()))),
+                sourceAlias,
+                tableColumns = listOf(keyAlias, valueAlias),
+                copy = false,
+            )
+            if (expression.args["from_"] != null) {
+                expression.append("joins", Join(args("this" to unnest, "kind" to "CROSS")))
+            } else {
+                expression.set("from_", From(args("this" to unnest)))
+            }
+            continue
+        }
+
         var posAlias: Identifier? = null
         var explodeAlias: Identifier? = null
         val alias = when (selection) {
@@ -660,7 +766,6 @@ fun explodeProjectionToUnnest(expression: Expression, indexOffset: Int = 0): Exp
         }
         explode = alias.find(Explode::class) as Explode
         val isPosexplode = explode is Posexplode
-        val explodeArg = explode.thisArg as Expression
         if (explodeArg is Column) takenSelectNames.add(explodeArg.outputName)
 
         val unnestSourceAlias = newName(takenSourceNames, "_u")

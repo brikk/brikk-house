@@ -1,8 +1,8 @@
 {
- "sqlglot_version": "v30.17.0-72-gbac1a897b",
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
  "fixture": "dialect-corpus/clickhouse.json",
  "dialect": "clickhouse",
- "case_count": 318,
+ "case_count": 321,
  "skipped": [
   {
    "sql": "SELECT json.a.b[].c",
@@ -4909,6 +4909,154 @@
     },
     {
      "i": 12,
+     "k": "totals",
+     "v": true
+    }
+   ]
+  },
+  {
+   "sql": "SELECT x, COUNT() FROM y GROUP BY x WITH TOTALS LIMIT 1",
+   "generated": "SELECT x, COUNT() FROM y GROUP BY x WITH TOTALS LIMIT 1",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 7,
+      "end": 7
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.aggregate.Count",
+     "m": {
+      "name": "COUNT",
+      "line": 1,
+      "col": 15,
+      "start": 10,
+      "end": 14
+     }
+    },
+    {
+     "i": 5,
+     "k": "big_int",
+     "v": true
+    },
+    {
+     "i": 0,
+     "k": "limit",
+     "c": "sqlglot.expressions.query.Limit"
+    },
+    {
+     "i": 7,
+     "k": "expression",
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 55,
+      "start": 54,
+      "end": 54
+     }
+    },
+    {
+     "i": 8,
+     "k": "this",
+     "v": "1"
+    },
+    {
+     "i": 8,
+     "k": "is_string",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From"
+    },
+    {
+     "i": 11,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table"
+    },
+    {
+     "i": 12,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 24,
+      "start": 23,
+      "end": 23
+     }
+    },
+    {
+     "i": 13,
+     "k": "this",
+     "v": "y"
+    },
+    {
+     "i": 13,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group"
+    },
+    {
+     "i": 16,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 17,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 35,
+      "start": 34,
+      "end": 34
+     }
+    },
+    {
+     "i": 18,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 18,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 16,
      "k": "totals",
      "v": true
     }
@@ -42041,6 +42189,486 @@
     },
     {
      "i": 10,
+     "k": "quoted",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT x FROM view(SELECT 1 AS x)",
+   "generated": "SELECT x FROM view(SELECT 1 AS x)",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 7,
+      "end": 7
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From"
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table"
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Anonymous"
+    },
+    {
+     "i": 7,
+     "k": "this",
+     "v": "view"
+    },
+    {
+     "i": 7,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 9,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Alias"
+    },
+    {
+     "i": 10,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 27,
+      "start": 26,
+      "end": 26
+     }
+    },
+    {
+     "i": 11,
+     "k": "this",
+     "v": "1"
+    },
+    {
+     "i": 11,
+     "k": "is_string",
+     "v": false
+    },
+    {
+     "i": 10,
+     "k": "alias",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 32,
+      "start": 31,
+      "end": 31
+     }
+    },
+    {
+     "i": 14,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 14,
+     "k": "quoted",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT country, sum(installs) AS installs FROM cluster('default', view(SELECT 'US' AS country, count() AS installs FROM numbers(1) GROUP BY country)) GROUP BY country",
+   "generated": "SELECT country, sum(installs) AS installs FROM cluster('default', view(SELECT 'US' AS country, count() AS installs FROM numbers(1) GROUP BY country)) GROUP BY country",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 14,
+      "start": 7,
+      "end": 13
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "country"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Alias"
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "c": "sqlglot.expressions.aggregate.Sum",
+     "m": {
+      "name": "sum",
+      "line": 1,
+      "col": 19,
+      "start": 16,
+      "end": 18
+     }
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 7,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 28,
+      "start": 20,
+      "end": 27
+     }
+    },
+    {
+     "i": 8,
+     "k": "this",
+     "v": "installs"
+    },
+    {
+     "i": 8,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 5,
+     "k": "alias",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 41,
+      "start": 33,
+      "end": 40
+     }
+    },
+    {
+     "i": 11,
+     "k": "this",
+     "v": "installs"
+    },
+    {
+     "i": 11,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From"
+    },
+    {
+     "i": 14,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table"
+    },
+    {
+     "i": 15,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Anonymous",
+     "m": {
+      "line": 1,
+      "col": 54,
+      "start": 47,
+      "end": 53
+     }
+    },
+    {
+     "i": 16,
+     "k": "this",
+     "v": "cluster"
+    },
+    {
+     "i": 16,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 64,
+      "start": 55,
+      "end": 63
+     }
+    },
+    {
+     "i": 18,
+     "k": "this",
+     "v": "default"
+    },
+    {
+     "i": 18,
+     "k": "is_string",
+     "v": true
+    },
+    {
+     "i": 16,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Anonymous"
+    },
+    {
+     "i": 21,
+     "k": "this",
+     "v": "view"
+    },
+    {
+     "i": 21,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 23,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Alias"
+    },
+    {
+     "i": 24,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 82,
+      "start": 78,
+      "end": 81
+     }
+    },
+    {
+     "i": 25,
+     "k": "this",
+     "v": "US"
+    },
+    {
+     "i": 25,
+     "k": "is_string",
+     "v": true
+    },
+    {
+     "i": 24,
+     "k": "alias",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 93,
+      "start": 86,
+      "end": 92
+     }
+    },
+    {
+     "i": 28,
+     "k": "this",
+     "v": "country"
+    },
+    {
+     "i": 28,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 23,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Alias"
+    },
+    {
+     "i": 31,
+     "k": "this",
+     "c": "sqlglot.expressions.aggregate.Count",
+     "m": {
+      "name": "count",
+      "line": 1,
+      "col": 100,
+      "start": 95,
+      "end": 99
+     }
+    },
+    {
+     "i": 32,
+     "k": "big_int",
+     "v": true
+    },
+    {
+     "i": 31,
+     "k": "alias",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 114,
+      "start": 106,
+      "end": 113
+     }
+    },
+    {
+     "i": 34,
+     "k": "this",
+     "v": "installs"
+    },
+    {
+     "i": 34,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 23,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From"
+    },
+    {
+     "i": 37,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table"
+    },
+    {
+     "i": 38,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Anonymous",
+     "m": {
+      "line": 1,
+      "col": 127,
+      "start": 120,
+      "end": 126
+     }
+    },
+    {
+     "i": 39,
+     "k": "this",
+     "v": "numbers"
+    },
+    {
+     "i": 39,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Literal",
+     "m": {
+      "line": 1,
+      "col": 129,
+      "start": 128,
+      "end": 128
+     }
+    },
+    {
+     "i": 41,
+     "k": "this",
+     "v": "1"
+    },
+    {
+     "i": 41,
+     "k": "is_string",
+     "v": false
+    },
+    {
+     "i": 23,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group"
+    },
+    {
+     "i": 44,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 45,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 147,
+      "start": 140,
+      "end": 146
+     }
+    },
+    {
+     "i": 46,
+     "k": "this",
+     "v": "country"
+    },
+    {
+     "i": 46,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group"
+    },
+    {
+     "i": 49,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 50,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 166,
+      "start": 159,
+      "end": 165
+     }
+    },
+    {
+     "i": 51,
+     "k": "this",
+     "v": "country"
+    },
+    {
+     "i": 51,
      "k": "quoted",
      "v": false
     }

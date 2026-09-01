@@ -16,7 +16,7 @@ import kotlin.test.assertSame
 
 /**
  * Hand assertions for the Postgres dialect wiring, each verified against the Python
- * oracle (reference/sqlglot v30.17.0-72-gbac1a897b): :: casts, JSON arrow operators,
+ * oracle (reference/sqlglot v30.17.0-93-gdcc36544a): :: casts, JSON arrow operators,
  * regex operators, TO_CHAR time mapping, SERIAL-to-GENERATED, array slices with the
  * bracket-paren rule, GENERATE_SERIES transpilation and ON CONFLICT ... RETURNING.
  */
@@ -27,6 +27,21 @@ class PostgresDialectTest {
     @Test
     fun doubleColonCastRoundTrips() {
         assertEquals("SELECT CAST(c AS INT) FROM t", roundTrip("SELECT c::int FROM t"))
+    }
+
+    @Test
+    fun quotedOneByteCharTypeIsPreserved() {
+        assertEquals("SELECT CAST(65 AS \"char\")", roundTrip("SELECT 65::\"char\""))
+        assertEquals("SELECT CAST(65 AS CHAR)", roundTrip("SELECT 65::\"CHAR\""))
+        assertEquals("SELECT CAST(x AS \"char\"[])", roundTrip("SELECT CAST(x AS \"char\"[])"))
+    }
+
+    @Test
+    fun lockStatementIsPreservedAsCommand() {
+        assertEquals(
+            "LOCK TABLE foo, bar IN SHARE ROW EXCLUSIVE MODE",
+            roundTrip("LOCK TABLE foo, bar IN SHARE ROW EXCLUSIVE MODE"),
+        )
     }
 
     @Test

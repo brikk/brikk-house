@@ -1,13 +1,4 @@
 {
-    "sqlglot_version": "v30.17.0-72-gbac1a897b",
-    "cases": [
-        {
-            "case": "write|starrocks|SELECT id, t.col FROM tbl, UNNEST(scores) AS t(col)",
-            "reason": "expected `null` actual `SELECT id, t.col FROM tbl, UNNEST(scores) AS t(col)`"
-        },
-        {
-            "case": "write|starrocks|SELECT id, t.col FROM tbl CROSS JOIN LATERAL UNNEST(scores) AS t(col)",
-            "reason": "expected `null` actual `SELECT id, t.col FROM tbl CROSS JOIN LATERAL UNNEST(scores) AS t(col)`"
-        }
-    ]
+    "sqlglot_version": "v30.17.0-93-gdcc36544a",
+    "cases": []
 }

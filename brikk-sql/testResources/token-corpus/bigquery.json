@@ -1,7 +1,7 @@
 {
- "sqlglot_version": "v30.17.0-72-gbac1a897b",
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
  "dialect": "bigquery",
- "case_count": 977,
+ "case_count": 981,
  "skipped": [
   {
    "sql": "''''",
@@ -23487,6 +23487,485 @@
      "col": 54,
      "start": 53,
      "end": 53,
+     "comments": []
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY GROUPING SETS ((x)) LIMIT 5",
+   "tokens": [
+    {
+     "type": "SELECT",
+     "text": "SELECT",
+     "line": 1,
+     "col": 6,
+     "start": 0,
+     "end": 5,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "a",
+     "line": 1,
+     "col": 8,
+     "start": 7,
+     "end": 7,
+     "comments": []
+    },
+    {
+     "type": "FROM",
+     "text": "FROM",
+     "line": 1,
+     "col": 13,
+     "start": 9,
+     "end": 12,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "test",
+     "line": 1,
+     "col": 18,
+     "start": 14,
+     "end": 17,
+     "comments": []
+    },
+    {
+     "type": "GROUP_BY",
+     "text": "GROUP BY",
+     "line": 1,
+     "col": 27,
+     "start": 19,
+     "end": 26,
+     "comments": []
+    },
+    {
+     "type": "GROUPING_SETS",
+     "text": "GROUPING SETS",
+     "line": 1,
+     "col": 41,
+     "start": 28,
+     "end": 40,
+     "comments": []
+    },
+    {
+     "type": "L_PAREN",
+     "text": "(",
+     "line": 1,
+     "col": 43,
+     "start": 42,
+     "end": 42,
+     "comments": []
+    },
+    {
+     "type": "L_PAREN",
+     "text": "(",
+     "line": 1,
+     "col": 44,
+     "start": 43,
+     "end": 43,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "x",
+     "line": 1,
+     "col": 45,
+     "start": 44,
+     "end": 44,
+     "comments": []
+    },
+    {
+     "type": "R_PAREN",
+     "text": ")",
+     "line": 1,
+     "col": 46,
+     "start": 45,
+     "end": 45,
+     "comments": []
+    },
+    {
+     "type": "R_PAREN",
+     "text": ")",
+     "line": 1,
+     "col": 47,
+     "start": 46,
+     "end": 46,
+     "comments": []
+    },
+    {
+     "type": "LIMIT",
+     "text": "LIMIT",
+     "line": 1,
+     "col": 53,
+     "start": 48,
+     "end": 52,
+     "comments": []
+    },
+    {
+     "type": "NUMBER",
+     "text": "5",
+     "line": 1,
+     "col": 55,
+     "start": 54,
+     "end": 54,
+     "comments": []
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY ROLLUP (x) LIMIT 5",
+   "tokens": [
+    {
+     "type": "SELECT",
+     "text": "SELECT",
+     "line": 1,
+     "col": 6,
+     "start": 0,
+     "end": 5,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "a",
+     "line": 1,
+     "col": 8,
+     "start": 7,
+     "end": 7,
+     "comments": []
+    },
+    {
+     "type": "FROM",
+     "text": "FROM",
+     "line": 1,
+     "col": 13,
+     "start": 9,
+     "end": 12,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "test",
+     "line": 1,
+     "col": 18,
+     "start": 14,
+     "end": 17,
+     "comments": []
+    },
+    {
+     "type": "GROUP_BY",
+     "text": "GROUP BY",
+     "line": 1,
+     "col": 27,
+     "start": 19,
+     "end": 26,
+     "comments": []
+    },
+    {
+     "type": "ROLLUP",
+     "text": "ROLLUP",
+     "line": 1,
+     "col": 34,
+     "start": 28,
+     "end": 33,
+     "comments": []
+    },
+    {
+     "type": "L_PAREN",
+     "text": "(",
+     "line": 1,
+     "col": 36,
+     "start": 35,
+     "end": 35,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "x",
+     "line": 1,
+     "col": 37,
+     "start": 36,
+     "end": 36,
+     "comments": []
+    },
+    {
+     "type": "R_PAREN",
+     "text": ")",
+     "line": 1,
+     "col": 38,
+     "start": 37,
+     "end": 37,
+     "comments": []
+    },
+    {
+     "type": "LIMIT",
+     "text": "LIMIT",
+     "line": 1,
+     "col": 44,
+     "start": 39,
+     "end": 43,
+     "comments": []
+    },
+    {
+     "type": "NUMBER",
+     "text": "5",
+     "line": 1,
+     "col": 46,
+     "start": 45,
+     "end": 45,
+     "comments": []
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY CUBE (x) OFFSET 5",
+   "tokens": [
+    {
+     "type": "SELECT",
+     "text": "SELECT",
+     "line": 1,
+     "col": 6,
+     "start": 0,
+     "end": 5,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "a",
+     "line": 1,
+     "col": 8,
+     "start": 7,
+     "end": 7,
+     "comments": []
+    },
+    {
+     "type": "FROM",
+     "text": "FROM",
+     "line": 1,
+     "col": 13,
+     "start": 9,
+     "end": 12,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "test",
+     "line": 1,
+     "col": 18,
+     "start": 14,
+     "end": 17,
+     "comments": []
+    },
+    {
+     "type": "GROUP_BY",
+     "text": "GROUP BY",
+     "line": 1,
+     "col": 27,
+     "start": 19,
+     "end": 26,
+     "comments": []
+    },
+    {
+     "type": "CUBE",
+     "text": "CUBE",
+     "line": 1,
+     "col": 32,
+     "start": 28,
+     "end": 31,
+     "comments": []
+    },
+    {
+     "type": "L_PAREN",
+     "text": "(",
+     "line": 1,
+     "col": 34,
+     "start": 33,
+     "end": 33,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "x",
+     "line": 1,
+     "col": 35,
+     "start": 34,
+     "end": 34,
+     "comments": []
+    },
+    {
+     "type": "R_PAREN",
+     "text": ")",
+     "line": 1,
+     "col": 36,
+     "start": 35,
+     "end": 35,
+     "comments": []
+    },
+    {
+     "type": "OFFSET",
+     "text": "OFFSET",
+     "line": 1,
+     "col": 43,
+     "start": 37,
+     "end": 42,
+     "comments": []
+    },
+    {
+     "type": "NUMBER",
+     "text": "5",
+     "line": 1,
+     "col": 45,
+     "start": 44,
+     "end": 44,
+     "comments": []
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY ROLLUP (x) WINDOW w AS (ORDER BY x)",
+   "tokens": [
+    {
+     "type": "SELECT",
+     "text": "SELECT",
+     "line": 1,
+     "col": 6,
+     "start": 0,
+     "end": 5,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "a",
+     "line": 1,
+     "col": 8,
+     "start": 7,
+     "end": 7,
+     "comments": []
+    },
+    {
+     "type": "FROM",
+     "text": "FROM",
+     "line": 1,
+     "col": 13,
+     "start": 9,
+     "end": 12,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "test",
+     "line": 1,
+     "col": 18,
+     "start": 14,
+     "end": 17,
+     "comments": []
+    },
+    {
+     "type": "GROUP_BY",
+     "text": "GROUP BY",
+     "line": 1,
+     "col": 27,
+     "start": 19,
+     "end": 26,
+     "comments": []
+    },
+    {
+     "type": "ROLLUP",
+     "text": "ROLLUP",
+     "line": 1,
+     "col": 34,
+     "start": 28,
+     "end": 33,
+     "comments": []
+    },
+    {
+     "type": "L_PAREN",
+     "text": "(",
+     "line": 1,
+     "col": 36,
+     "start": 35,
+     "end": 35,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "x",
+     "line": 1,
+     "col": 37,
+     "start": 36,
+     "end": 36,
+     "comments": []
+    },
+    {
+     "type": "R_PAREN",
+     "text": ")",
+     "line": 1,
+     "col": 38,
+     "start": 37,
+     "end": 37,
+     "comments": []
+    },
+    {
+     "type": "WINDOW",
+     "text": "WINDOW",
+     "line": 1,
+     "col": 45,
+     "start": 39,
+     "end": 44,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "w",
+     "line": 1,
+     "col": 47,
+     "start": 46,
+     "end": 46,
+     "comments": []
+    },
+    {
+     "type": "ALIAS",
+     "text": "AS",
+     "line": 1,
+     "col": 50,
+     "start": 48,
+     "end": 49,
+     "comments": []
+    },
+    {
+     "type": "L_PAREN",
+     "text": "(",
+     "line": 1,
+     "col": 52,
+     "start": 51,
+     "end": 51,
+     "comments": []
+    },
+    {
+     "type": "ORDER_BY",
+     "text": "ORDER BY",
+     "line": 1,
+     "col": 60,
+     "start": 52,
+     "end": 59,
+     "comments": []
+    },
+    {
+     "type": "VAR",
+     "text": "x",
+     "line": 1,
+     "col": 62,
+     "start": 61,
+     "end": 61,
+     "comments": []
+    },
+    {
+     "type": "R_PAREN",
+     "text": ")",
+     "line": 1,
+     "col": 63,
+     "start": 62,
+     "end": 62,
      "comments": []
     }
    ]
