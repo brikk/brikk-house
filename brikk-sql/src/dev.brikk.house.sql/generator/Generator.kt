@@ -2247,11 +2247,48 @@ open class Generator(
     open fun tupleSql(expression: Tuple): String =
         "(${expressions(expression, dynamic = true, newLine = true, skipFirst = true, skipLast = true)})"
 
-    // sqlglot: Generator.update_sql (base: UPDATE_STATEMENT_SUPPORTS_FROM=true)
+    // sqlglot: Generator._update_from_joins_sql
+    protected open fun updateFromJoinsSql(expression: Update): Pair<String, String> {
+        val from = expression.args["from_"] as? From
+        if (updateStatementSupportsFrom || from == null) {
+            return "" to sql(expression, "from_")
+        }
+
+        val target = expression.thisArg as? Table
+        if (target != null) {
+            val targetName = toIdentifier(target.aliasOrName)
+            for (assignment in expression.expressionsArg.filterIsInstance<EQ>()) {
+                val column = assignment.thisArg as? Column
+                if (column != null && column.table.isEmpty()) column.set("table", targetName?.copy())
+            }
+        }
+
+        val table = from.thisArg as? Expression ?: return "" to ""
+        val nestedJoins = (table.args["joins"] as? List<*>)?.filterIsInstance<Join>().orEmpty()
+        if (nestedJoins.isNotEmpty()) table.set("joins", null)
+
+        var joinsSql = sql(
+            Join(
+                args(
+                    "this" to table,
+                    "on" to BooleanNode(args("this" to true)),
+                )
+            )
+        )
+        for (nested in nestedJoins) {
+            if (nested.args["on"] == null && nested.args["using"] == null) {
+                nested.set("on", BooleanNode(args("this" to true)))
+            }
+            joinsSql += sql(nested)
+        }
+        return joinsSql to ""
+    }
+
+    // sqlglot: Generator.update_sql
     open fun updateSql(expression: Update): String {
         val hint = sql(expression, "hint")
         val thisSql = sql(expression, "this")
-        val fromSql = sql(expression, "from_")
+        val (joinSql, fromSql) = updateFromJoinsSql(expression)
         val setSql = expressions(expression, flat = true)
         val whereSql = sql(expression, "where")
         val returning = sql(expression, "returning")
@@ -2264,7 +2301,7 @@ open class Generator(
         }
         var options = expressions(expression, key = "options")
         if (options.isNotEmpty()) options = " OPTION($options)"
-        val sqlText = "UPDATE$hint $thisSql SET $setSql$expressionSql$order$limit$options"
+        val sqlText = "UPDATE$hint $thisSql$joinSql SET $setSql$expressionSql$order$limit$options"
         return prependCtes(expression, sqlText)
     }
 

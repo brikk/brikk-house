@@ -617,10 +617,6 @@
             "reason": "expected `SELECT STRFTIME(CAST('2020-09-09 10:15:30' AS TIMESTAMP), '%Y-%m-%-d')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2020-09-09 10:15:30' AS TIMESTAMP)), '%Y-%m-%-d')`"
         },
         {
-            "case": "write|duckdb|SELECT FORMAT_TIMESTAMP(\"%b-%d-%Y\", TIMESTAMP \"2050-12-25 15:30:55+00\")",
-            "reason": "expected `SELECT STRFTIME(CAST(CAST('2050-12-25 15:30:55+00' AS TIMESTAMPTZ) AS TIMESTAMP), '%b-%d-%Y')` actual `SELECT STRFTIME(TS_OR_DS_TO_TIMESTAMP(CAST('2050-12-25 15:30:55+00' AS TIMESTAMPTZ)), '%b-%d-%Y')`"
-        },
-        {
             "case": "write|duckdb|SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08')",
             "reason": "expected `SELECT CAST(GENERATE_SERIES(CAST('2016-10-05' AS DATE), CAST('2016-10-08' AS DATE), INTERVAL '1' DAY) AS DATE[])` actual `SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' DAY)`"
         },

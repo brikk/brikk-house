@@ -52,6 +52,7 @@ import dev.brikk.house.sql.ast.Struct
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.TableAlias
 import dev.brikk.house.sql.ast.Unnest
+import dev.brikk.house.sql.ast.Union
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.Window
 import dev.brikk.house.sql.ast.With
@@ -216,6 +217,54 @@ fun eliminateSemiAndAntiJoins(expression: Expression): Expression {
     }
 
     return expression
+}
+
+/** sqlglot: transforms.eliminate_full_outer_join. */
+fun eliminateFullOuterJoin(expression: Expression): Expression {
+    if (expression !is Select) return expression
+
+    val joins = expression.args["joins"] as? List<*> ?: return expression
+    val fullOuterJoins = joins.filterIsInstance<Join>().mapIndexedNotNull { index, join ->
+        if (join.side == "FULL") index to join else null
+    }
+    if (fullOuterJoins.size != 1) return expression
+
+    val expressionCopy = expression.copy() as Select
+    expression.set("limit", null)
+    val (index, fullOuterJoin) = fullOuterJoins.single()
+    val from = expression.args["from_"] as? From ?: return expression
+    val leftTable = from.aliasOrName
+    val rightTable = fullOuterJoin.aliasOrName
+    val joinConditions = (fullOuterJoin.args["on"] as? Expression)?.copy() ?: run {
+        val using = (fullOuterJoin.args["using"] as? List<*>)?.filterIsInstance<Identifier>().orEmpty()
+        val conditions = using.map { identifier ->
+            EQ(
+                args(
+                    "this" to column(identifier.name, table = leftTable),
+                    "expression" to column(identifier.name, table = rightTable),
+                )
+            )
+        }
+        if (conditions.isEmpty()) return expression
+        combineAnd(conditions)
+    }
+
+    fullOuterJoin.set("side", "left")
+    val antiJoin = Select(
+        args(
+            "expressions" to listOf(Literal.number("1")),
+            "from_" to From(args("this" to (from.thisArg as Expression).copy())),
+            "where" to Where(args("this" to joinConditions)),
+        )
+    )
+    val copiedJoins = expressionCopy.args["joins"] as? List<*> ?: return expression
+    val copiedFullJoin = copiedJoins.filterIsInstance<Join>().getOrNull(index) ?: return expression
+    copiedFullJoin.set("side", "right")
+    addWhere(expressionCopy, Not(args("this" to Exists(args("this" to antiJoin)))))
+    expressionCopy.set("with_", null)
+    expression.set("order", null)
+
+    return Union(args("this" to expression, "expression" to expressionCopy, "distinct" to false))
 }
 
 /**

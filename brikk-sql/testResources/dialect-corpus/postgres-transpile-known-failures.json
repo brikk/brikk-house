@@ -29,10 +29,6 @@
             "reason": "expected `SELECT y, a, b FROM t CROSS JOIN UNNEST(GENERATE_ARRAY(1, 2)) AS a CROSS JOIN UNNEST(GENERATE_ARRAY(11, 13)) AS b` actual `SELECT y, GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b FROM t`"
         },
         {
-            "case": "write|mysql|UPDATE foo SET a = bar.a, b = bar.b FROM bar WHERE foo.id = bar.id",
-            "reason": "expected `UPDATE foo JOIN bar ON TRUE SET foo.a = bar.a, foo.b = bar.b WHERE foo.id = bar.id` actual `UPDATE foo SET a = bar.a, b = bar.b FROM bar WHERE foo.id = bar.id`"
-        },
-        {
             "case": "read|postgres|SELECT a #> (n IN (1, 2))",
             "reason": "expected `SELECT a #> (n IN (1, 2))` actual `SELECT a #> n IN (1, 2)`"
         }

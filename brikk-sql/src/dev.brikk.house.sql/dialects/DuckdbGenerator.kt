@@ -666,6 +666,80 @@ open class DuckdbGenerator(
         }
     }
 
+    // sqlglot: dialect.months_between_sql
+    open fun monthsBetweenSql(expression: MonthsBetween): String {
+        val date1 = Cast(
+            args("this" to expression.thisArg, "to" to DataType(args("this" to DType.DATE)))
+        )
+        val date2 = Cast(
+            args("this" to expression.args["expression"], "to" to DataType(args("this" to DType.DATE)))
+        )
+        val day1 = Day(args("this" to date1.copy()))
+        val day2 = Day(args("this" to date2.copy()))
+        val bothLastDay = And(
+            args(
+                "this" to EQ(
+                    args(
+                        "this" to day1.copy(),
+                        "expression" to Day(args("this" to LastDay(args("this" to date1.copy())))),
+                    )
+                ),
+                "expression" to EQ(
+                    args(
+                        "this" to day2.copy(),
+                        "expression" to Day(args("this" to LastDay(args("this" to date2.copy())))),
+                    )
+                ),
+            )
+        )
+        val fractional = Div(
+            args(
+                "this" to Paren(
+                    args("this" to Sub(args("this" to day1.copy(), "expression" to day2.copy())))
+                ),
+                "expression" to Literal.number("31.0"),
+            )
+        )
+        return sql(
+            Add(
+                args(
+                    "this" to DateDiff(
+                        args(
+                            "this" to date1,
+                            "expression" to date2,
+                            "unit" to Var(args("this" to "MONTH")),
+                        )
+                    ),
+                    "expression" to If(
+                        args(
+                            "this" to bothLastDay,
+                            "true" to Literal.number("0"),
+                            "false" to fractional,
+                        )
+                    ),
+                )
+            )
+        )
+    }
+
+    open fun timeToStrSql(expression: TimeToStr): String {
+        val thisExpression = expression.thisArg as? Expression
+        val value = if (thisExpression is TsOrDsToTimestamp || thisExpression is TimeStrToTime) {
+            Cast(
+                args(
+                    "this" to thisExpression.thisArg,
+                    "to" to DataType(args("this" to DType.TIMESTAMP)),
+                )
+            )
+        } else {
+            thisExpression
+        }
+        return func("STRFTIME", value, formatTime(expression))
+    }
+
+    open fun unixToStrSql(expression: UnixToStr): String =
+        func("STRFTIME", func("TO_TIMESTAMP", expression.thisArg), formatTime(expression))
+
     // sqlglot: dialect.date_delta_to_binary_interval_op wrapped by
     // generators.duckdb._date_delta_to_binary_interval_op (nanosecond and
     // float-interval branches; the float branch is annotate_types-driven and
@@ -2207,6 +2281,7 @@ open class DuckdbGenerator(
             reg(PercentileCont::class) { e -> dg().renameFuncSql("QUANTILE_CONT", e) }
             reg(PercentileDisc::class) { e -> dg().renameFuncSql("QUANTILE_DISC", e) }
             reg(Posexplode::class) { e -> dg().posexplodeSql(e as Posexplode) }
+            reg(MonthsBetween::class) { e -> dg().monthsBetweenSql(e as MonthsBetween) }
             reg(RegexpExtract::class) { e -> dg().regexpExtractSql(e) }
             reg(RegexpExtractAll::class) { e -> dg().regexpExtractSql(e) }
             reg(RegexpILike::class) { e ->
@@ -2222,7 +2297,7 @@ open class DuckdbGenerator(
             reg(StrPosition::class) { e -> dg().strpositionSql(e as StrPosition) }
             reg(Struct::class) { e -> dg().duckdbStructSql(e as Struct) }
             reg(Transform::class) { e -> dg().renameFuncSql("LIST_TRANSFORM", e) }
-            reg(TimeToStr::class) { e -> func("STRFTIME", e.thisArg, formatTime(e)) }
+            reg(TimeToStr::class) { e -> dg().timeToStrSql(e as TimeToStr) }
             reg(TimeToUnix::class) { e -> dg().renameFuncSql("EPOCH", e) }
             reg(TimestampDiff::class) { e ->
                 func(
@@ -2233,6 +2308,7 @@ open class DuckdbGenerator(
                 )
             }
             reg(UnixToTime::class) { e -> dg().unixToTimeSql(e as UnixToTime) }
+            reg(UnixToStr::class) { e -> dg().unixToStrSql(e as UnixToStr) }
             reg(UnixToTimeStr::class) { e -> "CAST(TO_TIMESTAMP(${sql(e, "this")}) AS TEXT)" }
             reg(VariancePop::class) { e -> dg().renameFuncSql("VAR_POP", e) }
             reg(WeekOfYear::class) { e -> dg().renameFuncSql("WEEKOFYEAR", e) }

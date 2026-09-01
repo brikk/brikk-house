@@ -6,6 +6,7 @@ import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.eliminateQualify
 import dev.brikk.house.sql.generator.eliminateDistinctOn
+import dev.brikk.house.sql.generator.eliminateFullOuterJoin
 import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
@@ -859,13 +860,13 @@ open class MysqlGenerator(
             reg(Pivot::class) { e -> mg().noPivotSql(e as Pivot) }
             // sqlglot mysql order: [eliminate_distinct_on, eliminate_semi_and_anti_joins,
             // eliminate_qualify, eliminate_full_outer_join,
-            // unnest_generate_date_array_using_recursive_cte]. The last two remain
-            // NOT PORTED (ledgered).
+            // unnest_generate_date_array_using_recursive_cte]. The last remains NOT PORTED.
             reg(Select::class) { e ->
                 var s = eliminateDistinctOn(e)
                 s = eliminateSemiAndAntiJoins(s)
                 s = eliminateQualify(s)
-                selectSql(s as Select)
+                s = eliminateFullOuterJoin(s)
+                if (s is Select) selectSql(s) else sql(s)
             }
             reg(StrPosition::class) { e -> mg().strpositionSql(e as StrPosition) }
             reg(StrToDate::class) { e -> mg().strToDateSql(e) }
