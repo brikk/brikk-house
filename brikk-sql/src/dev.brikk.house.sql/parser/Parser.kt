@@ -2120,27 +2120,26 @@ open class Parser(
         // sqlglot: exp.Values CTE-body rewriting (SELECT * FROM <values>)
         val values = cte.args["this"]
         if (values is Values) {
-            val body = if (values.alias.isNotEmpty()) {
-                values
-            } else {
-                values.set(
-                    "alias",
-                    TableAlias(args("this" to Identifier(args("this" to "_values", "quoted" to false)))),
-                )
-                values
-            }
-            cte.set(
-                "this",
-                Select(
-                    args(
-                        "expressions" to mutableListOf<Expression>(selectStar()),
-                        "from_" to From(args("this" to body)),
-                    )
-                ),
-            )
+            cte.set("this", valuesToSelect(values))
         }
 
         return cte
+    }
+
+    // sqlglot: Parser._values_to_select
+    private fun valuesToSelect(values: Values): Select {
+        if (values.alias.isEmpty()) {
+            values.set(
+                "alias",
+                TableAlias(args("this" to Identifier(args("this" to "_values", "quoted" to false)))),
+            )
+        }
+        return Select(
+            args(
+                "expressions" to mutableListOf<Expression>(selectStar()),
+                "from_" to From(args("this" to values)),
+            )
+        )
     }
 
     // sqlglot: Parser._parse_table_alias
@@ -3860,7 +3859,7 @@ open class Parser(
             onColumnList = parseWrappedCsv({ parseColumn() })
         }
 
-        val expr = parseSelect(nested = true, parseSetOperation = false, consumePipe = consumePipe)
+        var expr = parseSelect(nested = true, parseSetOperation = false, consumePipe = consumePipe)
 
         var left = this_
         if (left is Alias && left.thisArg is Subquery) {
@@ -3869,6 +3868,9 @@ open class Parser(
             subquery.addComments(left.popComments())
             left = subquery
         }
+
+        if (left is Values) left = valuesToSelect(left)
+        if (expr is Values) expr = valuesToSelect(expr)
 
         return expression(
             operation(

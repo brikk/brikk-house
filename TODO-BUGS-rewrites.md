@@ -15,18 +15,9 @@
 
 ---
 
-**13 items across 8 source-to-target routes.**
+**0 items across 0 source-to-target routes.**
 
-| Route | Items |
-|---|---:|
-| spark -> spark | 4 |
-| spark -> duckdb | 2 |
-| starrocks -> starrocks | 2 |
-| presto -> spark | 1 |
-| spark -> presto | 1 |
-| presto -> presto | 1 |
-| postgres -> doris | 1 |
-| duckdb -> spark | 1 |
+The non-BigQuery mixed-dialect rewrite backlog is complete for the pinned SQLGlot version.
 
 ## Workflow
 

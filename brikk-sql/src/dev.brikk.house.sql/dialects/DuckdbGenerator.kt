@@ -2143,6 +2143,28 @@ open class DuckdbGenerator(
             reg(EuclideanDistance::class) { e -> dg().renameFuncSql("LIST_DISTANCE", e) }
             reg(GenerateSeries::class) { e -> dg().generateseriesSql(e as GenerateSeries) }
             reg(Explode::class) { e -> dg().renameFuncSql("UNNEST", e) }
+            reg(ArrayUniqueAgg::class) { e ->
+                val value = e.thisArg as Expression
+                sql(
+                    Filter(
+                        args(
+                            "this" to Anonymous(
+                                args(
+                                    "this" to "LIST",
+                                    "expressions" to listOf(Distinct(args("expressions" to listOf(value)))),
+                                )
+                            ),
+                            "expression" to Where(
+                                args(
+                                    "this" to Not(
+                                        args("this" to Is(args("this" to value.copy(), "expression" to Null())))
+                                    )
+                                )
+                            ),
+                        )
+                    )
+                )
+            }
             reg(IntDiv::class) { e -> binary(e as Binary, "//") }
             reg(IsInf::class) { e -> dg().renameFuncSql("ISINF", e) }
             reg(IsNan::class) { e -> dg().renameFuncSql("ISNAN", e) }

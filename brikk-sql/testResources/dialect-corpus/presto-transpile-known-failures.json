@@ -5,10 +5,6 @@
             "reason": "expected `INSTR(haystack, needle, 1, occurrence)` actual `STR_POSITION(haystack, needle, occurrence)`"
         },
         {
-            "case": "read|spark|SELECT AT_TIMEZONE(CAST('2012-10-31 00:00' AS TIMESTAMP WITH TIME ZONE), 'America/Sao_Paulo')",
-            "reason": "expected `SELECT AT_TIMEZONE(CAST('2012-10-31 00:00' AS TIMESTAMP WITH TIME ZONE), 'America/Sao_Paulo')` actual `SELECT AT_TIMEZONE(CAST(CAST('2012-10-31 00:00' AS TIMESTAMP WITH TIME ZONE) AS TIMESTAMP), 'America/Sao_Paulo')`"
-        },
-        {
             "case": "write|bigquery|SELECT SHA256(x)",
             "reason": "expected `SELECT SHA256(x)` actual `SELECT S_H_A2_DIGEST(x, 256)`"
         },
@@ -27,14 +23,6 @@
         {
             "case": "write|bigquery|SELECT * FROM UNNEST(ARRAY['7', '14']) AS x(y)",
             "reason": "expected `SELECT * FROM UNNEST(['7', '14']) AS y` actual `SELECT * FROM UNNEST(['7', '14']) AS x`"
-        },
-        {
-            "case": "write|presto|WITH RECURSIVE t(n) AS (VALUES (1) UNION ALL SELECT n+1 FROM t WHERE n < 100 ) SELECT SUM(n) FROM t",
-            "reason": "expected `WITH RECURSIVE t(n) AS (SELECT * FROM (VALUES (1)) AS _values UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t` actual `WITH RECURSIVE t(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t`"
-        },
-        {
-            "case": "write|spark|WITH RECURSIVE t(n) AS (VALUES (1) UNION ALL SELECT n+1 FROM t WHERE n < 100 ) SELECT SUM(n) FROM t",
-            "reason": "expected `WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t` actual `WITH t(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t`"
         }
     ]
 }
