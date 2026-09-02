@@ -408,24 +408,24 @@ open class DorisGenerator(
     }
 
     // sqlglot: DorisGenerator.partitionrange_sql
+    // brikk-native (docs/brikk-extensions.md #19) deviation: sqlglot renders ANY multi-value
+    // PartitionRange as the bracket form, which turns a multi-column
+    // `VALUES LESS THAN ('2020-01-01', 100)` into `VALUES [('2020-01-01'), (100))`. The
+    // Doris parser stores the bracket form as a list of lists (one per bound), so only
+    // that shape is a range; a flat value list is a (possibly multi-column) LESS THAN.
     override fun partitionrangeSql(expression: PartitionRange): String {
         val name = sql(expression, "this")
         val values = expression.expressionsArg
 
-        if (values.size != 1) {
-            // Multiple values: use VALUES [ ... )
-            val valuesSql = if (values.isNotEmpty() && values[0] is List<*>) {
-                values.joinToString(", ") { inner ->
-                    "(${(inner as List<*>).joinToString(", ") { sql(it) }})"
-                }
-            } else {
-                values.joinToString(", ") { "(${sql(it)})" }
+        if (values.isNotEmpty() && values[0] is List<*>) {
+            // VALUES [ (lower...), (upper...) )
+            val valuesSql = values.joinToString(", ") { inner ->
+                "(${(inner as List<*>).joinToString(", ") { sql(it) }})"
             }
-
             return "PARTITION $name VALUES [$valuesSql)"
         }
 
-        return "PARTITION $name VALUES LESS THAN (${sql(values[0])})"
+        return "PARTITION $name VALUES LESS THAN (${values.joinToString(", ") { sql(it) }})"
     }
 
     // sqlglot: DorisGenerator.partitionbyrangepropertydynamic_sql
@@ -436,12 +436,58 @@ open class DorisGenerator(
         val every = expression.args["every"] as? Expression
 
         val interval = if (every != null) {
-            "INTERVAL ${sql(every, "this")} ${sql(every, "unit")}"
+            val unit = sql(every, "unit")
+            "INTERVAL ${sql(every, "this")}${if (unit.isNotEmpty()) " $unit" else ""}"
         } else {
             ""
         }
 
-        return "FROM ($start) TO ($end) $interval"
+        return "FROM ($start) TO ($end) $interval".trimEnd()
+    }
+
+    // brikk-native (docs/brikk-extensions.md #19): render the two Doris parameterized
+    // storage types DorisParser.parseTypes builds (see there for the node shapes):
+    //   VARIANT<'a':INT, properties('k'='v')>   and   AGG_STATE<sum(INT NOT NULL)>
+    override fun datatypeSql(expression: DataType): String {
+        val kind = expression.thisArg
+        if (kind == DType.VARIANT && expression.expressionsArg.isNotEmpty()) {
+            val fields = expression.expressionsArg.map { field ->
+                when (field) {
+                    is ColumnDef -> "${sql(field, "this")}:${sql(field, "kind")}"
+                    is Properties -> "properties${properties(field)}"
+                    else -> sql(field)
+                }
+            }
+            return "VARIANT<${fields.joinToString(", ")}>"
+        }
+        if (kind == DType.AGG_STATE) {
+            val fn = expression.expressionsArg.firstOrNull() as? Anonymous ?: return "AGG_STATE"
+            val argTypes = fn.expressionsArg.map { arg ->
+                val t = sql(arg)
+                when ((arg as? Expression)?.args?.get("nullable")) {
+                    false -> "$t NOT NULL"
+                    true -> "$t NULL"
+                    else -> t
+                }
+            }
+            return "AGG_STATE<${fn.name}(${argTypes.joinToString(", ")})>"
+        }
+        return super.datatypeSql(expression)
+    }
+
+    // sqlglot: MySQLGenerator.partition_sql
+    // brikk-native (docs/brikk-extensions.md #19): a Doris partition definition may carry a
+    // trailing per-partition property list, kept as a Properties node after the
+    // PartitionRange/PartitionList in Partition.expressions and rendered bare:
+    //   PARTITION p1 VALUES LESS THAN ('2020-01-01') ('replication_num'='1')
+    override fun partitionSql(expression: Partition): String {
+        val parent = expression.parent
+        if (parent is PartitionByRangeProperty || parent is PartitionByListProperty) {
+            return expression.expressionsArg.filterIsInstance<Expression>().joinToString(" ") { e ->
+                if (e is Properties) properties(e, prefix = "") else sql(e)
+            }
+        }
+        return super.partitionSql(expression)
     }
 
     // brikk-native (docs/brikk-extensions.md #19): Doris ROLLUP entry ->

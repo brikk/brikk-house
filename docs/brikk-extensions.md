@@ -426,8 +426,9 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
 - **What / Where:**
   - *Type keywords* — `DorisDialect.TOKENIZER_CONFIG` layers `LARGEINT → INT128`
     (StarRocks' mapping, never propagated to Doris upstream), `IPV4` / `IPV6` (existing
-    kinds; ClickHouse tokenizer has them), `DECIMALV2` / `DECIMALV3 → DECIMAL`, and the
-    brikk-native `BITMAP` / `HLL` / `QUANTILE_STATE` TokenType + DType members over the
+    kinds; ClickHouse tokenizer has them), `DECIMALV2` / `DECIMALV3 → DECIMAL`,
+    `DATETIMEV2 → DATETIME`, `DATEV2 → DATE`, and the brikk-native `BITMAP` / `HLL` /
+    `QUANTILE_STATE` / `AGG_STATE` TokenType + DType members over the
     GENERATED `DorisTokenizerTables.CONFIG` (`TokenizerConfig.withKeywords`). The
     generated tables stay oracle-parity for `TokenCorpusDifferentialTest`. The native
     enum members are appended by `tools/gen_tokenizer_tables.py`
@@ -440,12 +441,28 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
     REPLACE_IF_NOT_NULL|HLL_UNION|BITMAP_UNION|QUANTILE_UNION|GENERIC`) →
     `ColumnConstraint(kind = AggregateTypeColumnConstraint)` via
     `DorisParserTables.CONSTRAINT_PARSERS`.
-  - *Empty partition list* — `PARTITION BY RANGE|LIST (cols) ()` (what dynamic / auto
-    partitioning emits) parses to `PartitionByRange/ListProperty` with an **empty**
-    `create_expressions`; the node is built directly because sqlglot's required-arg
-    check rejects the empty list. `PARTITION BY LIST (...)` without explicit
-    definitions now yields `PartitionByListProperty` (sqlglot always builds the RANGE
-    node here). The kind-less `PARTITION BY (cols)` path of #9 is unchanged.
+  - *Parameterized storage types* — `DorisParser.parseTypes` intercepts
+    `VARIANT<'name':type, ..., properties("k" = "v")>` (→ `DataType(VARIANT, nested,
+    expressions = ColumnDef(this = string literal, kind)* + Properties?)`) and
+    `AGG_STATE<fn(type [NULL | NOT NULL], ...)>` (→ `DataType(AGG_STATE, nested,
+    expressions = [Anonymous(fn, DataType*)])`, argument nullability on each
+    `DataType.nullable`). `DorisGenerator.datatypeSql` renders both. `MATCH_NAME` /
+    `MATCH_NAME_GLOB` variant field prefixes are not modeled yet (TODO-doris-ddl.md).
+  - *Partition definition lists* — `DorisParser.parsePartitionProperty` parses the whole
+    list itself (`parsePartitionDefinition`) instead of going through the MySQL port:
+    `()` (what dynamic / auto partitioning emits) yields `PartitionByRange/ListProperty`
+    with an **empty** `create_expressions` (built directly; sqlglot's required-arg check
+    rejects it); `PARTITION BY LIST (...)` yields `PartitionByListProperty` even without
+    definitions (sqlglot always builds RANGE); entries may mix `VALUES LESS THAN (..)`,
+    bare `VALUES LESS THAN MAXVALUE`, `VALUES [(..), (..))`, `VALUES IN (..)` and
+    `FROM (..) TO (..) INTERVAL n [unit]` (numeric bounds, optional unit) in one list;
+    a trailing per-partition `("k" = "v")` list is kept as a `Properties` node appended
+    to the `Partition`'s expressions and rendered bare by `DorisGenerator.partitionSql`.
+    `MAXVALUE` is normalized to a `Var` per column (MySQL only does so for a lone value).
+    `DorisGenerator.partitionrangeSql` treats only a list-of-lists as the bracket
+    range; sqlglot rendered every multi-value `PartitionRange` as one, turning a
+    multi-column `LESS THAN ('2020-01-01', 100)` into `[('2020-01-01'), (100))`.
+    The kind-less `PARTITION BY (cols)` path of #9 is unchanged.
   - *`AUTO PARTITION BY RANGE|LIST (...) (...)`* → `AutoPartitionProperty(this =
     inner partition property)`; a bare `AUTO` not followed by `PARTITION BY` is given
     back to the property loop. Previously an opaque `Command`.
@@ -467,13 +484,18 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
     `parseIndexConstraintOption`, `parseRollupProperty`, `DorisParserTables`).
     Generator: `dialects/DorisGenerator.kt` TRANSFORMS / PROPERTIES_LOCATION /
     `dorisrollupindexSql`.
-- **Tests:** `DorisDialectTest` (DDL section: each clause + a realistic
-  `SHOW CREATE TABLE` statement, all asserted as `Create` with a stable re-parse),
+- **Tests:** `DorisDialectTest` (DDL section: each clause + realistic `SHOW CREATE TABLE`
+  statements incl. a MoW unique-key table with `ORDER BY`, typed VARIANTs and a function
+  RANGE partition, all asserted as `Create` with a stable re-parse),
   `DorisTokenizerTest.dialectConfigAddsDorisStorageTypeKeywords`,
   `SqlVerifierTest.dorisAcceptsBrikkDdlRenderings` (JVM, real FE parser).
 - **Known lossy:** `BUCKETS AUTO` is dropped by the base `parseDistributedProperty`
   (absent = AUTO in Doris ≥ 1.2, so the round-trip is semantically equivalent).
-  `DECIMALV3(p, s)` renders as `DECIMAL(p, s)` (the same type in current Doris).
+  `DECIMALV3(p, s)` / `DATETIMEV2(n)` / `DATEV2` render as `DECIMAL` / `DATETIME` / `DATE`
+  (the same types in current Doris). `PARTITION [IF NOT EXISTS] p ...` in a definition
+  list is not accepted (never in `SHOW CREATE TABLE` output).
+- **Backlog:** `TODO-doris-ddl.md` tracks the remaining Doris DDL gaps (statement-level
+  DDL, generator renderings the FE rejects).
 - **Corpus/ledger impact:** none — no Python-oracle corpus case exercises these inputs,
   and all ledgers are unchanged.
 - **Upstream-PR candidate:** the tokenizer / type-mapping bits (`LARGEINT`, `IPV4`/

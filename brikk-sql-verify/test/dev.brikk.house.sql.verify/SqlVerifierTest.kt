@@ -294,6 +294,25 @@ class SqlVerifierTest {
                 "PROPERTIES ('parser'='english') COMMENT 'c') DUPLICATE KEY (k)",
             "CREATE TABLE t (k INT, v INT) DUPLICATE KEY (k) DISTRIBUTED BY HASH (k) BUCKETS 1 ROLLUP (r1(k, v))",
             "CREATE TABLE t (k INT, v INT) ROLLUP (r1(k, v), r2(k, v) DUPLICATE KEY (k) PROPERTIES ('a'='b'))",
+            // group A of TODO-doris-ddl.md: legacy spellings, AGG_STATE, typed VARIANT, partition lists
+            "CREATE TABLE t (a DATETIME(3), b DATE, c DATETIME(0))",
+            "CREATE TABLE t (k INT, v AGG_STATE<sum(INT)> GENERIC, w AGG_STATE<max_by(INT NOT NULL, VARCHAR(10) NULL)> GENERIC) " +
+                "AGGREGATE KEY (k)",
+            "CREATE TABLE t (v VARIANT<'x':LARGEINT, 'ip4':IPV4, 'ts':DATETIME(0), 'arr':ARRAY<STRING>, 'flag':BOOLEAN>, " +
+                "w VARIANT<'a':INT, properties('variant_max_subcolumns_count'='10')>, " +
+                "p VARIANT<properties('variant_max_subcolumns_count'='10')>)",
+            "CREATE TABLE t (d DATE, k INT) PARTITION BY RANGE (d) (PARTITION p1 VALUES [('2020-01-01'), ('2020-02-01')), " +
+                "PARTITION p2 VALUES LESS THAN ('2020-03-01'), PARTITION p3 VALUES LESS THAN (MAXVALUE))",
+            "CREATE TABLE t (d DATE, k INT) PARTITION BY RANGE (d) (FROM ('2020-01-01') TO ('2021-01-01') INTERVAL 1 MONTH, " +
+                "PARTITION p_max VALUES LESS THAN (MAXVALUE))",
+            "CREATE TABLE t (d INT, k INT) PARTITION BY RANGE (d) (FROM (1) TO (100) INTERVAL 10)",
+            "CREATE TABLE t (d DATE, k INT) PARTITION BY RANGE (d) (PARTITION p1 VALUES LESS THAN ('2020-01-01') " +
+                "('replication_num'='1'), PARTITION p2 VALUES LESS THAN ('2020-02-01'))",
+            "CREATE TABLE t (c VARCHAR(10)) PARTITION BY LIST (c) (PARTITION p1 VALUES IN ('a') ('replication_num'='1'))",
+            "CREATE TABLE t (d DATE, k INT) PARTITION BY RANGE (d, k) (PARTITION p1 VALUES LESS THAN ('2020-01-01', 100), " +
+                "PARTITION p2 VALUES LESS THAN ('2020-02-01', MAXVALUE))",
+            "CREATE TABLE t (k INT, a VARCHAR(20), d DATETIME) UNIQUE KEY (k, d) ORDER BY (a, d) " +
+                "PARTITION BY RANGE (DATE_TRUNC(d, 'DAY')) () DISTRIBUTED BY HASH (k) BUCKETS 16",
         )
         for (sql in renderings) {
             val result = verifier.verify(sql)

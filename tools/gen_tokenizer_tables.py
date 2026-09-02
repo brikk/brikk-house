@@ -40,7 +40,7 @@ DIALECTS = ["", "mysql", "doris", "starrocks", "presto", "trino", "duckdb", "pos
 # BRIKK_NATIVE_DTYPES) because Parser.parseTypes maps type tokens to DType by name.
 # Doris keyword wiring lives in DorisDialect.TOKENIZER_CONFIG, not in the generated
 # DorisTokenizerTables (which stays oracle-parity for the token differential test).
-BRIKK_NATIVE_TOKEN_TYPES = ["BITMAP", "HLL", "QUANTILE_STATE"]
+BRIKK_NATIVE_TOKEN_TYPES = ["BITMAP", "HLL", "QUANTILE_STATE", "AGG_STATE"]
 
 
 def sqlglot_version() -> str:

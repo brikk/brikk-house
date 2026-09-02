@@ -51,10 +51,11 @@ class DorisDialect : Dialect() {
          *
          * - `LARGEINT` -> INT128: StarRocks' mapping, never propagated to Doris upstream.
          * - `IPV4` / `IPV6`: existing TokenType/DType members (ClickHouse tokenizer has them).
-         * - `DECIMALV2` / `DECIMALV3` -> DECIMAL: Doris renders the current DECIMAL
-         *   implementation as `DECIMALV3(p, s)` in 1.2-era `SHOW CREATE TABLE` output.
-         * - `BITMAP` / `HLL` / `QUANTILE_STATE`: brikk-native TokenType + DType members
-         *   (Doris aggregate-storage types; no sqlglot counterpart).
+         * - `DECIMALV2` / `DECIMALV3` -> DECIMAL, `DATETIMEV2` -> DATETIME, `DATEV2` -> DATE:
+         *   1.2-era spellings of the current implementations, still emitted by older
+         *   clusters' `SHOW CREATE TABLE` and inside `VARIANT<...>` schemas.
+         * - `BITMAP` / `HLL` / `QUANTILE_STATE` / `AGG_STATE`: brikk-native TokenType + DType
+         *   members (Doris aggregate-storage types; no sqlglot counterpart).
          */
         val TOKENIZER_CONFIG: TokenizerConfig = DorisTokenizerTables.CONFIG.withKeywords(
             mapOf(
@@ -63,6 +64,9 @@ class DorisDialect : Dialect() {
                 "IPV6" to TokenType.IPV6,
                 "DECIMALV2" to TokenType.DECIMAL,
                 "DECIMALV3" to TokenType.DECIMAL,
+                "DATETIMEV2" to TokenType.DATETIME,
+                "DATEV2" to TokenType.DATE,
+                "AGG_STATE" to TokenType.AGG_STATE,
                 "BITMAP" to TokenType.BITMAP,
                 "HLL" to TokenType.HLL,
                 "QUANTILE_STATE" to TokenType.QUANTILE_STATE,

@@ -95,15 +95,16 @@ class DorisTokenizerTest {
     // generated DorisTokenizerTables.CONFIG itself stays oracle-parity (VAR for all of these).
     @Test
     fun dialectConfigAddsDorisStorageTypeKeywords() {
-        val sql = "LARGEINT IPV4 IPV6 DECIMALV2 DECIMALV3 BITMAP HLL QUANTILE_STATE"
+        val sql = "LARGEINT IPV4 IPV6 DECIMALV2 DECIMALV3 DATETIMEV2 DATEV2 BITMAP HLL QUANTILE_STATE AGG_STATE"
         val generated = tokenize(sql).map { it.first }
-        assertEquals(List(8) { TokenType.VAR }, generated)
+        assertEquals(List(11) { TokenType.VAR }, generated)
 
         val dialect = Tokenizer(DorisDialect.TOKENIZER_CONFIG).tokenize(sql).map { it.tokenType }
         assertEquals(
             listOf(
-                TokenType.INT128, TokenType.IPV4, TokenType.IPV6, TokenType.DECIMAL,
-                TokenType.DECIMAL, TokenType.BITMAP, TokenType.HLL, TokenType.QUANTILE_STATE,
+                TokenType.INT128, TokenType.IPV4, TokenType.IPV6, TokenType.DECIMAL, TokenType.DECIMAL,
+                TokenType.DATETIME, TokenType.DATE, TokenType.BITMAP, TokenType.HLL,
+                TokenType.QUANTILE_STATE, TokenType.AGG_STATE,
             ),
             dialect,
         )
