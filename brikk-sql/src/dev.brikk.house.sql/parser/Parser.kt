@@ -1194,6 +1194,12 @@ open class Parser(
     fun parseIntoIdentifier(rawTokens: List<Token>, sql: String): Expression? =
         parseInternal({ it.parseIdVar() }, rawTokens, sql).firstOrNull()
 
+    // brikk-native (no sqlglot counterpart): run an arbitrary parse method over a token
+    // list on this parser. Used by DorisParser.parseCommand to re-tokenize the STRING
+    // remainder of a COMMAND statement (BUILD INDEX ..., RECOVER ...) into a structured node.
+    fun parseIntoWith(rawTokens: List<Token>, sql: String, parseMethod: (Parser) -> Expression?): Expression? =
+        parseInternal(parseMethod, rawTokens, sql).firstOrNull()
+
     // sqlglot: Parser._parse
     private fun parseInternal(
         parseMethod: (Parser) -> Expression?,
@@ -1733,7 +1739,8 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_command
-    fun parseCommand(): Expression {
+    // (open for DorisParser: BUILD INDEX / PAUSE|RESUME|CANCEL MV / RECOVER, docs/brikk-extensions.md #19)
+    open fun parseCommand(): Expression {
         warnUnsupported()
         val comments = prevComments
         return expression(
@@ -5475,7 +5482,8 @@ open class Parser(
     // sqlglot: Parser._parse_alter (ALTER_TABLE_PARTITIONS=false,
     // ALTER_TABLE_SUPPORTS_CASCADE=false in the base dialect; ALTER SESSION is a
     // Snowflake-only token and unreachable here)
-    fun parseAlter(): Expression {
+    // (open for DorisParser: ALTER MATERIALIZED VIEW, docs/brikk-extensions.md #19)
+    open fun parseAlter(): Expression {
         val start = prevToken
 
         val iceberg = matchTextSeq("ICEBERG")
@@ -5579,7 +5587,8 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_describe
-    fun parseDescribe(): Expression {
+    // (open for DorisParser: DESC t ALL, docs/brikk-extensions.md #19)
+    open fun parseDescribe(): Expression {
         val kind = if (matchSet(creatables)) prevToken.text else null
         var style: String? = if (matchTexts(describeStyles)) prevToken.text.uppercase() else null
         if (match(TokenType.DOT)) {
@@ -6149,7 +6158,8 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_refresh
-    fun parseRefresh(): Expression {
+    // (open for DorisParser: REFRESH MATERIALIZED VIEW | CATALOG | DATABASE, docs/brikk-extensions.md #19)
+    open fun parseRefresh(): Expression {
         // sqlglot 3c6d84248 (feat(starrocks): parse REFRESH EXTERNAL TABLE): the
         // EXTERNAL TABLE branch is exercised by the StarRocks dialect (now ported).
         val kind = when {
@@ -8312,7 +8322,8 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_index_params
-    fun parseIndexParams(): Expression {
+    // (open for DorisParser: CREATE INDEX ... USING/PROPERTIES/COMMENT after the columns, #19)
+    open fun parseIndexParams(): Expression {
         val using = if (match(TokenType.USING)) parseVar(anyToken = true) else null
 
         val columns = if (match(TokenType.L_PAREN, advance = false)) {

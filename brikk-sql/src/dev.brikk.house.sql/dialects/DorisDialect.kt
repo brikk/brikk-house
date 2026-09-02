@@ -56,6 +56,8 @@ class DorisDialect : Dialect() {
          *   clusters' `SHOW CREATE TABLE` and inside `VARIANT<...>` schemas.
          * - `BITMAP` / `HLL` / `QUANTILE_STATE` / `AGG_STATE`: brikk-native TokenType + DType
          *   members (Doris aggregate-storage types; no sqlglot counterpart).
+         * - `REFRESH` statement token; `BUILD` / `CANCEL` / `PAUSE` / `RECOVER` / `RESUME` as
+         *   COMMAND so their statements degrade to Command rather than a parse error.
          */
         val TOKENIZER_CONFIG: TokenizerConfig = DorisTokenizerTables.CONFIG.withKeywords(
             mapOf(
@@ -70,6 +72,16 @@ class DorisDialect : Dialect() {
                 "BITMAP" to TokenType.BITMAP,
                 "HLL" to TokenType.HLL,
                 "QUANTILE_STATE" to TokenType.QUANTILE_STATE,
+                // Statement keywords. REFRESH is a sqlglot statement token that the Doris
+                // table (unlike StarRocks') never received; without it `REFRESH MATERIALIZED
+                // VIEW` hard-fails. The COMMAND words make their statements parse to an
+                // opaque Command (text preserved) instead of "Invalid expression" errors.
+                "REFRESH" to TokenType.REFRESH,
+                "BUILD" to TokenType.COMMAND,
+                "CANCEL" to TokenType.COMMAND,
+                "PAUSE" to TokenType.COMMAND,
+                "RECOVER" to TokenType.COMMAND,
+                "RESUME" to TokenType.COMMAND,
             )
         )
 
