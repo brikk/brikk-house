@@ -1,5 +1,16 @@
 package dev.brikk.house.sql
 
+import dev.brikk.house.sql.ast.AggregateKeyProperty
+import dev.brikk.house.sql.ast.AggregateTypeColumnConstraint
+import dev.brikk.house.sql.ast.AutoPartitionProperty
+import dev.brikk.house.sql.ast.ColumnDef
+import dev.brikk.house.sql.ast.Create
+import dev.brikk.house.sql.ast.DType
+import dev.brikk.house.sql.ast.DataType
+import dev.brikk.house.sql.ast.Expression
+import dev.brikk.house.sql.ast.PartitionByListProperty
+import dev.brikk.house.sql.ast.PartitionByRangeProperty
+import dev.brikk.house.sql.ast.Schema
 import dev.brikk.house.sql.dialects.transpile
 import dev.brikk.house.sql.generator.UnsupportedError
 import dev.brikk.house.sql.parser.parseOne
@@ -190,6 +201,157 @@ class DorisDialectTest {
         assertEquals(
             "CREATE TABLE test_table (c1 INT, c2 INT) UNIQUE KEY (c1)",
             roundTrip("CREATE TABLE test_table (c1 INT, c2 INT) UNIQUE KEY (c1)"),
+        )
+    }
+
+    // ------------------------------------------------------------------
+    // brikk extension #19 (docs/brikk-extensions.md, NOT sqlglot parity): Doris DDL as
+    // emitted by `SHOW CREATE TABLE`. sqlglot's Doris dialect fails or falls back to an
+    // opaque Command on every case below. Engine-side acceptance of each rendering is
+    // pinned in SqlVerifierTest.dorisAcceptsBrikkDdlRenderings (brikk-sql-verify).
+    // ------------------------------------------------------------------
+
+    /** Parses as a real Create (not a Command fallback) and is stable across a re-parse. */
+    private fun assertDdlRoundTrip(expected: String, input: String = expected) {
+        val parsed = parseOne(input, "doris")
+        assertTrue(parsed is Create, "expected Create, got ${parsed::class.simpleName}: $input")
+        val rendered = parsed.sql("doris")
+        assertEquals(expected, rendered)
+        assertEquals(expected, roundTrip(rendered), "unstable re-parse")
+    }
+
+    @Test
+    fun dorisStorageTypesParse() {
+        // LARGEINT <-> INT128 (StarRocks' mapping), IPV4/IPV6 (existing kinds),
+        // DECIMALV3 folds into DECIMAL, BITMAP/HLL/QUANTILE_STATE are brikk-native kinds.
+        assertDdlRoundTrip(
+            "CREATE TABLE t (a DECIMAL(10, 2), b LARGEINT, c IPV4, d IPV6, e BITMAP, f HLL, g QUANTILE_STATE)",
+            "CREATE TABLE t (a DECIMALV3(10, 2), b LARGEINT, c IPV4, d IPV6, e BITMAP, f HLL, g QUANTILE_STATE)",
+        )
+        val kinds = (parseOne("CREATE TABLE t (b LARGEINT, e BITMAP)", "doris") as Create)
+            .find(Schema::class)!!.expressionsArg
+            .map { ((it as ColumnDef).args["kind"] as DataType).thisArg }
+        assertEquals(listOf(DType.INT128, DType.BITMAP), kinds)
+    }
+
+    @Test
+    fun aggregateKeyTableWithColumnAggregators() {
+        assertDdlRoundTrip(
+            "CREATE TABLE t (k INT, v BIGINT SUM, b BITMAP BITMAP_UNION, h HLL HLL_UNION, m INT MAX, " +
+                "r INT REPLACE_IF_NOT_NULL, q QUANTILE_STATE QUANTILE_UNION) AGGREGATE KEY (k)",
+        )
+        // Aggregator sits in the column's constraint list as its own kind; other
+        // constraints (NULL / DEFAULT / COMMENT) keep their order around it.
+        assertDdlRoundTrip(
+            "CREATE TABLE t (k INT, `pv` BIGINT SUM NULL DEFAULT '0' COMMENT 'pv') AGGREGATE KEY (k)",
+            "CREATE TABLE t (k INT, `pv` BIGINT SUM NULL DEFAULT \"0\" COMMENT \"pv\") AGGREGATE KEY (k)",
+        )
+        val create = parseOne("CREATE TABLE t (k INT, v BIGINT SUM) AGGREGATE KEY (k)", "doris") as Create
+        val agg = create.find(AggregateTypeColumnConstraint::class)
+        assertEquals("SUM", agg?.name)
+        assertTrue(create.find(AggregateKeyProperty::class) != null)
+    }
+
+    @Test
+    fun emptyPartitionDefinitionListParsesForRangeAndList() {
+        // What dynamic partitioning emits: the RANGE/LIST kind must survive (not fold into
+        // the kind-less PartitionedByProperty of extension #9).
+        assertDdlRoundTrip(
+            "CREATE TABLE t (d DATE, k INT) UNIQUE KEY (d, k) PARTITION BY RANGE (d) () " +
+                "DISTRIBUTED BY HASH (k) BUCKETS 10",
+        )
+        assertDdlRoundTrip(
+            "CREATE TABLE t (c1 INT, c2 DATE) PARTITION BY LIST (c2) () DISTRIBUTED BY HASH (c1) BUCKETS 1",
+        )
+        val range = parseOne("CREATE TABLE t (d DATE) PARTITION BY RANGE (d) ()", "doris")
+            .find(PartitionByRangeProperty::class)!!
+        assertEquals(emptyList<Expression>(), range.args["create_expressions"])
+        assertTrue(
+            parseOne("CREATE TABLE t (d DATE) PARTITION BY LIST (d) ()", "doris")
+                .find(PartitionByListProperty::class) != null,
+        )
+    }
+
+    @Test
+    fun autoPartitionByRangeAndList() {
+        assertDdlRoundTrip(
+            "CREATE TABLE t (d DATETIME, k INT) AUTO PARTITION BY RANGE (DATE_TRUNC(d, 'DAY')) () " +
+                "DISTRIBUTED BY HASH (k)",
+            "CREATE TABLE t (d DATETIME, k INT) AUTO PARTITION BY RANGE (date_trunc(d, 'day')) () " +
+                "DISTRIBUTED BY HASH (k) BUCKETS AUTO",
+        )
+        assertDdlRoundTrip(
+            "CREATE TABLE t (c1 INT, c2 DATE) AUTO PARTITION BY LIST (c2) () DISTRIBUTED BY HASH (c1) BUCKETS 1",
+        )
+        val auto = parseOne(
+            "CREATE TABLE t (d DATETIME) AUTO PARTITION BY RANGE (DATE_TRUNC(d, 'DAY')) ()", "doris",
+        ).find(AutoPartitionProperty::class)!!
+        assertTrue(auto.thisArg is PartitionByRangeProperty)
+        // AUTO not followed by PARTITION BY is left for the next property parser.
+        assertDdlRoundTrip("CREATE TABLE t (k INT) AUTO_INCREMENT=5")
+    }
+
+    @Test
+    fun invertedIndexWithPropertiesAndComment() {
+        assertDdlRoundTrip(
+            "CREATE TABLE t (k INT, s VARCHAR(10), INDEX idx_s (s) USING INVERTED " +
+                "PROPERTIES ('parser'='english') COMMENT 'c') DUPLICATE KEY (k)",
+            "CREATE TABLE t (k INT, s VARCHAR(10), INDEX idx_s (s) USING INVERTED " +
+                "PROPERTIES(\"parser\" = \"english\") COMMENT 'c') DUPLICATE KEY (k)",
+        )
+        // MySQL-inherited option set is untouched.
+        assertDdlRoundTrip(
+            "CREATE TABLE t (k INT, s VARCHAR(10), INDEX idx_s (s) USING INVERTED) DUPLICATE KEY (k)",
+        )
+    }
+
+    @Test
+    fun rollupClauseUsesDorisEntryGrammar() {
+        // Doris rollupDef: name (cols) [DUPLICATE KEY (cols)] [PROPERTIES (...)] — not
+        // StarRocks' `FROM base` form, hence the DorisRollupIndex node.
+        assertDdlRoundTrip(
+            "CREATE TABLE t (k INT, v INT) DUPLICATE KEY (k) DISTRIBUTED BY HASH (k) BUCKETS 1 ROLLUP (r1(k, v))",
+            "CREATE TABLE t (k INT, v INT) DUPLICATE KEY (k) DISTRIBUTED BY HASH (k) BUCKETS 1 ROLLUP (r1 (k, v))",
+        )
+        assertDdlRoundTrip(
+            "CREATE TABLE t (k INT, v INT) ROLLUP (r1(k, v), r2(k, v) DUPLICATE KEY (k) PROPERTIES ('a'='b'))",
+            "CREATE TABLE t (k INT, v INT) ROLLUP (r1 (k, v), r2 (k, v) DUPLICATE KEY (k) PROPERTIES (\"a\" = \"b\"))",
+        )
+    }
+
+    @Test
+    fun realisticShowCreateTableOutputParses() {
+        // Unique-key merge-on-write table with auto partitioning: hits DECIMALV3, IPV4, an
+        // inverted index, AUTO PARTITION and an empty partition list in one statement.
+        val showCreate = """
+            CREATE TABLE `orders` (
+              `order_id` BIGINT NOT NULL COMMENT 'id',
+              `order_date` DATE NOT NULL,
+              `amount` DECIMALV3(18, 4) NULL DEFAULT "0",
+              `tags` ARRAY<VARCHAR(20)> NULL,
+              `ip` IPV4 NULL,
+              INDEX idx_tags (`tags`) USING INVERTED COMMENT 'tags'
+            ) ENGINE=OLAP
+            UNIQUE KEY(`order_id`, `order_date`)
+            COMMENT 'orders'
+            AUTO PARTITION BY RANGE (date_trunc(`order_date`, 'month'))
+            ()
+            DISTRIBUTED BY HASH(`order_id`) BUCKETS AUTO
+            PROPERTIES (
+            "replication_allocation" = "tag.location.default: 1",
+            "enable_unique_key_merge_on_write" = "true"
+            )
+        """.trimIndent()
+        assertDdlRoundTrip(
+            "CREATE TABLE `orders` (`order_id` BIGINT NOT NULL COMMENT 'id', `order_date` DATE NOT NULL, " +
+                "`amount` DECIMAL(18, 4) NULL DEFAULT '0', `tags` ARRAY<VARCHAR(20)> NULL, `ip` IPV4 NULL, " +
+                "INDEX idx_tags (`tags`) USING INVERTED COMMENT 'tags') ENGINE=OLAP " +
+                "UNIQUE KEY (`order_id`, `order_date`) COMMENT 'orders' " +
+                "AUTO PARTITION BY RANGE (DATE_TRUNC(`order_date`, 'MONTH')) () " +
+                "DISTRIBUTED BY HASH (`order_id`) " +
+                "PROPERTIES ('replication_allocation'='tag.location.default: 1', " +
+                "'enable_unique_key_merge_on_write'='true')",
+            showCreate,
         )
     }
 }

@@ -35,6 +35,13 @@ from sqlglot.dialects.dialect import Dialect  # noqa: E402
 # emits BaseTokenizerTables.kt; every other name emits <Name>TokenizerTables.kt.
 DIALECTS = ["", "mysql", "doris", "starrocks", "presto", "trino", "duckdb", "postgres", "clickhouse", "hive", "spark2", "spark", "bigquery"]
 
+# brikk-native TokenType members with no sqlglot counterpart, appended after the
+# sqlglot members. Each must have a same-named DType (tools/gen_ast_nodes.py
+# BRIKK_NATIVE_DTYPES) because Parser.parseTypes maps type tokens to DType by name.
+# Doris keyword wiring lives in DorisDialect.TOKENIZER_CONFIG, not in the generated
+# DorisTokenizerTables (which stays oracle-parity for the token differential test).
+BRIKK_NATIVE_TOKEN_TYPES = ["BITMAP", "HLL", "QUANTILE_STATE"]
+
 
 def sqlglot_version() -> str:
     try:
@@ -105,6 +112,10 @@ def gen_token_type(version: str) -> str:
     lines.append("enum class TokenType {")
     for member in TokenType:
         lines.append(f"    {member.name},")
+    lines.append("    // brikk-native (no sqlglot counterpart): Doris storage types, see DorisDialect.kt.")
+    for name in BRIKK_NATIVE_TOKEN_TYPES:
+        assert not hasattr(TokenType, name), f"{name} now exists upstream; drop it from BRIKK_NATIVE_TOKEN_TYPES"
+        lines.append(f"    {name},")
     lines.append("}")
     return "\n".join(lines) + "\n"
 

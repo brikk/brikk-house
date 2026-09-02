@@ -227,21 +227,20 @@ above identically — sqlglot's Doris dialect (15-line dialect, 135-line parser:
 property, dynamic granularity, MV BUILD/REFRESH; rest inherited from MySQL) is used for
 transpiling queries *into* Doris, never for parsing Doris DDL. No upstream sync fixes this.
 
-**TODO: Doris DDL parsing (brikk exceeds upstream here — mark `// brikk-native`).**
-- Port from StarRocks (sibling dialect, never propagated to Doris): `LARGEINT → INT128`
-  token; `_parse_rollup_property` + `_parse_create` for `ROLLUP (...)` (upstream #4509).
-- Reuse existing tokens: `IPV4`/`IPV6` (ClickHouse tokenizer has them); `DECIMALV3` → alias
-  of `DECIMAL`.
-- New: `HLL`, `BITMAP`, `QUANTILE_STATE` DataType kinds; aggregate-key column aggregator
-  suffix (`SUM|MAX|MIN|REPLACE|REPLACE_IF_NOT_NULL|HLL_UNION|BITMAP_UNION|QUANTILE_UNION|
-  GENERIC`) as a column-constraint node; empty partition list `()`; `AUTO PARTITION BY
-  RANGE(func(col))`; `INDEX name (cols) USING INVERTED PROPERTIES(...) COMMENT '...'`.
-- Optionally PR the tokenizer/type bits upstream; the aggregator/inverted-index nodes are
-  likely too Doris-specific for them.
+**DONE (Sep 2026): Doris DDL parsing — `docs/brikk-extensions.md` #19.** Every PARSE
+FAIL / Command-fallback case above now parses to a `Create` and round-trips; each
+rendering is accepted by the real Doris FE parser
+(`SqlVerifierTest.dorisAcceptsBrikkDdlRenderings`). Deviations from the plan as written:
+- `ROLLUP` was **not** ported from StarRocks as-is: Doris' entry grammar is
+  `name (cols) [DUPLICATE KEY (cols)] [PROPERTIES (...)]` (no `FROM base`); the FE
+  parser rejected the StarRocks form, so the entries are a Doris-specific node.
+- `PARTITION BY LIST (c) ()` now yields a LIST node (sqlglot's port always built RANGE).
+- Still lossy: `BUCKETS AUTO` is dropped (absent = AUTO); `DECIMALV3` renders as `DECIMAL`.
 
 **Separate TODO, do not conflate:** general resync of the port to a newer sqlglot pin
-(378 commits of parser/optimizer drift; upstream also restructured into `parsers/` and
-`generators/` packages).
+(upstream also restructured into `parsers/` and `generators/` packages). The pin moved
+to `v30.17.0-93` with the `sqlglot-catchup` merge; the Doris probe was re-run against
+the merged tree before the work above and failed identically.
 
 ## Open items
 
@@ -256,5 +255,5 @@ transpiling queries *into* Doris, never for parsing Doris DDL. No upstream sync 
   produce IDE-compiler-version builds under Kotlin Toolchain.
 - Shading brikk-sql into the plugin jar with relocation (`assemblePluginJar` is a plain
   merge; KEFS requires relocation).
-- Doris DDL parser work before Doris can be the schema-cache dialect (see above).
+- ~~Doris DDL parser work before Doris can be the schema-cache dialect~~ → done (brikk-extensions #19).
 - Step 4 (wiring / `then` operator) deferred.

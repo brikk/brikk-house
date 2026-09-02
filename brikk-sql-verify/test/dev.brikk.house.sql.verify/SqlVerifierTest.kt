@@ -273,6 +273,34 @@ class SqlVerifierTest {
         )
     }
 
+    @Test
+    fun dorisAcceptsBrikkDdlRenderings() {
+        // brikk extension (docs/brikk-extensions.md entry 19): the Doris generator's
+        // renderings of the `SHOW CREATE TABLE` clauses sqlglot cannot parse — storage types,
+        // aggregate-key aggregators, empty partition lists, AUTO PARTITION, INDEX PROPERTIES,
+        // ROLLUP. Keep in sync with DorisDialectTest (brikk-sql).
+        val verifier = SqlVerifiers.forEngine("doris")!!
+        val renderings = listOf(
+            "CREATE TABLE t (a DECIMAL(10, 2), b LARGEINT, c IPV4, d IPV6, e BITMAP, f HLL, g QUANTILE_STATE)",
+            "CREATE TABLE t (k INT, v BIGINT SUM, b BITMAP BITMAP_UNION, h HLL HLL_UNION, m INT MAX, " +
+                "r INT REPLACE_IF_NOT_NULL, q QUANTILE_STATE QUANTILE_UNION) AGGREGATE KEY (k)",
+            "CREATE TABLE t (d DATE, k INT) UNIQUE KEY (d, k) PARTITION BY RANGE (d) () " +
+                "DISTRIBUTED BY HASH (k) BUCKETS 10",
+            "CREATE TABLE t (c1 INT, c2 DATE) PARTITION BY LIST (c2) () DISTRIBUTED BY HASH (c1) BUCKETS 1",
+            "CREATE TABLE t (d DATETIME, k INT) AUTO PARTITION BY RANGE (DATE_TRUNC(d, 'DAY')) () " +
+                "DISTRIBUTED BY HASH (k)",
+            "CREATE TABLE t (c1 INT, c2 DATE) AUTO PARTITION BY LIST (c2) () DISTRIBUTED BY HASH (c1) BUCKETS 1",
+            "CREATE TABLE t (k INT, s VARCHAR(10), INDEX idx_s (s) USING INVERTED " +
+                "PROPERTIES ('parser'='english') COMMENT 'c') DUPLICATE KEY (k)",
+            "CREATE TABLE t (k INT, v INT) DUPLICATE KEY (k) DISTRIBUTED BY HASH (k) BUCKETS 1 ROLLUP (r1(k, v))",
+            "CREATE TABLE t (k INT, v INT) ROLLUP (r1(k, v), r2(k, v) DUPLICATE KEY (k) PROPERTIES ('a'='b'))",
+        )
+        for (sql in renderings) {
+            val result = verifier.verify(sql)
+            assertTrue(result.accepted, "Doris FE parser rejected `$sql`: ${result.error}")
+        }
+    }
+
     // -- function-semantics renderings (brikk-sql FunctionSemanticsTest) -------------------
 
     @Test

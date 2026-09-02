@@ -382,32 +382,7 @@ open class MysqlParser(
 
         val options = mutableListOf<Expression>()
         while (true) {
-            val opt: Expression? = if (matchTextSeq("KEY_BLOCK_SIZE")) {
-                match(TokenType.EQ)
-                IndexConstraintOption(args("key_block_size" to parseNumber()))
-            } else if (match(TokenType.USING)) {
-                IndexConstraintOption(
-                    args("using" to (if (advanceAny() != null) prevToken.text else null))
-                )
-            } else if (matchTextSeq("WITH", "PARSER")) {
-                IndexConstraintOption(args("parser" to parseVar(anyToken = true)))
-            } else if (match(TokenType.COMMENT)) {
-                IndexConstraintOption(args("comment" to parseString()))
-            } else if (matchTextSeq("VISIBLE")) {
-                IndexConstraintOption(args("visible" to true))
-            } else if (matchTextSeq("INVISIBLE")) {
-                IndexConstraintOption(args("visible" to false))
-            } else if (matchTextSeq("ENGINE_ATTRIBUTE")) {
-                match(TokenType.EQ)
-                IndexConstraintOption(args("engine_attr" to parseString()))
-            } else if (matchTextSeq("SECONDARY_ENGINE_ATTRIBUTE")) {
-                match(TokenType.EQ)
-                IndexConstraintOption(args("secondary_engine_attr" to parseString()))
-            } else {
-                null
-            }
-
-            if (opt == null) break
+            val opt = parseIndexConstraintOption() ?: break
             options.add(opt)
         }
 
@@ -423,6 +398,34 @@ open class MysqlParser(
             )
         )
     }
+
+    // sqlglot: the option loop body of MySQLParser._parse_index_constraint. Split out
+    // (brikk) so DorisParser can add its INDEX PROPERTIES (...) option; behavior unchanged.
+    open fun parseIndexConstraintOption(): Expression? =
+        if (matchTextSeq("KEY_BLOCK_SIZE")) {
+            match(TokenType.EQ)
+            IndexConstraintOption(args("key_block_size" to parseNumber()))
+        } else if (match(TokenType.USING)) {
+            IndexConstraintOption(
+                args("using" to (if (advanceAny() != null) prevToken.text else null))
+            )
+        } else if (matchTextSeq("WITH", "PARSER")) {
+            IndexConstraintOption(args("parser" to parseVar(anyToken = true)))
+        } else if (match(TokenType.COMMENT)) {
+            IndexConstraintOption(args("comment" to parseString()))
+        } else if (matchTextSeq("VISIBLE")) {
+            IndexConstraintOption(args("visible" to true))
+        } else if (matchTextSeq("INVISIBLE")) {
+            IndexConstraintOption(args("visible" to false))
+        } else if (matchTextSeq("ENGINE_ATTRIBUTE")) {
+            match(TokenType.EQ)
+            IndexConstraintOption(args("engine_attr" to parseString()))
+        } else if (matchTextSeq("SECONDARY_ENGINE_ATTRIBUTE")) {
+            match(TokenType.EQ)
+            IndexConstraintOption(args("secondary_engine_attr" to parseString()))
+        } else {
+            null
+        }
 
     // sqlglot: Parser._parse_show (dispatch through SHOW_PARSERS via _find_parser)
     open fun parseShow(): Expression {

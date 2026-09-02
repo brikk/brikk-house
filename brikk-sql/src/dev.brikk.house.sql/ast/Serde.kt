@@ -133,6 +133,7 @@ object ExpressionRegistry {
         // "brikk.pipes"); see PipeNodes.kt.
         registerNativePipeNodes(m)
         registerNativeTrinoNodes(m)
+        registerNativeDorisNodes(m)
     }
 
     fun newInstance(simpleName: String): Expression =

@@ -1,22 +1,31 @@
 package dev.brikk.house.sql.dialects
 
 import dev.brikk.house.sql.ast.AddMonths
+import dev.brikk.house.sql.ast.AggregateKeyProperty
+import dev.brikk.house.sql.ast.AggregateTypeColumnConstraint
 import dev.brikk.house.sql.ast.ArrayUniqueAgg
+import dev.brikk.house.sql.ast.AutoPartitionProperty
 import dev.brikk.house.sql.ast.DateAdd
 import dev.brikk.house.sql.ast.DateSub
+import dev.brikk.house.sql.ast.DorisRollupIndex
 import dev.brikk.house.sql.ast.EuclideanDistance
 import dev.brikk.house.sql.ast.Expression
+import dev.brikk.house.sql.ast.IndexPropertiesOption
 import dev.brikk.house.sql.ast.Interval
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Partition
+import dev.brikk.house.sql.ast.PartitionByListProperty
 import dev.brikk.house.sql.ast.PartitionByRangeProperty
 import dev.brikk.house.sql.ast.PartitionByRangePropertyDynamic
 import dev.brikk.house.sql.ast.PartitionRange
+import dev.brikk.house.sql.ast.Properties
 import dev.brikk.house.sql.ast.Property
 import dev.brikk.house.sql.ast.RegexpLike
+import dev.brikk.house.sql.ast.RollupProperty
 import dev.brikk.house.sql.ast.TimestampTrunc
 import dev.brikk.house.sql.ast.TsOrDsToDate
 import dev.brikk.house.sql.ast.UniqueKeyProperty
+import dev.brikk.house.sql.ast.Var
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.NodeFactory
@@ -86,7 +95,7 @@ private fun buildDorisDateTrunc(argsList: List<Expression?>): Expression {
 // sqlglot: parsers.doris.DorisParser
 open class DorisParser(
     errorLevel: ErrorLevel? = null,
-    tokenizerConfig: TokenizerConfig = dev.brikk.house.sql.parser.DorisTokenizerTables.CONFIG,
+    tokenizerConfig: TokenizerConfig = DorisDialect.TOKENIZER_CONFIG,
 ) : MysqlParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
@@ -114,8 +123,26 @@ open class DorisParser(
     override val propertyParsers: Map<String, (Parser, PropertyKwargs) -> kotlin.Any?>
         get() = DorisParserTables.PROPERTY_PARSERS
 
+    // brikk-native (docs/brikk-extensions.md #19): MySQL's + the aggregate-key column
+    // aggregator suffix.
+    override val constraintParsers: Map<String, (Parser) -> Expression?>
+        get() = DorisParserTables.CONSTRAINT_PARSERS
+
+    // brikk-native (docs/brikk-extensions.md #19): MySQL's + BITMAP / HLL / QUANTILE_STATE.
+    override val typeTokens: Set<TokenType> get() = DorisParserTables.TYPE_TOKENS
+
     // sqlglot: DorisParser._parse_partition_property
+    //
+    // brikk-native (docs/brikk-extensions.md #19) deviations from the sqlglot port:
+    //  - `PARTITION BY RANGE (d) ()` / `PARTITION BY LIST (d) ()` — the empty
+    //    partition-definition list that Doris emits for dynamic / auto partitioned
+    //    tables — parses to a PartitionByRange/ListProperty with an EMPTY
+    //    `create_expressions` instead of failing the required-arg check (sqlglot
+    //    raises "Required keyword: 'create_expressions' missing").
+    //  - `PARTITION BY LIST (...)` with no explicit definitions yields
+    //    PartitionByListProperty; sqlglot always builds PartitionByRangeProperty here.
     override fun parsePartitionProperty(): kotlin.Any? {
+        val isList = matchTextSeq("LIST", advance = false)
         val expr = super.parsePartitionProperty()
 
         // sqlglot: `if not expr`
@@ -127,21 +154,80 @@ open class DorisParser(
 
         matchLParen()
 
-        val createExpressions: List<Expression>? = if (matchTextSeq("FROM", advance = false)) {
+        val createExpressions: List<Expression> = if (matchTextSeq("FROM", advance = false)) {
             parseCsv { parsePartitioningGranularityDynamic() }
         } else {
-            null
+            emptyList()
         }
 
         matchRParen()
 
-        return expression(
-            PartitionByRangeProperty(
-                args(
-                    "partition_expressions" to expr,
-                    "create_expressions" to createExpressions,
+        val nodeArgs = args(
+            "partition_expressions" to expr,
+            "create_expressions" to createExpressions,
+        )
+        val node = if (isList) PartitionByListProperty(nodeArgs) else PartitionByRangeProperty(nodeArgs)
+        // An empty definition list is legal Doris; build the node directly so the
+        // required-arg validation in expression() does not reject it.
+        return if (createExpressions.isEmpty()) node else expression(node)
+    }
+
+    // brikk-native (docs/brikk-extensions.md #19): `AUTO PARTITION BY RANGE|LIST (...) (...)`.
+    // sqlglot leaves the whole CREATE as an opaque Command. Returns null (and gives the
+    // AUTO token back) when AUTO is not followed by PARTITION BY.
+    open fun parseAutoPartitionProperty(): Expression? {
+        if (!matchTextSeq("PARTITION BY")) {
+            retreat(index - 1)
+            return null
+        }
+        val inner = parsePartitionProperty() as? Expression
+            ?: return raiseError("Expecting RANGE or LIST partition after AUTO PARTITION BY")
+        return expression(AutoPartitionProperty(args("this" to inner)))
+    }
+
+    // brikk-native (docs/brikk-extensions.md #19): aggregate-key column aggregator suffix,
+    // e.g. `v BIGINT SUM`, `b BITMAP BITMAP_UNION`. The aggregator keyword has already been
+    // consumed by the CONSTRAINT_PARSERS dispatch; it is prevToken.
+    open fun parseAggregateTypeConstraint(): Expression =
+        expression(
+            AggregateTypeColumnConstraint(
+                args("this" to Var(args("this" to prevToken.text.uppercase())))
+            )
+        )
+
+    // brikk-native (docs/brikk-extensions.md #19): `INDEX ... USING INVERTED PROPERTIES (...)`
+    // on top of MySQL's index options.
+    override fun parseIndexConstraintOption(): Expression? {
+        if (matchTextSeq("PROPERTIES")) {
+            return expression(IndexPropertiesOption(args("expressions" to parseWrappedProperties())))
+        }
+        return super.parseIndexConstraintOption()
+    }
+
+    // brikk-native (docs/brikk-extensions.md #19): `ROLLUP (name (cols) [DUPLICATE KEY (cols)]
+    // [PROPERTIES (...)], ...)` per DorisParser.g4 `rollupDef`. Shaped after
+    // StarRocksParser._parse_rollup_property (upstream #4509, never propagated to Doris),
+    // but Doris' entry grammar has DUPLICATE KEY where StarRocks has FROM, so the entries
+    // are DorisRollupIndex nodes rather than sqlglot's RollupIndex.
+    open fun parseRollupProperty(): Expression {
+        fun parseRollupIndex(): Expression =
+            expression(
+                DorisRollupIndex(
+                    args(
+                        "this" to parseIdVar(),
+                        "expressions" to parseWrappedIdVars(),
+                        "duplicate_key" to if (matchTextSeq("DUPLICATE", "KEY")) parseWrappedIdVars() else null,
+                        "properties" to if (matchTextSeq("PROPERTIES")) {
+                            expression(Properties(args("expressions" to parseWrappedProperties())))
+                        } else {
+                            null
+                        },
+                    )
                 )
             )
+
+        return expression(
+            RollupProperty(args("expressions" to parseWrappedCsv({ parseRollupIndex() })))
         )
     }
 
@@ -277,5 +363,28 @@ object DorisParserTables {
             "KEY" to { p, _ -> p.parseCompositeKeyProperty { a -> UniqueKeyProperty(a) } },
             "BUILD" to { p, _ -> (p as DorisParser).parseBuildProperty() },
             "REFRESH" to { p, _ -> (p as DorisParser).parseRefreshProperty() },
+            // brikk-native (docs/brikk-extensions.md #19): Doris DDL clauses sqlglot lacks.
+            "AGGREGATE" to { p, _ -> p.parseCompositeKeyProperty { a -> AggregateKeyProperty(a) } },
+            "AUTO" to { p, _ -> (p as DorisParser).parseAutoPartitionProperty() },
+            "ROLLUP" to { p, _ -> (p as DorisParser).parseRollupProperty() },
         )
+
+    // brikk-native (docs/brikk-extensions.md #19): aggregate-key column aggregators
+    // (reference/doris .../DorisParser.g4 `aggTypeDef`). Dispatch is by keyword text after
+    // the column type, in the same slot MySQL parses its column constraints.
+    val AGGREGATE_TYPES: Set<String> = setOf(
+        "SUM", "MAX", "MIN", "REPLACE", "REPLACE_IF_NOT_NULL",
+        "HLL_UNION", "BITMAP_UNION", "QUANTILE_UNION", "GENERIC",
+    )
+
+    // brikk-native (docs/brikk-extensions.md #19): MySQL's constraint parsers + aggregators.
+    val CONSTRAINT_PARSERS: Map<String, (Parser) -> Expression?> =
+        MysqlParserTables.CONSTRAINT_PARSERS +
+            AGGREGATE_TYPES.associateWith<String, (Parser) -> Expression?> {
+                { p -> (p as DorisParser).parseAggregateTypeConstraint() }
+            }
+
+    // brikk-native (docs/brikk-extensions.md #19): MySQL's type tokens + Doris storage types.
+    val TYPE_TOKENS: Set<TokenType> =
+        MysqlParserTables.TYPE_TOKENS + setOf(TokenType.BITMAP, TokenType.HLL, TokenType.QUANTILE_STATE)
 }

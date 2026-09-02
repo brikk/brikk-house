@@ -9,7 +9,6 @@ import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.generator.UnsupportedError
-import dev.brikk.house.sql.parser.DorisTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
 import kotlin.String
@@ -38,7 +37,7 @@ open class DorisGenerator(
     pretty: Boolean = false,
     identify: kotlin.Any = false,
     comments: Boolean = true,
-    tokenizerConfig: TokenizerConfig = DorisTokenizerTables.CONFIG,
+    tokenizerConfig: TokenizerConfig = DorisDialect.TOKENIZER_CONFIG,
     sourceDialect: String? = null,
 ) : MysqlGenerator(
     pretty = pretty,
@@ -445,6 +444,19 @@ open class DorisGenerator(
         return "FROM ($start) TO ($end) $interval"
     }
 
+    // brikk-native (docs/brikk-extensions.md #19): Doris ROLLUP entry ->
+    // {this}({columns})[ DUPLICATE KEY (cols)][ PROPERTIES (...)] (DorisParser.g4 rollupDef).
+    open fun dorisrollupindexSql(expression: DorisRollupIndex): String {
+        val this_ = sql(expression, "this")
+        val columns = expressions(expression, flat = true)
+        val dupKey = expressions(expression, key = "duplicate_key", flat = true)
+        val dupClause = if (dupKey.isNotEmpty()) " DUPLICATE KEY ($dupKey)" else ""
+        val properties = expression.args["properties"] as? Properties
+        val propsClause =
+            if (properties != null) " ${properties(properties, prefix = "PROPERTIES")}" else ""
+        return "$this_($columns)$dupClause$propsClause"
+    }
+
     // sqlglot: DorisGenerator.partitionedbyproperty_sql
     // brikk extension (docs/brikk-extensions.md #9, NOT sqlglot parity): sqlglot emits a
     // bare `PARTITION BY (cols)` for CREATE TABLE, but Doris's grammar
@@ -585,6 +597,9 @@ open class DorisGenerator(
             DType.TEXT to "STRING",
             DType.TIMESTAMP to "DATETIME",
             DType.TIMESTAMPTZ to "DATETIME",
+            // brikk-native (docs/brikk-extensions.md #19): StarRocks' mapping, never propagated
+            // to Doris upstream; sqlglot emits INT128, which the Doris FE rejects.
+            DType.INT128 to "LARGEINT",
         )
 
         // sqlglot: DorisGenerator.PROPERTIES_LOCATION
@@ -593,6 +608,11 @@ open class DorisGenerator(
                 UniqueKeyProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
                 PartitionedByProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
                 BuildProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
+                // brikk-native (docs/brikk-extensions.md #19): Doris DDL clauses sqlglot lacks
+                // (RollupProperty is UNSUPPORTED in the base table; StarRocks lifts it the same way).
+                AggregateKeyProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
+                AutoPartitionProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
+                RollupProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
             )
 
         // sqlglot: DorisGenerator.TRANSFORMS (dispatch-map overlay over MysqlGenerator's;
@@ -806,6 +826,13 @@ open class DorisGenerator(
             reg(PartitionedByProperty::class) { e ->
                 dg().partitionedbypropertySql(e as PartitionedByProperty)
             }
+
+            // brikk-native (docs/brikk-extensions.md #19): Doris DDL nodes (ast/DorisNodes.kt).
+            reg(AggregateKeyProperty::class) { e -> "AGGREGATE KEY (${expressions(e, flat = true)})" }
+            reg(AggregateTypeColumnConstraint::class) { e -> sql(e, "this") }
+            reg(AutoPartitionProperty::class) { e -> "AUTO ${sql(e, "this")}" }
+            reg(IndexPropertiesOption::class) { e -> "PROPERTIES (${expressions(e, flat = true)})" }
+            reg(DorisRollupIndex::class) { e -> dg().dorisrollupindexSql(e as DorisRollupIndex) }
         }
 
         // sqlglot: DorisGenerator.RESERVED_KEYWORDS

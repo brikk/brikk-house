@@ -1,5 +1,6 @@
 package dev.brikk.house.sql
 
+import dev.brikk.house.sql.dialects.DorisDialect
 import dev.brikk.house.sql.parser.DorisTokenizerTables
 import dev.brikk.house.sql.parser.TokenType
 import dev.brikk.house.sql.parser.Tokenizer
@@ -86,6 +87,25 @@ class DorisTokenizerTest {
                 TokenType.STRING to "aqb",
             ),
             tokenize("SELECT 'a\\%b', 'a\\qb'"),
+        )
+    }
+
+    // brikk extension #19 (docs/brikk-extensions.md, NOT sqlglot parity): the dialect's
+    // TOKENIZER_CONFIG layers Doris DDL type keywords over the generated tables. The
+    // generated DorisTokenizerTables.CONFIG itself stays oracle-parity (VAR for all of these).
+    @Test
+    fun dialectConfigAddsDorisStorageTypeKeywords() {
+        val sql = "LARGEINT IPV4 IPV6 DECIMALV2 DECIMALV3 BITMAP HLL QUANTILE_STATE"
+        val generated = tokenize(sql).map { it.first }
+        assertEquals(List(8) { TokenType.VAR }, generated)
+
+        val dialect = Tokenizer(DorisDialect.TOKENIZER_CONFIG).tokenize(sql).map { it.tokenType }
+        assertEquals(
+            listOf(
+                TokenType.INT128, TokenType.IPV4, TokenType.IPV6, TokenType.DECIMAL,
+                TokenType.DECIMAL, TokenType.BITMAP, TokenType.HLL, TokenType.QUANTILE_STATE,
+            ),
+            dialect,
         )
     }
 }
