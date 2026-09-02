@@ -14,10 +14,13 @@ import java.time.Instant
  *   2. a reusable generic trait pipe (anything with a `payload` gets JSON fields extracted),
  *   3. a terminating pipe over a Partial input that closes the shape.
  *
- * `Rel<T>` parameters are table inputs. The SQL refers to each one as a table-valued call
- * named after the parameter (`FROM src() |> ...`, `JOIN other() ON ...`); the plugin checks
- * both directions (every Rel parameter is used as a source, every such call names a Rel
- * parameter) and the runtime binds the calls to CTEs when rendering.
+ * Parameters are referenced from the SQL as Kotlin template entries, so they are real
+ * references (usage, rename, navigation work): a `Rel<T>` parameter is a table input written
+ * as a table-valued call `FROM ${'$'}src() |> ...` / `JOIN ${'$'}other() ON ...`; a scalar
+ * parameter (or a local val / property) `${'$'}start` becomes the bind placeholder `:start`;
+ * a `const val` is spliced as SQL text. The plugin checks both directions (every Rel
+ * parameter is used as a source, every slot call names a Rel parameter) and the runtime
+ * binds the calls to CTEs when rendering.
  *
  * No return types are written (option C); the plugin infers `Rel<EventsInRangeOut>`,
  * `Rel<ExtractEventOut>` (a Partial), `Rel<LoginDailyOut>`, and at the call site
@@ -34,15 +37,16 @@ interface LoginInput : Partial {
     val event_at: Instant
 }
 
+
 @BrikkSql
 fun eventsInRange(start: Instant, end: Instant) = Sql.doris("""
     FROM public.events
-    |> WHERE event_at >= :start AND event_at < :end
+    |> WHERE event_at >= $start AND event_at < $end
 """)
 
 @BrikkSql
 fun <T : HasPayload> extractEvent(src: Rel<T>) = Sql.doris("""
-    FROM src()
+    FROM $src()
     |> EXTEND payload->>'user_id' AS user_id,
               payload->>'action' AS action,
               (payload->>'duration_ms')::BIGINT AS duration_ms
@@ -50,13 +54,13 @@ fun <T : HasPayload> extractEvent(src: Rel<T>) = Sql.doris("""
 
 @BrikkSql
 fun loginDaily(logins: Rel<LoginInput>) = Sql.doris("""
-    FROM logins()
+    FROM $logins()
     |> WHERE action = 'login'
     |> AGGREGATE count(*) AS logins, max(event_at) AS last_login
        GROUP BY user_id, CAST(event_at AS DATE) AS day
 """)
 
-fun report(start: Instant, end: Instant) = loginDaily(extractEvent(eventsInRange(start, end)))
+fun report(start: Instant, end: Instant) = loginDaily( extractEvent(eventsInRange(start, end)))
 
 /** Column access through generated shapes type-checks. */
 fun describe(row: LoginDailyOut, src: EventsInRangeOut): String =

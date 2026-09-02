@@ -27,6 +27,10 @@ import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrConstKind
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrGetField
+import org.jetbrains.kotlin.ir.expressions.IrGetValue
+import org.jetbrains.kotlin.ir.expressions.IrStringConcatenation
+import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
@@ -117,7 +121,8 @@ private class SqlCallTransformer(
 
         val sqlParam = callee.parameters.firstOrNull { it.kind == IrParameterKind.Regular } ?: return expression
         val sqlExpression = expression.arguments[sqlParam.indexInParameters] ?: return expression
-        val sql = sqlExpression.constSqlStringOrNull()?.trim() ?: return expression
+        val template = sqlExpression.sqlTemplate() ?: return expression
+        val sql = template.sql.trim()
         val dialect = callee.name.asString()
 
         intercepted++
@@ -139,47 +144,103 @@ private class SqlCallTransformer(
             arguments[1] = builder.irString(dialect)
         }
 
+        // Every Rel parameter is a slot; every scalar parameter is bound by name (it may be
+        // referenced as `:name` text or as `$name`); `$name` entries that are locals or
+        // properties are bound with the entry's own expression.
+        val bound = HashSet<String>()
         for (param in enclosing.parameters.filter { it.kind == IrParameterKind.Regular }) {
+            val name = param.name.asString()
             result = if (param.isRel()) {
                 builder.irCall(relInput).apply {
                     type = relType
                     arguments[0] = result
-                    arguments[1] = builder.irString(param.name.asString())
+                    arguments[1] = builder.irString(name)
                     arguments[2] = builder.irGet(param)
                 }
             } else {
+                bound += name
                 builder.irCall(relBind).apply {
                     type = relType
                     arguments[0] = result
-                    arguments[1] = builder.irString(param.name.asString())
+                    arguments[1] = builder.irString(name)
                     arguments[2] = builder.irGet(param)
                 }
+            }
+        }
+        for ((name, value) in template.binds) {
+            if (!bound.add(name)) continue
+            result = builder.irCall(relBind).apply {
+                type = relType
+                arguments[0] = result
+                arguments[1] = builder.irString(name)
+                arguments[2] = value
             }
         }
         return result
     }
 
     private fun IrValueParameter.isRel(): Boolean = type.classOrNull == relClass
-}
 
-/** IR mirror of the FIR-side constant evaluation: literal, optionally trimIndent/trimMargin. */
-private fun IrExpression.constSqlStringOrNull(): String? = when (this) {
-    is IrConst ->
-        if (kind == IrConstKind.String) value as? String else null
+    /** The SQL text after substitution plus the `$name` binds (name -> value expression) it introduced. */
+    private class IrSqlTemplate(val sql: String, val binds: List<Pair<String, IrExpression>>)
 
-    is IrCall -> {
-        val callee = symbol.owner
-        val receiverParam = callee.parameters.firstOrNull {
-            it.kind == IrParameterKind.ExtensionReceiver || it.kind == IrParameterKind.DispatchReceiver
+    /**
+     * IR mirror of `SqlTemplateFir.read`: literal or string template, optionally wrapped in
+     * trimIndent/trimMargin. Entries: constants -> text; a `Rel` parameter -> its name (slot);
+     * any other parameter/local -> `:name`; a `const val` -> its value; other properties -> `:name`
+     * bound to the getter call. The frontend has already rejected anything else.
+     */
+    private fun IrExpression.sqlTemplate(): IrSqlTemplate? = when (this) {
+        is IrConst -> if (kind == IrConstKind.String) IrSqlTemplate(value as String, emptyList()) else null
+
+        is IrStringConcatenation -> {
+            val sql = StringBuilder()
+            val binds = ArrayList<Pair<String, IrExpression>>()
+            for (entry in arguments) {
+                when {
+                    entry is IrConst -> sql.append(entry.value.toString())
+                    entry is IrGetValue -> {
+                        val owner = entry.symbol.owner
+                        val name = owner.name.asString()
+                        if (owner is IrValueParameter && owner.isRel()) sql.append(name)
+                        else { sql.append(':').append(name); binds += name to entry }
+                    }
+                    else -> {
+                        val property = entry.propertyOrNull() ?: return null
+                        val constValue = (property.backingField?.initializer?.expression as? IrConst)?.takeIf { property.isConst }
+                        if (constValue != null) {
+                            sql.append(constValue.value.toString())
+                        } else {
+                            val name = property.name.asString()
+                            sql.append(':').append(name); binds += name to entry
+                        }
+                    }
+                }
+            }
+            IrSqlTemplate(sql.toString(), binds)
         }
-        val receiver = receiverParam?.let { arguments[it.indexInParameters] }
-        when {
-            receiver == null -> null
-            callee.name.asString() == "trimIndent" -> receiver.constSqlStringOrNull()?.trimIndent()
-            callee.name.asString() == "trimMargin" -> receiver.constSqlStringOrNull()?.trimMargin()
-            else -> null
+
+        is IrCall -> {
+            val callee = symbol.owner
+            val receiverParam = callee.parameters.firstOrNull {
+                it.kind == IrParameterKind.ExtensionReceiver || it.kind == IrParameterKind.DispatchReceiver
+            }
+            val receiver = receiverParam?.let { arguments[it.indexInParameters] }
+            when {
+                receiver == null -> null
+                callee.name.asString() == "trimIndent" -> receiver.sqlTemplate()?.let { IrSqlTemplate(it.sql.trimIndent(), it.binds) }
+                callee.name.asString() == "trimMargin" -> receiver.sqlTemplate()?.let { IrSqlTemplate(it.sql.trimMargin(), it.binds) }
+                else -> null
+            }
         }
+
+        else -> null
     }
 
-    else -> null
+    /** The property behind a getter call or a field read, if any. */
+    private fun IrExpression.propertyOrNull(): IrProperty? = when (this) {
+        is IrCall -> symbol.owner.correspondingPropertySymbol?.owner
+        is IrGetField -> symbol.owner.correspondingPropertySymbol?.owner
+        else -> null
+    }
 }

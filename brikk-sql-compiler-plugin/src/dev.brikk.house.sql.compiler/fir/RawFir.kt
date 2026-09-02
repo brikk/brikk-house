@@ -4,6 +4,9 @@ import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.analysis.RawFunction
 import dev.brikk.house.sql.compiler.analysis.RawParam
 import dev.brikk.house.sql.compiler.analysis.SqlLiteralText
+import dev.brikk.house.sql.compiler.analysis.SqlTemplate
+import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.text
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
@@ -51,7 +54,7 @@ object RawFir {
     }
 
     /**
-     * (dialect, constant SQL text) of the body's `Sql.<dialect>(<literal>)` call.
+     * (dialect, SQL template) of the body's `Sql.<dialect>(<literal or template>)` call.
      *
      * In the CLI every body is a real [FirBlock]. In the IDE, FIR is built lazily per
      * declaration: a callee in another file has a [FirLazyBlock] whose statements throw when
@@ -59,15 +62,21 @@ object RawFir {
      * allowed. The declaration's *source text* is available either way, so lazy bodies are read
      * textually. (PSI is deliberately not used: the plugin is compiled against the embeddable
      * compiler, where `com.intellij` types are relocated, so PSI signatures do not link in the IDE.)
+     *
+     * A rejected `${'$'}{...}` entry yields a null template here; the call checker reports it
+     * precisely, this path only needs "no analyzable SQL".
      */
-    fun sqlLiteralOf(function: FirNamedFunction): Pair<String?, String?> {
+    fun sqlTemplateOf(function: FirNamedFunction, session: FirSession, containerFile: FirFile?): Pair<String?, SqlTemplate?> {
+        val scope = SqlTemplateFir.scopeOf(function, session, containerFile)
         val body = function.body
         if (body is FirLazyBlock) {
             val text = function.source?.text ?: return null to null
-            return SqlLiteralText.parse(text) ?: (null to null)
+            return SqlLiteralText.parse(text, scope::classify) ?: (null to null)
         }
-        val call = sqlCall(function)
-        return call?.let { dialectOf(it) } to call?.arguments?.firstOrNull()?.constSqlStringOrNull()
+        val call = sqlCall(function) ?: return null to null
+        val arg = call.arguments.firstOrNull() ?: return dialectOf(call) to null
+        val template = (SqlTemplateFir.read(arg, scope) as? TemplateOutcome.Ok)?.template
+        return dialectOf(call) to template
     }
 
     /** `Sql.<dialect>(...)` -> "<dialect>" if the receiver is the `Sql` object (by name). */
@@ -84,13 +93,14 @@ object RawFir {
         return call.calleeReference.name.asString()
     }
 
-    fun rawFunction(function: FirNamedFunction): RawFunction {
-        val (dialect, sqlText) = sqlLiteralOf(function)
+    fun rawFunction(function: FirNamedFunction, session: FirSession, containerFile: FirFile?): RawFunction {
+        val (dialect, template) = sqlTemplateOf(function, session, containerFile)
         return RawFunction(
             packageFqName = function.symbol.callableId.packageName,
             name = function.name,
             dialect = dialect,
-            sqlText = sqlText,
+            sqlText = template?.sql,
+            binds = template?.binds.orEmpty(),
             params = function.valueParameters.map { p ->
                 RawParam(
                     name = p.name.asString(),
@@ -117,8 +127,12 @@ object RawFir {
 
     // ---------------------------------------------------------------- helpers
 
+    /**
+     * The body's result: its last statement (a `return`, or the expression of an expression
+     * body). Preceding statements are allowed so `val`s can be declared for `$name` binds.
+     */
     private fun FirBlock.singleResultExpression(): FirExpression? {
-        val stmt = statements.singleOrNull() ?: return null
+        val stmt = statements.lastOrNull() ?: return null
         return when (stmt) {
             is FirReturnExpression -> stmt.result
             is FirExpression -> stmt
@@ -159,27 +173,4 @@ object RawFir {
         is FirResolvedTypeRef -> coneType.isMarkedNullable
         else -> false
     }
-}
-
-/**
- * Evaluates the SQL argument to a constant String if possible.
- * Accepts a plain literal (raw or escaped, no interpolation) optionally wrapped in
- * `.trimIndent()` / `.trimMargin()`, which are applied at compile time.
- */
-internal fun FirExpression.constSqlStringOrNull(): String? = when (this) {
-    is FirLiteralExpression ->
-        if (kind == ConstantValueKind.String) value as? String else null
-
-    is FirFunctionCall -> {
-        val name = calleeReference.name.asString()
-        val receiver = explicitReceiver
-        when {
-            receiver == null -> null
-            name == "trimIndent" && arguments.isEmpty() -> receiver.constSqlStringOrNull()?.trimIndent()
-            name == "trimMargin" && arguments.isEmpty() -> receiver.constSqlStringOrNull()?.trimMargin()
-            else -> null
-        }
-    }
-
-    else -> null
 }

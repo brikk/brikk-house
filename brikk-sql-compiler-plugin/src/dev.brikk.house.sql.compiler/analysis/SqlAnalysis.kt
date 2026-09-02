@@ -41,6 +41,8 @@ data class FunctionAnalysis(
     val sqlText: String,
     val relParams: List<RelParam>,
     val scalarParams: List<String>,
+    /** Extra bind names from `$name` template entries (locals, properties); see [RawFunction.binds]. */
+    val binds: List<String>,
     /** Type parameter name -> bound short names (raw). */
     val typeParamBounds: Map<String, List<String>>,
     /** Declared input columns per slot, as resolvable from the signature. */
@@ -71,6 +73,8 @@ data class RawFunction(
     /** (param name, raw type short name, raw type-argument short name if any). */
     val params: List<RawParam>,
     val typeParamBounds: Map<String, List<String>>,
+    /** Names bound through `$name` template entries that are not parameters (locals, properties). */
+    val binds: List<String> = emptyList(),
 )
 
 data class RawParam(val name: String, val typeShortName: String, val typeArgShortName: String?)
@@ -110,7 +114,7 @@ class SqlAnalyzer(
     fun failed(raw: RawFunction, message: String): FunctionAnalysis = Signature(raw).failed(raw, message)
 
     private fun Signature.failed(raw: RawFunction, msg: String) = FunctionAnalysis(
-        raw.packageFqName, raw.name, outClassId, dialect, sqlText, relParams, scalarParams,
+        raw.packageFqName, raw.name, outClassId, dialect, sqlText, relParams, scalarParams, raw.binds,
         raw.typeParamBounds, emptyMap(), emptyList(), isShape = false, satisfiedTraits = emptyList(), error = msg,
     )
 
@@ -173,7 +177,7 @@ class SqlAnalyzer(
         val closed = relParams.isEmpty() || closesColumnSet(fragment)
         val isShape = !isGeneric && closed
         return FunctionAnalysis(
-            raw.packageFqName, raw.name, outClassId, dialect, sqlText, relParams, scalarParams,
+            raw.packageFqName, raw.name, outClassId, dialect, sqlText, relParams, scalarParams, raw.binds,
             raw.typeParamBounds, inputs, output, isShape, satisfiedTraits(output),
         )
     }

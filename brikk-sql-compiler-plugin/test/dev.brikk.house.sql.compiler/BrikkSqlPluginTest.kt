@@ -127,12 +127,12 @@ class BrikkSqlPluginTest {
         @BrikkSql
         fun eventsInRange(start: Instant, end: Instant) = Sql.postgres($q
             FROM public.events
-            |> WHERE event_at >= :start AND event_at < :end
+            |> WHERE event_at >= ${'$'}start AND event_at < ${'$'}end
         $q)
 
         @BrikkSql
         fun <T : HasPayload> extractEvent(src: Rel<T>) = Sql.postgres($q
-            FROM src()
+            FROM ${'$'}src()
             |> EXTEND payload->>'user_id' AS user_id,
                       payload->>'action' AS action,
                       (payload->>'duration_ms')::BIGINT AS duration_ms
@@ -140,7 +140,7 @@ class BrikkSqlPluginTest {
 
         @BrikkSql
         fun loginDaily(events: Rel<LoginInput>) = Sql.postgres($q
-            FROM events()
+            FROM ${'$'}events()
             |> WHERE action = 'login'
             |> AGGREGATE count(*) AS logins, max(event_at) AS last_login
                GROUP BY user_id, CAST(event_at AS DATE) AS day
@@ -314,7 +314,7 @@ class BrikkSqlPluginTest {
             """.trimIndent(),
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
-        assertContains(result.messages, "must be a compile-time constant string")
+        assertContains(result.messages, "must be a string literal or template")
     }
 
     @Test
@@ -422,5 +422,109 @@ class BrikkSqlPluginTest {
         assertTrue(sql.startsWith("WITH s0 AS ("), sql)
         assertContains(sql, "JOIN s1")
         assertTrue(!sql.contains("logins()") && !sql.contains("dim()"), sql)
+    }
+
+    // ------------------------------------------------------------------ $ template entries
+
+    @Test
+    fun `local val and top-level val interpolate as binds, const val is spliced as text`() {
+        val result = compile(
+            traitsPrelude + """
+
+            const val EVENTS_TABLE = "public.events"
+            val minDuration = 250L
+
+            @BrikkSql
+            fun slow(start: Instant): Rel<Partial> {
+                val cutoff = start.plusSeconds(3600)
+                return Sql.postgres($q
+                    FROM ${'$'}EVENTS_TABLE
+                    |> WHERE event_at >= ${'$'}start AND event_at < ${'$'}cutoff
+                    |> EXTEND (payload->>'duration_ms')::BIGINT AS duration_ms
+                    |> WHERE duration_ms > ${'$'}minDuration
+                $q)
+            }
+
+            fun render(): String = slow(Instant.EPOCH).render()
+            fun bindings(): Set<String> = slow(Instant.EPOCH).bindings().keys
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val main = result.classLoader.loadClass("demo.MainKt")
+        val sql = main.getMethod("render").invoke(null) as String
+        assertContains(sql, "FROM public.events")          // const spliced as text
+        assertContains(sql, "%(start)s")                    // parameter bind
+        assertContains(sql, "%(cutoff)s")                   // local bind
+        assertContains(sql, "%(minDuration)s")              // top-level val bind
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(setOf("start", "cutoff", "minDuration"), main.getMethod("bindings").invoke(null) as Set<String>)
+    }
+
+    @Test
+    fun `interpolated expression is rejected at the entry`() {
+        val result = compile(
+            traitsPrelude + """
+
+            @BrikkSql
+            fun bad(start: Instant) = Sql.postgres("FROM public.events |> WHERE event_at >= ${'$'}{start.plusSeconds(1)}")
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "[BRIKK_SQL] only a parameter, a local val, a property or a const val can be interpolated here")
+        // Reported on the entry expression inside `${'$'}{...}` (column 83), not on the string literal
+        // (which opens at column 43).
+        val line = result.messages.lines().first { it.contains("can be interpolated here") }
+        assertContains(line, "main.kt:12:83")
+    }
+
+    @Test
+    fun `rel parameter interpolated without call parentheses is rejected`() {
+        val result = compile(
+            traitsPrelude + """
+
+            @BrikkSql
+            fun logins(src: Rel<LoginInput>) = Sql.postgres("FROM ${'$'}src |> WHERE action = 'login'")
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "[BRIKK_SQL] 'src' is a Rel parameter and must be used as a table call: write '${'$'}src()'")
+    }
+
+    @Test
+    fun `scalar parameter never referenced by the sql is a frontend error on the parameter`() {
+        val result = compile(
+            traitsPrelude + """
+
+            @BrikkSql
+            fun recent(start: Instant, limit: Int) = Sql.postgres("FROM public.events |> WHERE event_at >= ${'$'}start")
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "[BRIKK_SQL] parameter 'limit' is never referenced by the SQL")
+        val line = result.messages.lines().first { it.contains("'limit' is never referenced") }
+        assertContains(line, "main.kt:12:28") // the `limit: Int` parameter, not the string
+    }
+
+    @Test
+    fun `text forms and template forms of slots and placeholders are interchangeable`() {
+        val result = compile(
+            traitsPrelude + """
+
+            @BrikkSql
+            fun a(start: Instant) = Sql.postgres("FROM public.events |> WHERE event_at >= :start")
+            @BrikkSql
+            fun b(start: Instant) = Sql.postgres("FROM public.events |> WHERE event_at >= ${'$'}start")
+            @BrikkSql
+            fun c(src: Rel<LoginInput>) = Sql.postgres("FROM src() |> WHERE action = 'login'")
+            @BrikkSql
+            fun d(src: Rel<LoginInput>) = Sql.postgres("FROM ${'$'}src() |> WHERE action = 'login'")
+
+            fun render(): String = a(Instant.EPOCH).render() + "|" + b(Instant.EPOCH).render()
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val rendered = result.classLoader.loadClass("demo.MainKt").getMethod("render").invoke(null) as String
+        val (a, b) = rendered.split("|")
+        assertEquals(a, b)
     }
 }

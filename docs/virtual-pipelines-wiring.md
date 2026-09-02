@@ -57,16 +57,16 @@ Three stages: catalog-bound source with a date range → reusable pipe over a `R
 
 ```kotlin
 @BrikkSql
-fun eventsInRange(range: DateRange) = Sql.doris("""
+fun eventsInRange(start: Instant, end: Instant) = Sql.doris("""
     FROM rumble_import.events
-    |> WHERE event_at >= :range.start AND event_at < :range.end
+    |> WHERE event_at >= $start AND event_at < $end
 """)
 
 interface HasPayload : Shape { val payload: Json }
 
 @BrikkSql
 fun <T : HasPayload> extractEvent(src: Rel<T>) = Sql.doris("""
-    FROM src()
+    FROM $src()
     |> EXTEND
          json_extract_string(payload, '$.user_id')  AS user_id,
          json_extract_string(payload, '$.action')   AS action,
@@ -77,7 +77,7 @@ interface LoginInput : Shape { val user_id: String; val action: String; val even
 
 @BrikkSql
 fun loginDaily(logins: Rel<LoginInput>) = Sql.doris("""
-    FROM logins()
+    FROM $logins()
     |> WHERE action = 'login'
     |> AGGREGATE count(*) AS logins, max(event_at) AS last_login
        GROUP BY user_id, date_trunc('day', event_at) AS day
@@ -87,11 +87,21 @@ val report = loginDaily(extractEvent(eventsInRange(lastWeek)))
 ```
 
 Generated types are named from the enclosing declaration (`ExtractEvent.Added`,
-`LoginDaily.Out`); the user never declares them. Every `Rel<T>` parameter is a table slot
-referenced in the SQL by name (`FROM src() |> ...`, `JOIN other() ON ...`), the same
-TVF-slot convention brikk-sql's `SqlFragment.tableSlots` already implements; the analyzer
-requires each Rel parameter to be used as a source and each slot call to name a Rel
-parameter. There is no implied source.
+`LoginDaily.Out`); the user never declares them. Parameters are referenced from the SQL as
+Kotlin template entries (Terpal-style: the plugin sees parts and references separately, never
+a spliced string), so usage/rename/navigation work in the IDE:
+
+| `$x` refers to                                  | becomes in the SQL                     |
+|-------------------------------------------------|----------------------------------------|
+| a `Rel` parameter, written `$x()`               | `x()` - a table slot (brikk-sql TVF slot) |
+| any other parameter, a local `val`, a property  | `:x` - a named bind, `.bind("x", x)` at runtime |
+| a `const val`                                   | its literal value, spliced as text      |
+| anything else in `${...}`                       | error on that entry: extract to a `val` |
+
+Plain `:name` / `name()` text still works. The analyzer requires each Rel parameter to be
+used as a source and each slot call to name a Rel parameter. There is no implied source.
+Kotlin only treats `$identifier` and `${` as template entries, so `'$.user_id'`, `$$` and `$1`
+need no escaping.
 
 ### The seam: EXTEND on a generic input
 

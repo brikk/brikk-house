@@ -60,17 +60,36 @@ object SqlLiteralCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
         val calleeName = callee.callableId?.asSingleFqName()?.asString() ?: callee.name.asString()
         val sqlArg = expression.arguments.firstOrNull() ?: return
 
-        val sql = sqlArg.constSqlStringOrNull()
-        if (sql == null) {
-            reporter.reportOn(sqlArg.source, BrikkSqlDiagnostics.SQL_NOT_CONSTANT, calleeName)
-            return
-        }
-        if (sql.isBlank()) {
-            reporter.reportOn(sqlArg.source, BrikkSqlDiagnostics.SQL_EMPTY, calleeName)
-            return
-        }
         val enclosing = context.containingDeclarations.filterIsInstance<FirNamedFunctionSymbol>()
             .lastOrNull { it.hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, context.session) }
+
+        // References in the template are resolved here, so the scope only needs to cover the
+        // (already resolved) reference kinds; the name sets are a formality.
+        val scope = TemplateScope(emptySet(), emptySet(), emptySet()) { null }
+        when (val outcome = SqlTemplateFir.read(sqlArg, scope)) {
+            is TemplateOutcome.NotSql -> {
+                reporter.reportOn(sqlArg.source, BrikkSqlDiagnostics.SQL_NOT_CONSTANT, calleeName)
+                return
+            }
+            is TemplateOutcome.Rejected -> {
+                reporter.reportOn(outcome.entry.source, BrikkSqlDiagnostics.SQL_BAD_INTERPOLATION, outcome.reason)
+                return
+            }
+            is TemplateOutcome.Ok -> {
+                val template = outcome.template
+                template.malformedSlot()?.let { slot ->
+                    reporter.reportOn(
+                        sqlArg.source, BrikkSqlDiagnostics.SQL_BAD_INTERPOLATION,
+                        "'${slot.name}' is a Rel parameter and must be used as a table call: write '$${slot.name}()'",
+                    )
+                    return
+                }
+                if (template.sql.isBlank()) {
+                    reporter.reportOn(sqlArg.source, BrikkSqlDiagnostics.SQL_EMPTY, calleeName)
+                    return
+                }
+            }
+        }
         if (enclosing == null) {
             reporter.reportOn(expression.source, BrikkSqlDiagnostics.SQL_OUTSIDE_BRIKK_FUNCTION, calleeName)
         }
@@ -112,11 +131,20 @@ object BrikkSqlFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common)
             reporter.reportOn(anchor, BrikkSqlDiagnostics.SQL_ANALYSIS_FAILED, analysis.error)
             return
         }
-        val declared = analysis.scalarParams.toSet()
+        val declared = (analysis.scalarParams + analysis.binds).toSet()
         val used = analysis.fragment.scalarParams.mapNotNull { it.name }
         for (p in used) {
             if (p.substringBefore('.') !in declared) {
                 reporter.reportOn(anchor, BrikkSqlDiagnostics.SQL_UNBOUND_PARAM, p, declared.sorted().joinToString(", "))
+            }
+        }
+        // The body is only the SQL, so a scalar parameter it never references is a mistake, not
+        // a warning. (K2 has no UNUSED_PARAMETER; the IDE inspection cannot see `:name` text.)
+        val usedRoots = used.mapTo(HashSet()) { it.substringBefore('.') }
+        for (param in declaration.valueParameters) {
+            val name = param.name.asString()
+            if (name in analysis.scalarParams && name !in usedRoots) {
+                reporter.reportOn(param.source, BrikkSqlDiagnostics.SQL_UNUSED_PARAM, name)
             }
         }
         // Unknown columns: qualify strictly against the declared inputs and the catalog.
