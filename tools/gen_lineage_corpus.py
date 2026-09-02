@@ -17,13 +17,25 @@ Column expressions whose order is hash-dependent, so child order is not comparab
 import ast
 import json
 import os
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "reference", "sqlglot"))
 
 from sqlglot.lineage import lineage  # noqa: E402
 
-VERSION = "v30.12.0-44-g93d16591"
+SQLGLOT_DIR = os.path.join(os.path.dirname(__file__), "..", "reference", "sqlglot")
+
+
+def sqlglot_version() -> str:
+    """`git describe --tags` of the reference clone. Aborts rather than stamping a guess:
+    the fixture stamp is asserted against the pin by FixturePinSyncTest (EVAL-05)."""
+    return subprocess.run(
+        ["git", "describe", "--tags"], cwd=SQLGLOT_DIR, capture_output=True, text=True, check=True
+    ).stdout.strip()
+
+
+VERSION = sqlglot_version()
 SUPPORTED_DIALECTS = {"", "mysql", "doris", "presto", "trino", "duckdb", "postgres", "clickhouse"}
 TEST_FILE = os.path.join(
     os.path.dirname(__file__), "..", "reference", "sqlglot", "tests", "test_lineage.py"
@@ -224,7 +236,7 @@ def main():
         cases.append(run_case(f"extra#{i}", column, sql, schema, sources, dialect, trim_selects))
 
     out = {
-        "version": VERSION,
+        "sqlglot_version": VERSION,
         "generator": "tools/gen_lineage_corpus.py",
         "cases": cases,
         "skipped": skipped,

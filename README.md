@@ -121,8 +121,10 @@ for Central releases, the `KOTLIN_TOOLCHAIN_*` environment variables / org secre
 ### Snapshots
 
 Snapshots publish automatically: **any push to `main`** runs
-[`.github/workflows/snapshot.yml`](.github/workflows/snapshot.yml), which builds and publishes
-the current `-SNAPSHOT` to the Central snapshots repo.
+[`.github/workflows/snapshot.yml`](.github/workflows/snapshot.yml), which first runs the full
+test suite via [`.github/workflows/test.yml`](.github/workflows/test.yml) (build + every corpus
+and verify gate; also runs on every pull request) and, only if green, publishes the current
+`-SNAPSHOT` to the Central snapshots repo.
 
 To **bump the snapshot version** (e.g. after a release):
 
@@ -143,8 +145,8 @@ Publish a snapshot manually (needs `brikk.mavencentral.user`/`brikk.mavencentral
 A release is cut from a branch named **`release/<version>`** (non-`-SNAPSHOT`):
 
 1. Push a branch `release/<version>` (e.g. `release/0.2.0`). This runs
-   [`.github/workflows/release.yml`](.github/workflows/release.yml), which sets the version from
-   the branch suffix and publishes all modules to Maven Central via
+   [`.github/workflows/release.yml`](.github/workflows/release.yml), which runs the test suite,
+   then sets the version from the branch suffix and publishes all modules to Maven Central via
    [`publish-release.sh`](publish-release.sh). (The committed template stays on `-SNAPSHOT`; the
    script sets the release version temporarily and restores the file afterward.)
 2. Central runs in **manual** mode: finish (or drop) each deployment at

@@ -1,0 +1,59 @@
+name: Test
+
+# Builds every module and runs the full test suite — including the exact known-failure
+# corpus gates in brikk-sql and the engine verify gates in brikk-sql-oracle — on every pull
+# request. Pushes to main and release/** are covered too: snapshot.yml and release.yml call
+# this workflow first and refuse to publish unless it is green (EVAL-03,
+# TODO-rectify-from-eval.md). Not triggered on push directly so main runs it exactly once.
+#
+# Requirements satisfied by ubuntu-latest: linux-amd64 for the embedded PostgreSQL oracle
+# (zonky ships no arm64 binary), JDK 25 provisioned by the ./kotlin wrapper. chDB tests are
+# no-ops unless -Dbrikk.chdb.integrationLibrary is set, so no native archive is downloaded.
+
+on:
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      # The wrapper downloads the Kotlin Toolchain CLI, JDKs and dependencies into
+      # ~/.cache/JetBrains/Kotlin (~1.5 GB); extract.cache is re-derived from download.cache,
+      # so only the downloads are cached. Key on the wrapper (toolchain version) and module
+      # configs (dependency set); fall back to any earlier cache for partial reuse.
+      - name: Cache Kotlin Toolchain and dependencies
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            ~/.cache/JetBrains/Kotlin/cli
+            ~/.cache/JetBrains/Kotlin/download.cache
+          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', 'publish.module-template.yaml') }}
+          restore-keys: |
+            kotlin-toolchain-${{ runner.os }}-
+
+      - name: Build
+        run: ./kotlin build
+
+      - name: Test
+        run: ./kotlin test
+
+      # On a red gate, the refreshed *-ledger-actual.json files are exactly what a developer
+      # needs to update the committed *-known-failures.json ledgers (see TODO-BUGS-*.md).
+      - name: Upload actual ledgers
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ledger-actual
+          path: |
+            **/*-ledger-actual.json
+            build/**/*-ledger-actual.json
+          if-no-files-found: ignore
+          retention-days: 14

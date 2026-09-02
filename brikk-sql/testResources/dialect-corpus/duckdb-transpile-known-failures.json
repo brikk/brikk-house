@@ -17,8 +17,12 @@
             "reason": "expected `SELECT IF(pos = pos_2, y, NULL) + 1 AS y FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(x)) - 1)) AS pos CROSS JOIN UNNEST(x) AS y WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(x) - 1) AND pos_2 = (ARRAY_LENGTH(x) - 1))` actual `SELECT EXPLODE(x) + 1 AS y`"
         },
         {
+            "case": "write|duckdb, version=1.0|COUNT_IF(x)",
+            "reason": "expected `SUM(CASE WHEN x THEN 1 ELSE 0 END)` actual `COUNT_IF(x)`"
+        },
+        {
             "case": "write|bigquery|SELECT e'Hello\nworld'",
-            "reason": "expected `SELECT CAST(b'Hello\\nworld' AS STRING)` actual `SELECT CAST('b\\'Hello\nworld\\'' AS STRING)`"
+            "reason": "expected `SELECT CAST(b'Hello\\nworld' AS STRING)` actual `SELECT CAST('b\\'Hello\\\\nworld\\'' AS STRING)`"
         },
         {
             "case": "read|bigquery|SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)",

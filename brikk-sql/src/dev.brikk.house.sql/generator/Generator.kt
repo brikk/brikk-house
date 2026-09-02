@@ -4158,13 +4158,69 @@ open class Generator(
             )
         }
 
-        if (this_ is TsOrDsToDate) return sql(this_)
+        if (this_ is TsOrDsToDate || this_?.isType(DType.DATE) == true) return sql(this_)
 
         if (safe == true) {
             return sql(TryCast(args("this" to this_, "to" to DataType(args("this" to DType.DATE)))))
         }
 
-        return sql(Cast(args("this" to this_, "to" to DataType(args("this" to DType.DATE)))))
+        return sql(castIdempotent(this_, DType.DATE, dialectAware = false))
+    }
+
+    // sqlglot: Generator.tsordstotime_sql
+    open fun tsordstotimeSql(expression: TsOrDsToTime): String {
+        val this_ = expression.thisArg as? Expression
+        val timeFormat = formatTime(expression)
+
+        if (!timeFormat.isNullOrEmpty()) {
+            return sql(
+                Cast(
+                    args(
+                        "this" to StrToTime(args("this" to this_, "format" to expression.args["format"])),
+                        "to" to DataType(args("this" to DType.TIME)),
+                    )
+                )
+            )
+        }
+
+        if (this_ is TsOrDsToTime || this_?.isType(DType.TIME) == true) return sql(this_)
+
+        return sql(castIdempotent(this_, DType.TIME, dialectAware = false))
+    }
+
+    // sqlglot: Generator.tsordstotimestamp_sql
+    open fun tsordstotimestampSql(expression: TsOrDsToTimestamp): String {
+        val this_ = expression.thisArg as? Expression
+        if (this_ is TsOrDsToTimestamp || this_?.isType(DType.TIMESTAMP) == true) return sql(this_)
+
+        return sql(castIdempotent(this_, DType.TIMESTAMP, dialectAware = true))
+    }
+
+    // sqlglot: Generator.tsordstodatetime_sql
+    open fun tsordstodatetimeSql(expression: TsOrDsToDatetime): String {
+        val this_ = expression.thisArg as? Expression
+        if (this_ is TsOrDsToDatetime || this_?.isType(DType.DATETIME) == true) return sql(this_)
+
+        return sql(castIdempotent(this_, DType.DATETIME, dialectAware = true))
+    }
+
+    /**
+     * sqlglot: exp.cast(expression, to, dialect=...) — the idempotent cast builder. If
+     * [expression] is already a Cast to [to], or ([dialectAware]) to a type this generator's
+     * [typeMapping] renders identically (e.g. DATETIME vs TIMESTAMP under DuckDB), return it
+     * unchanged instead of emitting a double cast. Otherwise wrap in a new, type-annotated Cast.
+     * `dialectAware = false` mirrors `exp.cast(...)` with no dialect (base mapping is empty).
+     */
+    protected fun castIdempotent(expression: Expression?, to: DType, dialectAware: Boolean): Expression {
+        if (expression is Cast) {
+            val existing = (expression.args["to"] as? DataType)?.thisArg
+            val mapping = if (dialectAware) typeMapping else emptyMap()
+            val equivalent = existing is DType &&
+                (mapping[existing] ?: existing.value) == (mapping[to] ?: to.value)
+            if (expression.isType(to) || equivalent) return expression
+        }
+        val dataType = DataType(args("this" to to))
+        return Cast(args("this" to expression, "to" to dataType)).also { it.typeSlot = dataType }
     }
 
     // sqlglot: Generator.show_sql (base: unsupported)

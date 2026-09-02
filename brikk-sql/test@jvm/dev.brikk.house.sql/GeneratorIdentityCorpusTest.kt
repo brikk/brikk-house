@@ -26,7 +26,7 @@ class GeneratorIdentityCorpusTest {
     private data class LedgerCase(val sql: String, val reason: String)
 
     @Serializable
-    private data class Ledger(val sqlglot_version: String, val cases: List<LedgerCase>)
+    private data class Ledger(val cases: List<LedgerCase>) // brikk-side ledger: no oracle stamp
 
     private val json = Json { ignoreUnknownKeys = true }
 

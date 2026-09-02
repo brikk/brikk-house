@@ -87,13 +87,14 @@ class DatafusionFixtureTest {
             val sql = case.getValue("sql").jsonPrimitive.content
             val readDialect = case.getValue("read").jsonPrimitive.content
             val readSql = case.getValue("read_sql").jsonPrimitive.content
-            if (Dialects.forNameOrNull(readDialect) == null) {
+            val reader = CorpusDialects.resolveOrSkip(readDialect)
+            if (reader == null) {
                 skippedUnavailable += 1
                 continue
             }
             val key = "transpile|$readDialect|$readSql"
             transpileRan += 1
-            val result = runCatching { df.generate(Dialects.forName(readDialect).parseOne(readSql)) }
+            val result = runCatching { df.generate(reader.parseOne(readSql)) }
             val actual = result.getOrNull()
             if (actual == sql) {
                 transpilePass += 1
