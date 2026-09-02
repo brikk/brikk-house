@@ -10,7 +10,8 @@ object TokenizerConfigs {
     fun forName(dialect: String): TokenizerConfig = when (dialect.lowercase()) {
         "", "sqlglot" -> TokenizerConfig.BASE
         "mysql" -> MysqlTokenizerTables.CONFIG
-        "doris" -> DorisTokenizerTables.CONFIG
+        // brikk-native: generated tables + Doris DDL type keywords (see DorisDialect)
+        "doris" -> dev.brikk.house.sql.dialects.DorisDialect.TOKENIZER_CONFIG
         "presto" -> PrestoTokenizerTables.CONFIG
         "trino" -> TrinoTokenizerTables.CONFIG
         "duckdb" -> DuckdbTokenizerTables.CONFIG

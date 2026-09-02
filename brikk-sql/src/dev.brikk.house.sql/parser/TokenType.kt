@@ -448,4 +448,8 @@ enum class TokenType {
     EXPORT,
     HIVE_TOKEN_STREAM,
     SENTINEL,
+    // brikk-native (no sqlglot counterpart): Doris storage types, see DorisDialect.kt.
+    BITMAP,
+    HLL,
+    QUANTILE_STATE,
 }

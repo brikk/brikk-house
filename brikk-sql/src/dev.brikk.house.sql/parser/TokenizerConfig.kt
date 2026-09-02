@@ -56,6 +56,40 @@ class TokenizerConfig(
             .asIterable()
     )
 
+    /**
+     * brikk-native (no sqlglot counterpart): this config with [extra] keywords layered over
+     * [keywords]. Lets a dialect extend a GENERATED `<Dialect>TokenizerTables.CONFIG`
+     * without editing the generated file (e.g. DorisDialect.TOKENIZER_CONFIG).
+     */
+    fun withKeywords(extra: Map<String, TokenType>): TokenizerConfig = TokenizerConfig(
+        singleTokens = singleTokens,
+        keywords = keywords + extra,
+        quotes = quotes,
+        formatStrings = formatStrings,
+        identifiers = identifiers,
+        comments = comments,
+        stringEscapes = stringEscapes,
+        byteStringEscapes = byteStringEscapes,
+        identifierEscapes = identifierEscapes,
+        escapeFollowChars = escapeFollowChars,
+        commands = commands,
+        commandPrefixTokens = commandPrefixTokens,
+        nestedComments = nestedComments,
+        hintStart = hintStart,
+        tokensPrecedingHint = tokensPrecedingHint,
+        hasBitStrings = hasBitStrings,
+        hasHexStrings = hasHexStrings,
+        numericLiterals = numericLiterals,
+        varSingleTokens = varSingleTokens,
+        stringEscapesAllowedInRawStrings = stringEscapesAllowedInRawStrings,
+        heredocTagIsIdentifier = heredocTagIsIdentifier,
+        heredocStringAlternative = heredocStringAlternative,
+        numbersCanBeUnderscoreSeparated = numbersCanBeUnderscoreSeparated,
+        numbersCanHaveDecimals = numbersCanHaveDecimals,
+        identifiersCanStartWithDigit = identifiersCanStartWithDigit,
+        unescapedSequences = unescapedSequences,
+    )
+
     companion object {
         /** The base "sqlglot" dialect configuration. */
         val BASE: TokenizerConfig = TokenizerConfig()
