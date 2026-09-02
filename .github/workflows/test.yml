@@ -39,6 +39,15 @@ jobs:
           restore-keys: |
             kotlin-toolchain-${{ runner.os }}-
 
+      # publish.module-template.yaml declares `.env` as the centralSnapshots credentials file,
+      # and Toolchain 0.11 refuses to load the project model when that file is missing — even
+      # for build/test. This job never publishes (and the repo is resolve: false), so a
+      # placeholder with the expected keys is enough. No secrets are exposed to PR builds.
+      - name: Write placeholder .env (required for the project model to load)
+        run: |
+          umask 077
+          printf 'brikk.mavencentral.user=ci-placeholder\nbrikk.mavencentral.pass=ci-placeholder\n' > .env
+
       - name: Build
         run: ./kotlin build
 

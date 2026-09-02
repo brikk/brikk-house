@@ -112,6 +112,21 @@ dependencies {
 Release versions (non-`-SNAPSHOT`) are published to **Maven Central** and resolve from
 `mavenCentral()` with no extra repository configuration. Latest release: **`0.9.0`**.
 
+## Building
+
+```bash
+./kotlin build   # compile every module
+./kotlin test    # run every test, including the exact-ledger corpus gates
+```
+
+The build config references a gitignored `.env` as the snapshots-repo credentials file, and
+Toolchain 0.11 refuses to load the project model when it is missing — even for build/test.
+On a fresh clone create a placeholder (real credentials are only needed to publish):
+
+```bash
+printf 'brikk.mavencentral.user=x\nbrikk.mavencentral.pass=x\n' > .env
+```
+
 ## Publishing (maintainers)
 
 The version and all publishing config live in [`publish.module-template.yaml`](publish.module-template.yaml)
