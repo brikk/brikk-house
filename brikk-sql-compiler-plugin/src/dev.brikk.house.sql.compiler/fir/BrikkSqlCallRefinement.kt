@@ -139,10 +139,15 @@ class BrikkSqlCallRefinement(session: FirSession) : FirFunctionCallRefinementExt
             if (argType.classId != BrikkSqlNames.REL_CLASS_ID) return giveUp("argument '${rp.name}' is ${argType.classId}, not Rel")
             val shapeType = argType.typeArguments.firstOrNull()?.type as? ConeClassLikeType
                 ?: return giveUp("argument '${rp.name}' Rel type argument is not a class type")
+            val shapeClassId = shapeType.classId
+                ?: return giveUp("argument '${rp.name}' Rel type argument has no class id")
             val shapeSymbol = shapeType.toRegularClassSymbol(session)
-                ?: return giveUp("argument '${rp.name}' shape ${shapeType.classId} has no class symbol")
-            inputs[rp.slot] = columnsOfShapeClass(shapeSymbol)
-                ?: return giveUp("no columns known for argument '${rp.name}' shape ${shapeSymbol.classId}")
+            inputs[rp.slot] = when {
+                shapeSymbol != null -> columnsOfShapeClass(shapeSymbol)
+                // Generated `XyzOut` that this session did not generate (IDE sessions with an empty
+                // predicate index): its columns are the analysis of `fun xyz`, reachable by ClassId.
+                else -> brikk.analysisOf(shapeClassId)?.takeIf { it.error == null }?.output
+            } ?: return giveUp("no columns known for argument '${rp.name}' shape $shapeClassId")
         }
 
         val output = try {

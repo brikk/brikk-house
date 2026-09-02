@@ -50,6 +50,12 @@ fun assemblePluginJar(
 
     val seen = HashSet<String>()
     ZipOutputStream(out.outputStream().buffered()).use { zip ->
+        // Build stamp: the plugin prints it in its log notes, so the IDE log shows which jar runs.
+        val stamp = "$kotlinVersion-$libVersion ${java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC).withNano(0)}"
+        zip.putNextEntry(ZipEntry("META-INF/brikk-sql-compiler-plugin.build"))
+        zip.write(stamp.toByteArray())
+        zip.closeEntry()
+        seen += "META-INF/brikk-sql-compiler-plugin.build"
         for (source in sources) {
             ZipFile(source.toFile()).use { jar ->
                 for (entry in jar.entries().asSequence()) {

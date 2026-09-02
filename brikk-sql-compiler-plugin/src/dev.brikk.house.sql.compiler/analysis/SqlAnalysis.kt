@@ -266,13 +266,20 @@ fun rethrowIfCancellation(e: Throwable) {
 object PluginGuard {
     private val seen = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
 
+    /** Build stamp written into the jar by the assemble task; tells apart jars the IDE has loaded. */
+    val build: String by lazy {
+        PluginGuard::class.java.getResourceAsStream("/META-INF/brikk-sql-compiler-plugin.build")
+            ?.use { it.readBytes().decodeToString().trim() } ?: "dev"
+    }
+    private val tag get() = "brikk-sql compiler plugin [$build]"
+
     /**
      * Records a "gave up silently" branch once per distinct [key]. For paths that return `null`
      * without an exception (no refinement, no generated class) so they can be diagnosed from
      * the IDE log; the compiler output is unaffected.
      */
     fun note(key: String, message: () -> String) {
-        if (seen.add(key)) System.err.println("brikk-sql compiler plugin: $key - ${message()} (reported once)")
+        if (seen.add(key)) System.err.println("$tag: $key - ${message()} (reported once)")
     }
 
     /** Rethrows what must propagate; returns normally when [e] may be handled. */
@@ -281,7 +288,7 @@ object PluginGuard {
         if (e !is Exception && e !is LinkageError) throw e
         val key = "$where: $e"
         if (seen.add(key)) {
-            System.err.println("brikk-sql compiler plugin: suppressed failure in $where (reported once): $e")
+            System.err.println("$tag: suppressed failure in $where (reported once): $e")
             e.stackTrace.take(6).forEach { System.err.println("    at $it") }
         }
         return true

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.GeneratedDeclarationKey
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirClass
+import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataKey
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataRegistry
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
@@ -23,7 +24,11 @@ import org.jetbrains.kotlin.fir.declarations.FirNamedFunction
 import org.jetbrains.kotlin.fir.extensions.FirExtensionSessionComponent
 import org.jetbrains.kotlin.fir.extensions.predicate.LookupPredicate
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
+import org.jetbrains.kotlin.fir.declarations.hasAnnotation
+import org.jetbrains.kotlin.fir.types.FirUserTypeRef
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.name.ClassId
@@ -92,23 +97,45 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         val direct = File(path)
         if (direct.isAbsolute) return direct.takeIf { it.isFile }
         if (direct.isFile) return direct
-        var dir: File? = anchorFilePath?.let { File(it).absoluteFile.parentFile }
-        while (dir != null) {
-            val candidate = File(dir, path)
-            if (candidate.isFile) return candidate
-            dir = dir.parentFile
+        // The IDE creates many short-lived sessions for one project (dangling/in-memory file
+        // sessions have no source path at all); once any session has located the file, reuse it.
+        RESOLVED_SCHEMAS[path]?.takeIf { it.isFile }?.let { return it }
+        val anchors = buildList {
+            anchorFilePath?.let { add(it) }
+            addAll(knownSourcePaths())
+        }
+        for (anchor in anchors) {
+            var dir: File? = File(anchor).absoluteFile.parentFile
+            while (dir != null) {
+                val candidate = File(dir, path)
+                if (candidate.isFile) {
+                    RESOLVED_SCHEMAS[path] = candidate
+                    return candidate
+                }
+                dir = dir.parentFile
+            }
         }
         return null
     }
 
-    /** Source file path of the declaration a symbol lives in, if the provider knows it. */
-    private fun anchorFileOf(symbol: FirNamedFunctionSymbol): String? = try {
-        session.firProvider.getFirCallableContainerFile(symbol)?.sourceFile?.path
-            ?: null.also { PluginGuard.note("no source file for '${symbol.name}'") { "schema path resolves against cwd only" } }
+    /** Source paths of the module's files that the provider can enumerate (anchors for the schema search). */
+    private fun knownSourcePaths(): List<String> = try {
+        val packages = functionsByOutClassId.values.mapTo(HashSet()) { it.callableId.packageName }
+        packages.flatMap { pkg -> session.firProvider.getFirFilesByPackage(pkg) }.mapNotNull { it.sourceFile?.path }
+    } catch (e: Exception) {
+        emptyList()
+    }
+
+    /** The FIR file a symbol is declared in, if the provider knows it (source path = schema anchor; imports = const lookup). */
+    private fun containerFileOf(symbol: FirNamedFunctionSymbol): FirFile? = try {
+        session.firProvider.getFirCallableContainerFile(symbol)
     } catch (e: Exception) {
         PluginGuard.note("container file lookup failed for '${symbol.name}'") { e.toString() }
         null
     }
+
+    private fun noteNoAnchor(symbol: FirNamedFunctionSymbol) =
+        PluginGuard.note("no source file for '${symbol.name}'") { "schema path resolves against cwd only" }
 
     /** The schema catalog (empty if none configured or it failed to load; see [analyzer]). */
     val catalog: ShapeCatalog get() = loadCatalog(null).catalog
@@ -176,9 +203,10 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         analyses[symbol]?.let { return it }
         if (!analyzing.add(symbol)) return null // cycle: Rel<AOut> param inside A's own chain
         try {
-            val analyzer = analyzerFor(anchorFileOf(symbol))
+            val containerFile = containerFileOf(symbol)
+            val analyzer = analyzerFor(containerFile?.sourceFile?.path.also { if (it == null) noteNoAnchor(symbol) })
             val analysis = try {
-                analyzer.analyze(RawFir.rawFunction(symbol.fir as FirNamedFunction))
+                analyzer.analyze(RawFir.rawFunction(symbol.fir as FirNamedFunction, session, containerFile))
             } catch (e: Throwable) {
                 // Reading the raw declaration failed (IDE: partially built FIR). Report, don't throw.
                 PluginGuard.recoverable(e, "analysisOf(${symbol.name})")
@@ -194,11 +222,40 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         }
     }
 
-    fun analysisOf(outClassId: ClassId): FunctionAnalysis? = functionsByOutClassId[outClassId]?.let { analysisOf(it) }
+    fun analysisOf(outClassId: ClassId): FunctionAnalysis? =
+        (functionsByOutClassId[outClassId] ?: functionByOutClassIdFallback(outClassId))?.let { analysisOf(it) }
+
+    /**
+     * `XyzOut` -> the `@BrikkSql fun xyz` in the same package, by name through the symbol
+     * provider. Used when the predicate index does not list it: some IDE sessions (dangling /
+     * in-memory files) have an empty predicate-based provider although the declarations resolve.
+     */
+    private fun functionByOutClassIdFallback(outClassId: ClassId): FirNamedFunctionSymbol? {
+        val short = outClassId.shortClassName.asString()
+        if (!short.endsWith("Out") || short.length <= 3) return null
+        val fnName = Name.identifier(short.removeSuffix("Out").replaceFirstChar { it.lowercase() })
+        return try {
+            session.symbolProvider.getTopLevelCallableSymbols(outClassId.packageFqName, fnName)
+                .filterIsInstance<FirNamedFunctionSymbol>()
+                .firstOrNull { it.hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, session) }
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     /** Function symbol -> analysis, for the enclosing-function lookup in refinement/checkers. */
     fun analysisOfFunction(symbol: FirNamedFunctionSymbol): FunctionAnalysis? =
-        if (functionsByOutClassId.containsValue(symbol)) analysisOf(symbol) else null
+        if (functionsByOutClassId.containsValue(symbol) || symbol.isBrikkSqlFunction()) analysisOf(symbol) else null
+
+    /**
+     * `@BrikkSql` on the symbol, resolved or not: some IDE sessions hand us declarations whose
+     * annotations are still raw (`FirUserTypeRef`), where `hasAnnotation(classId)` is false.
+     */
+    private fun FirNamedFunctionSymbol.isBrikkSqlFunction(): Boolean {
+        if (hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, session)) return true
+        val short = BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID.shortClassName.asString()
+        return fir.annotations.any { (it.annotationTypeRef as? FirUserTypeRef)?.qualifier?.lastOrNull()?.name?.asString() == short }
+    }
 
     // ---------------------------------------------------------------- local shape classes
 
@@ -212,6 +269,9 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
     fun nextLocalIndex(): Int = ++localCounter
 
     companion object {
+        /** Relative `schema=` option -> file located by some session of this process; see [resolveSchemaFile]. */
+        private val RESOLVED_SCHEMAS = java.util.concurrent.ConcurrentHashMap<String, File>()
+
         val SQL_PREDICATE: LookupPredicate = LookupPredicate.create { annotated(BrikkSqlNames.BRIKK_SQL_ANNOTATION) }
         val TRAIT_PREDICATE: LookupPredicate = LookupPredicate.create { annotated(BrikkSqlNames.BRIKK_TRAIT_ANNOTATION) }
     }
