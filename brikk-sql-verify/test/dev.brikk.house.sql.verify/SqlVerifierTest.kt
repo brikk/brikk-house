@@ -313,6 +313,46 @@ class SqlVerifierTest {
                 "PARTITION p2 VALUES LESS THAN ('2020-02-01', MAXVALUE))",
             "CREATE TABLE t (k INT, a VARCHAR(20), d DATETIME) UNIQUE KEY (k, d) ORDER BY (a, d) " +
                 "PARTITION BY RANGE (DATE_TRUNC(d, 'DAY')) () DISTRIBUTED BY HASH (k) BUCKETS 16",
+            "CREATE TABLE t (v VARIANT<MATCH_NAME 'a*':INT, MATCH_NAME_GLOB 'b?':STRING, 'c':INT>)",
+            // statement-level DDL (TODO-doris-ddl.md C1/C3): REFRESH, CREATE INDEX, ALTER TABLE
+            // partition / rollup / swap actions, ALTER MATERIALIZED VIEW, DESC ALL, LIKE WITH ROLLUP
+            "REFRESH MATERIALIZED VIEW db.mv AUTO",
+            "REFRESH MATERIALIZED VIEW mv PARTITIONS (p1)",
+            "REFRESH CATALOG c PROPERTIES ('invalid_cache'='true')",
+            "REFRESH DATABASE c.db",
+            "CREATE INDEX IF NOT EXISTS idx ON db.t (s, k) USING INVERTED PROPERTIES ('parser'='english') COMMENT 'c'",
+            "CREATE INDEX idx ON t (s) USING NGRAM_BF PROPERTIES ('gram_size'='3')",
+            "DROP INDEX IF EXISTS idx ON db.t",
+            "ALTER TABLE t ADD PARTITION IF NOT EXISTS p3 VALUES LESS THAN ('2020-04-01') ('replication_num'='1') " +
+                "DISTRIBUTED BY HASH (k) BUCKETS 4",
+            "ALTER TABLE t ADD PARTITION p3 VALUES LESS THAN ('2020-04-01') DISTRIBUTED BY HASH (k) BUCKETS 4 " +
+                "PROPERTIES ('replication_num'='1')",
+            "ALTER TABLE t ADD PARTITION p3 VALUES LESS THAN (MAXVALUE)",
+            "ALTER TABLE t ADD TEMPORARY PARTITION tp1 VALUES [('2020-04-01'), ('2020-05-01'))",
+            "ALTER TABLE t ADD PARTITION p3 VALUES IN ('x', 'y')",
+            "ALTER TABLE t DROP PARTITION IF EXISTS p1 FORCE",
+            "ALTER TABLE t DROP TEMPORARY PARTITION tp1",
+            "ALTER TABLE t DROP PARTITION p1 FROM INDEX r1",
+            "ALTER TABLE t REPLACE PARTITION (p1, p2) WITH TEMPORARY PARTITION (tp1, tp2) FORCE PROPERTIES ('strict_range'='false')",
+            "ALTER TABLE t MODIFY PARTITION p1 SET ('replication_num'='1')",
+            "ALTER TABLE t MODIFY PARTITION (p1, p2) SET ('replication_num'='1')",
+            "ALTER TABLE t MODIFY PARTITION (*) SET ('replication_num'='1')",
+            "ALTER TABLE t RENAME PARTITION p1 p2",
+            "ALTER TABLE t RENAME ROLLUP r1 r2",
+            "ALTER TABLE t RENAME COLUMN a b",
+            "ALTER TABLE t SET ('replication_num' = '1', 'dynamic_partition.enable' = 'true')",
+            "ALTER TABLE t ADD ROLLUP r1(k, v) DUPLICATE KEY (k) FROM base PROPERTIES ('storage_type'='column')",
+            "ALTER TABLE t ADD ROLLUP r1(k, v), r2(k)",
+            "ALTER TABLE t REPLACE WITH TABLE t2 PROPERTIES ('swap'='false')",
+            "ALTER MATERIALIZED VIEW mv REFRESH COMPLETE ON SCHEDULE EVERY 1 DAY",
+            "ALTER MATERIALIZED VIEW mv REFRESH ON COMMIT",
+            "ALTER MATERIALIZED VIEW mv RENAME mv2",
+            "ALTER MATERIALIZED VIEW db.mv SET ('grace_period' = '10')",
+            "ALTER MATERIALIZED VIEW mv REPLACE WITH MATERIALIZED VIEW mv2 PROPERTIES ('swap'='false')",
+            "CREATE MATERIALIZED VIEW `mtmv` BUILD IMMEDIATE REFRESH ON COMMIT DISTRIBUTED BY RANDOM BUCKETS 2 AS SELECT k FROM t",
+            "DESCRIBE db.t ALL",
+            "CREATE TABLE IF NOT EXISTS t2 LIKE db.t WITH ROLLUP (r1, r2)",
+            "CREATE TABLE t2 LIKE t WITH ROLLUP",
         )
         for (sql in renderings) {
             val result = verifier.verify(sql)

@@ -1,6 +1,14 @@
 package dev.brikk.house.sql
 
 import dev.brikk.house.sql.ast.AggregateKeyProperty
+import dev.brikk.house.sql.ast.Alter
+import dev.brikk.house.sql.ast.Command
+import dev.brikk.house.sql.ast.Describe
+import dev.brikk.house.sql.ast.DorisModifyPartition
+import dev.brikk.house.sql.ast.DorisRefresh
+import dev.brikk.house.sql.ast.DorisVariantField
+import dev.brikk.house.sql.ast.Drop
+import dev.brikk.house.sql.ast.Refresh
 import dev.brikk.house.sql.ast.AggregateTypeColumnConstraint
 import dev.brikk.house.sql.ast.AutoPartitionProperty
 import dev.brikk.house.sql.ast.ColumnDef
@@ -450,6 +458,163 @@ class DorisDialectTest {
         val range = create.find(PartitionByRangeProperty::class)!!
         assertEquals(emptyList<Expression>(), range.args["create_expressions"])
         assertTrue(create.find(AutoPartitionProperty::class) == null, "no AUTO keyword in the source")
+    }
+
+    @Test
+    fun variantFieldNamePatternPrefixes() {
+        assertDdlRoundTrip("CREATE TABLE t (v VARIANT<MATCH_NAME 'a*':INT, MATCH_NAME_GLOB 'b?':STRING, 'c':INT>)")
+        val field = parseOne("CREATE TABLE t (v VARIANT<MATCH_NAME 'a*':INT>)", "doris").find(DorisVariantField::class)!!
+        assertEquals("MATCH_NAME", field.args["match"])
+    }
+
+    @Test
+    fun partitionIfNotExistsInsideCreateTableIsAcceptedAndDropped() {
+        // Grammar-legal but a no-op for a new table, so the flag is not modeled.
+        assertDdlRoundTrip(
+            "CREATE TABLE t (d DATE) PARTITION BY RANGE (d) (PARTITION p1 VALUES LESS THAN ('2020-01-01'), " +
+                "PARTITION p2 VALUES LESS THAN (MAXVALUE))",
+            "CREATE TABLE t (d DATE) PARTITION BY RANGE (d) (PARTITION IF NOT EXISTS p1 VALUES LESS THAN ('2020-01-01'), " +
+                "PARTITION IF NOT EXISTS p2 VALUES LESS THAN MAXVALUE)",
+        )
+        assertDdlRoundTrip(
+            "CREATE TABLE t (d DATE) PARTITION BY LIST (d) (PARTITION p1 VALUES IN ('2020-01-01'))",
+            "CREATE TABLE t (d DATE) PARTITION BY LIST (d) (PARTITION IF NOT EXISTS p1 VALUES IN ('2020-01-01'))",
+        )
+    }
+
+    // ------------------------------------------------------------------
+    // Statement-level Doris DDL a pipeline runtime issues (TODO-doris-ddl.md C1/C3).
+    // ------------------------------------------------------------------
+
+    /** Parses to the given node class (never Command) and re-parses stably. */
+    private inline fun <reified T : Expression> assertStatementRoundTrip(expected: String, input: String = expected): T {
+        val parsed = parseOne(input, "doris")
+        assertTrue(parsed is T, "expected ${T::class.simpleName}, got ${parsed::class.simpleName}: $input")
+        val rendered = parsed.sql("doris")
+        assertEquals(expected, rendered)
+        assertEquals(expected, roundTrip(rendered), "unstable re-parse")
+        return parsed as T
+    }
+
+    @Test
+    fun refreshMaterializedViewCatalogAndDatabase() {
+        // REFRESH is a sqlglot statement token the Doris tokenizer never received, so
+        // every REFRESH statement used to be a hard parse error.
+        assertStatementRoundTrip<DorisRefresh>("REFRESH MATERIALIZED VIEW db.mv AUTO")
+        assertStatementRoundTrip<DorisRefresh>("REFRESH MATERIALIZED VIEW mv COMPLETE")
+        val r = assertStatementRoundTrip<DorisRefresh>(
+            "REFRESH MATERIALIZED VIEW mv PARTITIONS (p1, p2)",
+            "REFRESH MATERIALIZED VIEW mv PARTITION (p1, p2)",
+        )
+        assertEquals(listOf("p1", "p2"), (r.args["partitions"] as List<*>).map { (it as Expression).name })
+        assertStatementRoundTrip<DorisRefresh>("REFRESH CATALOG c PROPERTIES ('invalid_cache'='true')")
+        assertStatementRoundTrip<DorisRefresh>("REFRESH DATABASE c.db")
+        // REFRESH TABLE stays on sqlglot's node
+        assertStatementRoundTrip<Refresh>("REFRESH TABLE c.db.t")
+        // ... and the keyword is still usable as a column name
+        assertEquals("SELECT `refresh`, `resume` FROM t", roundTrip("SELECT refresh, resume FROM t"))
+    }
+
+    @Test
+    fun createAndDropIndexStatements() {
+        assertStatementRoundTrip<Create>(
+            "CREATE INDEX IF NOT EXISTS idx ON db.t (s, k) USING INVERTED PROPERTIES ('parser'='english') COMMENT 'c'",
+            "CREATE INDEX IF NOT EXISTS idx ON db.t (s, k) USING INVERTED PROPERTIES(\"parser\" = \"english\") COMMENT 'c'",
+        )
+        assertStatementRoundTrip<Create>("CREATE INDEX idx ON t (s) USING NGRAM_BF PROPERTIES ('gram_size'='3')")
+        assertStatementRoundTrip<Create>("CREATE INDEX idx ON t (s) COMMENT 'c'")
+        assertStatementRoundTrip<Create>("CREATE INDEX idx ON t (s)")
+        assertStatementRoundTrip<Drop>("DROP INDEX IF EXISTS idx ON db.t")
+    }
+
+    @Test
+    fun alterTablePartitionActions() {
+        assertStatementRoundTrip<Alter>(
+            "ALTER TABLE t ADD PARTITION IF NOT EXISTS p3 VALUES LESS THAN ('2020-04-01') ('replication_num'='1') " +
+                "DISTRIBUTED BY HASH (k) BUCKETS 4",
+            "ALTER TABLE t ADD PARTITION IF NOT EXISTS p3 VALUES LESS THAN ('2020-04-01') (\"replication_num\" = \"1\") " +
+                "DISTRIBUTED BY HASH (k) BUCKETS 4",
+        )
+        assertStatementRoundTrip<Alter>(
+            "ALTER TABLE t ADD PARTITION p3 VALUES LESS THAN ('2020-04-01') DISTRIBUTED BY HASH (k) BUCKETS 4 " +
+                "PROPERTIES ('replication_num'='1')",
+        )
+        assertStatementRoundTrip<Alter>(
+            "ALTER TABLE t ADD PARTITION p3 VALUES LESS THAN (MAXVALUE)",
+            "ALTER TABLE t ADD PARTITION p3 VALUES LESS THAN MAXVALUE",
+        )
+        assertStatementRoundTrip<Alter>("ALTER TABLE t ADD TEMPORARY PARTITION tp1 VALUES [('2020-04-01'), ('2020-05-01'))")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t ADD PARTITION p3 VALUES IN ('x', 'y')")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t DROP PARTITION IF EXISTS p1 FORCE")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t DROP TEMPORARY PARTITION tp1")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t DROP PARTITION p1 FROM INDEX r1")
+        assertStatementRoundTrip<Alter>(
+            "ALTER TABLE t REPLACE PARTITION (p1, p2) WITH TEMPORARY PARTITION (tp1, tp2) FORCE PROPERTIES ('strict_range'='false')",
+            "ALTER TABLE t REPLACE PARTITION (p1, p2) WITH TEMPORARY PARTITION (tp1, tp2) PROPERTIES ('strict_range' = 'false') FORCE",
+        )
+        assertStatementRoundTrip<Alter>("ALTER TABLE t MODIFY PARTITION p1 SET ('replication_num'='1')")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t MODIFY PARTITION (p1, p2) SET ('replication_num'='1')")
+        val all = assertStatementRoundTrip<Alter>("ALTER TABLE t MODIFY PARTITION (*) SET ('replication_num'='1')")
+        assertEquals(true, all.find(DorisModifyPartition::class)!!.args["all"])
+        assertStatementRoundTrip<Alter>("ALTER TABLE t RENAME PARTITION p1 p2")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t RENAME ROLLUP r1 r2")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t RENAME COLUMN a b")
+        // MySQL-inherited actions still take their own path
+        assertStatementRoundTrip<Alter>("ALTER TABLE t MODIFY COLUMN c BIGINT NULL COMMENT 'x'")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t DROP COLUMN c")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t RENAME t2")
+    }
+
+    @Test
+    fun alterTableRollupSwapAndSet() {
+        assertStatementRoundTrip<Alter>(
+            "ALTER TABLE t ADD ROLLUP r1(k, v) DUPLICATE KEY (k) FROM base PROPERTIES ('storage_type'='column')",
+            "ALTER TABLE t ADD ROLLUP r1 (k, v) DUPLICATE KEY (k) FROM base PROPERTIES ('storage_type' = 'column')",
+        )
+        assertStatementRoundTrip<Alter>("ALTER TABLE t ADD ROLLUP r1(k, v), r2(k)", "ALTER TABLE t ADD ROLLUP r1 (k, v), r2 (k)")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t REPLACE WITH TABLE t2 PROPERTIES ('swap'='false')")
+        // SET keeps its parens (the FE rejects the bare form) and is stable across a re-parse
+        assertStatementRoundTrip<Alter>("ALTER TABLE t SET ('replication_num' = '1', 'dynamic_partition.enable' = 'true')")
+    }
+
+    @Test
+    fun alterMaterializedView() {
+        assertStatementRoundTrip<Alter>("ALTER MATERIALIZED VIEW mv REFRESH COMPLETE ON SCHEDULE EVERY 1 DAY")
+        assertStatementRoundTrip<Alter>("ALTER MATERIALIZED VIEW mv REFRESH AUTO ON MANUAL")
+        // optional method (sqlglot's port took ON as the method)
+        assertStatementRoundTrip<Alter>("ALTER MATERIALIZED VIEW mv REFRESH ON COMMIT")
+        assertStatementRoundTrip<Create>(
+            "CREATE MATERIALIZED VIEW `mtmv` BUILD IMMEDIATE REFRESH ON COMMIT DISTRIBUTED BY RANDOM BUCKETS 2 AS SELECT k FROM t",
+            "CREATE MATERIALIZED VIEW mtmv BUILD IMMEDIATE REFRESH ON COMMIT DISTRIBUTED BY RANDOM BUCKETS 2 AS SELECT k FROM t",
+        )
+        assertStatementRoundTrip<Alter>("ALTER MATERIALIZED VIEW mv RENAME mv2")
+        assertStatementRoundTrip<Alter>("ALTER MATERIALIZED VIEW db.mv SET ('grace_period' = '10')")
+        assertStatementRoundTrip<Alter>("ALTER MATERIALIZED VIEW mv REPLACE WITH MATERIALIZED VIEW mv2 PROPERTIES ('swap'='false')")
+    }
+
+    @Test
+    fun describeAllAndCreateTableLikeWithRollup() {
+        assertStatementRoundTrip<Describe>("DESCRIBE db.t ALL", "DESC db.t ALL")
+        assertStatementRoundTrip<Create>("CREATE TABLE IF NOT EXISTS t2 LIKE db.t WITH ROLLUP (r1, r2)")
+        assertStatementRoundTrip<Create>("CREATE TABLE t2 LIKE t WITH ROLLUP")
+        assertStatementRoundTrip<Create>("CREATE TABLE t2 LIKE t")
+    }
+
+    @Test
+    fun operationalStatementsWithoutNodesDegradeToCommand() {
+        // Not modeled; must at least survive as a Command (text preserved) instead of an
+        // "Invalid expression" error, so a script containing them can still be processed.
+        for (sql in listOf(
+            "PAUSE MATERIALIZED VIEW JOB ON mv",
+            "RESUME MATERIALIZED VIEW JOB ON mv",
+            "CANCEL MATERIALIZED VIEW TASK 123 ON mv",
+            "BUILD INDEX idx ON t PARTITIONS (p1, p2)",
+            "RECOVER TABLE t AS t2",
+        )) {
+            val parsed = parseOne(sql, "doris")
+            assertTrue(parsed is Command, "expected Command for: $sql, got ${parsed::class.simpleName}")
+            assertEquals(sql, parsed.sql("doris"))
+        }
     }
 
     @Test
