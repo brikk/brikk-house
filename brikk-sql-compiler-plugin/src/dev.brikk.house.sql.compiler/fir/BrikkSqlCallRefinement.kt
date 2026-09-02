@@ -4,8 +4,8 @@ import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.analysis.FunctionAnalysis
 import dev.brikk.house.sql.compiler.analysis.KType
 import dev.brikk.house.sql.compiler.analysis.ShapeColumn
+import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
 import dev.brikk.house.sql.compiler.analysis.TypeMap
-import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.KtSourceElementOffsetStrategy
 import org.jetbrains.kotlin.fakeElement
@@ -94,14 +94,20 @@ class BrikkSqlCallRefinement(session: FirSession) : FirFunctionCallRefinementExt
     /** Local classes by name, for [restoreSymbol]. */
     private val localsByName = HashMap<Name, FirRegularClassSymbol>()
 
-    override fun intercept(callInfo: CallInfo, symbol: FirNamedFunctionSymbol): CallReturnType? {
-        if (symbol.hasAnnotation(BrikkSqlNames.BRIKK_SQL_DIALECT_ANNOTATION_CLASS_ID, session)) {
-            return interceptSqlLiteral(callInfo)
+    // Boundary: a refinement that throws poisons resolution of the whole enclosing declaration
+    // (and in the IDE, every highlighting pass that touches it). `null` = "no refinement", so the
+    // call keeps its declared type and the checkers get to report whatever went wrong.
+    override fun intercept(callInfo: CallInfo, symbol: FirNamedFunctionSymbol): CallReturnType? = try {
+        when {
+            symbol.hasAnnotation(BrikkSqlNames.BRIKK_SQL_DIALECT_ANNOTATION_CLASS_ID, session) ->
+                interceptSqlLiteral(callInfo)
+            symbol.hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, session) && symbol.typeParameterSymbols.isNotEmpty() ->
+                interceptGenericPipe(callInfo, symbol)
+            else -> null
         }
-        if (symbol.hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, session) && symbol.typeParameterSymbols.isNotEmpty()) {
-            return interceptGenericPipe(callInfo, symbol)
-        }
-        return null
+    } catch (e: Exception) {
+        rethrowIfCancellation(e)
+        null
     }
 
     private fun interceptSqlLiteral(callInfo: CallInfo): CallReturnType? {
@@ -172,7 +178,7 @@ class BrikkSqlCallRefinement(session: FirSession) : FirFunctionCallRefinementExt
             // Declaration checkers require a source; make it a distinct zero-width fake range
             // at the call so it never collides with the wrapping lambda's source.
             source = callSource?.fakeElement(
-                KtFakeSourceElementKind.PluginGenerated,
+                CompilerCompat.pluginGenerated,
                 KtSourceElementOffsetStrategy.Custom.Initialized(callSource.startOffset, callSource.startOffset),
             )
             resolvePhase = FirResolvePhase.BODY_RESOLVE
@@ -229,12 +235,12 @@ class BrikkSqlCallRefinement(session: FirSession) : FirFunctionCallRefinementExt
         val originalSource = call.calleeReference.source
 
         val lambda = buildAnonymousFunctionExpression {
-            source = call.source?.fakeElement(KtFakeSourceElementKind.PluginGenerated)
+            source = call.source?.fakeElement(CompilerCompat.pluginGenerated)
             val fSymbol = FirAnonymousFunctionSymbol()
             val target = FirFunctionTarget(null, isLambda = true)
             isTrailingLambda = true
             anonymousFunction = buildAnonymousFunction {
-                source = call.source?.fakeElement(KtFakeSourceElementKind.PluginGenerated)
+                source = call.source?.fakeElement(CompilerCompat.pluginGenerated)
                 resolvePhase = FirResolvePhase.BODY_RESOLVE
                 moduleData = session.moduleData
                 origin = FirDeclarationOrigin.Plugin(BrikkSqlGeneratedKey)

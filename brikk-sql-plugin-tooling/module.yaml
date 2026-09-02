@@ -1,0 +1,18 @@
+# Build-time-only Kotlin Toolchain plugin for the brikk-sql compiler plugin's dev loop:
+#   ./kotlin do assemblePluginJar   -> one -Xplugin jar (plugin + brikk-sql + serialization)
+#   ./kotlin do publishKefsRepo     -> Maven-layout repo in build/repo for KEFS hot reload
+# Applied by brikk-sql-compiler-plugin/module.yaml. Replaces tools/assemble_plugin_jar.py and
+# tools/publish_local_repo.py: inputs come from the build graph (module jar, resolved runtime
+# classpath) instead of globbing the dependency cache.
+product: jvm/amper-plugin
+
+# Not published; see publish-targets.module-template.yaml for why this is applied anyway.
+apply:
+  - ../publish-targets.module-template.yaml
+
+pluginInfo:
+  settingsClass: dev.brikk.house.sql.tooling.Settings
+
+settings:
+  kotlin:
+    version: 2.4.10

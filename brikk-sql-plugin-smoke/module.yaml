@@ -6,8 +6,10 @@
 # kotlinx-serialization on the *plugin* classpath, so we point -Xplugin at a merged jar whose
 # name follows KEFS's `<artifact-id>-<kotlin-version>-<lib-version>.jar` convention (lets the
 # IDE plugin recognise it without replacement patterns). Paths are relative to the project
-# root; build it first:
-#     ./kotlin build -m brikk-sql-compiler-plugin && python3 tools/assemble_plugin_jar.py
+# root; build it first (brikk-sql-plugin-tooling task; compiles the plugin as needed):
+#     ./kotlin do assemblePluginJar
+# freeCompilerArgs cannot reference task outputs, so the path (incl. the Kotlin version
+# segment) is spelled out here and must track settings.kotlin.version of the plugin module.
 # Acceptable for a smoke module, not for production wiring (see KEFS notes in docs/).
 product: jvm/lib
 
@@ -22,7 +24,7 @@ settings:
   kotlin:
     version: 2.4.10
     freeCompilerArgs:
-      - -Xplugin=build/brikk-sql-compiler-plugin-2.4.0-0.1.0.jar
+      - -Xplugin=build/plugin/brikk-sql-compiler-plugin-2.4.10-0.1.0.jar
       - -P
       - plugin:dev.brikk.house.sql.compiler:schema=brikk-sql-plugin-smoke/schema/events.sql
       - -P

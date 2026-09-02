@@ -166,3 +166,12 @@ export KOTLIN_TOOLCHAIN_SIGNING_KEY="$(cat signing-key.asc)"   # ASCII-armored p
 export KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE=...   # if the key is encrypted
 ./publish-release.sh 0.2.0
 ```
+
+# Local Dev for Kotlin Compiler Plugin
+
+```bash
+./kotlin do publishKefsRepo     # the whole IDE loop: compile plugin -> assemble jar -> build/repo
+./kotlin do assemblePluginJar   # just the -Xplugin jar the smoke module consumes
+./kotlin check                  # everything (needs the jar above once; build/ persists)
+./kotlin show commands          # lists both
+```

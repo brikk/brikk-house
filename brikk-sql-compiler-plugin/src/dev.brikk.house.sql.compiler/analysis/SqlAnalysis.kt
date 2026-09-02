@@ -80,33 +80,63 @@ class SqlAnalyzer(
     private val catalog: ShapeCatalog,
     /** Trait short name -> info. */
     private val traitsByShortName: Map<String, TraitInfo>,
+    /** Non-null when the schema catalog could not be loaded; every analysis then fails with it. */
+    private val catalogError: String? = null,
     /** Generated output class short name (e.g. "EventsInRangeOut") -> the function it belongs to. */
     private val functionsByOutName: (String) -> FunctionAnalysis?,
 ) {
     val traits: Collection<TraitInfo> get() = traitsByShortName.values
 
-    fun analyze(raw: RawFunction): FunctionAnalysis {
+    /** Signature-derived parts of an analysis; shared by the success and failure paths. */
+    private class Signature(raw: RawFunction) {
         val outClassId = ClassId(raw.packageFqName, BrikkSqlNames.outputClassName(raw.name))
         val relParams = ArrayList<RelParam>()
         val scalarParams = ArrayList<String>()
-        for (p in raw.params) {
-            if (p.typeShortName == "Rel") {
-                val slot = if (relParams.isEmpty()) BrikkSqlNames.SOURCE_SLOT else p.name
-                relParams.add(RelParam(p.name, slot, p.typeArgShortName ?: "Partial"))
-            } else {
-                scalarParams.add(p.name)
-            }
-        }
         val sqlText = raw.sqlText?.trim().orEmpty()
         val headless = sqlText.startsWith("|>")
         val fullSql = if (headless) BrikkSqlNames.SOURCE_PREFIX + sqlText else sqlText
         val dialect = raw.dialect ?: "postgres"
 
-        fun failed(msg: String) = FunctionAnalysis(
-            raw.packageFqName, raw.name, outClassId, dialect, sqlText, fullSql, headless, relParams, scalarParams,
-            raw.typeParamBounds, emptyMap(), emptyList(), isShape = false, satisfiedTraits = emptyList(), error = msg,
-        )
+        init {
+            for (p in raw.params) {
+                if (p.typeShortName == "Rel") {
+                    val slot = if (relParams.isEmpty()) BrikkSqlNames.SOURCE_SLOT else p.name
+                    relParams.add(RelParam(p.name, slot, p.typeArgShortName ?: "Partial"))
+                } else {
+                    scalarParams.add(p.name)
+                }
+            }
+        }
+    }
 
+    /** An analysis that carries only [message]; the checker reports it, refinement skips typing. */
+    fun failed(raw: RawFunction, message: String): FunctionAnalysis = Signature(raw).failed(raw, message)
+
+    private fun Signature.failed(raw: RawFunction, msg: String) = FunctionAnalysis(
+        raw.packageFqName, raw.name, outClassId, dialect, sqlText, fullSql, headless, relParams, scalarParams,
+        raw.typeParamBounds, emptyMap(), emptyList(), isShape = false, satisfiedTraits = emptyList(), error = msg,
+    )
+
+    /** Never throws: any failure becomes [FunctionAnalysis.error]. */
+    fun analyze(raw: RawFunction): FunctionAnalysis = try {
+        analyzeOrThrow(raw)
+    } catch (e: Exception) {
+        rethrowIfCancellation(e)
+        failed(raw, "internal error analyzing '${raw.name}': $e")
+    }
+
+    private fun analyzeOrThrow(raw: RawFunction): FunctionAnalysis {
+        val sig = Signature(raw)
+        val outClassId = sig.outClassId
+        val relParams = sig.relParams
+        val scalarParams = sig.scalarParams
+        val sqlText = sig.sqlText
+        val headless = sig.headless
+        val fullSql = sig.fullSql
+        val dialect = sig.dialect
+        fun failed(msg: String) = sig.failed(raw, msg)
+
+        if (catalogError != null) return failed(catalogError)
         if (raw.dialect == null || raw.sqlText == null) {
             return failed("body must be a single Sql.<dialect>(\"...\") call with a constant string literal")
         }
@@ -181,4 +211,15 @@ class SqlAnalyzer(
         if (typeArgName == "Partial" || typeArgName == "Shape") return emptyList()
         return null
     }
+}
+
+/**
+ * Cancellation must propagate: the IDE cancels analysis on every keystroke via
+ * `ProcessCanceledException`, which a plugin must never swallow. The class is not on the
+ * compiler classpath, so it is matched by name.
+ */
+fun rethrowIfCancellation(e: Throwable) {
+    if (e is InterruptedException || e is java.util.concurrent.CancellationException ||
+        e.javaClass.name.endsWith("ProcessCanceledException")
+    ) throw e
 }

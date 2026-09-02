@@ -5,8 +5,8 @@ import dev.brikk.house.sql.compiler.ir.BrikkSqlIrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 
 /**
@@ -26,7 +26,10 @@ class BrikkSqlCompilerPluginRegistrar : CompilerPluginRegistrar() {
     override val supportsK2: Boolean get() = true
 
     override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
-        val messageCollector = configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+        // The IDE (KEFS / KtCompilerPluginsCache) registers plugins with a bare configuration that
+        // has no MESSAGE_COLLECTOR_KEY; `getNotNull` would throw there and take the plugin down.
+        // A plugin must never throw at registration, so fall back to MessageCollector.NONE.
+        val messageCollector = configuration.messageCollector
         val options = BrikkSqlOptions.from(configuration)
 
         FirExtensionRegistrarAdapter.registerExtension(BrikkSqlFirExtensionRegistrar(options))

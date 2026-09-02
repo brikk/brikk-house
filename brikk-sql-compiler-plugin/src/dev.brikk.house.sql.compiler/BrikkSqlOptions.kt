@@ -47,13 +47,21 @@ class BrikkSqlCommandLineProcessor : CommandLineProcessor {
 
     override fun processOption(option: AbstractCliOption, value: String, configuration: CompilerConfiguration) {
         when (option.optionName) {
-            DEBUG.optionName -> configuration.put(BrikkSqlOptions.KEY_DEBUG, value.toBooleanStrict())
+            DEBUG.optionName -> configuration.put(BrikkSqlOptions.KEY_DEBUG, parseBoolean(option, value))
             SCHEMA.optionName -> configuration.put(BrikkSqlOptions.KEY_SCHEMA, value)
             SCHEMA_DIALECT.optionName -> configuration.put(BrikkSqlOptions.KEY_SCHEMA_DIALECT, value)
             DEFAULT_SCHEMA.optionName -> configuration.put(BrikkSqlOptions.KEY_DEFAULT_SCHEMA, value)
             else -> throw CliOptionProcessingException("Unknown option: ${option.optionName}")
         }
     }
+
+    /** Option-processing failures must surface as [CliOptionProcessingException], not as a raw `IllegalArgumentException`. */
+    private fun parseBoolean(option: AbstractCliOption, value: String): Boolean =
+        value.toBooleanStrictOrNull()
+            ?: throw CliOptionProcessingException(
+                "Invalid value for plugin option '${BrikkSqlNames.PLUGIN_ID}:${option.optionName}': " +
+                    "expected ${option.valueDescription}, got '$value'",
+            )
 
     companion object {
         val DEBUG = CliOption(

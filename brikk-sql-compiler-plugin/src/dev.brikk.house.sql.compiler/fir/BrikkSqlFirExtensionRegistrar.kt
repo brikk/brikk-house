@@ -2,6 +2,7 @@ package dev.brikk.house.sql.compiler.fir
 
 import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.BrikkSqlOptions
+import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
 import dev.brikk.house.sql.compiler.analysis.FunctionAnalysis
 import dev.brikk.house.sql.compiler.analysis.toShape
 import dev.brikk.house.sql.ast.Column
@@ -84,6 +85,17 @@ object BrikkSqlFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common)
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(declaration: FirNamedFunction) {
         if (!declaration.hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, context.session)) return
+        try {
+            checkOrThrow(declaration)
+        } catch (e: Exception) {
+            // Boundary: the checker is the one place a failure can still become a diagnostic.
+            rethrowIfCancellation(e)
+            reporter.reportOn(declaration.source, BrikkSqlDiagnostics.SQL_ANALYSIS_FAILED, "internal error: $e")
+        }
+    }
+
+    context(context: CheckerContext, reporter: DiagnosticReporter)
+    private fun checkOrThrow(declaration: FirNamedFunction) {
         val brikk = context.session.brikkSql
         val analysis = brikk.analysisOfFunction(declaration.symbol) ?: return
         val call = RawFir.sqlCall(declaration)

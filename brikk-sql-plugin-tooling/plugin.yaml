@@ -1,0 +1,24 @@
+tasks:
+  assemblePluginJar:
+    action: !dev.brikk.house.sql.tooling.assemblePluginJar
+      pluginJar: ${module.jar}
+      runtimeClasspath: ${module.runtimeClasspath}
+      artifactId: ${module.name}
+      kotlinVersion: ${module.settings.kotlin.version}
+      libVersion: ${pluginSettings.libVersion}
+      bundleExcludes: ${pluginSettings.bundleExcludes}
+      # Stable, short location (not ${taskOutputDir}) because brikk-sql-plugin-smoke refers to
+      # the jar by path in its `-Xplugin=` argument, and KEFS matches on the file name.
+      outputDir: ${project.rootDir}/build/plugin
+
+  publishKefsRepo:
+    action: !dev.brikk.house.sql.tooling.publishKefsRepo
+      assembledDir: ${tasks.assemblePluginJar.action.outputDir}
+      artifactId: ${module.name}
+      ideKotlinVersion: ${pluginSettings.ideKotlinVersion}
+      libVersion: ${pluginSettings.libVersion}
+      repoDir: ${project.rootDir}/${pluginSettings.repoDir}
+
+commands:
+  - assemblePluginJar
+  - publishKefsRepo

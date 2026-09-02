@@ -29,8 +29,10 @@ still hold; "What exists" is updated.
   unknown column), `ir/` (rewrite to `Rel(...).input(...).bind(...)`, constructor bodies for
   local shapes). Options: `schema`, `schemaDialect`, `defaultSchema`, `debug`.
 - `brikk-sql-plugin-smoke/` — the same three-step pipeline compiled by the real toolchain via
-  `-Xplugin=build/brikk-sql-compiler-plugin-2.4.0-0.1.0.jar` (merged by `tools/assemble_plugin_jar.py`
-  after `./kotlin build -m brikk-sql-compiler-plugin`) + `-P plugin:...:schema=...`.
+  `-Xplugin=build/plugin/brikk-sql-compiler-plugin-2.4.10-0.1.0.jar` (merged by
+  `./kotlin do assemblePluginJar`, a `brikk-sql-plugin-tooling` task) + `-P plugin:...:schema=...`.
+- `brikk-sql-plugin-tooling/` — local Kotlin Toolchain plugin with the dev-loop tasks
+  `assemblePluginJar` / `publishKefsRepo` (below). Applied to `brikk-sql-compiler-plugin`.
 
 ## Division of labour (proposed)
 
@@ -126,7 +128,7 @@ Mechanisms:
 KEFS hard requirements (`docs/vendor/kefs/PLUGIN_AUTHORS.md`):
 1. Published to a Maven repo (local dir OK). `-Xplugin=<path>` is invisible.
 2. Version `<kotlin-version>-<lib-version>`, both semver. KEFS swaps the prefix for the IDE
-   compiler (e.g. `2.4.0-ij253-45-0.1.0`) and looks that up; missing → silently no IDE support.
+   compiler (e.g. `2.4.20-ij262-34-0.1.0`) and looks that up; missing → silently no IDE support.
 3. Compile against every supported IDE compiler build (from
    `packages.jetbrains.team/maven/p/ij/intellij-dependencies`), not just stable Kotlin.
    kotlinx-rpc: templated sources per version; Metro: compat layer.
@@ -142,18 +144,37 @@ build. Required for B as much as for C.
 ### Local IDE loop (KEFS hot-reload) — set up, not yet exercised
 
 ```sh
-./kotlin build -m brikk-sql-compiler-plugin
-python3 tools/assemble_plugin_jar.py
-python3 tools/publish_local_repo.py --ide-kotlin-version <from "KEFS: Copy Kotlin IDE Version">
+./kotlin do publishKefsRepo     # compiles the plugin, runs assemblePluginJar, then publishes
 ```
 publishes `dev.brikk.house:brikk-sql-compiler-plugin:<ide>-0.1.0` into `build/repo` (Maven
-layout). KEFS: add `build/repo` as a Local repository and a bundle with those coordinates
+layout). `<ide>` is `plugins.brikk-sql-plugin-tooling.ideKotlinVersion` in
+`brikk-sql-compiler-plugin/module.yaml` (from "KEFS: Copy Kotlin IDE Version"; `./kotlin do`
+takes no task arguments, so it lives in the yaml). The assembled jar's own name uses the real
+`settings.kotlin.version` of the plugin module, read by the task, so it cannot drift. KEFS: add `build/repo` as a Local repository and a bundle with those coordinates
 ("Latest" matching); leave the three replacement patterns at their defaults
 (`<kotlin-version>-<lib-version>`, `<artifact-id>`, `<artifact-id>`). KEFS detects the plugin
 from the `-Xplugin` jar *file name*, matched as `<detect>-<version>.jar`, which is why the
-assembled jar is named `brikk-sql-compiler-plugin-2.4.0-0.1.0.jar` and not `...-all.jar`.
-KEFS file-watches the repo: re-run the publish step after a plugin change. The jar is compiled against 2.4.0 regardless of the name — the first thing to
-learn is whether the IDE's compiler build accepts it (the exception analyzer says so).
+assembled jar is named `brikk-sql-compiler-plugin-2.4.10-0.1.0.jar` and not `...-all.jar`.
+KEFS file-watches the repo: re-run `./kotlin do publishKefsRepo` after a plugin change. The
+jar is compiled against 2.4.10 regardless of the name — the first thing to learn is whether the
+IDE's compiler build accepts it (the exception analyzer says so).
+
+Running a 2.4.10-built jar on the IDE's `2.4.20-ij*` compiler means any FIR API that moved
+between the two is a runtime link error, not a compile error. Two rules keep this workable:
+
+- **The plugin never throws.** Catalog loading, raw-FIR reading and the three extension entry
+  points (`intercept`, `generateTopLevelClassLikeDeclaration`, the function checker) convert
+  failures into `SQL_ANALYSIS_FAILED` diagnostics or "no refinement"; cancellation exceptions are
+  rethrown by name. The IDE re-runs resolution on every keystroke from several passes at once,
+  so one throwing line shows up as hundreds of stacks in `idea.log`.
+- **`fir/CompilerCompat.kt` shims the known API differences** (`KtFakeSourceElementKind.
+  PluginGenerated` object -> sealed class in 2.4.20; `FirResolvedQualifier.classId` removed).
+  When a new `NoSuchFieldError`/`NoSuchMethodError` appears, add the shim there rather than
+  around the call site. The remaining IDE-only difference is lazy bodies (`FirLazyBlock`),
+  handled in `RawFir.sqlLiteralOf` by reading the declaration's source text.
+
+Exceptions from the loaded plugin are in `~/.cache/JetBrains/IntelliJIdea<ver>/log/idea.log`
+and summarised per jar in `~/.kefs/<kotlin-ide-version>/reports/`.
 
 ## Schema cache format
 
@@ -233,7 +254,7 @@ transpiling queries *into* Doris, never for parsing Doris DDL. No upstream sync 
   check, sub-literal diagnostic ranges.
 - Publishing: `./kotlin publish` to a local repo dir with KEFS-compatible versioning; how to
   produce IDE-compiler-version builds under Kotlin Toolchain.
-- Shading brikk-sql into the plugin jar with relocation (`tools/assemble_plugin_jar.py` is a
-  plain merge; KEFS requires relocation).
+- Shading brikk-sql into the plugin jar with relocation (`assemblePluginJar` is a plain
+  merge; KEFS requires relocation).
 - Doris DDL parser work before Doris can be the schema-cache dialect (see above).
 - Step 4 (wiring / `then` operator) deferred.

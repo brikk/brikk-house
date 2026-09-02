@@ -9,8 +9,10 @@ modules:
   - brikk-sql-metadata
   - brikk-sql-oracle
   - brikk-sql-plugin-smoke
+  - brikk-sql-plugin-tooling
   - brikk-sql-runtime
   - brikk-sql-verify
 
 plugins:
   - ./brikk-chdb-native-packaging
+  - ./brikk-sql-plugin-tooling

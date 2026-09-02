@@ -34,20 +34,69 @@ class BrikkSqlPluginTest {
         )
     }
 
-    private fun compile(source: String, debug: Boolean = false): JvmCompilationResult =
+    private fun compile(
+        source: String,
+        debug: Boolean = false,
+        schema: String = schemaFile.absolutePath,
+        workingDir: File? = null,
+    ): JvmCompilationResult =
         KotlinCompilation().apply {
             sources = listOf(SourceFile.kotlin("main.kt", source))
             compilerPluginRegistrars = listOf(BrikkSqlCompilerPluginRegistrar())
             commandLineProcessors = listOf(BrikkSqlCommandLineProcessor())
             pluginOptions = buildList {
-                add(PluginOption(BrikkSqlNames.PLUGIN_ID, "schema", schemaFile.absolutePath))
+                add(PluginOption(BrikkSqlNames.PLUGIN_ID, "schema", schema))
                 add(PluginOption(BrikkSqlNames.PLUGIN_ID, "defaultSchema", "public"))
                 if (debug) add(PluginOption(BrikkSqlNames.PLUGIN_ID, "debug", "true"))
             }
+            if (workingDir != null) this.workingDir = workingDir
             inheritClassPath = true
             verbose = false
             messageOutputStream = java.io.OutputStream.nullOutputStream()
         }.compile()
+
+    private val simpleSource = """
+        package demo
+        import dev.brikk.house.sql.runtime.*
+        import java.time.Instant
+
+        @BrikkSql
+        fun recent(start: Instant) = Sql.postgres("FROM public.events |> WHERE event_at >= :start")
+    """.trimIndent()
+
+    // ------------------------------------------------------------------ schema file resolution
+    //
+    // The IDE runs the plugin with a working directory that is not the project root, and re-runs
+    // it on every keystroke; a thrown exception there is a resolve failure of the whole
+    // declaration, reported from every highlighting pass. So: never throw, always diagnose.
+
+    @Test
+    fun `missing schema file is a diagnostic not an exception`() {
+        val result = compile(simpleSource, schema = "does/not/exist/events.sql")
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "[BRIKK_SQL] schema file not found: 'does/not/exist/events.sql'")
+    }
+
+    @Test
+    fun `relative schema path resolves against the source file's ancestors when cwd differs`() {
+        // kctfork writes main.kt to <workingDir>/sources/; the schema sits beside that directory,
+        // and the relative option does not resolve against the JVM's own working directory.
+        val projectDir = kotlin.io.path.createTempDirectory("brikk-project").toFile().apply { deleteOnExit() }
+        val schema = File(projectDir, "schemas/events.sql").apply { parentFile.mkdirs(); writeText(schemaFile.readText()) }
+        assertTrue(!File("schemas/events.sql").exists(), "test precondition: relative path must not resolve from cwd")
+
+        val result = compile(simpleSource, schema = "schemas/events.sql", workingDir = projectDir)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        schema.delete()
+    }
+
+    @Test
+    fun `unreadable schema content is a diagnostic not an exception`() {
+        val broken = File.createTempFile("brikk-broken", ".sql").apply { deleteOnExit(); writeText("CREATE TABLE (((") }
+        val result = compile(simpleSource, schema = broken.absolutePath)
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "[BRIKK_SQL] schema file '${broken.path}' could not be loaded")
+    }
 
     // ------------------------------------------------------------------ the demo pipeline
 

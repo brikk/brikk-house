@@ -3,6 +3,7 @@ package dev.brikk.house.sql.compiler.fir
 import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.analysis.KType
 import dev.brikk.house.sql.compiler.analysis.ShapeColumn
+import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
@@ -53,16 +54,24 @@ class ShapeDeclarationGenerator(session: FirSession) : FirDeclarationGenerationE
     // predicate index exists.)
     override fun hasPackage(packageFqName: FqName): Boolean = false
 
-    override fun generateTopLevelClassLikeDeclaration(classId: ClassId): FirClassLikeSymbol<*>? {
-        val analysis = brikk.analysisOf(classId) ?: return null
-        val base = if (analysis.isShape) BrikkSqlNames.SHAPE_CLASS_ID else BrikkSqlNames.PARTIAL_CLASS_ID
-        return createTopLevelClass(classId, BrikkSqlGeneratedKey, ClassKind.INTERFACE) {
-            modality = Modality.ABSTRACT
-            superType(base.constructClassLikeType(emptyArray(), isMarkedNullable = false))
-            for (trait in analysis.satisfiedTraits) {
-                superType(trait.constructClassLikeType(emptyArray(), isMarkedNullable = false))
-            }
-        }.symbol
+    override fun generateTopLevelClassLikeDeclaration(classId: ClassId): FirClassLikeSymbol<*>? = try {
+        val analysis = brikk.analysisOf(classId)
+        if (analysis == null) {
+            null
+        } else {
+            val base = if (analysis.isShape) BrikkSqlNames.SHAPE_CLASS_ID else BrikkSqlNames.PARTIAL_CLASS_ID
+            createTopLevelClass(classId, BrikkSqlGeneratedKey, ClassKind.INTERFACE) {
+                modality = Modality.ABSTRACT
+                superType(base.constructClassLikeType(emptyArray(), isMarkedNullable = false))
+                for (trait in analysis.satisfiedTraits) {
+                    superType(trait.constructClassLikeType(emptyArray(), isMarkedNullable = false))
+                }
+            }.symbol
+        }
+    } catch (e: Exception) {
+        // Boundary: no generated class is better than a broken resolve (see BrikkSqlCallRefinement).
+        rethrowIfCancellation(e)
+        null
     }
 
     override fun getCallableNamesForClass(classSymbol: FirClassSymbol<*>, context: MemberGenerationContext): Set<Name> {

@@ -4,6 +4,8 @@ import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.BrikkSqlOptions
 import dev.brikk.house.sql.compiler.analysis.FunctionAnalysis
 import dev.brikk.house.sql.compiler.analysis.KType
+import dev.brikk.house.sql.compiler.analysis.RawFunction
+import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
 import dev.brikk.house.sql.compiler.analysis.ShapeColumn
 import dev.brikk.house.sql.compiler.analysis.SqlAnalyzer
 import dev.brikk.house.sql.compiler.analysis.TraitInfo
@@ -21,6 +23,7 @@ import org.jetbrains.kotlin.fir.declarations.FirNamedFunction
 import org.jetbrains.kotlin.fir.extensions.FirExtensionSessionComponent
 import org.jetbrains.kotlin.fir.extensions.predicate.LookupPredicate
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
+import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.name.ClassId
@@ -40,11 +43,73 @@ data object BrikkSqlGeneratedKey : GeneratedDeclarationKey()
  */
 class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirExtensionSessionComponent(session) {
 
-    val catalog: ShapeCatalog by lazy {
-        val path = options.schemaPath ?: return@lazy ShapeCatalog.EMPTY
-        val ddl = File(path).readText()
-        DdlCatalog.fromDdl(ddl, options.schemaDialect, options.defaultSchema)
+    // ---------------------------------------------------------------- schema catalog
+    //
+    // Loading must never throw: the IDE re-runs FIR resolution on every keystroke from several
+    // highlighting passes at once, and an exception here surfaces as a resolve failure of the
+    // declaration under analysis (not as a plugin diagnostic). A load failure is therefore held
+    // as [LoadedCatalog.error] and attached to every @BrikkSql function's analysis, which the
+    // checker reports through SQL_ANALYSIS_FAILED and the refinement treats as "no typing".
+
+    private class LoadedCatalog(val catalog: ShapeCatalog, val error: String?)
+
+    private var loadedCatalog: LoadedCatalog? = null
+
+    /**
+     * Resolves and loads the schema file. `anchorFilePath` is the source file of whichever
+     * declaration first needs the catalog; a relative `schema=` path that does not exist relative
+     * to the working directory (the IDE's cwd is not the project root, the CLI's is) is retried
+     * against that file's ancestors, which finds `<project>/<relative path>` in both.
+     */
+    private fun loadCatalog(anchorFilePath: String?): LoadedCatalog {
+        loadedCatalog?.let { return it }
+        val path = options.schemaPath
+        val result = if (path == null) {
+            LoadedCatalog(ShapeCatalog.EMPTY, null)
+        } else {
+            val file = resolveSchemaFile(path, anchorFilePath)
+            if (file == null) {
+                LoadedCatalog(
+                    ShapeCatalog.EMPTY,
+                    "schema file not found: '$path' (looked relative to the working directory " +
+                        "'${File("").absolutePath}'" +
+                        (anchorFilePath?.let { " and the ancestors of '$it'" } ?: "") + ")",
+                )
+            } else {
+                try {
+                    LoadedCatalog(DdlCatalog.fromDdl(file.readText(), options.schemaDialect, options.defaultSchema), null)
+                } catch (e: Exception) {
+                    LoadedCatalog(ShapeCatalog.EMPTY, "schema file '${file.path}' could not be loaded: ${e.message ?: e}")
+                }
+            }
+        }
+        // A failure without an anchor may still succeed once a caller can supply one; do not pin it.
+        if (result.error == null || anchorFilePath != null) loadedCatalog = result
+        return result
     }
+
+    private fun resolveSchemaFile(path: String, anchorFilePath: String?): File? {
+        val direct = File(path)
+        if (direct.isAbsolute) return direct.takeIf { it.isFile }
+        if (direct.isFile) return direct
+        var dir: File? = anchorFilePath?.let { File(it).absoluteFile.parentFile }
+        while (dir != null) {
+            val candidate = File(dir, path)
+            if (candidate.isFile) return candidate
+            dir = dir.parentFile
+        }
+        return null
+    }
+
+    /** Source file path of the declaration a symbol lives in, if the provider knows it. */
+    private fun anchorFileOf(symbol: FirNamedFunctionSymbol): String? = try {
+        session.firProvider.getFirCallableContainerFile(symbol)?.sourceFile?.path
+    } catch (e: Exception) {
+        null
+    }
+
+    /** The schema catalog (empty if none configured or it failed to load; see [analyzer]). */
+    val catalog: ShapeCatalog get() = loadCatalog(null).catalog
 
     /** All `@BrikkTrait` interfaces in the module, by short name. */
     private var traitsCache: Map<String, TraitInfo>? = null
@@ -88,11 +153,19 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
     private val functionsByOutShortName: Map<String, FirNamedFunctionSymbol>
         get() = functionsByOutClassId.entries.associate { it.key.shortClassName.asString() to it.value }
 
-    val analyzer: SqlAnalyzer by lazy {
-        SqlAnalyzer(catalog, traitsByShortName) { outShortName ->
+    private var analyzerCache: SqlAnalyzer? = null
+
+    private fun analyzerFor(anchorFilePath: String?): SqlAnalyzer {
+        analyzerCache?.let { return it }
+        val loaded = loadCatalog(anchorFilePath)
+        val analyzer = SqlAnalyzer(loaded.catalog, traitsByShortName, loaded.error) { outShortName ->
             functionsByOutShortName[outShortName]?.let { analysisOf(it) }
         }
+        if (loaded.error == null || anchorFilePath != null) analyzerCache = analyzer
+        return analyzer
     }
+
+    val analyzer: SqlAnalyzer get() = analyzerFor(null)
 
     private val analyses = HashMap<FirNamedFunctionSymbol, FunctionAnalysis>()
     private val analyzing = HashSet<FirNamedFunctionSymbol>()
@@ -101,8 +174,16 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         analyses[symbol]?.let { return it }
         if (!analyzing.add(symbol)) return null // cycle: Rel<AOut> param inside A's own chain
         try {
-            val raw = RawFir.rawFunction(symbol.fir as FirNamedFunction)
-            return analyzer.analyze(raw).also { analyses[symbol] = it }
+            val analyzer = analyzerFor(anchorFileOf(symbol))
+            val analysis = try {
+                analyzer.analyze(RawFir.rawFunction(symbol.fir as FirNamedFunction))
+            } catch (e: Exception) {
+                rethrowIfCancellation(e)
+                // Reading the raw declaration failed (IDE: partially built FIR). Report, don't throw.
+                val stub = RawFunction(symbol.callableId.packageName, symbol.name, null, null, emptyList(), emptyMap())
+                analyzer.failed(stub, "internal error reading '${symbol.name}': $e")
+            }
+            return analysis.also { analyses[symbol] = it }
         } finally {
             analyzing.remove(symbol)
         }

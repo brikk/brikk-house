@@ -4,6 +4,16 @@ product: jvm/lib
 apply:
   - ../publish-targets.module-template.yaml
 
+# Dev-loop tasks (see brikk-sql-plugin-tooling/):
+#   ./kotlin do assemblePluginJar   -> build/plugin/brikk-sql-compiler-plugin-<kotlin>-<lib>.jar
+#   ./kotlin do publishKefsRepo     -> build/repo (Maven layout) for KEFS in the IDE
+plugins:
+  brikk-sql-plugin-tooling:
+    enabled: true
+    # KEFS action "Copy Kotlin IDE Version". Bump when the IDE's Kotlin compiler changes.
+    ideKotlinVersion: 2.4.20-ij262-34
+    libVersion: 0.1.0
+
 dependencies:
   # Compile against the embeddable compiler: the Kotlin Toolchain runs JVM
   # compilation in-process via the Build Tools API (embeddable), so the plugin
