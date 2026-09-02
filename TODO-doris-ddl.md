@@ -24,11 +24,7 @@ and `./kotlin test -m brikk-sql-verify --include-classes='dev.brikk.house.sql.ve
 
 ## A. `SHOW CREATE TABLE` output that still fails to parse (blockers)
 
-All done (see "Done"). Remaining edge cases, none seen in real `SHOW CREATE TABLE` output:
-
-- [ ] `VARIANT<MATCH_NAME 'a*':INT, MATCH_NAME_GLOB ...>` field-name pattern prefixes
-      (Doris 3.1). Plain `'name':type` fields and `properties(...)` work.
-- [ ] `PARTITION IF NOT EXISTS p VALUES ...` inside a CREATE TABLE definition list.
+All done, including the two edge cases (see "Done").
 
 ## B. Parses, but the generator renders invalid Doris (matters once we emit DDL)
 
@@ -52,44 +48,31 @@ All FE-parser verified rejections:
 
 ### C1. Hard parse failures (not even `Command`)
 
-- [ ] `REFRESH MATERIALIZED VIEW [db.]mv [AUTO | COMPLETE] [PARTITIONS (p1, p2)]` —
-      `REFRESH` is a keyword token whose only branch is `EXTERNAL TABLE`.
-- [ ] `REFRESH CATALOG c` / `REFRESH DATABASE c.db` / `REFRESH TABLE c.db.t`.
-- [ ] `BUILD INDEX idx ON t [PARTITIONS (..)]`.
-- [ ] `ALTER TABLE t DROP PARTITION [IF EXISTS] p [FORCE]` (`DROP TEMPORARY PARTITION`
-      already parses).
-- [ ] `ALTER TABLE t ADD ROLLUP r (cols) [DUPLICATE KEY (..)] [FROM base] [PROPERTIES (..)]`
-      (`FROM base` is legal here, unlike CREATE TABLE's `ROLLUP (..)`), and the
-      multi-rollup form `ADD ROLLUP r1 (..), r2 (..)`.
-- [ ] `CREATE TABLE t2 LIKE t WITH ROLLUP [(r1, r2)]`.
-- [ ] `PAUSE | RESUME MATERIALIZED VIEW JOB ON mv`, `CANCEL MATERIALIZED VIEW TASK n ON mv`.
-- [ ] `RECOVER TABLE | PARTITION | DATABASE`.
-- [ ] `DESC t ALL`.
+All done (structured nodes or `Command` degradation; see "Done").
 
 ### C2. Mis-parses (wrong AST, no error)
 
-- [ ] `ALTER TABLE t MODIFY PARTITION (p1, p2) SET (..)` -> `MODIFY COLUMN PARTITION(..)`.
-- [ ] `ALTER TABLE t ADD COLUMN c INT TO r1` -> `ADD COLUMN c INT NULL, TO r1`.
+- [x] `ALTER TABLE t MODIFY PARTITION (p1, p2) SET (..)` -> now `DorisModifyPartition`.
+- [ ] `ALTER TABLE t ADD COLUMN c INT TO r1` -> `ADD COLUMN c INT NULL, TO r1` (rollup
+      target dropped into a bogus second action).
 
 ### C3. Opaque `Command` (text preserved, no structure)
 
 Operationally relevant first:
 
-- [ ] `CREATE INDEX idx ON t (cols) [USING INVERTED | BITMAP | NGRAM_BF | BLOOMFILTER]
-      [PROPERTIES (..)] [COMMENT '..']` — all forms. (`ALTER TABLE .. ADD INDEX` already
-      parses structurally via the MySQL path + #19 PROPERTIES option.)
-- [ ] `ALTER MATERIALIZED VIEW mv REFRESH .. | RENAME .. | SET (..) | REPLACE WITH MATERIALIZED VIEW ..`.
-- [ ] `ALTER TABLE t ADD [TEMPORARY] PARTITION [IF NOT EXISTS] p VALUES .. [(props)] [DISTRIBUTED BY ..]`,
-      `REPLACE PARTITION (..) WITH TEMPORARY PARTITION (..) [PROPERTIES (..)]`,
-      `MODIFY PARTITION p | (p1, p2) | (*) SET (..)`.
-- [ ] `ALTER TABLE t RENAME COLUMN | PARTITION | ROLLUP a b`.
+- [x] `CREATE INDEX ...` — structured (`DorisIndexParameters`).
+- [x] `ALTER MATERIALIZED VIEW ...` — structured.
+- [x] `ALTER TABLE .. ADD | DROP | REPLACE | MODIFY PARTITION`, `RENAME COLUMN | PARTITION | ROLLUP`,
+      `ADD ROLLUP`, `REPLACE WITH TABLE` — structured.
 - [ ] `ALTER TABLE t ADD COLUMN (c1 INT, c2 STRING)` multi-column form.
 - [ ] `ALTER TABLE t ORDER BY (cols) [FROM rollup]`, `ENABLE FEATURE "..."`,
-      `REPLACE WITH TABLE t2 [PROPERTIES (..)]`, `MODIFY DISTRIBUTION DISTRIBUTED BY ..`,
-      `MODIFY ENGINE TO ..`, `MODIFY COMMENT '..'`.
+      `MODIFY DISTRIBUTION DISTRIBUTED BY ..`, `MODIFY ENGINE TO ..`, `MODIFY COMMENT '..'`.
 - [ ] `CREATE MATERIALIZED VIEW mv AS SELECT .. PROPERTIES (..)` (sync MV with trailing
       PROPERTIES).
 - [ ] `SHOW CREATE MATERIALIZED VIEW mv`, `SHOW PARTITIONS FROM t`, `SHOW DATA FROM t`.
+- [ ] `PAUSE | RESUME MATERIALIZED VIEW JOB ON mv`, `CANCEL MATERIALIZED VIEW TASK n ON mv`,
+      `BUILD INDEX idx ON t [PARTITIONS (..)]`, `RECOVER TABLE | PARTITION | DATABASE` —
+      degrade to `Command` now; structured nodes if a runtime needs to inspect them.
 
 Lower priority (cluster administration, not table DDL):
 
@@ -98,6 +81,17 @@ Lower priority (cluster administration, not table DDL):
       `CREATE ENCRYPTKEY`, `CREATE [ALIAS] FUNCTION`, `CREATE JOB .. ON SCHEDULE .. DO ..`.
 
 ## Done
+
+- Sep 2026 (statements): `REFRESH MATERIALIZED VIEW | CATALOG | DATABASE` (`DorisRefresh`),
+  `CREATE INDEX .. USING .. PROPERTIES .. COMMENT` (`DorisIndexParameters`), `DROP INDEX ..
+  ON db.t`, `ALTER TABLE ADD | DROP | REPLACE | MODIFY PARTITION`, `RENAME COLUMN | PARTITION |
+  ROLLUP`, `ADD ROLLUP` (with `FROM base`), `REPLACE WITH TABLE`, `SET (..)` stable,
+  `ALTER MATERIALIZED VIEW REFRESH | RENAME | SET | REPLACE WITH`, optional MV `REFRESH`
+  method (`REFRESH ON COMMIT`), `DESC t ALL`, `CREATE TABLE .. LIKE .. WITH ROLLUP [(..)]`;
+  `BUILD | CANCEL | PAUSE | RECOVER | RESUME ..` degrade to `Command`. A-adjacent:
+  `VARIANT<MATCH_NAME 'a*':INT>` (`DorisVariantField.match`), `PARTITION IF NOT EXISTS` in
+  CREATE TABLE lists (accepted, flag dropped). Tests: `DorisDialectTest` statement section,
+  `SqlVerifierTest.dorisAcceptsBrikkDdlRenderings`.
 
 - Sep 2026 (group A): `DATETIMEV2` / `DATEV2`; `AGG_STATE<fn(type [NOT NULL], ..)>`;
   typed `VARIANT<'a':T, .., properties(..)>`; partition definition lists mixing

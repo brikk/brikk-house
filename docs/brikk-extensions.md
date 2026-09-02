@@ -443,11 +443,12 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
     `DorisParserTables.CONSTRAINT_PARSERS`.
   - *Parameterized storage types* — `DorisParser.parseTypes` intercepts
     `VARIANT<'name':type, ..., properties("k" = "v")>` (→ `DataType(VARIANT, nested,
-    expressions = ColumnDef(this = string literal, kind)* + Properties?)`) and
+    expressions = DorisVariantField* + Properties?)`) and
     `AGG_STATE<fn(type [NULL | NOT NULL], ...)>` (→ `DataType(AGG_STATE, nested,
     expressions = [Anonymous(fn, DataType*)])`, argument nullability on each
-    `DataType.nullable`). `DorisGenerator.datatypeSql` renders both. `MATCH_NAME` /
-    `MATCH_NAME_GLOB` variant field prefixes are not modeled yet (TODO-doris-ddl.md).
+    `DataType.nullable`). `DorisGenerator.datatypeSql` renders both. Variant fields are
+    `DorisVariantField` nodes (`this` = quoted name, `kind`, optional `match` =
+    `MATCH_NAME` / `MATCH_NAME_GLOB`).
   - *Partition definition lists* — `DorisParser.parsePartitionProperty` parses the whole
     list itself (`parsePartitionDefinition`) instead of going through the MySQL port:
     `()` (what dynamic / auto partitioning emits) yields `PartitionByRange/ListProperty`
@@ -477,6 +478,34 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
     — the FE parser rejects the StarRocks form — hence a separate node rather than
     sqlglot's `RollupIndex`. `RollupProperty` is lifted from UNSUPPORTED to
     POST_SCHEMA for Doris (as StarRocks does).
+  - *Statement-level DDL a pipeline runtime issues* (each a brikk-native node in
+    `ast/DorisNodes.kt`, rendered by `DorisGenerator`, FE-parser verified):
+    `REFRESH MATERIALIZED VIEW [db.]mv [AUTO | COMPLETE] [PARTITION[S] (..)]`,
+    `REFRESH CATALOG c [PROPERTIES (..)]`, `REFRESH DATABASE db` → `DorisRefresh`
+    (`REFRESH TABLE` stays on sqlglot's `Refresh`; the `REFRESH` statement token had to
+    be added to the Doris tokenizer — StarRocks' table has it, Doris' never did, so every
+    REFRESH statement hard-failed). `CREATE INDEX .. ON t (cols) [USING ..] [PROPERTIES (..)]
+    [COMMENT ..]` → `Index.params = DorisIndexParameters` (sqlglot's `IndexParameters`
+    wants USING before the columns; `parseIndexParams` made `open`). `ALTER TABLE` actions
+    `ADD [TEMPORARY] PARTITION` → `DorisAddPartition`, `DROP [TEMPORARY] PARTITION [IF
+    EXISTS] p [FORCE] [FROM INDEX r]` → `DorisDropPartition`, `REPLACE PARTITION (..) WITH
+    TEMPORARY PARTITION (..) [FORCE] [PROPERTIES (..)]` → `DorisReplacePartition`, `MODIFY
+    PARTITION p | (..) | (*) SET (..)` → `DorisModifyPartition`, `RENAME PARTITION | ROLLUP`
+    → `DorisRename`, `RENAME COLUMN a b` (no TO) → sqlglot `RenameColumn` with a Doris
+    renderer, `ADD ROLLUP r (cols) [DUPLICATE KEY] [FROM base] [PROPERTIES], ..` →
+    `DorisAddRollup` of `DorisRollupIndex`, `REPLACE WITH TABLE t2 [PROPERTIES]` →
+    `DorisReplaceWith`; all via `DorisParser.alterParsers` overrides for ADD / DROP /
+    MODIFY / REPLACE that fall back to the MySQL parser. `ALTER MATERIALIZED VIEW mv
+    REFRESH .. | RENAME .. | SET (..) | REPLACE WITH MATERIALIZED VIEW ..` → `Alter(kind =
+    "MATERIALIZED VIEW")` via a `parseAlter` override (made `open`); the MV `REFRESH`
+    method is now optional (`REFRESH ON COMMIT`; sqlglot's port took ON as the method).
+    `ALTER .. SET (..)` keeps sqlglot's `AlterSet` with `alterSetWrapped = true` (the FE
+    rejects the bare form). `DESC t ALL` → `Describe.style = "ALL"` rendered trailing.
+    `CREATE TABLE t2 LIKE t WITH ROLLUP [(r1, ..)]` → a `WITH ROLLUP` `Property` on
+    `LikeProperty` whose value is the name `Tuple`. `DROP INDEX idx ON db.t`: `OnProperty`
+    takes a `Table` (was a lone identifier). `BUILD` / `CANCEL` / `PAUSE` / `RECOVER` /
+    `RESUME` are `COMMAND` tokens so their statements degrade to `Command` instead of a
+    parse error.
   - Nodes: `ast/DorisNodes.kt` (module `brikk.doris`, allow-listed in
     `NATIVE_EXPRESSION_CLASSES`, scraped as HANDWRITTEN by `gen_ast_nodes.py`).
     Parser: `dialects/DorisParser.kt` (`parsePartitionProperty`,
@@ -486,14 +515,17 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
     `dorisrollupindexSql`.
 - **Tests:** `DorisDialectTest` (DDL section: each clause + realistic `SHOW CREATE TABLE`
   statements incl. a MoW unique-key table with `ORDER BY`, typed VARIANTs and a function
-  RANGE partition, all asserted as `Create` with a stable re-parse),
+  RANGE partition, all asserted as `Create` with a stable re-parse; statement section:
+  each REFRESH / CREATE INDEX / ALTER form asserted as its node class with a stable
+  re-parse, plus the Command-degradation set),
   `DorisTokenizerTest.dialectConfigAddsDorisStorageTypeKeywords`,
   `SqlVerifierTest.dorisAcceptsBrikkDdlRenderings` (JVM, real FE parser).
 - **Known lossy:** `BUCKETS AUTO` is dropped by the base `parseDistributedProperty`
   (absent = AUTO in Doris ≥ 1.2, so the round-trip is semantically equivalent).
   `DECIMALV3(p, s)` / `DATETIMEV2(n)` / `DATEV2` render as `DECIMAL` / `DATETIME` / `DATE`
-  (the same types in current Doris). `PARTITION [IF NOT EXISTS] p ...` in a definition
-  list is not accepted (never in `SHOW CREATE TABLE` output).
+  (the same types in current Doris). `PARTITION IF NOT EXISTS p ...` inside a CREATE TABLE
+  definition list is accepted and the flag dropped (a no-op for a new table; the ALTER
+  TABLE ADD PARTITION form keeps it).
 - **Backlog:** `TODO-doris-ddl.md` tracks the remaining Doris DDL gaps (statement-level
   DDL, generator renderings the FE rejects).
 - **Corpus/ledger impact:** none — no Python-oracle corpus case exercises these inputs,
