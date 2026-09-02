@@ -139,6 +139,21 @@ Useful: hot-reload via local repo + file watching (`PLUGIN_AUTHORS.md` §3) repl
 **Net:** the FIR path's real cost is a compiler-version matrix in CI plus a shaded single-jar
 build. Required for B as much as for C.
 
+### Local IDE loop (KEFS hot-reload) — set up, not yet exercised
+
+```sh
+./kotlin build -m brikk-sql-compiler-plugin
+python3 tools/assemble_plugin_jar.py
+python3 tools/publish_local_repo.py --ide-kotlin-version <from "KEFS: Copy Kotlin IDE Version">
+```
+publishes `dev.brikk.house:brikk-sql-compiler-plugin:<ide>-0.1.0` into `build/repo` (Maven
+layout). KEFS: add `build/repo` as a Local repository, a bundle with those coordinates
+("Latest" matching) and the replacement pattern `brikk-sql-compiler-plugin-all` ->
+`brikk-sql-compiler-plugin` (the project attaches the jar via `-Xplugin`, so KEFS detects the
+artifact id from the file name). KEFS file-watches the repo: re-run the publish step after a
+plugin change. The jar is compiled against 2.4.0 regardless of the name — the first thing to
+learn is whether the IDE's compiler build accepts it (the exception analyzer says so).
+
 ## Schema cache format
 
 No industry standard. Surveyed: sqlglot `MappingSchema` (nested map, no introspection;
