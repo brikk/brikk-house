@@ -452,4 +452,5 @@ enum class TokenType {
     BITMAP,
     HLL,
     QUANTILE_STATE,
+    AGG_STATE,
 }

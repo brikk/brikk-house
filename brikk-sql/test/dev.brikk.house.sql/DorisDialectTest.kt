@@ -320,6 +320,139 @@ class DorisDialectTest {
     }
 
     @Test
+    fun legacyTypeSpellingsFoldIntoCurrentTypes() {
+        assertDdlRoundTrip(
+            "CREATE TABLE t (a DATETIME(3), b DATE, c DATETIME(0))",
+            "CREATE TABLE t (a DATETIMEV2(3), b DATEV2, c datetimev2(0))",
+        )
+    }
+
+    @Test
+    fun aggStateTypeKeepsFunctionSignatureAndArgNullability() {
+        assertDdlRoundTrip(
+            "CREATE TABLE t (k INT, v AGG_STATE<sum(INT)> GENERIC, " +
+                "w AGG_STATE<max_by(INT NOT NULL, VARCHAR(10) NULL)> GENERIC) AGGREGATE KEY (k)",
+            "CREATE TABLE t (k INT, v AGG_STATE<sum(INT)> GENERIC, " +
+                "w agg_state<max_by(int not null, varchar(10) null)> GENERIC) AGGREGATE KEY (k)",
+        )
+        val kind = (parseOne("CREATE TABLE t (v AGG_STATE<sum(INT)>)", "doris") as Create)
+            .find(ColumnDef::class)!!.args["kind"] as DataType
+        assertEquals(DType.AGG_STATE, kind.thisArg)
+    }
+
+    @Test
+    fun typedVariantWithFieldsAndProperties() {
+        // Field names are string literals, field types are full Doris types, and a
+        // trailing properties(...) entry is allowed; a bare VARIANT is untouched.
+        assertDdlRoundTrip(
+            "CREATE TABLE t (v VARIANT<'x':LARGEINT, 'ip4':IPV4, 'ts':DATETIME(0), 'arr':ARRAY<STRING>, 'flag':BOOLEAN>, " +
+                "w VARIANT<'a':INT, properties('variant_max_subcolumns_count'='10')>, " +
+                "p VARIANT<properties('variant_max_subcolumns_count'='10')>, b VARIANT NULL)",
+            "CREATE TABLE t (v variant<'x':largeint, 'ip4':ipv4, 'ts':datetimev2(0), 'arr':array<text>, 'flag':boolean>, " +
+                "w VARIANT<'a':INT, properties(\"variant_max_subcolumns_count\" = \"10\")>, " +
+                "p VARIANT<properties(\"variant_max_subcolumns_count\" = \"10\")>, b VARIANT NULL)",
+        )
+    }
+
+    @Test
+    fun partitionDefinitionListsMixAllDorisEntryForms() {
+        // bracket range + LESS THAN + bare MAXVALUE in one list
+        assertDdlRoundTrip(
+            "CREATE TABLE t (d DATE, k INT) PARTITION BY RANGE (d) (PARTITION p1 VALUES [('2020-01-01'), ('2020-02-01')), " +
+                "PARTITION p2 VALUES LESS THAN ('2020-03-01'), PARTITION p3 VALUES LESS THAN (MAXVALUE))",
+            "CREATE TABLE t (d DATE, k INT) PARTITION BY RANGE (d) (PARTITION p1 VALUES [('2020-01-01'), ('2020-02-01')), " +
+                "PARTITION p2 VALUES LESS THAN ('2020-03-01'), PARTITION p3 VALUES LESS THAN MAXVALUE)",
+        )
+        // dynamic FROM/TO entry mixed with an explicit one; numeric bounds without a unit
+        assertDdlRoundTrip(
+            "CREATE TABLE t (d DATE, k INT) PARTITION BY RANGE (d) (FROM ('2020-01-01') TO ('2021-01-01') INTERVAL 1 MONTH, " +
+                "PARTITION p_max VALUES LESS THAN (MAXVALUE))",
+        )
+        assertDdlRoundTrip("CREATE TABLE t (d INT, k INT) PARTITION BY RANGE (d) (FROM (1) TO (100) INTERVAL 10)")
+        // per-partition property lists (RANGE and LIST)
+        assertDdlRoundTrip(
+            "CREATE TABLE t (d DATE, k INT) PARTITION BY RANGE (d) (PARTITION p1 VALUES LESS THAN ('2020-01-01') " +
+                "('replication_num'='1'), PARTITION p2 VALUES LESS THAN ('2020-02-01'))",
+            "CREATE TABLE t (d DATE, k INT) PARTITION BY RANGE (d) (PARTITION p1 VALUES LESS THAN ('2020-01-01') " +
+                "(\"replication_num\" = \"1\"), PARTITION p2 VALUES LESS THAN ('2020-02-01'))",
+        )
+        assertDdlRoundTrip(
+            "CREATE TABLE t (c VARCHAR(10)) PARTITION BY LIST (c) (PARTITION p1 VALUES IN ('a') ('replication_num'='1'))",
+        )
+        // multi-column LESS THAN must not be mistaken for a bracket range; MAXVALUE per column
+        assertDdlRoundTrip(
+            "CREATE TABLE t (d DATE, k INT) PARTITION BY RANGE (d, k) (PARTITION p1 VALUES LESS THAN ('2020-01-01', 100), " +
+                "PARTITION p2 VALUES LESS THAN ('2020-02-01', MAXVALUE))",
+        )
+    }
+
+    @Test
+    fun uniqueKeyTableWithSortKeyAndFunctionRangePartition() {
+        // Representative of our partitioned event tables: MoW unique key with ORDER BY sort
+        // key, a function RANGE partition without the AUTO keyword (the FE infers it), an
+        // inverted index, typed and untyped VARIANT columns, LARGEINT, IPV4/IPV6, DATETIMEV2.
+        val showCreate = """
+            CREATE TABLE import_db.events (
+                event_key LARGEINT NOT NULL,
+                event_at datetime NOT NULL,
+                landed_at datetime NOT NULL,
+                event_type VARCHAR(20) NOT NULL,
+                event_sub_type VARCHAR(20),
+                user_id LARGEINT,
+                user_is_premium boolean,
+                payload variant<
+                    'item_id':largeint,
+                    'start':bigint,
+                    'autoplay':boolean,
+                    'correlator':text
+                >,
+                experiments array<text>,
+                referer_info variant,
+                connect_info variant<
+                    'client':text,
+                    'ip_v4':ipv4,
+                    'ip_v6':ipv6
+                >,
+                ingest_info variant<
+                    'source_file':text,
+                    'ingested_at':datetimev2(0)
+                >,
+                possible_bot boolean NOT NULL,
+                INDEX idx_experiments(experiments) USING INVERTED
+            )
+            UNIQUE KEY(event_key, event_at)
+            ORDER BY (event_type, event_at)
+            PARTITION BY RANGE(date_trunc(event_at, 'day')) ()
+            DISTRIBUTED BY HASH(event_key) BUCKETS 16
+            PROPERTIES (
+                'replication_num' = '1',
+                'storage_format' = 'V3',
+                'inverted_index_storage_format' = 'V3',
+                'function_column.sequence_col' = 'landed_at'
+            )
+        """.trimIndent()
+        assertDdlRoundTrip(
+            "CREATE TABLE import_db.`events` (event_key LARGEINT NOT NULL, event_at DATETIME NOT NULL, " +
+                "landed_at DATETIME NOT NULL, event_type VARCHAR(20) NOT NULL, event_sub_type VARCHAR(20), " +
+                "user_id LARGEINT, user_is_premium BOOLEAN, " +
+                "payload VARIANT<'item_id':LARGEINT, 'start':BIGINT, 'autoplay':BOOLEAN, 'correlator':STRING>, " +
+                "experiments ARRAY<STRING>, referer_info VARIANT, " +
+                "connect_info VARIANT<'client':STRING, 'ip_v4':IPV4, 'ip_v6':IPV6>, " +
+                "ingest_info VARIANT<'source_file':STRING, 'ingested_at':DATETIME(0)>, " +
+                "possible_bot BOOLEAN NOT NULL, INDEX idx_experiments (experiments) USING INVERTED) " +
+                "UNIQUE KEY (event_key, event_at) ORDER BY (event_type, event_at) " +
+                "PARTITION BY RANGE (DATE_TRUNC(event_at, 'DAY')) () DISTRIBUTED BY HASH (event_key) BUCKETS 16 " +
+                "PROPERTIES ('replication_num'='1', 'storage_format'='V3', 'inverted_index_storage_format'='V3', " +
+                "'function_column.sequence_col'='landed_at')",
+            showCreate,
+        )
+        val create = parseOne(showCreate, "doris") as Create
+        val range = create.find(PartitionByRangeProperty::class)!!
+        assertEquals(emptyList<Expression>(), range.args["create_expressions"])
+        assertTrue(create.find(AutoPartitionProperty::class) == null, "no AUTO keyword in the source")
+    }
+
+    @Test
     fun realisticShowCreateTableOutputParses() {
         // Unique-key merge-on-write table with auto partitioning: hits DECIMALV3, IPV4, an
         // inverted index, AUTO PARTITION and an empty partition list in one statement.

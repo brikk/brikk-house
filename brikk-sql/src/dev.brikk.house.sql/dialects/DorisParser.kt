@@ -1,11 +1,16 @@
 package dev.brikk.house.sql.dialects
 
 import dev.brikk.house.sql.ast.AddMonths
+import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.AggregateKeyProperty
 import dev.brikk.house.sql.ast.AggregateTypeColumnConstraint
 import dev.brikk.house.sql.ast.ArrayUniqueAgg
+import dev.brikk.house.sql.ast.Column
+import dev.brikk.house.sql.ast.ColumnDef
 import dev.brikk.house.sql.ast.AutoPartitionProperty
 import dev.brikk.house.sql.ast.DateAdd
+import dev.brikk.house.sql.ast.DType
+import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.DateSub
 import dev.brikk.house.sql.ast.DorisRollupIndex
 import dev.brikk.house.sql.ast.EuclideanDistance
@@ -17,6 +22,7 @@ import dev.brikk.house.sql.ast.Partition
 import dev.brikk.house.sql.ast.PartitionByListProperty
 import dev.brikk.house.sql.ast.PartitionByRangeProperty
 import dev.brikk.house.sql.ast.PartitionByRangePropertyDynamic
+import dev.brikk.house.sql.ast.PartitionList
 import dev.brikk.house.sql.ast.PartitionRange
 import dev.brikk.house.sql.ast.Properties
 import dev.brikk.house.sql.ast.Property
@@ -133,43 +139,111 @@ open class DorisParser(
 
     // sqlglot: DorisParser._parse_partition_property
     //
-    // brikk-native (docs/brikk-extensions.md #19) deviations from the sqlglot port:
-    //  - `PARTITION BY RANGE (d) ()` / `PARTITION BY LIST (d) ()` — the empty
-    //    partition-definition list that Doris emits for dynamic / auto partitioned
-    //    tables — parses to a PartitionByRange/ListProperty with an EMPTY
-    //    `create_expressions` instead of failing the required-arg check (sqlglot
-    //    raises "Required keyword: 'create_expressions' missing").
-    //  - `PARTITION BY LIST (...)` with no explicit definitions yields
-    //    PartitionByListProperty; sqlglot always builds PartitionByRangeProperty here.
+    // brikk-native (docs/brikk-extensions.md #19): the definition list is parsed here
+    // in full rather than through MySQLParser._parse_partition_property, because Doris'
+    // `partitionDef` grammar is a superset sqlglot's port cannot express:
+    //  - `()` — the empty list dynamic / auto partitioned tables emit — yields a
+    //    PartitionByRange/ListProperty with an EMPTY `create_expressions` (sqlglot raises
+    //    "Required keyword: 'create_expressions' missing");
+    //  - `PARTITION BY LIST (...)` yields PartitionByListProperty even without explicit
+    //    definitions (sqlglot always builds the RANGE node here);
+    //  - entries may mix `PARTITION p VALUES LESS THAN (..) | MAXVALUE | [(..), (..))`,
+    //    `PARTITION p VALUES IN (..)` and `FROM (..) TO (..) INTERVAL n [unit]` in one
+    //    list, each optionally followed by a per-partition `("k" = "v")` property list.
     override fun parsePartitionProperty(): kotlin.Any? {
-        val isList = matchTextSeq("LIST", advance = false)
-        val expr = super.parsePartitionProperty()
+        val isRange = matchTextSeq("RANGE")
+        val isList = !isRange && matchTextSeq("LIST")
 
-        // sqlglot: `if not expr`
-        if (expr == null || (expr is List<*> && expr.isEmpty())) {
-            return parsePartitionedBy()
-        }
+        // sqlglot: `if not expr: return self._parse_partitioned_by()`
+        if (!isRange && !isList) return parsePartitionedBy()
 
-        if (expr is Property) return expr
+        val partitionExpressions = parseWrappedCsv({ parseAssignment() })
 
         matchLParen()
-
-        val createExpressions: List<Expression> = if (matchTextSeq("FROM", advance = false)) {
-            parseCsv { parsePartitioningGranularityDynamic() }
-        } else {
-            emptyList()
-        }
-
+        val createExpressions: List<Expression> = parseCsv { parsePartitionDefinition(isRange) }
         matchRParen()
 
         val nodeArgs = args(
-            "partition_expressions" to expr,
+            "partition_expressions" to partitionExpressions,
             "create_expressions" to createExpressions,
         )
         val node = if (isList) PartitionByListProperty(nodeArgs) else PartitionByRangeProperty(nodeArgs)
         // An empty definition list is legal Doris; build the node directly so the
         // required-arg validation in expression() does not reject it.
         return if (createExpressions.isEmpty()) node else expression(node)
+    }
+
+    // brikk-native (docs/brikk-extensions.md #19): one Doris `partitionDef` entry, or null
+    // at the end of an empty list. A trailing `("k" = "v")` property list is appended to
+    // the Partition's expressions as a Properties node (rendered by
+    // DorisGenerator.partitionSql without the PROPERTIES keyword).
+    open fun parsePartitionDefinition(isRange: kotlin.Boolean): Expression? {
+        val partition: Expression = when {
+            matchTextSeq("FROM", advance = false) -> parsePartitioningGranularityDynamic()
+            matchTextSeq("PARTITION", advance = false) ->
+                if (isRange) parsePartitionRangeValue()!! else parsePartitionListValue()
+            else -> return null
+        }
+        if (partition is Partition && matchTextSeq("(", advance = false)) {
+            val props = expression(Properties(args("expressions" to parseWrappedProperties())))
+            partition.append("expressions", props)
+        }
+        return partition
+    }
+
+    // brikk-native (docs/brikk-extensions.md #19): Doris' two parameterized storage types
+    // that sqlglot cannot parse (both are inherited-MySQL parse failures at the `<`):
+    //  - `VARIANT<'name':type, ..., properties("k" = "v")>` -> DataType(VARIANT, nested,
+    //    expressions = ColumnDef(this = string literal, kind = type)* + Properties?);
+    //  - `AGG_STATE<fn(type [NULL | NOT NULL], ...)>` -> DataType(AGG_STATE, nested,
+    //    expressions = [Anonymous(fn, DataType*)]) with the argument nullability kept on
+    //    each DataType's `nullable` arg.
+    // Everything else goes to the MySQL/base parseTypes.
+    override fun parseTypes(
+        checkFunc: kotlin.Boolean,
+        schema: kotlin.Boolean,
+        allowIdentifiers: kotlin.Boolean,
+        withCollation: kotlin.Boolean,
+    ): Expression? {
+        if (nextToken.tokenType == TokenType.LT) {
+            if (match(TokenType.VARIANT)) return parseVariantType()
+            if (match(TokenType.AGG_STATE)) return parseAggStateType()
+        }
+        return super.parseTypes(checkFunc, schema, allowIdentifiers, withCollation)
+    }
+
+    private fun parseVariantType(): Expression {
+        match(TokenType.LT)
+        val fields = parseCsv<Expression> {
+            if (matchTextSeq("PROPERTIES")) {
+                expression(Properties(args("expressions" to parseWrappedProperties())))
+            } else {
+                val name = parseString() ?: raiseError("Expecting a quoted VARIANT field name")
+                match(TokenType.COLON)
+                val kind = parseTypes(schema = true) ?: raiseError("Expecting a type for VARIANT field")
+                expression(ColumnDef(args("this" to name, "kind" to kind)))
+            }
+        }
+        if (!match(TokenType.GT)) raiseError("Expecting >")
+        return DataType(args("this" to DType.VARIANT, "expressions" to fields, "nested" to true))
+    }
+
+    private fun parseAggStateType(): Expression {
+        match(TokenType.LT)
+        val fnName = parseIdVar(anyToken = true)
+        if (fnName == null) raiseError("Expecting an aggregate function name in AGG_STATE")
+        val argTypes = parseWrappedCsv<Expression>({
+            val t = parseTypes(schema = true) ?: raiseError("Expecting a type in AGG_STATE")
+            if (matchTextSeq("NOT", "NULL")) {
+                t?.set("nullable", false)
+            } else if (match(TokenType.NULL)) {
+                t?.set("nullable", true)
+            }
+            t
+        })
+        if (!match(TokenType.GT)) raiseError("Expecting >")
+        val fn = expression(Anonymous(args("this" to (fnName?.name ?: ""), "expressions" to argTypes)))
+        return DataType(args("this" to DType.AGG_STATE, "expressions" to listOf(fn), "nested" to true))
     }
 
     // brikk-native (docs/brikk-extensions.md #19): `AUTO PARTITION BY RANGE|LIST (...) (...)`.
@@ -234,14 +308,19 @@ open class DorisParser(
     // sqlglot: DorisParser._parse_partitioning_granularity_dynamic
     open fun parsePartitioningGranularityDynamic(): Expression {
         matchTextSeq("FROM")
-        val start = parseWrapped({ parseString() })
+        // brikk-native (docs/brikk-extensions.md #19): bounds may be numbers for integer
+        // partition columns (`FROM (1) TO (100)`); sqlglot's port only accepts strings.
+        val start = parseWrapped({ parseString() ?: parseNumber() })
         matchTextSeq("TO")
-        val end = parseWrapped({ parseString() })
+        val end = parseWrapped({ parseString() ?: parseNumber() })
         matchTextSeq("INTERVAL")
         val number = parseNumber()
-        val unit = parseVar(anyToken = true)
+        // brikk-native (docs/brikk-extensions.md #19): the unit is optional for numeric
+        // partition columns (`FROM (1) TO (100) INTERVAL 10`); sqlglot's port would
+        // swallow the following `,` or `)` as the unit.
+        val unit = if (currToken.tokenType in setOf(TokenType.COMMA, TokenType.R_PAREN)) null else parseVar(anyToken = true)
         val every = expression(
-            Interval(args("this" to number, "unit" to normalizeTimeUnit(unit)))
+            Interval(args("this" to number, "unit" to unit?.let { normalizeTimeUnit(it) }))
         )
         return expression(
             PartitionByRangePropertyDynamic(args("start" to start, "end" to end, "every" to every))
@@ -250,16 +329,37 @@ open class DorisParser(
 
     // sqlglot: DorisParser._parse_partition_range_value
     override fun parsePartitionRangeValue(): Expression? {
+        // brikk-native (docs/brikk-extensions.md #19): `VALUES LESS THAN MAXVALUE` without
+        // parentheses (Doris `lessThanPartitionDef`); sqlglot's MySQL base insists on `(`.
+        val startIndex = index
+        if (matchTextSeq("PARTITION")) {
+            val name = parseIdVar()
+            if (matchTextSeq("VALUES", "LESS", "THAN", "MAXVALUE")) {
+                val partRange = expression(
+                    PartitionRange(args("this" to name, "expressions" to listOf(Var(args("this" to "MAXVALUE")))))
+                )
+                return expression(Partition(args("expressions" to listOf(partRange))))
+            }
+            // Not the bare form: hand the whole entry back to the MySQL base path.
+            retreat(startIndex)
+        }
         val expr = super.parsePartitionRangeValue()
 
-        if (expr is Partition) return expr
+        if (expr is Partition) {
+            // brikk-native (docs/brikk-extensions.md #19): MySQL's base only turns a lone
+            // MAXVALUE into a Var; Doris allows it per column (`LESS THAN ('2020-01-01', MAXVALUE)`).
+            expr.find(PartitionRange::class)?.let { range ->
+                range.set("expressions", range.expressionsArg.map { normalizeMaxValue(it) })
+            }
+            return expr
+        }
 
         matchTextSeq("VALUES")
         val name = expr
 
         // Doris-specific bracket syntax: VALUES [(...), (...))
         match(TokenType.L_BRACKET)
-        val values = parseCsv { parseWrappedCsv({ parseExpression() }) }
+        val values = parseCsv { parseWrappedCsv({ normalizeMaxValue(parseExpression()) }) }
 
         match(TokenType.R_BRACKET)
         match(TokenType.R_PAREN)
@@ -267,6 +367,15 @@ open class DorisParser(
         val partRange = expression(PartitionRange(args("this" to name, "expressions" to values)))
         return expression(Partition(args("expressions" to listOf(partRange))))
     }
+
+    // brikk-native (docs/brikk-extensions.md #19): a bare MAXVALUE partition bound parses as
+    // a Column (and would be rendered back-quoted, since it is reserved); keep it a Var.
+    private fun normalizeMaxValue(value: kotlin.Any?): kotlin.Any? =
+        if (value is Column && value.table.isEmpty() && value.name.uppercase() == "MAXVALUE") {
+            Var(args("this" to "MAXVALUE"))
+        } else {
+            value
+        }
 
     // sqlglot: DorisParser._parse_build_property
     open fun parseBuildProperty(): Expression =
@@ -386,5 +495,5 @@ object DorisParserTables {
 
     // brikk-native (docs/brikk-extensions.md #19): MySQL's type tokens + Doris storage types.
     val TYPE_TOKENS: Set<TokenType> =
-        MysqlParserTables.TYPE_TOKENS + setOf(TokenType.BITMAP, TokenType.HLL, TokenType.QUANTILE_STATE)
+        MysqlParserTables.TYPE_TOKENS + setOf(TokenType.BITMAP, TokenType.HLL, TokenType.QUANTILE_STATE, TokenType.AGG_STATE)
 }
