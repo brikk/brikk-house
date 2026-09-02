@@ -29,7 +29,7 @@ still hold; "What exists" is updated.
   unknown column), `ir/` (rewrite to `Rel(...).input(...).bind(...)`, constructor bodies for
   local shapes). Options: `schema`, `schemaDialect`, `defaultSchema`, `debug`.
 - `brikk-sql-plugin-smoke/` — the same three-step pipeline compiled by the real toolchain via
-  `-Xplugin=build/brikk-sql-compiler-plugin-all.jar` (merged by `tools/assemble_plugin_jar.py`
+  `-Xplugin=build/brikk-sql-compiler-plugin-2.4.0-0.1.0.jar` (merged by `tools/assemble_plugin_jar.py`
   after `./kotlin build -m brikk-sql-compiler-plugin`) + `-P plugin:...:schema=...`.
 
 ## Division of labour (proposed)
@@ -147,11 +147,12 @@ python3 tools/assemble_plugin_jar.py
 python3 tools/publish_local_repo.py --ide-kotlin-version <from "KEFS: Copy Kotlin IDE Version">
 ```
 publishes `dev.brikk.house:brikk-sql-compiler-plugin:<ide>-0.1.0` into `build/repo` (Maven
-layout). KEFS: add `build/repo` as a Local repository, a bundle with those coordinates
-("Latest" matching) and the replacement pattern `brikk-sql-compiler-plugin-all` ->
-`brikk-sql-compiler-plugin` (the project attaches the jar via `-Xplugin`, so KEFS detects the
-artifact id from the file name). KEFS file-watches the repo: re-run the publish step after a
-plugin change. The jar is compiled against 2.4.0 regardless of the name — the first thing to
+layout). KEFS: add `build/repo` as a Local repository and a bundle with those coordinates
+("Latest" matching); leave the three replacement patterns at their defaults
+(`<kotlin-version>-<lib-version>`, `<artifact-id>`, `<artifact-id>`). KEFS detects the plugin
+from the `-Xplugin` jar *file name*, matched as `<detect>-<version>.jar`, which is why the
+assembled jar is named `brikk-sql-compiler-plugin-2.4.0-0.1.0.jar` and not `...-all.jar`.
+KEFS file-watches the repo: re-run the publish step after a plugin change. The jar is compiled against 2.4.0 regardless of the name — the first thing to
 learn is whether the IDE's compiler build accepts it (the exception analyzer says so).
 
 ## Schema cache format

@@ -3,8 +3,10 @@
 # Kotlin Toolchain's first-class `settings.kotlin.compilerPlugins` only accepts Maven
 # coordinates (not module deps), so until we publish (KEFS-style versioned + shaded jar) we
 # attach the plugin via freeCompilerArgs. The plugin needs brikk-sql (its SQL brain) and
-# kotlinx-serialization on the *plugin* classpath, so we point -Xplugin at a merged jar. Paths
-# are relative to the project root; build it first:
+# kotlinx-serialization on the *plugin* classpath, so we point -Xplugin at a merged jar whose
+# name follows KEFS's `<artifact-id>-<kotlin-version>-<lib-version>.jar` convention (lets the
+# IDE plugin recognise it without replacement patterns). Paths are relative to the project
+# root; build it first:
 #     ./kotlin build -m brikk-sql-compiler-plugin && python3 tools/assemble_plugin_jar.py
 # Acceptable for a smoke module, not for production wiring (see KEFS notes in docs/).
 product: jvm/lib
@@ -20,7 +22,7 @@ settings:
   kotlin:
     version: 2.4.10
     freeCompilerArgs:
-      - -Xplugin=build/brikk-sql-compiler-plugin-all.jar
+      - -Xplugin=build/brikk-sql-compiler-plugin-2.4.0-0.1.0.jar
       - -P
       - plugin:dev.brikk.house.sql.compiler:schema=brikk-sql-plugin-smoke/schema/events.sql
       - -P

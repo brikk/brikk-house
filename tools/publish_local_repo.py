@@ -24,8 +24,12 @@ KEFS setup (Tools > Kotlin External FIR Support > Artifacts):
         coordinates: dev.brikk.house:brikk-sql-compiler-plugin
         version matching: Latest
         repositories: the local one
-        replacement patterns (the project uses -Xplugin=<jar>, not coordinates):
-            detection: brikk-sql-compiler-plugin-all      search: brikk-sql-compiler-plugin
+        replacement patterns: leave ALL THREE at their defaults
+            version:   <kotlin-version>-<lib-version>
+            detect:    <artifact-id>
+            search:    <artifact-id>
+        (the project's -Xplugin jar is named brikk-sql-compiler-plugin-2.4.0-0.1.0.jar, i.e.
+         exactly <artifact-id>-<kotlin-version>-<lib-version>.jar, so defaults match)
   - Save; commit the generated .idea/kotlin-plugins.xml.
 Re-run this script after every plugin change; KEFS file-watches the repo and reloads.
 """
@@ -37,9 +41,10 @@ import shutil
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-JAR = os.path.join(ROOT, "build", "brikk-sql-compiler-plugin-all.jar")
 GROUP = "dev.brikk.house"
 ARTIFACT = "brikk-sql-compiler-plugin"
+BUILT_VERSION = "2.4.0-0.1.0"  # what assemble_plugin_jar.py produces
+JAR = os.path.join(ROOT, "build", f"{ARTIFACT}-{BUILT_VERSION}.jar")
 
 POM = """<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0">

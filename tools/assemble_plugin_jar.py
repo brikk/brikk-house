@@ -6,7 +6,11 @@ Merges (first wins on duplicate entries):
   build/tasks/_brikk-sql_jarJvm/brikk-sql-jvm.jar
   kotlinx-serialization-core-jvm-<ver>.jar   (located in the Kotlin Toolchain's dependency cache)
 
-into build/brikk-sql-compiler-plugin-all.jar.
+into build/brikk-sql-compiler-plugin-<kotlin>-<lib>.jar  (default: ...-2.4.0-0.1.0.jar).
+
+The file name deliberately follows KEFS's default detect+version pattern
+`<artifact-id>-<kotlin-version>-<lib-version>.jar` so the IDE plugin recognises the
+`-Xplugin=` reference with no replacement patterns (docs/vendor/kefs/GUIDE.md §6).
 
 Run after `./kotlin build -m brikk-sql-compiler-plugin`. This is a plain merge, not a
 relocating shade: fine for the in-repo smoke module, NOT what a published (KEFS-loadable)
@@ -20,7 +24,11 @@ import sys
 import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, "build", "brikk-sql-compiler-plugin-all.jar")
+ARTIFACT = "brikk-sql-compiler-plugin"
+KOTLIN_VERSION = "2.4.0"   # compiler the plugin is compiled against
+LIB_VERSION = "0.1.0"
+VERSION = f"{KOTLIN_VERSION}-{LIB_VERSION}"
+OUT = os.path.join(ROOT, "build", f"{ARTIFACT}-{VERSION}.jar")
 
 LOCAL_JARS = [
     os.path.join(ROOT, "build", "tasks", "_brikk-sql-compiler-plugin_jarJvm", "brikk-sql-compiler-plugin-jvm.jar"),
