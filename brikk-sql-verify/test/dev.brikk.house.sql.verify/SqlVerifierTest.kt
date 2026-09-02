@@ -353,6 +353,31 @@ class SqlVerifierTest {
             "DESCRIBE db.t ALL",
             "CREATE TABLE IF NOT EXISTS t2 LIKE db.t WITH ROLLUP (r1, r2)",
             "CREATE TABLE t2 LIKE t WITH ROLLUP",
+            // group B column renderings + remaining C2/C3 statements
+            "CREATE TABLE t (k INT KEY, v INT SUM) AGGREGATE KEY (k)",
+            "CREATE TABLE t (a MAP<STRING, INT>, b STRUCT<x:INT, y:STRING>, c ARRAY<STRUCT<x:INT>>)",
+            "CREATE TABLE t (a DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                "b DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3), c DATE DEFAULT CURRENT_DATE)",
+            "CREATE TABLE t (a INT, b INT AS (a + 1))",
+            "CREATE TABLE t (id BIGINT NOT NULL AUTO_INCREMENT(100), k INT, j BIGINT AUTO_INCREMENT)",
+            "SHOW CREATE TABLE db.t",
+            "SHOW CREATE MATERIALIZED VIEW mv ON t",
+            "SHOW PARTITIONS FROM t WHERE PartitionName = 'p1' LIMIT 10",
+            "SHOW TEMPORARY PARTITIONS FROM t",
+            "SHOW DATA FROM db.t",
+            "ALTER TABLE t ADD COLUMN (c1 INT, c2 STRING) TO r1",
+            "ALTER TABLE t ADD COLUMN c INT NULL AFTER k TO r1 PROPERTIES ('timeout'='10')",
+            "ALTER TABLE t ORDER BY (k, v) FROM r1",
+            "ALTER TABLE t ENABLE FEATURE 'SEQUENCE_LOAD' WITH PROPERTIES ('function_column.sequence_type'='int')",
+            "ALTER TABLE t MODIFY DISTRIBUTION DISTRIBUTED BY HASH (k) BUCKETS 16",
+            "ALTER TABLE t MODIFY ENGINE TO odbc PROPERTIES ('driver'='x')",
+            "ALTER TABLE t MODIFY COMMENT 'x'",
+            "BUILD INDEX idx ON db.t PARTITIONS (p1, p2)",
+            "PAUSE MATERIALIZED VIEW JOB ON db.mv",
+            "RESUME MATERIALIZED VIEW JOB ON mv",
+            "CANCEL MATERIALIZED VIEW TASK 123 ON db.mv",
+            "RECOVER TABLE t 12345 AS t2",
+            "RECOVER PARTITION p1 999 AS p2 FROM db.t",
         )
         for (sql in renderings) {
             val result = verifier.verify(sql)

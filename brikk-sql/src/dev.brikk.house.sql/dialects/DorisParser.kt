@@ -6,6 +6,7 @@ import dev.brikk.house.sql.ast.AggregateKeyProperty
 import dev.brikk.house.sql.ast.AggregateTypeColumnConstraint
 import dev.brikk.house.sql.ast.ArrayUniqueAgg
 import dev.brikk.house.sql.ast.Column
+import dev.brikk.house.sql.ast.ColumnDef
 import dev.brikk.house.sql.ast.AutoPartitionProperty
 import dev.brikk.house.sql.ast.DateAdd
 import dev.brikk.house.sql.ast.DType
@@ -15,6 +16,7 @@ import dev.brikk.house.sql.ast.DorisRollupIndex
 import dev.brikk.house.sql.ast.EuclideanDistance
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.IndexPropertiesOption
+import dev.brikk.house.sql.ast.GeneratedAsIdentityColumnConstraint
 import dev.brikk.house.sql.ast.Interval
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.OnProperty
@@ -48,12 +50,25 @@ import dev.brikk.house.sql.ast.DorisReplacePartition
 import dev.brikk.house.sql.ast.DorisReplaceWith
 import dev.brikk.house.sql.ast.DorisVariantField
 import dev.brikk.house.sql.ast.Tuple
+import dev.brikk.house.sql.ast.DorisAddColumn
+import dev.brikk.house.sql.ast.DorisAlterOrderBy
+import dev.brikk.house.sql.ast.DorisBuildIndex
+import dev.brikk.house.sql.ast.DorisCancelMaterializedViewTask
+import dev.brikk.house.sql.ast.DorisEnableFeature
+import dev.brikk.house.sql.ast.DorisMaterializedViewJob
+import dev.brikk.house.sql.ast.DorisModifyComment
+import dev.brikk.house.sql.ast.DorisModifyDistribution
+import dev.brikk.house.sql.ast.DorisModifyEngine
+import dev.brikk.house.sql.ast.DorisRecover
+import dev.brikk.house.sql.ast.Schema
+import dev.brikk.house.sql.ast.Show
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.NodeFactory
 import dev.brikk.house.sql.parser.ParseError
 import dev.brikk.house.sql.parser.Parser
 import dev.brikk.house.sql.parser.TokenType
+import dev.brikk.house.sql.parser.Tokenizer
 import dev.brikk.house.sql.parser.TokenizerConfig
 
 private fun seqGet(argsList: List<Expression?>, index: Int): Expression? = argsList.getOrNull(index)
@@ -161,7 +176,22 @@ open class DorisParser(
             "DROP" to { p -> (p as DorisParser).parseAlterTableDropDoris() },
             "MODIFY" to { p -> (p as DorisParser).parseAlterTableModifyDoris() },
             "REPLACE" to { p -> (p as DorisParser).parseAlterTableReplaceDoris() },
+            "ORDER BY" to { p ->
+                p.expression(
+                    DorisAlterOrderBy(
+                        args(
+                            "expressions" to p.parseWrappedIdVars(),
+                            "from_index" to if (p.matchTextSeq("FROM")) p.parseIdVar() else null,
+                        )
+                    )
+                )
+            },
+            "ENABLE" to { p -> (p as DorisParser).parseAlterTableEnableDoris() },
         )
+
+    // brikk-native (docs/brikk-extensions.md #19): Doris SHOW statements on top of MySQL's.
+    override val showParsers: Map<String, (MysqlParser) -> Expression>
+        get() = DorisParserTables.SHOW_PARSERS
 
     // sqlglot: DorisParser._parse_partition_property
     //
@@ -300,6 +330,16 @@ open class DorisParser(
                 args("this" to Var(args("this" to prevToken.text.uppercase())))
             )
         )
+
+    // brikk-native (docs/brikk-extensions.md #19): `AUTO_INCREMENT[(start)]` — sqlglot's
+    // parseAutoIncrement only keeps (start, increment) pairs, so a lone start is lost.
+    open fun parseAutoIncrementDoris(): Expression {
+        if (match(TokenType.L_PAREN, advance = false)) {
+            val start = parseWrapped({ parseNumber() })
+            return GeneratedAsIdentityColumnConstraint(args("this" to false, "start" to start))
+        }
+        return parseAutoIncrement()
+    }
 
     // brikk-native (docs/brikk-extensions.md #19): `INDEX ... USING INVERTED PROPERTIES (...)`
     // on top of MySQL's index options.
@@ -490,7 +530,41 @@ open class DorisParser(
         if (matchTextSeq("ROLLUP")) {
             return expression(DorisAddRollup(args("expressions" to parseCsv { parseRollupIndexDoris(allowFrom = true) })))
         }
-        return parseAlterTableAdd()
+        // ADD COLUMN (c1 INT, c2 STRING) [TO rollup] [PROPERTIES (..)] — multi-column form
+        if (matchTextSeq("COLUMN") && match(TokenType.L_PAREN, advance = false)) {
+            return wrapAddColumn(parseSchema()!!)
+        }
+        retreat(startIndex)
+        val added = parseAlterTableAdd()
+        // ADD COLUMN c INT [.. AFTER k] TO rollup [PROPERTIES (..)] — single column with a target
+        if (added.size == 1 && added[0] is ColumnDef &&
+            (matchTextSeq("TO", advance = false) || matchTextSeq("PROPERTIES", advance = false))
+        ) {
+            return wrapAddColumn(added[0])
+        }
+        return added
+    }
+
+    private fun wrapAddColumn(columns: Expression): Expression {
+        val toIndex = if (matchTextSeq("TO")) parseIdVar() else null
+        val properties = if (matchTextSeq("PROPERTIES")) {
+            expression(Properties(args("expressions" to parseWrappedProperties())))
+        } else {
+            null
+        }
+        return expression(DorisAddColumn(args("this" to columns, "to_index" to toIndex, "properties" to properties)))
+    }
+
+    // ALTER TABLE t ENABLE FEATURE "name" [WITH PROPERTIES (..)]
+    open fun parseAlterTableEnableDoris(): Expression? {
+        if (!matchTextSeq("FEATURE")) return null
+        val feature = parseString()
+        val properties = if (matchTextSeq("WITH", "PROPERTIES")) {
+            expression(Properties(args("expressions" to parseWrappedProperties())))
+        } else {
+            null
+        }
+        return expression(DorisEnableFeature(args("this" to feature, "properties" to properties)))
     }
 
     private fun parseAddPartitionDoris(temporary: kotlin.Boolean): Expression {
@@ -572,6 +646,23 @@ open class DorisParser(
 
     // ALTER TABLE t MODIFY PARTITION p | (p, ...) | (*) SET ("k" = "v") | (MySQL MODIFY COLUMN)
     open fun parseAlterTableModifyDoris(): Expression? {
+        if (matchTextSeq("DISTRIBUTION")) {
+            matchTextSeq("DISTRIBUTED")
+            return expression(DorisModifyDistribution(args("this" to parseDistributedProperty())))
+        }
+        if (matchTextSeq("ENGINE")) {
+            matchTextSeq("TO")
+            val engine = parseIdVar()
+            val properties = if (matchTextSeq("PROPERTIES")) {
+                expression(Properties(args("expressions" to parseWrappedProperties())))
+            } else {
+                null
+            }
+            return expression(DorisModifyEngine(args("this" to engine, "properties" to properties)))
+        }
+        if (matchTextSeq("COMMENT")) {
+            return expression(DorisModifyComment(args("this" to parseString())))
+        }
         if (!matchTextSeq("PARTITION")) return parseAlterTableModify()
         var all = false
         val partitions: List<Expression> = if (match(TokenType.L_PAREN)) {
@@ -629,6 +720,77 @@ open class DorisParser(
                 )
             )
         )
+
+    // BUILD INDEX idx ON t [PARTITIONS (..)] | PAUSE | RESUME MATERIALIZED VIEW JOB ON mv |
+    // CANCEL MATERIALIZED VIEW TASK n ON mv | RECOVER TABLE | DATABASE | PARTITION ... — the
+    // leading words are COMMAND tokens (DorisDialect.TOKENIZER_CONFIG); anything that does
+    // not match the expected shape falls back to the opaque Command.
+    override fun parseCommand(): Expression {
+        val word = prevToken.text.uppercase()
+        // The tokenizer folds everything after a COMMAND word into one STRING token, so the
+        // body is re-tokenized and parsed by a fresh parser of this dialect.
+        if (word in DorisParserTables.COMMAND_WORDS && currToken.tokenType == TokenType.STRING && !nextToken.exists) {
+            val body = currToken.text
+            val comments = prevComments
+            val parsed = try {
+                DorisParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig).parseIntoWith(
+                    Tokenizer(tokenizerConfig).tokenize(body), body,
+                ) { (it as DorisParser).parseCommandBody(word) }
+            } catch (e: ParseError) {
+                null
+            }
+            if (parsed != null) {
+                advance()
+                parsed.addComments(comments, prepend = true)
+                return parsed
+            }
+        }
+        return super.parseCommand()
+    }
+
+    // The part of a BUILD / PAUSE / RESUME / CANCEL / RECOVER statement after the leading
+    // word; null when the shape is not one we model (the caller then keeps the Command).
+    open fun parseCommandBody(word: String): Expression? {
+        val parsed: Expression? = when (word) {
+            "BUILD" -> if (matchTextSeq("INDEX")) {
+                val name = parseIdVar()
+                match(TokenType.ON)
+                val table = parseTableParts(schema = true)
+                val partitions = if (matchTextSeq("PARTITIONS")) parseWrappedIdVars() else null
+                DorisBuildIndex(args("this" to name, "table" to table, "partitions" to partitions))
+            } else null
+            "PAUSE", "RESUME" -> if (matchTextSeq("MATERIALIZED", "VIEW", "JOB", "ON")) {
+                DorisMaterializedViewJob(
+                    args("kind" to word, "this" to parseTableParts(schema = true))
+                )
+            } else null
+            "CANCEL" -> if (matchTextSeq("MATERIALIZED", "VIEW", "TASK")) {
+                val id = parseNumber()
+                match(TokenType.ON)
+                DorisCancelMaterializedViewTask(args("this" to id, "table" to parseTableParts(schema = true)))
+            } else null
+            "RECOVER" -> if (matchTexts(setOf("TABLE", "DATABASE", "PARTITION"))) {
+                val kind = prevToken.text.uppercase()
+                val name = if (kind == "PARTITION") parseIdVar() else parseTableParts(schema = true)
+                val id = parseNumber()
+                val to = if (matchTextSeq("AS")) (if (kind == "PARTITION") parseIdVar() else parseTableParts(schema = true)) else null
+                val from = if (kind == "PARTITION" && matchTextSeq("FROM")) parseTableParts(schema = true) else null
+                DorisRecover(args("kind" to kind, "this" to name, "id" to id, "to" to to, "from" to from))
+            } else null
+            else -> null
+        }
+        return if (parsed != null && !currToken.exists) expression(parsed) else null
+    }
+
+    // SHOW CREATE MATERIALIZED VIEW [db.]mv [ON t] | SHOW [TEMPORARY] PARTITIONS FROM [db.]t |
+    // SHOW DATA [FROM [db.]t] — on top of MySQL's SHOW parsers.
+    open fun parseShowDoris(thisName: String, target: kotlin.Any): Expression {
+        val show = parseShowMysql(thisName, target = target)
+        if (thisName == "CREATE MATERIALIZED VIEW" && match(TokenType.ON)) {
+            show.set("for_table", parseTableParts(schema = true))
+        }
+        return show
+    }
 
     // DROP INDEX idx ON db.t — sqlglot's OnProperty (ClickHouse ON CLUSTER) takes a single
     // identifier; Doris' target may be db-qualified. ON COMMIT forms go to the base.
@@ -779,12 +941,29 @@ object DorisParserTables {
         "HLL_UNION", "BITMAP_UNION", "QUANTILE_UNION", "GENERIC",
     )
 
-    // brikk-native (docs/brikk-extensions.md #19): MySQL's constraint parsers + aggregators.
+    // brikk-native (docs/brikk-extensions.md #19): MySQL's constraint parsers + aggregators,
+    // and AUTO_INCREMENT(start) keeping its start value (the base drops a lone start).
     val CONSTRAINT_PARSERS: Map<String, (Parser) -> Expression?> =
         MysqlParserTables.CONSTRAINT_PARSERS +
             AGGREGATE_TYPES.associateWith<String, (Parser) -> Expression?> {
                 { p -> (p as DorisParser).parseAggregateTypeConstraint() }
-            }
+            } +
+            mapOf<String, (Parser) -> Expression?>(
+                "AUTO_INCREMENT" to { p -> (p as DorisParser).parseAutoIncrementDoris() },
+            )
+
+    // brikk-native (docs/brikk-extensions.md #19): statement words tokenized as COMMAND whose
+    // bodies DorisParser.parseCommand re-parses into structured nodes.
+    val COMMAND_WORDS: Set<String> = setOf("BUILD", "CANCEL", "PAUSE", "RECOVER", "RESUME")
+
+    // brikk-native (docs/brikk-extensions.md #19): MySQL's SHOW parsers + Doris SHOW forms.
+    val SHOW_PARSERS: Map<String, (MysqlParser) -> Expression> =
+        MysqlParserTables.SHOW_PARSERS + mapOf<String, (MysqlParser) -> Expression>(
+            "CREATE MATERIALIZED VIEW" to { p -> (p as DorisParser).parseShowDoris("CREATE MATERIALIZED VIEW", target = true) },
+            "PARTITIONS" to { p -> (p as DorisParser).parseShowDoris("PARTITIONS", target = "FROM") },
+            "TEMPORARY PARTITIONS" to { p -> (p as DorisParser).parseShowDoris("TEMPORARY PARTITIONS", target = "FROM") },
+            "DATA" to { p -> (p as DorisParser).parseShowDoris("DATA", target = "FROM") },
+        )
 
     // brikk-native (docs/brikk-extensions.md #19): MySQL's type tokens + Doris storage types.
     val TYPE_TOKENS: Set<TokenType> =

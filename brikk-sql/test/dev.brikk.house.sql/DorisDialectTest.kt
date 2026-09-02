@@ -4,11 +4,16 @@ import dev.brikk.house.sql.ast.AggregateKeyProperty
 import dev.brikk.house.sql.ast.Alter
 import dev.brikk.house.sql.ast.Command
 import dev.brikk.house.sql.ast.Describe
+import dev.brikk.house.sql.ast.DorisBuildIndex
+import dev.brikk.house.sql.ast.DorisCancelMaterializedViewTask
+import dev.brikk.house.sql.ast.DorisMaterializedViewJob
 import dev.brikk.house.sql.ast.DorisModifyPartition
+import dev.brikk.house.sql.ast.DorisRecover
 import dev.brikk.house.sql.ast.DorisRefresh
 import dev.brikk.house.sql.ast.DorisVariantField
 import dev.brikk.house.sql.ast.Drop
 import dev.brikk.house.sql.ast.Refresh
+import dev.brikk.house.sql.ast.Show
 import dev.brikk.house.sql.ast.AggregateTypeColumnConstraint
 import dev.brikk.house.sql.ast.AutoPartitionProperty
 import dev.brikk.house.sql.ast.ColumnDef
@@ -601,20 +606,81 @@ class DorisDialectTest {
     }
 
     @Test
-    fun operationalStatementsWithoutNodesDegradeToCommand() {
-        // Not modeled; must at least survive as a Command (text preserved) instead of an
-        // "Invalid expression" error, so a script containing them can still be processed.
-        for (sql in listOf(
-            "PAUSE MATERIALIZED VIEW JOB ON mv",
-            "RESUME MATERIALIZED VIEW JOB ON mv",
-            "CANCEL MATERIALIZED VIEW TASK 123 ON mv",
-            "BUILD INDEX idx ON t PARTITIONS (p1, p2)",
-            "RECOVER TABLE t AS t2",
-        )) {
-            val parsed = parseOne(sql, "doris")
-            assertTrue(parsed is Command, "expected Command for: $sql, got ${parsed::class.simpleName}")
-            assertEquals(sql, parsed.sql("doris"))
-        }
+    fun commandWordStatementsParseStructurally() {
+        // BUILD / PAUSE / RESUME / CANCEL / RECOVER are COMMAND tokens (the tokenizer folds
+        // the rest of the statement into one STRING); DorisParser.parseCommand re-tokenizes
+        // the body into a node, and keeps the opaque Command for shapes it does not model.
+        assertStatementRoundTrip<DorisBuildIndex>("BUILD INDEX idx ON db.t PARTITIONS (p1, p2)")
+        assertStatementRoundTrip<DorisBuildIndex>("BUILD INDEX idx ON t")
+        val job = assertStatementRoundTrip<DorisMaterializedViewJob>("PAUSE MATERIALIZED VIEW JOB ON db.mv")
+        assertEquals("PAUSE", job.args["kind"])
+        assertStatementRoundTrip<DorisMaterializedViewJob>("RESUME MATERIALIZED VIEW JOB ON mv")
+        assertStatementRoundTrip<DorisCancelMaterializedViewTask>("CANCEL MATERIALIZED VIEW TASK 123 ON db.mv")
+        assertStatementRoundTrip<DorisRecover>("RECOVER TABLE db.t")
+        assertStatementRoundTrip<DorisRecover>("RECOVER TABLE t 12345 AS t2")
+        assertStatementRoundTrip<DorisRecover>("RECOVER DATABASE db AS db2")
+        assertStatementRoundTrip<DorisRecover>("RECOVER PARTITION p1 999 AS p2 FROM db.t")
+        val other = parseOne("BUILD SOMETHING ELSE", "doris")
+        assertTrue(other is Command, "unmodeled shape must stay a Command")
+        assertEquals("BUILD SOMETHING ELSE", other.sql("doris"))
+        assertEquals("SELECT `build`, `cancel`, `recover` FROM t", roundTrip("SELECT build, cancel, recover FROM t"))
+    }
+
+    @Test
+    fun remainingAlterTableActions() {
+        // TODO-doris-ddl.md C2/C3: ADD COLUMN with a rollup target (was mis-parsed into a bogus
+        // second action), the parenthesized multi-column form, ORDER BY, ENABLE FEATURE,
+        // MODIFY DISTRIBUTION | ENGINE | COMMENT.
+        assertStatementRoundTrip<Alter>("ALTER TABLE t ADD COLUMN (c1 INT, c2 STRING) TO r1")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t ADD COLUMN (c1 INT, c2 STRING)")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t ADD COLUMN c INT NULL AFTER k TO r1 PROPERTIES ('timeout'='10')")
+        // plain ADD COLUMN keeps sqlglot's bare ColumnDef action
+        val plain = assertStatementRoundTrip<Alter>("ALTER TABLE t ADD COLUMN c INT NULL AFTER k")
+        assertTrue((plain.args["actions"] as List<*>)[0] is ColumnDef)
+        assertStatementRoundTrip<Alter>("ALTER TABLE t ADD COLUMN c1 INT, ADD COLUMN c2 INT")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t ORDER BY (k, v) FROM r1")
+        assertStatementRoundTrip<Alter>(
+            "ALTER TABLE t ENABLE FEATURE 'SEQUENCE_LOAD' WITH PROPERTIES ('function_column.sequence_type'='int')",
+            "ALTER TABLE t ENABLE FEATURE \"SEQUENCE_LOAD\" WITH PROPERTIES (\"function_column.sequence_type\" = \"int\")",
+        )
+        assertStatementRoundTrip<Alter>("ALTER TABLE t MODIFY DISTRIBUTION DISTRIBUTED BY HASH (k) BUCKETS 16")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t MODIFY ENGINE TO odbc PROPERTIES ('driver'='x')")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t MODIFY COMMENT 'x'")
+        assertStatementRoundTrip<Alter>("ALTER TABLE t MODIFY COLUMN k COMMENT 'kk'")
+    }
+
+    @Test
+    fun dorisShowStatements() {
+        // SHOW CREATE <kind> keeps the db-qualified name (MySQL's `t FROM db` is rejected)
+        assertStatementRoundTrip<Show>("SHOW CREATE TABLE db.t")
+        assertStatementRoundTrip<Show>("SHOW CREATE VIEW db.v")
+        assertStatementRoundTrip<Show>("SHOW CREATE MATERIALIZED VIEW db.mv")
+        assertStatementRoundTrip<Show>("SHOW CREATE MATERIALIZED VIEW mv ON t")
+        assertStatementRoundTrip<Show>("SHOW PARTITIONS FROM db.t")
+        assertStatementRoundTrip<Show>("SHOW PARTITIONS FROM t WHERE PartitionName = 'p1' LIMIT 10")
+        assertStatementRoundTrip<Show>("SHOW TEMPORARY PARTITIONS FROM t")
+        assertStatementRoundTrip<Show>("SHOW DATA FROM db.t")
+        assertStatementRoundTrip<Show>("SHOW DATA")
+        // MySQL forms are untouched
+        assertStatementRoundTrip<Show>("SHOW FULL COLUMNS FROM t FROM db")
+    }
+
+    // ------------------------------------------------------------------
+    // TODO-doris-ddl.md group B: renderings the FE rejected when inherited from MySQL.
+    // ------------------------------------------------------------------
+
+    @Test
+    fun columnDefinitionRenderingsAreDorisNotMysql() {
+        assertDdlRoundTrip("CREATE TABLE t (k INT KEY, v INT SUM) AGGREGATE KEY (k)")
+        assertDdlRoundTrip("CREATE TABLE t (a MAP<STRING, INT>, b STRUCT<x:INT, y:STRING>, c ARRAY<STRUCT<x:INT>>)")
+        assertDdlRoundTrip(
+            "CREATE TABLE t (a DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +
+                "b DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3), c DATE DEFAULT CURRENT_DATE)",
+        )
+        // ... while CURRENT_TIMESTAMP outside DEFAULT keeps sqlglot's NOW() mapping
+        assertEquals("SELECT NOW()", roundTrip("SELECT CURRENT_TIMESTAMP"))
+        assertDdlRoundTrip("CREATE TABLE t (a INT, b INT AS (a + 1))")
+        assertDdlRoundTrip("CREATE TABLE t (id BIGINT NOT NULL AUTO_INCREMENT(100), k INT, j BIGINT AUTO_INCREMENT)")
     }
 
     @Test

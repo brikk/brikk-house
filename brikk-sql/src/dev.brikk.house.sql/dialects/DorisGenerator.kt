@@ -397,7 +397,7 @@ open class DorisGenerator(
     // declared. sqlglot re-emits full typed column defs (`c1 INT`), which the FE parser
     // rejects, so we strip the type from MV schema columns (dropping only what Doris
     // cannot express; the engine derives the same column from the query either way).
-    override fun columndefSql(expression: ColumnDef, sep: String): String {
+    private fun dorisColumndefSql(expression: ColumnDef, sep: String): String {
         if (expression.args["kind"] != null) {
             val create = expression.findAncestor(Create::class)
             val isMaterializedView = (create?.args?.get("properties") as? Expression)
@@ -509,9 +509,60 @@ open class DorisGenerator(
         return "$this_($columns)$dupClause$fromClause${propertiesClause(expression)}"
     }
 
-    private fun propertiesClause(expression: Expression, key: String = "properties"): String {
+    internal fun propertiesClause(expression: Expression, key: String = "properties"): String {
         val properties = expression.args[key] as? Properties ?: return ""
         return " ${properties(properties, prefix = "PROPERTIES")}"
+    }
+
+    // ------------------------------------------------------------------
+    // brikk-native (docs/brikk-extensions.md #19): column-definition renderings the Doris
+    // FE rejects when inherited from MySQL (TODO-doris-ddl.md group B). Each FE-verified.
+    // ------------------------------------------------------------------
+
+    // `k INT KEY` — Doris has no PRIMARY KEY column constraint; KEY marks a key column.
+    override fun primarykeycolumnconstraintSql(expression: PrimaryKeyColumnConstraint): String {
+        if (expression.args["desc"] == null && (expression.args["options"] as? List<*>).isNullOrEmpty()) return "KEY"
+        return super.primarykeycolumnconstraintSql(expression)
+    }
+
+    // `STRUCT<x:INT>` — Doris requires the colon between a struct field name and its type
+    // (same shape as HiveGenerator.columndefSql; extension #10's MV rule still applies).
+    override fun columndefSql(expression: ColumnDef, sep: String): String {
+        val parent = expression.parent
+        val effSep = if (parent is DataType && parent.isType(DType.STRUCT)) ":" else sep
+        return dorisColumndefSql(expression, effSep)
+    }
+
+    // `b INT AS (a + 1)` — the FE rejects MySQL's `GENERATED ALWAYS AS (..) VIRTUAL|STORED`.
+    override fun computedcolumnconstraintSql(expression: ComputedColumnConstraint): String {
+        val inner = (expression.thisArg as? Expression)?.unnest()
+        return "AS (${sql(inner)})"
+    }
+
+    // `AUTO_INCREMENT[(start)]` — parsed as GeneratedAsIdentity(this = false, start) by the
+    // base; Doris' only form is AUTO_INCREMENT with an optional start value.
+    override fun generatedasidentitycolumnconstraintSql(expression: GeneratedAsIdentityColumnConstraint): String {
+        if (expression.args["this"] == false && expression.args["increment"] == null) {
+            val start = sql(expression, "start")
+            return if (start.isEmpty()) "AUTO_INCREMENT" else "AUTO_INCREMENT($start)"
+        }
+        return super.generatedasidentitycolumnconstraintSql(expression)
+    }
+
+    // DEFAULT / ON UPDATE accept only a fixed literal set in Doris: BITMAP_EMPTY |
+    // CURRENT_DATE | CURRENT_TIMESTAMP[(n)] | E | NULL | PI | literal. The Doris TRANSFORMS
+    // otherwise render CurrentTimestamp as NOW() and CurrentDate as CURRENT_DATE(), which the
+    // FE rejects in this position.
+    internal fun defaultValueSql(value: kotlin.Any?): String = when (value) {
+        is CurrentTimestamp -> {
+            val precision = sql(value, "this")
+            if (precision.isEmpty()) "CURRENT_TIMESTAMP" else "CURRENT_TIMESTAMP($precision)"
+        }
+        is CurrentDate -> "CURRENT_DATE"
+        // Doris drops CURRENT_DATE from NO_PAREN_FUNCTIONS (sqlglot parity), so a bare
+        // CURRENT_DATE parses as a Column; in DEFAULT position it is the keyword.
+        is Column -> if (value.table.isEmpty() && value.name.uppercase() == "CURRENT_DATE") "CURRENT_DATE" else sql(value)
+        else -> sql(value)
     }
 
     // ------------------------------------------------------------------
@@ -572,6 +623,50 @@ open class DorisGenerator(
 
     open fun dorisreplacewithSql(expression: DorisReplaceWith): String =
         "REPLACE WITH ${expression.text("kind")} ${sql(expression, "this")}${propertiesClause(expression)}"
+
+    open fun dorisaddcolumnSql(expression: DorisAddColumn): String {
+        val toIndex = sql(expression, "to_index").let { if (it.isEmpty()) "" else " TO $it" }
+        return "ADD COLUMN ${sql(expression, "this")}$toIndex${propertiesClause(expression)}"
+    }
+
+    open fun dorisrecoverSql(expression: DorisRecover): String {
+        val id = sql(expression, "id").let { if (it.isEmpty()) "" else " $it" }
+        val to = sql(expression, "to").let { if (it.isEmpty()) "" else " AS $it" }
+        val from = sql(expression, "from").let { if (it.isEmpty()) "" else " FROM $it" }
+        return "RECOVER ${expression.text("kind")} ${sql(expression, "this")}$id$to$from"
+    }
+
+    open fun dorisbuildindexSql(expression: DorisBuildIndex): String {
+        val partitions = expressions(expression, key = "partitions", flat = true)
+            .let { if (it.isEmpty()) "" else " PARTITIONS ($it)" }
+        return "BUILD INDEX ${sql(expression, "this")} ON ${sql(expression, "table")}$partitions"
+    }
+
+    // SHOW CREATE MATERIALIZED VIEW [db.]mv [ON t] | SHOW [TEMPORARY] PARTITIONS FROM [db.]t |
+    // SHOW DATA [FROM [db.]t] | SHOW CREATE <kind> db.t — MySQL's renderer emits the db as a
+    // trailing `FROM db` (rejected by the FE for SHOW CREATE) and PARTITIONS with ON.
+    override fun showSql(expression: Show): String {
+        val name = expression.name
+        val db = sql(expression, "db")
+        val target = sql(expression, "target").let { if (db.isEmpty()) it else "$db.$it" }
+        return when {
+            name == "CREATE MATERIALIZED VIEW" -> {
+                val on = sql(expression, "for_table").let { if (it.isEmpty()) "" else " ON $it" }
+                "SHOW CREATE MATERIALIZED VIEW $target$on"
+            }
+            name == "PARTITIONS" || name == "TEMPORARY PARTITIONS" || name == "DATA" -> {
+                val from = if (target.isEmpty()) "" else " FROM $target"
+                "SHOW $name$from${sql(expression, "where")}${oldstyleLimitSql(expression)}"
+            }
+            name.startsWith("CREATE") && db.isNotEmpty() -> {
+                val bare = expression.copy() as Show
+                bare.set("db", null)
+                bare.set("target", Table(args("this" to expression.args["target"], "db" to expression.args["db"])))
+                super.showSql(bare)
+            }
+            else -> super.showSql(expression)
+        }
+    }
 
     // Doris RENAME COLUMN takes no TO (the FE rejects `RENAME COLUMN a TO b`).
     override fun renamecolumnSql(expression: RenameColumn): String {
@@ -992,6 +1087,9 @@ open class DorisGenerator(
             reg(IndexPropertiesOption::class) { e -> "PROPERTIES (${expressions(e, flat = true)})" }
             reg(DorisRollupIndex::class) { e -> dg().dorisrollupindexSql(e as DorisRollupIndex) }
             reg(DorisRefresh::class) { e -> dg().dorisrefreshSql(e as DorisRefresh) }
+            // group B: DEFAULT / ON UPDATE keep CURRENT_TIMESTAMP[(n)] / CURRENT_DATE spelling
+            reg(DefaultColumnConstraint::class) { e -> "DEFAULT ${dg().defaultValueSql(e.thisArg)}" }
+            reg(OnUpdateColumnConstraint::class) { e -> "ON UPDATE ${dg().defaultValueSql(e.thisArg)}" }
             reg(DorisIndexParameters::class) { e -> dg().dorisindexparametersSql(e as DorisIndexParameters) }
             reg(DorisAddPartition::class) { e -> dg().dorisaddpartitionSql(e as DorisAddPartition) }
             reg(DorisDropPartition::class) { e -> dg().dorisdroppartitionSql(e as DorisDropPartition) }
@@ -1000,6 +1098,24 @@ open class DorisGenerator(
             reg(DorisRename::class) { e -> dg().dorisrenameSql(e as DorisRename) }
             reg(DorisReplaceWith::class) { e -> dg().dorisreplacewithSql(e as DorisReplaceWith) }
             reg(DorisAddRollup::class) { e -> "ADD ROLLUP ${expressions(e, flat = true)}" }
+            reg(DorisAddColumn::class) { e -> dg().dorisaddcolumnSql(e as DorisAddColumn) }
+            reg(DorisAlterOrderBy::class) { e ->
+                val from = sql(e, "from_index").let { if (it.isEmpty()) "" else " FROM $it" }
+                "ORDER BY (${expressions(e, flat = true)})$from"
+            }
+            reg(DorisEnableFeature::class) { e ->
+                val props = (e.args["properties"] as? Properties)?.let { " WITH ${properties(it, prefix = "PROPERTIES")}" } ?: ""
+                "ENABLE FEATURE ${sql(e, "this")}$props"
+            }
+            reg(DorisModifyDistribution::class) { e -> "MODIFY DISTRIBUTION ${sql(e, "this")}" }
+            reg(DorisModifyEngine::class) { e -> "MODIFY ENGINE TO ${sql(e, "this")}${dg().propertiesClause(e)}" }
+            reg(DorisModifyComment::class) { e -> "MODIFY COMMENT ${sql(e, "this")}" }
+            reg(DorisBuildIndex::class) { e -> dg().dorisbuildindexSql(e as DorisBuildIndex) }
+            reg(DorisMaterializedViewJob::class) { e -> "${e.text("kind")} MATERIALIZED VIEW JOB ON ${sql(e, "this")}" }
+            reg(DorisCancelMaterializedViewTask::class) { e ->
+                "CANCEL MATERIALIZED VIEW TASK ${sql(e, "this")} ON ${sql(e, "table")}"
+            }
+            reg(DorisRecover::class) { e -> dg().dorisrecoverSql(e as DorisRecover) }
         }
 
         // sqlglot: DorisGenerator.RESERVED_KEYWORDS

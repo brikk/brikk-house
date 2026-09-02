@@ -1194,6 +1194,12 @@ open class Parser(
     fun parseIntoIdentifier(rawTokens: List<Token>, sql: String): Expression? =
         parseInternal({ it.parseIdVar() }, rawTokens, sql).firstOrNull()
 
+    // brikk-native (no sqlglot counterpart): run an arbitrary parse method over a token
+    // list on this parser. Used by DorisParser.parseCommand to re-tokenize the STRING
+    // remainder of a COMMAND statement (BUILD INDEX ..., RECOVER ...) into a structured node.
+    fun parseIntoWith(rawTokens: List<Token>, sql: String, parseMethod: (Parser) -> Expression?): Expression? =
+        parseInternal(parseMethod, rawTokens, sql).firstOrNull()
+
     // sqlglot: Parser._parse
     private fun parseInternal(
         parseMethod: (Parser) -> Expression?,
@@ -1733,7 +1739,8 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_command
-    fun parseCommand(): Expression {
+    // (open for DorisParser: BUILD INDEX / PAUSE|RESUME|CANCEL MV / RECOVER, docs/brikk-extensions.md #19)
+    open fun parseCommand(): Expression {
         warnUnsupported()
         val comments = prevComments
         return expression(

@@ -26,61 +26,37 @@ and `./kotlin test -m brikk-sql-verify --include-classes='dev.brikk.house.sql.ve
 
 All done, including the two edge cases (see "Done").
 
-## B. Parses, but the generator renders invalid Doris (matters once we emit DDL)
+## B. Parses, but the generator renders invalid Doris
 
-All FE-parser verified rejections:
+All done except:
 
-- [ ] `k INT KEY` -> `k INT PRIMARY KEY` (MySQL inheritance). Doris wants bare `KEY`.
-- [ ] `STRUCT<x:INT>` -> `STRUCT<x INT>`. Doris requires the colon.
-- [ ] `DEFAULT CURRENT_TIMESTAMP[(n)]` -> `DEFAULT NOW()`. Doris only allows
-      `BITMAP_EMPTY | CURRENT_DATE | CURRENT_TIMESTAMP[(n)] | E | NULL | PI | literal`.
-      Also `ON UPDATE CURRENT_TIMESTAMP`.
-- [ ] `b INT AS (a + 1)` -> `GENERATED ALWAYS AS (..) VIRTUAL`. Doris rejects `VIRTUAL`
-      (and `GENERATED ALWAYS`); render `AS (expr)`.
-- [ ] `AUTO_INCREMENT(100)` start value is dropped.
-- [ ] `SHOW CREATE TABLE db.t` -> `SHOW CREATE TABLE t FROM db` (FE rejects; keep the
-      dotted name).
-- [ ] `ALTER TABLE t SET ("k" = "v")` renders without parens (FE rejects) and the
-      re-parse flips to `SET PROPERTIES (..)` — unstable.
 - [ ] `BUCKETS AUTO` is dropped (absent = AUTO, so harmless; low priority).
 
 ## C. Statement-level DDL
 
-### C1. Hard parse failures (not even `Command`)
+Table-level DDL and the operational statements are all structured now (see "Done").
 
-All done (structured nodes or `Command` degradation; see "Done").
+Deliberately left as opaque `Command` (cluster administration, no consumer in the
+pipeline runtime; revisit if one appears):
 
-### C2. Mis-parses (wrong AST, no error)
+- `CREATE | DROP | ALTER CATALOG`, `ALTER DATABASE .. SET PROPERTIES | SET DATA QUOTA`.
+- `CREATE WORKLOAD GROUP`, `CREATE RESOURCE`, `CREATE STORAGE POLICY`, `CREATE ENCRYPTKEY`,
+  `CREATE [ALIAS] FUNCTION`, `CREATE JOB .. ON SCHEDULE .. DO ..`.
 
-- [x] `ALTER TABLE t MODIFY PARTITION (p1, p2) SET (..)` -> now `DorisModifyPartition`.
-- [ ] `ALTER TABLE t ADD COLUMN c INT TO r1` -> `ADD COLUMN c INT NULL, TO r1` (rollup
-      target dropped into a bogus second action).
-
-### C3. Opaque `Command` (text preserved, no structure)
-
-Operationally relevant first:
-
-- [x] `CREATE INDEX ...` — structured (`DorisIndexParameters`).
-- [x] `ALTER MATERIALIZED VIEW ...` — structured.
-- [x] `ALTER TABLE .. ADD | DROP | REPLACE | MODIFY PARTITION`, `RENAME COLUMN | PARTITION | ROLLUP`,
-      `ADD ROLLUP`, `REPLACE WITH TABLE` — structured.
-- [ ] `ALTER TABLE t ADD COLUMN (c1 INT, c2 STRING)` multi-column form.
-- [ ] `ALTER TABLE t ORDER BY (cols) [FROM rollup]`, `ENABLE FEATURE "..."`,
-      `MODIFY DISTRIBUTION DISTRIBUTED BY ..`, `MODIFY ENGINE TO ..`, `MODIFY COMMENT '..'`.
-- [ ] `CREATE MATERIALIZED VIEW mv AS SELECT .. PROPERTIES (..)` (sync MV with trailing
-      PROPERTIES).
-- [ ] `SHOW CREATE MATERIALIZED VIEW mv`, `SHOW PARTITIONS FROM t`, `SHOW DATA FROM t`.
-- [ ] `PAUSE | RESUME MATERIALIZED VIEW JOB ON mv`, `CANCEL MATERIALIZED VIEW TASK n ON mv`,
-      `BUILD INDEX idx ON t [PARTITIONS (..)]`, `RECOVER TABLE | PARTITION | DATABASE` —
-      degrade to `Command` now; structured nodes if a runtime needs to inspect them.
-
-Lower priority (cluster administration, not table DDL):
-
-- [ ] `CREATE | DROP | ALTER CATALOG`, `ALTER DATABASE .. SET PROPERTIES | SET DATA QUOTA`.
-- [ ] `CREATE WORKLOAD GROUP`, `CREATE RESOURCE`, `CREATE STORAGE POLICY`,
-      `CREATE ENCRYPTKEY`, `CREATE [ALIAS] FUNCTION`, `CREATE JOB .. ON SCHEDULE .. DO ..`.
+Not a bug (checked against the FE grammar): a sync materialized view takes `PROPERTIES`
+*before* `AS SELECT`, which sqlglot already parses; the trailing form is rejected by the FE.
 
 ## Done
+
+- Sep 2026 (rest): group B renderings (`KEY`, `STRUCT<x:INT>`, `DEFAULT CURRENT_TIMESTAMP[(n)]`
+  / `ON UPDATE` / `CURRENT_DATE`, `AS (expr)`, `AUTO_INCREMENT(n)`, `SHOW CREATE .. db.t`,
+  `ALTER .. SET (..)`); C2 `ADD COLUMN .. TO rollup`; C3 `ADD COLUMN (..)`, `ORDER BY ..
+  [FROM]`, `ENABLE FEATURE`, `MODIFY DISTRIBUTION | ENGINE | COMMENT`, `SHOW CREATE
+  MATERIALIZED VIEW [ON t]`, `SHOW [TEMPORARY] PARTITIONS`, `SHOW DATA`; `BUILD INDEX`,
+  `PAUSE | RESUME MATERIALIZED VIEW JOB`, `CANCEL MATERIALIZED VIEW TASK`, `RECOVER ..` as
+  structured nodes (COMMAND body re-parse). Tests: `DorisDialectTest`
+  `{commandWordStatementsParseStructurally, remainingAlterTableActions, dorisShowStatements,
+  columnDefinitionRenderingsAreDorisNotMysql}`, `SqlVerifierTest.dorisAcceptsBrikkDdlRenderings`.
 
 - Sep 2026 (statements): `REFRESH MATERIALIZED VIEW | CATALOG | DATABASE` (`DorisRefresh`),
   `CREATE INDEX .. USING .. PROPERTIES .. COMMENT` (`DorisIndexParameters`), `DROP INDEX ..

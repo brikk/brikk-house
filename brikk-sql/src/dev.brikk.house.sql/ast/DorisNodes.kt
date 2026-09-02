@@ -205,6 +205,107 @@ class DorisAddRollup(initArgs: Args = emptyMap()) : Expression(initArgs) {
     }
 }
 
+/**
+ * `ALTER TABLE t ADD COLUMN col_def | (col_def, ...) [TO rollup] [PROPERTIES (...)]` when the
+ * rollup target / properties are present, or for the parenthesized multi-column form.
+ * `this` is a [ColumnDef] or a [Schema] of them. A plain `ADD COLUMN c INT` stays a
+ * bare [ColumnDef] action, as in sqlglot.
+ */
+class DorisAddColumn(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "to_index" to false, "properties" to false)
+    }
+}
+
+/** `ALTER TABLE t ORDER BY (cols) [FROM rollup]` — reorder the columns of a table or rollup. */
+class DorisAlterOrderBy(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("expressions" to true, "from_index" to false)
+    }
+}
+
+/** `ALTER TABLE t ENABLE FEATURE "name" [WITH PROPERTIES (...)]`. `this` is the string literal. */
+class DorisEnableFeature(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "properties" to false)
+    }
+}
+
+/** `ALTER TABLE t MODIFY DISTRIBUTION DISTRIBUTED BY ...` — `this` is the [DistributedByProperty]. */
+class DorisModifyDistribution(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true)
+    }
+}
+
+/** `ALTER TABLE t MODIFY ENGINE TO engine [PROPERTIES (...)]`. */
+class DorisModifyEngine(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "properties" to false)
+    }
+}
+
+/** `ALTER TABLE t MODIFY COMMENT '...'`. */
+class DorisModifyComment(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true)
+    }
+}
+
+/** `BUILD INDEX idx ON [db.]t [PARTITIONS (p, ...)]`. */
+class DorisBuildIndex(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "table" to true, "partitions" to false)
+    }
+}
+
+/** `PAUSE | RESUME MATERIALIZED VIEW JOB ON [db.]mv` (`kind` is PAUSE or RESUME). */
+class DorisMaterializedViewJob(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("kind" to true, "this" to true)
+    }
+}
+
+/** `CANCEL MATERIALIZED VIEW TASK task_id ON [db.]mv` — `this` is the task id literal. */
+class DorisCancelMaterializedViewTask(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "table" to true)
+    }
+}
+
+/**
+ * `RECOVER TABLE [db.]t [id] [AS new]`, `RECOVER DATABASE db [id] [AS new]`,
+ * `RECOVER PARTITION p [id] [AS new] FROM [db.]t`. `kind` is the keyword text; `id` the
+ * optional numeric id literal; `to` the new name; `from` the owning table (PARTITION only).
+ */
+class DorisRecover(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf(
+            "kind" to true, "this" to true, "id" to false, "to" to false, "from" to false,
+        )
+    }
+}
+
 internal fun registerNativeDorisNodes(
     entries: kotlin.collections.MutableMap<String, ExpressionRegistry.Entry>,
 ) {
@@ -224,4 +325,14 @@ internal fun registerNativeDorisNodes(
     entries["DorisRename"] = ExpressionRegistry.Entry(module) { DorisRename() }
     entries["DorisReplaceWith"] = ExpressionRegistry.Entry(module) { DorisReplaceWith() }
     entries["DorisAddRollup"] = ExpressionRegistry.Entry(module) { DorisAddRollup() }
+    entries["DorisAddColumn"] = ExpressionRegistry.Entry(module) { DorisAddColumn() }
+    entries["DorisAlterOrderBy"] = ExpressionRegistry.Entry(module) { DorisAlterOrderBy() }
+    entries["DorisEnableFeature"] = ExpressionRegistry.Entry(module) { DorisEnableFeature() }
+    entries["DorisModifyDistribution"] = ExpressionRegistry.Entry(module) { DorisModifyDistribution() }
+    entries["DorisModifyEngine"] = ExpressionRegistry.Entry(module) { DorisModifyEngine() }
+    entries["DorisModifyComment"] = ExpressionRegistry.Entry(module) { DorisModifyComment() }
+    entries["DorisBuildIndex"] = ExpressionRegistry.Entry(module) { DorisBuildIndex() }
+    entries["DorisMaterializedViewJob"] = ExpressionRegistry.Entry(module) { DorisMaterializedViewJob() }
+    entries["DorisCancelMaterializedViewTask"] = ExpressionRegistry.Entry(module) { DorisCancelMaterializedViewTask() }
+    entries["DorisRecover"] = ExpressionRegistry.Entry(module) { DorisRecover() }
 }
