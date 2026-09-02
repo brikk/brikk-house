@@ -29,7 +29,7 @@ class BrikkSqlCompilerPluginRegistrar : CompilerPluginRegistrar() {
         val messageCollector = configuration.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
         val options = BrikkSqlOptions.from(configuration)
 
-        FirExtensionRegistrarAdapter.registerExtension(BrikkSqlFirExtensionRegistrar())
+        FirExtensionRegistrarAdapter.registerExtension(BrikkSqlFirExtensionRegistrar(options))
         IrGenerationExtension.registerExtension(BrikkSqlIrGenerationExtension(messageCollector, options))
     }
 }

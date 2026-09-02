@@ -4,15 +4,17 @@ import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers.TO_STRING
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticsContainer
 import org.jetbrains.kotlin.diagnostics.error1
+import org.jetbrains.kotlin.diagnostics.error2
+import org.jetbrains.kotlin.diagnostics.warning1
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
- * Frontend diagnostics for brikk-sql call sites.
+ * Frontend diagnostics for brikk-sql.
  *
  * Note: arbitrary sub-literal ranges (pointing *inside* the SQL string) are possible via a
- * custom `SourceElementPositioningStrategy` returning explicit `TextRange`s — deferred until
- * the brikk-sql parser is hooked in and can report SQL error offsets.
+ * custom `SourceElementPositioningStrategy` returning explicit `TextRange`s — not done yet;
+ * diagnostics anchor on the whole literal.
  */
 object BrikkSqlDiagnostics : KtDiagnosticsContainer() {
     /** SQL argument was not a compile-time constant string. Arg: callee name. */
@@ -20,6 +22,18 @@ object BrikkSqlDiagnostics : KtDiagnosticsContainer() {
 
     /** SQL argument was constant but blank. Arg: callee name. */
     val SQL_EMPTY by error1<KtElement, String>()
+
+    /** `Sql.<dialect>(...)` used outside a `@BrikkSql` function body. Arg: callee name. */
+    val SQL_OUTSIDE_BRIKK_FUNCTION by error1<KtElement, String>()
+
+    /** brikk-sql could not analyze the function's SQL. Arg: message. */
+    val SQL_ANALYSIS_FAILED by error1<KtElement, String>()
+
+    /** A `:name` placeholder has no matching parameter. Args: name, declared parameters. */
+    val SQL_UNBOUND_PARAM by error2<KtElement, String, String>()
+
+    /** Debug-only: analysis summary of a `@BrikkSql` function (`debug=true`). */
+    val SQL_DEBUG by warning1<KtElement, String>()
 
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = Renderers
 
@@ -32,6 +46,18 @@ object BrikkSqlDiagnostics : KtDiagnosticsContainer() {
                 TO_STRING,
             )
             it.put(SQL_EMPTY, "[BRIKK_SQL] argument to ''{0}'' is blank", TO_STRING)
+            it.put(
+                SQL_OUTSIDE_BRIKK_FUNCTION,
+                "[BRIKK_SQL] ''{0}'' must be the body of a function annotated @BrikkSql",
+                TO_STRING,
+            )
+            it.put(SQL_ANALYSIS_FAILED, "[BRIKK_SQL] {0}", TO_STRING)
+            it.put(SQL_DEBUG, "[BRIKK_SQL_DEBUG] {0}", TO_STRING)
+            it.put(
+                SQL_UNBOUND_PARAM,
+                "[BRIKK_SQL] placeholder '':{0}'' does not match any parameter (declared: {1})",
+                TO_STRING, TO_STRING,
+            )
         }
     }
 }

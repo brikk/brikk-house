@@ -177,7 +177,12 @@ class SqlFragment(val sql: String, val dialect: String = "") {
             schema = schema,
             validateQualifyColumns = false,
         )
-        val annotated = annotateTypes(qualified, schema = schema, dialect = dialectObj)
+        val annotated = annotateTypes(
+            qualified,
+            schema = schema,
+            dialect = dialectObj,
+            expressionMetadata = dialectObj.expressionMetadata + SHAPE_LAYER_TYPING,
+        )
         val selects = outermostSelect(annotated).selects.filterIsInstance<Expression>()
         return Shape(
             selects.map { sel ->
@@ -321,13 +326,38 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      */
     private fun buildSchema(inputs: ShapeCatalog): MappingSchema {
         val mapping = LinkedHashMap<String, Any?>()
+        var depth = 1
         for ((tableName, shape) in inputs.tables) {
-            nestedSet(mapping, tableName.split("."), shape.toSchemaMapping())
+            val parts = tableName.split(".")
+            depth = maxOf(depth, parts.size)
+            nestedSet(mapping, parts, shape.toSchemaMapping())
         }
+        // Slots are referenced unqualified; nest them under synthetic qualifiers so every
+        // entry shares the catalog's depth (MappingSchema constraint). Unqualified lookups
+        // still resolve through the trie's unique-suffix match.
+        val slotPrefix = List(depth - 1) { SLOT_QUALIFIER }
         for ((slotName, shape) in inputs.slots) {
-            nestedSet(mapping, listOf(slotName), shape.toSchemaMapping())
+            nestedSet(mapping, slotPrefix + slotName, shape.toSchemaMapping())
         }
         return MappingSchema(schema = mapping, dialect = dialectObj)
+    }
+
+    private companion object {
+        /** Synthetic db/catalog name under which slots are nested when tables are qualified. */
+        const val SLOT_QUALIFIER = "__slots"
+
+        /**
+         * BRIKK-NATIVE typing overrides applied only when computing shapes. The sqlglot-faithful
+         * annotator leaves scalar JSON extraction (`->>`, `#>>`, `JSON_VALUE`) as a generic
+         * binary (UNKNOWN); its SQL semantics fix it to text in every dialect we target. Kept
+         * out of the dialect typing tables so annotator parity with sqlglot stays intact.
+         */
+        val SHAPE_LAYER_TYPING: Map<kotlin.reflect.KClass<out Expression>, dev.brikk.house.sql.ast.TypingSpec> = mapOf(
+            dev.brikk.house.sql.ast.JSONExtractScalar::class to
+                dev.brikk.house.sql.ast.TypingSpec.Returns(dev.brikk.house.sql.ast.DType.TEXT),
+            dev.brikk.house.sql.ast.JSONBExtractScalar::class to
+                dev.brikk.house.sql.ast.TypingSpec.Returns(dev.brikk.house.sql.ast.DType.TEXT),
+        )
     }
 
     /** The SELECT whose projections name the output (left-most branch for set ops). */

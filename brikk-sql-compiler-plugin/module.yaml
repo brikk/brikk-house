@@ -5,12 +5,18 @@ dependencies:
   # compilation in-process via the Build Tools API (embeddable), so the plugin
   # jar must be embeddable-compatible.
   - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0: compile-only
+  # The SQL brain: parse/qualify/annotate the literals at compile time. For a distributable
+  # plugin jar this must be shaded+relocated (KEFS requirement); in-repo we rely on the
+  # module classpath (kctfork tests) and explicit -Xplugin entries (smoke module).
+  - ../brikk-sql
 
 test-dependencies:
   # kctfork = maintained fork of kotlin-compile-testing (0.13.0 is built for Kotlin 2.4.0).
   # In-process compilation with in-memory plugin registrar registration.
   - dev.zacsweers.kctfork:core:0.13.0
   - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0
+  # User-facing runtime types (Rel/Shape/Partial/Sql) on the test compilation classpath.
+  - ../brikk-sql-runtime
 
 settings:
   kotlin:
@@ -20,3 +26,6 @@ settings:
     optIns:
       - org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
       - org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
+      - org.jetbrains.kotlin.fir.extensions.FirExtensionApiInternals
+      - org.jetbrains.kotlin.fir.symbols.SymbolInternals
+      - org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess

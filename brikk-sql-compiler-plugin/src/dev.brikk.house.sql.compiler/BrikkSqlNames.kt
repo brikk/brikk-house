@@ -1,18 +1,45 @@
 package dev.brikk.house.sql.compiler
 
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 
 /**
- * Central place for the (placeholder) source-level contract between the plugin and user code.
- *
- * The real surface syntax (Sql.doris(...), traits, TVF composition) is still being designed;
- * for now the plugin intercepts calls to any function annotated with [BRIKK_SQL_ANNOTATION].
+ * The source-level contract between the plugin and user code. Mirrors the declarations in
+ * the `brikk-sql-runtime` module (package `dev.brikk.house.sql.runtime`); the plugin refers
+ * to them by name only.
  */
 object BrikkSqlNames {
     const val PLUGIN_ID: String = "dev.brikk.house.sql.compiler"
 
-    /** Marker annotation on the callee function (e.g. `Sql.doris`). Placeholder contract. */
-    val BRIKK_SQL_ANNOTATION: FqName = FqName("dev.brikk.house.sql.BrikkSql")
+    val RUNTIME_PACKAGE: FqName = FqName("dev.brikk.house.sql.runtime")
+
+    /** `@BrikkSql` on a user function whose body is one `Sql.<dialect>("...")` literal. */
+    val BRIKK_SQL_ANNOTATION: FqName = RUNTIME_PACKAGE.child(Name.identifier("BrikkSql"))
     val BRIKK_SQL_ANNOTATION_CLASS_ID: ClassId = ClassId.topLevel(BRIKK_SQL_ANNOTATION)
+
+    /** `@BrikkTrait` on a user `Partial` interface. */
+    val BRIKK_TRAIT_ANNOTATION: FqName = RUNTIME_PACKAGE.child(Name.identifier("BrikkTrait"))
+    val BRIKK_TRAIT_ANNOTATION_CLASS_ID: ClassId = ClassId.topLevel(BRIKK_TRAIT_ANNOTATION)
+
+    /** `@BrikkSqlDialect("<dialect>")` on the `Sql.<dialect>` entry points. */
+    val BRIKK_SQL_DIALECT_ANNOTATION: FqName = RUNTIME_PACKAGE.child(Name.identifier("BrikkSqlDialect"))
+    val BRIKK_SQL_DIALECT_ANNOTATION_CLASS_ID: ClassId = ClassId.topLevel(BRIKK_SQL_DIALECT_ANNOTATION)
+
+    val REL_CLASS_ID: ClassId = ClassId(RUNTIME_PACKAGE, Name.identifier("Rel"))
+    val SHAPE_CLASS_ID: ClassId = ClassId(RUNTIME_PACKAGE, Name.identifier("Shape"))
+    val PARTIAL_CLASS_ID: ClassId = ClassId(RUNTIME_PACKAGE, Name.identifier("Partial"))
+    val SQL_OBJECT_CLASS_ID: ClassId = ClassId(RUNTIME_PACKAGE, Name.identifier("Sql"))
+
+    val REL_INPUT: CallableId = CallableId(REL_CLASS_ID, Name.identifier("input"))
+    val REL_BIND: CallableId = CallableId(REL_CLASS_ID, Name.identifier("bind"))
+
+    /** Slot name of the implicit pipe source (first `Rel` parameter of a headless pipe). */
+    const val SOURCE_SLOT: String = "__src"
+    const val SOURCE_PREFIX: String = "FROM $SOURCE_SLOT() "
+
+    /** Generated output shape class for `fun eventsInRange(...)` is `EventsInRangeOut`. */
+    fun outputClassName(functionName: Name): Name =
+        Name.identifier(functionName.asString().replaceFirstChar { it.uppercase() } + "Out")
 }

@@ -43,3 +43,11 @@ The pipe-syntax (`|>`) operator semantics implemented in `brikk-sql` (first-clas
 [GoogleSQL pipe query syntax](https://cloud.google.com/bigquery/docs/reference/standard-sql/pipe-syntax)
 specification published by Google (Apache 2.0-licensed documentation in the
 googlesql/ZetaSQL project). No code from ZetaSQL is included.
+
+## Kotlin External FIR Support (KEFS) — vendored docs
+
+`docs/vendor/kefs/` contains `PLUGIN_AUTHORS.md`, `GUIDE.md`, and `LICENSE` copied verbatim
+from [Mr3zee/kotlin-external-fir-support](https://github.com/Mr3zee/kotlin-external-fir-support)
+at commit `845fff740475111459d90ae85065d9f5d01cf352` (2026-08-17), Apache License 2.0.
+Kept in-repo as the reference for how the brikk-sql compiler plugin must be versioned and
+published so the IDE can load it. No KEFS code is included.
