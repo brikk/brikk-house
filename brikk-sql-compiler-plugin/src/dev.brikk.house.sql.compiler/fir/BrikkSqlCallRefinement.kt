@@ -4,7 +4,7 @@ import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.analysis.FunctionAnalysis
 import dev.brikk.house.sql.compiler.analysis.KType
 import dev.brikk.house.sql.compiler.analysis.ShapeColumn
-import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
+import dev.brikk.house.sql.compiler.analysis.PluginGuard
 import dev.brikk.house.sql.compiler.analysis.TypeMap
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.KtSourceElementOffsetStrategy
@@ -105,8 +105,8 @@ class BrikkSqlCallRefinement(session: FirSession) : FirFunctionCallRefinementExt
                 interceptGenericPipe(callInfo, symbol)
             else -> null
         }
-    } catch (e: Exception) {
-        rethrowIfCancellation(e)
+    } catch (e: Throwable) {
+        PluginGuard.recoverable(e, "intercept(${symbol.name})")
         null
     }
 
@@ -120,26 +120,35 @@ class BrikkSqlCallRefinement(session: FirSession) : FirFunctionCallRefinementExt
     }
 
     private fun interceptGenericPipe(callInfo: CallInfo, symbol: FirNamedFunctionSymbol): CallReturnType? {
-        val analysis = brikk.analysisOfFunction(symbol) ?: return null
-        if (analysis.error != null) return null
+        val fn = symbol.name.asString()
+        fun giveUp(why: String): CallReturnType? {
+            PluginGuard.note("generic pipe '$fn' not refined: $why") { "call keeps its declared type" }
+            return null
+        }
+        val analysis = brikk.analysisOfFunction(symbol) ?: return giveUp("not a known @BrikkSql function (predicate index empty?)")
+        if (analysis.error != null) return giveUp("analysis error: ${analysis.error}")
 
         // Concrete input columns from the argument types, positionally matched to Rel parameters.
         val paramNames = symbol.valueParameterSymbols.map { it.name.asString() }
         val inputs = LinkedHashMap<String, List<ShapeColumn>>()
         for (rp in analysis.relParams) {
             val index = paramNames.indexOf(rp.name)
-            val arg = callInfo.arguments.getOrNull(index) ?: return null
-            val argType = arg.resolvedType as? ConeClassLikeType ?: return null
-            if (argType.classId != BrikkSqlNames.REL_CLASS_ID) return null
-            val shapeType = argType.typeArguments.firstOrNull()?.type as? ConeClassLikeType ?: return null
-            val shapeSymbol = shapeType.toRegularClassSymbol(session) ?: return null
-            inputs[rp.slot] = columnsOfShapeClass(shapeSymbol) ?: return null
+            val arg = callInfo.arguments.getOrNull(index) ?: return giveUp("no argument for '${rp.name}'")
+            val argType = arg.resolvedType as? ConeClassLikeType
+                ?: return giveUp("argument '${rp.name}' has no resolved class type (${arg.resolvedType})")
+            if (argType.classId != BrikkSqlNames.REL_CLASS_ID) return giveUp("argument '${rp.name}' is ${argType.classId}, not Rel")
+            val shapeType = argType.typeArguments.firstOrNull()?.type as? ConeClassLikeType
+                ?: return giveUp("argument '${rp.name}' Rel type argument is not a class type")
+            val shapeSymbol = shapeType.toRegularClassSymbol(session)
+                ?: return giveUp("argument '${rp.name}' shape ${shapeType.classId} has no class symbol")
+            inputs[rp.slot] = columnsOfShapeClass(shapeSymbol)
+                ?: return giveUp("no columns known for argument '${rp.name}' shape ${shapeSymbol.classId}")
         }
 
         val output = try {
             brikk.analyzer.applyTo(analysis, inputs)
         } catch (e: Exception) {
-            return null
+            return giveUp("applying to call-site inputs failed: ${e.message}")
         }
         val local = buildLocalShapeClass(output, analysis, callInfo.callSite.source)
         val localType = ConeClassLikeTypeImpl(

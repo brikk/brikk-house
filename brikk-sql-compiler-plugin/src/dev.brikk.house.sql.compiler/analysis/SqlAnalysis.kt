@@ -22,7 +22,10 @@ fun Shape.toColumns(): List<ShapeColumn> = columns.map { ShapeColumn.from(it) }
 /** A `@BrikkTrait` interface: its ClassId and the columns it requires (own + inherited). */
 data class TraitInfo(val classId: ClassId, val columns: List<ShapeColumn>)
 
-/** A `Rel<...>`-typed parameter: Kotlin name, slot it feeds, and the raw type-argument name. */
+/**
+ * A `Rel<...>`-typed parameter: Kotlin name, the slot it feeds (always the parameter name; the
+ * SQL references it as `FROM name()` / `JOIN name() ...`), and the raw type-argument name.
+ */
 data class RelParam(val name: String, val slot: String, val typeArgName: String)
 
 /**
@@ -34,11 +37,8 @@ data class FunctionAnalysis(
     val functionName: Name,
     val outClassId: ClassId,
     val dialect: String,
-    /** SQL as written by the user (after trimIndent/trimMargin). */
+    /** SQL as written by the user (after trimIndent/trimMargin). `Rel` inputs appear as slot calls. */
     val sqlText: String,
-    /** SQL as analyzed: headless pipes get the `FROM __src() ` prefix. */
-    val fullSql: String,
-    val headless: Boolean,
     val relParams: List<RelParam>,
     val scalarParams: List<String>,
     /** Type parameter name -> bound short names (raw). */
@@ -55,7 +55,7 @@ data class FunctionAnalysis(
     val error: String? = null,
 ) {
     val isGeneric: Boolean get() = typeParamBounds.isNotEmpty()
-    val fragment: SqlFragment get() = SqlFragment(fullSql, dialect)
+    val fragment: SqlFragment get() = SqlFragment(sqlText, dialect)
 }
 
 /**
@@ -93,15 +93,12 @@ class SqlAnalyzer(
         val relParams = ArrayList<RelParam>()
         val scalarParams = ArrayList<String>()
         val sqlText = raw.sqlText?.trim().orEmpty()
-        val headless = sqlText.startsWith("|>")
-        val fullSql = if (headless) BrikkSqlNames.SOURCE_PREFIX + sqlText else sqlText
         val dialect = raw.dialect ?: "postgres"
 
         init {
             for (p in raw.params) {
                 if (p.typeShortName == "Rel") {
-                    val slot = if (relParams.isEmpty()) BrikkSqlNames.SOURCE_SLOT else p.name
-                    relParams.add(RelParam(p.name, slot, p.typeArgShortName ?: "Partial"))
+                    relParams.add(RelParam(p.name, slot = p.name, p.typeArgShortName ?: "Partial"))
                 } else {
                     scalarParams.add(p.name)
                 }
@@ -113,15 +110,15 @@ class SqlAnalyzer(
     fun failed(raw: RawFunction, message: String): FunctionAnalysis = Signature(raw).failed(raw, message)
 
     private fun Signature.failed(raw: RawFunction, msg: String) = FunctionAnalysis(
-        raw.packageFqName, raw.name, outClassId, dialect, sqlText, fullSql, headless, relParams, scalarParams,
+        raw.packageFqName, raw.name, outClassId, dialect, sqlText, relParams, scalarParams,
         raw.typeParamBounds, emptyMap(), emptyList(), isShape = false, satisfiedTraits = emptyList(), error = msg,
     )
 
     /** Never throws: any failure becomes [FunctionAnalysis.error]. */
     fun analyze(raw: RawFunction): FunctionAnalysis = try {
         analyzeOrThrow(raw)
-    } catch (e: Exception) {
-        rethrowIfCancellation(e)
+    } catch (e: Throwable) {
+        PluginGuard.recoverable(e, "analyze(${raw.name})")
         failed(raw, "internal error analyzing '${raw.name}': $e")
     }
 
@@ -131,8 +128,6 @@ class SqlAnalyzer(
         val relParams = sig.relParams
         val scalarParams = sig.scalarParams
         val sqlText = sig.sqlText
-        val headless = sig.headless
-        val fullSql = sig.fullSql
         val dialect = sig.dialect
         fun failed(msg: String) = sig.failed(raw, msg)
 
@@ -140,8 +135,22 @@ class SqlAnalyzer(
         if (raw.dialect == null || raw.sqlText == null) {
             return failed("body must be a single Sql.<dialect>(\"...\") call with a constant string literal")
         }
-        if (headless && relParams.isEmpty()) {
-            return failed("headless pipe (starts with '|>') needs a Rel<...> parameter as its source")
+
+        // Slots in the SQL <-> Rel parameters, both ways. brikk-sql matches slot names
+        // case-insensitively (SQL function-name semantics), so compare uppercased.
+        val fragment = try {
+            SqlFragment(sqlText, dialect).also { it.tableSlots }
+        } catch (e: Exception) {
+            return failed(e.message ?: e.toString())
+        }
+        val slotsInSql = fragment.tableSlots
+        val slotKeys = slotsInSql.mapTo(HashSet()) { it.uppercase() }
+        val paramKeys = relParams.mapTo(HashSet()) { it.name.uppercase() }
+        for (slot in slotsInSql) {
+            if (slot.uppercase() !in paramKeys) return failed(unknownSlotMessage(slot, relParams))
+        }
+        for (rp in relParams) {
+            if (rp.name.uppercase() !in slotKeys) return failed(unusedRelParamMessage(rp.name, fragment))
         }
 
         // Declared inputs from the signature.
@@ -153,30 +162,46 @@ class SqlAnalyzer(
         }
 
         val output = try {
-            computeOutput(fullSql, dialect, inputs)
+            computeOutput(sqlText, dialect, inputs)
         } catch (e: Exception) {
             return failed(e.message ?: e.toString())
         }
 
         val isGeneric = raw.typeParamBounds.isNotEmpty()
-        val closed = !headless || closesColumnSet(fullSql, dialect)
+        // Closed (a full Shape) iff every source is a catalog table, or a SELECT/AGGREGATE stage
+        // replaces the column set; otherwise the slot inputs' unknown extra columns flow through.
+        val closed = relParams.isEmpty() || closesColumnSet(fragment)
         val isShape = !isGeneric && closed
         return FunctionAnalysis(
-            raw.packageFqName, raw.name, outClassId, dialect, sqlText, fullSql, headless, relParams, scalarParams,
+            raw.packageFqName, raw.name, outClassId, dialect, sqlText, relParams, scalarParams,
             raw.typeParamBounds, inputs, output, isShape, satisfiedTraits(output),
         )
     }
 
-    /** Output columns of [fullSql] when its slots are fed by [inputs]. */
-    fun computeOutput(fullSql: String, dialect: String, inputs: Map<String, List<ShapeColumn>>): List<ShapeColumn> {
-        val fragment = SqlFragment(fullSql, dialect)
+    /** `fun f(src: Rel<..>)` whose SQL never says `FROM src()`. */
+    fun unusedRelParamMessage(name: String, fragment: SqlFragment): String =
+        if (fragment.isKnownFunction(name)) {
+            "parameter '$name' cannot be used as a source: '$name' is a ${fragment.dialect} function, " +
+                "so 'FROM $name()' calls the function. Rename the parameter."
+        } else {
+            "parameter '$name' is never used as a source - write 'FROM $name()' or 'JOIN $name() ON ...'"
+        }
+
+    /** `FROM foo()` with no `Rel` parameter named `foo`. */
+    fun unknownSlotMessage(slot: String, relParams: List<RelParam>): String =
+        "'FROM $slot()' - no Rel parameter named '$slot'" +
+            if (relParams.isEmpty()) "" else " (Rel parameters: ${relParams.joinToString { it.name }})"
+
+    /** Output columns of [sql] when its slots are fed by [inputs]. */
+    fun computeOutput(sql: String, dialect: String, inputs: Map<String, List<ShapeColumn>>): List<ShapeColumn> {
+        val fragment = SqlFragment(sql, dialect)
         val cat = ShapeCatalog(tables = catalog.tables, slots = inputs.mapValues { it.value.toShape() })
         return fragment.outputShape(cat).toColumns()
     }
 
     /** Re-applies [fn] to concrete call-site inputs (generic pipes). */
     fun applyTo(fn: FunctionAnalysis, inputs: Map<String, List<ShapeColumn>>): List<ShapeColumn> =
-        computeOutput(fn.fullSql, fn.dialect, inputs)
+        computeOutput(fn.sqlText, fn.dialect, inputs)
 
     fun satisfiedTraits(output: List<ShapeColumn>): List<ClassId> =
         traitsByShortName.values.filter { satisfies(output, it) }.map { it.classId }
@@ -188,8 +213,8 @@ class SqlAnalyzer(
         }
 
     /** Whether the pipe contains a stage that replaces the column set (SELECT / AGGREGATE). */
-    private fun closesColumnSet(fullSql: String, dialect: String): Boolean {
-        val ops = SqlFragment(fullSql, dialect).describe().stageOperators
+    private fun closesColumnSet(fragment: SqlFragment): Boolean {
+        val ops = fragment.describe().stageOperators
         return ops.any { it == "SELECT" || it == "AGGREGATE" }
     }
 
@@ -222,4 +247,39 @@ fun rethrowIfCancellation(e: Throwable) {
     if (e is InterruptedException || e is java.util.concurrent.CancellationException ||
         e.javaClass.name.endsWith("ProcessCanceledException")
     ) throw e
+}
+
+/**
+ * The plugin's "never throw" boundary. Recoverable = any [Exception] (except cancellation) or a
+ * [LinkageError] - the latter is what running a jar built against one Kotlin version on
+ * another looks like (`NoSuchFieldError`, `NoSuchMethodError`, ...; the KEFS setup does
+ * exactly that). Other errors (OOM, stack overflow, assertion) are rethrown.
+ *
+ * Every suppressed failure is logged once per distinct message to stderr (the IDE routes
+ * that into idea.log; the CLI prints it), so degraded behaviour is visible without turning
+ * back into hundreds of resolve failures.
+ */
+object PluginGuard {
+    private val seen = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    /**
+     * Records a "gave up silently" branch once per distinct [key]. For paths that return `null`
+     * without an exception (no refinement, no generated class) so they can be diagnosed from
+     * the IDE log; the compiler output is unaffected.
+     */
+    fun note(key: String, message: () -> String) {
+        if (seen.add(key)) System.err.println("brikk-sql compiler plugin: $key - ${message()} (reported once)")
+    }
+
+    /** Rethrows what must propagate; returns normally when [e] may be handled. */
+    fun recoverable(e: Throwable, where: String): Boolean {
+        rethrowIfCancellation(e)
+        if (e !is Exception && e !is LinkageError) throw e
+        val key = "$where: $e"
+        if (seen.add(key)) {
+            System.err.println("brikk-sql compiler plugin: suppressed failure in $where (reported once): $e")
+            e.stackTrace.take(6).forEach { System.err.println("    at $it") }
+        }
+        return true
+    }
 }

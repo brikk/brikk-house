@@ -5,7 +5,7 @@ import dev.brikk.house.sql.compiler.BrikkSqlOptions
 import dev.brikk.house.sql.compiler.analysis.FunctionAnalysis
 import dev.brikk.house.sql.compiler.analysis.KType
 import dev.brikk.house.sql.compiler.analysis.RawFunction
-import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
+import dev.brikk.house.sql.compiler.analysis.PluginGuard
 import dev.brikk.house.sql.compiler.analysis.ShapeColumn
 import dev.brikk.house.sql.compiler.analysis.SqlAnalyzer
 import dev.brikk.house.sql.compiler.analysis.TraitInfo
@@ -104,7 +104,9 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
     /** Source file path of the declaration a symbol lives in, if the provider knows it. */
     private fun anchorFileOf(symbol: FirNamedFunctionSymbol): String? = try {
         session.firProvider.getFirCallableContainerFile(symbol)?.sourceFile?.path
+            ?: null.also { PluginGuard.note("no source file for '${symbol.name}'") { "schema path resolves against cwd only" } }
     } catch (e: Exception) {
+        PluginGuard.note("container file lookup failed for '${symbol.name}'") { e.toString() }
         null
     }
 
@@ -177,13 +179,16 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
             val analyzer = analyzerFor(anchorFileOf(symbol))
             val analysis = try {
                 analyzer.analyze(RawFir.rawFunction(symbol.fir as FirNamedFunction))
-            } catch (e: Exception) {
-                rethrowIfCancellation(e)
+            } catch (e: Throwable) {
                 // Reading the raw declaration failed (IDE: partially built FIR). Report, don't throw.
+                PluginGuard.recoverable(e, "analysisOf(${symbol.name})")
                 val stub = RawFunction(symbol.callableId.packageName, symbol.name, null, null, emptyList(), emptyMap())
                 analyzer.failed(stub, "internal error reading '${symbol.name}': $e")
             }
-            return analysis.also { analyses[symbol] = it }
+            // Do not pin an analysis that failed only because the catalog could not be located
+            // yet (analyzer not pinned either); a later caller may supply a usable anchor file.
+            if (analysis.error == null || analyzerCache != null) analyses[symbol] = analysis
+            return analysis
         } finally {
             analyzing.remove(symbol)
         }

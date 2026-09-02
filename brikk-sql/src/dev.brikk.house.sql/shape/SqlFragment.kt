@@ -261,6 +261,13 @@ class SqlFragment(val sql: String, val dialect: String = "") {
     }
 
     /**
+     * Whether [name] is a function of the dialect (case-insensitive). A `FROM name()` whose
+     * name is a real function is never a slot; callers naming slots after parameters can use
+     * this to explain why such a slot is "missing".
+     */
+    fun isKnownFunction(name: String): Boolean = name.uppercase() in knownFunctionNames
+
+    /**
      * Table-valued slot names: unresolved ([Anonymous]) function calls in table
      * position (FROM/JOIN/pipe-head sources) whose names are not known functions of
      * the dialect. Names are reported as written; slot binding matches them
@@ -505,9 +512,16 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * into `Table(this=Identifier(slotName))`, preserving any explicit alias (an
      * unaliased slot is referenced by the slot name itself, exactly like a plain
      * table). Unknown slot bindings raise [ShapeError].
+     *
+     * When the catalog's tables are qualified, the bound reference is qualified with the
+     * same synthetic [SLOT_QUALIFIER] under which [buildSchema] nests the slot, so a slot
+     * named like a catalog table (`FROM events()` next to `public.events`) resolves to the
+     * slot instead of raising an ambiguous-mapping error. Column references still qualify
+     * by the table's own name (`events.user_id`).
      */
     private fun bindSlots(tree: Expression, inputs: ShapeCatalog): Expression {
         if (inputs.slots.isEmpty()) return tree
+        val depth = inputs.tables.keys.maxOfOrNull { it.split(".").size } ?: 1
 
         val available = tableSlots.associateBy { it.uppercase() }
         for (slotName in inputs.slots.keys) {
@@ -526,6 +540,8 @@ class SqlFragment(val sql: String, val dialect: String = "") {
                 val slotKey = fn?.name?.uppercase()?.let { slotsByUpper[it] }
                 if (slotKey != null) {
                     node.set("this", Identifier(args("this" to slotKey, "quoted" to false)))
+                    if (depth >= 2) node.set("db", Identifier(args("this" to SLOT_QUALIFIER, "quoted" to false)))
+                    if (depth >= 3) node.set("catalog", Identifier(args("this" to SLOT_QUALIFIER, "quoted" to false)))
                 }
             }
             node

@@ -2,7 +2,7 @@ package dev.brikk.house.sql.compiler.fir
 
 import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.BrikkSqlOptions
-import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
+import dev.brikk.house.sql.compiler.analysis.PluginGuard
 import dev.brikk.house.sql.compiler.analysis.FunctionAnalysis
 import dev.brikk.house.sql.compiler.analysis.toShape
 import dev.brikk.house.sql.ast.Column
@@ -87,9 +87,9 @@ object BrikkSqlFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common)
         if (!declaration.hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, context.session)) return
         try {
             checkOrThrow(declaration)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Boundary: the checker is the one place a failure can still become a diagnostic.
-            rethrowIfCancellation(e)
+            PluginGuard.recoverable(e, "check(${declaration.name})")
             reporter.reportOn(declaration.source, BrikkSqlDiagnostics.SQL_ANALYSIS_FAILED, "internal error: $e")
         }
     }

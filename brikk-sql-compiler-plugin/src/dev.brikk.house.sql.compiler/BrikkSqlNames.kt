@@ -35,9 +35,6 @@ object BrikkSqlNames {
     val REL_INPUT: CallableId = CallableId(REL_CLASS_ID, Name.identifier("input"))
     val REL_BIND: CallableId = CallableId(REL_CLASS_ID, Name.identifier("bind"))
 
-    /** Slot name of the implicit pipe source (first `Rel` parameter of a headless pipe). */
-    const val SOURCE_SLOT: String = "__src"
-    const val SOURCE_PREFIX: String = "FROM $SOURCE_SLOT() "
 
     /** Generated output shape class for `fun eventsInRange(...)` is `EventsInRangeOut`. */
     fun outputClassName(functionName: Name): Name =

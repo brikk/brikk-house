@@ -17,7 +17,7 @@ interface Settings {
     val ideKotlinVersion: String get() = ""
 
     /** Our own version segment of the KEFS `<kotlin-version>-<lib-version>` scheme. */
-    val libVersion: String get() = "0.1.0"
+    val libVersion: String get() = "0.2.0"
 
     /** Local Maven-layout repository for KEFS, relative to the project root. */
     val repoDir: String get() = "build/repo"

@@ -1,5 +1,7 @@
 package dev.brikk.house.sql.runtime
 
+import org.intellij.lang.annotations.Language
+
 /**
  * A set of *minimum* column requirements: "whatever flows here has at least these columns".
  * User-declared trait interfaces extend this (and are marked [BrikkTrait]); the compiler
@@ -20,8 +22,8 @@ interface Shape : Partial
  * Marks a function whose body is a single `Sql.<dialect>("""...""")` literal as a virtual
  * table-valued function. The plugin parses the SQL at compile time, binds `:name`
  * placeholders to the function's parameters, takes `Rel`-typed parameters as table inputs
- * (the first one is the implicit pipe source `__src` when the SQL starts with `|>`), infers
- * the output shape and types the function accordingly.
+ * (each referenced in the SQL as a slot call named after the parameter: `FROM src() |> ...`),
+ * infers the output shape and types the function accordingly.
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
@@ -46,16 +48,16 @@ annotation class BrikkSqlDialect(val dialect: String)
 /** Dialect entry points. Bodies are never executed: the plugin rewrites every call. */
 object Sql {
     @BrikkSqlDialect("postgres")
-    fun postgres(sql: String): Rel<Nothing> = notRewritten("postgres")
+    fun postgres(@Language("BrikkSQL", prefix = "-- dialect: postgresql\n") sql: String): Rel<Nothing> = notRewritten("postgres")
 
     @BrikkSqlDialect("doris")
-    fun doris(sql: String): Rel<Nothing> = notRewritten("doris")
+    fun doris(@Language("DorisSQL", prefix = "-- dialect: doris\n") sql: String): Rel<Nothing> = notRewritten("doris")
 
     @BrikkSqlDialect("clickhouse")
-    fun clickhouse(sql: String): Rel<Nothing> = notRewritten("clickhouse")
+    fun clickhouse(@Language("BrikkSQL", prefix = "-- dialect: clickhouse\n") sql: String): Rel<Nothing> = notRewritten("clickhouse")
 
     @BrikkSqlDialect("duckdb")
-    fun duckdb(sql: String): Rel<Nothing> = notRewritten("duckdb")
+    fun duckdb(@Language("BrikkSQL", prefix = "-- dialect: duckdb\n") sql: String): Rel<Nothing> = notRewritten("duckdb")
 
     private fun notRewritten(dialect: String): Nothing =
         error("Sql.$dialect(...) reached at runtime: the brikk-sql compiler plugin was not applied")

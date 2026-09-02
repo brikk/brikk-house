@@ -29,7 +29,7 @@ still hold; "What exists" is updated.
   unknown column), `ir/` (rewrite to `Rel(...).input(...).bind(...)`, constructor bodies for
   local shapes). Options: `schema`, `schemaDialect`, `defaultSchema`, `debug`.
 - `brikk-sql-plugin-smoke/` — the same three-step pipeline compiled by the real toolchain via
-  `-Xplugin=build/plugin/brikk-sql-compiler-plugin-2.4.10-0.1.0.jar` (merged by
+  `-Xplugin=build/plugin/brikk-sql-compiler-plugin-2.4.10-0.2.0.jar` (merged by
   `./kotlin do assemblePluginJar`, a `brikk-sql-plugin-tooling` task) + `-P plugin:...:schema=...`.
 - `brikk-sql-plugin-tooling/` — local Kotlin Toolchain plugin with the dev-loop tasks
   `assemblePluginJar` / `publishKefsRepo` (below). Applied to `brikk-sql-compiler-plugin`.
@@ -52,7 +52,7 @@ still hold; "What exists" is updated.
 
 ## Surface sketch
 
-Three stages: catalog-bound source with a date range → reusable headless pipe that
+Three stages: catalog-bound source with a date range → reusable pipe over a `Rel` slot that
 `EXTEND`s JSON fields → terminating pipe that closes the shape.
 
 ```kotlin
@@ -66,6 +66,7 @@ interface HasPayload : Shape { val payload: Json }
 
 @BrikkSql
 fun <T : HasPayload> extractEvent(src: Rel<T>) = Sql.doris("""
+    FROM src()
     |> EXTEND
          json_extract_string(payload, '$.user_id')  AS user_id,
          json_extract_string(payload, '$.action')   AS action,
@@ -75,7 +76,8 @@ fun <T : HasPayload> extractEvent(src: Rel<T>) = Sql.doris("""
 interface LoginInput : Shape { val user_id: String; val action: String; val event_at: Instant }
 
 @BrikkSql
-fun loginDaily(src: Rel<LoginInput>) = Sql.doris("""
+fun loginDaily(logins: Rel<LoginInput>) = Sql.doris("""
+    FROM logins()
     |> WHERE action = 'login'
     |> AGGREGATE count(*) AS logins, max(event_at) AS last_login
        GROUP BY user_id, date_trunc('day', event_at) AS day
@@ -85,8 +87,11 @@ val report = loginDaily(extractEvent(eventsInRange(lastWeek)))
 ```
 
 Generated types are named from the enclosing declaration (`ExtractEvent.Added`,
-`LoginDaily.Out`); the user never declares them. Headless pipes parse as
-`FROM __src |> <fragment>` with `__src : T`.
+`LoginDaily.Out`); the user never declares them. Every `Rel<T>` parameter is a table slot
+referenced in the SQL by name (`FROM src() |> ...`, `JOIN other() ON ...`), the same
+TVF-slot convention brikk-sql's `SqlFragment.tableSlots` already implements; the analyzer
+requires each Rel parameter to be used as a source and each slot call to name a Rel
+parameter. There is no implied source.
 
 ### The seam: EXTEND on a generic input
 
@@ -128,7 +133,7 @@ Mechanisms:
 KEFS hard requirements (`docs/vendor/kefs/PLUGIN_AUTHORS.md`):
 1. Published to a Maven repo (local dir OK). `-Xplugin=<path>` is invisible.
 2. Version `<kotlin-version>-<lib-version>`, both semver. KEFS swaps the prefix for the IDE
-   compiler (e.g. `2.4.20-ij262-34-0.1.0`) and looks that up; missing → silently no IDE support.
+   compiler (e.g. `2.4.20-ij262-34-0.2.0`) and looks that up; missing → silently no IDE support.
 3. Compile against every supported IDE compiler build (from
    `packages.jetbrains.team/maven/p/ij/intellij-dependencies`), not just stable Kotlin.
    kotlinx-rpc: templated sources per version; Metro: compat layer.
@@ -146,7 +151,7 @@ build. Required for B as much as for C.
 ```sh
 ./kotlin do publishKefsRepo     # compiles the plugin, runs assemblePluginJar, then publishes
 ```
-publishes `dev.brikk.house:brikk-sql-compiler-plugin:<ide>-0.1.0` into `build/repo` (Maven
+publishes `dev.brikk.house:brikk-sql-compiler-plugin:<ide>-0.2.0` into `build/repo` (Maven
 layout). `<ide>` is `plugins.brikk-sql-plugin-tooling.ideKotlinVersion` in
 `brikk-sql-compiler-plugin/module.yaml` (from "KEFS: Copy Kotlin IDE Version"; `./kotlin do`
 takes no task arguments, so it lives in the yaml). The assembled jar's own name uses the real
@@ -154,7 +159,7 @@ takes no task arguments, so it lives in the yaml). The assembled jar's own name 
 ("Latest" matching); leave the three replacement patterns at their defaults
 (`<kotlin-version>-<lib-version>`, `<artifact-id>`, `<artifact-id>`). KEFS detects the plugin
 from the `-Xplugin` jar *file name*, matched as `<detect>-<version>.jar`, which is why the
-assembled jar is named `brikk-sql-compiler-plugin-2.4.10-0.1.0.jar` and not `...-all.jar`.
+assembled jar is named `brikk-sql-compiler-plugin-2.4.10-0.2.0.jar` and not `...-all.jar`.
 KEFS file-watches the repo: re-run `./kotlin do publishKefsRepo` after a plugin change. The
 jar is compiled against 2.4.10 regardless of the name — the first thing to learn is whether the
 IDE's compiler build accepts it (the exception analyzer says so).

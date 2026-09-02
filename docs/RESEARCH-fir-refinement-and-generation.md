@@ -149,6 +149,7 @@ with that hint is a good follow-up. Documented by a test.
 ## Runtime value
 
 `Rel<out T : Partial>(sql, dialect)` + `.input(slot, rel)` + `.bind(name, value)`, chosen so the
-IR rewrite is a chain of ordinary calls (no vararg/array construction). Headless pipes are
-stored with the `FROM __src()` prefix the plugin prepends; rendering binds slot `__src` to the
-CTE name of the input. Rendering = brikk-sql desugar → CTE chain → target dialect.
+IR rewrite is a chain of ordinary calls (no vararg/array construction). The SQL is stored as
+written; each `Rel` parameter becomes `.input(<param name>, param)` and rendering binds the
+`FROM <param>()` slot call to the CTE name of that input. Rendering = brikk-sql desugar →
+CTE chain → target dialect.

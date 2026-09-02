@@ -39,16 +39,16 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 /**
  * Backend rewrite: inside a `@BrikkSql` function `f(src: Rel<..>, start: Instant)`,
  *
- *     Sql.postgres("|> WHERE event_at >= :start")
+ *     Sql.postgres("FROM src() |> WHERE event_at >= :start")
  *
  * becomes
  *
- *     Rel<Out>("FROM __src() |> WHERE event_at >= :start", "postgres").input("__src", src).bind("start", start)
+ *     Rel<Out>("FROM src() |> WHERE event_at >= :start", "postgres").input("src", src).bind("start", start)
  *
  * The frontend has already typed the call as `Rel<Out>`; the constructor call reuses that
- * type. Parameter roles mirror the frontend analysis: the first `Rel` parameter is the pipe
- * source slot `__src`, further `Rel` parameters are slots named after themselves, everything
- * else is a scalar binding by name.
+ * type. Parameter roles mirror the frontend analysis: every `Rel` parameter is a slot named
+ * after itself (the SQL references it as `FROM name()`), everything else is a scalar binding
+ * by name. The SQL text is passed through unchanged.
  */
 class BrikkSqlIrGenerationExtension(
     private val messageCollector: MessageCollector,
@@ -119,13 +119,12 @@ private class SqlCallTransformer(
         val sqlExpression = expression.arguments[sqlParam.indexInParameters] ?: return expression
         val sql = sqlExpression.constSqlStringOrNull()?.trim() ?: return expression
         val dialect = callee.name.asString()
-        val fullSql = if (sql.startsWith("|>")) BrikkSqlNames.SOURCE_PREFIX + sql else sql
 
         intercepted++
         if (options.debug) {
             messageCollector.report(
                 CompilerMessageSeverity.WARNING,
-                "brikk-sql[debug]: intercepted ${callee.name} in ${enclosing.name} with SQL:\n$fullSql",
+                "brikk-sql[debug]: intercepted ${callee.name} in ${enclosing.name} with SQL:\n$sql",
             )
         }
 
@@ -136,19 +135,16 @@ private class SqlCallTransformer(
 
         var result: IrExpression = builder.irCallConstructor(relConstructor, listOf(shapeType)).apply {
             type = relType
-            arguments[0] = builder.irString(fullSql)
+            arguments[0] = builder.irString(sql)
             arguments[1] = builder.irString(dialect)
         }
 
-        var firstRel = true
         for (param in enclosing.parameters.filter { it.kind == IrParameterKind.Regular }) {
             result = if (param.isRel()) {
-                val slot = if (firstRel) BrikkSqlNames.SOURCE_SLOT else param.name.asString()
-                firstRel = false
                 builder.irCall(relInput).apply {
                     type = relType
                     arguments[0] = result
-                    arguments[1] = builder.irString(slot)
+                    arguments[1] = builder.irString(param.name.asString())
                     arguments[2] = builder.irGet(param)
                 }
             } else {

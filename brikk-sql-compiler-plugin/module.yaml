@@ -12,7 +12,7 @@ plugins:
     enabled: true
     # KEFS action "Copy Kotlin IDE Version". Bump when the IDE's Kotlin compiler changes.
     ideKotlinVersion: 2.4.20-ij262-34
-    libVersion: 0.1.0
+    libVersion: 0.2.0
 
 dependencies:
   # Compile against the embeddable compiler: the Kotlin Toolchain runs JVM

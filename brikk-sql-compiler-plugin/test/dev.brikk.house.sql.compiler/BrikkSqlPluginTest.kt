@@ -132,13 +132,15 @@ class BrikkSqlPluginTest {
 
         @BrikkSql
         fun <T : HasPayload> extractEvent(src: Rel<T>) = Sql.postgres($q
+            FROM src()
             |> EXTEND payload->>'user_id' AS user_id,
                       payload->>'action' AS action,
                       (payload->>'duration_ms')::BIGINT AS duration_ms
         $q)
 
         @BrikkSql
-        fun loginDaily(src: Rel<LoginInput>) = Sql.postgres($q
+        fun loginDaily(events: Rel<LoginInput>) = Sql.postgres($q
+            FROM events()
             |> WHERE action = 'login'
             |> AGGREGATE count(*) AS logins, max(event_at) AS last_login
                GROUP BY user_id, CAST(event_at AS DATE) AS day
@@ -291,7 +293,7 @@ class BrikkSqlPluginTest {
             fun events() = Sql.postgres("FROM public.events")
 
             @BrikkSql
-            fun sumAmount(src: Rel<NeedsAmount>) = Sql.postgres("|> AGGREGATE sum(amount) AS total")
+            fun sumAmount(src: Rel<NeedsAmount>) = Sql.postgres("FROM src() |> AGGREGATE sum(amount) AS total")
 
             val r = sumAmount(events())
             """.trimIndent(),
@@ -327,5 +329,98 @@ class BrikkSqlPluginTest {
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
         assertContains(result.messages, "must be the body of a function annotated @BrikkSql")
+    }
+
+    // ------------------------------------------------------------------ explicit slots
+
+    private val traitsPrelude = """
+        package demo
+        import dev.brikk.house.sql.runtime.*
+        import java.time.Instant
+
+        @BrikkTrait
+        interface LoginInput : Partial {
+            val user_id: String
+            val action: String
+            val event_at: Instant
+        }
+    """.trimIndent()
+
+    @Test
+    fun `rel parameter never referenced as a slot is a frontend error`() {
+        val result = compile(
+            traitsPrelude + """
+
+            @BrikkSql
+            fun logins(src: Rel<LoginInput>) = Sql.postgres("FROM public.events |> WHERE action = 'login'")
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "[BRIKK_SQL] parameter 'src' is never used as a source - write 'FROM src()'")
+    }
+
+    @Test
+    fun `slot without a matching rel parameter is a frontend error`() {
+        val result = compile(
+            traitsPrelude + """
+
+            @BrikkSql
+            fun logins(src: Rel<LoginInput>) = Sql.postgres("FROM events() |> WHERE action = 'login'")
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "[BRIKK_SQL] 'FROM events()' - no Rel parameter named 'events' (Rel parameters: src)")
+    }
+
+    @Test
+    fun `rel parameter named like a dialect function gets a rename hint`() {
+        val result = compile(
+            traitsPrelude + """
+
+            @BrikkSql
+            fun logins(now: Rel<LoginInput>) = Sql.postgres("FROM now() |> WHERE action = 'login'")
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "[BRIKK_SQL] parameter 'now' cannot be used as a source: 'now' is a postgres function")
+    }
+
+    @Test
+    fun `two rel inputs joined by explicit slots compile and render as ctes`() {
+        val result = compile(
+            traitsPrelude + """
+
+            @BrikkTrait
+            interface UserDim : Partial {
+                val user_id: String
+                val tenant: String
+            }
+
+            @BrikkSql
+            fun rawLogins() = Sql.postgres($q
+                FROM public.events
+                |> EXTEND payload->>'user_id' AS user_id, payload->>'action' AS action
+                |> WHERE action = 'login'
+            $q)
+
+            @BrikkSql
+            fun users() = Sql.postgres("FROM public.events |> SELECT payload->>'user_id' AS user_id, tenant")
+
+            @BrikkSql
+            fun loginsWithTenant(logins: Rel<LoginInput>, dim: Rel<UserDim>) = Sql.postgres($q
+                FROM logins()
+                |> JOIN dim() ON logins.user_id = dim.user_id
+                |> SELECT logins.user_id, dim.tenant, logins.event_at
+            $q)
+
+            fun render(): String = loginsWithTenant(rawLogins(), users()).render()
+            fun columns(row: LoginsWithTenantOut): String = row.user_id + row.tenant + row.event_at.toString()
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val sql = result.classLoader.loadClass("demo.MainKt").getMethod("render").invoke(null) as String
+        assertTrue(sql.startsWith("WITH s0 AS ("), sql)
+        assertContains(sql, "JOIN s1")
+        assertTrue(!sql.contains("logins()") && !sql.contains("dim()"), sql)
     }
 }

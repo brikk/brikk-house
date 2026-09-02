@@ -23,7 +23,10 @@ import dev.brikk.house.sql.shape.SqlFragment
  * it references.
  */
 class Rel<out T : Partial>(
-    /** The fragment text as analyzed by the plugin (headless pipes carry the `FROM __src()` prefix). */
+    /**
+     * The fragment text as written. `Rel` inputs appear in it as table-valued slot calls named
+     * after the parameter (`FROM src() |> ...`, `JOIN other() ON ...`); [input] binds them.
+     */
     val sql: String,
     val dialect: String,
 ) {
@@ -95,12 +98,4 @@ class Rel<out T : Partial>(
     }
 
     override fun toString(): String = "Rel($dialect: $sql; inputs=${inputSlots.keys}; bindings=${scalarBindings.keys})"
-
-    companion object {
-        /** Slot name the plugin assigns to the first `Rel` parameter of a headless (`|> ...`) pipe. */
-        const val SOURCE_SLOT: String = "__src"
-
-        /** Prefix the plugin prepends to headless pipe text so it parses as a full pipe query. */
-        const val SOURCE_PREFIX: String = "FROM $SOURCE_SLOT() "
-    }
 }

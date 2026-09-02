@@ -3,7 +3,7 @@ package dev.brikk.house.sql.compiler.fir
 import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.analysis.KType
 import dev.brikk.house.sql.compiler.analysis.ShapeColumn
-import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
+import dev.brikk.house.sql.compiler.analysis.PluginGuard
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
@@ -68,9 +68,9 @@ class ShapeDeclarationGenerator(session: FirSession) : FirDeclarationGenerationE
                 }
             }.symbol
         }
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         // Boundary: no generated class is better than a broken resolve (see BrikkSqlCallRefinement).
-        rethrowIfCancellation(e)
+        PluginGuard.recoverable(e, "generateTopLevelClassLikeDeclaration($classId)")
         null
     }
 

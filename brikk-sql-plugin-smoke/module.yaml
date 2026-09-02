@@ -24,7 +24,7 @@ settings:
   kotlin:
     version: 2.4.10
     freeCompilerArgs:
-      - -Xplugin=build/plugin/brikk-sql-compiler-plugin-2.4.10-0.1.0.jar
+      - -Xplugin=build/plugin/brikk-sql-compiler-plugin-2.4.10-0.2.0.jar
       - -P
       - plugin:dev.brikk.house.sql.compiler:schema=brikk-sql-plugin-smoke/schema/events.sql
       - -P
