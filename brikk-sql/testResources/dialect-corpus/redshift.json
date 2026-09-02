@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "redshift",
   "identity": [
     {
@@ -549,6 +549,21 @@
       "pretty": false
     },
     {
+      "sql": "CAST(65 AS \"char\")",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "65::\"char\"",
+      "expected": "CAST(65 AS \"char\")",
+      "pretty": false
+    },
+    {
+      "sql": "CAST(x AS \"CHAR\")",
+      "expected": "CAST(x AS CHAR)",
+      "pretty": false
+    },
+    {
       "sql": "SELECT LAG(x) IGNORE NULLS OVER (PARTITION BY y ORDER BY z)",
       "expected": null,
       "pretty": false
@@ -577,6 +592,90 @@
       "sql": "1::\"int\"",
       "expected": "CAST(1 AS INTEGER)",
       "pretty": false
+    },
+    {
+      "sql": "GRANT SELECT ON ALL TABLES IN SCHEMA qa_tickit TO fred",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT USAGE ON DATASHARE salesshare TO NAMESPACE '13b8833d-17c6-4f16-8fe4-1a018f5ed00d'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT USAGE FOR SCHEMAS IN DATABASE Sales_db TO ROLE Sales",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT EXECUTE FOR FUNCTIONS IN SCHEMA Sales_schema TO bob",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT SELECT FOR TABLES IN DATABASE Sales_db TO alice WITH GRANT OPTION",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT ALL FOR TABLES IN SCHEMA ShareSchema DATABASE ShareDb TO ROLE Sales",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT ASSUMEROLE ON 'arn:aws:iam::123456789012:role/Redshift-Exfunc' TO reg_user1 FOR EXTERNAL FUNCTION",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT ROLE sample_role1 TO ROLE sample_role2",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT ON ALL TABLES IN SCHEMA qa_tickit FROM fred",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE USAGE ON DATASHARE salesshare FROM NAMESPACE '13b8833d-17c6-4f16-8fe4-1a018f5ed00d'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE USAGE FOR SCHEMAS IN DATABASE Sales_db FROM ROLE Sales",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE EXECUTE FOR FUNCTIONS IN SCHEMA Sales_schema FROM bob",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT FOR TABLES IN DATABASE Sales_db FROM alice",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE ROLE sample_role1 FROM ROLE sample_role2",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
     }
   ],
   "transpile": [
@@ -625,6 +724,13 @@
         "spark, version=4.0.0": "LISTAGG(sellerid, ', ')",
         "spark": "LISTAGG(sellerid, ', ')",
         "databricks": "LISTAGG(sellerid, ', ')"
+      }
+    },
+    {
+      "sql": "SELECT LISTAGG(x, ',') WITHIN GROUP (ORDER BY y) FILTER (WHERE z > 0) FROM t",
+      "read": {},
+      "write": {
+        "snowflake": "SELECT LISTAGG(IFF(z > 0, x, NULL), ',') WITHIN GROUP (ORDER BY y) FROM t"
       }
     },
     {
@@ -1058,8 +1164,8 @@
     }
   ],
   "stats": {
-    "identity_count": 115,
-    "transpile_count": 51,
+    "identity_count": 132,
+    "transpile_count": 52,
     "skipped_dynamic": 2
   }
 }

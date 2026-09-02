@@ -81,4 +81,27 @@ class ClickhouseDialectTest {
             roundTrip("SELECT x FROM t ARRAY JOIN arr AS a"),
         )
     }
+
+    @Test
+    fun viewTableFunctionRoundTrips() {
+        assertEquals("SELECT x FROM view(SELECT 1 AS x)", roundTrip("SELECT x FROM view(SELECT 1 AS x)"))
+    }
+
+    @Test
+    fun refreshableMaterializedViews() {
+        // sqlglot #7990: AutoRefreshProperty (REFRESH EVERY/AFTER/OFFSET/RANDOMIZE/DEPENDS/
+        // SETTINGS/APPEND) with bare (keyword-less) schedule intervals. Verified against the
+        // Python oracle — each round-trips identically.
+        for (sql in listOf(
+            "CREATE MATERIALIZED VIEW v REFRESH EVERY 30 SECOND AS SELECT 1",
+            "CREATE MATERIALIZED VIEW v REFRESH AFTER 5 MINUTE AS SELECT 1",
+            "CREATE MATERIALIZED VIEW v REFRESH DEPENDS ON db.x, db.y APPEND TO db.t AS SELECT 1",
+            "CREATE MATERIALIZED VIEW v ON CLUSTER '{cluster}' REFRESH EVERY 1 MONTH OFFSET 5 DAY 2 HOUR " +
+                "RANDOMIZE FOR 1 HOUR DEPENDS ON db.x, db.y SETTINGS refresh_retries = 5 APPEND TO db.t AS SELECT 1",
+            "CREATE MATERIALIZED VIEW v REFRESH EVERY 1 HOUR (id UInt64) AS SELECT 1 AS id",
+            "CREATE MATERIALIZED VIEW v REFRESH DEPENDS ON dep (id UInt64) AS SELECT 1",
+        )) {
+            assertEquals(sql, roundTrip(sql))
+        }
+    }
 }

@@ -43,6 +43,10 @@ from sqlglot.typing.presto import EXPRESSION_METADATA as PRESTO_METADATA  # noqa
 from sqlglot.typing.duckdb import EXPRESSION_METADATA as DUCKDB_METADATA  # noqa: E402
 from sqlglot.typing.postgres import EXPRESSION_METADATA as POSTGRES_METADATA  # noqa: E402
 from sqlglot.typing.clickhouse import EXPRESSION_METADATA as CLICKHOUSE_METADATA  # noqa: E402
+from sqlglot.typing.hive import EXPRESSION_METADATA as HIVE_METADATA  # noqa: E402
+from sqlglot.typing.spark2 import EXPRESSION_METADATA as SPARK2_METADATA  # noqa: E402
+from sqlglot.typing.spark import EXPRESSION_METADATA as SPARK_METADATA  # noqa: E402
+from sqlglot.typing.bigquery import EXPRESSION_METADATA as BIGQUERY_METADATA  # noqa: E402
 from sqlglot.optimizer.annotate_types import (  # noqa: E402
     _COERCES_TO,
     BIGINT_EXTRACT_DATE_PARTS,
@@ -73,6 +77,17 @@ def classify(src: str) -> str:
     # presto Rand: conditional by_args/DOUBLE
     if "_annotate_by_args(e, \"this\") if e.this else self._set_type(e, exp.DType.DOUBLE)" in src:
         return "AnnotatorRef.RandThisOrDouble"
+    # mysql typing defs (typing/mysql.py) — match by def name.
+    if "def _annotate_bit_func(" in src:
+        return "AnnotatorRef.BitFunc"
+    if "def _annotate_reverse(" in src:
+        return "AnnotatorRef.Reverse"
+    if "def _annotate_truncate(" in src:
+        return "AnnotatorRef.Truncate"
+    if "def _annotate_regexp_replace(" in src:
+        return "AnnotatorRef.RegexpReplace"
+    if "def _annotate_compress(" in src:
+        return "AnnotatorRef.Compress"
     # clickhouse MD5Digest: parametrized non-nullable type via DataType.build
     m = re.search(
         r"self\._set_type\(\s*e,\s*exp\.DataType\.build\(\"(\w+)\((\d+)\)\","
@@ -82,9 +97,58 @@ def classify(src: str) -> str:
     if m:
         dtype = exp.DType[m.group(1).upper()]
         return f"AnnotatorRef.SetSizedType(DType.{dtype.name}, {m.group(2)})"
+    # clickhouse fixed-type annotator: _set_type(e, DataType.build("Name", dialect="clickhouse"))
+    # for a plain (non-parametrized) named type, e.g. Float64 -> DOUBLE.
+    m = re.search(
+        r"self\._set_type\(\s*e,\s*exp\.DataType\.build\(\"(\w+)\","
+        r" dialect=\"clickhouse\"\)\s*\)",
+        src,
+    )
+    if m:
+        built = exp.DataType.build(m.group(1), dialect="clickhouse")
+        if built.args.get("expressions"):
+            raise SystemExit(
+                f"clickhouse fixed-type build is parametrized, needs SetDataType: {m.group(1)}"
+            )
+        return f"AnnotatorRef.SetType(DType.{built.this.name})"
+    # bigquery _annotate_math_functions (CEIL/FLOOR/... family)
+    if "_annotate_math_functions(self, e)" in src:
+        return "AnnotatorRef.MathFunctionsBq"
+    # bigquery _annotate_safe_divide (must precede _annotate_by_args_with_coerce)
+    if "_annotate_safe_divide(self, e)" in src:
+        return "AnnotatorRef.SafeDivideBq"
+    # bigquery _annotate_by_args_with_coerce (SafeAdd/SafeSubtract/... family)
+    if "_annotate_by_args_with_coerce(self, e)" in src:
+        return "AnnotatorRef.ByArgsWithCoerceBq"
+    # bigquery _annotate_by_args_approx_top (APPROX_TOP_K/APPROX_TOP_SUM)
+    if "_annotate_by_args_approx_top(self, e)" in src:
+        return "AnnotatorRef.ApproxTopKBq"
+    # bigquery _annotate_concat (source of the whole def block is inlined)
+    if "def _annotate_concat(" in src:
+        return "AnnotatorRef.ConcatBq"
+    # bigquery _annotate_array
+    if "def _annotate_array(" in src:
+        return "AnnotatorRef.ArrayBq"
+    # bigquery _annotate_date_func (DATE_ADD/DATE_SUB/*_TRUNC)
+    if "_annotate_date_func(self, e)" in src:
+        return "__DATE_FUNC_BQ__"
     # exp.Case: by_args over the ifs' true branches + default
     if "_annotate_by_args( e, *[if_expr.args[\"true\"] for if_expr in e.args[\"ifs\"]], \"default\" )" in src:
         return "AnnotatorRef.CaseArgs"
+    # spark2 exp.ApproxQuantile: by_args over "this", array-ness driven by the
+    # "quantile" arg's runtime type (array when quantile is an ARRAY literal).
+    if '_annotate_by_args( e, "this", array=e.args["quantile"].is_type(exp.DType.ARRAY) )' in src:
+        return "AnnotatorRef.ApproxQuantileByArgs"
+    # spark2 _annotate_by_similar_args helper (CONCAT/LPAD/RPAD family): all-BINARY
+    # -> BINARY; else any known non-array/non-binary -> TEXT; else UNKNOWN.
+    m = re.search(
+        r"_annotate_by_similar_args\(\s*self,\s*e,\s*((?:\"[a-z_]+\",?\s*)+)\)",
+        src,
+    )
+    if m:
+        keys = re.findall(r"\"([a-z_]+)\"", m.group(1))
+        keys_kt = ", ".join(f'"{k}"' for k in keys)
+        return f"AnnotatorRef.BySimilarArgs(listOf({keys_kt}))"
     m = re.search(
         r"self\._annotate_by_args\(\s*e,\s*((?:\"[a-z_]+\",?\s*)+)"
         r"((?:promote=True)?,?\s*(?:array=True)?)\s*\)",
@@ -130,7 +194,7 @@ def classify(src: str) -> str:
         )
     if re.search(r"\{\"annotator\": lambda _, e: e\}", src):
         return "AnnotatorRef.Identity"
-    m = re.search(r"exp\.DataType\.from_str\(\"ARRAY<(\w+)>\"\)", src)
+    m = re.search(r"exp\.DataType\.from_str\(\"ARRAY<(\w+)>\"(?:,\s*dialect=\"\w+\")?\)", src)
     if m:
         return f"AnnotatorRef.ArrayOfType(DType.{m.group(1)})"
     for helper in (
@@ -144,15 +208,38 @@ def classify(src: str) -> str:
     raise SystemExit(f"gen_typing_metadata.py: UNCLASSIFIED annotator lambda:\n  {src}")
 
 
+def emit_datatype(dt) -> str:
+    """Kotlin source reconstructing an exp.DataType node (nested/parametrized returns)."""
+    if not isinstance(dt, exp.DataType):
+        raise SystemExit(f"emit_datatype: expected DataType, got {dt!r}")
+    parts = [f'"this" to DType.{dt.this.name}']
+    exprs = dt.args.get("expressions")
+    if exprs:
+        inner = ", ".join(emit_datatype(e) for e in exprs)
+        parts.append(f'"expressions" to listOf({inner})')
+    parts.append(f'"nested" to {"true" if dt.args.get("nested") else "false"}')
+    return f"DataType(args({', '.join(parts)}))"
+
+
 def classify_spec(cls, spec) -> str:
     keys = set(spec)
     if keys == {"returns"}:
         dtype = spec["returns"]
-        if not isinstance(dtype, exp.DType):
-            raise SystemExit(f"non-DType returns for {cls.__name__}: {dtype!r}")
-        return f"TypingSpec.Returns(DType.{dtype.name})"
+        if isinstance(dtype, exp.DType):
+            return f"TypingSpec.Returns(DType.{dtype.name})"
+        if isinstance(dtype, exp.DataType):
+            return f"TypingSpec.ReturnsDataType({emit_datatype(dtype)})"
+        raise SystemExit(f"non-DType returns for {cls.__name__}: {dtype!r}")
     if keys == {"annotator"}:
-        return f"TypingSpec.Annotate({classify(lambda_source(spec['annotator']))})"
+        ref = classify(lambda_source(spec["annotator"]))
+        if ref == "__DATE_FUNC_BQ__":
+            # bigquery _annotate_date_func: the string-literal temporal type is keyed
+            # by the expression class (_DATE_FUNC_LITERAL_TYPE in typing/bigquery.py).
+            from sqlglot.typing.bigquery import _DATE_FUNC_LITERAL_TYPE
+
+            lit = _DATE_FUNC_LITERAL_TYPE[cls]
+            ref = f"AnnotatorRef.DateFuncBq(DType.{lit.name})"
+        return f"TypingSpec.Annotate({ref})"
     raise SystemExit(f"unexpected metadata keys for {cls.__name__}: {keys}")
 
 
@@ -199,6 +286,10 @@ def main() -> None:
         "DUCKDB": build_entries(DUCKDB_METADATA),
         "POSTGRES": build_entries(POSTGRES_METADATA),
         "CLICKHOUSE": build_entries(CLICKHOUSE_METADATA),
+        "HIVE": build_entries(HIVE_METADATA),
+        "SPARK2": build_entries(SPARK2_METADATA),
+        "SPARK": build_entries(SPARK_METADATA),
+        "BIGQUERY": build_entries(BIGQUERY_METADATA),
     }
 
     annotator_variants = {

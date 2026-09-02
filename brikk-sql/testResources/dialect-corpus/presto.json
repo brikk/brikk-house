@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "presto",
   "identity": [
     {
@@ -198,6 +198,26 @@
     },
     {
       "sql": "FROM_UTF8(x, y)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT JSON_EXTRACT(x, '$[1,0]')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT JSON_EXTRACT_SCALAR(x, '$[1,0]')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT JSON_EXTRACT(x, '$[\"a\",\"\"]')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT JSON_EXTRACT(x, '$[\"\"]')",
       "expected": null,
       "pretty": false
     },
@@ -517,7 +537,7 @@
         "duckdb": "STRPTIME(x, '%Y-%m-%d %H:%M:%S')",
         "presto": "DATE_PARSE(x, '%Y-%m-%d %T')",
         "hive": "CAST(x AS TIMESTAMP)",
-        "spark": "TO_TIMESTAMP(x, 'yyyy-MM-dd HH:mm:ss')"
+        "spark": "TO_TIMESTAMP(x, 'yyyy-M-d H:m:s')"
       }
     },
     {
@@ -527,7 +547,7 @@
         "duckdb": "STRPTIME(x, '%Y-%m-%d')",
         "presto": "DATE_PARSE(x, '%Y-%m-%d')",
         "hive": "CAST(x AS TIMESTAMP)",
-        "spark": "TO_TIMESTAMP(x, 'yyyy-MM-dd')"
+        "spark": "TO_TIMESTAMP(x, 'yyyy-M-d')"
       }
     },
     {
@@ -544,7 +564,7 @@
         "duckdb": "STRPTIME(SUBSTRING(x, 1, 10), '%Y-%m-%d')",
         "presto": "DATE_PARSE(SUBSTR(x, 1, 10), '%Y-%m-%d')",
         "hive": "CAST(SUBSTRING(x, 1, 10) AS TIMESTAMP)",
-        "spark": "TO_TIMESTAMP(SUBSTRING(x, 1, 10), 'yyyy-MM-dd')"
+        "spark": "TO_TIMESTAMP(SUBSTRING(x, 1, 10), 'yyyy-M-d')"
       }
     },
     {
@@ -554,7 +574,7 @@
         "duckdb": "STRPTIME(SUBSTRING(x, 1, 10), '%Y-%m-%d')",
         "presto": "DATE_PARSE(SUBSTR(x, 1, 10), '%Y-%m-%d')",
         "hive": "CAST(SUBSTRING(x, 1, 10) AS TIMESTAMP)",
-        "spark": "TO_TIMESTAMP(SUBSTRING(x, 1, 10), 'yyyy-MM-dd')"
+        "spark": "TO_TIMESTAMP(SUBSTRING(x, 1, 10), 'yyyy-M-d')"
       }
     },
     {
@@ -1299,8 +1319,8 @@
       "sql": "WITH RECURSIVE t(n) AS (VALUES (1) UNION ALL SELECT n+1 FROM t WHERE n < 100 ) SELECT SUM(n) FROM t",
       "read": {},
       "write": {
-        "presto": "WITH RECURSIVE t(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t",
-        "spark": "WITH RECURSIVE t(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t"
+        "presto": "WITH RECURSIVE t(n) AS (SELECT * FROM (VALUES (1)) AS _values UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t",
+        "spark": "WITH RECURSIVE t(n) AS (SELECT * FROM VALUES (1) AS _values UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t"
       }
     },
     {
@@ -1633,7 +1653,7 @@
     }
   ],
   "stats": {
-    "identity_count": 44,
+    "identity_count": 48,
     "transpile_count": 147,
     "skipped_dynamic": 3
   }

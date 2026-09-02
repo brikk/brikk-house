@@ -80,7 +80,8 @@ internal fun binaryRangeParser(
 
 /**
  * sqlglot: Func.from_arg_list — positional args zipped against arg_types keys;
- * for var-len functions the remaining args land in the last key as a list.
+ * for var-len functions the remaining args land in the `expressions` key (or the
+ * final key for nodes such as VarMap whose custom variadic key is `values`).
  */
 internal fun fromArgList(
     argKeys: List<String>,
@@ -89,9 +90,9 @@ internal fun fromArgList(
 ): (List<Expression?>) -> Expression = { argsList ->
     val kwargs = LinkedHashMap<String, kotlin.Any?>()
     if (isVarLenArgs) {
-        val nonVarKeys = argKeys.dropLast(1)
-        for ((arg, key) in argsList.zip(nonVarKeys)) kwargs[key] = arg
-        kwargs[argKeys.last()] = argsList.drop(nonVarKeys.size)
+        val varLenIndex = argKeys.indexOf("expressions").takeIf { it >= 0 } ?: argKeys.lastIndex
+        for ((arg, key) in argsList.zip(argKeys.take(varLenIndex))) kwargs[key] = arg
+        kwargs[argKeys[varLenIndex]] = argsList.drop(varLenIndex)
     } else {
         for ((arg, key) in argsList.zip(argKeys)) kwargs[key] = arg
     }
@@ -111,6 +112,32 @@ private val UNABBREVIATED_UNIT_NAME: Map<String, String> = mapOf(
  * construction site, which is the only parser path that passes raw unit columns.
  */
 internal fun applyTimeUnitCoercion(expression: Expression): Expression {
+    // sqlglot: exp.DateTrunc.__init__ (unabbreviate defaults True) — VAR_LIKE unit
+    // (single-part Column / Literal / Var) is replaced by a FRESH uppercased,
+    // unabbreviated string Literal. Fresh node matters: Python drops the original
+    // literal's position meta here.
+    if (expression is dev.brikk.house.sql.ast.DateTrunc) {
+        val unit = expression.args["unit"]
+        val isVarLike = unit != null &&
+            (unit::class == dev.brikk.house.sql.ast.Column::class ||
+                unit::class == Literal::class ||
+                unit::class == Var::class)
+        if (isVarLike) {
+            val unitExpr = unit as Expression
+            if (unitExpr is dev.brikk.house.sql.ast.Column) {
+                val parts = listOf("catalog", "db", "table", "this")
+                    .count { unitExpr.args[it] is Expression }
+                if (parts != 1) return expression
+            }
+            val unitName = unitExpr.name.uppercase()
+            expression.set(
+                "unit",
+                Literal(args("this" to (UNABBREVIATED_UNIT_NAME[unitName] ?: unitName), "is_string" to true)),
+            )
+        }
+        return expression
+    }
+
     if (expression !is dev.brikk.house.sql.ast.TimeUnit) return expression
 
     val unit = expression.args["unit"]
@@ -268,7 +295,8 @@ object BaseParserTables {
         TokenType.BEGIN, TokenType.BPCHAR, TokenType.CACHE, TokenType.CASE,
         TokenType.COLLATE, TokenType.COMMAND, TokenType.COMMENT, TokenType.COMMIT,
         TokenType.CONSTRAINT, TokenType.COPY, TokenType.CUBE, TokenType.CURRENT_SCHEMA,
-        TokenType.DEFAULT, TokenType.DELETE, TokenType.DESC, TokenType.DESCRIBE,
+        // sqlglot: TokenType.DECLARE (inline UDF / routine labels & identifiers)
+        TokenType.DECLARE, TokenType.DEFAULT, TokenType.DELETE, TokenType.DESC, TokenType.DESCRIBE,
         TokenType.DETACH, TokenType.DICTIONARY, TokenType.DIV, TokenType.END,
         TokenType.EXECUTE, TokenType.EXPORT, TokenType.ESCAPE, TokenType.FALSE,
         TokenType.FIRST, TokenType.FILE, TokenType.FILTER, TokenType.FINAL,
@@ -277,6 +305,7 @@ object BaseParserTables {
         TokenType.KEEP, TokenType.KILL, TokenType.LEFT, TokenType.LIMIT, TokenType.LOAD,
         TokenType.LOCK, TokenType.MATCH, TokenType.MERGE, TokenType.NATURAL,
         TokenType.NEXT, TokenType.OFFSET, TokenType.OPERATOR, TokenType.ORDINALITY,
+        TokenType.OUT,
         TokenType.OVER, TokenType.OVERLAPS, TokenType.OVERWRITE, TokenType.PARTITION,
         TokenType.PERCENT, TokenType.PIVOT, TokenType.PROJECTION, TokenType.PRAGMA,
         TokenType.PUT, TokenType.RANGE, TokenType.RECURSIVE, TokenType.REFERENCES,
@@ -351,6 +380,8 @@ object BaseParserTables {
         TokenType.COLLATE, TokenType.COMMAND, TokenType.CURRENT_DATE,
         TokenType.CURRENT_DATETIME, TokenType.CURRENT_SCHEMA, TokenType.CURRENT_TIMESTAMP,
         TokenType.CURRENT_TIME, TokenType.CURRENT_USER, TokenType.CURRENT_CATALOG,
+        // sqlglot: TokenType.DECLARE (allows SELECT DECLARE() after WITH FUNCTION declare())
+        TokenType.DECLARE,
         TokenType.FILTER, TokenType.FIRST, TokenType.FORMAT, TokenType.GET,
         TokenType.GLOB, TokenType.IDENTIFIER, TokenType.INDEX, TokenType.ISNULL,
         TokenType.ILIKE, TokenType.INSERT, TokenType.LIKE, TokenType.LOCALTIME,
@@ -404,7 +435,6 @@ object BaseParserTables {
     val TERM: Map<TokenType, NodeFactory> = mapOf(
         TokenType.DASH to { Sub(it) },
         TokenType.PLUS to { Add(it) },
-        TokenType.MOD to { Mod(it) },
         TokenType.COLLATE to { Collate(it) },
     )
 
@@ -413,6 +443,7 @@ object BaseParserTables {
         TokenType.DIV to { IntDiv(it) },
         TokenType.LR_ARROW to { dev.brikk.house.sql.ast.Distance(it) },
         TokenType.LLRR_ARROW to { dev.brikk.house.sql.ast.DistanceNd(it) },
+        TokenType.MOD to { Mod(it) },
         TokenType.SLASH to { Div(it) },
         TokenType.STAR to { Mul(it) },
     )
@@ -532,8 +563,11 @@ object BaseParserTables {
                 )
             },
             TokenType.PLACEHOLDER to { parser, this_, key ->
+                // sqlglot #8156: `?` builds JSONBContainsTopKey (was JSONBContains).
                 parser.expression(
-                    dev.brikk.house.sql.ast.JSONBContains(args("this" to this_, "expression" to key))
+                    dev.brikk.house.sql.ast.JSONBContainsTopKey(
+                        args("this" to this_, "expression" to key)
+                    )
                 )
             },
         )
@@ -552,6 +586,7 @@ object BaseParserTables {
         TokenType.COMMIT to { p -> p.parseCommitOrRollback() },
         TokenType.COPY to { p -> p.parseCopy() },
         TokenType.CREATE to { p -> p.parseCreate() },
+        TokenType.DECLARE to { p -> p.parseDeclare() },
         TokenType.DELETE to { p -> p.parseDelete() },
         TokenType.DESC to { p -> p.parseDescribe() },
         TokenType.DESCRIBE to { p -> p.parseDescribe() },
@@ -711,8 +746,8 @@ object BaseParserTables {
     // sqlglot: Parser.FUNCTIONS_WITH_ALIASED_ARGS
     val FUNCTIONS_WITH_ALIASED_ARGS: Set<String> = setOf("STRUCT")
 
-    // sqlglot: Parser.FUNCTION_PARSERS (GAP_FILL, OPENJSON, XMLELEMENT, XMLTABLE not
-    // ported yet — no base-corpus coverage).
+    // sqlglot: Parser.FUNCTION_PARSERS (OPENJSON not ported yet — no base-corpus
+    // coverage).
     val FUNCTION_PARSERS: Map<String, (Parser) -> Expression?> = buildMap {
         put("CONVERT") { parser -> parser.parseConvert(parser.strictCast) }
         put("STRING_AGG") { parser -> parser.parseStringAgg() }
@@ -730,6 +765,7 @@ object BaseParserTables {
         put("DECODE") { parser -> parser.parseDecode() }
         put("EXTRACT") { parser -> parser.parseExtract() }
         put("FLOOR") { parser -> parser.parseCeilFloor { a: Args -> dev.brikk.house.sql.ast.Floor(a) } }
+        put("GAP_FILL") { parser -> parser.parseGapFill() }
         put("JSON_OBJECT") { parser -> parser.parseJsonObject() }
         put("JSON_OBJECTAGG") { parser -> parser.parseJsonObject(agg = true) }
         put("JSON_TABLE") { parser -> parser.parseJsonTable() }
@@ -769,7 +805,8 @@ object BaseParserTables {
         "BLOCKCOMPRESSION" to { p, _ -> p.parseBlockcompression() },
         "CALLED" to { p, _ -> p.parseCalledOnNullInputProperty() },
         "CHARSET" to { p, kw -> p.parseCharacterSet(default = kw.default) },
-        "CHARACTER SET" to { p, kw -> p.parseCharacterSet(default = kw.default) },
+        // sqlglot #8007: `CHARACTER SET` is no longer a single token; parsed via
+        // text-sequence in parseProperty/parsePropertyBefore/parseColumnConstraint/parseCast.
         "CHECKSUM" to { p, _ -> p.parseChecksum() },
         "CLUSTER BY" to { p, _ -> p.parseClusterProperty() },
         "CLUSTERED" to { p, _ -> p.parseClusteredBy() },
@@ -935,11 +972,8 @@ object BaseParserTables {
         "CASESPECIFIC" to { p ->
             p.expression(dev.brikk.house.sql.ast.CaseSpecificColumnConstraint(args("not_" to false)))
         },
-        "CHARACTER SET" to { p ->
-            p.expression(
-                dev.brikk.house.sql.ast.CharacterSetColumnConstraint(args("this" to p.parseVarOrString()))
-            )
-        },
+        // sqlglot #8007: `CHARACTER SET` column constraint parsed via text-sequence in
+        // parseColumnConstraint (no longer a single CHARACTER_SET-keyed token).
         "CHECK" to { p -> p.parseCheckConstraint() },
         "COLLATE" to { p ->
             p.expression(
@@ -1093,7 +1127,8 @@ object BaseParserTables {
             "sort" to parser.parseSort({ a: Args -> dev.brikk.house.sql.ast.Sort(a) }, TokenType.SORT_BY)
         },
         TokenType.CONNECT_BY to { parser -> "connect" to parser.parseConnect(skipStartToken = true) },
-        TokenType.START_WITH to { parser -> "connect" to parser.parseConnect() },
+        // sqlglot #8008: START WITH ... CONNECT BY is handled in parseQueryModifiers via
+        // text-sequence (START is no longer a single START_WITH token).
     )
 
     // sqlglot: Parser.TYPE_LITERAL_PARSERS

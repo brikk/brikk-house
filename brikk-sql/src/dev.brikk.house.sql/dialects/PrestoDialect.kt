@@ -30,6 +30,6 @@ open class PrestoDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         PrestoParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        PrestoGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        PrestoGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 }

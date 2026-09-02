@@ -4,6 +4,10 @@ package dev.brikk.house.sql.dialects
 import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.generator.GenMethod
+import dev.brikk.house.sql.generator.eliminateQualify
+import dev.brikk.house.sql.generator.eliminateDistinctOn
+import dev.brikk.house.sql.generator.eliminateFullOuterJoin
+import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.parser.MysqlTokenizerTables
@@ -68,12 +72,14 @@ open class MysqlGenerator(
     tokenizerConfig: TokenizerConfig = MysqlTokenizerTables.CONFIG,
     // extra dispatch overlay for subclasses (sqlglot: further TRANSFORMS merges, e.g. Doris)
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    sourceDialect: String? = null,
 ) : Generator(
     pretty = pretty,
     identify = identify,
     comments = comments,
     tokenizerConfig = tokenizerConfig,
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
@@ -795,6 +801,9 @@ open class MysqlGenerator(
             reg(BitwiseOrAgg::class) { e -> mg().renameFuncSql("BIT_OR", e) }
             reg(BitwiseXorAgg::class) { e -> mg().renameFuncSql("BIT_XOR", e) }
             reg(BitwiseCount::class) { e -> mg().renameFuncSql("BIT_COUNT", e) }
+            // MySQL/Doris reject a bare COUNT(); normalize zero-arg count() -> COUNT(*)
+            // (e.g. transpiling ClickHouse count()). Inherited by DorisGenerator.
+            reg(Count::class) { e -> countStarSql(e as Count) }
             reg(Chr::class) { e -> chrSql(e as Chr, "CHAR") }
             reg(CurrentDate::class) { e -> mg().noParenCurrentDateSql(e as CurrentDate) }
             reg(CurrentVersion::class) { e -> mg().renameFuncSql("VERSION", e) }
@@ -849,6 +858,16 @@ open class MysqlGenerator(
             reg(NullSafeNEQ::class) { e -> "NOT ${binary(e as Binary, "<=>")}" }
             reg(NumberToStr::class) { e -> mg().renameFuncSql("FORMAT", e) }
             reg(Pivot::class) { e -> mg().noPivotSql(e as Pivot) }
+            // sqlglot mysql order: [eliminate_distinct_on, eliminate_semi_and_anti_joins,
+            // eliminate_qualify, eliminate_full_outer_join,
+            // unnest_generate_date_array_using_recursive_cte]. The last remains NOT PORTED.
+            reg(Select::class) { e ->
+                var s = eliminateDistinctOn(e)
+                s = eliminateSemiAndAntiJoins(s)
+                s = eliminateQualify(s)
+                s = eliminateFullOuterJoin(s)
+                if (s is Select) selectSql(s) else sql(s)
+            }
             reg(StrPosition::class) { e -> mg().strpositionSql(e as StrPosition) }
             reg(StrToDate::class) { e -> mg().strToDateSql(e) }
             reg(StrToTime::class) { e -> mg().strToDateSql(e) }

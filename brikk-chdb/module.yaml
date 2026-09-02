@@ -1,0 +1,16 @@
+# In-process chDB binding. The native library is deliberately supplied out-of-band in phase 0;
+# see docs/design/brikk-chdb.md for the packaging plan and ABI policy.
+product: jvm/lib
+
+description: In-process Kotlin/JVM binding for the embedded chDB ClickHouse engine.
+
+apply:
+  - ../publish.module-template.yaml
+
+settings:
+  publishing:
+    artifactId: brikk-chdb
+  jvm:
+    # The final java.lang.foreign API is required; this is intentionally not JNI/JNA.
+    jdk:
+      version: 25

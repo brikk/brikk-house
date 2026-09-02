@@ -38,17 +38,9 @@ class LineageCorpusTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun resource(path: String): String {
-        val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql/testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: java.io.File("testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: fail("resource $path not found on classpath or filesystem")
-        return stream.use { it.readBytes().decodeToString() }
-    }
-
     private fun loadLedger(): Map<String, String> {
         val text = try {
-            resource("lineage-corpus/known-failures.json")
+            testResource("lineage-corpus/known-failures.json")
         } catch (e: AssertionError) {
             return emptyMap()
         }
@@ -156,7 +148,7 @@ class LineageCorpusTest {
 
     @Test
     fun lineageCorpusMatchesPythonModuloLedger() {
-        val root = json.parseToJsonElement(resource("lineage-corpus/base.json")).jsonObject
+        val root = json.parseToJsonElement(testResource("lineage-corpus/base.json")).jsonObject
         val cases = root.getValue("cases").jsonArray.map { it.jsonObject }
         check(cases.isNotEmpty()) { "empty lineage corpus" }
         val ledger = loadLedger()

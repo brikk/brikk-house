@@ -56,6 +56,7 @@ import dev.brikk.house.sql.ast.TimeFromParts
 import dev.brikk.house.sql.ast.TimeToStr
 import dev.brikk.house.sql.ast.TimestampFromParts
 import dev.brikk.house.sql.ast.TimestampTrunc
+import dev.brikk.house.sql.ast.Trim
 import dev.brikk.house.sql.ast.UnixToTime
 import dev.brikk.house.sql.ast.Uuid
 import dev.brikk.house.sql.ast.Var
@@ -227,8 +228,11 @@ open class PostgresParser(
     tokenizerConfig: TokenizerConfig = dev.brikk.house.sql.parser.PostgresTokenizerTables.CONFIG,
 ) : Parser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig) {
 
+    override val quotedTypesToPreserve: Set<String> get() = setOf("char")
+
     // sqlglot: dialect back-reference for annotate_types-driven paths
     override val dialect: Dialect get() = Dialects.POSTGRES
+    override val normalizeNotNull: Boolean get() = false
 
     // sqlglot: PostgresParser.SUPPORTS_OMITTED_INTERVAL_SPAN_UNIT = True
     override val supportsOmittedIntervalSpanUnit: Boolean get() = true
@@ -241,6 +245,9 @@ open class PostgresParser(
 
     // sqlglot: Postgres.TYPED_DIVISION = True
     override val typedDivision: Boolean get() = true
+
+    // sqlglot: Postgres.CONCAT_COALESCE = True
+    override val concatCoalesce: Boolean get() = true
 
     // sqlglot: Postgres.NULL_ORDERING = "nulls_are_large"
     override val nullOrdering: String get() = "nulls_are_large"
@@ -467,6 +474,7 @@ object PostgresParserTables {
         put("BIT_AND", fromArgList(listOf("this"), false) { BitwiseAndAgg(it) })
         put("BIT_OR", fromArgList(listOf("this"), false) { BitwiseOrAgg(it) })
         put("BIT_XOR", fromArgList(listOf("this"), false) { BitwiseXorAgg(it) })
+        put("BTRIM", fromArgList(listOf("this", "expression", "position", "collation"), false) { Trim(it) })
         put("VERSION", fromArgList(listOf(), false) { CurrentVersion(it) })
         // sqlglot: dialect.build_timestamp_trunc
         put("DATE_TRUNC") { a ->

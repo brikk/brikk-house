@@ -92,6 +92,12 @@ open class DorisParser(
     // sqlglot: dialect back-reference for annotate_types-driven paths
     override val dialect: Dialect get() = Dialects.DORIS
 
+    // brikk extension (registry entry 7): Doris array subscripts are 1-based (ELEMENT_AT /
+    // arr[i] start at 1); sqlglot inherits MySQL's INDEX_OFFSET = 0. Mirrored by
+    // DorisGenerator.dialectIndexOffset so doris->doris round-trips and cross-dialect
+    // subscripts keep their semantics.
+    override val indexOffset: Int get() = 1
+
     // sqlglot: DorisParser.FUNCTIONS
     override val functions: Map<String, (List<Expression?>) -> Expression>
         get() = DorisParserTables.FUNCTIONS

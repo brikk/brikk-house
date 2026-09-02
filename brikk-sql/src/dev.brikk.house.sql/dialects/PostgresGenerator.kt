@@ -8,6 +8,8 @@ import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
+import dev.brikk.house.sql.generator.eliminateQualify
+import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
 import dev.brikk.house.sql.parser.PostgresTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -50,6 +52,7 @@ open class PostgresGenerator(
     tokenizerConfig: TokenizerConfig = PostgresTokenizerTables.CONFIG,
     // extra dispatch overlay for subclasses (sqlglot: further TRANSFORMS merges)
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    sourceDialect: String? = null,
 ) : Generator(
     pretty = pretty,
     identify = identify,
@@ -57,6 +60,7 @@ open class PostgresGenerator(
     normalizeFunctions = normalizeFunctions,
     tokenizerConfig = tokenizerConfig,
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
@@ -68,7 +72,8 @@ open class PostgresGenerator(
 
     override val selectKinds: Set<String> get() = emptySet()
     override val trySupported: Boolean get() = false
-    override val supportsUescape: Boolean get() = false
+    // Postgres supports U&'...' unicode string literals + the UESCAPE clause (sqlglot a1e3338e3).
+    override val supportsUescape: Boolean get() = true
     override val singleStringInterval: Boolean get() = true
     override val renameTableWithDb: Boolean get() = false
     override val lockingReadsSupported: Boolean get() = true
@@ -545,7 +550,16 @@ open class PostgresGenerator(
 
     // sqlglot: generators.postgres._date_diff_sql
     open fun dateDiffSql(expression: Expression): String {
-        val unit = ((expression.args["unit"] as? Expression)?.name ?: "").uppercase()
+        val unit = ((expression.args["unit"] as? Expression)?.name ?: "DAY").uppercase()
+        if (unit == "DAY" && expression.args["date_part_boundary"] == true) {
+            val endDate = Cast(
+                args("this" to expression.thisArg, "to" to DataType(args("this" to DType.DATE)))
+            )
+            val startDate = Cast(
+                args("this" to expression.args["expression"], "to" to DataType(args("this" to DType.DATE)))
+            )
+            return sql(Paren(args("this" to Sub(args("this" to endDate, "expression" to startDate)))))
+        }
         val factor = DATE_DIFF_FACTOR[unit]
 
         val end = "CAST(${sql(expression, "this")} AS TIMESTAMP)"
@@ -610,8 +624,37 @@ open class PostgresGenerator(
         return func(name, expression.thisArg, *segments.toTypedArray())
     }
 
+    // sqlglot: dialect.arrow_json_extract_sql (postgres JSON_TYPE_REQUIRED_FOR_EXTRACTION = true)
+    open fun arrowJsonExtractSql(expression: Binary, op: String? = null): String {
+        val this_ = expression.thisArg
+        if (this_ is Literal && this_.isString) {
+            this_.replace(
+                Cast(args("this" to this_.copy(), "to" to DataType(args("this" to DType.JSON))))
+            )
+        }
+        val pathExpr = expression.args["expression"]
+        if (pathExpr is Binary || pathExpr is Predicate || pathExpr is Not) {
+            expression.set("expression", paren(pathExpr as Expression, copy = false))
+        }
+        val realOp = op ?: if (expression is JSONExtract) "->" else "->>"
+        return binary(expression, realOp)
+    }
+
     // sqlglot: generators.postgres._json_extract_sql
     open fun postgresJsonExtractSql(expression: Expression, name: String, op: String): String {
+        val path = expression.args["expression"]
+        // Single non-JSONPath segment (e.g. a negative array index) with no `expressions`:
+        // render as the infix arrow operator, not JSON_EXTRACT_PATH[_TEXT] (jsonb-unsafe).
+        if (path !is JSONPath && path !is Variadic && expression.expressionsArg.isEmpty()) {
+            return arrowJsonExtractSql(expression as Binary, op)
+        }
+        // JSON_EXTRACT_PATH requires a key, so use an empty variadic array for the root path.
+        if (path is JSONPath && path.expressionsArg.size == 1 && path.expressionsArg[0] is JSONPathRoot) {
+            expression.set(
+                "expression",
+                Variadic(args("this" to Literal(args("this" to "{}", "is_string" to true)))),
+            )
+        }
         if (expression.args["only_json_types"] == true) {
             return jsonExtractSegments(expression, name, quotedIndex = false, op = op)
         }
@@ -1237,9 +1280,10 @@ open class PostgresGenerator(
             reg(JSONExtractScalar::class) { e ->
                 pg().postgresJsonExtractSql(e, "JSON_EXTRACT_PATH_TEXT", "->>")
             }
-            reg(JSONBExtract::class) { e -> binary(e as Binary, "#>") }
-            reg(JSONBExtractScalar::class) { e -> binary(e as Binary, "#>>") }
-            reg(JSONBContains::class) { e -> binary(e as Binary, "?") }
+            reg(JSONBExtract::class) { e -> pg().arrowJsonExtractSql(e as Binary, "#>") }
+            reg(JSONBExtractScalar::class) { e -> pg().arrowJsonExtractSql(e as Binary, "#>>") }
+            // sqlglot #8156: the `?` operator now maps to JSONBContainsTopKey (base
+            // generator); JSONBContains renders as its function form.
             reg(ParseJSON::class) { e ->
                 sql(Cast(args("this" to e.thisArg, "to" to DataType(args("this" to DType.JSON)))))
             }
@@ -1278,6 +1322,13 @@ open class PostgresGenerator(
                 )
             }
             reg(Round::class) { e -> pg().roundSql(e as Round) }
+            // sqlglot: postgres exp.Select preprocess pipeline
+            // [eliminate_semi_and_anti_joins, eliminate_qualify]
+            reg(Select::class) { e ->
+                var s = eliminateSemiAndAntiJoins(e)
+                s = eliminateQualify(s)
+                selectSql(s as Select)
+            }
             reg(SHA2::class) { e -> pg().sha256Sql(e as SHA2) }
             reg(SHA2Digest::class) { e -> pg().sha2DigestSql(e as SHA2Digest) }
             reg(StrPosition::class) { e -> pg().strpositionSql(e as StrPosition) }

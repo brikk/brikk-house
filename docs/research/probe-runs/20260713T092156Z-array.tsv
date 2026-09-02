@@ -1,0 +1,18 @@
+idx_base1	toString(arrayElement([10,20,30], 1))	([10,20,30])[1]::VARCHAR	SAME	"10"[U+0031 U+0030]	"10"[U+0031 U+0030]
+idx_oob_hi	toString(arrayElement([10,20,30], 5))	([10,20,30])[5]::VARCHAR	DIFF	"0"[U+0030]	NULL
+idx_oob_zero	toString(arrayElement([10,20,30], 0))	([10,20,30])[0]::VARCHAR	DIFF	"0"[U+0030]	NULL
+idx_neg	toString(arrayElement([10,20,30], -1))	list_extract([10,20,30], -1)::VARCHAR	SAME	"30"[U+0033 U+0030]	"30"[U+0033 U+0030]
+idx_oob_str	arrayElement(['a','b'], 5)	list_extract(['a','b'], 5)	DIFF	""[]	NULL
+card_v	length([1,2,3])	cardinality([1,2,3])	DIFF	3	<ERR:Binder Error: Cardinality can only operate on MAPs>
+card_empty	length([])	cardinality([]::INT[])	DIFF	0	<ERR:Binder Error: Cardinality can only operate on MAPs>
+empty_check	empty([])	len([]::INT[]) = 0	SAME	1	true
+arr_to_str	arrayStringConcat([1,2,3], ',')	array_to_string([1,2,3], ',')	SAME	"1,2,3"[U+0031 U+002C U+0032 U+002C U+0033]	"1,2,3"[U+0031 U+002C U+0032 U+002C U+0033]
+arr_to_str_null	arrayStringConcat(['a',NULL,'c'], ',')	array_to_string(['a',NULL,'c'], ',')	SAME	"a,c"[U+0061 U+002C U+0063]	"a,c"[U+0061 U+002C U+0063]
+arr_remove	toString(arrayFilter(x -> x != 2, [1,2,2,3]))	list_filter([1,2,2,3], x -> x != 2)::VARCHAR	DIFF	"[1,3]"[U+005B U+0031 U+002C U+0033 U+005D]	"[1, 3]"[U+005B U+0031 U+002C U+0020 U+0033 U+005D]
+flatten_v	toString(arrayFlatten([[1,2],[3,4]]))	flatten([[1,2],[3,4]])::VARCHAR	DIFF	"[1,2,3,4]"[U+005B U+0031 U+002C U+0032 U+002C U+0033 U+002C U+0034 U+005D]	"[1, 2, 3, 4]"[U+005B U+0031 U+002C U+0020 U+0032 U+002C U+0020 U+0033 U+002C U+0020 U+0034 U+005D]
+range_v	toString(range(5))	range(5)::VARCHAR	DIFF	"[0,1,2,3,4]"[U+005B U+0030 U+002C U+0031 U+002C U+0032 U+002C U+0033 U+002C U+0034 U+005D]	"[0, 1, 2, 3, 4]"[U+005B U+0030 U+002C U+0020 U+0031 U+002C U+0020 U+0032 U+002C U+0020 U+0033 U+002C U+0020 U+0034 U+005D]
+range_1_5	toString(range(1,5))	range(1,5)::VARCHAR	DIFF	"[1,2,3,4]"[U+005B U+0031 U+002C U+0032 U+002C U+0033 U+002C U+0034 U+005D]	"[1, 2, 3, 4]"[U+005B U+0031 U+002C U+0020 U+0032 U+002C U+0020 U+0033 U+002C U+0020 U+0034 U+005D]
+has_v	has([1,2,3], 2)	list_contains([1,2,3], 2)	SAME	1	true
+indexof_found	indexOf([10,20,30], 20)	list_position([10,20,30], 20)	SAME	2	2
+indexof_absent	indexOf([10,20,30], 99)	list_position([10,20,30], 99)	DIFF	0	NULL
+arr_has_null	toString([1,NULL,3])	([1,NULL,3])::VARCHAR	DIFF	"[1,NULL,3]"[U+005B U+0031 U+002C U+004E U+0055 U+004C U+004C U+002C U+0033 U+005D]	"[1, NULL, 3]"[U+005B U+0031 U+002C U+0020 U+004E U+0055 U+004C U+004C U+002C U+0020 U+0033 U+005D]

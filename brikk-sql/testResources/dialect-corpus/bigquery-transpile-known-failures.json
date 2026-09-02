@@ -1,0 +1,752 @@
+{
+    "cases": [
+        {
+            "case": "read|hive|SELECT REPEAT(' ', 2)",
+            "reason": "expected `SELECT REPEAT(' ', 2)` actual `SELECT SPACE(2)`"
+        },
+        {
+            "case": "read|spark|SELECT REPEAT(' ', 2)",
+            "reason": "expected `SELECT REPEAT(' ', 2)` actual `SELECT SPACE(2)`"
+        },
+        {
+            "case": "write|presto|SELECT purchases, LAST_VALUE(item) OVER item_window AS most_popular FROM Produce WINDOW item_window AS (PARTITION BY purchases ORDER BY purchases ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)",
+            "reason": "expected `SELECT purchases, LAST_VALUE(item) OVER (PARTITION BY purchases ORDER BY purchases NULLS FIRST ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS most_popular FROM Produce` actual `SELECT purchases, LAST_VALUE(item) OVER item_window AS most_popular FROM Produce WINDOW item_window AS (PARTITION BY purchases ORDER BY purchases NULLS FIRST ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)`"
+        },
+        {
+            "case": "write|bigquery|EDIT_DISTANCE(col1, col2, max_distance => 3)",
+            "reason": "expected `EDIT_DISTANCE(col1, col2, max_distance => 3)` actual `LEVENSHTEIN(col1, col2, 3)`"
+        },
+        {
+            "case": "write|duckdb|EDIT_DISTANCE(col1, col2, max_distance => 3)",
+            "reason": "expected `CASE WHEN LEVENSHTEIN(col1, col2) IS NULL OR 3 IS NULL THEN NULL ELSE LEAST(LEVENSHTEIN(col1, col2), 3) END` actual `LEVENSHTEIN(col1, col2, 3)`"
+        },
+        {
+            "case": "write|hive|EDIT_DISTANCE(col1, col2, max_distance => 3)",
+            "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`"
+        },
+        {
+            "case": "write|spark|EDIT_DISTANCE(col1, col2, max_distance => 3)",
+            "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`"
+        },
+        {
+            "case": "write|spark2|EDIT_DISTANCE(col1, col2, max_distance => 3)",
+            "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`"
+        },
+        {
+            "case": "write|duckdb|SELECT t.c1, h.c2, s.c3 FROM t1 AS t, UNNEST(t.t2) AS h, UNNEST(h.t3) AS s",
+            "reason": "expected `SELECT t.c1, h.c2, s.c3 FROM t1 AS t CROSS JOIN UNNEST(t.t2) AS _t0(h) CROSS JOIN UNNEST(h.t3) AS _t1(s)` actual `SELECT t.c1, h.c2, s.c3 FROM t1 AS t CROSS JOIN UNNEST(t.t2) AS h CROSS JOIN UNNEST(h.t3) AS s`"
+        },
+        {
+            "case": "write|bigquery|SELECT results FROM Coordinates, Coordinates.position AS results",
+            "reason": "expected `SELECT results FROM Coordinates CROSS JOIN UNNEST(Coordinates.position) AS results` actual `SELECT results FROM Coordinates CROSS JOIN Coordinates.position AS results`"
+        },
+        {
+            "case": "write|presto|SELECT results FROM Coordinates, Coordinates.position AS results",
+            "reason": "expected `SELECT results FROM Coordinates CROSS JOIN UNNEST(Coordinates.position) AS _t0(results)` actual `SELECT results FROM Coordinates CROSS JOIN Coordinates.position AS results`"
+        },
+        {
+            "case": "read|presto|SELECT results FROM Coordinates AS c, UNNEST(c.position) AS results",
+            "reason": "expected `SELECT results FROM Coordinates AS c, UNNEST(c.position) AS results` actual `SELECT results FROM Coordinates AS c, UNNEST(c.position) AS _t`"
+        },
+        {
+            "case": "write|presto|SELECT results FROM Coordinates AS c, UNNEST(c.position) AS results",
+            "reason": "expected `SELECT results FROM Coordinates AS c CROSS JOIN UNNEST(c.position) AS _t0(results)` actual `SELECT results FROM Coordinates AS c CROSS JOIN UNNEST(c.position) AS results`"
+        },
+        {
+            "case": "write|duckdb|TIMESTAMP(x)",
+            "reason": "expected `CAST(x AS TIMESTAMPTZ)` actual `TIMESTAMP(x)`"
+        },
+        {
+            "case": "write|presto|TIMESTAMP(x)",
+            "reason": "expected `CAST(x AS TIMESTAMP WITH TIME ZONE)` actual `CAST(x AS TIMESTAMP)`"
+        },
+        {
+            "case": "write|duckdb|SELECT TIMESTAMP('2008-12-25 15:30:00', 'America/Los_Angeles')",
+            "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIMESTAMP) AT TIME ZONE 'America/Los_Angeles'` actual `SELECT TIMESTAMP('2008-12-25 15:30:00', 'America/Los_Angeles')`"
+        },
+        {
+            "case": "write|duckdb|SELECT ARRAY_AGG(x IGNORE NULLS) AS x",
+            "reason": "expected `SELECT ARRAY_AGG(x) FILTER(WHERE x IS NOT NULL) AS x` actual `SELECT ARRAY_AGG(x) AS x`"
+        },
+        {
+            "case": "write|duckdb|SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY x) AS x",
+            "reason": "expected `SELECT ARRAY_AGG(DISTINCT x ORDER BY x NULLS FIRST) FILTER(WHERE x IS NOT NULL) AS x` actual `SELECT ARRAY_AGG(DISTINCT x ORDER BY x NULLS FIRST) AS x`"
+        },
+        {
+            "case": "write|duckdb|SELECT UNIX_DATE(DATE '2008-12-25')",
+            "reason": "expected `SELECT DATE_DIFF('DAY', CAST('1970-01-01' AS DATE), CAST('2008-12-25' AS DATE))` actual `SELECT UNIX_DATE(CAST('2008-12-25' AS DATE))`"
+        },
+        {
+            "case": "write|duckdb|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
+            "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`"
+        },
+        {
+            "case": "write|clickhouse|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
+            "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS Nullable(DATE)))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS Nullable(DATE)), MONTH)`"
+        },
+        {
+            "case": "write|mysql|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
+            "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`"
+        },
+        {
+            "case": "write|postgres|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
+            "reason": "expected `SELECT CAST(DATE_TRUNC('MONTH', CAST('2008-11-25' AS DATE)) + INTERVAL '1 MONTH' - INTERVAL '1 DAY' AS DATE)` actual `SELECT CAST(DATE_SUB(DATE_ADD(DATE_TRUNC('month', CAST('2008-11-25' AS DATE)), 1, 'month'), 1, 'day') AS DATE)`"
+        },
+        {
+            "case": "write|spark|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
+            "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`"
+        },
+        {
+            "case": "write|duckdb|SELECT TIME(15, 30, 00)",
+            "reason": "expected `SELECT MAKE_TIME(15, 30, 00)` actual `SELECT TIME_FROM_PARTS(15, 30, 00)`"
+        },
+        {
+            "case": "write|duckdb|SELECT TIME('2008-12-25 15:30:00')",
+            "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIME)` actual `SELECT TS_OR_DS_TO_TIME('2008-12-25 15:30:00')`"
+        },
+        {
+            "case": "write|mysql|SELECT TIME('2008-12-25 15:30:00')",
+            "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIME)` actual `SELECT TS_OR_DS_TO_TIME('2008-12-25 15:30:00')`"
+        },
+        {
+            "case": "write|postgres|SELECT TIME('2008-12-25 15:30:00')",
+            "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIME)` actual `SELECT TS_OR_DS_TO_TIME('2008-12-25 15:30:00')`"
+        },
+        {
+            "case": "write|spark|SELECT TIME('2008-12-25 15:30:00')",
+            "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIMESTAMP)` actual `SELECT TS_OR_DS_TO_TIME('2008-12-25 15:30:00')`"
+        },
+        {
+            "case": "write|bigquery|SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0), minute)",
+            "reason": "expected `SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0), MINUTE)` actual `SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0))`"
+        },
+        {
+            "case": "write|presto|SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0), minute)",
+            "reason": "expected `SELECT DATE_DIFF('MINUTE', FROM_UNIXTIME(0), FROM_UNIXTIME(60))` actual `SELECT TIMESTAMPDIFF(FROM_UNIXTIME(60), FROM_UNIXTIME(0), MINUTE)`"
+        },
+        {
+            "case": "write|trino|SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0), minute)",
+            "reason": "expected `SELECT DATE_DIFF('MINUTE', FROM_UNIXTIME(0), FROM_UNIXTIME(60))` actual `SELECT TIMESTAMPDIFF(FROM_UNIXTIME(60), FROM_UNIXTIME(0), MINUTE)`"
+        },
+        {
+            "case": "read|bigquery|TIMESTAMP_DIFF(a, b, MONTH)",
+            "reason": "expected `TIMESTAMP_DIFF(a, b, MONTH)` actual `TIMESTAMP_DIFF(a, b)`"
+        },
+        {
+            "case": "read|mysql|TIMESTAMP_DIFF(a, b, MONTH)",
+            "reason": "expected `TIMESTAMP_DIFF(a, b, MONTH)` actual `TIMESTAMP_DIFF(a, b)`"
+        },
+        {
+            "case": "write|presto|TIMESTAMP_DIFF(a, b, MONTH)",
+            "reason": "expected `DATE_DIFF('MONTH', b, a)` actual `TIMESTAMPDIFF(a, b, MONTH)`"
+        },
+        {
+            "case": "write|trino|TIMESTAMP_DIFF(a, b, MONTH)",
+            "reason": "expected `DATE_DIFF('MONTH', b, a)` actual `TIMESTAMPDIFF(a, b, MONTH)`"
+        },
+        {
+            "case": "write|duckdb|SELECT * FROM t WHERE EXISTS(SELECT * FROM unnest(nums) AS x WHERE x > 1)",
+            "reason": "expected `SELECT * FROM t WHERE EXISTS(SELECT * FROM UNNEST(nums) AS _t0(x) WHERE x > 1)` actual `SELECT * FROM t WHERE EXISTS(SELECT * FROM UNNEST(nums) AS x WHERE x > 1)`"
+        },
+        {
+            "case": "write|presto|SELECT DATETIME_DIFF(DATETIME '2021-02-01 00:00:00', DATETIME '2021-01-31 00:00:00', MONTH)",
+            "reason": "expected `SELECT DATE_DIFF('MONTH', DATE_TRUNC('MONTH', CAST('2021-01-31 00:00:00' AS TIMESTAMP)), DATE_TRUNC('MONTH', CAST('2021-02-01 00:00:00' AS TIMESTAMP)))` actual `SELECT DATETIME_DIFF(CAST('2021-02-01 00:00:00' AS TIMESTAMP), CAST('2021-01-31 00:00:00' AS TIMESTAMP), MONTH)`"
+        },
+        {
+            "case": "write|trino|SELECT DATETIME_DIFF(DATETIME '2021-02-01 00:00:00', DATETIME '2021-01-31 00:00:00', MONTH)",
+            "reason": "expected `SELECT DATE_DIFF('MONTH', DATE_TRUNC('MONTH', CAST('2021-01-31 00:00:00' AS TIMESTAMP)), DATE_TRUNC('MONTH', CAST('2021-02-01 00:00:00' AS TIMESTAMP)))` actual `SELECT DATETIME_DIFF(CAST('2021-02-01 00:00:00' AS TIMESTAMP), CAST('2021-01-31 00:00:00' AS TIMESTAMP), MONTH)`"
+        },
+        {
+            "case": "write|presto|SELECT DATETIME_DIFF(DATETIME '2017-10-15 00:00:00', DATETIME '2017-10-14 00:00:00', WEEK)",
+            "reason": "expected `SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2017-10-14 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY), DATE_TRUNC('WEEK', CAST('2017-10-15 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY))` actual `SELECT DATETIME_DIFF(CAST('2017-10-15 00:00:00' AS TIMESTAMP), CAST('2017-10-14 00:00:00' AS TIMESTAMP), WEEK_START(SUNDAY))`"
+        },
+        {
+            "case": "write|trino|SELECT DATETIME_DIFF(DATETIME '2017-10-15 00:00:00', DATETIME '2017-10-14 00:00:00', WEEK)",
+            "reason": "expected `SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2017-10-14 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY), DATE_TRUNC('WEEK', CAST('2017-10-15 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY))` actual `SELECT DATETIME_DIFF(CAST('2017-10-15 00:00:00' AS TIMESTAMP), CAST('2017-10-14 00:00:00' AS TIMESTAMP), WEEK_START(SUNDAY))`"
+        },
+        {
+            "case": "write|spark|SELECT TIMESTAMP_SUB(TIMESTAMP \"2008-12-25 15:30:00+00\", INTERVAL 10 MINUTE)",
+            "reason": "expected `SELECT CAST('2008-12-25 15:30:00+00' AS TIMESTAMP) - INTERVAL '10' MINUTE` actual `SELECT TIMESTAMP_SUB(CAST('2008-12-25 15:30:00+00' AS TIMESTAMP), '10', 'MINUTE')`"
+        },
+        {
+            "case": "write||LOWER(TO_HEX(x))",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`"
+        },
+        {
+            "case": "write|clickhouse|LOWER(TO_HEX(x))",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER(x)`"
+        },
+        {
+            "case": "write|duckdb|LOWER(TO_HEX(x))",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`"
+        },
+        {
+            "case": "write|hive|LOWER(TO_HEX(x))",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`"
+        },
+        {
+            "case": "write|mysql|LOWER(TO_HEX(x))",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`"
+        },
+        {
+            "case": "write|spark|LOWER(TO_HEX(x))",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`"
+        },
+        {
+            "case": "write||TO_HEX(x)",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`"
+        },
+        {
+            "case": "write|clickhouse|TO_HEX(x)",
+            "reason": "expected `LOWER(HEX(x))` actual `TO_HEX(x)`"
+        },
+        {
+            "case": "write|duckdb|TO_HEX(x)",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`"
+        },
+        {
+            "case": "write|hive|TO_HEX(x)",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`"
+        },
+        {
+            "case": "write|mysql|TO_HEX(x)",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`"
+        },
+        {
+            "case": "write|spark|TO_HEX(x)",
+            "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`"
+        },
+        {
+            "case": "write|clickhouse|UPPER(TO_HEX(x))",
+            "reason": "expected `HEX(x)` actual `UPPER(x)`"
+        },
+        {
+            "case": "read|clickhouse|SHA256(x)",
+            "reason": "expected `SHA256(x)` actual `SHA2(x, 256)`"
+        },
+        {
+            "case": "read|presto|SHA256(x)",
+            "reason": "expected `SHA256(x)` actual `S_H_A2_DIGEST(x, 256)`"
+        },
+        {
+            "case": "read|trino|SHA256(x)",
+            "reason": "expected `SHA256(x)` actual `S_H_A2_DIGEST(x, 256)`"
+        },
+        {
+            "case": "read|postgres|SHA256(x)",
+            "reason": "expected `SHA256(x)` actual `SHA2(x, 256)`"
+        },
+        {
+            "case": "read|duckdb|SHA256(x)",
+            "reason": "expected `SHA256(x)` actual `SHA2(x, 256)`"
+        },
+        {
+            "case": "write|bigquery|SHA256(x)",
+            "reason": "expected `SHA256(x)` actual `S_H_A2_DIGEST(x, 256)`"
+        },
+        {
+            "case": "read|clickhouse|SHA512(x)",
+            "reason": "expected `SHA512(x)` actual `SHA2(x, 512)`"
+        },
+        {
+            "case": "read|presto|SHA512(x)",
+            "reason": "expected `SHA512(x)` actual `S_H_A2_DIGEST(x, 512)`"
+        },
+        {
+            "case": "read|trino|SHA512(x)",
+            "reason": "expected `SHA512(x)` actual `S_H_A2_DIGEST(x, 512)`"
+        },
+        {
+            "case": "write|bigquery|SHA512(x)",
+            "reason": "expected `SHA512(x)` actual `S_H_A2_DIGEST(x, 512)`"
+        },
+        {
+            "case": "read|spark|WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(arr)) - 1)) AS pos CROSS JOIN UNNEST(arr) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(arr) - 1) AND pos_2 = (ARRAY_LENGTH(arr) - 1))",
+            "reason": "expected `WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(arr)) - 1)) AS pos CROSS JOIN UNNEST(arr) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(arr) - 1) AND pos_2 = (ARRAY_LENGTH(arr) - 1))` actual `WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT EXPLODE(arr) FROM cte`"
+        },
+        {
+            "case": "read|spark|SELECT IF(pos = pos_2, col, NULL) AS col FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))",
+            "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))` actual `SELECT EXPLODE_OUTER([])`"
+        },
+        {
+            "case": "read|spark|SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))",
+            "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))` actual `SELECT POSEXPLODE_OUTER([])`"
+        },
+        {
+            "case": "write|duckdb|SELECT AS STRUCT ARRAY(SELECT AS STRUCT 1 AS b FROM x) AS y FROM z",
+            "reason": "expected `SELECT {'y': ARRAY(SELECT {'b': 1} FROM x)} FROM z` actual `SELECT AS STRUCT ARRAY(SELECT AS STRUCT 1 AS b FROM x) AS y FROM z`"
+        },
+        {
+            "case": "read|spark|SELECT * FROM UNNEST(['7', '14']) AS x",
+            "reason": "expected `SELECT * FROM UNNEST(['7', '14']) AS x` actual `SELECT * FROM UNNEST(['7', '14']) AS _t0`"
+        },
+        {
+            "case": "write|presto|SELECT * FROM UNNEST(['7', '14']) AS x",
+            "reason": "expected `SELECT * FROM UNNEST(ARRAY['7', '14']) AS _t0(x)` actual `SELECT * FROM UNNEST(ARRAY['7', '14']) AS x`"
+        },
+        {
+            "case": "write|spark|SELECT * FROM UNNEST(['7', '14']) AS x",
+            "reason": "expected `SELECT * FROM EXPLODE(ARRAY('7', '14')) AS _t0(x)` actual `SELECT * FROM EXPLODE(ARRAY('7', '14')) AS x`"
+        },
+        {
+            "case": "write|duckdb|SELECT * FROM a WHERE b IN UNNEST([1, 2, 3])",
+            "reason": "expected `SELECT * FROM a WHERE CASE WHEN [1, 2, 3] IS NULL OR ARRAY_LENGTH([1, 2, 3]) = 0 THEN FALSE WHEN ARRAY_CONTAINS([1, 2, 3], b) THEN TRUE WHEN b IS NULL OR ARRAY_LENGTH([1, 2, 3]) <> LIST_COUNT([1, 2, 3]) THEN NULL ELSE FALSE END` actual `SELECT * FROM a WHERE b IN (SELECT UNNEST([1, 2, 3]))`"
+        },
+        {
+            "case": "write|duckdb|SELECT * FROM a WHERE b NOT IN UNNEST([1, 2, 3])",
+            "reason": "expected `SELECT * FROM a WHERE NOT CASE WHEN [1, 2, 3] IS NULL OR ARRAY_LENGTH([1, 2, 3]) = 0 THEN FALSE WHEN ARRAY_CONTAINS([1, 2, 3], b) THEN TRUE WHEN b IS NULL OR ARRAY_LENGTH([1, 2, 3]) <> LIST_COUNT([1, 2, 3]) THEN NULL ELSE FALSE END` actual `SELECT * FROM a WHERE NOT b IN (SELECT UNNEST([1, 2, 3]))`"
+        },
+        {
+            "case": "write|postgres|DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)",
+            "reason": "expected `CURRENT_DATE - INTERVAL '1 DAY'` actual `CURRENT_DATE - INTERVAL '1 'DAY''`"
+        },
+        {
+            "case": "write|postgres|DATE_ADD(CURRENT_DATE(), INTERVAL -1 DAY)",
+            "reason": "expected `CURRENT_DATE + INTERVAL '-1 DAY'` actual `CURRENT_DATE + INTERVAL '-1 'DAY''`"
+        },
+        {
+            "case": "write|duckdb|CURRENT_DATE('UTC')",
+            "reason": "expected `CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)` actual `CURRENT_DATE('UTC')`"
+        },
+        {
+            "case": "read|spark|SELECT cola, colb FROM UNNEST([STRUCT(1 AS cola, 'test' AS colb)]) AS tab",
+            "reason": "expected `SELECT cola, colb FROM UNNEST([STRUCT(1 AS cola, 'test' AS colb)]) AS tab` actual `SELECT cola, colb FROM (VALUES (1, 'test')) AS tab`"
+        },
+        {
+            "case": "read|postgres|SELECT * FROM UNNEST([STRUCT(1 AS _c0)]) AS t1",
+            "reason": "expected `SELECT * FROM UNNEST([STRUCT(1 AS _c0)]) AS t1` actual `SELECT * FROM (VALUES (1)) AS t1`"
+        },
+        {
+            "case": "read|postgres|SELECT * FROM UNNEST([STRUCT(1 AS id)]) AS t1 CROSS JOIN UNNEST([STRUCT(1 AS id)]) AS t2",
+            "reason": "expected `SELECT * FROM UNNEST([STRUCT(1 AS id)]) AS t1 CROSS JOIN UNNEST([STRUCT(1 AS id)]) AS t2` actual `SELECT * FROM (VALUES (1)) AS t1 CROSS JOIN (VALUES (1)) AS t2`"
+        },
+        {
+            "case": "read||SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL",
+            "reason": "expected `SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL` actual `SELECT `u`.`user_email` AS `user_email`, `_q_0`.`d`.`user_id` AS `user_id`, `_q_1`.`account_id` AS `account_id` FROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `_q_0`, UNNEST(`_q_0`.`d`.`account_ids`) AS `_q_1` WHERE NOT `_q_1`.`account_id` IS NULL`"
+        },
+        {
+            "case": "write|duckdb|SELECT DATETIME('2020-01-01')",
+            "reason": "expected `SELECT CAST('2020-01-01' AS TIMESTAMP)` actual `SELECT TS_OR_DS_TO_DATETIME('2020-01-01')`"
+        },
+        {
+            "case": "write|duckdb|SELECT DATETIME('2020-01-01', TIME '23:59:59')",
+            "reason": "expected `SELECT CAST(CAST('2020-01-01' AS DATE) + CAST('23:59:59' AS TIME) AS TIMESTAMP)` actual `SELECT DATETIME('2020-01-01')`"
+        },
+        {
+            "case": "write|bigquery|SELECT DATETIME('2020-01-01', TIME '23:59:59')",
+            "reason": "expected `SELECT DATETIME('2020-01-01', CAST('23:59:59' AS TIME))` actual `SELECT DATETIME('2020-01-01')`"
+        },
+        {
+            "case": "write|duckdb|SELECT DATETIME('2020-01-01', 'America/Los_Angeles')",
+            "reason": "expected `SELECT CAST(CAST('2020-01-01' AS TIMESTAMPTZ) AT TIME ZONE 'America/Los_Angeles' AS TIMESTAMP)` actual `SELECT DATETIME('2020-01-01')`"
+        },
+        {
+            "case": "write|bigquery|SELECT DATETIME('2020-01-01', 'America/Los_Angeles')",
+            "reason": "expected `SELECT DATETIME('2020-01-01', 'America/Los_Angeles')` actual `SELECT DATETIME('2020-01-01')`"
+        },
+        {
+            "case": "write|duckdb|SELECT LENGTH(foo)",
+            "reason": "expected `SELECT CASE TYPEOF(foo) WHEN 'BLOB' THEN OCTET_LENGTH(CAST(foo AS BLOB)) ELSE LENGTH(CAST(foo AS TEXT)) END` actual `SELECT LENGTH(foo)`"
+        },
+        {
+            "case": "write|duckdb|SELECT TIME_DIFF('12:00:00', '12:30:00', MINUTE)",
+            "reason": "expected `SELECT DATE_DIFF('MINUTE', CAST('12:30:00' AS TIME), CAST('12:00:00' AS TIME))` actual `SELECT TIME_DIFF('12:00:00', '12:30:00', MINUTE)`"
+        },
+        {
+            "case": "write|duckdb|SELECT GENERATE_TIMESTAMP_ARRAY('2016-10-05 00:00:00', '2016-10-07 00:00:00', INTERVAL '1' DAY)",
+            "reason": "expected `SELECT GENERATE_SERIES(CAST('2016-10-05 00:00:00' AS TIMESTAMP), CAST('2016-10-07 00:00:00' AS TIMESTAMP), INTERVAL '1' DAY)` actual `SELECT GENERATE_TIMESTAMP_ARRAY('2016-10-05 00:00:00', '2016-10-07 00:00:00', INTERVAL '1' DAY)`"
+        },
+        {
+            "case": "write|duckdb|SELECT ARRAY_TO_STRING(['cake', 'pie', NULL], '--', 'MISSING') AS text",
+            "reason": "expected `SELECT ARRAY_TO_STRING(LIST_TRANSFORM(['cake', 'pie', NULL], x -> COALESCE(x, 'MISSING')), '--') AS text` actual `SELECT ARRAY_TO_STRING(['cake', 'pie', NULL], '--', 'MISSING') AS text`"
+        },
+        {
+            "case": "write|duckdb|STRING(a)",
+            "reason": "expected `CAST(a AS TEXT)` actual `STRING(a)`"
+        },
+        {
+            "case": "write|bigquery|STRING('2008-12-25 15:30:00', 'America/New_York')",
+            "reason": "expected `STRING('2008-12-25 15:30:00', 'America/New_York')` actual `STRING('2008-12-25 15:30:00')`"
+        },
+        {
+            "case": "write|duckdb|STRING('2008-12-25 15:30:00', 'America/New_York')",
+            "reason": "expected `CAST(CAST('2008-12-25 15:30:00' AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS TEXT)` actual `STRING('2008-12-25 15:30:00', 'America/New_York')`"
+        },
+        {
+            "case": "write|hive|SAFE_DIVIDE(x, y)",
+            "reason": "expected `IF(y <> 0, x / y, NULL)` actual `SAFE_DIVIDE(x, y)`"
+        },
+        {
+            "case": "write|duckdb|SAFE_DIVIDE(x + 1, 2 * y)",
+            "reason": "expected `CASE WHEN (2 * y) <> 0 THEN (x + 1) / (2 * y) ELSE NULL END` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+        },
+        {
+            "case": "write|presto|SAFE_DIVIDE(x + 1, 2 * y)",
+            "reason": "expected `IF((2 * y) <> 0, CAST((x + 1) AS DOUBLE) / (2 * y), NULL)` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+        },
+        {
+            "case": "write|trino|SAFE_DIVIDE(x + 1, 2 * y)",
+            "reason": "expected `IF((2 * y) <> 0, CAST((x + 1) AS DOUBLE) / (2 * y), NULL)` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+        },
+        {
+            "case": "write|hive|SAFE_DIVIDE(x + 1, 2 * y)",
+            "reason": "expected `IF((2 * y) <> 0, (x + 1) / (2 * y), NULL)` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+        },
+        {
+            "case": "write|spark2|SAFE_DIVIDE(x + 1, 2 * y)",
+            "reason": "expected `IF((2 * y) <> 0, (x + 1) / (2 * y), NULL)` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+        },
+        {
+            "case": "write|postgres|SAFE_DIVIDE(x + 1, 2 * y)",
+            "reason": "expected `CASE WHEN (2 * y) <> 0 THEN CAST((x + 1) AS DOUBLE PRECISION) / (2 * y) ELSE NULL END` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+        },
+        {
+            "case": "write|duckdb|SELECT JSON_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')",
+            "reason": "expected `SELECT CAST('{\"arr\": [1, \"a\"]}' -> '$.arr' AS TEXT[])` actual `SELECT J_S_O_N_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')`"
+        },
+        {
+            "case": "write|duckdb|SELECT ts + MAKE_INTERVAL(1, 2, minute => 5, day => 3)",
+            "reason": "expected `SELECT ts + INTERVAL '1 year 2 month 5 minute 3 day'` actual `SELECT ts + MAKE_INTERVAL(1, 2, day => 3, minute => 5)`"
+        },
+        {
+            "case": "write|duckdb|SELECT INT64(JSON_QUERY(JSON '{\"key\": 2000}', '$.key'))",
+            "reason": "expected `SELECT CAST(JSON('{\"key\": 2000}') -> '$.key' AS BIGINT)` actual `SELECT INT64(JSON('{\"key\": 2000}') -> '$.key')`"
+        },
+        {
+            "case": "read|duckdb|SELECT * FROM t1, UNNEST(`t1`) AS `col`",
+            "reason": "expected `SELECT * FROM t1, UNNEST(`t1`) AS `col`` actual `SELECT * FROM t1, UNNEST(`t1`) AS `t1``"
+        },
+        {
+            "case": "read|duckdb|SELECT * FROM t, UNNEST(`t2`.`t3`) AS `col`",
+            "reason": "expected `SELECT * FROM t, UNNEST(`t2`.`t3`) AS `col`` actual `SELECT * FROM t, UNNEST(`t1`.`t2`.`t3`) AS `t1``"
+        },
+        {
+            "case": "read|duckdb|SELECT * FROM t1, UNNEST(`t1`.`t2`.`t3`.`t4`) AS `col`",
+            "reason": "expected `SELECT * FROM t1, UNNEST(`t1`.`t2`.`t3`.`t4`) AS `col`` actual `SELECT * FROM t1, UNNEST(`t1`.`t2`.`t3`.`t4`) AS `t3``"
+        },
+        {
+            "case": "write|duckdb|SELECT PARSE_DATETIME('%F %T', '2023-01-15 14:30:00')",
+            "reason": "expected `SELECT STRPTIME('1970 ' || '2023-01-15 14:30:00', '%Y ' || '%Y-%m-%d %H:%M:%S')` actual `SELECT PARSE_DATETIME('2023-01-15 14:30:00', '%Y-%m-%d %H:%M:%S', 1970)`"
+        },
+        {
+            "case": "write|bigquery|SELECT 0xA",
+            "reason": "expected `SELECT 0xA` actual `SELECT 10`"
+        },
+        {
+            "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr) FROM (SELECT [1, 2] AS arr) AS t",
+            "reason": "expected `SELECT FLATTEN(ARRAY_AGG(arr) FILTER(WHERE NOT arr IS NULL)) FROM (SELECT [1, 2] AS arr) AS t` actual `SELECT ARRAY_CONCAT_AGG(arr) FROM (SELECT [1, 2] AS arr) AS t`"
+        },
+        {
+            "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr ORDER BY y) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t",
+            "reason": "expected `SELECT FLATTEN(ARRAY_AGG(arr ORDER BY y NULLS FIRST) FILTER(WHERE NOT arr IS NULL)) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t` actual `SELECT ARRAY_CONCAT_AGG(arr ORDER BY y NULLS FIRST) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t`"
+        },
+        {
+            "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr LIMIT 2) FROM (SELECT [1, 2] AS arr) AS t",
+            "reason": "expected UnsupportedError, got `SELECT ARRAY_CONCAT_AGG(arr LIMIT 2) FROM (SELECT [1, 2] AS arr) AS t`"
+        },
+        {
+            "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr ORDER BY y DESC LIMIT 2) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t",
+            "reason": "expected UnsupportedError, got `SELECT ARRAY_CONCAT_AGG(arr ORDER BY y DESC LIMIT 2) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t`"
+        },
+        {
+            "case": "write|duckdb|SELECT * FROM a LEFT JOIN b ON a.key = b.key AND a.val IN UNNEST(b.arr)",
+            "reason": "expected `SELECT * FROM a LEFT JOIN b ON a.key = b.key AND CASE WHEN b.arr IS NULL OR ARRAY_LENGTH(b.arr) = 0 THEN FALSE WHEN ARRAY_CONTAINS(b.arr, a.val) THEN TRUE WHEN a.val IS NULL OR ARRAY_LENGTH(b.arr) <> LIST_COUNT(b.arr) THEN NULL ELSE FALSE END` actual `SELECT * FROM a LEFT JOIN b ON a.key = b.key AND a.val IN (SELECT UNNEST(b.arr))`"
+        },
+        {
+            "case": "write|duckdb|SELECT b'a'",
+            "reason": "expected `SELECT CAST(e'a' AS BLOB)` actual `SELECT CAST('e''a''' AS BLOB)`"
+        },
+        {
+            "case": "write|postgres|SELECT b'a'",
+            "reason": "expected `SELECT CAST(e'a' AS BYTEA)` actual `SELECT CAST('e''a''' AS BYTEA)`"
+        },
+        {
+            "case": "write|duckdb|SELECT GENERATE_UUID()",
+            "reason": "expected `SELECT CAST(UUID() AS TEXT)` actual `SELECT UUID()`"
+        },
+        {
+            "case": "write|spark2|SELECT GENERATE_UUID()",
+            "reason": "expected `SELECT CAST(UUID() AS STRING)` actual `SELECT UUID()`"
+        },
+        {
+            "case": "write|spark|SELECT GENERATE_UUID()",
+            "reason": "expected `SELECT CAST(UUID() AS STRING)` actual `SELECT UUID()`"
+        },
+        {
+            "case": "write|presto|SELECT GENERATE_UUID()",
+            "reason": "expected `SELECT CAST(UUID() AS VARCHAR)` actual `SELECT UUID()`"
+        },
+        {
+            "case": "write|trino|SELECT GENERATE_UUID()",
+            "reason": "expected `SELECT CAST(UUID() AS VARCHAR)` actual `SELECT UUID()`"
+        },
+        {
+            "case": "write|duckdb|WITH sample AS (SELECT * FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:03']) AS ts) SELECT ts, TIMESTAMP_TRUNC(ts, DAY, 'America/New_York') AS truncated_ts FROM sample",
+            "reason": "expected `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) SELECT ts, DATE_TRUNC('DAY', ts AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York' AS truncated_ts FROM sample` actual `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS ts) SELECT ts, DATE_TRUNC('DAY', ts AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York' AS truncated_ts FROM sample`"
+        },
+        {
+            "case": "write|duckdb|WITH sample AS (SELECT ts FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:03']) AS ts) SELECT ts, TIMESTAMP_TRUNC(ts, DAY) AS truncated_ts FROM sample",
+            "reason": "expected `WITH sample AS (SELECT ts FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) SELECT ts, DATE_TRUNC('DAY', ts) AS truncated_ts FROM sample` actual `WITH sample AS (SELECT ts FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS ts) SELECT ts, DATE_TRUNC('DAY', ts) AS truncated_ts FROM sample`"
+        },
+        {
+            "case": "write|duckdb|WITH sample AS (SELECT * FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:03']) AS ts) SELECT ts, TIMESTAMP_TRUNC(ts, MINUTE, 'America/New_York') AS truncated_ts FROM sample",
+            "reason": "expected `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) SELECT ts, DATE_TRUNC('MINUTE', ts) AS truncated_ts FROM sample` actual `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS ts) SELECT ts, DATE_TRUNC('MINUTE', ts) AS truncated_ts FROM sample`"
+        },
+        {
+            "case": "write|duckdb|WITH sample AS (SELECT * FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:03']) AS ts) SELECT ts, TIMESTAMP_TRUNC(ts, MINUTE) AS truncated_ts FROM sample",
+            "reason": "expected `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) SELECT ts, DATE_TRUNC('MINUTE', ts) AS truncated_ts FROM sample` actual `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS ts) SELECT ts, DATE_TRUNC('MINUTE', ts) AS truncated_ts FROM sample`"
+        },
+        {
+            "case": "write|duckdb|SELECT GREATEST(1, NULL, 3)",
+            "reason": "expected `SELECT CASE WHEN 1 IS NULL OR NULL IS NULL OR 3 IS NULL THEN NULL ELSE GREATEST(1, NULL, 3) END` actual `SELECT GREATEST(1, NULL, 3)`"
+        },
+        {
+            "case": "write|duckdb|SELECT LEAST(1, NULL, 3)",
+            "reason": "expected `SELECT CASE WHEN 1 IS NULL OR NULL IS NULL OR 3 IS NULL THEN NULL ELSE LEAST(1, NULL, 3) END` actual `SELECT LEAST(1, NULL, 3)`"
+        },
+        {
+            "case": "read|spark|WITH cte AS (SELECT 1 AS foo) SELECT foo FROM cte",
+            "reason": "expected `WITH cte AS (SELECT 1 AS foo) SELECT foo FROM cte` actual `WITH cte AS (SELECT 1 AS bar) SELECT foo FROM cte`"
+        },
+        {
+            "case": "read|postgres|WITH cte AS (SELECT 1 AS foo, 2) SELECT foo FROM cte",
+            "reason": "expected `WITH cte AS (SELECT 1 AS foo, 2) SELECT foo FROM cte` actual `WITH cte AS (SELECT 1, 2) SELECT foo FROM cte`"
+        },
+        {
+            "case": "read|postgres|WITH cte AS (SELECT 1 AS foo UNION ALL SELECT 2) SELECT foo FROM cte",
+            "reason": "expected `WITH cte AS (SELECT 1 AS foo UNION ALL SELECT 2) SELECT foo FROM cte` actual `WITH cte AS (SELECT 1 UNION ALL SELECT 2) SELECT foo FROM cte`"
+        },
+        {
+            "case": "write|duckdb|SELECT * FROM UNNEST(ARRAY<STRUCT<x INT64>>[])",
+            "reason": "expected `SELECT * FROM (SELECT UNNEST(CAST([] AS STRUCT(x BIGINT)[]), max_depth => 2))` actual `SELECT * FROM UNNEST(CAST([] AS STRUCT(x BIGINT)[]))`"
+        },
+        {
+            "case": "write|duckdb|SELECT * FROM UNNEST(ARRAY<STRUCT<device_id INT64, time DATETIME, signal INT64, state STRING>>[STRUCT(1, DATETIME '2023-11-01 09:34:01', 74, 'INACTIVE'),STRUCT(4, DATETIME '2023-11-01 09:38:01', 80, 'ACTIVE')])",
+            "reason": "expected `SELECT * FROM (SELECT UNNEST(CAST([ROW(1, CAST('2023-11-01 09:34:01' AS TIMESTAMP), 74, 'INACTIVE'), ROW(4, CAST('2023-11-01 09:38:01' AS TIMESTAMP), 80, 'ACTIVE')] AS STRUCT(device_id BIGINT, time TIMESTAMP, signal BIGINT, state TEXT)[]), max_depth => 2))` actual `SELECT * FROM UNNEST(CAST([ROW(1, CAST('2023-11-01 09:34:01' AS TIMESTAMP), 74, 'INACTIVE'), ROW(4, CAST('2023-11-01 09:38:01' AS TIMESTAMP), 80, 'ACTIVE')] AS STRUCT(device_id BIGINT, time TIMESTAMP, signal BIGINT, state TEXT)[]))`"
+        },
+        {
+            "case": "write|bigquery|SELECT MAX_BY(name, score) FROM table1",
+            "reason": "expected `SELECT MAX_BY(name, score) FROM table1` actual `SELECT ARG_MAX(name, score) FROM table1`"
+        },
+        {
+            "case": "write|bigquery|SELECT MIN_BY(product, price) FROM table1",
+            "reason": "expected `SELECT MIN_BY(product, price) FROM table1` actual `SELECT ARG_MIN(product, price) FROM table1`"
+        },
+        {
+            "case": "write|duckdb|SELECT name, laps FROM UNNEST([STRUCT('Rudisha' AS name, [23.4, 26.3, 26.4, 26.1] AS laps), STRUCT('Makhloufi' AS name, [24.5, 25.4, 26.6, 26.1] AS laps)])",
+            "reason": "expected `SELECT name, laps FROM (SELECT UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}, {'name': 'Makhloufi', 'laps': [24.5, 25.4, 26.6, 26.1]}], max_depth => 2))` actual `SELECT name, laps FROM UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}, {'name': 'Makhloufi', 'laps': [24.5, 25.4, 26.6, 26.1]}])`"
+        },
+        {
+            "case": "write|duckdb|WITH Races AS (SELECT '800M' AS race) SELECT race, name, laps FROM Races AS r CROSS JOIN UNNEST([STRUCT('Rudisha' AS name, [23.4, 26.3, 26.4, 26.1] AS laps)])",
+            "reason": "expected `WITH Races AS (SELECT '800M' AS race) SELECT race, name, laps FROM Races AS r CROSS JOIN (SELECT UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}], max_depth => 2))` actual `WITH Races AS (SELECT '800M' AS race) SELECT race, name, laps FROM Races AS r CROSS JOIN UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}])`"
+        },
+        {
+            "case": "write|duckdb|SELECT participant FROM UNNEST([STRUCT('Rudisha' AS name, [23.4, 26.3, 26.4, 26.1] AS laps)]) AS participant",
+            "reason": "expected `SELECT participant FROM (SELECT UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}], max_depth => 2)) AS participant` actual `SELECT participant FROM UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}]) AS participant`"
+        },
+        {
+            "case": "write|duckdb|WITH Races AS (SELECT '800M' AS race) SELECT race, participant FROM Races AS r CROSS JOIN UNNEST([STRUCT('Rudisha' AS name, [23.4, 26.3, 26.4, 26.1] AS laps)]) AS participant",
+            "reason": "expected `WITH Races AS (SELECT '800M' AS race) SELECT race, participant FROM Races AS r CROSS JOIN (SELECT UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}], max_depth => 2)) AS participant` actual `WITH Races AS (SELECT '800M' AS race) SELECT race, participant FROM Races AS r CROSS JOIN UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}]) AS participant`"
+        },
+        {
+            "case": "write|duckdb|SELECT * FROM UNNEST([STRUCT('Alice' AS name, STRUCT(85 AS math, 90 AS english) AS scores), STRUCT('Bob' AS name, STRUCT(92 AS math, 88 AS english) AS scores)])",
+            "reason": "expected `SELECT * FROM (SELECT UNNEST([{'name': 'Alice', 'scores': {'math': 85, 'english': 90}}, {'name': 'Bob', 'scores': {'math': 92, 'english': 88}}], max_depth => 2))` actual `SELECT * FROM UNNEST([{'name': 'Alice', 'scores': {'math': 85, 'english': 90}}, {'name': 'Bob', 'scores': {'math': 92, 'english': 88}}])`"
+        },
+        {
+            "case": "write|duckdb|SELECT * FROM UNNEST([STRUCT('Alice' AS name, 85 AS score), STRUCT('Bob', 92), STRUCT('Diana', 95)])",
+            "reason": "expected `SELECT * FROM (SELECT UNNEST([{'name': 'Alice', 'score': 85}, {'name': 'Bob', 'score': 92}, {'name': 'Diana', 'score': 95}], max_depth => 2))` actual `SELECT * FROM UNNEST([{'name': 'Alice', 'score': 85}, {'_0': 'Bob', '_1': 92}, {'_0': 'Diana', '_1': 95}])`"
+        },
+        {
+            "case": "write|presto|SELECT * FROM UNNEST([STRUCT('Alice' AS name, 85 AS score), STRUCT('Bob', 92), STRUCT('Diana', 95)])",
+            "reason": "expected `SELECT * FROM UNNEST(ARRAY[CAST(ROW('Alice', 85) AS ROW(name VARCHAR, score INTEGER)), CAST(ROW('Bob', 92) AS ROW(name VARCHAR, score INTEGER)), CAST(ROW('Diana', 95) AS ROW(name VARCHAR, score INTEGER))])` actual `SELECT * FROM UNNEST(ARRAY[CAST(ROW('Alice', 85) AS ROW(name VARCHAR, score INTEGER)), ROW('Bob', 92), ROW('Diana', 95)])`"
+        },
+        {
+            "case": "write|trino|SELECT * FROM UNNEST([STRUCT('Alice' AS name, 85 AS score), STRUCT('Bob', 92), STRUCT('Diana', 95)])",
+            "reason": "expected `SELECT * FROM UNNEST(ARRAY[CAST(ROW('Alice', 85) AS ROW(name VARCHAR, score INTEGER)), CAST(ROW('Bob', 92) AS ROW(name VARCHAR, score INTEGER)), CAST(ROW('Diana', 95) AS ROW(name VARCHAR, score INTEGER))])` actual `SELECT * FROM UNNEST(ARRAY[CAST(ROW('Alice', 85) AS ROW(name VARCHAR, score INTEGER)), ROW('Bob', 92), ROW('Diana', 95)])`"
+        },
+        {
+            "case": "write|duckdb|SELECT UNIX_SECONDS('2008-12-25 15:30:00+00')",
+            "reason": "expected `SELECT CAST(EPOCH(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ)) AS BIGINT)` actual `SELECT UNIX_SECONDS('2008-12-25 15:30:00+00')`"
+        },
+        {
+            "case": "write|duckdb|SELECT UNIX_MICROS('2008-12-25 15:30:00+00')",
+            "reason": "expected `SELECT EPOCH_US(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MICROS('2008-12-25 15:30:00+00')`"
+        },
+        {
+            "case": "write|duckdb|SELECT UNIX_MICROS(TIMESTAMP '2008-12-25 15:30:00+00')",
+            "reason": "expected `SELECT EPOCH_US(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MICROS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))`"
+        },
+        {
+            "case": "write|duckdb|SELECT UNIX_MILLIS('2008-12-25 15:30:00+00')",
+            "reason": "expected `SELECT EPOCH_MS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MILLIS('2008-12-25 15:30:00+00')`"
+        },
+        {
+            "case": "write|duckdb|SELECT UNIX_MILLIS(TIMESTAMP '2008-12-25 15:30:00+00')",
+            "reason": "expected `SELECT EPOCH_MS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MILLIS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))`"
+        },
+        {
+            "case": "write|duckdb|SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 2) FROM table",
+            "reason": "expected `SELECT REGEXP_EXTRACT(NULLIF(SUBSTRING(abc, 2), ''), 'pattern(group)', 1) FROM \"table\"` actual `SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 1) FROM \"table\"`"
+        },
+        {
+            "case": "write|duckdb|SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 2, 3) FROM table",
+            "reason": "expected `SELECT ARRAY_EXTRACT(REGEXP_EXTRACT_ALL(NULLIF(SUBSTRING(abc, 2), ''), 'pattern(group)', 1), 3) FROM \"table\"` actual `SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 1) FROM \"table\"`"
+        },
+        {
+            "case": "write|duckdb|SELECT FORMAT_DATETIME('%Y%m%d %H:%M:%S', DATETIME '2023-12-25 15:30:00')",
+            "reason": "expected `SELECT STRFTIME(CAST('2023-12-25 15:30:00' AS TIMESTAMP), '%Y%m%d %H:%M:%S')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2023-12-25 15:30:00' AS TIMESTAMP)), '%Y%m%d %H:%M:%S')`"
+        },
+        {
+            "case": "write|duckdb|SELECT FORMAT_DATETIME('%x', '2023-12-25 15:30:00')",
+            "reason": "expected `SELECT STRFTIME(CAST('2023-12-25 15:30:00' AS TIMESTAMP), '%m/%d/%y')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME('2023-12-25 15:30:00'), '%m/%d/%y')`"
+        },
+        {
+            "case": "write|duckdb|SELECT FORMAT_DATETIME('%F %T', DATETIME '2023-10-15 14:30:45')",
+            "reason": "expected `SELECT STRFTIME(CAST('2023-10-15 14:30:45' AS TIMESTAMP), '%Y-%m-%d %H:%M:%S')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2023-10-15 14:30:45' AS TIMESTAMP)), '%Y-%m-%d %H:%M:%S')`"
+        },
+        {
+            "case": "write|duckdb|SELECT FORMAT_DATETIME('%c', DATETIME '2008-12-25 15:30:00')",
+            "reason": "expected `SELECT STRFTIME(CAST('2008-12-25 15:30:00' AS TIMESTAMP), '%a %b %-d %H:%M:%S %Y')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2008-12-25 15:30:00' AS TIMESTAMP)), '%a %b %-d %H:%M:%S %Y')`"
+        },
+        {
+            "case": "write|duckdb|SELECT FORMAT_DATETIME('%Y-%m-%e', DATETIME '2020-09-09 10:15:30')",
+            "reason": "expected `SELECT STRFTIME(CAST('2020-09-09 10:15:30' AS TIMESTAMP), '%Y-%m-%-d')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2020-09-09 10:15:30' AS TIMESTAMP)), '%Y-%m-%-d')`"
+        },
+        {
+            "case": "write|duckdb|SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08')",
+            "reason": "expected `SELECT CAST(GENERATE_SERIES(CAST('2016-10-05' AS DATE), CAST('2016-10-08' AS DATE), INTERVAL '1' DAY) AS DATE[])` actual `SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' DAY)`"
+        },
+        {
+            "case": "write|duckdb|SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' MONTH)",
+            "reason": "expected `SELECT CAST(GENERATE_SERIES(CAST('2016-10-05' AS DATE), CAST('2016-10-08' AS DATE), INTERVAL '1' MONTH) AS DATE[])` actual `SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' MONTH)`"
+        },
+        {
+            "case": "write|duckdb|SELECT id, mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC(CURRENT_DATE, MONTH), INTERVAL '1' MONTH)) AS mnth",
+            "reason": "expected `SELECT id, mnth FROM t CROSS JOIN UNNEST(CAST(GENERATE_SERIES(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH) AS DATE[])) AS _t0(mnth)` actual `SELECT id, mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH)) AS mnth`"
+        },
+        {
+            "case": "write|duckdb|SELECT id, mnth AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC(CURRENT_DATE, MONTH), INTERVAL '1' MONTH)) AS mnth",
+            "reason": "expected `SELECT id, mnth AS a_mnth FROM t CROSS JOIN UNNEST(CAST(GENERATE_SERIES(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH) AS DATE[])) AS _t0(mnth)` actual `SELECT id, mnth AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH)) AS mnth`"
+        },
+        {
+            "case": "write|duckdb|SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC(CURRENT_DATE, MONTH), INTERVAL '1' MONTH)) AS mnth",
+            "reason": "expected `SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(CAST(GENERATE_SERIES(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH) AS DATE[])) AS _t0(mnth)` actual `SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH)) AS mnth`"
+        },
+        {
+            "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', WEEK(SUNDAY))",
+            "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((13 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK_START(SUNDAY))`"
+        },
+        {
+            "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', WEEK)",
+            "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((13 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK_START(SUNDAY))`"
+        },
+        {
+            "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', WEEK(MONDAY))",
+            "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((7 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK_START(MONDAY))`"
+        },
+        {
+            "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', ISOWEEK)",
+            "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((7 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), ISOWEEK)`"
+        },
+        {
+            "case": "write|spark|SELECT DATE_TRUNC(d, WEEK(SUNDAY))",
+            "reason": "expected UnsupportedError, got `SELECT TRUNC(d, WEEK_START(SUNDAY))`"
+        },
+        {
+            "case": "write|clickhouse|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
+            "reason": "expected UnsupportedError, got `SELECT dateTrunc(WEEK(SUNDAY), ts)`"
+        },
+        {
+            "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
+            "reason": "expected `SELECT DATE_TRUNC('WEEK', ts + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), ts)`"
+        },
+        {
+            "case": "write|mysql|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
+            "reason": "expected UnsupportedError, got `SELECT DATE_ADD('0000-01-01 00:00:00', INTERVAL (TIMESTAMPDIFF(WEEK_START(SUNDAY), '0000-01-01 00:00:00', ts)) WEEK_START(SUNDAY))`"
+        },
+        {
+            "case": "write|spark|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
+            "reason": "expected UnsupportedError, got `SELECT DATE_TRUNC(WEEK_START(SUNDAY), ts)`"
+        },
+        {
+            "case": "write|duckdb|SELECT DATETIME_TRUNC(dt, WEEK(SUNDAY))",
+            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(dt AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(dt, WEEK_START(SUNDAY))`"
+        },
+        {
+            "case": "write|hive|SELECT EXTRACT(WEEK(THURSDAY) FROM d)",
+            "reason": "expected UnsupportedError, got `SELECT EXTRACT(THURSDAY FROM d)`"
+        },
+        {
+            "case": "write|spark|SELECT EXTRACT(WEEK(THURSDAY) FROM d)",
+            "reason": "expected UnsupportedError, got `SELECT EXTRACT(THURSDAY FROM d)`"
+        },
+        {
+            "case": "write|duckdb|SELECT DATE_TRUNC(DATE '2008-11-10', ISOWEEK)",
+            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10' AS DATE))` actual `SELECT DATE_TRUNC('ISOWEEK', CAST('2008-11-10' AS DATE))`"
+        },
+        {
+            "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00', WEEK)",
+            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ))`"
+        },
+        {
+            "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00', WEEK(SUNDAY))",
+            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ))`"
+        },
+        {
+            "case": "write|duckdb|SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK)",
+            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(CAST('2008-11-10 14:30:00' AS TIMESTAMP) AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK_START(SUNDAY))`"
+        },
+        {
+            "case": "write|duckdb|SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK(SUNDAY))",
+            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(CAST('2008-11-10 14:30:00' AS TIMESTAMP) AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK_START(SUNDAY))`"
+        },
+        {
+            "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00+00', WEEK, 'America/New_York')",
+            "reason": "expected `SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ))`"
+        },
+        {
+            "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00+00', WEEK(SUNDAY), 'America/New_York')",
+            "reason": "expected `SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ))`"
+        },
+        {
+            "case": "write|duckdb|SELECT ROUND(NUMERIC '2.25', 1, 'ROUND_HALF_AWAY_FROM_ZERO') AS value",
+            "reason": "expected `SELECT ROUND(CAST('2.25' AS DECIMAL), 1) AS value` actual `SELECT ROUND(CAST('2.25' AS DECIMAL), 1, 'ROUND_HALF_AWAY_FROM_ZERO') AS value`"
+        },
+        {
+            "case": "write|duckdb|SELECT ROUND(NUMERIC '2.25', 1, 'ROUND_HALF_EVEN') AS value",
+            "reason": "expected `SELECT ROUND_EVEN(CAST('2.25' AS DECIMAL), 1) AS value` actual `SELECT ROUND(CAST('2.25' AS DECIMAL), 1, 'ROUND_HALF_EVEN') AS value`"
+        },
+        {
+            "case": "write|duckdb|APPROX_QUANTILES(x, 1)",
+            "reason": "expected `APPROX_QUANTILE(x, [0, 1])` actual `APPROX_QUANTILES(x, 1)`"
+        },
+        {
+            "case": "write|duckdb|APPROX_QUANTILES(x, 2)",
+            "reason": "expected `APPROX_QUANTILE(x, [0, 0.5, 1])` actual `APPROX_QUANTILES(x, 2)`"
+        },
+        {
+            "case": "write|duckdb|APPROX_QUANTILES(x, 4)",
+            "reason": "expected `APPROX_QUANTILE(x, [0, 0.25, 0.5, 0.75, 1])` actual `APPROX_QUANTILES(x, 4)`"
+        },
+        {
+            "case": "write|duckdb|APPROX_QUANTILES(DISTINCT x, 2)",
+            "reason": "expected `APPROX_QUANTILE(DISTINCT x, [0, 0.5, 1])` actual `APPROX_QUANTILES(DISTINCT x, 2)`"
+        },
+        {
+            "case": "write|spark|SELECT DATETIME_ADD('2023-01-01T00:00:00', INTERVAL 1 MILLISECOND)",
+            "reason": "expected `SELECT '2023-01-01T00:00:00' + INTERVAL '1' MILLISECOND` actual `SELECT DATETIME_ADD('2023-01-01T00:00:00', '1', 'MILLISECOND')`"
+        },
+        {
+            "case": "write|spark|SELECT DATETIME_SUB('2023-01-01T00:00:00', INTERVAL 1 MILLISECOND)",
+            "reason": "expected `SELECT '2023-01-01T00:00:00' - INTERVAL '1' MILLISECOND` actual `SELECT DATETIME_SUB('2023-01-01T00:00:00', '1', 'MILLISECOND')`"
+        },
+        {
+            "case": "write|duckdb|SELECT DATETIME_TRUNC('2023-01-01T01:01:01', HOUR)",
+            "reason": "expected `SELECT DATE_TRUNC('HOUR', CAST('2023-01-01T01:01:01' AS TIMESTAMP))` actual `SELECT DATETIME_TRUNC('2023-01-01T01:01:01', HOUR)`"
+        },
+        {
+            "case": "write|duckdb|APPROX_QUANTILES(x, 2 IGNORE NULLS)",
+            "reason": "expected `APPROX_QUANTILE(x, [0, 0.5, 1])` actual `APPROX_QUANTILES(x, 2)`"
+        }
+    ]
+}

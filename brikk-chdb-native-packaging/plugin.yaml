@@ -1,0 +1,9 @@
+tasks:
+  materialize:
+    action: !dev.brikk.house.chdb.packaging.materializeChdbNative
+      manifest: ${module.rootDir}/chdb-native.properties
+      resourceDir: ${taskOutputDir}
+
+generated:
+  resources:
+    - directory: ${tasks.materialize.action.resourceDir}

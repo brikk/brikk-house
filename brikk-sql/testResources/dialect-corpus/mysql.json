@@ -1,7 +1,12 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "mysql",
   "identity": [
+    {
+      "sql": "DROP TEMPORARY TABLE IF EXISTS db.t1, t2 CASCADE",
+      "expected": null,
+      "pretty": false
+    },
     {
       "sql": "CREATE TABLE bar (abacate DOUBLE(10, 2) UNSIGNED)",
       "expected": null,
@@ -24,6 +29,27 @@
     },
     {
       "sql": "CREATE TABLE foo (id BIGINT)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v AS SELECT * FROM start WITH CHECK OPTION",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "CREATE DATABASE db CHARACTER SET=utf8",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE DATABASE db DEFAULT CHARACTER SET=utf8",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE SCHEMA db DEFAULT CHARACTER SET=utf8",
       "expected": null,
       "pretty": false
     },
@@ -79,6 +105,21 @@
     },
     {
       "sql": "CREATE TABLE foo (a INT UNSIGNED ZEROFILL)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (a VARCHAR(16) BINARY)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (a CHAR(16) BINARY NOT NULL)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (a VARCHAR(16) CHARACTER SET utf8mb4 BINARY)",
       "expected": null,
       "pretty": false
     },
@@ -316,6 +357,16 @@
       "pretty": false
     },
     {
+      "sql": "INSERT INTO `test_table` SET `test_col_1` = 123, `test_col_2` = '456'",
+      "expected": "INSERT INTO `test_table` (`test_col_1`, `test_col_2`) VALUES (123, '456')",
+      "pretty": false
+    },
+    {
+      "sql": "INSERT INTO t SET a = DEFAULT, b = 2 AS new ON DUPLICATE KEY UPDATE a = new.a + 1",
+      "expected": "INSERT INTO t (a, b) VALUES (DEFAULT, 2) AS new ON DUPLICATE KEY UPDATE a = new.a + 1",
+      "pretty": false
+    },
+    {
       "sql": "CREATE OR REPLACE VIEW my_view AS SELECT column1 AS `boo`, column2 AS `foo` FROM my_table WHERE column3 = 'some_value' UNION SELECT q.* FROM fruits_table, JSON_TABLE(Fruits, '$[*]' COLUMNS(id VARCHAR(255) PATH '$.$id', value VARCHAR(255) PATH '$.value')) AS q",
       "expected": null,
       "pretty": false
@@ -523,6 +574,26 @@
     {
       "sql": "CREATE FUNCTION f () RETURNS VARCHAR LANGUAGE SQL SQL SECURITY INVOKER SELECT 'abc'",
       "expected": "CREATE FUNCTION f() RETURNS TEXT LANGUAGE SQL SQL SECURITY INVOKER AS SELECT 'abc'",
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t1 (id INT KEY AUTO_INCREMENT)",
+      "expected": "CREATE TABLE t1 (id INT PRIMARY KEY AUTO_INCREMENT)",
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t1 (id INT AUTO_INCREMENT KEY)",
+      "expected": "CREATE TABLE t1 (id INT AUTO_INCREMENT PRIMARY KEY)",
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t1 (id INT KEY)",
+      "expected": "CREATE TABLE t1 (id INT PRIMARY KEY)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT a, SUM(b) FROM t GROUP BY a WITH ROLLUP LIMIT 2",
+      "expected": null,
       "pretty": false
     },
     {
@@ -988,8 +1059,18 @@
       "pretty": false
     },
     {
-      "sql": "SELECT 'foo' NOT SOUNDS LIKE 'bar'",
-      "expected": "SELECT NOT SOUNDEX('foo') = SOUNDEX('bar')",
+      "sql": "SELECT a SOUNDS LIKE b | c",
+      "expected": "SELECT SOUNDEX(a) = SOUNDEX(b | c)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT a SOUNDS LIKE b IS NULL",
+      "expected": "SELECT (SOUNDEX(a) = SOUNDEX(b)) IS NULL",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM t WHERE sounds LIKE 'a%'",
+      "expected": null,
       "pretty": false
     },
     {
@@ -1159,6 +1240,21 @@
     },
     {
       "sql": "SELECT CHAR(65 USING `my charset`)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_FORMAT(x, '%X-%V')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_FORMAT(x, '%x-%v')",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_FORMAT(x, '%U')",
       "expected": null,
       "pretty": false
     },
@@ -1353,6 +1449,16 @@
       "pretty": false
     },
     {
+      "sql": "ANALYZE TABLE t1, t2",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ANALYZE LOCAL TABLE db.t1, db.t2, t3",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "ANALYZE tbl UPDATE HISTOGRAM ON col1",
       "expected": null,
       "pretty": false
@@ -1454,6 +1560,90 @@
       "sql": "TRUNC(3.14159, 2)",
       "expected": "TRUNCATE(3.14159, 2)",
       "pretty": false
+    },
+    {
+      "sql": "GRANT 'role1', 'role2' TO 'user1'@'localhost', 'user2'@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT SELECT ON world.* TO 'role3'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT SELECT ON db2.invoice TO 'jeffrey'@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT INSERT ON `d%`.* TO u",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT ALL ON test.* TO ''@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT SELECT (col1), INSERT (col1, col2) ON mydb.mytbl TO 'someuser'@'somehost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT SELECT, INSERT, UPDATE ON *.* TO u2",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE 'role1', 'role2' FROM 'user1'@'localhost', 'user2'@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT ON world.* FROM 'role3'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT ON db2.invoice FROM 'jeffrey'@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE INSERT ON `d%`.* FROM u",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE ALL ON test.* FROM ''@'localhost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT (col1), INSERT (col1, col2) ON mydb.mytbl FROM 'someuser'@'somehost'",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE SELECT, INSERT, UPDATE ON *.* FROM u2",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
     }
   ],
   "transpile": [
@@ -1734,6 +1924,29 @@
       }
     },
     {
+      "sql": "SELECT DATE_FORMAT('2021-01-01 22:23:00', '%x')",
+      "read": {},
+      "write": {
+        "mysql": "SELECT DATE_FORMAT('2021-01-01 22:23:00', '%x')",
+        "duckdb": "SELECT STRFTIME(CAST('2021-01-01 22:23:00' AS TIMESTAMP), '%G')"
+      }
+    },
+    {
+      "sql": "SELECT DATE_FORMAT(CAST('2021-01-01 22:23:00' AS DATETIME), '%x')",
+      "read": {
+        "duckdb": "SELECT STRFTIME(CAST('2021-01-01 22:23:00' AS TIMESTAMP), '%G')"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT DATE_FORMAT('2007-10-04 22:23:00', '%r')",
+      "read": {},
+      "write": {
+        "mysql": "SELECT DATE_FORMAT('2007-10-04 22:23:00', '%r')",
+        "duckdb": "SELECT STRFTIME(CAST('2007-10-04 22:23:00' AS TIMESTAMP), '%I:%M:%S %p')"
+      }
+    },
+    {
       "sql": "SELECT TO_DAYS(x)",
       "read": {},
       "write": {
@@ -1751,7 +1964,8 @@
       "write": {
         "exasol": "SELECT DAYS_BETWEEN(x, y)",
         "mysql": "SELECT DATEDIFF(x, y)",
-        "presto": "SELECT DATE_DIFF('DAY', y, x)",
+        "postgres": "SELECT (CAST(x AS DATE) - CAST(y AS DATE))",
+        "presto": "SELECT DATE_DIFF('DAY', DATE_TRUNC('DAY', y), DATE_TRUNC('DAY', x))",
         "redshift": "SELECT DATEDIFF(DAY, y, x)"
       }
     },
@@ -1893,9 +2107,7 @@
     },
     {
       "sql": "SELECT JSON_EXTRACT('[10, 20, [30, 40]]', '$[1]')",
-      "read": {
-        "sqlite": "SELECT JSON_EXTRACT('[10, 20, [30, 40]]', '$[1]')"
-      },
+      "read": {},
       "write": {
         "mysql": "SELECT JSON_EXTRACT('[10, 20, [30, 40]]', '$[1]')",
         "sqlite": "SELECT '[10, 20, [30, 40]]' -> '$[1]'"
@@ -2186,9 +2398,9 @@
       "read": {},
       "write": {
         "bigquery": "a / NULLIF(b, 0)",
-        "clickhouse": "a / b",
+        "clickhouse": "a / nullIf(b, 0)",
         "databricks": "a / NULLIF(b, 0)",
-        "duckdb": "a / b",
+        "duckdb": "a / NULLIF(b, 0)",
         "hive": "a / b",
         "mysql": "a / b",
         "oracle": "a / NULLIF(b, 0)",
@@ -2337,8 +2549,8 @@
     }
   ],
   "stats": {
-    "identity_count": 289,
-    "transpile_count": 100,
+    "identity_count": 324,
+    "transpile_count": 103,
     "skipped_dynamic": 34
   }
 }

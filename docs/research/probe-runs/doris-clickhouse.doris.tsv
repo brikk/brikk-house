@@ -1,0 +1,61 @@
+# doris-clickhouse.doris.tsv — live Doris outputs for the 57-row differential probe
+# engine=Doris (FE doris-0.0.0/P-series pr62767-local, BE apache/doris:be-4.1.2)
+# rendered=raw  (raw UTF-8 text; strings not codepoint-expanded)
+# NULL -> literal token NULL; errors -> <ERR:...>; no rows errored in this batch
+lower_turk	i̇stanbul
+lower_utf8_turk	i̇stanbul
+upper_ss	STRASSE
+upper_utf8_ss	STRASSE
+length_cjk	6
+charlen_cjk	2
+length_emoji	6
+reverse_cjk	x文中
+ascii_A	65
+ascii_cjk	228
+substr_1	rik
+substr_neg	kk
+locate	2
+trim_both	abc
+ltrim_chars	abc
+concat_null	NULL
+lpad	007
+repeat	ababab
+replace_all	bXnXnX
+split_idx	b
+re_replace_first	bXnXnX
+re_replace_all	bXnXnX
+re_extract	123
+round_half_even	3
+round_half2	1
+round_neg	-3
+round_dp	2.35
+trunc_dp	2.6
+log_1arg	4.605170185988092
+ln_1arg	1
+log10	3
+log2	3
+mod_neg	-1
+pow	1024
+floor_neg	-2
+ceil_neg	-1
+sign_neg	-1
+abs_neg	3
+dow_sun	1
+dow_mon	2
+isoweek	1
+year	2024
+month	6
+dayofmonth	16
+hour	13
+date_trunc_mon	2024-06-01 00:00:00
+datediff_day	60
+to_unix	1704067200
+from_unix	2024-01-01 00:00:00
+coalesce	5
+nullif_eq	NULL
+if_expr	a
+greatest_null	NULL
+least_null	NULL
+md5	900150983cd24fb0d6963f7d28e17f72
+hex_int	FF
+crc32	891568578

@@ -1,6 +1,6 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
- "class_count": 1017,
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
+ "class_count": 1031,
  "traits": [
   "AggFunc",
   "Binary",
@@ -189,7 +189,8 @@
     "comment": false,
     "allow_null": false,
     "visible": false,
-    "rename_to": false
+    "rename_to": false,
+    "exists": false
    }
   },
   "AlterDistStyle": {
@@ -250,7 +251,7 @@
    "module": "sqlglot.expressions.query",
    "arg_types": {
     "kind": false,
-    "this": false,
+    "tables": false,
     "options": false,
     "mode": false,
     "partition": false,
@@ -806,7 +807,13 @@
   "AutoRefreshProperty": {
    "module": "sqlglot.expressions.properties",
    "arg_types": {
-    "this": true
+    "this": false,
+    "cadence": false,
+    "offset": false,
+    "randomize": false,
+    "expressions": false,
+    "settings": false,
+    "append": false
    }
   },
   "Avg": {
@@ -851,6 +858,10 @@
     "high": true,
     "symmetric": false
    }
+  },
+  "BinaryColumnConstraint": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {}
   },
   "BitLength": {
    "module": "sqlglot.expressions.string",
@@ -967,7 +978,8 @@
   "Block": {
    "module": "sqlglot.expressions.query",
    "arg_types": {
-    "expressions": true
+    "expressions": true,
+    "begin": false
    }
   },
   "BlockCompressionProperty": {
@@ -1080,6 +1092,14 @@
    "module": "sqlglot.expressions.constraints",
    "arg_types": {
     "not_": true
+   }
+  },
+  "CaseStatement": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": false,
+    "ifs": true,
+    "default": false
    }
   },
   "Cast": {
@@ -1281,7 +1301,8 @@
     "table": false,
     "db": false,
     "catalog": false,
-    "join_mark": false
+    "join_mark": false,
+    "shadow": false
    }
   },
   "ColumnConstraint": {
@@ -1925,7 +1946,8 @@
    "arg_types": {
     "this": true,
     "expression": true,
-    "unit": false
+    "unit": false,
+    "date_part_boundary": false
    }
   },
   "DatetimeSub": {
@@ -2228,8 +2250,8 @@
   "Drop": {
    "module": "sqlglot.expressions.ddl",
    "arg_types": {
-    "this": false,
     "kind": false,
+    "tables": false,
     "expressions": false,
     "exists": false,
     "temporary": false,
@@ -2241,7 +2263,8 @@
     "cluster": false,
     "concurrently": false,
     "sync": false,
-    "iceberg": false
+    "iceberg": false,
+    "force": false
    }
   },
   "DropPartition": {
@@ -2702,6 +2725,15 @@
    "arg_types": {
     "this": true,
     "zone": true
+   }
+  },
+  "FunctionSpecification": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true,
+    "characteristics": false,
+    "properties": false,
+    "expression": true
    }
   },
   "GT": {
@@ -3221,7 +3253,8 @@
     "partition": false,
     "settings": false,
     "source": false,
-    "default": false
+    "default": false,
+    "using": false
    }
   },
   "Install": {
@@ -3320,7 +3353,8 @@
    "module": "sqlglot.expressions.core",
    "arg_types": {
     "this": true,
-    "expression": true
+    "expression": true,
+    "negate": false
    }
   },
   "IsArray": {
@@ -3359,6 +3393,12 @@
     "no": false,
     "concurrent": false,
     "target": false
+   }
+  },
+  "Iterate": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
    }
   },
   "JSON": {
@@ -3425,6 +3465,13 @@
    }
   },
   "JSONBContainsAnyTopKeys": {
+   "module": "sqlglot.expressions.json",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
+  "JSONBContainsTopKey": {
    "module": "sqlglot.expressions.json",
    "arg_types": {
     "this": true,
@@ -3550,7 +3597,8 @@
     "only_json_types": false,
     "expressions": false,
     "json_type": false,
-    "scalar_only": false
+    "scalar_only": false,
+    "json_subtype": false
    }
   },
   "JSONFormat": {
@@ -3924,6 +3972,12 @@
     "ignore_nulls": true
    }
   },
+  "Leave": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "this": true
+   }
+  },
   "Left": {
    "module": "sqlglot.expressions.string",
    "arg_types": {
@@ -4090,6 +4144,13 @@
    "module": "sqlglot.expressions.aggregate",
    "arg_types": {
     "this": true
+   }
+  },
+  "LoopBlock": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "body": true,
+    "label": false
    }
   },
   "Lower": {
@@ -4450,6 +4511,13 @@
     "expression": true
    }
   },
+  "Nanvl": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true,
+    "expression": true
+   }
+  },
   "National": {
    "module": "sqlglot.expressions.query",
    "arg_types": {
@@ -4458,6 +4526,12 @@
   },
   "Neg": {
    "module": "sqlglot.expressions.core",
+   "arg_types": {
+    "this": true
+   }
+  },
+  "Negative": {
+   "module": "sqlglot.expressions.math",
    "arg_types": {
     "this": true
    }
@@ -4994,7 +5068,8 @@
     "with_": false,
     "identify_pivot_strings": false,
     "prefixed_pivot_columns": false,
-    "pivot_column_naming": false
+    "pivot_column_naming": false,
+    "value_columns_first": false
    }
   },
   "PivotAlias": {
@@ -5141,7 +5216,8 @@
     "table": false,
     "db": false,
     "catalog": false,
-    "join_mark": false
+    "join_mark": false,
+    "shadow": false
    }
   },
   "Put": {
@@ -5400,7 +5476,8 @@
    "arg_types": {
     "this": true,
     "expression": true,
-    "limit": false
+    "limit": false,
+    "mode": false
    }
   },
   "RegexpSubstr": {
@@ -5519,6 +5596,14 @@
     "times": true
    }
   },
+  "RepeatBlock": {
+   "module": "sqlglot.expressions.query",
+   "arg_types": {
+    "body": true,
+    "until": true,
+    "label": false
+   }
+  },
   "Replace": {
    "module": "sqlglot.expressions.string",
    "arg_types": {
@@ -5585,6 +5670,12 @@
     "this": true,
     "expression": true,
     "negative_length_returns_empty": false
+   }
+  },
+  "Rint": {
+   "module": "sqlglot.expressions.math",
+   "arg_types": {
+    "this": true
    }
   },
   "Rollback": {
@@ -5800,6 +5891,13 @@
    "module": "sqlglot.expressions.temporal",
    "arg_types": {
     "this": true
+   }
+  },
+  "Secret": {
+   "module": "sqlglot.expressions.string",
+   "arg_types": {
+    "this": true,
+    "expression": true
    }
   },
   "SecureProperty": {
@@ -6025,6 +6123,12 @@
     "into_outfile": false,
     "json": false,
     "iceberg": false
+   }
+  },
+  "Shuffle": {
+   "module": "sqlglot.expressions.array",
+   "arg_types": {
+    "this": true
    }
   },
   "Sign": {
@@ -6456,7 +6560,8 @@
     "changes": false,
     "rows_from": false,
     "sample": false,
-    "indexed": false
+    "indexed": false,
+    "branch": false
    }
   },
   "TableAlias": {
@@ -6626,6 +6731,12 @@
     "this": true,
     "unit": true,
     "zone": false
+   }
+  },
+  "TimeseriesKey": {
+   "module": "sqlglot.expressions.constraints",
+   "arg_types": {
+    "this": true
    }
   },
   "Timestamp": {
@@ -7014,7 +7125,8 @@
    "arg_types": {
     "this": true,
     "format": false,
-    "safe": false
+    "safe": false,
+    "default_date": false
    }
   },
   "TsOrDsToDateStr": {
@@ -7445,7 +7557,8 @@
    "module": "sqlglot.expressions.query",
    "arg_types": {
     "this": true,
-    "body": true
+    "body": true,
+    "label": false
    }
   },
   "WidthBucket": {
@@ -7484,9 +7597,10 @@
   "With": {
    "module": "sqlglot.expressions.query",
    "arg_types": {
-    "expressions": true,
+    "expressions": false,
     "recursive": false,
-    "search": false
+    "search": false,
+    "udfs": false
    }
   },
   "WithDataProperty": {

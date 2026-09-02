@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "exasol",
   "identity": [
     {

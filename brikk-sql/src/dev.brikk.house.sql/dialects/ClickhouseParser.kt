@@ -40,6 +40,7 @@ import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.DateAdd
 import dev.brikk.house.sql.ast.DateDiff
 import dev.brikk.house.sql.ast.DateSub
+import dev.brikk.house.sql.ast.DateTrunc
 import dev.brikk.house.sql.ast.DefinerProperty
 import dev.brikk.house.sql.ast.Detach
 import dev.brikk.house.sql.ast.Dot
@@ -104,6 +105,7 @@ import dev.brikk.house.sql.ast.TimestampAdd
 import dev.brikk.house.sql.ast.TimestampSub
 import dev.brikk.house.sql.ast.TimestampTrunc
 import dev.brikk.house.sql.ast.Transform
+import dev.brikk.house.sql.ast.Trim
 import dev.brikk.house.sql.ast.Tuple
 import dev.brikk.house.sql.ast.Typeof
 import dev.brikk.house.sql.ast.UtcTimestamp
@@ -121,6 +123,7 @@ import dev.brikk.house.sql.parser.TokenType
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.applyTimeUnitCoercion
 import dev.brikk.house.sql.parser.buildVarMap
+import dev.brikk.house.sql.parser.buildTrim
 import dev.brikk.house.sql.parser.fromArgList
 import dev.brikk.house.sql.ast.Array as ArrayNode
 
@@ -306,9 +309,6 @@ open class ClickhouseParser(
     // sqlglot: ClickHouse.NULL_ORDERING = "nulls_are_last"
     override val nullOrdering: String get() = "nulls_are_last"
 
-    // sqlglot: ClickHouse.SAFE_DIVISION = True
-    override val safeDivision: Boolean get() = true
-
     // sqlglot: ClickHouse.SUPPORTS_USER_DEFINED_TYPES = False
     override val supportsUserDefinedTypes: Boolean get() = false
 
@@ -436,6 +436,68 @@ open class ClickhouseParser(
         match(TokenType.EQ)
         return expression(
             EngineProperty(args("this" to parseField(anyToken = true, anonymousFunc = true)))
+        )
+    }
+
+    // sqlglot #7990: ClickHouseParser._parse_auto_refresh_property — refreshable MV
+    // REFRESH [EVERY|AFTER <interval>] [OFFSET <interval>] [RANDOMIZE FOR <interval>]
+    //         [DEPENDS ON t, ...] [SETTINGS ...] [APPEND]
+    open fun parseAutoRefreshProperty(): Expression? {
+        val idx = index - 1
+        val cadence = if (matchTexts(setOf("EVERY", "AFTER"))) prevToken.text.uppercase() else null
+        val interval =
+            if (cadence != null) parseInterval(requireInterval = false, parseFunctionUnit = false) else null
+        if (cadence != null && interval == null) {
+            retreat(idx)
+            return null
+        }
+
+        var offset: Expression? = null
+        if (matchTextSeq("OFFSET")) {
+            offset = parseInterval(requireInterval = false, parseFunctionUnit = false)
+            if (offset == null) {
+                retreat(idx)
+                return null
+            }
+        }
+
+        var randomize: Expression? = null
+        if (matchTextSeq("RANDOMIZE", "FOR")) {
+            randomize = parseInterval(requireInterval = false, parseFunctionUnit = false)
+            if (randomize == null) {
+                retreat(idx)
+                return null
+            }
+        }
+
+        var dependencies: List<Expression>? = null
+        if (matchTextSeq("DEPENDS", "ON")) {
+            dependencies = parseCsv { parseTableParts(schema = true) }
+            if (dependencies.isEmpty()) {
+                retreat(idx)
+                return null
+            }
+        }
+
+        if (cadence == null && dependencies == null) {
+            retreat(idx)
+            return null
+        }
+
+        val settings = if (matchTextSeq("SETTINGS")) parseSettingsProperty() else null
+
+        return expression(
+            dev.brikk.house.sql.ast.AutoRefreshProperty(
+                args(
+                    "this" to interval,
+                    "cadence" to cadence,
+                    "offset" to offset,
+                    "randomize" to randomize,
+                    "expressions" to dependencies,
+                    "settings" to settings,
+                    "append" to matchTextSeq("APPEND"),
+                )
+            )
         )
     }
 
@@ -731,7 +793,7 @@ open class ClickhouseParser(
 
         // Aggregate functions can be split in 2 parts: <func_name><suffix[es]>
         val parts = if (func is Anonymous) {
-            (func.thisArg as? String)?.let { resolveClickhouseAgg(it) }
+            resolveClickhouseAgg(func.name)
         } else {
             null
         }
@@ -915,15 +977,20 @@ open class ClickhouseParser(
         )
     }
 
-    // sqlglot: ClickHouseParser._parse_alter_table_modify
+    // sqlglot: ClickHouseParser._parse_alter_table_alter
     open fun parseAlterTableModify(): Expression? {
-        val properties = parseProperties()
-        if (properties != null) {
-            return expression(
-                AlterModifySqlSecurity(args("expressions" to properties.expressionsArg))
-            )
+        if (!match(TokenType.COLUMN, advance = false)) {
+            val properties = parseProperties()
+            if (properties != null) {
+                return expression(
+                    AlterModifySqlSecurity(args("expressions" to properties.expressionsArg))
+                )
+            }
+            return null
         }
-        return null
+
+        val alter = parseAlterTableAlter()
+        return if (currToken.exists) null else alter
     }
 
     // sqlglot: ClickHouseParser._parse_definer
@@ -997,7 +1064,7 @@ open class ClickhouseParser(
             value.set(
                 "expressions",
                 expressions.map { expr ->
-                    expression(Tuple(args("expressions" to listOf(expr))))
+                    expression(Tuple(args("expressions" to listOf((expr as Expression).unnest()))))
                 },
             )
         }
@@ -1036,6 +1103,15 @@ open class ClickhouseParser(
     internal fun clickhouseFunctionArgs(alias: Boolean): MutableList<Expression> =
         parseFunctionArgs(alias = alias)
 
+    // sqlglot: Parser._parse_connector_function (used by the AND/OR FUNCTION_PARSERS)
+    internal fun parseConnectorFunction(factory: (Args) -> Expression): Expression {
+        val fnArgs = clickhouseFunctionArgs(alias = false)
+        if (fnArgs.isEmpty()) raiseError("Expected at least one argument")
+
+        // Wrapped so the connector keeps its precedence in the parent context
+        return Paren(args("this" to combineConnector(factory, fnArgs)))
+    }
+
     // sqlglot: ClickHouseParser SETTINGS query-modifier body (the lambda advances past
     // the SETTINGS token before parsing the assignment list)
     internal fun parseSettingsModifier(): List<Expression> {
@@ -1072,7 +1148,7 @@ open class ClickhouseParser(
             "groupBitmapOr", "groupBitmapXor", "sumWithOverflow", "sumMap", "minMap",
             "maxMap", "skewSamp", "skewPop", "kurtSamp", "kurtPop", "uniq", "uniqExact",
             "uniqCombined", "uniqCombined64", "uniqHLL12", "uniqTheta", "quantile",
-            "quantiles", "quantileExact", "quantilesExact", "quantilesExactExclusive",
+            "quantiles", "quantileExact", "quantileExactInclusive", "quantilesExact", "quantilesExactExclusive",
             "quantileExactLow", "quantilesExactLow", "quantileExactHigh",
             "quantilesExactHigh", "quantileExactWeighted", "quantilesExactWeighted",
             "quantileTiming", "quantilesTiming", "quantileTimingWeighted",
@@ -1146,10 +1222,12 @@ object ClickhouseParserTables {
         put("ARRAYREVERSE", fromArgList(listOf("this"), false) { ArrayReverse(it) })
         put("ARRAYSLICE", fromArgList(listOf("this", "start", "end", "step", "zero_based"), false) { ArraySlice(it) })
         put("ARRAYFILTER") { a ->
-            ArrayFilter(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
+            if (a.size > 2) Anonymous(args("this" to "arrayFilter", "expressions" to a))
+            else ArrayFilter(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
         }
         put("ARRAYMAP") { a ->
-            Transform(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
+            if (a.size > 2) Anonymous(args("this" to "arrayMap", "expressions" to a))
+            else Transform(args("this" to seqGet(a, 1), "expression" to seqGet(a, 0)))
         }
         put("CURRENTDATABASE", fromArgList(listOf(), false) { CurrentDatabase(it) })
         put("CURRENTSCHEMAS", fromArgList(listOf("this"), false) { CurrentSchemas(it) })
@@ -1164,6 +1242,7 @@ object ClickhouseParserTables {
         put("DATE_FORMAT", buildDatetimeFormat { a: Args -> TimeToStr(a) })
         put("DATE_SUB", buildDateDelta({ a: Args -> DateSub(a) }))
         put("DATESUB", buildDateDelta({ a: Args -> DateSub(a) }))
+        put("DATETRUNC", fromArgList(listOf("unit", "this", "zone", "input_type_preserved"), false) { DateTrunc(it) })
         put("FORMATDATETIME", buildDatetimeFormat { a: Args -> TimeToStr(a) })
         put("HAS", fromArgList(listOf("this", "expression", "ensure_variant", "check_null"), false) { ArrayContains(it) })
         put("ILIKE", buildDialectLike({ a: Args -> ILike(a) }))
@@ -1200,6 +1279,9 @@ object ClickhouseParserTables {
             fromArgList(listOf("this", "delimiter", "count"), false) { SubstringIndex(it) },
         )
         put("TOTYPENAME", fromArgList(listOf("this"), false) { Typeof(it) })
+        put("TRIMBOTH", fromArgList(listOf("this", "expression", "position", "collation"), false) { Trim(it) })
+        put("TRIMLEFT", ::buildTrim)
+        put("TRIMRIGHT") { a -> buildTrim(a, isLeft = false) }
         put(
             "EDITDISTANCE",
             fromArgList(
@@ -1233,7 +1315,7 @@ object ClickhouseParserTables {
 
     // sqlglot: ClickHouseParser.FUNC_TOKENS
     val FUNC_TOKENS: Set<TokenType> = BaseParserTables.FUNC_TOKENS + setOf(
-        TokenType.AND, TokenType.FILE, TokenType.OR, TokenType.SET,
+        TokenType.AND, TokenType.FILE, TokenType.OR, TokenType.SET, TokenType.VIEW,
     )
 
     // sqlglot: ClickHouseParser.RESERVED_TOKENS = base - {SELECT}
@@ -1257,13 +1339,23 @@ object ClickhouseParserTables {
                 Struct(args("expressions" to (p as ClickhouseParser).clickhouseFunctionArgs(alias = true)))
             },
             "AND" to { p ->
-                combineConnector({ a: Args -> And(a) }, (p as ClickhouseParser).clickhouseFunctionArgs(alias = false))
+                (p as ClickhouseParser).parseConnectorFunction { a: Args -> And(a) }
             },
             "OR" to { p ->
-                combineConnector({ a: Args -> Or(a) }, (p as ClickhouseParser).clickhouseFunctionArgs(alias = false))
+                (p as ClickhouseParser).parseConnectorFunction { a: Args -> Or(a) }
             },
             "XOR" to { p ->
                 combineConnector({ a: Args -> Xor(a) }, (p as ClickhouseParser).clickhouseFunctionArgs(alias = false))
+            },
+            "VIEW" to { p ->
+                p.expression(
+                    Anonymous(
+                        args(
+                            "this" to "view",
+                            "expressions" to listOf((p as ClickhouseParser).parseSelect()),
+                        )
+                    )
+                )
             },
         )
 
@@ -1272,6 +1364,8 @@ object ClickhouseParserTables {
         (BaseParserTables.PROPERTY_PARSERS - "DYNAMIC") +
             mapOf<String, (Parser, Parser.PropertyKwargs) -> kotlin.Any?>(
                 "ENGINE" to { p, _ -> (p as ClickhouseParser).parseEngineProperty() },
+                // sqlglot #7990: refreshable materialized views
+                "REFRESH" to { p, _ -> (p as ClickhouseParser).parseAutoRefreshProperty() },
                 "UUID" to { p, _ ->
                     p.expression(
                         dev.brikk.house.sql.ast.UuidProperty(args("this" to p.parseString()))

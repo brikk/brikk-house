@@ -30,8 +30,8 @@ class MysqlDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         MysqlParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        MysqlGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        MysqlGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     companion object {
         // sqlglot: MySQL.TIME_MAPPING
@@ -45,12 +45,16 @@ class MysqlDialect : Dialect() {
             "%u" to "%W",
             "%k" to "%-H",
             "%l" to "%-I",
+            "%r" to "%I:%M:%S %p",
             "%T" to "%H:%M:%S",
             "%W" to "%A",
+            "%x" to "%G",
         )
 
-        // sqlglot: MySQL.INVERSE_TIME_MAPPING
+        // sqlglot: MySQL.INVERSE_TIME_MAPPING (+ _with_strict_time_inverse)
         val INVERSE_TIME_MAPPING: Map<String, String> =
-            TIME_MAPPING.entries.associate { (k, v) -> v to k }
+            dev.brikk.house.sql.parser.withStrictTimeInverse(
+                TIME_MAPPING.entries.associate { (k, v) -> v to k },
+            )
     }
 }

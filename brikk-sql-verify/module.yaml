@@ -1,0 +1,65 @@
+# Native-grammar verification oracles: "does the target engine's own parser accept this SQL?"
+# JVM-only: engine parsers (trino-parser, duckdb_jdbc, vendored Doris FE parser) are JVM artifacts.
+product: jvm/lib
+
+# TODO(review): used verbatim as the published POM <description> (required by Maven Central).
+description: SQL verification oracles (Trino, DuckDB, Doris fidelity; ShardingSphere advisory) for brikk-sql.
+
+apply:
+  - ../publish.module-template.yaml
+
+dependencies:
+  # Pure-JVM ShardingSphere 5.5.2 SQL parser: the portable/advisory grammar oracle for
+  # postgres, mysql, hive, and clickhouse (see ShardingSphereVerifier). It coexists with
+  # trino-parser/Doris on antlr4-runtime 4.13.2 (which those force); ShardingSphere's grammars
+  # were generated with ANTLR 4.10.1 so first parse logs a cosmetic "Tool version ... does not
+  # match runtime" warning — benign, the grammars parse correctly under 4.13.2.
+  - org.apache.shardingsphere:shardingsphere-parser-sql-engine:5.5.2
+  - org.apache.shardingsphere:shardingsphere-parser-sql-postgresql:5.5.2
+  - org.apache.shardingsphere:shardingsphere-parser-sql-mysql:5.5.2
+  - org.apache.shardingsphere:shardingsphere-parser-sql-hive:5.5.2
+  - org.apache.shardingsphere:shardingsphere-parser-sql-clickhouse:5.5.2
+  # Needed for Hive's database-type SPI to load (without it the Hive parser can't resolve).
+  - org.apache.shardingsphere:shardingsphere-infra-database-hive:5.5.2
+  # Trino's own SQL parser. 483 matches the vendored function catalog (vendor/data/trino-functions-483.tsv).
+  # NOTE: trino-parser ships class-file 69 => requires a JDK 25 runtime (see settings.jvm.jdk below).
+  - io.trino:trino-parser:483
+  # Embedded DuckDB (pinned to engine 1.5.5 = jdbc artifact 1.5.5.0, matching the generated
+  # DuckDB function catalog).
+  - org.duckdb:duckdb_jdbc:1.5.5.0
+  # ANTLR runtime for the vendored Doris FE SQL parser. The parser jar itself
+  # (vendor/lib/doris-fe-sql-parser-*.jar) CANNOT be declared here: Amper 0.11 has no
+  # local-jar dependency kind (schema only knows Maven/catalog/BOM/module deps) and
+  # rejects non-https repositories ("Non-https repositories are not supported"), so a
+  # committed file:// Maven layout is out too. DorisVerifier loads the jar reflectively
+  # via a URLClassLoader instead (see its KDoc). Swap to the org.apache.doris:fe-sql-parser
+  # coordinate once Doris publishes it (vendor/README.md says weeks from 2026-07).
+  # NOTE: trino-parser pulls antlr4-runtime 4.13.2, which overrides this declaration;
+  # ANTLR 4.13.x runtimes are compatible with the 4.13.1-generated Doris parser.
+  - org.antlr:antlr4-runtime:4.13.1
+
+test-dependencies:
+  # The verify gate re-generates every corpus SQL through brikk's own parser+generator:
+  # the corpora's "generated" strings are the Python oracle's outputs, and ours diverge
+  # from them exactly at the registered brikk extensions (docs/brikk-extensions.md), so
+  # the gate must feed the engines what WE actually emit.
+  - ../brikk-sql
+
+settings:
+  publishing:
+    # Explicit artifactId is required by Maven Central publishing (toolchain 0.11); equals the
+    # default (module name). Published coordinate: dev.brikk.house:brikk-sql-verify.
+    artifactId: brikk-sql-verify
+  jvm:
+    jdk:
+      version: 25
+  kotlin:
+    serialization: json
+  internal:
+    # ShardingSphere pulls org.apache.groovy:groovy (~7.2 MB) solely for its inline
+    # sharding-expression engine (InlineExpressionParser), which the SQL grammar/parse path
+    # used by ShardingSphereVerifier never touches. Exclude it — the advisory verifier's
+    # accept/reject suite stays green without it. (settings.internal.excludeDependencies:
+    # temporary Amper/Toolchain 0.11 mechanism for transitive exclusions, "<group>:<artifact>".)
+    excludeDependencies:
+      - org.apache.groovy:groovy

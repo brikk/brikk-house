@@ -1,16 +1,28 @@
 {
- "cases": [
-  {
-   "case": "write|mysql|UPDATE foo SET a = bar.a, b = bar.b FROM bar WHERE foo.id = bar.id",
-   "reason": "MySQL update_sql FROM->JOIN rewrite (generators/mysql UPDATE preprocess) not ported"
-  },
-  {
-   "case": "write|presto|SELECT UNNEST(c) FROM t",
-   "reason": "transforms.explode_projection_to_unnest (Presto exp.Select preprocess) not ported"
-  },
-  {
-   "case": "write|presto|SELECT UNNEST(ARRAY[1])",
-   "reason": "transforms.explode_projection_to_unnest (Presto exp.Select preprocess) not ported"
-  }
- ]
+    "cases": [
+        {
+            "case": "write|bigquery|SELECT GENERATE_SERIES(1, 5)",
+            "reason": "expected `SELECT _gen_series_value FROM UNNEST(GENERATE_ARRAY(1, 5)) AS _gen_series_value` actual `SELECT GENERATE_SERIES(1, 5)`"
+        },
+        {
+            "case": "write|bigquery|SELECT GENERATE_SERIES(1, 5) AS x",
+            "reason": "expected `SELECT x FROM UNNEST(GENERATE_ARRAY(1, 5)) AS x` actual `SELECT GENERATE_SERIES(1, 5) AS x`"
+        },
+        {
+            "case": "write|bigquery|SELECT GENERATE_SERIES(1, 5) AS x WHERE x > 2 ORDER BY x DESC LIMIT 3",
+            "reason": "expected `SELECT x FROM UNNEST(GENERATE_ARRAY(1, 5)) AS x WHERE x > 2 ORDER BY x DESC NULLS FIRST LIMIT 3` actual `SELECT GENERATE_SERIES(1, 5) AS x WHERE x > 2 ORDER BY x DESC NULLS FIRST LIMIT 3`"
+        },
+        {
+            "case": "write|bigquery|SELECT y, GENERATE_SERIES(1, 3) AS g FROM t",
+            "reason": "expected `SELECT y, g FROM t CROSS JOIN UNNEST(GENERATE_ARRAY(1, 3)) AS g` actual `SELECT y, GENERATE_SERIES(1, 3) AS g FROM t`"
+        },
+        {
+            "case": "write|bigquery|SELECT GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b",
+            "reason": "expected `SELECT a, b FROM UNNEST(GENERATE_ARRAY(1, 2)) AS a CROSS JOIN UNNEST(GENERATE_ARRAY(11, 13)) AS b` actual `SELECT GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b`"
+        },
+        {
+            "case": "write|bigquery|SELECT y, GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b FROM t",
+            "reason": "expected `SELECT y, a, b FROM t CROSS JOIN UNNEST(GENERATE_ARRAY(1, 2)) AS a CROSS JOIN UNNEST(GENERATE_ARRAY(11, 13)) AS b` actual `SELECT y, GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b FROM t`"
+        }
+    ]
 }

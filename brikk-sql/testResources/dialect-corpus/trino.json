@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "trino",
   "identity": [
     {
@@ -65,6 +65,16 @@
     {
       "sql": "SELECT TIMESTAMP '2012-10-31 01:00 +2'",
       "expected": "SELECT CAST('2012-10-31 01:00 +2' AS TIMESTAMP WITH TIME ZONE)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TIME '01:02:03.456 -08:00'",
+      "expected": "SELECT CAST('01:02:03.456 -08:00' AS TIME WITH TIME ZONE)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT TIME '01:02:03.456'",
+      "expected": "SELECT CAST('01:02:03.456' AS TIME)",
       "pretty": false
     },
     {
@@ -284,9 +294,277 @@
       "sql": "SELECT ARRAY_FIRST(ARRAY['a', 'b'], x -> x = 'b') FROM tbl",
       "expected": null,
       "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f(num INTEGER) RETURNS INTEGER RETURN num SELECT F(1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION hello(name VARCHAR) RETURNS VARCHAR RETURN FORMAT('Hello %s!', name), FUNCTION bye() RETURNS VARCHAR RETURN 'Bye!' SELECT HELLO('Finn') || BYE()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION doubled(x INTEGER) RETURNS INTEGER RETURN x * 2 WITH t AS (SELECT 3 AS v) SELECT DOUBLED(v) FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f(x INTEGER) RETURNS INTEGER RETURN x WITH RECURSIVE t(n) AS (SELECT 1 AS n) SELECT F(n) FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f(num int)\n    RETURNS int\n    RETURN num\nSELECT f(1)",
+      "expected": "WITH FUNCTION f(num INTEGER) RETURNS INTEGER RETURN num SELECT F(1)",
+      "pretty": false
+    },
+    {
+      "sql": "WITH function AS (SELECT 1 AS x) SELECT x FROM function",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH function(x) AS (SELECT 1) SELECT x FROM function",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER LANGUAGE SQL RETURN 1 SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER DETERMINISTIC RETURN 1 SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER NOT DETERMINISTIC RETURN 1 SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER CALLED ON NULL INPUT RETURN 1 SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER RETURNS NULL ON NULL INPUT RETURN 1 SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER COMMENT 'hi' RETURN 1 SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER SECURITY DEFINER RETURN 1 SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER SECURITY INVOKER RETURN 1 SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER WITH (weight=42) RETURN 1 SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER LANGUAGE SQL WITH (weight=42, cost='low') RETURN 1 SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION custom_sqrt(a INTEGER) RETURNS DOUBLE COMMENT 'Custom sqrt function' RETURNS NULL ON NULL INPUT NOT DETERMINISTIC LANGUAGE SQL SECURITY DEFINER WITH (weight=42, cost='low') RETURN a SELECT CUSTOM_SQRT(4)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION meaning_of_life() RETURNS INTEGER BEGIN DECLARE a INTEGER DEFAULT 6; DECLARE b INTEGER DEFAULT 7; RETURN a * b; END SELECT MEANING_OF_LIFE()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION one() RETURNS INTEGER BEGIN DECLARE counter INTEGER DEFAULT 1; SET counter = 0; SET counter = counter + 2; SET counter = counter / counter; RETURN counter; END SELECT ONE()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER BEGIN DECLARE first_name, last_name, middle_name VARCHAR(25); RETURN 1; END SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER BEGIN DECLARE x INTEGER DEFAULT 1; BEGIN SET x = x + 1; END; RETURN x; END SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT declare FROM (VALUES (1), (2)) AS t(declare)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION declare() RETURNS INTEGER RETURN 1 SELECT DECLARE()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION simple_if(a BIGINT) RETURNS VARCHAR BEGIN IF a = 0 THEN RETURN 'zero'; ELSEIF a = 1 THEN RETURN 'one'; ELSE RETURN 'more than one or negative'; END IF; END SELECT SIMPLE_IF(3)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f(a INTEGER) RETURNS VARCHAR BEGIN IF a = 0 THEN RETURN 'zero'; END IF; RETURN 'other'; END SELECT F(1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f(a INTEGER) RETURNS VARCHAR BEGIN IF a = 0 THEN RETURN 'zero'; ELSEIF a = 1 THEN RETURN 'one'; END IF; RETURN 'other'; END SELECT F(1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f(a INTEGER, b INTEGER) RETURNS VARCHAR BEGIN IF a = 0 THEN IF b = 0 THEN RETURN 'both zero'; ELSE RETURN 'a zero'; END IF; ELSE RETURN 'a nonzero'; END IF; RETURN 'unreachable'; END SELECT F(1, 2)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f(a INTEGER) RETURNS INTEGER BEGIN DECLARE result INTEGER DEFAULT 0; IF a > 0 THEN RETURN CASE WHEN a > 10 THEN 1 ELSE 2 END; ELSE SET result = -1; END IF; RETURN result; END SELECT F(1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION f() RETURNS INTEGER LANGUAGE SQL NOT DETERMINISTIC BEGIN DECLARE x INTEGER DEFAULT 1; RETURN x; END SELECT F()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION doubled(x INTEGER) RETURNS INTEGER BEGIN RETURN x * 2; END WITH t AS (SELECT 3 AS v) SELECT DOUBLED(v) FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION simple_case(a BIGINT) RETURNS VARCHAR BEGIN CASE a WHEN 0 THEN RETURN 'zero'; WHEN 1 THEN RETURN 'one'; ELSE RETURN 'more than one or negative'; END CASE; RETURN NULL; END SELECT SIMPLE_CASE(0)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION searched_case(a BIGINT) RETURNS VARCHAR BEGIN CASE WHEN a = 0 THEN RETURN 'zero'; WHEN a = 1 THEN RETURN 'one'; ELSE RETURN 'other'; END CASE; RETURN NULL; END SELECT SEARCHED_CASE(0)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION no_else(a BIGINT) RETURNS VARCHAR BEGIN CASE a WHEN 0 THEN RETURN 'zero'; END CASE; RETURN 'fallthrough'; END SELECT NO_ELSE(0)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION no_operand_no_else(a INTEGER) RETURNS VARCHAR BEGIN CASE WHEN a = 0 THEN RETURN 'zero'; END CASE; RETURN 'other'; END SELECT NO_OPERAND_NO_ELSE(1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION nested_case(a BIGINT, b BIGINT) RETURNS VARCHAR BEGIN DECLARE result VARCHAR; CASE WHEN a = 0 THEN CASE b WHEN 0 THEN SET result = 'a0b0'; ELSE SET result = 'a0bN'; END CASE; ELSE SET result = 'aN'; END CASE; RETURN result; END SELECT NESTED_CASE(0, 0)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION mix(a INTEGER) RETURNS INTEGER BEGIN DECLARE result INTEGER DEFAULT 0; CASE WHEN a > 0 THEN IF a > 10 THEN SET result = 1; ELSE SET result = 2; END IF; ELSE SET result = CASE WHEN a < -10 THEN -1 ELSE -2 END; END CASE; RETURN result; END SELECT MIX(1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION last_stmt(a INTEGER) RETURNS VARCHAR BEGIN CASE a WHEN 0 THEN RETURN 'zero'; ELSE RETURN 'other'; END CASE; END SELECT LAST_STMT(1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION npow(n BIGINT) RETURNS BIGINT BEGIN DECLARE r BIGINT DEFAULT 1; DECLARE p BIGINT DEFAULT n; WHILE p > 1 DO SET r = r * n; SET p = p - 1; END WHILE; RETURN r; END SELECT NPOW(5)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION npow_labeled(n BIGINT) RETURNS BIGINT BEGIN DECLARE r BIGINT DEFAULT 1; DECLARE p BIGINT DEFAULT n; abc: WHILE p > 1 DO SET r = r * n; SET p = p - 1; END WHILE; RETURN r; END SELECT NPOW_LABELED(5)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION last_stmt(n BIGINT) RETURNS BIGINT BEGIN DECLARE r BIGINT DEFAULT 1; WHILE r < n DO SET r = r + 1; END WHILE; END SELECT LAST_STMT(5)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION count_evens(n BIGINT) RETURNS BIGINT BEGIN DECLARE total BIGINT DEFAULT 0; DECLARE i BIGINT DEFAULT 0; WHILE i < n DO SET total = total + 1; IF i = 0 THEN SET total = total + 1; END IF; SET i = i + 1; END WHILE; RETURN total; END SELECT COUNT_EVENS(3)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION while_case(n BIGINT) RETURNS BIGINT BEGIN DECLARE i BIGINT DEFAULT 0; WHILE i < n DO CASE WHEN i = 0 THEN SET i = 1; ELSE SET i = i + 1; END CASE; END WHILE; RETURN i; END SELECT WHILE_CASE(3)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION to_one_hundred(start_value BIGINT, step BIGINT) RETURNS BIGINT BEGIN DECLARE count BIGINT DEFAULT 0; DECLARE current BIGINT DEFAULT 0; SET current = start_value; abc: LOOP IF current >= 100 THEN LEAVE abc; END IF; SET count = count + 1; SET current = current + step; END LOOP; RETURN count; END SELECT TO_ONE_HUNDRED(0, 10)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION test_repeat(a BIGINT) RETURNS BIGINT BEGIN REPEAT SET a = a + 1; UNTIL a >= 10 END REPEAT; RETURN a; END SELECT TEST_REPEAT(5)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION iter_count() RETURNS BIGINT BEGIN DECLARE a BIGINT DEFAULT 0; DECLARE b BIGINT DEFAULT 0; top: REPEAT SET a = a + 1; IF a <= 3 THEN ITERATE top; END IF; SET b = b + 1; UNTIL a >= 10 END REPEAT; RETURN b; END SELECT ITER_COUNT()",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION nested_test(n BIGINT) RETURNS BIGINT BEGIN DECLARE total BIGINT DEFAULT 0; DECLARE i BIGINT DEFAULT 0; DECLARE j BIGINT DEFAULT 0; outer_loop: WHILE i < n DO SET j = 0; inner_loop: LOOP IF j >= 3 THEN LEAVE inner_loop; END IF; SET total = total + 1; SET j = j + 1; END LOOP; SET i = i + 1; END WHILE; RETURN total; END SELECT NESTED_TEST(2)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION last_stmt(n BIGINT) RETURNS BIGINT BEGIN DECLARE i BIGINT DEFAULT 0; top: LOOP IF i >= n THEN LEAVE top; END IF; SET i = i + 1; END LOOP; END SELECT LAST_STMT(5)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION label_test(n BIGINT) RETURNS BIGINT BEGIN DECLARE i BIGINT DEFAULT 0; iterate: LOOP IF i >= n THEN LEAVE iterate; END IF; SET i = i + 1; END LOOP; RETURN i; END SELECT LABEL_TEST(5)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION label_test2(n BIGINT) RETURNS BIGINT BEGIN DECLARE i BIGINT DEFAULT 0; leave: LOOP IF i >= n THEN LEAVE leave; END IF; SET i = i + 1; END LOOP; RETURN i; END SELECT LABEL_TEST2(5)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH FUNCTION label_test3(n BIGINT) RETURNS BIGINT BEGIN DECLARE i BIGINT DEFAULT 0; set: LOOP IF i >= n THEN LEAVE set; END IF; SET i = i + 1; END LOOP; RETURN i; END SELECT LABEL_TEST3(5)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT NOT deterministic FROM t",
+      "expected": null,
+      "pretty": false
     }
   ],
   "transpile": [
+    {
+      "sql": "SELECT TIME '01:02:03.456 -08:00'",
+      "read": {},
+      "write": {
+        "duckdb": "SELECT CAST('01:02:03.456 -08:00' AS TIMETZ)",
+        "trino": "SELECT CAST('01:02:03.456 -08:00' AS TIME WITH TIME ZONE)"
+      }
+    },
     {
       "sql": "SELECT FROM_ISO8601_TIMESTAMP_NANOS('2020-05-11T11:15:05.000000000')",
       "read": {},
@@ -318,8 +596,8 @@
     }
   ],
   "stats": {
-    "identity_count": 55,
-    "transpile_count": 3,
+    "identity_count": 109,
+    "transpile_count": 4,
     "skipped_dynamic": 3
   }
 }

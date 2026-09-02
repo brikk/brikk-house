@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
  "cases": [
   {
    "sql": "SUM(1)",
@@ -658,7 +658,7 @@
    "skipped": "no scopes"
   },
   {
-   "sql": "INTERVAL '-1' CURRENT_DATE",
+   "sql": "INTERVAL '-1' AS CURRENT_DATE",
    "skipped": "no scopes"
   },
   {
@@ -4791,6 +4791,136 @@
       "z"
      ],
      "unqualified_column_count": 5,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY GROUPING SETS ((x)) LIMIT 5",
+   "scopes": [
+    {
+     "expression_class": "Select",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "test",
+       "table"
+      ]
+     ],
+     "selected_source_names": [
+      "test"
+     ],
+     "column_names": [
+      "a",
+      "x"
+     ],
+     "external_column_names": [
+      "a",
+      "x"
+     ],
+     "unqualified_column_count": 2,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY ROLLUP (x) LIMIT 5",
+   "scopes": [
+    {
+     "expression_class": "Select",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "test",
+       "table"
+      ]
+     ],
+     "selected_source_names": [
+      "test"
+     ],
+     "column_names": [
+      "a",
+      "x"
+     ],
+     "external_column_names": [
+      "a",
+      "x"
+     ],
+     "unqualified_column_count": 2,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY CUBE (x) OFFSET 5",
+   "scopes": [
+    {
+     "expression_class": "Select",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "test",
+       "table"
+      ]
+     ],
+     "selected_source_names": [
+      "test"
+     ],
+     "column_names": [
+      "a",
+      "x"
+     ],
+     "external_column_names": [
+      "a",
+      "x"
+     ],
+     "unqualified_column_count": 2,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY ROLLUP (x) WINDOW w AS (ORDER BY x)",
+   "scopes": [
+    {
+     "expression_class": "Select",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "test",
+       "table"
+      ]
+     ],
+     "selected_source_names": [
+      "test"
+     ],
+     "column_names": [
+      "a",
+      "x",
+      "x"
+     ],
+     "external_column_names": [
+      "a",
+      "x",
+      "x"
+     ],
+     "unqualified_column_count": 3,
      "subquery_count": 0,
      "cte_count": 0,
      "derived_count": 0,
@@ -9491,6 +9621,46 @@
    ]
   },
   {
+   "sql": "WITH out AS (SELECT 1 AS c) SELECT * FROM out",
+   "scopes": [
+    {
+     "expression_class": "Select",
+     "scope_type": "CTE",
+     "sources": [],
+     "selected_source_names": [],
+     "column_names": [],
+     "external_column_names": [],
+     "unqualified_column_count": 0,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    },
+    {
+     "expression_class": "Select",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "out",
+       "scope"
+      ]
+     ],
+     "selected_source_names": [
+      "out"
+     ],
+     "column_names": [],
+     "external_column_names": [],
+     "unqualified_column_count": 0,
+     "subquery_count": 0,
+     "cte_count": 1,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
+  },
+  {
    "sql": "WITH a AS (SELECT 1) SELECT 1 UNION ALL SELECT 2",
    "scopes": [
     {
@@ -9940,7 +10110,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -9955,7 +10125,12 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [
       "x"
@@ -9964,9 +10139,9 @@
       "x"
      ],
      "unqualified_column_count": 1,
-     "subquery_count": 1,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -10108,7 +10283,7 @@
     },
     {
      "expression_class": "Union",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10123,7 +10298,12 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [
       "x"
@@ -10132,9 +10312,9 @@
       "x"
      ],
      "unqualified_column_count": 1,
-     "subquery_count": 1,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -10381,7 +10561,7 @@
     },
     {
      "expression_class": "Except",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10396,14 +10576,19 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [],
      "external_column_names": [],
      "unqualified_column_count": 0,
-     "subquery_count": 1,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -10414,7 +10599,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10429,68 +10614,19 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
-     "selected_source_names": [],
-     "column_names": [],
-     "external_column_names": [],
-     "unqualified_column_count": 0,
-     "subquery_count": 1,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    }
-   ]
-  },
-  {
-   "sql": "VALUES (1) UNION SELECT * FROM x",
-   "scopes": [
-    {
-     "expression_class": "Values",
-     "scope_type": "UNION",
-     "sources": [],
-     "selected_source_names": [],
-     "column_names": [],
-     "external_column_names": [],
-     "unqualified_column_count": 0,
-     "subquery_count": 0,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    },
-    {
-     "expression_class": "Select",
-     "scope_type": "UNION",
      "sources": [
       [
-       "x",
-       "table"
+       "",
+       "scope"
       ]
      ],
-     "selected_source_names": [
-      "x"
-     ],
-     "column_names": [],
-     "external_column_names": [],
-     "unqualified_column_count": 0,
-     "subquery_count": 0,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    },
-    {
-     "expression_class": "Union",
-     "scope_type": "ROOT",
-     "sources": [],
      "selected_source_names": [],
      "column_names": [],
      "external_column_names": [],
      "unqualified_column_count": 0,
      "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -10666,224 +10802,31 @@
    ]
   },
   {
-   "sql": "WITH RECURSIVE T(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t",
-   "scopes": [
-    {
-     "expression_class": "Values",
-     "scope_type": "UNION",
-     "sources": [
-      [
-       "T",
-       "scope"
-      ]
-     ],
-     "selected_source_names": [],
-     "column_names": [],
-     "external_column_names": [],
-     "unqualified_column_count": 0,
-     "subquery_count": 0,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    },
-    {
-     "expression_class": "Select",
-     "scope_type": "UNION",
-     "sources": [
-      [
-       "T",
-       "scope"
-      ],
-      [
-       "t",
-       "table"
-      ]
-     ],
-     "selected_source_names": [
-      "t"
-     ],
-     "column_names": [
-      "n",
-      "n"
-     ],
-     "external_column_names": [
-      "n",
-      "n"
-     ],
-     "unqualified_column_count": 2,
-     "subquery_count": 0,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    },
-    {
-     "expression_class": "Union",
-     "scope_type": "CTE",
-     "sources": [
-      [
-       "T",
-       "scope"
-      ]
-     ],
-     "selected_source_names": [],
-     "column_names": [],
-     "external_column_names": [
-      "n",
-      "n"
-     ],
-     "unqualified_column_count": 0,
-     "subquery_count": 0,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    },
-    {
-     "expression_class": "Select",
-     "scope_type": "ROOT",
-     "sources": [
-      [
-       "T",
-       "scope"
-      ],
-      [
-       "t",
-       "table"
-      ]
-     ],
-     "selected_source_names": [
-      "t"
-     ],
-     "column_names": [
-      "n"
-     ],
-     "external_column_names": [
-      "n"
-     ],
-     "unqualified_column_count": 1,
-     "subquery_count": 0,
-     "cte_count": 1,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    }
-   ]
-  },
-  {
-   "sql": "WITH RECURSIVE T(n, m) AS (VALUES (1, 2) UNION ALL SELECT n + 1, n + 2 FROM t) SELECT SUM(n) FROM t",
-   "scopes": [
-    {
-     "expression_class": "Values",
-     "scope_type": "UNION",
-     "sources": [
-      [
-       "T",
-       "scope"
-      ]
-     ],
-     "selected_source_names": [],
-     "column_names": [],
-     "external_column_names": [],
-     "unqualified_column_count": 0,
-     "subquery_count": 0,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    },
-    {
-     "expression_class": "Select",
-     "scope_type": "UNION",
-     "sources": [
-      [
-       "T",
-       "scope"
-      ],
-      [
-       "t",
-       "table"
-      ]
-     ],
-     "selected_source_names": [
-      "t"
-     ],
-     "column_names": [
-      "n",
-      "n"
-     ],
-     "external_column_names": [
-      "n",
-      "n"
-     ],
-     "unqualified_column_count": 2,
-     "subquery_count": 0,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    },
-    {
-     "expression_class": "Union",
-     "scope_type": "CTE",
-     "sources": [
-      [
-       "T",
-       "scope"
-      ]
-     ],
-     "selected_source_names": [],
-     "column_names": [],
-     "external_column_names": [
-      "n",
-      "n"
-     ],
-     "unqualified_column_count": 0,
-     "subquery_count": 0,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    },
-    {
-     "expression_class": "Select",
-     "scope_type": "ROOT",
-     "sources": [
-      [
-       "T",
-       "scope"
-      ],
-      [
-       "t",
-       "table"
-      ]
-     ],
-     "selected_source_names": [
-      "t"
-     ],
-     "column_names": [
-      "n"
-     ],
-     "external_column_names": [
-      "n"
-     ],
-     "unqualified_column_count": 1,
-     "subquery_count": 0,
-     "cte_count": 1,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    }
-   ]
-  },
-  {
    "sql": "WITH baz AS (SELECT 1 AS col) UPDATE bar SET cid = baz.col1 FROM baz",
    "scopes": [
     {
      "expression_class": "Select",
      "scope_type": "CTE",
      "sources": [],
+     "selected_source_names": [],
+     "column_names": [],
+     "external_column_names": [],
+     "unqualified_column_count": 0,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    },
+    {
+     "expression_class": "Table",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "baz",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [],
      "external_column_names": [],
@@ -12879,7 +12822,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -12894,14 +12837,19 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [],
      "external_column_names": [],
      "unqualified_column_count": 0,
-     "subquery_count": 1,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -12912,7 +12860,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -12927,14 +12875,19 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [],
      "external_column_names": [],
      "unqualified_column_count": 0,
-     "subquery_count": 1,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -12945,7 +12898,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -12960,14 +12913,19 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [],
      "external_column_names": [],
      "unqualified_column_count": 0,
-     "subquery_count": 1,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -13203,7 +13161,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [
       [
        "cte",
@@ -13225,14 +13183,19 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [],
      "external_column_names": [],
      "unqualified_column_count": 0,
-     "subquery_count": 1,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -13257,7 +13220,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [
       [
        "cte",
@@ -13279,14 +13242,19 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [],
      "external_column_names": [],
      "unqualified_column_count": 0,
-     "subquery_count": 1,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -13473,7 +13441,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [
       [
        "b",
@@ -13494,23 +13462,24 @@
      "cte_count": 0,
      "derived_count": 0,
      "udtf_count": 0,
-     "is_correlated_subquery": true
+     "is_correlated_subquery": false
     },
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
-     "column_names": [
-      "a"
-     ],
-     "external_column_names": [
-      "a"
-     ],
-     "unqualified_column_count": 1,
-     "subquery_count": 1,
+     "column_names": [],
+     "external_column_names": [],
+     "unqualified_column_count": 0,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -14040,7 +14009,7 @@
      "cte_count": 0,
      "derived_count": 0,
      "udtf_count": 0,
-     "is_correlated_subquery": true
+     "is_correlated_subquery": false
     },
     {
      "expression_class": "Select",
@@ -14065,11 +14034,11 @@
      "cte_count": 0,
      "derived_count": 0,
      "udtf_count": 0,
-     "is_correlated_subquery": true
+     "is_correlated_subquery": false
     },
     {
      "expression_class": "Except",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -14082,25 +14051,24 @@
      "cte_count": 0,
      "derived_count": 0,
      "udtf_count": 0,
-     "is_correlated_subquery": true
+     "is_correlated_subquery": false
     },
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
-     "column_names": [
-      "A",
-      "A"
-     ],
-     "external_column_names": [
-      "A",
-      "A"
-     ],
-     "unqualified_column_count": 2,
-     "subquery_count": 1,
+     "column_names": [],
+     "external_column_names": [],
+     "unqualified_column_count": 0,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -14334,19 +14302,105 @@
   },
   {
    "sql": "DELETE FROM event USING sales WHERE event.eventid = sales.eventid",
-   "skipped": "no scopes"
+   "scopes": [
+    {
+     "expression_class": "Table",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "sales",
+       "table"
+      ]
+     ],
+     "selected_source_names": [],
+     "column_names": [],
+     "external_column_names": [],
+     "unqualified_column_count": 0,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
   },
   {
    "sql": "DELETE FROM event USING sales, bla WHERE event.eventid = sales.eventid",
-   "skipped": "no scopes"
+   "scopes": [
+    {
+     "expression_class": "Table",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "bla",
+       "table"
+      ],
+      [
+       "sales",
+       "table"
+      ]
+     ],
+     "selected_source_names": [
+      "bla"
+     ],
+     "column_names": [],
+     "external_column_names": [],
+     "unqualified_column_count": 0,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
   },
   {
    "sql": "DELETE FROM event USING sales AS s WHERE event.eventid = s.eventid",
-   "skipped": "no scopes"
+   "scopes": [
+    {
+     "expression_class": "Table",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "s",
+       "table"
+      ]
+     ],
+     "selected_source_names": [],
+     "column_names": [],
+     "external_column_names": [],
+     "unqualified_column_count": 0,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
   },
   {
    "sql": "DELETE FROM event AS event USING sales AS s WHERE event.eventid = s.eventid",
-   "skipped": "no scopes"
+   "scopes": [
+    {
+     "expression_class": "Table",
+     "scope_type": "ROOT",
+     "sources": [
+      [
+       "s",
+       "table"
+      ]
+     ],
+     "selected_source_names": [],
+     "column_names": [],
+     "external_column_names": [],
+     "unqualified_column_count": 0,
+     "subquery_count": 0,
+     "cte_count": 0,
+     "derived_count": 0,
+     "udtf_count": 0,
+     "is_correlated_subquery": false
+    }
+   ]
   },
   {
    "sql": "DROP TABLE a",
@@ -14357,7 +14411,19 @@
    "skipped": "no scopes"
   },
   {
+   "sql": "DROP TABLE a, b",
+   "skipped": "no scopes"
+  },
+  {
+   "sql": "DROP TABLE a.b, c.d",
+   "skipped": "no scopes"
+  },
+  {
    "sql": "DROP TABLE IF EXISTS a",
+   "skipped": "no scopes"
+  },
+  {
+   "sql": "DROP TABLE IF EXISTS a, b CASCADE",
    "skipped": "no scopes"
   },
   {
@@ -14435,7 +14501,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [
       [
        "y",
@@ -14457,14 +14523,19 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [],
      "external_column_names": [],
      "unqualified_column_count": 0,
-     "subquery_count": 1,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -14651,7 +14722,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "SUBQUERY",
+     "scope_type": "DERIVED_TABLE",
      "sources": [
       [
        "test",
@@ -14673,14 +14744,19 @@
     {
      "expression_class": "Subquery",
      "scope_type": "ROOT",
-     "sources": [],
+     "sources": [
+      [
+       "",
+       "scope"
+      ]
+     ],
      "selected_source_names": [],
      "column_names": [],
      "external_column_names": [],
      "unqualified_column_count": 0,
-     "subquery_count": 1,
+     "subquery_count": 0,
      "cte_count": 0,
-     "derived_count": 0,
+     "derived_count": 1,
      "udtf_count": 0,
      "is_correlated_subquery": false
     }
@@ -20472,22 +20548,8 @@
      "is_correlated_subquery": false
     },
     {
-     "expression_class": "Subquery",
-     "scope_type": "ROOT",
-     "sources": [],
-     "selected_source_names": [],
-     "column_names": [],
-     "external_column_names": [],
-     "unqualified_column_count": 0,
-     "subquery_count": 1,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
-    },
-    {
      "expression_class": "Select",
-     "scope_type": "ROOT",
+     "scope_type": "SUBQUERY",
      "sources": [
       [
        "t2",
@@ -20513,7 +20575,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "ROOT",
+     "scope_type": "SUBQUERY",
      "sources": [
       [
        "tbl2",
@@ -20535,7 +20597,7 @@
      "cte_count": 0,
      "derived_count": 0,
      "udtf_count": 0,
-     "is_correlated_subquery": false
+     "is_correlated_subquery": true
     }
    ]
   },
@@ -21816,7 +21878,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "ROOT",
+     "scope_type": "SUBQUERY",
      "sources": [
       [
        "t2",
@@ -21838,7 +21900,7 @@
      "cte_count": 0,
      "derived_count": 0,
      "udtf_count": 0,
-     "is_correlated_subquery": false
+     "is_correlated_subquery": true
     }
    ]
   },
@@ -21869,24 +21931,6 @@
      "derived_count": 0,
      "udtf_count": 0,
      "is_correlated_subquery": true
-    },
-    {
-     "expression_class": "Subquery",
-     "scope_type": "ROOT",
-     "sources": [],
-     "selected_source_names": [],
-     "column_names": [
-      "id"
-     ],
-     "external_column_names": [
-      "id"
-     ],
-     "unqualified_column_count": 1,
-     "subquery_count": 1,
-     "cte_count": 0,
-     "derived_count": 0,
-     "udtf_count": 0,
-     "is_correlated_subquery": false
     }
    ]
   },

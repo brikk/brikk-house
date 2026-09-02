@@ -498,21 +498,20 @@ fun toNode(
         }
     }
 
-    val pivots = scope.pivots
-    val pivot = if (pivots.size == 1) pivots[0] as? Pivot else null
+    var pivots = scope.pivots.filterIsInstance<Pivot>()
+    if (pivots.isNotEmpty() && pivots.first().parent !== pivots.last().parent) {
+        // The scope's pivots only form a chain when they all hang off of the same source;
+        // otherwise they can't be folded, so their columns degrade to unresolved leaves
+        pivots = emptyList()
+    }
+
     var pivotRenames: Map<String, String> = emptyMap()
     var pivotColumnMapping: Map<String, List<Column>> = emptyMap()
 
-    if (pivot != null) {
-        pivotRenames = pivotOutputRenames(pivot, scope, schema)
-        pivotColumnMapping = pivotColumnMappingOf(pivot)
-        if (pivotRenames.isNotEmpty()) {
-            val remapped = LinkedHashMap<String, List<Column>>()
-            for ((post, pre) in pivotRenames) {
-                pivotColumnMapping[pre]?.let { remapped[post] = it }
-            }
-            pivotColumnMapping = remapped
-        }
+    if (pivots.isNotEmpty()) {
+        val (renames, mapping) = pivotChainMapping(pivots, scope, schema)
+        pivotRenames = renames
+        pivotColumnMapping = mapping
     }
 
     // Python rebinds the `reference_node_name` parameter inside this loop; the pivot
@@ -548,7 +547,9 @@ fun toNode(
                 scopeMeta = scopeMeta,
                 onNode = onNode,
             )
-        } else if (pivot != null && pivot.aliasOrName == c.table) {
+        } else if (pivots.isNotEmpty() && pivots.last().aliasOrName == c.table) {
+            // Only the last operator in a chain names the resulting source
+            val pivotParent = pivots.last().parent
             val downstreamColumns = mutableListOf<Column>()
 
             val columnName = c.name
@@ -558,7 +559,6 @@ fun toNode(
             } else {
                 // The column is not in the pivot, so it must be an implicit column of the
                 // pivoted source -- adapt column to be from the implicit pivoted source.
-                val pivotParent = pivot.parent
                 downstreamColumns.add(
                     column(
                         pivotRenames[c.name] ?: c.thisArg as Expression,
@@ -572,7 +572,6 @@ fun toNode(
                 if (downstreamColumn.table.isEmpty()) {
                     // Some dialects (e.g. bigquery) don't qualify the IN-list columns,
                     // but they can only come from the pivoted source
-                    val pivotParent = pivot.parent
                     downstreamColumn = column(
                         downstreamColumn.thisArg as Expression,
                         table = pivotParent?.aliasOrName,
@@ -642,33 +641,100 @@ private fun sqlWithoutComments(expression: Expression, dialect: Dialect): String
 }
 
 /**
- * sqlglot: lineage._pivot_output_renames — map each (UN)PIVOT output column name to its
- * pre-rename name, when an alias column list (`... AS t(c1, c2, ...)`) renames the
- * outputs. The renames are positional over the operator's full output, so they can
- * only be aligned when the pre-pivot columns are known: from the projections of a
- * derived table or CTE source, or from the schema for a physical table.
+ * sqlglot: lineage._pre_pivot_columns — the columns the first operator of a chain sees,
+ * taken from the projections of a derived table or CTE source, or from the schema for a
+ * physical table. Returns an empty list when they can't be determined (e.g. an
+ * unexpanded star), since anything positional over them would silently shift.
  */
-private fun pivotOutputRenames(pivot: Pivot, scope: Scope, schema: Schema?): Map<String, String> {
-    if (pivot.aliasColumnNames.isEmpty()) return emptyMap()
-
+private fun prePivotColumns(pivot: Pivot, scope: Scope, schema: Schema?): List<String> {
     val parent = pivot.parent
-    var prePivotColumns: List<String> = emptyList()
+    var columns: List<String> = emptyList()
     if (parent is DerivedTable && parent.thisArg is Query) {
-        prePivotColumns = (parent.thisArg as Expression).namedSelects
+        columns = (parent.thisArg as Expression).namedSelects
     } else if (parent is Table) {
         val cteSource = if (parent.db.isEmpty()) scope.cteSources[parent.name] else null
         if (cteSource is Scope && cteSource.expression is Query) {
-            prePivotColumns = cteSource.expression.namedSelects
+            columns = cteSource.expression.namedSelects
         } else if (schema != null) {
-            prePivotColumns = schema.columnNames(parent, onlyVisible = true)
+            columns = schema.columnNames(parent, onlyVisible = true)
         }
     }
 
-    // The alignment is also unknowable when the source's projections aren't fully
-    // expanded (e.g. an unresolved star), since the renames would silently shift
-    if (prePivotColumns.isEmpty() || "*" in prePivotColumns) return emptyMap()
+    return if ("*" in columns) emptyList() else columns
+}
 
-    return pivot.outputColumns(prePivotColumns)
+/**
+ * sqlglot: lineage._pivot_chain_mapping — fold a chain of (UN)PIVOT operators into a
+ * single view of its output, since each one consumes the previous one's columns rather
+ * than the pivoted source's.
+ *
+ * Returns the composed output-name -> pre-chain-name renames (from alias column lists),
+ * and the composed output-name -> source columns it derives from.
+ */
+private fun pivotChainMapping(
+    pivots: List<Pivot>,
+    scope: Scope,
+    schema: Schema?,
+): Pair<Map<String, String>, Map<String, List<Column>>> {
+    var available: List<String> = prePivotColumns(pivots[0], scope, schema)
+    var renames: Map<String, String> = LinkedHashMap()
+    var mapping: Map<String, List<Column>> = LinkedHashMap()
+
+    for (pivot in pivots) {
+        // Renames are positional over the operator's full output, so they can only be
+        // applied when the columns going into it are known
+        val stepRenames: Map<String, String> =
+            if (pivot.aliasColumnNames.isNotEmpty() && available.isNotEmpty()) {
+                pivot.outputColumns(available)
+            } else {
+                emptyMap()
+            }
+        var stepMapping: Map<String, List<Column>> = pivotColumnMappingOf(pivot)
+        if (stepRenames.isNotEmpty()) {
+            val renamed = LinkedHashMap<String, List<Column>>()
+            for ((post, pre) in stepRenames) {
+                stepMapping[pre]?.let { renamed[post] = it }
+            }
+            stepMapping = renamed
+        }
+
+        // Columns this operator consumed may have been produced by an earlier one, or be
+        // alias-list renames of passthroughs; resolve through what we've folded so far
+        fun resolve(col: Column): List<Column> {
+            mapping[col.name]?.let { return it }
+            renames[col.name]?.let { return listOf(column(it) as Column) }
+            return listOf(col)
+        }
+
+        val composed = LinkedHashMap<String, List<Column>>()
+        for ((out, cols) in stepMapping) {
+            composed[out] = cols.flatMap { resolve(it) }
+        }
+
+        // Whatever an earlier operator produced and this one didn't consume passes
+        // through, under whatever name this operator's alias column list gives it
+        val consumed = stepMapping.values.flatten().map { it.name }.toSet()
+        val preToPost = stepRenames.entries.associate { (post, pre) -> pre to post }
+        for ((out, cols) in mapping) {
+            if (out !in consumed) {
+                composed.putIfAbsent(preToPost[out] ?: out, cols)
+            }
+        }
+
+        if (stepRenames.isNotEmpty()) {
+            renames = stepRenames.entries.associate { (post, pre) ->
+                post to (renames[pre] ?: pre)
+            }
+        }
+        mapping = composed
+        available = if (available.isNotEmpty()) {
+            pivot.outputColumns(available).keys.toList()
+        } else {
+            emptyList()
+        }
+    }
+
+    return renames to mapping
 }
 
 // sqlglot: lineage._pivot_column_mapping — map each (UN)PIVOT output column name to the

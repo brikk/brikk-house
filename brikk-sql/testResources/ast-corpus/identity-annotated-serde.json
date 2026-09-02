@@ -1,8 +1,8 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
  "fixture": "tests/fixtures/identity.sql",
  "dialect": "",
- "case_count": 979,
+ "case_count": 984,
  "skipped": [],
  "cases": [
   {
@@ -15822,11 +15822,11 @@
    ]
   },
   {
-   "sql": "INTERVAL '-1' CURRENT_DATE",
-   "generated": "INTERVAL '-1' CURRENT_DATE",
+   "sql": "INTERVAL '-1' AS CURRENT_DATE",
+   "generated": "INTERVAL '-1' AS CURRENT_DATE",
    "dump": [
     {
-     "c": "sqlglot.expressions.datatypes.Interval",
+     "c": "sqlglot.expressions.core.Alias",
      "t": [
       {
        "c": "sqlglot.expressions.datatypes.DataType"
@@ -15841,6 +15841,22 @@
     },
     {
      "i": 0,
+     "k": "this",
+     "c": "sqlglot.expressions.datatypes.Interval",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "INTERVAL"
+      }
+     ]
+    },
+    {
+     "i": 1,
      "k": "this",
      "c": "sqlglot.expressions.core.Literal",
      "t": [
@@ -15863,19 +15879,19 @@
      }
     },
     {
-     "i": 1,
+     "i": 2,
      "k": "this",
      "v": "-1"
     },
     {
-     "i": 1,
+     "i": 2,
      "k": "is_string",
      "v": true
     },
     {
      "i": 0,
-     "k": "unit",
-     "c": "sqlglot.expressions.temporal.CurrentDate",
+     "k": "alias",
+     "c": "sqlglot.expressions.core.Identifier",
      "t": [
       {
        "c": "sqlglot.expressions.datatypes.DataType"
@@ -15884,9 +15900,25 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "DATE"
+       "v": "UNKNOWN"
       }
-     ]
+     ],
+     "m": {
+      "line": 1,
+      "col": 29,
+      "start": 17,
+      "end": 28
+     }
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "v": "CURRENT_DATE"
+    },
+    {
+     "i": 5,
+     "k": "quoted",
+     "v": false
     }
    ]
   },
@@ -20331,7 +20363,8 @@
       "line": 1,
       "col": 11,
       "start": 0,
-      "end": 10
+      "end": 10,
+      "nonnull": true
      }
     },
     {
@@ -34599,8 +34632,7 @@
       "line": 1,
       "col": 13,
       "start": 12,
-      "end": 12,
-      "is_table": false
+      "end": 12
      }
     },
     {
@@ -34936,8 +34968,7 @@
       "line": 1,
       "col": 14,
       "start": 11,
-      "end": 13,
-      "is_table": false
+      "end": 13
      }
     },
     {
@@ -35102,8 +35133,7 @@
       "line": 1,
       "col": 12,
       "start": 11,
-      "end": 11,
-      "is_table": false
+      "end": 11
      }
     },
     {
@@ -35268,8 +35298,7 @@
       "line": 1,
       "col": 10,
       "start": 9,
-      "end": 9,
-      "is_table": false
+      "end": 9
      }
     },
     {
@@ -35434,8 +35463,7 @@
       "line": 1,
       "col": 10,
       "start": 9,
-      "end": 9,
-      "is_table": false
+      "end": 9
      }
     },
     {
@@ -52714,8 +52742,7 @@
       "line": 1,
       "col": 10,
       "start": 9,
-      "end": 9,
-      "is_table": false
+      "end": 9
      }
     },
     {
@@ -52941,8 +52968,7 @@
       "line": 1,
       "col": 46,
       "start": 45,
-      "end": 45,
-      "is_table": false
+      "end": 45
      }
     },
     {
@@ -53712,6 +53738,1164 @@
      "i": 26,
      "k": "quoted",
      "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY GROUPING SETS ((x)) LIMIT 5",
+   "generated": "SELECT a FROM test GROUP BY GROUPING SETS ((x)) LIMIT 5",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 7,
+      "end": 7
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "limit",
+     "c": "sqlglot.expressions.query.Limit",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 5,
+     "k": "expression",
+     "c": "sqlglot.expressions.core.Literal",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "INT"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 55,
+      "start": 54,
+      "end": 54,
+      "nonnull": true
+     }
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "v": "5"
+    },
+    {
+     "i": 6,
+     "k": "is_string",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 9,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 10,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 18,
+      "start": 14,
+      "end": 17
+     }
+    },
+    {
+     "i": 11,
+     "k": "this",
+     "v": "test"
+    },
+    {
+     "i": 11,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 14,
+     "k": "grouping_sets",
+     "a": true,
+     "c": "sqlglot.expressions.query.GroupingSets",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 15,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Paren",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 16,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 17,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 45,
+      "start": 44,
+      "end": 44
+     }
+    },
+    {
+     "i": 18,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 18,
+     "k": "quoted",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY ROLLUP (x) LIMIT 5",
+   "generated": "SELECT a FROM test GROUP BY ROLLUP (x) LIMIT 5",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 7,
+      "end": 7
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "limit",
+     "c": "sqlglot.expressions.query.Limit",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 5,
+     "k": "expression",
+     "c": "sqlglot.expressions.core.Literal",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "INT"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 46,
+      "start": 45,
+      "end": 45,
+      "nonnull": true
+     }
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "v": "5"
+    },
+    {
+     "i": 6,
+     "k": "is_string",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 9,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 10,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 18,
+      "start": 14,
+      "end": 17
+     }
+    },
+    {
+     "i": 11,
+     "k": "this",
+     "v": "test"
+    },
+    {
+     "i": 11,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 14,
+     "k": "rollup",
+     "a": true,
+     "c": "sqlglot.expressions.query.Rollup",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 15,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 16,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 37,
+      "start": 36,
+      "end": 36
+     }
+    },
+    {
+     "i": 17,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 17,
+     "k": "quoted",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY CUBE (x) OFFSET 5",
+   "generated": "SELECT a FROM test GROUP BY CUBE (x) OFFSET 5",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 7,
+      "end": 7
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 18,
+      "start": 14,
+      "end": 17
+     }
+    },
+    {
+     "i": 7,
+     "k": "this",
+     "v": "test"
+    },
+    {
+     "i": 7,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 10,
+     "k": "cube",
+     "a": true,
+     "c": "sqlglot.expressions.query.Cube",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 11,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 12,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 35,
+      "start": 34,
+      "end": 34
+     }
+    },
+    {
+     "i": 13,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 13,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "offset",
+     "c": "sqlglot.expressions.query.Offset",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 16,
+     "k": "expression",
+     "c": "sqlglot.expressions.core.Literal",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "INT"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 45,
+      "start": 44,
+      "end": 44,
+      "nonnull": true
+     }
+    },
+    {
+     "i": 17,
+     "k": "this",
+     "v": "5"
+    },
+    {
+     "i": 17,
+     "k": "is_string",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a FROM test GROUP BY ROLLUP (x) WINDOW w AS (ORDER BY x)",
+   "generated": "SELECT a FROM test GROUP BY ROLLUP (x) WINDOW w AS (ORDER BY x)",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 7,
+      "end": 7
+     }
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 18,
+      "start": 14,
+      "end": 17
+     }
+    },
+    {
+     "i": 7,
+     "k": "this",
+     "v": "test"
+    },
+    {
+     "i": 7,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 10,
+     "k": "rollup",
+     "a": true,
+     "c": "sqlglot.expressions.query.Rollup",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 11,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 12,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 37,
+      "start": 36,
+      "end": 36
+     }
+    },
+    {
+     "i": 13,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 13,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "windows",
+     "a": true,
+     "c": "sqlglot.expressions.query.Window",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 16,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 47,
+      "start": 46,
+      "end": 46
+     }
+    },
+    {
+     "i": 17,
+     "k": "this",
+     "v": "w"
+    },
+    {
+     "i": 17,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 16,
+     "k": "order",
+     "c": "sqlglot.expressions.query.Order",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 20,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Ordered",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 21,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 22,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 62,
+      "start": 61,
+      "end": 61
+     }
+    },
+    {
+     "i": 23,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 23,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 21,
+     "k": "nulls_first",
+     "v": true
     }
    ]
   },
@@ -59479,6 +60663,11 @@
      "i": 19,
      "k": "default_on_null",
      "v": false
+    },
+    {
+     "i": 19,
+     "k": "value_columns_first",
+     "v": false
     }
    ]
   },
@@ -61549,6 +62738,11 @@
     },
     {
      "i": 10,
+     "k": "value_columns_first",
+     "v": false
+    },
+    {
+     "i": 10,
      "k": "alias",
      "c": "sqlglot.expressions.query.TableAlias",
      "t": [
@@ -61564,7 +62758,7 @@
      ]
     },
     {
-     "i": 28,
+     "i": 29,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -61586,12 +62780,12 @@
      }
     },
     {
-     "i": 29,
+     "i": 30,
      "k": "this",
      "v": "x"
     },
     {
-     "i": 29,
+     "i": 30,
      "k": "quoted",
      "v": false
     }
@@ -62237,6 +63431,11 @@
     },
     {
      "i": 38,
+     "k": "value_columns_first",
+     "v": false
+    },
+    {
+     "i": 38,
      "k": "alias",
      "c": "sqlglot.expressions.query.TableAlias",
      "t": [
@@ -62252,7 +63451,7 @@
      ]
     },
     {
-     "i": 56,
+     "i": 57,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -62274,12 +63473,12 @@
      }
     },
     {
-     "i": 57,
+     "i": 58,
      "k": "this",
      "v": "x"
     },
     {
-     "i": 57,
+     "i": 58,
      "k": "quoted",
      "v": false
     }
@@ -63855,7 +65054,7 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "UNKNOWN"
+       "v": "INT"
       }
      ]
     },
@@ -64004,7 +65203,7 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "UNKNOWN"
+       "v": "INT"
       }
      ]
     },
@@ -71309,8 +72508,7 @@
       "line": 1,
       "col": 35,
       "start": 34,
-      "end": 34,
-      "is_table": false
+      "end": 34
      }
     },
     {
@@ -71637,8 +72835,7 @@
       "line": 1,
       "col": 34,
       "start": 33,
-      "end": 33,
-      "is_table": false
+      "end": 33
      }
     },
     {
@@ -72082,8 +73279,7 @@
       "line": 1,
       "col": 41,
       "start": 40,
-      "end": 40,
-      "is_table": false
+      "end": 40
      }
     },
     {
@@ -72447,8 +73643,7 @@
       "line": 1,
       "col": 40,
       "start": 39,
-      "end": 39,
-      "is_table": false
+      "end": 39
      }
     },
     {
@@ -72812,8 +74007,7 @@
       "line": 1,
       "col": 41,
       "start": 40,
-      "end": 40,
-      "is_table": false
+      "end": 40
      }
     },
     {
@@ -73177,8 +74371,7 @@
       "line": 1,
       "col": 41,
       "start": 40,
-      "end": 40,
-      "is_table": false
+      "end": 40
      }
     },
     {
@@ -73542,8 +74735,7 @@
       "line": 1,
       "col": 40,
       "start": 39,
-      "end": 39,
-      "is_table": false
+      "end": 39
      }
     },
     {
@@ -73912,8 +75104,7 @@
       "line": 1,
       "col": 45,
       "start": 44,
-      "end": 44,
-      "is_table": false
+      "end": 44
      }
     },
     {
@@ -74282,8 +75473,7 @@
       "line": 1,
       "col": 45,
       "start": 44,
-      "end": 44,
-      "is_table": false
+      "end": 44
      }
     },
     {
@@ -74652,8 +75842,7 @@
       "line": 1,
       "col": 46,
       "start": 45,
-      "end": 45,
-      "is_table": false
+      "end": 45
      }
     },
     {
@@ -75022,8 +76211,7 @@
       "line": 1,
       "col": 46,
       "start": 45,
-      "end": 45,
-      "is_table": false
+      "end": 45
      }
     },
     {
@@ -76137,8 +77325,7 @@
       "line": 1,
       "col": 64,
       "start": 63,
-      "end": 63,
-      "is_table": false
+      "end": 63
      }
     },
     {
@@ -77197,8 +78384,7 @@
       "line": 1,
       "col": 55,
       "start": 52,
-      "end": 54,
-      "is_table": false
+      "end": 54
      }
     },
     {
@@ -77278,8 +78464,7 @@
       "line": 1,
       "col": 63,
       "start": 60,
-      "end": 62,
-      "is_table": false
+      "end": 62
      }
     },
     {
@@ -77804,8 +78989,7 @@
       "line": 1,
       "col": 60,
       "start": 57,
-      "end": 59,
-      "is_table": false
+      "end": 59
      }
     },
     {
@@ -77885,8 +79069,7 @@
       "line": 1,
       "col": 68,
       "start": 65,
-      "end": 67,
-      "is_table": false
+      "end": 67
      }
     },
     {
@@ -78175,8 +79358,7 @@
       "line": 1,
       "col": 42,
       "start": 39,
-      "end": 41,
-      "is_table": false
+      "end": 41
      }
     },
     {
@@ -78256,8 +79438,7 @@
       "line": 1,
       "col": 50,
       "start": 47,
-      "end": 49,
-      "is_table": false
+      "end": 49
      }
     },
     {
@@ -78546,8 +79727,7 @@
       "line": 1,
       "col": 42,
       "start": 39,
-      "end": 41,
-      "is_table": false
+      "end": 41
      }
     },
     {
@@ -78627,8 +79807,7 @@
       "line": 1,
       "col": 50,
       "start": 47,
-      "end": 49,
-      "is_table": false
+      "end": 49
      }
     },
     {
@@ -79491,8 +80670,7 @@
       "line": 1,
       "col": 37,
       "start": 34,
-      "end": 36,
-      "is_table": false
+      "end": 36
      }
     },
     {
@@ -79572,8 +80750,7 @@
       "line": 1,
       "col": 45,
       "start": 42,
-      "end": 44,
-      "is_table": false
+      "end": 44
      }
     },
     {
@@ -79857,8 +81034,7 @@
       "line": 1,
       "col": 36,
       "start": 33,
-      "end": 35,
-      "is_table": false
+      "end": 35
      }
     },
     {
@@ -79938,8 +81114,7 @@
       "line": 1,
       "col": 44,
       "start": 41,
-      "end": 43,
-      "is_table": false
+      "end": 43
      }
     },
     {
@@ -80539,8 +81714,7 @@
       "line": 1,
       "col": 59,
       "start": 57,
-      "end": 58,
-      "is_table": false
+      "end": 58
      }
     },
     {
@@ -89383,7 +90557,7 @@
   },
   {
    "sql": "SELECT A.* EXCEPT (A.COL_1) FROM TABLE_1 AS A",
-   "generated": "SELECT A.* EXCEPT (A.col_1) FROM TABLE_1 AS A",
+   "generated": "SELECT A.* EXCEPT (A.COL_1) FROM TABLE_1 AS A",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select",
@@ -89435,8 +90609,7 @@
       "line": 1,
       "col": 10,
       "start": 9,
-      "end": 9,
-      "is_table": false
+      "end": 9
      }
     },
     {
@@ -89475,14 +90648,13 @@
       "line": 1,
       "col": 26,
       "start": 21,
-      "end": 25,
-      "is_table": false
+      "end": 25
      }
     },
     {
      "i": 4,
      "k": "this",
-     "v": "col_1"
+     "v": "COL_1"
     },
     {
      "i": 4,
@@ -91590,6 +92762,295 @@
     {
      "i": 10,
      "k": "offset",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "WITH out AS (SELECT 1 AS c) SELECT * FROM out",
+   "generated": "WITH out AS (SELECT 1 AS c) SELECT * FROM out",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Star",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 36,
+      "start": 35,
+      "end": 35
+     }
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 3,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 45,
+      "start": 42,
+      "end": 44
+     }
+    },
+    {
+     "i": 4,
+     "k": "this",
+     "v": "out"
+    },
+    {
+     "i": 4,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "with_",
+     "c": "sqlglot.expressions.query.With",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 7,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.CTE",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 8,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Select",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 9,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Alias",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "INT"
+      }
+     ],
+     "m": {
+      "nonnull": true
+     }
+    },
+    {
+     "i": 10,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Literal",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "INT"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 21,
+      "start": 20,
+      "end": 20,
+      "nonnull": true
+     }
+    },
+    {
+     "i": 11,
+     "k": "this",
+     "v": "1"
+    },
+    {
+     "i": 11,
+     "k": "is_string",
+     "v": false
+    },
+    {
+     "i": 10,
+     "k": "alias",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 26,
+      "start": 25,
+      "end": 25
+     }
+    },
+    {
+     "i": 14,
+     "k": "this",
+     "v": "c"
+    },
+    {
+     "i": 14,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 8,
+     "k": "alias",
+     "c": "sqlglot.expressions.query.TableAlias",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 17,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 8,
+      "start": 5,
+      "end": 7
+     }
+    },
+    {
+     "i": 18,
+     "k": "this",
+     "v": "out"
+    },
+    {
+     "i": 18,
+     "k": "quoted",
      "v": false
     }
    ]
@@ -95745,201 +97206,6 @@
    ]
   },
   {
-   "sql": "VALUES (1) UNION SELECT * FROM x",
-   "generated": "VALUES (1) UNION SELECT * FROM x",
-   "dump": [
-    {
-     "c": "sqlglot.expressions.query.Union",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 0,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Values",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 1,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.query.Tuple",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 2,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Literal",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "INT"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 9,
-      "start": 8,
-      "end": 8,
-      "nonnull": true
-     }
-    },
-    {
-     "i": 3,
-     "k": "this",
-     "v": "1"
-    },
-    {
-     "i": 3,
-     "k": "is_string",
-     "v": false
-    },
-    {
-     "i": 0,
-     "k": "distinct",
-     "v": true
-    },
-    {
-     "i": 0,
-     "k": "expression",
-     "c": "sqlglot.expressions.query.Select",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 7,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Star",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 25,
-      "start": 24,
-      "end": 24
-     }
-    },
-    {
-     "i": 7,
-     "k": "from_",
-     "c": "sqlglot.expressions.query.From",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 9,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Table",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 10,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 32,
-      "start": 31,
-      "end": 31
-     }
-    },
-    {
-     "i": 11,
-     "k": "this",
-     "v": "x"
-    },
-    {
-     "i": 11,
-     "k": "quoted",
-     "v": false
-    }
-   ]
-  },
-  {
    "sql": "WITH a AS (SELECT 1) SELECT a.* FROM a",
    "generated": "WITH a AS (SELECT 1) SELECT a.* FROM a",
    "dump": [
@@ -97353,1364 +98619,6 @@
      "i": 43,
      "k": "quoted",
      "v": false
-    }
-   ]
-  },
-  {
-   "sql": "WITH RECURSIVE T(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t",
-   "generated": "WITH RECURSIVE T(n) AS (VALUES (1) UNION ALL SELECT n + 1 FROM t WHERE n < 100) SELECT SUM(n) FROM t",
-   "dump": [
-    {
-     "c": "sqlglot.expressions.query.Select",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 0,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.aggregate.Sum",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 90,
-      "start": 87,
-      "end": 89
-     }
-    },
-    {
-     "i": 1,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Column",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 2,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 92,
-      "start": 91,
-      "end": 91
-     }
-    },
-    {
-     "i": 3,
-     "k": "this",
-     "v": "n"
-    },
-    {
-     "i": 3,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 0,
-     "k": "from_",
-     "c": "sqlglot.expressions.query.From",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 6,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Table",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 7,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 100,
-      "start": 99,
-      "end": 99
-     }
-    },
-    {
-     "i": 8,
-     "k": "this",
-     "v": "t"
-    },
-    {
-     "i": 8,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 0,
-     "k": "with_",
-     "c": "sqlglot.expressions.query.With",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 11,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.query.CTE",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 12,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Union",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 13,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Values",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 14,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.query.Tuple",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 15,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Literal",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "INT"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 33,
-      "start": 32,
-      "end": 32,
-      "nonnull": true
-     }
-    },
-    {
-     "i": 16,
-     "k": "this",
-     "v": "1"
-    },
-    {
-     "i": 16,
-     "k": "is_string",
-     "v": false
-    },
-    {
-     "i": 13,
-     "k": "distinct",
-     "v": false
-    },
-    {
-     "i": 13,
-     "k": "expression",
-     "c": "sqlglot.expressions.query.Select",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 20,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Add",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 21,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Column",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 22,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 53,
-      "start": 52,
-      "end": 52
-     }
-    },
-    {
-     "i": 23,
-     "k": "this",
-     "v": "n"
-    },
-    {
-     "i": 23,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 21,
-     "k": "expression",
-     "c": "sqlglot.expressions.core.Literal",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "INT"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 57,
-      "start": 56,
-      "end": 56,
-      "nonnull": true
-     }
-    },
-    {
-     "i": 26,
-     "k": "this",
-     "v": "1"
-    },
-    {
-     "i": 26,
-     "k": "is_string",
-     "v": false
-    },
-    {
-     "i": 20,
-     "k": "from_",
-     "c": "sqlglot.expressions.query.From",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 29,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Table",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 30,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 64,
-      "start": 63,
-      "end": 63
-     }
-    },
-    {
-     "i": 31,
-     "k": "this",
-     "v": "t"
-    },
-    {
-     "i": 31,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 20,
-     "k": "where",
-     "c": "sqlglot.expressions.query.Where",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 34,
-     "k": "this",
-     "c": "sqlglot.expressions.core.LT",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "BOOLEAN"
-      }
-     ]
-    },
-    {
-     "i": 35,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Column",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 36,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 72,
-      "start": 71,
-      "end": 71
-     }
-    },
-    {
-     "i": 37,
-     "k": "this",
-     "v": "n"
-    },
-    {
-     "i": 37,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 35,
-     "k": "expression",
-     "c": "sqlglot.expressions.core.Literal",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "INT"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 78,
-      "start": 75,
-      "end": 77,
-      "nonnull": true
-     }
-    },
-    {
-     "i": 40,
-     "k": "this",
-     "v": "100"
-    },
-    {
-     "i": 40,
-     "k": "is_string",
-     "v": false
-    },
-    {
-     "i": 12,
-     "k": "alias",
-     "c": "sqlglot.expressions.query.TableAlias",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 43,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 16,
-      "start": 15,
-      "end": 15
-     }
-    },
-    {
-     "i": 44,
-     "k": "this",
-     "v": "T"
-    },
-    {
-     "i": 44,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 43,
-     "k": "columns",
-     "a": true,
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 18,
-      "start": 17,
-      "end": 17
-     }
-    },
-    {
-     "i": 47,
-     "k": "this",
-     "v": "n"
-    },
-    {
-     "i": 47,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 11,
-     "k": "recursive",
-     "v": true
-    }
-   ]
-  },
-  {
-   "sql": "WITH RECURSIVE T(n, m) AS (VALUES (1, 2) UNION ALL SELECT n + 1, n + 2 FROM t) SELECT SUM(n) FROM t",
-   "generated": "WITH RECURSIVE T(n, m) AS (VALUES (1, 2) UNION ALL SELECT n + 1, n + 2 FROM t) SELECT SUM(n) FROM t",
-   "dump": [
-    {
-     "c": "sqlglot.expressions.query.Select",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 0,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.aggregate.Sum",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 89,
-      "start": 86,
-      "end": 88
-     }
-    },
-    {
-     "i": 1,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Column",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 2,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 91,
-      "start": 90,
-      "end": 90
-     }
-    },
-    {
-     "i": 3,
-     "k": "this",
-     "v": "n"
-    },
-    {
-     "i": 3,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 0,
-     "k": "from_",
-     "c": "sqlglot.expressions.query.From",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 6,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Table",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 7,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 99,
-      "start": 98,
-      "end": 98
-     }
-    },
-    {
-     "i": 8,
-     "k": "this",
-     "v": "t"
-    },
-    {
-     "i": 8,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 0,
-     "k": "with_",
-     "c": "sqlglot.expressions.query.With",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 11,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.query.CTE",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 12,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Union",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 13,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Values",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 14,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.query.Tuple",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 15,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Literal",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "INT"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 36,
-      "start": 35,
-      "end": 35,
-      "nonnull": true
-     }
-    },
-    {
-     "i": 16,
-     "k": "this",
-     "v": "1"
-    },
-    {
-     "i": 16,
-     "k": "is_string",
-     "v": false
-    },
-    {
-     "i": 15,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Literal",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "INT"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 39,
-      "start": 38,
-      "end": 38,
-      "nonnull": true
-     }
-    },
-    {
-     "i": 19,
-     "k": "this",
-     "v": "2"
-    },
-    {
-     "i": 19,
-     "k": "is_string",
-     "v": false
-    },
-    {
-     "i": 13,
-     "k": "distinct",
-     "v": false
-    },
-    {
-     "i": 13,
-     "k": "expression",
-     "c": "sqlglot.expressions.query.Select",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 23,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Add",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 24,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Column",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 25,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 59,
-      "start": 58,
-      "end": 58
-     }
-    },
-    {
-     "i": 26,
-     "k": "this",
-     "v": "n"
-    },
-    {
-     "i": 26,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 24,
-     "k": "expression",
-     "c": "sqlglot.expressions.core.Literal",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "INT"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 63,
-      "start": 62,
-      "end": 62,
-      "nonnull": true
-     }
-    },
-    {
-     "i": 29,
-     "k": "this",
-     "v": "1"
-    },
-    {
-     "i": 29,
-     "k": "is_string",
-     "v": false
-    },
-    {
-     "i": 23,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Add",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 32,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Column",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 33,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 66,
-      "start": 65,
-      "end": 65
-     }
-    },
-    {
-     "i": 34,
-     "k": "this",
-     "v": "n"
-    },
-    {
-     "i": 34,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 32,
-     "k": "expression",
-     "c": "sqlglot.expressions.core.Literal",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "INT"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 70,
-      "start": 69,
-      "end": 69,
-      "nonnull": true
-     }
-    },
-    {
-     "i": 37,
-     "k": "this",
-     "v": "2"
-    },
-    {
-     "i": 37,
-     "k": "is_string",
-     "v": false
-    },
-    {
-     "i": 23,
-     "k": "from_",
-     "c": "sqlglot.expressions.query.From",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 40,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Table",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 41,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 77,
-      "start": 76,
-      "end": 76
-     }
-    },
-    {
-     "i": 42,
-     "k": "this",
-     "v": "t"
-    },
-    {
-     "i": 42,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 12,
-     "k": "alias",
-     "c": "sqlglot.expressions.query.TableAlias",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ]
-    },
-    {
-     "i": 45,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 16,
-      "start": 15,
-      "end": 15
-     }
-    },
-    {
-     "i": 46,
-     "k": "this",
-     "v": "T"
-    },
-    {
-     "i": 46,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 45,
-     "k": "columns",
-     "a": true,
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 18,
-      "start": 17,
-      "end": 17
-     }
-    },
-    {
-     "i": 49,
-     "k": "this",
-     "v": "n"
-    },
-    {
-     "i": 49,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 45,
-     "k": "columns",
-     "a": true,
-     "c": "sqlglot.expressions.core.Identifier",
-     "t": [
-      {
-       "c": "sqlglot.expressions.datatypes.DataType"
-      },
-      {
-       "i": 0,
-       "k": "this",
-       "c": "DataType.Type",
-       "v": "UNKNOWN"
-      }
-     ],
-     "m": {
-      "line": 1,
-      "col": 21,
-      "start": 20,
-      "end": 20
-     }
-    },
-    {
-     "i": 52,
-     "k": "this",
-     "v": "m"
-    },
-    {
-     "i": 52,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 11,
-     "k": "recursive",
-     "v": true
     }
    ]
   },
@@ -107733,8 +107641,7 @@
       "line": 1,
       "col": 24,
       "start": 23,
-      "end": 23,
-      "is_table": false
+      "end": 23
      }
     },
     {
@@ -107865,8 +107772,7 @@
       "line": 1,
       "col": 34,
       "start": 33,
-      "end": 33,
-      "is_table": false
+      "end": 33
      }
     },
     {
@@ -145741,7 +145647,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -145900,6 +145807,11 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -145928,7 +145840,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -146104,6 +146017,11 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -146132,7 +146050,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -146290,6 +146209,11 @@
     {
      "i": 0,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
      "v": false
     }
    ]
@@ -148255,7 +148179,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -148430,6 +148355,11 @@
     {
      "i": 0,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
      "v": false
     }
    ]
@@ -148624,11 +148554,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -148659,7 +148584,7 @@
      ]
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -148676,7 +148601,7 @@
      ]
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -148698,17 +148623,17 @@
      }
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "this",
      "v": "x"
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -148724,7 +148649,7 @@
      ]
     },
     {
-     "i": 27,
+     "i": 26,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -148740,7 +148665,7 @@
      ]
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -148762,12 +148687,12 @@
      }
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "quoted",
      "v": false
     },
@@ -149027,11 +148952,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -149062,7 +148982,7 @@
      ]
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -149079,7 +148999,7 @@
      ]
     },
     {
-     "i": 27,
+     "i": 26,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -149101,17 +149021,17 @@
      }
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "this",
      "v": "x"
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -149127,7 +149047,7 @@
      ]
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -149143,7 +149063,7 @@
      ]
     },
     {
-     "i": 32,
+     "i": 31,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -149165,12 +149085,12 @@
      }
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "quoted",
      "v": false
     },
@@ -149430,11 +149350,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -149465,7 +149380,7 @@
      ]
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -149482,7 +149397,7 @@
      ]
     },
     {
-     "i": 27,
+     "i": 26,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -149504,17 +149419,17 @@
      }
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "this",
      "v": "x"
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -149530,7 +149445,7 @@
      ]
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -149546,7 +149461,7 @@
      ]
     },
     {
-     "i": 32,
+     "i": 31,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -149568,12 +149483,12 @@
      }
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "quoted",
      "v": false
     },
@@ -149931,11 +149846,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -149966,7 +149876,7 @@
      ]
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -149983,7 +149893,7 @@
      ]
     },
     {
-     "i": 35,
+     "i": 34,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -150005,17 +149915,17 @@
      }
     },
     {
-     "i": 36,
+     "i": 35,
      "k": "this",
      "v": "x"
     },
     {
-     "i": 36,
+     "i": 35,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -150031,7 +149941,7 @@
      ]
     },
     {
-     "i": 39,
+     "i": 38,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -150047,7 +149957,7 @@
      ]
     },
     {
-     "i": 40,
+     "i": 39,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -150069,12 +149979,12 @@
      }
     },
     {
-     "i": 41,
+     "i": 40,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 41,
+     "i": 40,
      "k": "quoted",
      "v": false
     },
@@ -150416,11 +150326,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -150451,7 +150356,7 @@
      ]
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -150468,7 +150373,7 @@
      ]
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -150490,17 +150395,17 @@
      }
     },
     {
-     "i": 35,
+     "i": 34,
      "k": "this",
      "v": "x"
     },
     {
-     "i": 35,
+     "i": 34,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -150516,7 +150421,7 @@
      ]
     },
     {
-     "i": 38,
+     "i": 37,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -150532,7 +150437,7 @@
      ]
     },
     {
-     "i": 39,
+     "i": 38,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -150554,12 +150459,12 @@
      }
     },
     {
-     "i": 40,
+     "i": 39,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 40,
+     "i": 39,
      "k": "quoted",
      "v": false
     },
@@ -152339,7 +152244,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -152434,6 +152340,11 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -152462,7 +152373,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -152589,6 +152501,431 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "DROP TABLE a, b",
+   "generated": "DROP TABLE a, b",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.ddl.Drop",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "exists",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "tables",
+     "a": true,
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 12,
+      "start": 11,
+      "end": 11
+     }
+    },
+    {
+     "i": 3,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 3,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "tables",
+     "a": true,
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 15,
+      "start": 14,
+      "end": 14
+     }
+    },
+    {
+     "i": 7,
+     "k": "this",
+     "v": "b"
+    },
+    {
+     "i": 7,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "kind",
+     "v": "TABLE"
+    },
+    {
+     "i": 0,
+     "k": "temporary",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "materialized",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "cascade",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "restrict",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "constraints",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "purge",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "concurrently",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "sync",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "DROP TABLE a.b, c.d",
+   "generated": "DROP TABLE a.b, c.d",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.ddl.Drop",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "exists",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "tables",
+     "a": true,
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 14,
+      "start": 13,
+      "end": 13
+     }
+    },
+    {
+     "i": 3,
+     "k": "this",
+     "v": "b"
+    },
+    {
+     "i": 3,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 2,
+     "k": "db",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 12,
+      "start": 11,
+      "end": 11
+     }
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 6,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "tables",
+     "a": true,
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 9,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 19,
+      "start": 18,
+      "end": 18
+     }
+    },
+    {
+     "i": 10,
+     "k": "this",
+     "v": "d"
+    },
+    {
+     "i": 10,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 9,
+     "k": "db",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 17,
+      "start": 16,
+      "end": 16
+     }
+    },
+    {
+     "i": 13,
+     "k": "this",
+     "v": "c"
+    },
+    {
+     "i": 13,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "kind",
+     "v": "TABLE"
+    },
+    {
+     "i": 0,
+     "k": "temporary",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "materialized",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "cascade",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "restrict",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "constraints",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "purge",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "concurrently",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "sync",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -152617,7 +152954,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -152712,6 +153050,189 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "DROP TABLE IF EXISTS a, b CASCADE",
+   "generated": "DROP TABLE IF EXISTS a, b CASCADE",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.ddl.Drop",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "exists",
+     "v": true
+    },
+    {
+     "i": 0,
+     "k": "tables",
+     "a": true,
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 22,
+      "start": 21,
+      "end": 21
+     }
+    },
+    {
+     "i": 3,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 3,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "tables",
+     "a": true,
+     "c": "sqlglot.expressions.query.Table",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 25,
+      "start": 24,
+      "end": 24
+     }
+    },
+    {
+     "i": 7,
+     "k": "this",
+     "v": "b"
+    },
+    {
+     "i": 7,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "kind",
+     "v": "TABLE"
+    },
+    {
+     "i": 0,
+     "k": "temporary",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "materialized",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "cascade",
+     "v": true
+    },
+    {
+     "i": 0,
+     "k": "restrict",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "constraints",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "purge",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "concurrently",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "sync",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -152740,7 +153261,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -152867,6 +153389,11 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -152895,7 +153422,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -152990,6 +153518,11 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -153018,7 +153551,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -153113,6 +153647,11 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -153141,7 +153680,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -153236,6 +153776,11 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -153264,7 +153809,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -153359,6 +153905,11 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -153387,7 +153938,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -153514,6 +154066,11 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -153542,7 +154099,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -153637,6 +154195,11 @@
      "i": 0,
      "k": "iceberg",
      "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
+     "v": false
     }
    ]
   },
@@ -153665,7 +154228,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -153791,6 +154355,11 @@
     {
      "i": 0,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
      "v": false
     }
    ]
@@ -154043,11 +154612,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -154078,7 +154642,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -154101,7 +154665,7 @@
      }
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -154117,7 +154681,7 @@
      ]
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -154133,7 +154697,7 @@
      ]
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -154155,12 +154719,12 @@
      }
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "quoted",
      "v": false
     },
@@ -154269,11 +154833,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -154304,7 +154863,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "this",
      "c": "sqlglot.expressions.query.Select",
      "t": [
@@ -154320,7 +154879,7 @@
      ]
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -154343,7 +154902,7 @@
      }
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -154359,7 +154918,7 @@
      ]
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -154375,7 +154934,7 @@
      ]
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -154397,12 +154956,12 @@
      }
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "quoted",
      "v": false
     },
@@ -154511,11 +155070,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -154546,7 +155100,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -154569,7 +155123,7 @@
      }
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -154585,7 +155139,7 @@
      ]
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -154601,7 +155155,7 @@
      ]
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -154623,17 +155177,17 @@
      }
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "with_",
      "c": "sqlglot.expressions.query.With",
      "t": [
@@ -154649,7 +155203,7 @@
      ]
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.CTE",
@@ -154666,7 +155220,7 @@
      ]
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "this",
      "c": "sqlglot.expressions.query.Select",
      "t": [
@@ -154682,7 +155236,7 @@
      ]
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -154706,17 +155260,17 @@
      }
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "alias",
      "c": "sqlglot.expressions.query.TableAlias",
      "t": [
@@ -154732,7 +155286,7 @@
      ]
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -154754,12 +155308,12 @@
      }
     },
     {
-     "i": 27,
+     "i": 26,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 27,
+     "i": 26,
      "k": "quoted",
      "v": false
     },
@@ -154900,11 +155454,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -154935,7 +155484,7 @@
      ]
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -154958,7 +155507,7 @@
      }
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -154974,7 +155523,7 @@
      ]
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -154990,7 +155539,7 @@
      ]
     },
     {
-     "i": 19,
+     "i": 18,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -155012,12 +155561,12 @@
      }
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "quoted",
      "v": false
     },
@@ -155126,11 +155675,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -155161,7 +155705,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple",
@@ -155178,7 +155722,7 @@
      ]
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -155202,17 +155746,17 @@
      }
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -155236,17 +155780,17 @@
      }
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "this",
      "v": "a"
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "is_string",
      "v": true
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -155270,12 +155814,12 @@
      }
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "this",
      "v": "2.0"
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "is_string",
      "v": false
     },
@@ -155384,11 +155928,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -155419,7 +155958,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple",
@@ -155436,7 +155975,7 @@
      ]
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -155460,17 +155999,17 @@
      }
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -155494,17 +156033,17 @@
      }
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "this",
      "v": "a"
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "is_string",
      "v": true
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -155528,17 +156067,17 @@
      }
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "this",
      "v": "2.0"
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple",
@@ -155555,7 +156094,7 @@
      ]
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -155579,17 +156118,17 @@
      }
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -155613,17 +156152,17 @@
      }
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "this",
      "v": "a"
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "is_string",
      "v": true
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -155647,17 +156186,17 @@
      }
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "this",
      "v": "3.0"
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple",
@@ -155674,7 +156213,7 @@
      ]
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Anonymous",
@@ -155697,12 +156236,12 @@
      }
     },
     {
-     "i": 35,
+     "i": 34,
      "k": "this",
      "v": "X"
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Bracket",
@@ -155719,7 +156258,7 @@
      ]
     },
     {
-     "i": 37,
+     "i": 36,
      "k": "this",
      "c": "sqlglot.expressions.core.Column",
      "t": [
@@ -155735,7 +156274,7 @@
      ]
     },
     {
-     "i": 38,
+     "i": 37,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -155757,17 +156296,17 @@
      }
     },
     {
-     "i": 39,
+     "i": 38,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 39,
+     "i": 38,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 37,
+     "i": 36,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -155791,17 +156330,17 @@
      }
     },
     {
-     "i": 42,
+     "i": 41,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 42,
+     "i": 41,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -155818,7 +156357,7 @@
      ]
     },
     {
-     "i": 45,
+     "i": 44,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -155840,17 +156379,17 @@
      }
     },
     {
-     "i": 46,
+     "i": 45,
      "k": "this",
      "v": "x"
     },
     {
-     "i": 46,
+     "i": 45,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 45,
+     "i": 44,
      "k": "table",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -155872,12 +156411,12 @@
      }
     },
     {
-     "i": 49,
+     "i": 48,
      "k": "this",
      "v": "z"
     },
     {
-     "i": 49,
+     "i": 48,
      "k": "quoted",
      "v": false
     },
@@ -156101,11 +156640,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -156136,7 +156670,7 @@
      ]
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -156153,7 +156687,7 @@
      ]
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -156175,17 +156709,17 @@
      }
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "this",
      "v": "a"
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -156202,7 +156736,7 @@
      ]
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -156224,17 +156758,17 @@
      }
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "this",
      "v": "b"
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -156251,7 +156785,7 @@
      ]
     },
     {
-     "i": 32,
+     "i": 31,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -156273,17 +156807,17 @@
      }
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "this",
      "v": "c"
     },
     {
-     "i": 33,
+     "i": 32,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -156299,7 +156833,7 @@
      ]
     },
     {
-     "i": 36,
+     "i": 35,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -156315,7 +156849,7 @@
      ]
     },
     {
-     "i": 37,
+     "i": 36,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -156337,12 +156871,12 @@
      }
     },
     {
-     "i": 38,
+     "i": 37,
      "k": "this",
      "v": "x"
     },
     {
-     "i": 38,
+     "i": 37,
      "k": "quoted",
      "v": false
     },
@@ -156451,11 +156985,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -156486,7 +157015,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "this",
      "c": "sqlglot.expressions.query.Subquery",
      "t": [
@@ -156502,7 +157031,7 @@
      ]
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "this",
      "c": "sqlglot.expressions.query.Select",
      "t": [
@@ -156518,7 +157047,7 @@
      ]
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -156542,22 +157071,22 @@
      }
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "distinct",
      "v": true
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expression",
      "c": "sqlglot.expressions.query.Subquery",
      "t": [
@@ -156573,7 +157102,7 @@
      ]
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "this",
      "c": "sqlglot.expressions.query.Select",
      "t": [
@@ -156589,7 +157118,7 @@
      ]
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -156613,12 +157142,12 @@
      }
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "this",
      "v": "2"
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "is_string",
      "v": false
     },
@@ -156727,11 +157256,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -156762,7 +157286,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "this",
      "c": "sqlglot.expressions.query.Select",
      "t": [
@@ -156778,7 +157302,7 @@
      ]
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -156801,7 +157325,7 @@
      }
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -156817,7 +157341,7 @@
      ]
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -156833,7 +157357,7 @@
      ]
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -156855,17 +157379,17 @@
      }
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "this",
      "v": "test"
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "with_",
      "c": "sqlglot.expressions.query.With",
      "t": [
@@ -156881,7 +157405,7 @@
      ]
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.CTE",
@@ -156898,7 +157422,7 @@
      ]
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "this",
      "c": "sqlglot.expressions.query.Select",
      "t": [
@@ -156914,7 +157438,7 @@
      ]
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -156937,7 +157461,7 @@
      }
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -156953,7 +157477,7 @@
      ]
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -156969,7 +157493,7 @@
      ]
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -156991,17 +157515,17 @@
      }
     },
     {
-     "i": 27,
+     "i": 26,
      "k": "this",
      "v": "source_table"
     },
     {
-     "i": 27,
+     "i": 26,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "alias",
      "c": "sqlglot.expressions.query.TableAlias",
      "t": [
@@ -157017,7 +157541,7 @@
      ]
     },
     {
-     "i": 30,
+     "i": 29,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -157039,12 +157563,12 @@
      }
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "this",
      "v": "test"
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "quoted",
      "v": false
     },
@@ -157268,11 +157792,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -157303,7 +157822,7 @@
      ]
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple",
@@ -157320,7 +157839,7 @@
      ]
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -157344,17 +157863,17 @@
      }
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "this",
      "v": "fiara"
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "is_string",
      "v": true
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -157378,17 +157897,17 @@
      }
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "this",
      "v": "Fiara"
     },
     {
-     "i": 28,
+     "i": 27,
      "k": "is_string",
      "v": true
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -157412,12 +157931,12 @@
      }
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "this",
      "v": "Ironhide"
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "is_string",
      "v": true
     },
@@ -157438,7 +157957,7 @@
      ]
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -157455,7 +157974,7 @@
      ]
     },
     {
-     "i": 35,
+     "i": 34,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -157477,17 +157996,17 @@
      }
     },
     {
-     "i": 36,
+     "i": 35,
      "k": "this",
      "v": "id"
     },
     {
-     "i": 36,
+     "i": 35,
      "k": "quoted",
      "v": true
     },
     {
-     "i": 35,
+     "i": 34,
      "k": "table",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -157509,17 +158028,17 @@
      }
     },
     {
-     "i": 39,
+     "i": 38,
      "k": "this",
      "v": "tests_user"
     },
     {
-     "i": 39,
+     "i": 38,
      "k": "quoted",
      "v": true
     },
     {
-     "i": 34,
+     "i": 33,
      "k": "into",
      "v": false
     },
@@ -157716,11 +158235,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -157751,7 +158265,7 @@
      ]
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -157771,7 +158285,7 @@
      ]
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -157793,17 +158307,17 @@
      }
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "this",
      "v": "c1"
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -157823,7 +158337,7 @@
      ]
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -157845,17 +158359,17 @@
      }
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "this",
      "v": "c2"
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -157871,7 +158385,7 @@
      ]
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -157887,7 +158401,7 @@
      ]
     },
     {
-     "i": 30,
+     "i": 29,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -157909,12 +158423,12 @@
      }
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "this",
      "v": "t"
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "quoted",
      "v": false
     },
@@ -158111,11 +158625,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -158146,7 +158655,7 @@
      ]
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -158166,7 +158675,7 @@
      ]
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -158188,17 +158697,17 @@
      }
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "this",
      "v": "c1"
     },
     {
-     "i": 22,
+     "i": 21,
      "k": "quoted",
      "v": true
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column",
@@ -158218,7 +158727,7 @@
      ]
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -158240,17 +158749,17 @@
      }
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "this",
      "v": "c2"
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "quoted",
      "v": true
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -158266,7 +158775,7 @@
      ]
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -158282,7 +158791,7 @@
      ]
     },
     {
-     "i": 30,
+     "i": 29,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -158304,12 +158813,12 @@
      }
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "this",
      "v": "t"
     },
     {
-     "i": 31,
+     "i": 30,
      "k": "quoted",
      "v": false
     },
@@ -158418,11 +158927,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -158453,7 +158957,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -158476,7 +158980,7 @@
      }
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -158492,7 +158996,7 @@
      ]
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -158508,7 +159012,7 @@
      ]
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -158530,12 +159034,12 @@
      }
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "quoted",
      "v": false
     },
@@ -158676,11 +159180,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -158711,7 +159210,7 @@
      ]
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -158734,7 +159233,7 @@
      }
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -158750,7 +159249,7 @@
      ]
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -158766,7 +159265,7 @@
      ]
     },
     {
-     "i": 19,
+     "i": 18,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -158788,12 +159287,12 @@
      }
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "this",
      "v": "y"
     },
     {
-     "i": 20,
+     "i": 19,
      "k": "quoted",
      "v": false
     },
@@ -158903,11 +159402,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -158938,7 +159432,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -158962,12 +159456,12 @@
      }
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "is_string",
      "v": false
     },
@@ -159077,11 +159571,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -159112,7 +159601,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -159136,12 +159625,12 @@
      }
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "is_string",
      "v": false
     },
@@ -159432,11 +159921,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -159467,7 +159951,7 @@
      ]
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -159491,12 +159975,12 @@
      }
     },
     {
-     "i": 30,
+     "i": 29,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 30,
+     "i": 29,
      "k": "is_string",
      "v": false
     },
@@ -164715,11 +165199,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -164750,7 +165229,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -164773,7 +165252,7 @@
      }
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -164789,7 +165268,7 @@
      ]
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -164805,7 +165284,7 @@
      ]
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -164827,12 +165306,12 @@
      }
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "this",
      "v": "a"
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "quoted",
      "v": false
     },
@@ -164868,7 +165347,7 @@
      ]
     },
     {
-     "i": 23,
+     "i": 22,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.CTE",
@@ -164885,7 +165364,7 @@
      ]
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "this",
      "c": "sqlglot.expressions.query.Select",
      "t": [
@@ -164901,7 +165380,7 @@
      ]
     },
     {
-     "i": 25,
+     "i": 24,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -164925,17 +165404,17 @@
      }
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 26,
+     "i": 25,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 24,
+     "i": 23,
      "k": "alias",
      "c": "sqlglot.expressions.query.TableAlias",
      "t": [
@@ -164951,7 +165430,7 @@
      ]
     },
     {
-     "i": 29,
+     "i": 28,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -164973,12 +165452,12 @@
      }
     },
     {
-     "i": 30,
+     "i": 29,
      "k": "this",
      "v": "a"
     },
     {
-     "i": 30,
+     "i": 29,
      "k": "quoted",
      "v": false
     }
@@ -167204,8 +167683,7 @@
       "line": 1,
       "col": 24,
       "start": 21,
-      "end": 23,
-      "is_table": false
+      "end": 23
      }
     },
     {
@@ -167334,8 +167812,7 @@
       "line": 1,
       "col": 38,
       "start": 35,
-      "end": 37,
-      "is_table": false
+      "end": 37
      }
     },
     {
@@ -172124,11 +172601,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -172159,7 +172631,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Star",
@@ -172182,7 +172654,7 @@
      }
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "from_",
      "c": "sqlglot.expressions.query.From",
      "t": [
@@ -172198,7 +172670,7 @@
      ]
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "c": "sqlglot.expressions.query.Table",
      "t": [
@@ -172217,7 +172689,7 @@
      ]
     },
     {
-     "i": 16,
+     "i": 15,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -172239,12 +172711,12 @@
      }
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "this",
      "v": "bar"
     },
     {
-     "i": 17,
+     "i": 16,
      "k": "quoted",
      "v": false
     },
@@ -174509,7 +174981,8 @@
     },
     {
      "i": 7,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.core.Column",
      "t": [
       {
@@ -174603,6 +175076,11 @@
     {
      "i": 7,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 7,
+     "k": "force",
      "v": false
     },
     {
@@ -174732,7 +175210,8 @@
     },
     {
      "i": 7,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.core.Column",
      "t": [
       {
@@ -174826,6 +175305,11 @@
     {
      "i": 7,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 7,
+     "k": "force",
      "v": false
     },
     {
@@ -174955,7 +175439,8 @@
     },
     {
      "i": 7,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.core.Column",
      "t": [
       {
@@ -175049,6 +175534,11 @@
     {
      "i": 7,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 7,
+     "k": "force",
      "v": false
     },
     {
@@ -176252,7 +176742,8 @@
     },
     {
      "i": 10,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.core.Column",
      "t": [
       {
@@ -176349,6 +176840,11 @@
      "v": false
     },
     {
+     "i": 10,
+     "k": "force",
+     "v": false
+    },
+    {
      "i": 0,
      "k": "actions",
      "a": true,
@@ -176366,13 +176862,14 @@
      ]
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "exists",
      "v": true
     },
     {
-     "i": 26,
-     "k": "this",
+     "i": 27,
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.core.Column",
      "t": [
       {
@@ -176387,7 +176884,7 @@
      ]
     },
     {
-     "i": 28,
+     "i": 29,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "t": [
@@ -176409,63 +176906,68 @@
      }
     },
     {
-     "i": 29,
+     "i": 30,
      "k": "this",
      "v": "B"
     },
     {
-     "i": 29,
+     "i": 30,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "kind",
      "v": "COLUMN"
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "temporary",
      "v": false
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "materialized",
      "v": false
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "cascade",
      "v": false
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "restrict",
      "v": false
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "constraints",
      "v": false
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "purge",
      "v": false
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "concurrently",
      "v": false
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "sync",
      "v": false
     },
     {
-     "i": 26,
+     "i": 27,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 27,
+     "k": "force",
      "v": false
     },
     {
@@ -180484,8 +180986,7 @@
       "line": 1,
       "col": 12,
       "start": 11,
-      "end": 11,
-      "is_table": false
+      "end": 11
      }
     },
     {
@@ -186624,7 +187125,7 @@
   },
   {
    "sql": "SELECT LEFT.FOO FROM BLA AS LEFT",
-   "generated": "SELECT LEFT.foo FROM BLA AS LEFT",
+   "generated": "SELECT LEFT.FOO FROM BLA AS LEFT",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select",
@@ -186676,14 +187177,13 @@
       "line": 1,
       "col": 15,
       "start": 12,
-      "end": 14,
-      "is_table": false
+      "end": 14
      }
     },
     {
      "i": 2,
      "k": "this",
-     "v": "foo"
+     "v": "FOO"
     },
     {
      "i": 2,
@@ -186838,7 +187338,7 @@
   },
   {
    "sql": "SELECT RIGHT.FOO FROM BLA AS RIGHT",
-   "generated": "SELECT RIGHT.foo FROM BLA AS RIGHT",
+   "generated": "SELECT RIGHT.FOO FROM BLA AS RIGHT",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select",
@@ -186890,14 +187390,13 @@
       "line": 1,
       "col": 16,
       "start": 13,
-      "end": 15,
-      "is_table": false
+      "end": 15
      }
     },
     {
      "i": 2,
      "k": "this",
-     "v": "foo"
+     "v": "FOO"
     },
     {
      "i": 2,
@@ -187933,7 +188432,7 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "UNKNOWN"
+       "v": "BOOLEAN"
       }
      ]
     },
@@ -193173,11 +193672,6 @@
     },
     {
      "i": 0,
-     "k": "where",
-     "v": false
-    },
-    {
-     "i": 0,
      "k": "partition",
      "v": false
     },
@@ -193208,7 +193702,7 @@
      ]
     },
     {
-     "i": 13,
+     "i": 12,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple",
@@ -193225,7 +193719,7 @@
      ]
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -193249,17 +193743,17 @@
      }
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "this",
      "v": "1"
     },
     {
-     "i": 15,
+     "i": 14,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -193283,17 +193777,17 @@
      }
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "this",
      "v": "2"
     },
     {
-     "i": 18,
+     "i": 17,
      "k": "is_string",
      "v": false
     },
     {
-     "i": 14,
+     "i": 13,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Literal",
@@ -193317,12 +193811,12 @@
      }
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "this",
      "v": "3"
     },
     {
-     "i": 21,
+     "i": 20,
      "k": "is_string",
      "v": false
     },
@@ -198272,8 +198766,7 @@
       "line": 1,
       "col": 19,
       "start": 18,
-      "end": 18,
-      "is_table": false
+      "end": 18
      }
     },
     {
@@ -206333,7 +206826,7 @@
   },
   {
    "sql": "SELECT test.Unknown FROM test",
-   "generated": "SELECT test.unknown FROM test",
+   "generated": "SELECT test.Unknown FROM test",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select",
@@ -206385,14 +206878,13 @@
       "line": 1,
       "col": 19,
       "start": 12,
-      "end": 18,
-      "is_table": false
+      "end": 18
      }
     },
     {
      "i": 2,
      "k": "this",
-     "v": "unknown"
+     "v": "Unknown"
     },
     {
      "i": 2,
@@ -210000,7 +210492,7 @@
        "i": 0,
        "k": "this",
        "c": "DataType.Type",
-       "v": "UNKNOWN"
+       "v": "BOOLEAN"
       }
      ]
     },
@@ -210644,7 +211136,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -210738,6 +211231,11 @@
     {
      "i": 0,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
      "v": false
     }
    ]
@@ -210968,7 +211466,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -211062,6 +211561,11 @@
     {
      "i": 0,
      "k": "iceberg",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "force",
      "v": false
     }
    ]
@@ -213357,7 +213861,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -213425,7 +213930,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {
@@ -213493,7 +213999,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table",
      "t": [
       {

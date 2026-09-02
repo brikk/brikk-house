@@ -1,0 +1,841 @@
+{
+ "source_project": "brikk behavior-matrix probe (tools/probe_behavior_matrix.py)",
+ "extracted": "20260830T073810Z",
+ "engines": {
+  "starrocks": "4.1.4",
+  "doris": "4.1.3"
+ },
+ "coverage": {
+  "status": "partial",
+  "catalogs": {
+   "starrocks": "4.1.4 SHOW FULL BUILTIN FUNCTIONS: 820 functions / 6242 overloads",
+   "doris": "4.1.3 live all-in-one oracle; repository Doris catalog pin"
+  },
+  "scope": "92 behavior vectors yielding 82 named concepts; partial against the 820-function StarRocks catalog; unlisted functions are unprobed"
+ },
+ "pairs": [
+  {
+   "starrocks": "abs",
+   "doris": "abs",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#abs"
+  },
+  {
+   "starrocks": "abs_min",
+   "doris": "abs_min",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "boundary"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#abs_min"
+  },
+  {
+   "starrocks": "any_value",
+   "doris": "any_value",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "agg"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#any_value"
+  },
+  {
+   "starrocks": "array_avg",
+   "doris": "array_avg",
+   "verdict": "divergent",
+   "hazard": "1 diverging / 0 identical vectors; e.g. array_avg([1, 2, 3]) -> starrocks=2.0 doris=2",
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#array_avg"
+  },
+  {
+   "starrocks": "array_contains",
+   "doris": "array_contains",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "array",
+    "null"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#array_contains"
+  },
+  {
+   "starrocks": "array_distinct",
+   "doris": "array_distinct",
+   "verdict": "unclear",
+   "hazard": null,
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#array_distinct"
+  },
+  {
+   "starrocks": "array_empty",
+   "doris": "array_empty",
+   "verdict": "conditionally-equivalent",
+   "hazard": "0 diverging / 0 identical vectors; e.g. array_length([]) -> starrocks=0 doris=<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = Can not found function 'array_length'>",
+   "areas": [
+    "boundary"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#array_empty"
+  },
+  {
+   "starrocks": "array_join",
+   "doris": "array_join",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#array_join"
+  },
+  {
+   "starrocks": "array_length",
+   "doris": "array_length",
+   "verdict": "conditionally-equivalent",
+   "hazard": "0 diverging / 0 identical vectors; e.g. array_length([10, 20, 30]) -> starrocks=3 doris=<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = Can not found function 'array_length'>",
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#array_length"
+  },
+  {
+   "starrocks": "array_max",
+   "doris": "array_max",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#array_max"
+  },
+  {
+   "starrocks": "array_position",
+   "doris": "array_position",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#array_position"
+  },
+  {
+   "starrocks": "array_slice",
+   "doris": "array_slice",
+   "verdict": "divergent",
+   "hazard": "1 diverging / 0 identical vectors; e.g. array_slice([1, 2, 3, 4, 5], 2, 2) -> starrocks=[2,3] doris=[2, 3]",
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#array_slice"
+  },
+  {
+   "starrocks": "array_sort",
+   "doris": "array_sort",
+   "verdict": "unclear",
+   "hazard": null,
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#array_sort"
+  },
+  {
+   "starrocks": "arrays_overlap",
+   "doris": "arrays_overlap",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#arrays_overlap"
+  },
+  {
+   "starrocks": "ascii",
+   "doris": "ascii",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#ascii"
+  },
+  {
+   "starrocks": "avg",
+   "doris": "avg",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "agg"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#avg"
+  },
+  {
+   "starrocks": "bin",
+   "doris": "bin",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#bin"
+  },
+  {
+   "starrocks": "cast_overflow",
+   "doris": "cast_overflow",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "boundary"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#cast_overflow"
+  },
+  {
+   "starrocks": "ceil",
+   "doris": "ceil",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#ceil"
+  },
+  {
+   "starrocks": "char_length",
+   "doris": "char_length",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#char_length"
+  },
+  {
+   "starrocks": "coalesce",
+   "doris": "coalesce",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#coalesce"
+  },
+  {
+   "starrocks": "concat",
+   "doris": "concat",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#concat"
+  },
+  {
+   "starrocks": "concat_empty",
+   "doris": "concat_empty",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#concat_empty"
+  },
+  {
+   "starrocks": "concat_num",
+   "doris": "concat_num",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "boundary"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#concat_num"
+  },
+  {
+   "starrocks": "concat_ws",
+   "doris": "concat_ws",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#concat_ws"
+  },
+  {
+   "starrocks": "count_distinct",
+   "doris": "count_distinct",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "agg"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#count_distinct"
+  },
+  {
+   "starrocks": "date_add",
+   "doris": "date_add",
+   "verdict": "divergent",
+   "hazard": "1 diverging / 0 identical vectors; e.g. date_add('2024-01-31', INTERVAL 1 MONTH) -> starrocks=2024-02-29 00:00:00 doris=2024-02-29",
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#date_add"
+  },
+  {
+   "starrocks": "date_format",
+   "doris": "date_format",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#date_format"
+  },
+  {
+   "starrocks": "date_sub",
+   "doris": "date_sub",
+   "verdict": "divergent",
+   "hazard": "1 diverging / 0 identical vectors; e.g. date_sub('2024-03-31', INTERVAL 1 MONTH) -> starrocks=2024-02-29 00:00:00 doris=2024-02-29",
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#date_sub"
+  },
+  {
+   "starrocks": "date_trunc",
+   "doris": "date_trunc",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#date_trunc"
+  },
+  {
+   "starrocks": "datediff",
+   "doris": "datediff",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#datediff"
+  },
+  {
+   "starrocks": "day_of_week",
+   "doris": "day_of_week",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#day_of_week"
+  },
+  {
+   "starrocks": "day_of_year",
+   "doris": "day_of_year",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#day_of_year"
+  },
+  {
+   "starrocks": "divide_zero_float",
+   "doris": "divide_zero_float",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#divide_zero_float"
+  },
+  {
+   "starrocks": "divide_zero_int",
+   "doris": "divide_zero_int",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#divide_zero_int"
+  },
+  {
+   "starrocks": "element_at",
+   "doris": "element_at",
+   "verdict": "conditionally-equivalent",
+   "hazard": "1 diverging / 1 identical vectors; e.g. element_at([10, 20, 30], -1) -> starrocks=NULL doris=30",
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#element_at"
+  },
+  {
+   "starrocks": "floor",
+   "doris": "floor",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#floor"
+  },
+  {
+   "starrocks": "from_unixtime",
+   "doris": "from_unixtime",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#from_unixtime"
+  },
+  {
+   "starrocks": "get_json_string",
+   "doris": "get_json_string",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#get_json_string"
+  },
+  {
+   "starrocks": "greatest",
+   "doris": "greatest",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#greatest"
+  },
+  {
+   "starrocks": "group_concat",
+   "doris": "group_concat",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "agg"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#group_concat"
+  },
+  {
+   "starrocks": "hour",
+   "doris": "hour",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#hour"
+  },
+  {
+   "starrocks": "if",
+   "doris": "if",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#if"
+  },
+  {
+   "starrocks": "ifnull",
+   "doris": "ifnull",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#ifnull"
+  },
+  {
+   "starrocks": "instr",
+   "doris": "instr",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#instr"
+  },
+  {
+   "starrocks": "json_extract",
+   "doris": "json_extract",
+   "verdict": "conditionally-equivalent",
+   "hazard": "0 diverging / 0 identical vectors; e.g. json_extract('{\"a\": 1}', '$.a') -> starrocks=<ERR:ERROR 1064 (HY000) at line 1: Getting analyzing error from line 1, column 7 to line 1, column 37. Detail message: No matching function with signature: json_extract(varchar, varchar).> doris=1",
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#json_extract"
+  },
+  {
+   "starrocks": "json_length",
+   "doris": "json_length",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "array"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#json_length"
+  },
+  {
+   "starrocks": "last_day",
+   "doris": "last_day",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#last_day"
+  },
+  {
+   "starrocks": "least",
+   "doris": "least",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#least"
+  },
+  {
+   "starrocks": "left",
+   "doris": "left",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#left"
+  },
+  {
+   "starrocks": "length",
+   "doris": "length",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null",
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#length"
+  },
+  {
+   "starrocks": "locate",
+   "doris": "locate",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#locate"
+  },
+  {
+   "starrocks": "lower",
+   "doris": "lower",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#lower"
+  },
+  {
+   "starrocks": "lpad",
+   "doris": "lpad",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#lpad"
+  },
+  {
+   "starrocks": "ltrim",
+   "doris": "ltrim",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#ltrim"
+  },
+  {
+   "starrocks": "min",
+   "doris": "min",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "agg"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#min"
+  },
+  {
+   "starrocks": "mod",
+   "doris": "mod",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#mod"
+  },
+  {
+   "starrocks": "mod_zero",
+   "doris": "mod_zero",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#mod_zero"
+  },
+  {
+   "starrocks": "months_add",
+   "doris": "months_add",
+   "verdict": "divergent",
+   "hazard": "1 diverging / 0 identical vectors; e.g. months_add('2024-01-31', 1) -> starrocks=2024-02-29 00:00:00 doris=2024-02-29",
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#months_add"
+  },
+  {
+   "starrocks": "nullif",
+   "doris": "nullif",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#nullif"
+  },
+  {
+   "starrocks": "pmod",
+   "doris": "pmod",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#pmod"
+  },
+  {
+   "starrocks": "pow",
+   "doris": "pow",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#pow"
+  },
+  {
+   "starrocks": "power_big",
+   "doris": "power_big",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "boundary"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#power_big"
+  },
+  {
+   "starrocks": "regexp_extract",
+   "doris": "regexp_extract",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "regex"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#regexp_extract"
+  },
+  {
+   "starrocks": "regexp_replace",
+   "doris": "regexp_replace",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "regex"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#regexp_replace"
+  },
+  {
+   "starrocks": "repeat",
+   "doris": "repeat",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#repeat"
+  },
+  {
+   "starrocks": "replace",
+   "doris": "replace",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#replace"
+  },
+  {
+   "starrocks": "reverse",
+   "doris": "reverse",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#reverse"
+  },
+  {
+   "starrocks": "right",
+   "doris": "right",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#right"
+  },
+  {
+   "starrocks": "round",
+   "doris": "round",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#round"
+  },
+  {
+   "starrocks": "rpad",
+   "doris": "rpad",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#rpad"
+  },
+  {
+   "starrocks": "split_part",
+   "doris": "split_part",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#split_part"
+  },
+  {
+   "starrocks": "stddev",
+   "doris": "stddev",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "agg"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#stddev"
+  },
+  {
+   "starrocks": "substring",
+   "doris": "substring",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#substring"
+  },
+  {
+   "starrocks": "substring_oob",
+   "doris": "substring_oob",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "boundary"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#substring_oob"
+  },
+  {
+   "starrocks": "sum",
+   "doris": "sum",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "agg"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#sum"
+  },
+  {
+   "starrocks": "to_date",
+   "doris": "to_date",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#to_date"
+  },
+  {
+   "starrocks": "trim",
+   "doris": "trim",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#trim"
+  },
+  {
+   "starrocks": "truncate",
+   "doris": "truncate",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "rounding"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#truncate"
+  },
+  {
+   "starrocks": "unix_timestamp",
+   "doris": "unix_timestamp",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "datetime"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#unix_timestamp"
+  },
+  {
+   "starrocks": "upper",
+   "doris": "upper",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "null",
+    "string"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#upper"
+  },
+  {
+   "starrocks": "variance",
+   "doris": "variance",
+   "verdict": "identical",
+   "hazard": null,
+   "areas": [
+    "agg"
+   ],
+   "provenance": "probe-runs/20260830T073810Z-starrocks-doris.tsv#variance"
+  }
+ ]
+}

@@ -1,0 +1,21 @@
+format_v	format('{0}-{1}', 'a', 'b')	printf('%s-%s', 'a', 'b')	SAME	"a-b"[U+0061 U+002D U+0062]	"a-b"[U+0061 U+002D U+0062]
+printf_v	printf('%s=%d', 'x', 5)	printf('%s=%d', 'x', 5)	SAME	"x=5"[U+0078 U+003D U+0035]	"x=5"[U+0078 U+003D U+0035]
+soundex_v	soundex('Robert')	soundex('Robert')	DIFF	"R163"[U+0052 U+0031 U+0036 U+0033]	<ERR:Catalog Error: Scalar Function with name soundex does not exist!>
+xor_bool	xor(1, 0)	xor(true, false)	DIFF	1	<ERR:Binder Error: No function matches the given name and argument types 'xor(BOOLEAN>
+xor_ints	xor(5, 3)	xor(5, 3)	DIFF	0	6
+bit_and_v	bitAnd(12, 10)	12 & 10	SAME	8	8
+bit_count_v	bitCount(255)	bit_count(255)	SAME	8	8
+greatest_null	greatest(1, NULL, 3)	greatest(1, NULL, 3)	SAME	3	3
+least_null	least(1, NULL, 3)	least(1, NULL, 3)	SAME	1	1
+greatest_mixed	greatest(1, 2.5)	greatest(1, 2.5)	SAME	2.5	2.5
+nullif_eq	nullIf(5, 5)	nullif(5, 5)	SAME	NULL	NULL
+nullif_ne	nullIf(5, 3)	nullif(5, 3)	SAME	5	5
+truncate_2	truncate(2.678, 2)	trunc(2.678, 2)	SAME	2.67	2.67
+to_unixtime_v	toUnixTimestamp(toDateTime('2024-01-01 00:00:00','UTC'))	epoch(TIMESTAMP '2024-01-01 00:00:00')	SAME	1704067200	1704067200.0
+repeat_neg	repeat('a', -1)	repeat('a', -1)	SAME	""[]	""[]
+reverse_num	reverse('12345')	reverse('12345')	SAME	"54321"[U+0035 U+0034 U+0033 U+0032 U+0031]	"54321"[U+0035 U+0034 U+0033 U+0032 U+0031]
+pos_empty	position('abc', '')	strpos('abc', '')	SAME	1	1
+substr_overrun	substring('abc', 2, 100)	substring('abc', 2, 100)	SAME	"bc"[U+0062 U+0063]	"bc"[U+0062 U+0063]
+substr_neglen	substring('abcdef', 2, -1)	substring('abcdef', 2, -1)	DIFF	"bcde"[U+0062 U+0063 U+0064 U+0065]	"a"[U+0061]
+concat_nums	concat(toString(1), toString(2))	concat(1, 2)	SAME	"12"[U+0031 U+0032]	"12"[U+0031 U+0032]
+concat_num_direct	concat(1, 2)	concat(1, 2)	SAME	"12"[U+0031 U+0032]	"12"[U+0031 U+0032]

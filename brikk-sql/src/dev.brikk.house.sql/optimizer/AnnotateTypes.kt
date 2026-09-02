@@ -24,6 +24,7 @@ import dev.brikk.house.sql.ast.Pivot
 import dev.brikk.house.sql.ast.PivotAlias
 import dev.brikk.house.sql.ast.Predicate
 import dev.brikk.house.sql.ast.Query
+import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.SetOperation
 import dev.brikk.house.sql.ast.Slice
 import dev.brikk.house.sql.ast.Subquery
@@ -41,6 +42,7 @@ import dev.brikk.house.sql.ast.outputColumns
 import dev.brikk.house.sql.ast.outputName
 import dev.brikk.house.sql.ast.selects
 import dev.brikk.house.sql.ast.unpivot
+import dev.brikk.house.sql.ast.intoExpr
 import dev.brikk.house.sql.dialects.Dialect
 import dev.brikk.house.sql.dialects.Dialects
 
@@ -282,6 +284,23 @@ class TypeAnnotator(
         nullExpressions.clear()
         setopColumnTypes.clear()
         scopeSourceSelects.clear()
+    }
+
+    // sqlglot: TypeAnnotator.uncache
+    /**
+     * Evicts [expression] (or its subtree, if [deep]) from the annotation caches. Must be
+     * called when an already-annotated tree is about to be mutated, both so a subsequent
+     * annotation pass doesn't skip it and so the ids of discarded nodes can't be conflated
+     * with new nodes allocated at the same addresses.
+     */
+    fun uncache(expression: Expression, deep: Boolean = true) {
+        val nodes: Iterable<Expression> = if (deep) expression.walk().asIterable() else listOf(expression)
+        for (node in nodes) {
+            val nodeId = node.objectId
+            visited.remove(nodeId)
+            nullExpressions.remove(nodeId)
+            setopColumnTypes.remove(nodeId)
+        }
     }
 
     // sqlglot: TypeAnnotator._set_type
@@ -553,6 +572,7 @@ class TypeAnnotator(
             when {
                 spec is TypingSpec.Annotate -> runAnnotator(spec.ref, expr)
                 spec is TypingSpec.Returns -> setType(expr, spec.dtype)
+                spec is TypingSpec.ReturnsDataType -> setType(expr, spec.dtype)
                 else -> setType(expr, DType.UNKNOWN)
             }
         }
@@ -613,9 +633,16 @@ class TypeAnnotator(
             val i = dotParts.iterator()
             var parent = expr.parent
             while (parent is Dot) {
-                (parent.expressionArg as Expression).replace(
-                    Identifier(args("this" to i.next(), "quoted" to true))
-                )
+                val identifier = parent.expressionArg as Expression
+                if (identifier is Identifier) {
+                    // Rename in place to preserve the identifier's meta, e.g. token positions.
+                    identifier.set("this", i.next())
+                    identifier.set("quoted", true)
+                } else {
+                    identifier.replace(
+                        Identifier(args("this" to i.next(), "quoted" to true))
+                    )
+                }
                 parent = parent.parent
             }
 
@@ -678,6 +705,14 @@ class TypeAnnotator(
                 } else {
                     setType(e, DType.DOUBLE)
                 }
+            // sqlglot: spark2 exp.ApproxQuantile — by_args over "this", array-ness
+            // driven by whether the "quantile" arg resolves to an ARRAY type.
+            is AnnotatorRef.ApproxQuantileByArgs -> {
+                val quantile = e.args["quantile"] as? Expression
+                annotateByArgs(e, listOf("this"), array = quantile?.isType(DType.ARRAY) == true)
+            }
+            // sqlglot: spark2 _annotate_by_similar_args (CONCAT/LPAD/RPAD family).
+            is AnnotatorRef.BySimilarArgs -> annotateBySimilarArgs(e, ref.keys)
             // sqlglot: exp.DataType.build("FixedString(16)", dialect="clickhouse")
             is AnnotatorRef.SetSizedType -> setType(
                 e,
@@ -692,7 +727,217 @@ class TypeAnnotator(
                     )
                 ),
             )
+            // sqlglot: bigquery _annotate_math_functions
+            is AnnotatorRef.MathFunctionsBq -> annotateMathFunctionsBq(e)
+            // sqlglot: bigquery _annotate_by_args_with_coerce
+            is AnnotatorRef.ByArgsWithCoerceBq -> annotateByArgsWithCoerceBq(e)
+            // sqlglot: bigquery _annotate_safe_divide
+            is AnnotatorRef.SafeDivideBq -> annotateSafeDivideBq(e)
+            // sqlglot: bigquery _annotate_concat
+            is AnnotatorRef.ConcatBq -> annotateConcatBq(e)
+            // sqlglot: bigquery _annotate_date_func
+            is AnnotatorRef.DateFuncBq -> annotateDateFuncBq(e, ref.literalType)
+            // sqlglot: bigquery _annotate_array
+            is AnnotatorRef.ArrayBq -> annotateArrayBq(e)
+            // sqlglot: bigquery _annotate_by_args_approx_top
+            is AnnotatorRef.ApproxTopKBq -> annotateApproxTopKBq(e)
+            is AnnotatorRef.BitFunc -> annotateBitFunc(e)
+            is AnnotatorRef.Reverse -> annotateReverse(e)
+            is AnnotatorRef.Truncate -> annotateTruncate(e)
+            is AnnotatorRef.RegexpReplace -> annotateRegexpReplace(e)
+            is AnnotatorRef.Compress -> annotateCompress(e)
+            is AnnotatorRef.SetType -> setType(e, ref.dtype)
         }
+    }
+
+    // sqlglot: typing/mysql.py _annotate_bit_func (BIT_AND/BIT_OR/... family).
+    private fun annotateBitFunc(e: Expression) {
+        val this0 = e.args["this"] as? Expression
+        when {
+            this0 == null || this0.isType(DType.UNKNOWN) -> setType(e, DType.UNKNOWN)
+            this0.isType(*DataType.BINARY_TYPES.toTypedArray()) -> setType(e, DType.VARBINARY)
+            else -> setType(e, DType.UBIGINT)
+        }
+    }
+
+    // sqlglot: typing/mysql.py _annotate_reverse.
+    private fun annotateReverse(e: Expression) {
+        val this0 = e.args["this"] as? Expression
+        if (this0 != null && this0.isType(DType.BINARY, DType.VARBINARY, DType.UNKNOWN)) {
+            annotateByArgs(e, listOf("this"))
+        } else {
+            setType(e, DType.VARCHAR)
+        }
+    }
+
+    // sqlglot: typing/mysql.py _annotate_truncate.
+    private fun annotateTruncate(e: Expression) {
+        val this0 = e.args["this"] as? Expression
+        if (this0 != null && this0.isType(*DataType.TEXT_TYPES.toTypedArray())) {
+            setType(e, DType.DOUBLE)
+        } else {
+            annotateByArgs(e, listOf("this"))
+        }
+    }
+
+    // sqlglot: typing/mysql.py _annotate_regexp_replace.
+    private fun annotateRegexpReplace(e: Expression) {
+        val args = listOf(e.args["this"], e.args["expression"], e.args["replacement"])
+        var hasBinary = false
+        for (arg in args) {
+            if (arg is Expression) {
+                if (arg.isType(DType.UNKNOWN)) {
+                    setType(e, DType.UNKNOWN)
+                    return
+                }
+                if (arg.isType(*DataType.BINARY_TYPES.toTypedArray())) hasBinary = true
+            }
+        }
+        setType(e, if (hasBinary) DType.LONGBLOB else DType.LONGTEXT)
+    }
+
+    // sqlglot: typing/mysql.py _annotate_compress.
+    private fun annotateCompress(e: Expression) {
+        val this0 = e.args["this"] as? Expression
+        when {
+            this0 == null -> setType(e, DType.UNKNOWN)
+            this0.isType(*COMPRESS_VARBINARY_TYPES.toTypedArray()) -> setType(e, DType.VARBINARY)
+            this0.isType(*COMPRESS_LONGBLOB_TYPES.toTypedArray()) -> setType(e, DType.LONGBLOB)
+            this0.isType(DType.TINYTEXT) -> setType(e, DType.BLOB)
+            else -> setType(e, DType.UNKNOWN)
+        }
+    }
+
+    // sqlglot: bigquery.py _annotate_math_functions — INT64 input -> FLOAT64, else the
+    // first arg's own type.
+    private fun annotateMathFunctionsBq(expression: Expression) {
+        val this0 = expression.args["this"] as? Expression
+        val t = this0?.type as? DataType
+        setType(
+            expression,
+            if (t != null && t.thisArg in DataType.INTEGER_TYPES) DType.DOUBLE else t,
+        )
+    }
+
+    // sqlglot: bigquery.py _annotate_by_args_with_coerce — _maybe_coerce(this, expression).
+    private fun annotateByArgsWithCoerceBq(expression: Expression) {
+        val this0 = (expression.args["this"] as? Expression)?.type
+        val expr0 = (expression.args["expression"] as? Expression)?.type
+        setType(expression, maybeCoerce(this0, expr0))
+    }
+
+    // sqlglot: bigquery.py _annotate_safe_divide — INT64/INT64 -> FLOAT64, else coerce.
+    private fun annotateSafeDivideBq(expression: Expression) {
+        val this0 = expression.args["this"] as? Expression
+        val expr0 = expression.args["expression"] as? Expression
+        if (
+            this0?.isType(*DataType.INTEGER_TYPES.toTypedArray()) == true &&
+            expr0?.isType(*DataType.INTEGER_TYPES.toTypedArray()) == true
+        ) {
+            setType(expression, DType.DOUBLE)
+        } else {
+            annotateByArgsWithCoerceBq(expression)
+        }
+    }
+
+    // sqlglot: bigquery.py _annotate_concat — by_args over "expressions"; unless the
+    // result is BINARY/UNKNOWN, coerce it to VARCHAR.
+    private fun annotateConcatBq(expression: Expression) {
+        annotateByArgs(expression, listOf("expressions"))
+        if (!expression.isType(DType.BINARY, DType.UNKNOWN)) {
+            setType(expression, DType.VARCHAR)
+        }
+    }
+
+    // sqlglot: bigquery.py _annotate_date_func — a string-literal first arg takes the
+    // function's own temporal type; otherwise by_args("this").
+    private fun annotateDateFuncBq(expression: Expression, literalType: DType) {
+        val this0 = expression.args["this"] as? Expression
+        if (this0 is Literal && this0.isString) {
+            setType(expression, literalType)
+        } else {
+            annotateByArgs(expression, listOf("this"))
+        }
+    }
+
+    // sqlglot: bigquery.py _annotate_by_args_approx_top — ARRAY<STRUCT<this.type, INT64>>.
+    private fun annotateApproxTopKBq(expression: Expression) {
+        val thisType = (expression.args["this"] as? Expression)?.type ?: DType.UNKNOWN.intoExpr()
+        val structType = DataType(
+            args(
+                "this" to DType.STRUCT,
+                "expressions" to listOf(thisType, DataType(args("this" to DType.BIGINT))),
+                "nested" to true,
+            )
+        )
+        setType(
+            expression,
+            DataType(
+                args(
+                    "this" to DType.ARRAY,
+                    "expressions" to listOf(structType),
+                    "nested" to true,
+                )
+            ),
+        )
+    }
+
+    // sqlglot: bigquery.py _annotate_array — ARRAY(SELECT ...) / ARRAY(SELECT AS STRUCT
+    // ...) / ARRAY(set-op) projection typing; falls back to by_args("expressions",
+    // array=true). Schema-less: query_type meta drives the projection cases.
+    private fun annotateArrayBq(expression: Expression) {
+        val arrayArgs = expression.expressionsArg.filterIsInstance<Expression>()
+        if (arrayArgs.size == 1) {
+            val unnested = arrayArgs[0].unnest()
+            var projectionType: Any? = null
+
+            if (unnested is Select) {
+                val queryType = unnested.metaOrNull?.get("query_type") as? DataType
+                if (queryType != null && queryType.isType(DType.STRUCT)) {
+                    val queryExprs = queryType.expressionsArg.filterIsInstance<Expression>()
+                    val colDefs = queryExprs.filterIsInstance<ColumnDef>().filter { cd ->
+                        val kind = cd.args["kind"] as? DataType
+                        kind == null || !kind.isType(DType.UNKNOWN)
+                    }
+                    if (colDefs.size == queryExprs.size) {
+                        if (unnested.args["kind"] == "STRUCT") {
+                            projectionType = queryType
+                        } else if (colDefs.size == 1) {
+                            (colDefs[0].args["kind"] as? DataType)?.let { projectionType = it }
+                        }
+                    }
+                }
+            } else if (unnested is SetOperation) {
+                val colTypes = getSetopColumnTypes(unnested)
+                val leftSelects = unnested.left.selects
+                if (colTypes.isNotEmpty() && leftSelects.isNotEmpty()) {
+                    val firstColName = leftSelects[0].aliasOrName
+                    projectionType = colTypes[firstColName]
+                }
+            }
+
+            val pt = projectionType
+            val isUnknown = (pt is DataType && pt.isType(DType.UNKNOWN)) || pt == DType.UNKNOWN
+            if (pt != null && !isUnknown) {
+                val elementType: Expression = when (pt) {
+                    is DataType -> pt.copy()
+                    is DType -> DataType(args("this" to pt))
+                    else -> DataType(args("this" to DType.UNKNOWN))
+                }
+                setType(
+                    expression,
+                    DataType(
+                        args(
+                            "this" to DType.ARRAY,
+                            "expressions" to listOf(elementType),
+                            "nested" to true,
+                        )
+                    ),
+                )
+                return
+            }
+        }
+        annotateByArgs(expression, listOf("expressions"), array = true)
     }
 
     // sqlglot: TypeAnnotator._fixup_order_by_aliases
@@ -1070,6 +1315,35 @@ class TypeAnnotator(
         return expression
     }
 
+    // sqlglot: spark2 _annotate_by_similar_args (sqlglot/typing/spark2.py) — CONCAT-family
+    // type inference. All-BINARY -> BINARY; else any known, non-ARRAY, non-BINARY arg
+    // -> TEXT; else UNKNOWN. Ported bug-for-bug (binary+unknown stays UNKNOWN).
+    private fun annotateBySimilarArgs(expression: Expression, keys: List<String>): Expression {
+        val argExprs = mutableListOf<Expression>()
+        for (key in keys) {
+            when (val v = expression.args[key]) {
+                null -> {}
+                is List<*> -> v.forEach { if (it is Expression) argExprs.add(it) }
+                is Expression -> argExprs.add(v)
+            }
+        }
+
+        val result: Any = if (argExprs.isNotEmpty() && argExprs.all { it.isType(DType.BINARY) }) {
+            DType.BINARY
+        } else if (
+            argExprs.any {
+                it.type != null && !it.isType(DType.UNKNOWN, DType.ARRAY, DType.BINARY)
+            }
+        ) {
+            DType.TEXT
+        } else {
+            DType.UNKNOWN
+        }
+
+        setType(expression, result)
+        return expression
+    }
+
     // sqlglot: TypeAnnotator._annotate_timeunit
     private fun annotateTimeunit(expression: Expression): Expression {
         val exprThis = expression.thisArg as Expression
@@ -1357,3 +1631,13 @@ class TypeAnnotator(
         return expression
     }
 }
+
+// sqlglot: typing/mysql.py COMPRESS_VARBINARY_TYPES / COMPRESS_LONGBLOB_TYPES.
+// Hand-defined (not a generated DataType.* set) — used only by annotateCompress.
+private val COMPRESS_VARBINARY_TYPES: Set<DType> = setOf(
+    DType.CHAR, DType.VARCHAR, DType.BINARY, DType.VARBINARY, DType.TINYBLOB, DType.ENUM,
+    DType.INT, DType.BIGINT, DType.DECIMAL, DType.DOUBLE, DType.DATE, DType.DATETIME,
+)
+private val COMPRESS_LONGBLOB_TYPES: Set<DType> = setOf(
+    DType.TEXT, DType.MEDIUMTEXT, DType.LONGTEXT, DType.BLOB, DType.MEDIUMBLOB, DType.LONGBLOB, DType.JSON,
+)

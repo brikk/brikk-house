@@ -5,11 +5,16 @@ import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.generator.GenMethod
+import dev.brikk.house.sql.generator.eliminateQualify
+import dev.brikk.house.sql.generator.eliminateDistinctOn
+import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
+import dev.brikk.house.sql.generator.explodeProjectionToUnnest
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.parser.PrestoTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
+import dev.brikk.house.sql.parser.withStrictTimeInverse
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.String
@@ -28,18 +33,10 @@ private fun unitToStr(expression: Expression, default: String = "DAY"): Expressi
     return Literal.string(unit.name)
 }
 
-// sqlglot: dialects.hive.Hive.TIME_MAPPING (needed by PrestoGenerator.strtounix_sql)
-private val HIVE_TIME_MAPPING: Map<String, String> = linkedMapOf(
-    "y" to "%Y", "Y" to "%Y", "YYYY" to "%Y", "yyyy" to "%Y", "YY" to "%y", "yy" to "%y",
-    "MMMM" to "%B", "MMM" to "%b", "MM" to "%m", "M" to "%-m", "dd" to "%d", "d" to "%-d",
-    "HH" to "%H", "H" to "%-H", "hh" to "%I", "h" to "%-I", "mm" to "%M", "m" to "%-M",
-    "ss" to "%S", "s" to "%-S", "SSSSSS" to "%f", "a" to "%p", "DD" to "%j", "D" to "%-j",
-    "E" to "%a", "EE" to "%a", "EEE" to "%a", "EEEE" to "%A", "z" to "%Z", "Z" to "%z",
-)
-
-// sqlglot: dialects.hive.Hive.INVERSE_TIME_MAPPING
+// sqlglot: dialects.hive.Hive.INVERSE_TIME_MAPPING (with _with_strict_time_inverse)
+// Used by PrestoGenerator.strtounix_sql and HiveGenerator.
 internal val HIVE_INVERSE_TIME_MAPPING: Map<String, String> =
-    HIVE_TIME_MAPPING.entries.associate { (k, v) -> v to k }
+    withStrictTimeInverse(HiveDialect.TIME_MAPPING.entries.associate { (k, v) -> v to k })
 
 /**
  * Port of sqlglot's PrestoGenerator (reference/sqlglot/sqlglot/generators/presto.py).
@@ -60,12 +57,14 @@ open class PrestoGenerator(
     tokenizerConfig: TokenizerConfig = PrestoTokenizerTables.CONFIG,
     // extra dispatch overlay for subclasses (sqlglot: further TRANSFORMS merges, e.g. Trino)
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    sourceDialect: String? = null,
 ) : Generator(
     pretty = pretty,
     identify = identify,
     comments = comments,
     tokenizerConfig = tokenizerConfig,
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
@@ -155,6 +154,92 @@ open class PrestoGenerator(
             this_ = Encode(args("this" to this_, "charset" to Literal.string("utf-8")))
         }
         return func("SHA$length", this_)
+    }
+
+    // brikk extension (docs/brikk-extensions.md entry 11, NOT sqlglot parity):
+    // GREATEST/LEAST NULL algebra. Presto/Trino GREATEST/LEAST return NULL if ANY
+    // argument is NULL, while DuckDB/Postgres-parsed calls carry ignore_nulls=true
+    // (they SKIP NULLs) — trino-duckdb-hazards.json "greatest / least",
+    // verdict=divergent ("never translate by name when args may be NULL"). No
+    // probe-verified Presto/Trino rewrite exists for the NULL-skipping semantics, so
+    // the call is flagged instead of silently emitted; the Python oracle emits the
+    // bare (semantically wrong) name, which we keep as the fallback output.
+    open fun greatestLeastSql(expression: Expression): String {
+        if (expression.args["ignore_nulls"] == true && expression.expressionsArg.isNotEmpty()) {
+            val name = if (expression is Greatest) "GREATEST" else "LEAST"
+            unsupported(
+                "$name was parsed under a NULL-skipping dialect (e.g. DuckDB/Postgres); " +
+                    "Presto/Trino $name returns NULL if any argument is NULL — " +
+                    "no result-identical rewrite is verified"
+            )
+        }
+        return functionFallbackSql(expression as Func)
+    }
+
+    // brikk extension (docs/brikk-extensions.md entry 12, NOT sqlglot parity):
+    // REGEXP_REPLACE replace-first vs replace-all. Presto/Trino REGEXP_REPLACE always
+    // replaces ALL matches and has no modifiers argument; DuckDB's default replaces only
+    // the FIRST match unless the 'g' modifier is present (trino-duckdb-hazards.json
+    // "regexp_replace", verdict=divergent). The Python oracle re-emits DuckDB's
+    // modifiers as a 4th argument, which Trino's own parser/analyzer rejects (the only
+    // 4-ary form takes a lambda). We render the grammar-legal 3-arg form and flag:
+    //  - replace-first sources (single_replace=true without 'g'): no Presto/Trino
+    //    equivalent exists — flagged;
+    //  - the 'g' modifier is dropped silently (replace-all is Presto/Trino's default);
+    //  - any other modifiers (c/i/m/s/...) have no Presto/Trino REGEXP_REPLACE
+    //    equivalent — flagged and dropped;
+    //  - position/occurrence arguments (Snowflake-style) — flagged and dropped.
+    open fun regexpreplaceSql(expression: RegexpReplace): String {
+        val modifiers = expression.args["modifiers"] as? Expression
+        val modifierStr =
+            if (modifiers is Literal && modifiers.isString) modifiers.thisArg as? String ?: ""
+            else null // non-literal modifiers: cannot inspect
+
+        if (modifiers != null && modifierStr == null) {
+            unsupported("REGEXP_REPLACE with non-literal modifiers is not supported in Presto")
+        }
+        val remaining = modifierStr?.filter { it != 'g' } ?: ""
+        if (remaining.isNotEmpty()) {
+            unsupported(
+                "Regexp modifiers '$remaining' have no Presto/Trino REGEXP_REPLACE equivalent"
+            )
+        }
+        val replacesAll = modifierStr?.contains('g') == true
+        if (expression.args["single_replace"] == true && !replacesAll && (modifiers == null || modifierStr != null)) {
+            unsupported(
+                "DuckDB REGEXP_REPLACE without the 'g' modifier replaces only the first " +
+                    "match; Presto/Trino REGEXP_REPLACE always replaces all matches — " +
+                    "there is no replace-first form"
+            )
+        }
+        for (arg in listOf("position", "occurrence")) {
+            if (expression.args[arg] != null) {
+                unsupported(
+                    "Argument '$arg' is not supported for expression 'RegexpReplace' when targeting Presto."
+                )
+            }
+        }
+        return func(
+            "REGEXP_REPLACE",
+            expression.thisArg,
+            expression.args["expression"],
+            expression.args["replacement"],
+        )
+    }
+
+    // brikk extension (docs/brikk-extensions.md entry 13, NOT sqlglot parity): scalar-
+    // position UNNEST/EXPLODE (e.g. duckdb `SELECT UNNEST([1, 2, 3])`) is eliminated in
+    // sqlglot by the exp.Select preprocess `explode_projection_to_unnest`, which is not
+    // ported (see class KDoc; the affected corpus cases are ledgered). Presto/Trino has
+    // no EXPLODE *function*, so an Explode node that reaches the generator would render
+    // as a call Trino cannot resolve — flag it accurately; Lateral-wrapped Explodes are
+    // handled by explodeToUnnestSql and never dispatch here.
+    open fun explodeSql(expression: Explode): String {
+        unsupported(
+            "UNNEST/EXPLODE in scalar position requires the explode_projection_to_unnest " +
+                "transform (not ported); Presto/Trino has no EXPLODE function"
+        )
+        return functionFallbackSql(expression)
     }
 
     // sqlglot: generators.presto._initcap_sql (INITCAP_DEFAULT_DELIMITER_CHARS check
@@ -347,6 +432,18 @@ open class PrestoGenerator(
         return func(name, unitToStr(expression), finalInterval, expression.thisArg)
     }
 
+    // sqlglot: generators.presto._date_diff_sql
+    open fun dateDiffSql(expression: Expression): String {
+        var thisExpression = expression.thisArg as Expression
+        var startExpression = expression.expressionArg as Expression
+        val unit = unitToStr(expression)
+        if (unit != null && expression.args["date_part_boundary"] == true) {
+            thisExpression = DateTrunc(args("unit" to unit.copy(), "this" to thisExpression))
+            startExpression = DateTrunc(args("unit" to unit.copy(), "this" to startExpression))
+        }
+        return func("DATE_DIFF", unit, startExpression, thisExpression)
+    }
+
     // sqlglot: dialect.explode_to_unnest_sql + generators.presto._explode_to_unnest_sql
     // (the annotate_types-driven struct-array alias fix is not ported)
     open fun explodeToUnnestSql(expression: Lateral): String {
@@ -395,7 +492,7 @@ open class PrestoGenerator(
             val subquery = Subquery(
                 args(
                     "this" to Select(
-                        args("expressions" to selectCols, "from" to From(args("this" to unnest)))
+                        args("expressions" to selectCols, "from_" to From(args("this" to unnest)))
                     )
                 )
             )
@@ -506,22 +603,17 @@ open class PrestoGenerator(
                     "this" to expression.thisArg,
                     "start" to Sub(
                         args(
-                            "this" to Add(
+                            "this" to Length(args("this" to expression.thisArg)),
+                            "expression" to Paren(
                                 args(
-                                    "this" to Length(args("this" to expression.thisArg)),
-                                    "expression" to Paren(
+                                    "this" to Sub(
                                         args(
-                                            "this" to Sub(
-                                                args(
-                                                    "this" to expression.args["expression"],
-                                                    "expression" to Literal.number("1"),
-                                                )
-                                            )
+                                            "this" to expression.args["expression"],
+                                            "expression" to Literal.number("1"),
                                         )
-                                    ),
+                                    )
                                 )
                             ),
-                            "expression" to null,
                         )
                     ),
                 )
@@ -832,7 +924,7 @@ open class PrestoGenerator(
         val parseWithTz = func(
             "PARSE_DATETIME",
             formattedValue,
-            formatTimeString(sql(expression, "format"), HIVE_INVERSE_TIME_MAPPING),
+            formatTime(expression, HIVE_INVERSE_TIME_MAPPING),
         )
         val coalesced = func("COALESCE", func("TRY", parseWithoutTz), parseWithTz)
         return func("TO_UNIXTIME", coalesced)
@@ -1037,6 +1129,9 @@ open class PrestoGenerator(
             fun Generator.pg(): PrestoGenerator = this as PrestoGenerator
 
             reg(AnyValue::class) { e -> pg().renameFuncSql("ARBITRARY", e) }
+            // Trino/Presto reject a bare COUNT(); normalize zero-arg count() -> COUNT(*)
+            // (e.g. transpiling ClickHouse count()). Inherited by TrinoGenerator.
+            reg(Count::class) { e -> countStarSql(e as Count) }
             reg(ApproxQuantile::class) { e ->
                 func(
                     "APPROX_PERCENTILE",
@@ -1070,9 +1165,7 @@ open class PrestoGenerator(
             reg(CurrentTimestamp::class) { _ -> "CURRENT_TIMESTAMP" }
             reg(CurrentUser::class) { _ -> "CURRENT_USER" }
             reg(DateAdd::class) { e -> pg().dateDeltaSql("DATE_ADD", e) }
-            reg(DateDiff::class) { e ->
-                func("DATE_DIFF", unitToStr(e), e.args["expression"], e.thisArg)
-            }
+            reg(DateDiff::class) { e -> pg().dateDiffSql(e) }
             reg(DateStrToDate::class) { e -> pg().datestrtodateSql(e as DateStrToDate) }
             reg(DateToDi::class) { e ->
                 "CAST(DATE_FORMAT(${sql(e, "this")}, ${pg().dialectDateintFormat}) AS INT)"
@@ -1103,6 +1196,46 @@ open class PrestoGenerator(
             }
             reg(ILike::class) { e -> pg().noIlikeSql(e as ILike) }
             reg(Initcap::class) { e -> pg().initcapSql(e as Initcap) }
+            // brikk extension (docs/brikk-extensions.md entry 11)
+            reg(Greatest::class) { e -> pg().greatestLeastSql(e) }
+            reg(Least::class) { e -> pg().greatestLeastSql(e) }
+            // brikk extension (docs/brikk-extensions.md entry 12)
+            reg(RegexpReplace::class) { e -> pg().regexpreplaceSql(e as RegexpReplace) }
+            // brikk extension (docs/brikk-extensions.md entry 13)
+            reg(Explode::class) { e -> pg().explodeSql(e as Explode) }
+            // brikk extension (docs/brikk-extensions.md entry 14): catalog-backed rename
+            // fixes for renders the Python oracle emits under names Trino/Presto does not
+            // have (gap-report.json bucket B "absent-name" entries):
+            // duckdb isinf()/doris isinf() -> IS_INFINITE (trino-functions-481.tsv:
+            // is_infinite(double|number) -> boolean; Python emits IS_INF).
+            reg(IsInf::class) { e -> pg().renameFuncSql("IS_INFINITE", e) }
+            // doris database()/mysql schema() -> CURRENT_SCHEMA, a parenthesis-less
+            // special form in Trino's grammar (SqlBase.g4 `name=CURRENT_SCHEMA`); the
+            // Python oracle emits CURRENT_SCHEMA(), which that grammar rejects.
+            reg(CurrentSchema::class) { _ -> "CURRENT_SCHEMA" }
+            // doris months_add(d, n) -> DATE_ADD('MONTH', n, d) (trino-functions-481.tsv:
+            // date_add(varchar(x), bigint, date|timestamp...)); Python emits ADD_MONTHS,
+            // which Trino does not have.
+            reg(AddMonths::class) { e ->
+                if (e.args["preserve_end_of_month"] != null) {
+                    unsupported(
+                        "Argument 'preserve_end_of_month' is not supported for expression 'AddMonths' when targeting Presto."
+                    )
+                }
+                func("DATE_ADD", Literal.string("MONTH"), e.args["expression"], e.thisArg)
+            }
+            // doris split_by_string(s, sep) -> SPLIT(s, sep) (trino-functions-481.tsv:
+            // split(varchar(x), varchar(y)) -> array(varchar(x)); Python emits
+            // STRING_TO_ARRAY, which Trino does not have). The Postgres 3-arg
+            // null-replacement form has no Trino equivalent and is flagged.
+            reg(StringToArray::class) { e ->
+                if (e.args["null"] != null) {
+                    unsupported(
+                        "Argument 'null' is not supported for expression 'StringToArray' when targeting Presto."
+                    )
+                }
+                func("SPLIT", e.thisArg, e.args["expression"])
+            }
             reg(Last::class) { e -> pg().firstLastSql(e) }
             reg(LastDay::class) { e -> func("LAST_DAY_OF_MONTH", e.thisArg) }
             reg(Lateral::class) { e -> pg().explodeToUnnestSql(e as Lateral) }
@@ -1127,6 +1260,18 @@ open class PrestoGenerator(
             reg(Right::class) { e -> pg().rightToSubstringSql(e as Right) }
             reg(Schema::class) { e -> pg().prestoSchemaSql(e as Schema) }
             reg(SchemaCommentProperty::class) { e -> nakedProperty(e as Property) }
+            // sqlglot: exp.Select preprocess pipeline. Only eliminate_qualify is ported;
+            // sqlglot presto order: [eliminate_window_clause, eliminate_qualify,
+            // eliminate_distinct_on, explode_projection_to_unnest(1),
+            // eliminate_semi_and_anti_joins, amend_exploded_column_table].
+            // eliminate_window_clause and amend_exploded_column_table remain NOT PORTED.
+            reg(Select::class) { e ->
+                var s = eliminateQualify(e)
+                s = eliminateDistinctOn(s)
+                s = explodeProjectionToUnnest(s, indexOffset = 1, unnestMap = true)
+                s = eliminateSemiAndAntiJoins(s)
+                selectSql(s as Select)
+            }
             reg(SortArray::class) { e -> pg().noSortArraySql(e as SortArray) }
             reg(SqlSecurityProperty::class) { e -> "SECURITY ${sql(e, "this")}" }
             reg(StrPosition::class) { e -> pg().strpositionSql(e as StrPosition) }

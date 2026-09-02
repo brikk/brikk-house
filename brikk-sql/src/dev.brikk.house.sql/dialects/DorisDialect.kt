@@ -1,6 +1,8 @@
 package dev.brikk.house.sql.dialects
 
 import dev.brikk.house.sql.generator.Generator
+import dev.brikk.house.sql.metadata.DORIS_FUNCTION_CATALOG
+import dev.brikk.house.sql.metadata.FunctionCatalog
 import dev.brikk.house.sql.parser.DorisTokenizerTables
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.Parser
@@ -22,6 +24,9 @@ class DorisDialect : Dialect() {
     // sqlglot: Doris inherits MySQL.NORMALIZATION_STRATEGY (CASE_SENSITIVE)
     override val normalizationStrategy get() = NormalizationStrategy.CASE_SENSITIVE
 
+    // Generated from Doris's runtime function registry (tools/generate_doris_functions.py).
+    override val functionCatalog: FunctionCatalog get() = DORIS_FUNCTION_CATALOG
+
     override val tokenizerConfig: TokenizerConfig get() = DorisTokenizerTables.CONFIG
 
     // sqlglot: Doris.TIME_MAPPING (inherited from MySQL)
@@ -30,8 +35,8 @@ class DorisDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         DorisParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        DorisGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        DorisGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     companion object {
         // sqlglot: Doris.DATE_FORMAT / DATEINT_FORMAT / TIME_FORMAT

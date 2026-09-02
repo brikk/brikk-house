@@ -1249,6 +1249,72 @@
       }
     },
     {
+      "id": "test_chained_pivots_consuming_alias_columns#1",
+      "column": "hi",
+      "sql": "\n        SELECT hi, lo FROM sales\n        UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d)\n        UNPIVOT((hi, lo) FOR region IN ((b, c)))\n        ",
+      "dialect": "duckdb",
+      "trim_selects": true,
+      "schema": {
+        "sales": {
+          "id": "int",
+          "jan": "int",
+          "feb": "int",
+          "north": "int",
+          "south": "int"
+        }
+      },
+      "expected": {
+        "name": "hi",
+        "expression": "sales.hi AS hi",
+        "source": "SELECT sales.hi AS hi FROM sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales",
+        "source_name": "",
+        "reference_node_name": "",
+        "downstream": [
+          {
+            "name": "sales.north",
+            "expression": "sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales",
+            "source": "sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "test_chained_pivots_consuming_alias_columns#2",
+      "column": "lo",
+      "sql": "\n        SELECT hi, lo FROM sales\n        UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d)\n        UNPIVOT((hi, lo) FOR region IN ((b, c)))\n        ",
+      "dialect": "duckdb",
+      "trim_selects": true,
+      "schema": {
+        "sales": {
+          "id": "int",
+          "jan": "int",
+          "feb": "int",
+          "north": "int",
+          "south": "int"
+        }
+      },
+      "expected": {
+        "name": "lo",
+        "expression": "sales.lo AS lo",
+        "source": "SELECT sales.lo AS lo FROM sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales",
+        "source_name": "",
+        "reference_node_name": "",
+        "downstream": [
+          {
+            "name": "sales.south",
+            "expression": "sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales",
+            "source": "sales AS sales UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d) UNPIVOT((hi, lo) FOR region IN ((b, c))) AS sales",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          }
+        ]
+      }
+    },
+    {
       "id": "test_pivot_with_alias_columns#1",
       "column": "x",
       "sql": "\n        SELECT x FROM (SELECT value, category FROM sample_data) AS sd\n        PIVOT (SUM(value) FOR category IN ('a', 'b')) AS p(x, y)\n        ",
@@ -2422,12 +2488,56 @@
       "reason": "unresolvable name: renamed"
     },
     {
+      "id": "test_chained_pivots#1",
+      "reason": "unsupported dialect: snowflake"
+    },
+    {
+      "id": "test_chained_pivots#2",
+      "reason": "unsupported dialect: snowflake"
+    },
+    {
+      "id": "test_chained_pivots#3",
+      "reason": "unsupported dialect: snowflake"
+    },
+    {
+      "id": "test_chained_pivots_through_cte#1",
+      "reason": "unsupported dialect: snowflake"
+    },
+    {
+      "id": "test_chained_pivots_mixed#1",
+      "reason": "unsupported dialect: snowflake"
+    },
+    {
+      "id": "test_chained_pivots_mixed#2",
+      "reason": "unsupported dialect: snowflake"
+    },
+    {
+      "id": "test_chained_pivots_with_alias_columns#1",
+      "reason": "unresolvable name: column"
+    },
+    {
+      "id": "test_chained_pivots_consuming_alias_columns#3",
+      "reason": "unresolvable name: column"
+    },
+    {
+      "id": "test_multiple_pivoted_sources#1",
+      "reason": "unsupported dialect: snowflake"
+    },
+    {
+      "id": "test_multiple_pivoted_sources#2",
+      "reason": "unsupported dialect: snowflake"
+    },
+    {
       "id": "test_table_udtf_snowflake#1",
       "reason": "unsupported dialect: snowflake"
     },
     {
       "id": "test_table_udtf_snowflake#2",
       "reason": "unsupported dialect: snowflake"
+    },
+    {
+      "id": "test_table_udtfs#1",
+      "reason": "unsupported kwargs: ['expand_stars', 'validate_qualify_columns']"
     },
     {
       "id": "test_copy_flag#1",

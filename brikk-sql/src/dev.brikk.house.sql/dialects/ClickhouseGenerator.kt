@@ -4,6 +4,7 @@ package dev.brikk.house.sql.dialects
 import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.ast.Any as AnyNode
 import dev.brikk.house.sql.ast.Array as ArrayNode
+import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.ast.Map as MapNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
@@ -86,6 +87,7 @@ open class ClickhouseGenerator(
     tokenizerConfig: TokenizerConfig = ClickhouseTokenizerTables.CONFIG,
     // extra dispatch overlay for subclasses (sqlglot: further TRANSFORMS merges)
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    sourceDialect: String? = null,
 ) : Generator(
     pretty = pretty,
     identify = identify,
@@ -93,6 +95,7 @@ open class ClickhouseGenerator(
     normalizeFunctions = normalizeFunctions,
     tokenizerConfig = tokenizerConfig,
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
@@ -105,9 +108,16 @@ open class ClickhouseGenerator(
     override val selectKinds: Set<String> get() = emptySet()
     override val trySupported: Boolean get() = false
     override val supportsUescape: Boolean get() = false
+    override val supportsAlterColumnIfExists: Boolean get() = true
     override val queryHints: Boolean get() = false
     override val structDelimiter: Pair<String, String> get() = "(" to ")"
     override val nvl2Supported: Boolean get() = false
+    // sqlglot: ClickHouse.SET_OP_DISTINCT_BY_DEFAULT (Except/Intersect false, Union null)
+    override fun setOpDistinctByDefault(expression: SetOperation): Boolean? = when (expression) {
+        is Except, is Intersect -> false
+        is Union -> null
+        else -> true
+    }
     override val tablesampleRequiresParens: Boolean get() = false
     override val tablesampleSizeIsRows: Boolean get() = false
     override val tablesampleKeywords: String get() = "SAMPLE"
@@ -122,7 +132,6 @@ open class ClickhouseGenerator(
     // sqlglot: ClickHouse dialect-level flags read by the generator
     override val dialectNullOrdering: String get() = "nulls_are_last"
     override val dialectIndexOffset: Int get() = 1
-    override val dialectSafeDivision: Boolean get() = true
     override val dialectPreserveOriginalNames: Boolean get() = true
     override val hexStringIsIntegerType: Boolean get() = true
     override val dialectIdentifiersCanStartWithDigit: Boolean get() = true
@@ -135,6 +144,7 @@ open class ClickhouseGenerator(
 
     // sqlglot: ClickHouse STRING_ESCAPES include "\\" -> ESCAPED_SEQUENCES active
     override val dialectStringsSupportEscapedSequences: Boolean get() = true
+    override val alterSetType: String get() = "TYPE"
     override val escapedSequences: Map<String, String> get() = ESCAPED_SEQUENCES
 
     // sqlglot: ClickHouseGenerator.TYPE_MAPPING
@@ -540,6 +550,37 @@ open class ClickhouseGenerator(
     override fun onclusterSql(expression: OnCluster): String =
         "ON CLUSTER ${sql(expression, "this")}"
 
+    // sqlglot #7990: ClickHouseGenerator.AUTO_REFRESH_BARE_INTERVALS = True
+    override val autoRefreshBareIntervals: Boolean get() = true
+
+    // sqlglot #7990: ClickHouseGenerator._refresh_interval_sql — a schedule interval may be a
+    // sum of bare intervals (e.g. OFFSET 5 DAY 2 HOUR -> Add(Interval, Interval)).
+    private fun refreshIntervalSql(expression: Expression): String =
+        if (expression is Add) {
+            "${refreshIntervalSql(expression.thisArg as Expression)} " +
+                refreshIntervalSql(expression.expressionArg as Expression)
+        } else {
+            sql(expression as Interval)
+        }
+
+    // sqlglot #7990: ClickHouseGenerator.autorefreshproperty_sql
+    internal fun autorefreshpropertySql(expression: AutoRefreshProperty): String {
+        val cadence = sql(expression, "cadence")
+        val interval = expression.args["this"] as? Expression
+        val schedule =
+            if (cadence.isNotEmpty() && interval != null) " $cadence ${refreshIntervalSql(interval)}" else ""
+        val offsetArg = expression.args["offset"] as? Expression
+        val offset = if (offsetArg != null) " OFFSET ${refreshIntervalSql(offsetArg)}" else ""
+        val randomizeArg = expression.args["randomize"] as? Expression
+        val randomize = if (randomizeArg != null) " RANDOMIZE FOR ${refreshIntervalSql(randomizeArg)}" else ""
+        var dependencies = expressions(expression, flat = true)
+        dependencies = if (dependencies.isNotEmpty()) " DEPENDS ON $dependencies" else ""
+        var settings = sql(expression, "settings")
+        settings = if (settings.isNotEmpty()) " $settings" else ""
+        val append = if (expression.args["append"] == true) " APPEND" else ""
+        return "REFRESH$schedule$offset$randomize$dependencies$settings$append"
+    }
+
     // sqlglot: ClickHouseGenerator.createable_sql
     override fun createableSql(
         expression: Create,
@@ -685,7 +726,224 @@ open class ClickhouseGenerator(
         return func("dateTrunc", unit, expression.thisArg, expression.args["zone"])
     }
 
+    // BUGS-clickhouse-generator-mappings rows 3 (P1) + 12 (P2): the Log node.
+    // The base generator rendered it verbatim as LOG(...), which is wrong for ClickHouse:
+    //   - single-arg log(x) [Log(this=x), no base] means log-base-10 in the source
+    //     (DuckDB LOG_DEFAULTS_TO_LN=false), but ClickHouse LOG(x) is the NATURAL log
+    //     (silent base change);
+    //   - log10(x)/log2(x) parse to Log(this=10|2, expression=x) and were emitted as
+    //     LOG(10, x) / LOG(2, x), which ClickHouse REJECTS (it has no 2-arg log).
+    // ClickHouse exposes dedicated log10/log2; a bare natural log is `log`. So:
+    //   - no base                -> log10(value)         (source single-arg log = base 10)
+    //   - base literal 10        -> log10(value)
+    //   - base literal 2         -> log2(value)
+    //   - arbitrary base b       -> log(value) / log(b)  (change-of-base via natural log,
+    //                                                      exactly log_b(value))
+    open fun clickhouseLogSql(expression: Log): String {
+        // Parser (build_logarithm, LOG_BASE_FIRST=true): LOG(base, value) -> Log(this=base,
+        // expression=value); single-arg LOG(x) -> Log(this=x) with no expression.
+        val value = expression.args["expression"] as? Expression
+        if (value == null) {
+            // Single-arg: `this` is the value; source semantics are base-10.
+            return func("log10", expression.thisArg)
+        }
+        // Two-arg LOG(base, value): `this` is the base.
+        val base = expression.thisArg as? Expression
+        return when {
+            base is Literal && !base.isString && base.name == "10" -> func("log10", value)
+            base is Literal && !base.isString && base.name == "2" -> func("log2", value)
+            // Change-of-base via natural log = log_b(value); parenthesized so it stays
+            // atomic inside a larger expression.
+            else -> "(${func("log", value)} / ${func("log", base)})"
+        }
+    }
+
+    // BUGS-clickhouse-generator-mappings row 4 (P1): RegexpReplace. ClickHouse
+    // REGEXP_REPLACE aliases replaceRegexpAll (replaces EVERY match). DuckDB
+    // regexp_replace(s, p, r) replaces only the FIRST match unless the 'g' flag is
+    // present (the parser records single_replace=true + the flag in `modifiers`); Trino
+    // regexp_replace always replaces all (single_replace unset). Emit the matching
+    // ClickHouse primitive: replaceRegexpOne for the DuckDB first-only form, else
+    // replaceRegexpAll. Any regex FLAG other than 'g' (case-insensitive 'i', ...) has no
+    // ClickHouse argument form, so flag it rather than silently drop it.
+    // BUGS-clickhouse-generator-mappings row 6 (P1): DuckDB/Trino millisecond(t) reaches
+    // us as an unresolved Anonymous call (no canonical node) and used to pass through
+    // verbatim, but ClickHouse has NO `millisecond` function — its toMillisecond returns
+    // only the SUB-SECOND component, whereas the source millisecond is
+    // seconds-within-minute*1000 + ms. Emit the compound. Live-differential-verified vs
+    // ClickHouse 26.5.1.1 + DuckDB 1.5.4 (30123, 0, 5789, 56001 all match). `millisecond`
+    // is not a ClickHouse function name, so this never fires on ClickHouse->ClickHouse.
+    override fun anonymousSql(expression: Anonymous): String {
+        if (expression.name.equals("millisecond", ignoreCase = true)) {
+            val args = expression.expressionsArg
+            if (args.size == 1) {
+                val t = args[0]
+                return "(${func("toSecond", t)} * 1000 + ${func("toMillisecond", t)})"
+            }
+        }
+        // SOURCE-AWARE bin shim: DuckDB bin(5)='101' (no leading zeros); ClickHouse
+        // bin(5)='00000101' (zero-padded to a full byte). For duckdb->clickhouse strip the
+        // leading zeros (live-verified equal to DuckDB on 5/0/255/1); ClickHouse->ClickHouse
+        // keeps the padded native bin.
+        if (expression.name.equals("bin", ignoreCase = true) &&
+            isCrossDialectFrom("clickhouse") &&
+            expression.expressionsArg.size == 1
+        ) {
+            val xs = sql(expression.expressionsArg[0])
+            return "if($xs = 0, '0', substring(bin($xs), position(bin($xs), '1')))"
+        }
+        // Cross-dialect function RENAMES that reach the ClickHouse generator as an
+        // unmapped Anonymous call (the source parser has no canonical node for them).
+        // ClickHouse has the SAME function under a different spelling (camelCase / IP-cased);
+        // rewrite the name. SAFE for ClickHouse->ClickHouse round-trips: ClickHouse's own
+        // catalog uses the target spelling (which parses back to an Anonymous of THAT name),
+        // so the source snake_case keys here never fire on native ClickHouse input.
+        // Probe-verified vs ClickHouse 26.5.1.1 (chdb); see CLICKHOUSE-rename-map.md and the
+        // per-pair generator-gap reports. Divergent renames keep their hazard (the name is
+        // valid, the semantics divergence is certify-guarded).
+        ANON_FUNC_RENAMES[expression.name.lowercase()]?.let { target ->
+            return func(target, *expression.expressionsArg.toTypedArray())
+        }
+        return super.anonymousSql(expression)
+    }
+
+    open fun clickhouseRegexpReplaceSql(expression: RegexpReplace): String {
+        val single = expression.args["single_replace"] == true
+        val modifiers = expression.args["modifiers"]
+        val modStr = if (modifiers is Literal && !modifiers.isString) "" else (modifiers as? Literal)?.name ?: ""
+        val global = modStr.contains("g")
+        for (flag in modStr) {
+            if (flag != 'g') {
+                unsupported(
+                    "regexp_replace flag '$flag' has no ClickHouse replaceRegexp* equivalent"
+                )
+            }
+        }
+        val fn = if (single && !global) "replaceRegexpOne" else "replaceRegexpAll"
+        return func(fn, expression.thisArg, expression.args["expression"], expression.args["replacement"])
+    }
+
+    // SOURCE-AWARE round shim: DuckDB round() is half-away-from-zero (round(2.5)=3);
+    // ClickHouse round() is banker's/half-even (round(2.5)=2). For duckdb->clickhouse emit an
+    // explicit half-away expression (live-verified equal to DuckDB on 2.5/0.5/-2.5/2dp/3.5);
+    // ClickHouse->ClickHouse (and other sources) stay faithful banker's round. Only sources
+    // whose round is half-away-from-zero are listed (HALF_AWAY_ROUND_SOURCES); MySQL/Trino
+    // half-up would differ on negatives, so they are NOT rewritten.
+    open fun clickhouseRoundSql(expression: Round): String {
+        val truncate = expression.args["truncate"] == true
+        if (!truncate && sourceDialect?.lowercase() in HALF_AWAY_ROUND_SOURCES) {
+            val xSql = sql(expression.thisArg)
+            val decimals = expression.args["decimals"] as? Expression
+            val dSql = if (decimals != null) sql(decimals) else "0"
+            return "sign($xSql) * floor(abs($xSql) * pow(10, $dSql) + 0.5) / pow(10, $dSql)"
+        }
+        return functionFallbackSql(expression as Func)
+    }
+
+    // DuckDB list_sort/array_sort/list_reverse_sort/array_reverse_sort parse to the
+    // SortArray node (this, asc). ClickHouse renders ascending as arraySort and descending
+    // as arrayReverseSort (probe-verified equal to DuckDB, chdb + DuckDB 1.5.4). SAFE for
+    // ClickHouse->ClickHouse: ClickHouse arraySort/arrayReverseSort parse to Anonymous, not
+    // SortArray, so this only fires cross-dialect.
+    open fun clickhouseSortArraySql(expression: SortArray): String {
+        val asc = expression.args["asc"]
+        return if (asc is BooleanNode && asc.thisArg == false) {
+            func("arrayReverseSort", expression.thisArg)
+        } else {
+            func("arraySort", expression.thisArg)
+        }
+    }
+
     companion object {
+
+        // Source dialects whose bare week() is ISO-8601 (so ClickHouse target must be
+        // toISOWeek, not the Sunday-based default week/toWeek). MySQL-family week() is mode 0
+        // and matches ClickHouse's default, so it is NOT listed (stays faithful `week`).
+        private val ISO_WEEK_SOURCES: Set<String> = setOf("duckdb")
+
+        // Source dialects whose round() is half-away-from-zero (round(2.5)=3), so the
+        // ClickHouse target needs an explicit half-away shim instead of native banker's
+        // rounding. MySQL/Trino half-up differ on negatives and are intentionally excluded.
+        private val HALF_AWAY_ROUND_SOURCES: Set<String> = setOf("duckdb")
+
+        // Cross-dialect function-name RENAMES applied to unmapped Anonymous calls when
+        // targeting ClickHouse. Key = lowercased SOURCE function name (DuckDB / Doris /
+        // Trino), value = the ClickHouse spelling. All probe-verified live vs ClickHouse
+        // 26.5.1.1 (chdb); see docs/research/CLICKHOUSE-rename-map.md. Entries whose recorded
+        // verdict is `divergent`/`conditionally-equivalent` are still listed: the NAME is a
+        // correct rename (the emitted SQL runs), the residual semantic divergence is kept as
+        // a hazard and surfaced by certify.
+        val ANON_FUNC_RENAMES: Map<String, String> = mapOf(
+            // -- array family (DuckDB list_*/array_* + Doris array_*) -> ClickHouse array* --
+            "list_dot_product" to "arrayDotProduct",
+            "list_element" to "arrayElement", // divergent (indexing edges) — hazard kept
+            "list_extract" to "arrayElement", // divergent (indexing edges) — hazard kept
+            "list_has_all" to "hasAll",
+            "list_intersect" to "arrayIntersect",
+            "list_unique" to "arrayUniq",
+            "array_avg" to "arrayAvg",
+            "array_count" to "arrayCount",
+            "array_cum_sum" to "arrayCumSum",
+            "array_difference" to "arrayDifference",
+            "array_enumerate" to "arrayEnumerate",
+            "array_enumerate_uniq" to "arrayEnumerateUniq",
+            "array_exists" to "arrayExists", // divergent — hazard kept
+            "array_popback" to "arrayPopBack",
+            "array_popfront" to "arrayPopFront",
+            "array_product" to "arrayProduct",
+            "array_reverse_sort" to "arrayReverseSort",
+            "array_shuffle" to "arrayShuffle", // divergent (non-determinism) — hazard kept
+            "array_union" to "arrayUnion", // divergent — hazard kept
+            // -- temporal (Doris/DuckDB) -> ClickHouse to<Part> --
+            "to_monday" to "toMonday",
+            "weekday" to "toDayOfWeek", // divergent (Sun=0/6 vs ISO Mon=1..Sun=7) — hazard kept
+            // -- math / bit (DuckDB) --
+            "bit_count" to "bitCount",
+            "gamma" to "tgamma",
+            "greatest_common_divisor" to "gcd",
+            "isfinite" to "isFinite",
+            "jaro_similarity" to "jaroSimilarity",
+            "least_common_multiple" to "lcm",
+            // -- bit (Doris) --
+            "bit_shift_left" to "bitShiftLeft",
+            "bit_shift_right" to "bitShiftRight",
+            "bit_test" to "bitTest",
+            // -- string / url (Doris) --
+            "count_substrings" to "countSubstrings",
+            "split_by_regexp" to "splitByRegexp",
+            "cut_to_first_significant_subdomain" to "cutToFirstSignificantSubdomain", // divergent
+            "domain_without_www" to "domainWithoutWWW", // divergent
+            "extract_url_parameter" to "extractURLParameter", // divergent
+            "first_significant_subdomain" to "firstSignificantSubdomain", // divergent
+            "top_level_domain" to "topLevelDomain", // divergent
+            // -- ip (Doris) --
+            "ipv4_num_to_string" to "IPv4NumToString",
+            "ipv4_string_to_num_or_default" to "IPv4StringToNumOrDefault",
+            "ipv6_string_to_num_or_default" to "IPv6StringToNumOrDefault",
+            "is_ipv4_string" to "isIPv4String",
+            "is_ipv6_string" to "isIPv6String",
+            "to_ipv4_or_default" to "toIPv4OrDefault",
+            "to_ipv6_or_default" to "toIPv6OrDefault",
+            // -- distance / hash / rounding (Doris) --
+            "l1_distance" to "L1Distance",
+            "round_bankers" to "roundBankers",
+            // Doris xxhash_32 IS ClickHouse xxHash32 (direct live re-probe 2026-07-14:
+            // 'abc'->852579327, ''->46947589 both match exactly). Conditionally-equivalent
+            // (UInt32 vs Doris return width). See probe-runs/doris-xxhash-week-reprobe.results.tsv.
+            "xxhash_32" to "xxHash32",
+            // NOTE: Doris xxhash_64 is intentionally NOT mapped — the same re-probe confirmed
+            // Doris xxhash_64('abc') = 8696274497037089104 vs ClickHouse xxHash64('abc') =
+            // 4952883123889572249, a DIFFERENT hash (impl/seed). Emitting xxHash64 would
+            // silently produce a wrong hash, so it stays a divergent (unmapped) hazard that
+            // certify refuses.
+            // -- Trino source --
+            "bitwise_left_shift" to "bitShiftLeft",
+            "bitwise_right_shift" to "bitShiftRight",
+            "is_finite" to "isFinite",
+            "is_infinite" to "isInfinite",
+            "xxhash64" to "xxHash64", // conditionally-equivalent (type/signedness)
+        )
+
 
         // sqlglot: ClickHouse.ESCAPED_SEQUENCES (MySQL's map + the \0 unescape)
         val ESCAPED_SEQUENCES: Map<String, String> =
@@ -798,6 +1056,8 @@ open class ClickhouseGenerator(
         // sqlglot: ClickHouseGenerator.PROPERTIES_LOCATION
         val PROPERTIES_LOCATION: Map<KClass<out Expression>, GeneratorTables.PropLocation> =
             GeneratorTables.PROPERTIES_LOCATION + mapOf(
+                // sqlglot #7990: refreshable MV REFRESH clause after the view name
+                AutoRefreshProperty::class to GeneratorTables.PropLocation.POST_NAME,
                 DefinerProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
                 OnCluster::class to GeneratorTables.PropLocation.POST_NAME,
                 PartitionedByProperty::class to GeneratorTables.PropLocation.POST_SCHEMA,
@@ -811,11 +1071,139 @@ open class ClickhouseGenerator(
             fun reg(cls: KClass<out Expression>, method: GenMethod) { put(cls, method) }
             fun Generator.ch(): ClickhouseGenerator = this as ClickhouseGenerator
 
+            // sqlglot #7990: refreshable MV REFRESH clause (overrides base "AUTO REFRESH")
+            reg(AutoRefreshProperty::class) { e -> ch().autorefreshpropertySql(e as AutoRefreshProperty) }
             reg(AnyValue::class) { e -> ch().renameFuncSql("any", e) }
             reg(ApproxDistinct::class) { e -> ch().renameFuncSql("uniq", e) }
+            // SOURCE-AWARE rewrites (SPIKE-source-aware-generator-transforms, now implemented
+            // via Generator.sourceDialect / isCrossDialectFrom). These rewrites are CORRECT
+            // for cross-dialect (DuckDB/Trino/Doris -> ClickHouse) but would CORRUPT a native
+            // ClickHouse function on same-dialect generation (pipe desugaring / toStandardSql,
+            // transpile read==write), so they fire ONLY when the source is known to be a
+            // non-ClickHouse dialect. Same-dialect / source-unknown stays faithful.
+            //   lower/upper: ClickHouse LOWER/UPPER are ASCII-only; the source folds full
+            //     Unicode -> lowerUTF8/upperUTF8 (residual İ/ß edge stays a divergent hazard).
+            //   week (DuckDB Week node): DuckDB/others week is ISO-8601 -> toISOWeek (CH WEEK
+            //     default mode 0 is Sunday-based). (Trino week parses to WeekOfYear, handled
+            //     unconditionally below since ClickHouse never emits that node.)
+            //   translate: source translate is code-point-wise -> translateUTF8 (CH translate
+            //     is byte-level and errors on multibyte). Faithful CH keeps byte `translate`.
+            reg(Lower::class) { e ->
+                if (ch().isCrossDialectFrom("clickhouse")) func("lowerUTF8", e.thisArg)
+                else func("lower", e.thisArg)
+            }
+            reg(Upper::class) { e ->
+                if (ch().isCrossDialectFrom("clickhouse")) func("upperUTF8", e.thisArg)
+                else func("upper", e.thisArg)
+            }
+            // week() semantics are SOURCE-SPECIFIC (not uniformly cross-dialect): DuckDB
+            // week is ISO-8601 -> toISOWeek, but MySQL-family (Doris/MySQL) week defaults to
+            // mode 0 (Sunday-based) == ClickHouse's own week default, so those stay faithful
+            // `week`. Only rewrite for sources whose Week node is ISO. (Trino week parses to
+            // WeekOfYear, handled unconditionally below.)
+            reg(Week::class) { e ->
+                if (ch().sourceDialect?.lowercase() in ISO_WEEK_SOURCES) func("toISOWeek", e.thisArg)
+                else func("week", e.thisArg)
+            }
+            reg(Translate::class) { e ->
+                val name = if (ch().isCrossDialectFrom("clickhouse")) "translateUTF8" else "translate"
+                func(name, e.thisArg, e.args["from_"], e.args["to"])
+            }
+            reg(Round::class) { e -> ch().clickhouseRoundSql(e as Round) }
+            // BUGS-clickhouse-generator-mappings rows 3/12 (P1/P2): natural-log collision
+            // + invalid 2-arg LOG. See clickhouseLogSql.
+            reg(Log::class) { e -> ch().clickhouseLogSql(e as Log) }
+            // BUGS-clickhouse-generator-mappings row 4 (P1): first-vs-all replace. See
+            // clickhouseRegexpReplaceSql.
+            reg(RegexpReplace::class) { e -> ch().clickhouseRegexpReplaceSql(e as RegexpReplace) }
+            // BUGS-clickhouse-generator-mappings row 13 (P3): DuckDB xor is BITWISE; the
+            // base emitted `a ^ b`, which ClickHouse has no operator for. bitXor(a, b) is
+            // ClickHouse's bitwise xor (result-identical to DuckDB xor).
+            reg(BitwiseXor::class) { e ->
+                func("bitXor", (e as Binary).thisArg, e.args["expression"])
+            }
+            // BUGS-clickhouse-generator-mappings row 10 (P2): Trino week parses to
+            // WeekOfYear; the emitted WEEK_OF_YEAR does not exist in ClickHouse. Trino week
+            // is ISO -> toISOWeek (result-identical). SAFE for CH->CH: ClickHouse never
+            // parses to the WeekOfYear node, so this only fires cross-dialect (Trino->CH).
+            reg(WeekOfYear::class) { e -> func("toISOWeek", e.thisArg) }
+            // BUGS-clickhouse-generator-mappings row 9 (P2): the emitted DAY_OF_WEEK does
+            // not exist in ClickHouse. toDayOfWeek is the valid name. SAFE for CH->CH:
+            // ClickHouse `dayofweek` == `toDayOfWeek` (both ISO Mon=1..Sun=7, verified 7==7),
+            // so the rename preserves ClickHouse semantics; a residual numbering divergence
+            // vs DuckDB (Sunday=0) remains and is kept as a hazard for the cross-dialect case.
+            reg(DayOfWeek::class) { e -> func("toDayOfWeek", e.thisArg) }
+            // Temporal to<Part> renames (DuckDB/Doris/Trino source -> ClickHouse). The base
+            // rendered these canonical nodes as DAY_OF_MONTH / DAY_OF_YEAR, which ClickHouse
+            // rejects (no underscore form). toDayOfMonth/toDayOfYear are the real names
+            // (probe-verified equal, chdb 26.5.1.1 + DuckDB 1.5.4). SAFE for CH->CH: those
+            // names parse to Anonymous, not these nodes. See CLICKHOUSE-rename-map.md.
+            reg(DayOfMonth::class) { e -> func("toDayOfMonth", e.thisArg) }
+            reg(DayOfYear::class) { e -> func("toDayOfYear", e.thisArg) }
+            // Math/bit nodes rendered their uppercase base name (ACOSH, CBRT, ...), which
+            // case-sensitive ClickHouse rejects. ClickHouse spells them lowercase; every
+            // source dialect (DuckDB/Doris/Trino) maps to the SAME lowercase name so there
+            // is no source-unaware conflict. bit_count parses to BitwiseCount in Doris ->
+            // ClickHouse bitCount. Probe-verified (chdb 26.5.1.1). Round-trip safe: these
+            // ClickHouse names parse to Anonymous, not these nodes.
+            reg(Acosh::class) { e -> func("acosh", (e as Acosh).thisArg) }
+            reg(Asinh::class) { e -> func("asinh", (e as Asinh).thisArg) }
+            reg(Cbrt::class) { e -> func("cbrt", (e as Cbrt).thisArg) }
+            reg(Cosh::class) { e -> func("cosh", (e as Cosh).thisArg) }
+            reg(Sinh::class) { e -> func("sinh", (e as Sinh).thisArg) }
+            reg(BitwiseCount::class) { e -> func("bitCount", (e as BitwiseCount).thisArg) }
+            // Trino source: day_of_week parses to DayOfWeekIso (ISO Mon=1..Sun=7) ==
+            // ClickHouse toDayOfWeek (also ISO); dot_product -> ClickHouse dotProduct. Base
+            // rendered DAYOFWEEK_ISO / DOT_PRODUCT, which ClickHouse rejects. Probe-verified
+            // (chdb 26.5.1.1). Round-trip safe (ClickHouse parses its names to Anonymous).
+            reg(DayOfWeekIso::class) { e -> func("toDayOfWeek", (e as DayOfWeekIso).thisArg) }
+            reg(DotProduct::class) { e ->
+                func("dotProduct", (e as DotProduct).thisArg, e.args["expression"])
+            }
+            // BUGS-clickhouse-generator-mappings row 11 (P2): the leaked internal node name
+            // TIME_TO_UNIX does not exist in ClickHouse. toUnixTimestamp is the real name.
+            reg(TimeToUnix::class) { e -> func("toUnixTimestamp", e.thisArg) }
+            // TODO(clickhouse-bugs): rows from BUGS-clickhouse-generator-mappings not fixed
+            // here (millisecond, row 6, IS fixed via anonymousSql below — verified live):
+            //   rows 1 & 5 (lower/upper, duckdb week): source-aware follow-up — the correct
+            //                    lowerUTF8/upperUTF8/toISOWeek rewrites need source!=clickhouse
+            //                    gating to avoid CH->CH corruption. See SPIKE doc.
+            //   row 2  round  : half-away shim `sign(x)*floor(abs(x)*pow(10,d)+0.5)/pow(10,d)`
+            //                    is live-VERIFIED (matches DuckDB across 2.5/0.5/-2.5/2dp),
+            //                    but `round` is a ClickHouse-NATIVE name and this generator
+            //                    is source-unaware, so applying it would regress CH->CH
+            //                    banker's rounding — same source-aware follow-up.
+            //   row 7  bin    : strip-leading-zeros shim
+            //                    `if(x=0,'0',substring(bin(x),position(bin(x),'1')))` is
+            //                    live-VERIFIED, but `bin` is CH-native too — same concern.
+            //   row 8  to_days: the ToDays node is source-ambiguous (DuckDB interval-builder
+            //                    vs MySQL day-number) — fix belongs in the DuckDB PARSER,
+            //                    not here, so a target rewrite isn't safe for all sources.
+            //   row 14 age    : return-type mismatch — DuckDB age(a,b) yields an INTERVAL,
+            //                    ClickHouse age('unit',start,end) a scalar; no clean map.
             reg(ArrayDistinct::class) { e -> ch().renameFuncSql("arrayDistinct", e) }
             reg(ArrayConcat::class) { e -> ch().renameFuncSql("arrayConcat", e) }
             reg(ArrayContains::class) { e -> ch().renameFuncSql("has", e) }
+            // Array-family renames (DuckDB/Doris source -> ClickHouse). Each of these
+            // canonical nodes rendered its uppercase/base name (e.g. ARRAY_SORT,
+            // ARRAY_INTERSECT), which ClickHouse — being CASE-SENSITIVE — rejects. Emit the
+            // real ClickHouse names. Probe-verified (chdb 26.5.1.1 + DuckDB 1.5.4). SAFE for
+            // ClickHouse->ClickHouse: ClickHouse parses arraySort/arrayIntersect/... to
+            // Anonymous (not these nodes), so the fixes only fire cross-dialect.
+            // See CLICKHOUSE-rename-map.md (array_*->array*, list_*->array*).
+            reg(SortArray::class) { e -> ch().clickhouseSortArraySql(e as SortArray) }
+            reg(ArraySort::class) { e -> func("arraySort", (e as ArraySort).thisArg) }
+            reg(ArrayIntersect::class) { e -> ch().renameFuncSql("arrayIntersect", e) }
+            reg(ArrayCompact::class) { e -> ch().renameFuncSql("arrayCompact", e) }
+            reg(ArrayExcept::class) { e ->
+                func("arrayExcept", (e as ArrayExcept).thisArg, e.args["expression"])
+            }
+            // DuckDB list_has_any parses to ArrayOverlaps, which the base rendered as the
+            // `a && b` operator (ClickHouse has no such array operator). hasAny is the
+            // ClickHouse equivalent.
+            reg(ArrayOverlaps::class) { e ->
+                func("hasAny", (e as ArrayOverlaps).thisArg, e.args["expression"])
+            }
             reg(ArrayFilter::class) { e ->
                 func("arrayFilter", e.args["expression"], e.thisArg)
             }

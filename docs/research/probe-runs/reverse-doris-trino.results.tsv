@@ -1,0 +1,47 @@
+# reverse-doris-trino.results.tsv — Part-1 live verification of clickhouse->doris/trino rename candidates
+# engines: Doris (FE doris-0.0.0/pr62767-local, BE 4.1.2) + Trino 481. Diffed vs precomputed clickhouse_value.
+# columns: fn  doris_output  trino_output  doris_matches(ch)  trino_matches(ch)
+# match normalization: array spacing [1, 2]==[1,2], quotes stripped, booleans 1/true & 0/false, float 6dp, ints as-is
+# VERDICT NOTES for the brikk-sql agent (Part 2):
+#  arrayUniq        : Doris has NO 'array_unique' (ERR). Value-equal form is size(array_distinct(...))=3 — needs a composite, not a plain name map. DROP the bare name.
+#  jaroSimilarity   : Doris has NO jaro-family scalar (jaro_similarity/jaro/jaro_winkler_similarity all ERR). No rename to ship for Doris.
+#  splitByRegexp    : Doris split_by_regexp(str,pattern) MATCHES (arg-swapped from CH). Trino regexp_split(str,pattern) does NOT match with the CH literal '\\d' — Trino treats backslash literally (regex becomes \\d), so no digit split. Real string-escape divergence; name/arg-order are right but value-equality needs escape handling.
+#  xxHash64         : Doris xxhash_64 RUNS but value differs (8696274497037089104 vs CH 4952883123889572249) — different impl/seed. Valid name, DIVERGENT value (keep as divergent hazard, not a clean rename).
+#  arrayElement->element_at : value-equal here (index 2 -> 20); negative-index semantics still divergent per handoff.
+#  blank rows (arrayDotProduct/hasAll/hasAny/tgamma): no doris_call or trino_call candidate provided — nothing to verify.
+fn	doris_output	trino_output	doris_matches	trino_matches
+arraySort	[1, 2, 3]	[1, 2, 3]	yes	yes
+arrayReverseSort	[3, 2, 1]		yes	
+arrayUniq	<ERR:Can not found function 'array_unique'>		ERR	
+arrayIntersect	[2, 3]	[2, 3]	yes	yes
+arrayAvg	2		yes	
+arrayCompact	[1, 2, 1]		yes	
+arrayCount	2		yes	
+arrayCumSum	[1, 3, 6]		yes	
+arrayDifference	[0, 2, 3]		yes	
+arrayEnumerate	[1, 2, 3]		yes	
+arrayEnumerateUniq	[1, 2, 1]		yes	
+arrayExcept	[1, 3]		yes	
+arrayPopBack	[1, 2]		yes	
+arrayPopFront	[2, 3]		yes	
+arrayProduct	24		yes	
+arrayDotProduct				
+hasAll				
+hasAny				
+arrayElement	20	20	yes	yes
+bitCount	3		yes	
+bitShiftLeft	8	8	yes	yes
+bitShiftRight	2	2	yes	yes
+bitTest	1		yes	
+tgamma				
+jaroSimilarity	<ERR:Can not found function 'jaro_similarity'>		ERR	
+countSubstrings	3		yes	
+splitByRegexp	["a", "b", "c"]	[a1b2c]	yes	no
+L1Distance	7		yes	
+roundBankers	2		yes	
+xxHash64	8696274497037089104		no	
+dotProduct		11.0		yes
+isInfinite		false		yes
+IPv4NumToString	192.168.0.1		yes	
+isIPv4String	1		yes	
+toIPv4OrDefault	1.2.3.4		yes	

@@ -542,7 +542,7 @@ fun normalizeName(
 ): Expression {
     val ident: Expression = when (identifier) {
         is String -> parseIdentifier(identifier, dialect)
-        is Expression -> identifier
+        is Expression -> if (normalize == true) identifier.copy() else identifier
         else -> throw IllegalArgumentException("Invalid identifier: $identifier")
     }
 

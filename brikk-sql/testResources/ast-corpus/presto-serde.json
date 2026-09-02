@@ -1,8 +1,8 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
  "fixture": "dialect-corpus/presto.json",
  "dialect": "presto",
- "case_count": 44,
+ "case_count": 48,
  "skipped": [],
  "cases": [
   {
@@ -4510,6 +4510,308 @@
    ]
   },
   {
+   "sql": "SELECT JSON_EXTRACT(x, '$[1,0]')",
+   "generated": "SELECT JSON_EXTRACT(x, '$[1,0]')",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.json.JSONExtract",
+     "m": {
+      "line": 1,
+      "col": 19,
+      "start": 7,
+      "end": 18
+     }
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 21,
+      "start": 20,
+      "end": 20
+     }
+    },
+    {
+     "i": 3,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 3,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 1,
+     "k": "expression",
+     "c": "sqlglot.expressions.query.JSONPath"
+    },
+    {
+     "i": 6,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.JSONPathRoot"
+    },
+    {
+     "i": 6,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.JSONPathUnion"
+    },
+    {
+     "i": 8,
+     "k": "expressions",
+     "a": true,
+     "v": 1
+    },
+    {
+     "i": 8,
+     "k": "expressions",
+     "a": true,
+     "v": 0
+    }
+   ]
+  },
+  {
+   "sql": "SELECT JSON_EXTRACT_SCALAR(x, '$[1,0]')",
+   "generated": "SELECT JSON_EXTRACT_SCALAR(x, '$[1,0]')",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.json.JSONExtractScalar",
+     "m": {
+      "line": 1,
+      "col": 26,
+      "start": 7,
+      "end": 25
+     }
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 28,
+      "start": 27,
+      "end": 27
+     }
+    },
+    {
+     "i": 3,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 3,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 1,
+     "k": "expression",
+     "c": "sqlglot.expressions.query.JSONPath"
+    },
+    {
+     "i": 6,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.JSONPathRoot"
+    },
+    {
+     "i": 6,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.JSONPathUnion"
+    },
+    {
+     "i": 8,
+     "k": "expressions",
+     "a": true,
+     "v": 1
+    },
+    {
+     "i": 8,
+     "k": "expressions",
+     "a": true,
+     "v": 0
+    },
+    {
+     "i": 1,
+     "k": "scalar_only",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT JSON_EXTRACT(x, '$[\"a\",\"\"]')",
+   "generated": "SELECT JSON_EXTRACT(x, '$[\"a\",\"\"]')",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.json.JSONExtract",
+     "m": {
+      "line": 1,
+      "col": 19,
+      "start": 7,
+      "end": 18
+     }
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 21,
+      "start": 20,
+      "end": 20
+     }
+    },
+    {
+     "i": 3,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 3,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 1,
+     "k": "expression",
+     "c": "sqlglot.expressions.query.JSONPath"
+    },
+    {
+     "i": 6,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.JSONPathRoot"
+    },
+    {
+     "i": 6,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.JSONPathUnion"
+    },
+    {
+     "i": 8,
+     "k": "expressions",
+     "a": true,
+     "v": "a"
+    },
+    {
+     "i": 8,
+     "k": "expressions",
+     "a": true,
+     "v": ""
+    }
+   ]
+  },
+  {
+   "sql": "SELECT JSON_EXTRACT(x, '$[\"\"]')",
+   "generated": "SELECT JSON_EXTRACT(x, '$[\"\"]')",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.json.JSONExtract",
+     "m": {
+      "line": 1,
+      "col": 19,
+      "start": 7,
+      "end": 18
+     }
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 21,
+      "start": 20,
+      "end": 20
+     }
+    },
+    {
+     "i": 3,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 3,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 1,
+     "k": "expression",
+     "c": "sqlglot.expressions.query.JSONPath"
+    },
+    {
+     "i": 6,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.JSONPathRoot"
+    },
+    {
+     "i": 6,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.JSONPathKey"
+    },
+    {
+     "i": 8,
+     "k": "this",
+     "v": ""
+    }
+   ]
+  },
+  {
    "sql": "SELECT\n  *\nFROM orders\nMATCH_RECOGNIZE (\n  PARTITION BY custkey\n  ORDER BY\n    orderdate\n  MEASURES\n    A.totalprice AS starting_price,\n    LAST(B.totalprice) AS bottom_price,\n    LAST(C.totalprice) AS top_price\n  ONE ROW PER MATCH\n  AFTER MATCH SKIP PAST LAST ROW\n  PATTERN (A B+ C+ D+)\n  DEFINE\n    B AS totalprice < PREV(totalprice),\n    C AS totalprice > PREV(totalprice) AND totalprice <= A.totalprice,\n    D AS totalprice > PREV(totalprice),\n    E AS MAX(foo) >= NEXT(bar)\n)",
    "generated": "SELECT * FROM orders MATCH_RECOGNIZE (PARTITION BY custkey ORDER BY orderdate MEASURES A.totalprice AS starting_price, LAST(B.totalprice) AS bottom_price, LAST(C.totalprice) AS top_price ONE ROW PER MATCH AFTER MATCH SKIP PAST LAST ROW PATTERN (A B+ C+ D+) DEFINE B AS totalprice < PREV(totalprice), C AS totalprice > PREV(totalprice) AND totalprice <= A.totalprice, D AS totalprice > PREV(totalprice), E AS MAX(foo) >= NEXT(bar))",
    "dump": [
@@ -5446,7 +5748,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {
@@ -5481,7 +5784,8 @@
     },
     {
      "i": 0,
-     "k": "this",
+     "k": "tables",
+     "a": true,
      "c": "sqlglot.expressions.query.Table"
     },
     {

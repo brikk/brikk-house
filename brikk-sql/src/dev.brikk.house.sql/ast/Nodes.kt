@@ -92,6 +92,8 @@ open class Column(initArgs: Args = emptyMap()) : Expression(initArgs), Condition
     companion object {
         private val ARG_TYPES = argTypesOf(
             "this" to true, "table" to false, "db" to false, "catalog" to false, "join_mark" to false,
+            // sqlglot: `shadow` added to Column.arg_types.
+            "shadow" to false,
         )
     }
 }
@@ -260,7 +262,14 @@ class LT(initArgs: Args = emptyMap()) : Binary(initArgs), Predicate
 class LTE(initArgs: Args = emptyMap()) : Binary(initArgs), Predicate
 
 // sqlglot: core.Is(Expression, Binary, Predicate)
-class Is(initArgs: Args = emptyMap()) : Binary(initArgs), Predicate
+class Is(initArgs: Args = emptyMap()) : Binary(initArgs), Predicate {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        // sqlglot: `negate` added to Is.arg_types.
+        private val ARG_TYPES = argTypesOf("this" to true, "expression" to true, "negate" to false)
+    }
+}
 
 // sqlglot: core.Like(Expression, Binary, Predicate)
 class Like(initArgs: Args = emptyMap()) : Binary(initArgs), Predicate {
@@ -457,6 +466,7 @@ class Table(initArgs: Args = emptyMap()) : Expression(initArgs), Selectable {
             "system_time" to false, "version" to false, "format" to false, "pattern" to false,
             "ordinality" to false, "when" to false, "only" to false, "partition" to false,
             "changes" to false, "rows_from" to false, "sample" to false, "indexed" to false,
+            "branch" to false,
         )
     }
 }
@@ -631,7 +641,8 @@ class With(initArgs: Args = emptyMap()) : Expression(initArgs) {
 
     companion object {
         private val ARG_TYPES = argTypesOf(
-            "expressions" to true, "recursive" to false, "search" to false,
+            // sqlglot: `expressions` now optional; `udfs` added to With.arg_types.
+            "expressions" to false, "recursive" to false, "search" to false, "udfs" to false,
         )
     }
 }

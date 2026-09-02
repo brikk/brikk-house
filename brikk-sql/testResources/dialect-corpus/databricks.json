@@ -1,7 +1,12 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "databricks",
   "identity": [
+    {
+      "sql": "INSERT INTO target REPLACE USING (c1, c2) SELECT c1, c2 FROM source",
+      "expected": null,
+      "pretty": false
+    },
     {
       "sql": "CREATE TABLE foo (my_arr ARRAY<STRING COLLATE UTF8_BINARY>)",
       "expected": null,
@@ -129,6 +134,11 @@
     },
     {
       "sql": "CREATE TABLE table1 CLUSTER BY AUTO",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t (customer_id INT NOT NULL, ts TIMESTAMP NOT NULL, CONSTRAINT customer_features_pk PRIMARY KEY (customer_id, ts TIMESERIES))",
       "expected": null,
       "pretty": false
     },
@@ -418,6 +428,26 @@
       "pretty": false
     },
     {
+      "sql": "INSERT INTO t REPLACE WHERE a = 1 SELECT * FROM src",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "INSERT INTO t REPLACE WHERE a = 2 (SELECT * FROM src)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH s AS (SELECT * FROM src) INSERT INTO t REPLACE WHERE a = 1 SELECT * FROM s",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH s AS (SELECT * FROM src) INSERT INTO t REPLACE USING (a) SELECT * FROM s",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "SELECT c1:price, c1:price.foo, c1:price.bar[1]",
       "expected": null,
       "pretty": false
@@ -695,6 +725,14 @@
   ],
   "transpile": [
     {
+      "sql": "CREATE TABLE t (a INT, b TIMESTAMP, PRIMARY KEY (a, b TIMESERIES))",
+      "read": {},
+      "write": {
+        "databricks": "CREATE TABLE t (a INT, b TIMESTAMP, PRIMARY KEY (a, b TIMESERIES))",
+        "duckdb": "CREATE TABLE t (a INT, b TIMESTAMPTZ, PRIMARY KEY (a, b))"
+      }
+    },
+    {
       "sql": "SELECT SUBSTRING_INDEX('a.b.c.d', '.', 2)",
       "read": {},
       "write": {
@@ -738,7 +776,7 @@
       "read": {},
       "write": {
         "databricks": "CREATE TABLE foo (x INT GENERATED ALWAYS AS (YEAR(y)))",
-        "tsql": "CREATE TABLE foo (x AS YEAR(CAST(y AS DATE)))"
+        "tsql": "CREATE TABLE foo (x AS YEAR(y))"
       }
     },
     {
@@ -960,8 +998,8 @@
     }
   ],
   "stats": {
-    "identity_count": 138,
-    "transpile_count": 31,
+    "identity_count": 144,
+    "transpile_count": 32,
     "skipped_dynamic": 1
   }
 }

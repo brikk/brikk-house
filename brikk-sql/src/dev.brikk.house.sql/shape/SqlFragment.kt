@@ -1,15 +1,20 @@
 package dev.brikk.house.sql.shape
 
+import dev.brikk.house.sql.ast.Alias
 import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.CTE
+import dev.brikk.house.sql.ast.Func
+import dev.brikk.house.sql.ast.sqlNames
 import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.Parameter
+import dev.brikk.house.sql.ast.PipeCall
 import dev.brikk.house.sql.ast.PipeQuery
 import dev.brikk.house.sql.ast.Placeholder
 import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.SetOperation
+import dev.brikk.house.sql.ast.Star
 import dev.brikk.house.sql.ast.Subquery
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.args
@@ -18,12 +23,14 @@ import dev.brikk.house.sql.dialects.Dialect
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.optimizer.MappingSchema
 import dev.brikk.house.sql.optimizer.Node
+import dev.brikk.house.sql.optimizer.annotateNullability
 import dev.brikk.house.sql.optimizer.annotateTypes
 import dev.brikk.house.sql.optimizer.lineage
 import dev.brikk.house.sql.optimizer.lineageAll
 import dev.brikk.house.sql.optimizer.nestedSet
 import dev.brikk.house.sql.optimizer.qualify
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * BRIKK-NATIVE (no sqlglot counterpart): a single SQL statement as a composable value —
@@ -66,6 +73,138 @@ class SqlFragment(val sql: String, val dialect: String = "") {
 
     /** Whether the fragment is written in pipe (`|>`) syntax at the top level. */
     val isPipe: Boolean by lazy { ast is PipeQuery }
+
+    /**
+     * The root statement's node kind (AST class simple name): "Select", "Insert",
+     * "Command", "Pragma", ... Gate harnesses use this to detect statement-shaped
+     * passthrough (see [isRawPassthroughStatement]).
+     */
+    val rootKind: String by lazy { ast::class.simpleName ?: "Unknown" }
+
+    /**
+     * True when the root statement is a raw-passthrough shape: [Command] (unknown
+     * statement kept verbatim) or Pragma (engine-local directive). Such statements
+     * transpile as verbatim text with no cross-dialect semantics — a corpus gate
+     * should engine-skip them rather than trust the output.
+     */
+    val isRawPassthroughStatement: Boolean by lazy {
+        rootKind == "Command" || rootKind == "Pragma"
+    }
+
+    /**
+     * Transpiles this fragment to [target], returning the SQL together with the
+     * generator's collected `unsupported(...)` diagnostics — the "flagged but still
+     * emitted" channel (sqlglot semantics: unsupported_level WARN collects and
+     * continues). A non-empty [TranspileResult.unsupportedMessages] means the output
+     * is best-effort and should be reviewed / gate-skipped.
+     *
+     * [desugarPipes]: when true and the fragment is pipe syntax ([isPipe]), the AST is
+     * desugared to standard syntax (ast/PipeDesugar.kt, on a copy) before generating.
+     * Real engines don't speak `|>` — when targeting one with a pipe-syntax fragment,
+     * pass true (or pre-desugar manually via [toStandardSql]). The default false keeps
+     * the historical behavior of rendering the pipe stages verbatim.
+     */
+    fun transpileTo(
+        target: String,
+        pretty: Boolean = false,
+        trackSourceMap: Boolean = false,
+        desugarPipes: Boolean = false,
+    ): TranspileResult {
+        val generator = Dialects.forName(target)
+            .generator(pretty = pretty, sourceDialect = dialect.ifBlank { null })
+        // brikk-native: emit-span tracking (generator/SourceMap.kt) — off by default
+        generator.trackSpans = trackSourceMap
+        // Qualified call: the boolean param shadows the imported desugarPipes function.
+        val tree =
+            if (desugarPipes && isPipe) dev.brikk.house.sql.ast.desugarPipes(ast, copy = true)
+            else ast
+        val out = generator.generate(tree, copy = true)
+        return TranspileResult(
+            sql = out,
+            unsupportedMessages = generator.unsupportedMessages.toList(),
+            rootKind = rootKind,
+            isRawPassthroughStatement = isRawPassthroughStatement,
+            sourceMap = generator.lastSourceMap,
+        )
+    }
+
+    /**
+     * One-call "give me the executable SQL and a source map that corresponds to it".
+     *
+     * Real engines don't speak pipe syntax, so this ALWAYS desugars pipe fragments
+     * ([isPipe]) to the standard CTE-chain form before generating, and it tracks the
+     * source map by default. The returned [TranspileResult.sql] and
+     * [TranspileResult.sourceMap] come from the SAME single generator pass over the
+     * SAME (desugared) tree — they can never be from different renderings, so mapped
+     * positions never lie. See the identity invariant `sourceMap.output === sql`.
+     *
+     * This is the contract editor/plugin callers want; it is a thin, intent-revealing
+     * wrapper over [transpileTo] with `desugarPipes = true`.
+     */
+    fun toExecutable(
+        target: String,
+        pretty: Boolean = false,
+        trackSourceMap: Boolean = true,
+    ): TranspileResult =
+        transpileTo(
+            target = target,
+            pretty = pretty,
+            trackSourceMap = trackSourceMap,
+            desugarPipes = true,
+        )
+
+    /**
+     * Class-3 capability check: function names that would land in [target] SQL even
+     * though the target engine does not register them (silent-passthrough holes like
+     * duckdb's `read_parquet(...)` transpiled to Doris).
+     *
+     * Semantics: transpile to [target], re-parse the OUTPUT under the target dialect,
+     * collect function calls that would reach the engine as plain `NAME(args)` — i.e.
+     * unresolved ([Anonymous]) calls plus typed Func nodes with no dedicated renderer
+     * in the target generator (the generic fallback emits their name verbatim; e.g.
+     * duckdb's READ_PARQUET parses to a typed ReadParquet node everywhere but Doris has
+     * no renderer or registration for it). Names the target engine recognizes are
+     * cleared via [dev.brikk.house.sql.metadata.FunctionCatalog.isKnown]: registry hit
+     * (aliases included, case-insensitive) OR grammar-level builtin (e.g. Trino
+     * COALESCE — absent from SHOW FUNCTIONS but a parser special form); grammar-shaped
+     * functions with dedicated renderers (CAST, EXTRACT, ...) are engine syntax and
+     * never reported.
+     *
+     * Requires the target dialect to ship a function catalog (doris/trino/duckdb today);
+     * throws [ShapeError] otherwise. If the emitted SQL cannot be re-parsed under the
+     * target dialect, falls back to scanning this fragment's own AST (conservative).
+     *
+     * [desugarPipes] mirrors [transpileTo]'s flag so the checked output is the one a
+     * caller would actually ship to the engine.
+     */
+    fun unmappableFunctions(target: String, desugarPipes: Boolean = false): List<String> {
+        val targetDialect = Dialects.forName(target)
+        val catalog = targetDialect.functionCatalog ?: throw ShapeError(
+            "unmappableFunctions requires a function catalog for '$target' " +
+                "(available: dialects with Dialect.functionCatalog != null)."
+        )
+        val generator = targetDialect.generator()
+        val root = try {
+            targetDialect.parseOne(transpileTo(target, desugarPipes = desugarPipes).sql)
+        } catch (_: Exception) {
+            ast
+        }
+        val out = LinkedHashSet<String>()
+        for (node in root.walk(bfs = false)) {
+            when {
+                node is Anonymous -> {
+                    val name = node.name
+                    if (name.isNotEmpty() && !catalog.isKnown(name)) out.add(name)
+                }
+                node is Func && !generator.hasDedicatedRenderer(node::class) -> {
+                    val name = node.sqlNames().firstOrNull()?.uppercase() ?: continue
+                    if (!catalog.isKnown(name)) out.add(name)
+                }
+                else -> {}
+            }
+        }
+        return out.toList()
+    }
 
     /** The ordered pipe stage nodes (Pipe* classes); empty when [isPipe] is false. */
     val stages: List<Expression> by lazy {
@@ -110,7 +249,15 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      */
     private val knownFunctionNames: Set<String> by lazy {
         val p = dialectObj.parser()
-        p.functions.keys + p.functionParsers.keys + p.noParenFunctionParsers.keys
+        val fromParser = p.functions.keys + p.functionParsers.keys + p.noParenFunctionParsers.keys
+        // When the dialect ships a full engine catalog (e.g. Doris: 800+ registered
+        // functions vs the handful in the translation registries), slot detection becomes
+        // engine-exact: any registered function name is a real function, not a slot.
+        val catalog = dialectObj.functionCatalog ?: return@lazy fromParser
+        // Catalog names are engine-native case (Doris uppercase, DuckDB/Trino lowercase);
+        // the membership check uppercases, so normalize here.
+        fromParser + catalog.functions.flatMap { def -> listOf(def.name) + def.aliases }
+            .map { it.uppercase() }
     }
 
     /**
@@ -118,11 +265,20 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * position (FROM/JOIN/pipe-head sources) whose names are not known functions of
      * the dialect. Names are reported as written; slot binding matches them
      * case-insensitively (SQL function-name semantics).
+     *
+     * `|> CALL tvf(...)` stages count too: on desugar the TVF lands in table position
+     * with the pipe input as its first argument (see ast/PipeDesugar.kt), i.e. exactly
+     * the slot-candidate shape — so an unknown CALLed function is offered as a slot
+     * pre-desugar as well.
      */
     val tableSlots: List<String> by lazy {
         val out = LinkedHashSet<String>()
-        for (table in ast.findAll(Table::class, bfs = false)) {
-            val fn = table.thisArg as? Anonymous ?: continue
+        for (node in ast.walk(bfs = false)) {
+            val fn = when (node) {
+                is Table -> node.thisArg as? Anonymous
+                is PipeCall -> node.thisArg as? Anonymous
+                else -> null
+            } ?: continue
             val name = fn.name
             if (name.isNotEmpty() && name.uppercase() !in knownFunctionNames) out.add(name)
         }
@@ -165,11 +321,64 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      *     from the annotated nodes rendered as base-dialect SQL ("UNKNOWN" when
      *     unresolved). For set operations the left-most branch names the output.
      *
-     * [ColumnShape.nullable] is left null for now — the annotator's nonnull metadata
-     * exists but is not surfaced yet (future work).
+     * [ColumnShape.nullable] is populated by the BRIKK-NATIVE nullability pass
+     * ([annotateNullability], run after qualify+annotateTypes): tri-state
+     * true/false/null (null = unknown, never guessed). Each projection's verdict is read
+     * off the (possibly aliased) projection expression.
      */
-    fun outputShape(inputs: ShapeCatalog = ShapeCatalog.EMPTY): Shape {
-        val prepared = prepareTree(inputs)
+    fun outputShape(inputs: ShapeCatalog = ShapeCatalog.EMPTY): Shape =
+        outputShapeOf(ast, inputs)
+
+    /**
+     * Output shape after EACH user-visible pipe stage, INCLUDING the `FROM` head as
+     * stage 0. The list aligns 1:1 with `PipeStageSplitter.split(sql).stages` — the
+     * user-visible stage model that also drives caret->stage mapping and run-to-stage
+     * UI ("stage 2/5"). Empty when not [isPipe].
+     *
+     * Reference list & indexing (the single convention both APIs share):
+     *  - `stageShapes().size == PipeStageSplitter.split(sql).stages.size`;
+     *  - element 0 = the base relation (the `FROM` head, catalog-resolved; an unbound
+     *    source survives as a single `"*"` column);
+     *  - element `n` = the fragment's scope AFTER splitter stage `n`;
+     *  - completion at stage `n` consumes element `n - 1` (its input scope); at stage 0
+     *    that input is the catalog base itself.
+     *
+     * The same list powers per-stage lineage ("column c first exists at stage 2").
+     *
+     * NOTE: [stages] is the raw AST accessor and intentionally EXCLUDES the head (the
+     * head lives in `PipeQuery.this`, not `PipeQuery.expressions`), so
+     * `stageShapes().size == stages.size + 1`. Index editor state against
+     * `PipeStageSplitter.stages` / `stageShapes`, never against [stages].
+     *
+     * Each shape is resolved exactly like [outputShape] (desugar -> qualify ->
+     * annotate) on the pipeline truncated after stage `n`, so an alias enters scope at
+     * precisely the stage that projects it — no alias is offered before it exists.
+     *
+     * Cost is O(stages) qualify passes over growing trees; fine for editor-scale
+     * pipelines. When exact per-stage columns matter, bind a [ShapeCatalog] so stars
+     * resolve (an unbound star survives as a single "*" column, same as [outputShape]).
+     */
+    fun stageShapes(inputs: ShapeCatalog = ShapeCatalog.EMPTY): List<Shape> {
+        val pipe = ast as? PipeQuery ?: return emptyList()
+        val head = pipe.thisArg as Expression
+        val allStages = stages
+        // n == 0 truncates to the bare head (scope after FROM); n == allStages.size is
+        // the full pipeline (== outputShape()). One element per user-visible stage.
+        return List(allStages.size + 1) { n ->
+            val truncated = PipeQuery(
+                args(
+                    "this" to head.copy(),
+                    "expressions" to allStages.subList(0, n)
+                        .map { it.copy() }
+                        .toMutableList(),
+                )
+            )
+            outputShapeOf(truncated, inputs)
+        }
+    }
+
+    private fun outputShapeOf(tree: Expression, inputs: ShapeCatalog): Shape {
+        val prepared = prepareTree(tree, inputs)
         val schema = buildSchema(inputs)
         val qualified = qualify(
             prepared,
@@ -183,10 +392,18 @@ class SqlFragment(val sql: String, val dialect: String = "") {
             dialect = dialectObj,
             expressionMetadata = dialectObj.expressionMetadata + SHAPE_LAYER_TYPING,
         )
+        // brikk-native: nullability lives in a sidecar (keyed by node identity), NOT in
+        // node meta — the annotated-serde gates compare our Serde dumps exact-equal, so
+        // an extra meta key would fail them. See AnnotateNullability.kt.
+        val nullability = annotateNullability(annotated, inputs = inputs, dialect = dialectObj)
         val selects = outermostSelect(annotated).selects.filterIsInstance<Expression>()
         return Shape(
             selects.map { sel ->
-                ColumnShape(name = sel.aliasOrName, type = renderType(sel.type))
+                ColumnShape(
+                    name = sel.aliasOrName,
+                    type = renderType(sel.type),
+                    nullable = nullability.nullableOf(sel),
+                )
             }
         )
     }
@@ -205,7 +422,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         column: String? = null,
         inputs: ShapeCatalog = ShapeCatalog.EMPTY,
     ): Map<String, Set<String>> {
-        val prepared = prepareTree(inputs)
+        val prepared = prepareTree(ast, inputs)
         val schema = buildSchema(inputs)
         val nodes: Map<String, Node> = if (column == null) {
             lineageAll(prepared, schema = schema, dialect = dialectObj)
@@ -235,15 +452,12 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         var tree = desugarPipes(ast, copy = true)
         if (expandStars && inputs != null) {
             tree = bindSlots(tree, inputs)
-            tree = qualify(
-                tree,
-                dialect = dialectObj,
-                schema = buildSchema(inputs),
-                validateQualifyColumns = false,
-                quoteIdentifiers = false,
-            )
+            tree = expandStarModifiers(tree, buildSchema(inputs), dialectObj)
         }
-        return Dialects.forName(target).generate(tree)
+        // Source-aware: pass this fragment's dialect so same-dialect desugaring (the common
+        // toStandardSql case, target defaults to `dialect`) stays faithful and never rewrites
+        // native functions (e.g. ClickHouse lower stays LOWER, not lowerUTF8).
+        return Dialects.forName(target).generate(tree, sourceDialect = dialect.ifBlank { null })
     }
 
     /**
@@ -280,10 +494,10 @@ class SqlFragment(val sql: String, val dialect: String = "") {
     // ------------------------------------------------------------------ internals
 
     /** Copy + desugar pipes + rewrite bound slots into plain table references. */
-    private fun prepareTree(inputs: ShapeCatalog): Expression {
-        var tree = ast.copy()
-        if (isPipe) tree = desugarPipes(tree, copy = false)
-        return bindSlots(tree, inputs)
+    private fun prepareTree(tree: Expression, inputs: ShapeCatalog): Expression {
+        var t = tree.copy()
+        if (t is PipeQuery) t = desugarPipes(t, copy = false)
+        return bindSlots(t, inputs)
     }
 
     /**
@@ -415,6 +629,51 @@ data class ScalarParam(
     val positions: List<Int>,
 )
 
+/**
+ * Result of [SqlFragment.transpileTo]: the emitted SQL plus the gate-relevant
+ * diagnostics. A corpus harness's "runnable" predicate is typically:
+ * `unsupportedMessages.isEmpty() && !isRawPassthroughStatement &&
+ *  fragment.unmappableFunctions(target).isEmpty()` (plus its own explicit skip-list
+ * for content-divergent sources like information_schema).
+ */
+@Serializable
+data class TranspileResult(
+    val sql: String,
+    val unsupportedMessages: List<String>,
+    val rootKind: String,
+    val isRawPassthroughStatement: Boolean,
+    /**
+     * brikk-native: emit-span map of [sql] back to the parsed AST / original source
+     * (see generator/SourceMap.kt). Populated only by
+     * `transpileTo(trackSourceMap = true)`. Excluded from serialization (@Transient):
+     * it holds live AST nodes; serialize [SourceMap.describeEntries] yourself if a
+     * projection is needed.
+     */
+    @Transient val sourceMap: dev.brikk.house.sql.generator.SourceMap? = null,
+) {
+    /**
+     * brikk-native payoff API: maps a 1-based (line, col) position in the OUTPUT
+     * [sql] (e.g. an engine error position) back to a position in the ORIGINAL source
+     * the fragment was parsed from. The returned [dev.brikk.house.sql.generator.SourcePos]
+     * carries the full token range (lineStart/lineEnd/colStart/colEnd) so an editor can
+     * span the whole offending token.
+     *
+     * Column convention: [col] is 1-based. Engines that report 0-based columns (e.g.
+     * Doris/ANTLR `pos`) must add 1 before calling — that normalization is the caller's.
+     *
+     * Contract: null when no source map was tracked, or (default [exact]) when no
+     * positioned node covers the location — a deliberate "no squiggle beats a wrong
+     * squiggle". Pass `exact = false` to opt into the lenient nearest-positioned-token
+     * fallback (useful for end-of-statement errors that sit past the last token).
+     */
+    fun mapErrorToSource(
+        line: Int,
+        col: Int,
+        exact: Boolean = true,
+    ): dev.brikk.house.sql.generator.SourcePos? =
+        sourceMap?.sourcePosition(line, col, exact)
+}
+
 /** Serializable, statically-derivable summary of a fragment (compiler-plugin seed). */
 @Serializable
 data class FragmentDescription(
@@ -433,3 +692,80 @@ data class FragmentContract(
     val output: Shape,
     val dependencies: Map<String, Set<String>>,
 )
+
+/**
+ * Any-engine post-pass for the star EXCEPT/REPLACE/RENAME modifiers (BigQuery-isms) the
+ * pipe SET/DROP/RENAME desugars produce (see ast/PipeDesugar.kt): qualifies [tree]
+ * against [schema] so qualify()'s star expansion resolves every star — modifiers
+ * included — to an explicit column list, valid on engines with no star-modifier
+ * support (e.g. MySQL). [tree] is qualified in place; pass a disposable copy.
+ *
+ * Validation (googlesql spec: "Each referenced column must exist exactly once in the
+ * input table", docs/pipe-syntax.md ~664 SET / ~763 RENAME): once a star with
+ * REPLACE/RENAME modifiers has been expanded, the target column must have resolved —
+ * a RENAME of an unknown column (no `old AS new` projection materialized) or a
+ * SET/REPLACE of an unknown column throws [ShapeError]. Modifiers on stars whose
+ * source has no schema entry survive unexpanded and are not validated (same lenient
+ * posture as `validateQualifyColumns = false`).
+ */
+fun expandStarModifiers(
+    tree: Expression,
+    schema: Any?,
+    dialect: Dialect = Dialects.BASE,
+): Expression {
+    fun renamePairs(root: Expression): Set<Pair<String, String>> =
+        root.findAll(Star::class)
+            .flatMap { star ->
+                ((star.args["rename"] as? List<*>) ?: emptyList<Any?>())
+                    .filterIsInstance<Alias>()
+                    .map { (it.thisArg as Expression).name.lowercase() to it.alias.lowercase() }
+            }
+            .toSet()
+
+    fun replaceTargets(root: Expression): Set<String> =
+        root.findAll(Star::class)
+            .flatMap { star ->
+                ((star.args["replace"] as? List<*>) ?: emptyList<Any?>())
+                    .filterIsInstance<Alias>()
+                    .map { it.alias.lowercase() }
+            }
+            .toSet()
+
+    val requestedRenames = renamePairs(tree)
+    val requestedReplaces = replaceTargets(tree)
+
+    val qualified = qualify(
+        tree,
+        dialect = dialect,
+        schema = schema,
+        validateQualifyColumns = false,
+        quoteIdentifiers = false,
+    )
+
+    // Modifiers still attached to surviving stars could not be resolved (no schema for
+    // their source) — exempt from validation.
+    val unresolvedRenames = renamePairs(qualified)
+    val unresolvedReplaces = replaceTargets(qualified)
+
+    val outputAliases =
+        qualified.findAll(Alias::class).map { it.alias.lowercase() }.toSet()
+
+    for ((old, new) in requestedRenames - unresolvedRenames) {
+        if (new !in outputAliases) {
+            throw ShapeError(
+                "Cannot RENAME unknown column '$old': it does not exist in the " +
+                    "resolved input columns."
+            )
+        }
+    }
+    for (target in requestedReplaces - unresolvedReplaces) {
+        if (target !in outputAliases) {
+            throw ShapeError(
+                "Cannot SET/REPLACE unknown column '$target': it does not exist in " +
+                    "the resolved input columns."
+            )
+        }
+    }
+
+    return qualified
+}

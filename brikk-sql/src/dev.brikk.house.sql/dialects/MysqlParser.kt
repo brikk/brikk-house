@@ -11,6 +11,7 @@ import dev.brikk.house.sql.ast.BitwiseOrAgg
 import dev.brikk.house.sql.ast.BitwiseXorAgg
 import dev.brikk.house.sql.ast.Cast
 import dev.brikk.house.sql.ast.Column
+import dev.brikk.house.sql.ast.ColumnConstraint
 import dev.brikk.house.sql.ast.ColumnDef
 import dev.brikk.house.sql.ast.ColumnPrefix
 import dev.brikk.house.sql.ast.ComputedColumnConstraint
@@ -275,6 +276,34 @@ open class MysqlParser(
             return expression(RenameIndex(args("this" to old, "to" to new)))
         }
         return super.parseAlterTableRename()
+    }
+
+    // sqlglot #8006: MySQLParser._parse_range — `x SOUNDS LIKE y` -> SOUNDEX(x) = SOUNDEX(y)
+    // via text-sequence matching (no longer a single SOUNDS_LIKE token).
+    override fun parseRange(this_: Expression?): Expression? {
+        var current = this_ ?: parseBitwise()
+        if (matchTextSeq("SOUNDS", "LIKE")) {
+            current = expression(
+                EQ(
+                    args(
+                        "this" to expression(Soundex(args("this" to current))),
+                        "expression" to expression(Soundex(args("this" to parseBitwise()))),
+                    )
+                )
+            )
+            if (match(TokenType.IS, advance = false)) {
+                current = expression(Paren(args("this" to current)))
+            }
+        }
+        return super.parseRange(current)
+    }
+
+    // sqlglot: MySQLParser._parse_column_constraint
+    override fun parseColumnConstraint(): Expression? {
+        if (match(TokenType.KEY)) {
+            return expression(ColumnConstraint(args("kind" to parsePrimaryKey())))
+        }
+        return super.parseColumnConstraint()
     }
 
     // sqlglot: MySQLParser._parse_alter_drop_action
@@ -796,16 +825,8 @@ object MysqlParserTables {
     // sqlglot: MySQLParser.RANGE_PARSERS
     val RANGE_PARSERS: Map<TokenType, (Parser, Expression?) -> Expression?> =
         BaseParserTables.RANGE_PARSERS + mapOf<TokenType, (Parser, Expression?) -> Expression?>(
-            TokenType.SOUNDS_LIKE to { p, this_ ->
-                p.expression(
-                    EQ(
-                        args(
-                            "this" to p.expression(Soundex(args("this" to this_))),
-                            "expression" to p.expression(Soundex(args("this" to p.parseTerm()))),
-                        )
-                    )
-                )
-            },
+            // sqlglot #8006: `SOUNDS LIKE` is no longer a single token; handled in
+            // MysqlParser.parseRange via text-sequence matching instead.
             TokenType.MEMBER_OF to { p, this_ ->
                 p.expression(
                     JSONArrayContains(
@@ -837,6 +858,15 @@ object MysqlParserTables {
         put("CURDATE", BaseParserTables.FUNCTIONS.getValue("CURRENT_DATE"))
         put("CURTIME", BaseParserTables.FUNCTIONS.getValue("CURRENT_TIME"))
         put("DATE") { a -> TsOrDsToDate(args("this" to seqGet(a, 0))) }
+        put("DATEDIFF") {
+            a -> DateDiff(
+                args(
+                    "this" to seqGet(a, 0),
+                    "expression" to seqGet(a, 1),
+                    "date_part_boundary" to true,
+                )
+            )
+        }
         put("DATE_ADD", buildDateDeltaWithInterval { a -> DateAdd(a) })
         put("DATE_FORMAT") { a ->
             TimeToStr(
@@ -856,6 +886,19 @@ object MysqlParserTables {
         put("FROM_UNIXTIME") { a ->
             dev.brikk.house.sql.ast.UnixToTime(
                 args("this" to seqGet(a, 0), "format" to mysqlFormatTime(seqGet(a, 1)))
+            )
+        }
+        // sqlglot: parser FUNCTIONS[LEAST/GREATEST] with MySQL.LEAST_GREATEST_IGNORES_NULLS
+        // = False (MySQL and Doris GREATEST/LEAST return NULL when any argument is NULL,
+        // unlike the base default) — read by e.g. DuckdbGenerator.greatestLeastSql.
+        put("GREATEST") { a ->
+            dev.brikk.house.sql.ast.Greatest(
+                args("this" to seqGet(a, 0), "expressions" to a.drop(1), "ignore_nulls" to false)
+            )
+        }
+        put("LEAST") { a ->
+            dev.brikk.house.sql.ast.Least(
+                args("this" to seqGet(a, 0), "expressions" to a.drop(1), "ignore_nulls" to false)
             )
         }
         // sqlglot: dialect.isnull_to_is_null
@@ -1012,6 +1055,7 @@ object MysqlParserTables {
     // sqlglot: MySQLParser.CONSTRAINT_PARSERS
     val CONSTRAINT_PARSERS: Map<String, (Parser) -> Expression?> =
         BaseParserTables.CONSTRAINT_PARSERS + mapOf<String, (Parser) -> Expression?>(
+            "BINARY" to { p -> p.expression(dev.brikk.house.sql.ast.BinaryColumnConstraint()) },
             "FULLTEXT" to { p -> (p as MysqlParser).parseIndexConstraint(kind = "FULLTEXT") },
             "INDEX" to { p -> (p as MysqlParser).parseIndexConstraint() },
             "KEY" to { p -> (p as MysqlParser).parseIndexConstraint() },

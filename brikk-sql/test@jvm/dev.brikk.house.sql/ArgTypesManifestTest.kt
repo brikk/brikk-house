@@ -17,14 +17,8 @@ import kotlin.test.fail
  */
 class ArgTypesManifestTest {
 
-    private fun loadManifest() = run {
-        val stream = javaClass.classLoader.getResourceAsStream("ast-corpus/arg-types-manifest.json")
-            ?: java.io.File("brikk-sql/testResources/ast-corpus/arg-types-manifest.json")
-                .takeIf { it.exists() }
-                ?.inputStream()
-            ?: fail("arg-types-manifest.json not found on classpath or filesystem")
-        stream.use { Json.parseToJsonElement(it.readBytes().decodeToString()) }.jsonObject
-    }
+    private fun loadManifest() =
+        Json.parseToJsonElement(testResource("ast-corpus/arg-types-manifest.json")).jsonObject
 
     @Test
     fun argTypesMatchManifest() {
@@ -75,7 +69,9 @@ class ArgTypesManifestTest {
             "NATIVE_EXPRESSION_CLASSES out of sync with registry NATIVE section",
         )
         for ((name, entry) in native) {
-            assertEquals("brikk.pipes", entry.module, "$name: native class must use a brikk module")
+            if (!entry.module.startsWith("brikk.")) {
+                fail("$name: native class must use a brikk module, got ${entry.module}")
+            }
             if (name in classes.keys) fail("$name: native class collides with a Python manifest class")
         }
         assertEquals(

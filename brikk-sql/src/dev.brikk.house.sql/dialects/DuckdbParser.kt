@@ -13,7 +13,9 @@ import dev.brikk.house.sql.ast.ArrayIntersect
 import dev.brikk.house.sql.ast.ArrayMax
 import dev.brikk.house.sql.ast.ArrayMin
 import dev.brikk.house.sql.ast.ArrayOverlaps
+import dev.brikk.house.sql.ast.ArrayPosition
 import dev.brikk.house.sql.ast.ArrayPrepend
+import dev.brikk.house.sql.ast.ArraySlice
 import dev.brikk.house.sql.ast.Attach
 import dev.brikk.house.sql.ast.AttachOption
 import dev.brikk.house.sql.ast.BitwiseAndAgg
@@ -27,6 +29,7 @@ import dev.brikk.house.sql.ast.CosineDistance
 import dev.brikk.house.sql.ast.CurrentCatalog
 import dev.brikk.house.sql.ast.CurrentDate
 import dev.brikk.house.sql.ast.CurrentTime
+import dev.brikk.house.sql.ast.CurrentTimestamp
 import dev.brikk.house.sql.ast.CurrentVersion
 import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.DataType
@@ -37,6 +40,7 @@ import dev.brikk.house.sql.ast.DateFromParts
 import dev.brikk.house.sql.ast.Decode
 import dev.brikk.house.sql.ast.Detach
 import dev.brikk.house.sql.ast.Encode
+import dev.brikk.house.sql.ast.EndsWith
 import dev.brikk.house.sql.ast.EuclideanDistance
 import dev.brikk.house.sql.ast.Explode
 import dev.brikk.house.sql.ast.Expression
@@ -84,6 +88,7 @@ import dev.brikk.house.sql.ast.TimeToUnix
 import dev.brikk.house.sql.ast.TimestampFromParts
 import dev.brikk.house.sql.ast.ToMap
 import dev.brikk.house.sql.ast.Transform
+import dev.brikk.house.sql.ast.Unhex
 import dev.brikk.house.sql.ast.UnixToTime
 import dev.brikk.house.sql.ast.Var
 import dev.brikk.house.sql.ast.args
@@ -93,6 +98,7 @@ import dev.brikk.house.sql.parser.NodeFactory
 import dev.brikk.house.sql.parser.Parser
 import dev.brikk.house.sql.parser.ParseError
 import dev.brikk.house.sql.parser.TokenType
+import dev.brikk.house.sql.parser.TokenError
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.applyTimeUnitCoercion
 import dev.brikk.house.sql.parser.binaryRangeParser
@@ -162,6 +168,8 @@ internal fun duckdbToJsonPath(path: Expression?): Expression? {
             return parseJsonPath(text)
         } catch (e: ParseError) {
             // sqlglot: STRICT_JSON_PATH_SYNTAX=False — no warning, fall through
+        } catch (e: TokenError) {
+            // A string key containing quote characters is valid DuckDB JSON syntax.
         }
     }
     return path
@@ -208,8 +216,8 @@ open class DuckdbParser(
     // sqlglot: DuckDB.NULL_ORDERING = "nulls_are_last"
     override val nullOrdering: String get() = "nulls_are_last"
 
-    // sqlglot: DuckDB.SAFE_DIVISION = True
-    override val safeDivision: Boolean get() = true
+    // sqlglot: DuckDB.CONCAT_COALESCE = True
+    override val concatCoalesce: Boolean get() = true
 
     // sqlglot: DuckDB.INDEX_OFFSET = 1
     override val indexOffset: Int get() = 1
@@ -561,6 +569,7 @@ object DuckdbParserTables {
         put("BIT_AND", fromArgList(listOf("this"), false) { BitwiseAndAgg(it) })
         put("BIT_OR", fromArgList(listOf("this"), false) { BitwiseOrAgg(it) })
         put("BIT_XOR", fromArgList(listOf("this"), false) { BitwiseXorAgg(it) })
+        put("FROM_HEX", fromArgList(listOf("this", "expression"), false) { Unhex(it) })
         // sqlglot: parser.py FUNCTIONS["CONCAT"/"CONCAT_WS"] bake in
         // safe=not dialect.STRICT_STRING_CONCAT (DuckDB: False -> safe=true) and
         // coalesce=dialect.CONCAT[_WS]_COALESCE (DuckDB: true)
@@ -594,6 +603,10 @@ object DuckdbParserTables {
         }
         put("GENERATE_SERIES", buildGenerateSeries())
         put("GET_CURRENT_TIME", fromArgList(listOf("this"), false) { CurrentTime(it) })
+        // BUGS-doris-generator-mappings enhancement: get_current_timestamp() -> the
+        // canonical CurrentTimestamp node, which DorisGenerator already renders as NOW().
+        // Was previously Anonymous GET_CURRENT_TIMESTAMP -> unmappable refusal.
+        put("GET_CURRENT_TIMESTAMP") { _ -> CurrentTimestamp() }
         put("GET_BIT") { a ->
             Getbit(
                 args("this" to seqGet(a, 0), "expression" to seqGet(a, 1), "zero_is_msb" to true)
@@ -644,6 +657,21 @@ object DuckdbParserTables {
         )
         put("LIST_MAX", fromArgList(listOf("this"), false) { ArrayMax(it) })
         put("LIST_MIN", fromArgList(listOf("this"), false) { ArrayMin(it) })
+        // BUGS-doris-generator-mappings enhancement: list_position(list, elem) -> the
+        // canonical ArrayPosition node (renders ARRAY_POSITION, which Doris has; verified
+        // identical). Was previously Anonymous LIST_POSITION -> unmappable refusal.
+        put(
+            "LIST_POSITION",
+            fromArgList(listOf("this", "expression", "zero_based"), false) { ArrayPosition(it) },
+        )
+        // BUGS-doris-generator-mappings enhancement: list_slice(list, begin, END) -> the
+        // canonical ArraySlice node. DuckDB uses an END index; Doris ARRAY_SLICE uses a
+        // LENGTH, so DorisGenerator.arraysliceSql converts end->length. Was Anonymous
+        // LIST_SLICE -> unmappable refusal.
+        put(
+            "LIST_SLICE",
+            fromArgList(listOf("this", "start", "end", "step"), false) { ArraySlice(it) },
+        )
         put("LIST_PREPEND", ::buildArrayPrependDuckdb)
         put("LIST_REVERSE_SORT", ::buildSortArrayDesc)
         put("LIST_SORT", fromArgList(listOf("this", "asc", "nulls_first"), false) { SortArray(it) })
@@ -680,6 +708,10 @@ object DuckdbParserTables {
                 )
             )
         }
+        // BUGS-doris-generator-mappings enhancement: suffix(string, search) -> the
+        // canonical EndsWith node (renders ENDS_WITH, which Doris has; verified identical).
+        // Was previously Anonymous SUFFIX -> unmappable refusal.
+        put("SUFFIX", fromArgList(listOf("this", "expression"), false) { EndsWith(it) })
         put("SHA256") { a ->
             SHA2(args("this" to seqGet(a, 0), "length" to Literal.number("256")))
         }

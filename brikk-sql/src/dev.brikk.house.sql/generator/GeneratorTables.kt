@@ -201,6 +201,8 @@ object GeneratorTables {
         reg(Literal::class) { e -> literalSql(e as Literal) }
         reg(National::class) { e -> nationalSql(e as National) }
         reg(RawString::class) { e -> rawstringSql(e as RawString) }
+        reg(UnicodeString::class) { e -> unicodestringSql(e as UnicodeString) }
+        reg(ForIn::class) { e -> forinSql(e as ForIn) }
         reg(Null::class) { e -> nullSql(e as Null) }
         reg(BooleanNode::class) { e -> booleanSql(e as BooleanNode) }
         reg(Star::class) { e -> starSql(e as Star) }
@@ -223,6 +225,7 @@ object GeneratorTables {
         }
         // sqlglot: TRANSFORMS[exp.AssumeColumnConstraint]
         reg(AssumeColumnConstraint::class) { e -> "ASSUME (${sql(e, "this")})" }
+        reg(BinaryColumnConstraint::class) { _ -> "BINARY" }
         reg(Parameter::class) { e -> parameterSql(e as Parameter) }
         reg(SessionParameter::class) { e -> sessionparameterSql(e as SessionParameter) }
         reg(Placeholder::class) { e -> placeholderSql(e as Placeholder) }
@@ -304,6 +307,11 @@ object GeneratorTables {
         reg(PipeUnpivot::class) { e -> pipeunpivotSql(e as PipeUnpivot) }
         reg(PipeJoin::class) { e -> pipejoinSql(e as PipeJoin) }
         reg(PipeSetOperation::class) { e -> pipesetoperationSql(e as PipeSetOperation) }
+        reg(PipeSet::class) { e -> pipesetSql(e as PipeSet) }
+        reg(PipeDrop::class) { e -> pipedropSql(e as PipeDrop) }
+        reg(PipeRename::class) { e -> piperenameSql(e as PipeRename) }
+        reg(PipeCall::class) { e -> pipecallSql(e as PipeCall) }
+        reg(PipeWindow::class) { e -> pipewindowSql(e as PipeWindow) }
 
         // --- window ---
         reg(Window::class) { e -> windowSql(e as Window) }
@@ -325,6 +333,7 @@ object GeneratorTables {
         reg(Sub::class) { e -> binary(e as Binary, "-") }
         reg(Mul::class) { e -> binary(e as Binary, "*") }
         reg(Div::class) { e -> divSql(e as Div) }
+        reg(SafeDivide::class) { e -> safedivideSql(e as SafeDivide) }
         reg(IntDiv::class) { e -> intdivSql(e as IntDiv) }
         reg(Mod::class) { e -> binary(e as Binary, "%") }
         reg(DPipe::class) { e -> dpipeSql(e as DPipe) }
@@ -380,6 +389,9 @@ object GeneratorTables {
         reg(Lambda::class) { e -> lambdaSql(e as Lambda) }
         reg(AtIndex::class) { e -> atindexSql(e as AtIndex) }
         reg(AtTimeZone::class) { e -> attimezoneSql(e as AtTimeZone) }
+        reg(AtLocal::class) { e -> atlocalSql(e as AtLocal) }
+        reg(MatchPredicate::class) { e -> matchpredicateSql(e as MatchPredicate) }
+        reg(UniquePredicate::class) { e -> uniquepredicateSql(e as UniquePredicate) }
         reg(FromTimeZone::class) { e -> fromtimezoneSql(e as FromTimeZone) }
         reg(NextValueFor::class) { e -> nextvalueforSql(e as NextValueFor) }
         reg(Comprehension::class) { e -> comprehensionSql(e as Comprehension) }
@@ -408,6 +420,20 @@ object GeneratorTables {
         reg(Rand::class) { e -> randSql(e as Rand) }
         reg(ParseJSON::class) { e -> parsejsonSql(e as ParseJSON) }
         reg(Struct::class) { e -> structSql(e as Struct) }
+        // sqlglot bac1a897b: grammar-shaped ML/AI and table-valued functions.
+        reg(Predict::class) { e -> predictSql(e as Predict) }
+        reg(GenerateEmbedding::class) { e -> generateembeddingSql(e as GenerateEmbedding) }
+        reg(GenerateText::class) { e -> generatetextSql(e as GenerateText) }
+        reg(GenerateTable::class) { e -> generatetableSql(e as GenerateTable) }
+        reg(GenerateBool::class) { e -> generateboolSql(e as GenerateBool) }
+        reg(GenerateInt::class) { e -> generateintSql(e as GenerateInt) }
+        reg(GenerateDouble::class) { e -> generatedoubleSql(e as GenerateDouble) }
+        reg(MLTranslate::class) { e -> mltranslateSql(e as MLTranslate) }
+        reg(MLForecast::class) { e -> mlforecastSql(e as MLForecast) }
+        reg(AIForecast::class) { e -> aiforecastSql(e as AIForecast) }
+        reg(FeaturesAtTime::class) { e -> featuresattimeSql(e as FeaturesAtTime) }
+        reg(VectorSearch::class) { e -> vectorsearchSql(e as VectorSearch) }
+        reg(GapFill::class) { e -> gapfillSql(e as GapFill) }
         reg(Ceil::class) { e -> ceilFloor(e) } // sqlglot: TRANSFORMS[Ceil]
         reg(Floor::class) { e -> ceilFloor(e) } // sqlglot: TRANSFORMS[Floor]
         reg(VarMap::class) { e -> func("MAP", e.args["keys"], e.args["values"]) }
@@ -455,6 +481,10 @@ object GeneratorTables {
         reg(Update::class) { e -> updateSql(e as Update) }
         reg(Kill::class) { e -> killSql(e as Kill) }
         reg(Pragma::class) { e -> pragmaSql(e as Pragma) }
+        reg(Declare::class) { e -> declareSql(e as Declare) }
+        reg(DeclareItem::class) { e -> declareitemSql(e as DeclareItem) }
+        reg(QueryTransform::class) { e -> querytransformSql(e as QueryTransform) }
+        reg(Export::class) { e -> exportSql(e as Export) }
         reg(SetNode::class) { e -> setSql(e as SetNode) }
         reg(SetItem::class) { e -> setitemSql(e as SetItem) }
         reg(Use::class) { e -> useSql(e as Use) }
@@ -465,6 +495,17 @@ object GeneratorTables {
         reg(Rollback::class) { e -> rollbackSql(e as Rollback) }
         reg(LoadData::class) { e -> loaddataSql(e as LoadData) }
         reg(Return::class) { e -> returnSql(e as Return) }
+        // sqlglot: routine / inline-UDF body nodes (Trino WITH FUNCTION, etc.)
+        reg(EndStatement::class) { _ -> "END" }
+        reg(Block::class) { e -> blockSql(e as Block) }
+        reg(FunctionSpecification::class) { e -> functionspecificationSql(e as FunctionSpecification) }
+        reg(IfBlock::class) { e -> ifblockSql(e as IfBlock) }
+        reg(CaseStatement::class) { e -> casestatementSql(e as CaseStatement) }
+        reg(WhileBlock::class) { e -> whileblockSql(e as WhileBlock) }
+        reg(LoopBlock::class) { e -> loopblockSql(e as LoopBlock) }
+        reg(RepeatBlock::class) { e -> repeatblockSql(e as RepeatBlock) }
+        reg(Leave::class) { e -> leaveSql(e as Leave) }
+        reg(Iterate::class) { e -> iterateSql(e as Iterate) }
         reg(Partition::class) { e -> partitionSql(e as Partition) }
         reg(PartitionRange::class) { e -> partitionrangeSql(e as PartitionRange) }
         reg(Grant::class) { e -> grantSql(e as Grant) }
@@ -534,6 +575,7 @@ object GeneratorTables {
         reg(PartitionByRangeProperty::class) { e -> partitionbyrangepropertySql(e as PartitionByRangeProperty) }
         reg(AddConstraint::class) { e -> addconstraintSql(e as AddConstraint) }
         reg(AddPartition::class) { e -> addpartitionSql(e as AddPartition) }
+        reg(AlterModifySqlSecurity::class) { e -> altermodifysqlsecuritySql(e as AlterModifySqlSecurity) }
 
         // --- schema objects ---
         reg(ColumnDef::class) { e -> columndefSql(e as ColumnDef) }
@@ -631,6 +673,8 @@ object GeneratorTables {
         reg(WithOperator::class) { e -> "${sql(e, "this")} WITH ${sql(e, "op")}" }
         reg(JSONBContainsAnyTopKeys::class) { e -> binary(e as Binary, "?|") }
         reg(JSONBContainsAllTopKeys::class) { e -> binary(e as Binary, "?&") }
+        // sqlglot #8156: JSONBContainsTopKey renders as the `?` operator.
+        reg(JSONBContainsTopKey::class) { e -> binary(e as Binary, "?") }
         reg(JSONBDeleteAtPath::class) { e -> binary(e as Binary, "#-") }
         reg(JSONBPathExists::class) { e -> binary(e as Binary, "@?") }
 
@@ -688,6 +732,10 @@ object GeneratorTables {
             "ON COMMIT ${if (e.args["delete"] == true) "DELETE" else "PRESERVE"} ROWS"
         }
         reg(OutputModelProperty::class) { e -> "OUTPUT${sql(e, "this")}" }
+        // sqlglot bac1a897b: reusable model property renderers.
+        reg(RemoteWithConnectionModelProperty::class) { e ->
+            "REMOTE WITH CONNECTION ${sql(e, "this")}"
+        }
         reg(ReturnsProperty::class) { e ->
             // sqlglot: TRANSFORMS[ReturnsProperty]
             if (e.args["null"] == true) "RETURNS NULL ON NULL INPUT" else nakedProperty(e as Property)
@@ -712,6 +760,9 @@ object GeneratorTables {
         reg(Tags::class) { e -> "TAG (${expressions(e, flat = true)})" }
         reg(TemporaryProperty::class) { _ -> "TEMPORARY" }
         reg(ToTableProperty::class) { e -> "TO ${sql(e.thisArg)}" }
+        reg(TransformModelProperty::class) { e ->
+            func("TRANSFORM", *e.expressionsArg.toTypedArray())
+        }
         reg(TransientProperty::class) { _ -> "TRANSIENT" }
         reg(UnloggedProperty::class) { _ -> "UNLOGGED" }
         reg(UppercaseColumnConstraint::class) { _ -> "UPPERCASE" }

@@ -1,0 +1,5 @@
+re_extract_grp0	regexpExtract('2024-05', '([0-9]+)-([0-9]+)', 0)	regexp_extract('2024-05', '([0-9]+)-([0-9]+)', 0)	SAME	"2024-05"[U+0032 U+0030 U+0032 U+0034 U+002D U+0030 U+0035]	"2024-05"[U+0032 U+0030 U+0032 U+0034 U+002D U+0030 U+0035]
+re_extract_grp1	regexpExtract('2024-05', '([0-9]+)-([0-9]+)', 1)	regexp_extract('2024-05', '([0-9]+)-([0-9]+)', 1)	SAME	"2024"[U+0032 U+0030 U+0032 U+0034]	"2024"[U+0032 U+0030 U+0032 U+0034]
+re_extract_grp2	regexpExtract('2024-05', '([0-9]+)-([0-9]+)', 2)	regexp_extract('2024-05', '([0-9]+)-([0-9]+)', 2)	SAME	"05"[U+0030 U+0035]	"05"[U+0030 U+0035]
+re_matches_partial	match('hello world', 'wor')	regexp_matches('hello world', 'wor')	SAME	1	true
+literal_escape_d	'x\\dy'	'x\\dy'	DIFF	"x\\dy"[U+0078 U+005C U+0064 U+0079]	"x\\\\dy"[U+0078 U+005C U+005C U+0064 U+0079]

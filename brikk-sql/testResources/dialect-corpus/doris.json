@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "doris",
   "identity": [
     {
@@ -24,6 +24,21 @@
     },
     {
       "sql": "COALECSE(a, b, c, d)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DROP TABLE my_table",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DROP TABLE IF EXISTS example_db.my_table",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "DROP TABLE my_table FORCE",
       "expected": null,
       "pretty": false
     },
@@ -373,7 +388,7 @@
     }
   ],
   "stats": {
-    "identity_count": 41,
+    "identity_count": 44,
     "transpile_count": 18,
     "skipped_dynamic": 0
   }

@@ -35,16 +35,8 @@ class AnnotateTypesCorpusTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun resource(path: String): String? {
-        val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql/testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: java.io.File("testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: return null
-        return stream.use { it.readBytes().decodeToString() }
-    }
-
     private fun loadCorpus(name: String): List<Pair<String, JsonArray>> {
-        val text = resource("ast-corpus/$name.json")
+        val text = testResourceOrNull("ast-corpus/$name.json")
             ?: fail("corpus ast-corpus/$name.json not found on classpath or filesystem")
         val root = json.parseToJsonElement(text).jsonObject
         return root.getValue("cases").jsonArray.map { case ->
@@ -54,7 +46,7 @@ class AnnotateTypesCorpusTest {
     }
 
     private fun loadLedger(name: String): Map<String, String> {
-        val text = resource("annotate-corpus/known-failures-$name.json") ?: return emptyMap()
+        val text = testResourceOrNull("annotate-corpus/known-failures-$name.json") ?: return emptyMap()
         val root = json.parseToJsonElement(text).jsonObject
         return root.getValue("cases").jsonArray.associate { entry ->
             val obj = entry.jsonObject
@@ -189,5 +181,13 @@ class AnnotateTypesCorpusTest {
     @Test fun prestoAnnotatedCorpus() = runCorpus("presto-annotated-serde", "presto")
     @Test fun trinoAnnotatedCorpus() = runCorpus("trino-annotated-serde", "trino")
     @Test fun dorisAnnotatedCorpus() = runCorpus("doris-annotated-serde", "doris")
+    @Test fun starrocksAnnotatedCorpus() = runCorpus("starrocks-annotated-serde", "starrocks")
     @Test fun clickhouseAnnotatedCorpus() = runCorpus("clickhouse-annotated-serde", "clickhouse")
+    @Test fun hiveAnnotatedCorpus() = runCorpus("hive-annotated-serde", "hive")
+
+    // spark2 has no dialect-corpus fixture in sqlglot; the Spark2 annotator is gated
+    // transitively through the hive and spark annotated corpora (Hive -> Spark2 -> Spark).
+    @Test fun sparkAnnotatedCorpus() = runCorpus("spark-annotated-serde", "spark")
+
+    @Test fun bigqueryAnnotatedCorpus() = runCorpus("bigquery-annotated-serde", "bigquery")
 }

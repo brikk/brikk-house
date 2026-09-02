@@ -1,0 +1,9 @@
+trim_tab	trim(concat(char(9),'x',char(9)))	trim(chr(9)||'x'||chr(9))	SAME	"\tx\t"[U+0009 U+0078 U+0009]	"\tx\t"[U+0009 U+0078 U+0009]
+trim_nl	trim(concat(char(10),'x',char(10)))	trim(chr(10)||'x'||chr(10))	SAME	"\nx\n"[U+000A U+0078 U+000A]	"\nx\n"[U+000A U+0078 U+000A]
+ltrim_tab	trimLeft(concat(char(9),'x'))	ltrim(chr(9)||'x')	SAME	"\tx"[U+0009 U+0078]	"\tx"[U+0009 U+0078]
+position_hn	position('abcabc','b')	strpos('abcabc','b')	SAME	2	2
+position_in	position('b' IN 'abcabc')	position('b' IN 'abcabc')	SAME	2	2
+instr_case	instr('abcABC','B')	instr('abcABC','B')	DIFF	2	5
+instr_case2	instr('Hello','h')	instr('Hello','h')	DIFF	1	0
+octet_len_vc	octet_length('abc')	octet_length('abc')	DIFF	3	<ERR:Binder Error: Could not choose a best candidate function for the function call ">
+substringUTF8_emoji	substringUTF8('😀x',1,1)	substring('😀x',1,1)	SAME	"😀"[U+1F600]	"😀"[U+1F600]

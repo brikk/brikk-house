@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "",
   "identity": [
     {
@@ -1028,11 +1028,11 @@
       "write": {
         "mysql": "STR_TO_DATE(x, '%Y-%m-%dT%T')",
         "duckdb": "STRPTIME(x, '%Y-%m-%dT%H:%M:%S')",
-        "hive": "CAST(FROM_UNIXTIME(UNIX_TIMESTAMP(x, 'yyyy-MM-ddTHH:mm:ss')) AS TIMESTAMP)",
+        "hive": "CAST(FROM_UNIXTIME(UNIX_TIMESTAMP(x, 'yyyy-M-dTH:m:s')) AS TIMESTAMP)",
         "presto": "DATE_PARSE(x, '%Y-%m-%dT%T')",
         "drill": "TO_TIMESTAMP(x, 'yyyy-MM-dd''T''HH:mm:ss')",
         "redshift": "TO_TIMESTAMP(x, 'YYYY-MM-DDTHH24:MI:SS')",
-        "spark": "TO_TIMESTAMP(x, 'yyyy-MM-ddTHH:mm:ss')"
+        "spark": "TO_TIMESTAMP(x, 'yyyy-M-dTH:m:s')"
       }
     },
     {
@@ -1046,7 +1046,7 @@
         "postgres": "TO_TIMESTAMP('2020-01-01', 'YYYY-MM-DD')",
         "presto": "DATE_PARSE('2020-01-01', '%Y-%m-%d')",
         "redshift": "TO_TIMESTAMP('2020-01-01', 'YYYY-MM-DD')",
-        "spark": "TO_TIMESTAMP('2020-01-01', 'yyyy-MM-dd')"
+        "spark": "TO_TIMESTAMP('2020-01-01', 'yyyy-M-d')"
       }
     },
     {
@@ -1069,7 +1069,7 @@
       "read": {},
       "write": {
         "duckdb": "EPOCH(STRPTIME('2020-01-01', '%Y-%m-%d'))",
-        "hive": "UNIX_TIMESTAMP('2020-01-01', 'yyyy-MM-dd')",
+        "hive": "UNIX_TIMESTAMP('2020-01-01', 'yyyy-M-d')",
         "presto": "TO_UNIXTIME(COALESCE(TRY(DATE_PARSE(CAST('2020-01-01' AS VARCHAR), '%Y-%m-%d')), PARSE_DATETIME(DATE_FORMAT(CAST('2020-01-01' AS TIMESTAMP), '%Y-%m-%d'), 'yyyy-MM-dd')))",
         "starrocks": "UNIX_TIMESTAMP('2020-01-01', '%Y-%m-%d')",
         "doris": "UNIX_TIMESTAMP('2020-01-01', '%Y-%m-%d')"
@@ -1531,9 +1531,9 @@
         "drill": "TO_DATE(x, 'yyyy-MM-dd''T''HH:mm:ss')",
         "mysql": "STR_TO_DATE(x, '%Y-%m-%dT%T')",
         "starrocks": "STR_TO_DATE(x, '%Y-%m-%dT%T')",
-        "hive": "CAST(FROM_UNIXTIME(UNIX_TIMESTAMP(x, 'yyyy-MM-ddTHH:mm:ss')) AS DATE)",
+        "hive": "CAST(FROM_UNIXTIME(UNIX_TIMESTAMP(x, 'yyyy-M-dTH:m:s')) AS DATE)",
         "presto": "CAST(DATE_PARSE(x, '%Y-%m-%dT%T') AS DATE)",
-        "spark": "TO_DATE(x, 'yyyy-MM-ddTHH:mm:ss')",
+        "spark": "TO_DATE(x, 'yyyy-M-dTH:m:s')",
         "doris": "STR_TO_DATE(x, '%Y-%m-%dT%T')"
       }
     },
@@ -1546,7 +1546,7 @@
         "starrocks": "STR_TO_DATE(x, '%Y-%m-%d')",
         "hive": "CAST(x AS DATE)",
         "presto": "CAST(DATE_PARSE(x, '%Y-%m-%d') AS DATE)",
-        "spark": "TO_DATE(x)",
+        "spark": "TO_DATE(x, 'yyyy-M-d')",
         "doris": "STR_TO_DATE(x, '%Y-%m-%d')"
       }
     },
@@ -2314,7 +2314,7 @@
       "write": {
         "bigquery": "LOWER(x) LIKE LOWER('%y')",
         "clickhouse": "x ILIKE '%y'",
-        "drill": "x `ILIKE` '%y'",
+        "drill": "ILIKE(x, '%y')",
         "duckdb": "x ILIKE '%y'",
         "hive": "LOWER(x) LIKE LOWER('%y')",
         "mysql": "LOWER(x) LIKE LOWER('%y')",
@@ -2327,6 +2327,18 @@
         "starrocks": "LOWER(x) LIKE LOWER('%y')",
         "trino": "LOWER(x) LIKE LOWER('%y')",
         "doris": "LOWER(x) LIKE LOWER('%y')"
+      }
+    },
+    {
+      "sql": "x NOT ILIKE '%y'",
+      "read": {
+        "postgres": "x NOT ILIKE '%y'"
+      },
+      "write": {
+        "drill": "NOT ILIKE(x, '%y')",
+        "hive": "LOWER(x) NOT LIKE LOWER('%y')",
+        "presto": "LOWER(x) NOT LIKE LOWER('%y')",
+        "postgres": "x NOT ILIKE '%y'"
       }
     },
     {
@@ -3749,6 +3761,22 @@
       }
     },
     {
+      "sql": "SELECT ARRAY_AGG(x) WITHIN GROUP (ORDER BY y) FILTER(WHERE z > 0) FROM t",
+      "read": {},
+      "write": {
+        "snowflake": "SELECT ARRAY_AGG(IFF(z > 0, x, NULL)) WITHIN GROUP (ORDER BY y NULLS FIRST) FROM t"
+      }
+    },
+    {
+      "sql": "SELECT FOO(x) WITHIN GROUP (ORDER BY y) FILTER(WHERE z > 0) FROM t",
+      "read": {},
+      "write": {
+        "snowflake": {
+          "error": "UnsupportedError"
+        }
+      }
+    },
+    {
       "sql": "CURRENT_SCHEMA()",
       "read": {
         "mysql": "SCHEMA()",
@@ -4538,11 +4566,17 @@
         "": "x IS NOT UNKNOWN",
         "bigquery": "x IS NOT UNKNOWN",
         "mysql": "x IS NOT UNKNOWN",
-        "postgres": "x IS NOT UNKNOWN",
         "redshift": "x IS NOT UNKNOWN",
         "duckdb": "x IS NOT UNKNOWN",
         "spark": "x IS NOT UNKNOWN",
         "databricks": "x IS NOT UNKNOWN"
+      },
+      "write": {}
+    },
+    {
+      "sql": "x IS NOT NULL",
+      "read": {
+        "postgres": "x IS NOT UNKNOWN"
       },
       "write": {}
     },
@@ -4561,7 +4595,13 @@
       "read": {
         "": "SELECT col IS NOT NULL::BOOLEAN FROM (SELECT 1 AS col) AS t",
         "duckdb": "SELECT col IS NOT NULL::BOOLEAN FROM (SELECT 1 AS col) AS t",
-        "redshift": "SELECT col IS NOT NULL::BOOLEAN FROM (SELECT 1 AS col) AS t",
+        "redshift": "SELECT col IS NOT NULL::BOOLEAN FROM (SELECT 1 AS col) AS t"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT CAST(col IS NOT NULL AS BOOLEAN) FROM (SELECT 1 AS col) AS t",
+      "read": {
         "postgres": "SELECT col IS NOT NULL::BOOLEAN FROM (SELECT 1 AS col) AS t"
       },
       "write": {}
@@ -4609,7 +4649,7 @@
   ],
   "stats": {
     "identity_count": 99,
-    "transpile_count": 277,
+    "transpile_count": 282,
     "skipped_dynamic": 38
   }
 }

@@ -1,3 +1,28 @@
 {
- "cases": []
+    "cases": [
+        {
+            "case": "write|bigquery|STRPOS(haystack, needle, occurrence)",
+            "reason": "expected `INSTR(haystack, needle, 1, occurrence)` actual `STR_POSITION(haystack, needle, occurrence)`"
+        },
+        {
+            "case": "write|bigquery|SELECT SHA256(x)",
+            "reason": "expected `SELECT SHA256(x)` actual `SELECT S_H_A2_DIGEST(x, 256)`"
+        },
+        {
+            "case": "write|bigquery|SELECT SHA512(x)",
+            "reason": "expected `SELECT SHA512(x)` actual `SELECT S_H_A2_DIGEST(x, 512)`"
+        },
+        {
+            "case": "write|bigquery|SELECT MAX_BY(a.id, a.timestamp) FROM a",
+            "reason": "expected `SELECT MAX_BY(a.id, a.timestamp) FROM a` actual `SELECT ARG_MAX(a.id, a.timestamp) FROM a`"
+        },
+        {
+            "case": "write|bigquery|SELECT * FROM UNNEST(ARRAY['7', '14']) AS x",
+            "reason": "expected `SELECT * FROM UNNEST(['7', '14'])` actual `SELECT * FROM UNNEST(['7', '14']) AS x`"
+        },
+        {
+            "case": "write|bigquery|SELECT * FROM UNNEST(ARRAY['7', '14']) AS x(y)",
+            "reason": "expected `SELECT * FROM UNNEST(['7', '14']) AS y` actual `SELECT * FROM UNNEST(['7', '14']) AS x`"
+        }
+    ]
 }

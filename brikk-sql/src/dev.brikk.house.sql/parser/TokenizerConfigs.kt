@@ -16,6 +16,10 @@ object TokenizerConfigs {
         "duckdb" -> DuckdbTokenizerTables.CONFIG
         "postgres", "postgresql" -> PostgresTokenizerTables.CONFIG
         "clickhouse" -> ClickhouseTokenizerTables.CONFIG
+        "hive" -> HiveTokenizerTables.CONFIG
+        "spark2" -> Spark2TokenizerTables.CONFIG
+        "spark", "sparksql" -> SparkTokenizerTables.CONFIG
+        "bigquery" -> BigqueryTokenizerTables.CONFIG
         else -> TokenizerConfig.BASE
     }
 }

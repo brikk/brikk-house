@@ -1,0 +1,110 @@
+{
+    "engine": "postgres",
+    "cases": [
+        {
+            "sql": "CAST('a' AS TEXT COLLATE \"de_DE\")",
+            "generated": "CAST('a' AS TEXT COLLATE \"de_DE\")",
+            "error": "statement: 42601: syntax error at or near \"CAST\" (line 1, col 1) | expression: 42601: syntax error at or near \"COLLATE\" (line 1, col 18)"
+        },
+        {
+            "sql": "EXEC AS myfunc @id = 123",
+            "generated": "EXEC AS myfunc @id = 123",
+            "error": "statement: 42601: syntax error at or near \"EXEC\" (line 1, col 1) | expression: 42601: syntax error at or near \"@\" (line 1, col 16)"
+        },
+        {
+            "sql": "select count() OVER(partition by a order by a range offset preceding exclude current row)",
+            "generated": "SELECT COUNT() OVER (PARTITION BY a ORDER BY a range BETWEEN offset preceding AND CURRENT ROW EXCLUDE CURRENT ROW)",
+            "error": "statement: 42601: syntax error at or near \"offset\" (line 1, col 62) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
+        },
+        {
+            "sql": "SELECT DATE_PART('isodow'::varchar(6), current_date)",
+            "generated": "SELECT EXTRACT(CAST('isodow' AS VARCHAR(6)) FROM CURRENT_DATE)",
+            "error": "statement: 42601: syntax error at or near \"CAST\" (line 1, col 16) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
+        },
+        {
+            "sql": "MERGE INTO x USING (SELECT id) AS y ON a = b WHEN MATCHED THEN UPDATE SET x.a = y.b WHEN NOT MATCHED THEN INSERT (a, b) VALUES (y.a, y.b)",
+            "generated": "MERGE INTO x USING (SELECT id) AS y ON a = b WHEN MATCHED THEN UPDATE SET a = y.b WHEN NOT MATCHED THEN INSERT (a, b) VALUES (y.a, y.b)",
+            "error": "statement: 42601: syntax error at or near \"MERGE\" (line 1, col 1) | expression: 42601: syntax error at or near \"USING\" (line 1, col 14)"
+        },
+        {
+            "sql": "SELECT js, js IS JSON AS \"json?\", js IS JSON VALUE AS \"scalar?\", js IS JSON SCALAR AS \"scalar?\", js IS JSON OBJECT AS \"object?\", js IS JSON ARRAY AS \"array?\" FROM t",
+            "generated": "SELECT js, js IS JSON AS \"json?\", js IS JSON VALUE AS \"scalar?\", js IS JSON SCALAR AS \"scalar?\", js IS JSON OBJECT AS \"object?\", js IS JSON ARRAY AS \"array?\" FROM t",
+            "error": "statement: 42601: syntax error at or near \"JSON\" (line 1, col 18) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
+        },
+        {
+            "sql": "SELECT js, js IS JSON ARRAY WITH UNIQUE KEYS AS \"array w. UK?\", js IS JSON ARRAY WITHOUT UNIQUE KEYS AS \"array w/o UK?\", js IS JSON ARRAY UNIQUE KEYS AS \"array w UK 2?\" FROM t",
+            "generated": "SELECT js, js IS JSON ARRAY WITH UNIQUE KEYS AS \"array w. UK?\", js IS JSON ARRAY WITHOUT UNIQUE KEYS AS \"array w/o UK?\", js IS JSON ARRAY UNIQUE KEYS AS \"array w UK 2?\" FROM t",
+            "error": "statement: 42601: syntax error at or near \"JSON\" (line 1, col 18) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
+        },
+        {
+            "sql": "MERGE INTO target_table USING source_table AS source ON target.id = source.id WHEN MATCHED THEN DO NOTHING WHEN NOT MATCHED THEN DO NOTHING RETURNING MERGE_ACTION(), *",
+            "generated": "MERGE INTO target_table USING source_table AS source ON target.id = source.id WHEN MATCHED THEN DO NOTHING WHEN NOT MATCHED THEN DO NOTHING RETURNING MERGE_ACTION(), *",
+            "error": "statement: 42601: syntax error at or near \"MERGE\" (line 1, col 1) | expression: 42601: syntax error at or near \"USING\" (line 1, col 25)"
+        },
+        {
+            "sql": "SELECT * FROM foo WHERE id = %s",
+            "generated": "SELECT * FROM foo WHERE id = %s",
+            "error": "statement: 42601: syntax error at or near \"%\" (line 1, col 30) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
+        },
+        {
+            "sql": "SELECT * FROM foo WHERE id = %(id_param)s",
+            "generated": "SELECT * FROM foo WHERE id = %(id_param)s",
+            "error": "statement: 42601: syntax error at or near \"%\" (line 1, col 30) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
+        },
+        {
+            "sql": "SELECT * FROM foo WHERE id = ?",
+            "generated": "SELECT * FROM foo WHERE id = ?",
+            "error": "statement: 42601: syntax error at end of input (line 1, col 31) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
+        },
+        {
+            "sql": "CREATE INDEX IF NOT EXISTS ON t(c)",
+            "generated": "CREATE INDEX IF NOT EXISTS ON t(c)",
+            "error": "statement: 42601: syntax error at or near \"ON\" (line 1, col 28) | expression: 42601: syntax error at or near \"CREATE\" (line 1, col 1)"
+        },
+        {
+            "sql": "ALTER TABLE t1 SET ACCESS METHOD method",
+            "generated": "ALTER TABLE t1 SET ACCESS METHOD method",
+            "error": "statement: 42601: syntax error at or near \"ACCESS\" (line 1, col 20) | expression: 42601: syntax error at or near \"t1\" (line 1, col 13)"
+        },
+        {
+            "sql": "CREATE TABLE A (LIKE B INCLUDING CONSTRAINT INCLUDING COMPRESSION EXCLUDING COMMENTS)",
+            "generated": "CREATE TABLE A (LIKE B INCLUDING CONSTRAINT INCLUDING COMPRESSION EXCLUDING COMMENTS)",
+            "error": "statement: 42601: syntax error at or near \"CONSTRAINT\" (line 1, col 34) | expression: 42601: syntax error at or near \"CREATE\" (line 1, col 1)"
+        },
+        {
+            "sql": "CREATE TABLE tbl (col INT UNIQUE NULLS NOT DISTINCT DEFAULT 9.99)",
+            "generated": "CREATE TABLE tbl (col INT UNIQUE NULLS NOT DISTINCT DEFAULT 9.99)",
+            "error": "statement: 42601: syntax error at or near \"NULLS\" (line 1, col 34) | expression: 42601: syntax error at or near \"CREATE\" (line 1, col 1)"
+        },
+        {
+            "sql": "CREATE TABLE tbl (col UUID, UNIQUE NULLS NOT DISTINCT (col))",
+            "generated": "CREATE TABLE tbl (col UUID, UNIQUE NULLS NOT DISTINCT (col))",
+            "error": "statement: 42601: syntax error at or near \"NULLS\" (line 1, col 36) | expression: 42601: syntax error at or near \"CREATE\" (line 1, col 1)"
+        },
+        {
+            "sql": "SELECT a, LOGICAL_OR(b) FROM table GROUP BY a",
+            "generated": "SELECT a, BOOL_OR(b) FROM table GROUP BY a",
+            "error": "statement: 42601: syntax error at or near \"table\" (line 1, col 27) | expression: 42601: syntax error at or near \"SELECT\" (line 1, col 1)"
+        },
+        {
+            "sql": "SELECT * FROM ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT), FUNC2(col2) AS alias2(\"col2\" INT)) WITH ORDINALITY",
+            "generated": "",
+            "error": "brikk parse/generate failed: ParseError: ROWS FROM is not supported yet. Line 1, Col: 18.\n  SELECT * FROM \u001b[4mROWS\u001b[0m FROM (FUNC1(col1) AS alias1(\"col1\" TEXT), FUNC2(col2) AS alias"
+        },
+        {
+            "sql": "SELECT * FROM table1, ROWS FROM (FUNC1(col1) AS alias1(\"col1\" TEXT)) WITH ORDINALITY AS alias3(\"col3\" INT, \"col4\" TEXT)",
+            "generated": "",
+            "error": "brikk parse/generate failed: ParseError: Invalid expression / Unexpected token. Line 1, Col: 26.\n  SELECT * FROM table1, \u001b[4mROWS\u001b[0m FROM (FUNC1(col1) AS alias1(\"col1\" TEXT)) WITH "
+        },
+        {
+            "sql": "ANALYZE VERBOSE SKIP_LOCKED TBL(col1, col2)",
+            "generated": "ANALYZE VERBOSE SKIP_LOCKED TBL(col1, col2)",
+            "error": "statement: 42601: syntax error at or near \"TBL\" (line 1, col 29) | expression: 42601: syntax error at or near \"ANALYZE\" (line 1, col 1)"
+        },
+        {
+            "sql": "ANALYZE BUFFER_USAGE_LIMIT 1337 TBL",
+            "generated": "ANALYZE BUFFER_USAGE_LIMIT 1337 TBL",
+            "error": "statement: 42601: syntax error at or near \"1337\" (line 1, col 28) | expression: 42601: syntax error at or near \"ANALYZE\" (line 1, col 1)"
+        }
+    ]
+}

@@ -1,0 +1,7 @@
+{
+    "engine": "trino",
+    "notes": [
+        "Empty since brikk extension #8 (docs/brikk-extensions.md): the JSON_QUERY `WITHOUT CONDITIONAL WRAPPER` and ALTER TABLE ... SET PROPERTIES string-literal-key emissions inherited from sqlglot were grammar-illegal per Trino's SqlBase.g4; brikk now emits `WITHOUT WRAPPER` and quoted-identifier property keys (accepted renderings pinned in SqlVerifierTest.trinoAcceptsBrikkGrammarLegalityRenderings)."
+    ],
+    "cases": []
+}

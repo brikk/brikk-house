@@ -1,0 +1,942 @@
+{
+ "_generated_by": "tools/function_gap_report.py",
+ "_warning": "Bucket A (same-name) is CANDIDATE-OK only: identical names do not imply identical semantics. Nothing in this report is verified-correct.",
+ "_layout": "Split report: this manifest indexes per-pair detail files under 'function-gaps/'. Each pair's full entry list lives in its own file (see pairs[*].file). Regenerate with: python3 tools/function_gap_report.py",
+ "dialectEvidence": {
+  "sqlglot": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+  "mysql": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+  "doris": "engine-catalog: vendor/data/doris-signatures.json",
+  "starrocks": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+  "presto": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+  "trino": "engine-catalog: vendor/data/trino-functions-483.tsv",
+  "duckdb": "engine-catalog: duckdb_functions() 1.5.5",
+  "postgres": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+  "clickhouse": "engine-catalog: system.functions 26.5.1.1",
+  "hive": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+  "spark2": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+  "spark": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+  "bigquery": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+  "datafusion": "unavailable: brikk-native; no SQLGlot oracle or extracted catalog"
+ },
+ "registeredDialects": [
+  "sqlglot",
+  "mysql",
+  "doris",
+  "starrocks",
+  "presto",
+  "trino",
+  "duckdb",
+  "postgres",
+  "clickhouse",
+  "hive",
+  "spark2",
+  "spark",
+  "bigquery",
+  "datafusion"
+ ],
+ "catalogEngines": [
+  "duckdb",
+  "trino",
+  "doris",
+  "starrocks",
+  "clickhouse"
+ ],
+ "unavailableDialects": [
+  "datafusion"
+ ],
+ "pairDirectory": "function-gaps",
+ "pairs": {
+  "duckdb->trino": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "counts": {
+    "A": 127,
+    "B": 81,
+    "C": 35,
+    "D": 544
+   },
+   "subCounts": {
+    "A_arity_compatible": 119,
+    "A_arity_suspect": 3,
+    "A_arity_unknown": 5,
+    "A_sqlglot_translates_differently": 11,
+    "B_render_ok": 81,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 9,
+    "C_c3_hint_only": 26
+   },
+   "entryCount": 787,
+   "file": "function-gaps/duckdb__trino.json"
+  },
+  "duckdb->doris": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "targetEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "counts": {
+    "A": 181,
+    "B": 56,
+    "C": 51,
+    "D": 499
+   },
+   "subCounts": {
+    "A_arity_compatible": 150,
+    "A_arity_suspect": 2,
+    "A_arity_unknown": 29,
+    "A_sqlglot_translates_differently": 17,
+    "B_render_ok": 55,
+    "B_render_error": 1,
+    "C_with_c1_or_c2": 14,
+    "C_c3_hint_only": 37
+   },
+   "entryCount": 787,
+   "file": "function-gaps/duckdb__doris.json"
+  },
+  "duckdb->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "counts": {
+    "A": 146,
+    "B": 66,
+    "C": 32,
+    "D": 543
+   },
+   "subCounts": {
+    "A_arity_compatible": 135,
+    "A_arity_suspect": 2,
+    "A_arity_unknown": 9,
+    "A_sqlglot_translates_differently": 12,
+    "B_render_ok": 65,
+    "B_render_error": 1,
+    "C_with_c1_or_c2": 7,
+    "C_c3_hint_only": 25
+   },
+   "entryCount": 787,
+   "file": "function-gaps/duckdb__starrocks.json"
+  },
+  "duckdb->clickhouse": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "targetEvidence": "engine-catalog: system.functions 26.5.1.1",
+   "counts": {
+    "A": 152,
+    "B": 58,
+    "C": 39,
+    "D": 538
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 152,
+    "A_sqlglot_translates_differently": 21,
+    "B_render_ok": 58,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 7,
+    "C_c3_hint_only": 32
+   },
+   "entryCount": 787,
+   "file": "function-gaps/duckdb__clickhouse.json"
+  },
+  "trino->duckdb": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "targetEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "counts": {
+    "A": 150,
+    "B": 52,
+    "C": 9,
+    "D": 230
+   },
+   "subCounts": {
+    "A_arity_compatible": 140,
+    "A_arity_suspect": 5,
+    "A_arity_unknown": 5,
+    "A_sqlglot_translates_differently": 19,
+    "B_render_ok": 50,
+    "B_render_error": 2,
+    "C_with_c1_or_c2": 0,
+    "C_c3_hint_only": 9
+   },
+   "entryCount": 441,
+   "file": "function-gaps/trino__duckdb.json"
+  },
+  "trino->doris": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "targetEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "counts": {
+    "A": 178,
+    "B": 37,
+    "C": 10,
+    "D": 216
+   },
+   "subCounts": {
+    "A_arity_compatible": 159,
+    "A_arity_suspect": 4,
+    "A_arity_unknown": 15,
+    "A_sqlglot_translates_differently": 25,
+    "B_render_ok": 37,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 3,
+    "C_c3_hint_only": 7
+   },
+   "entryCount": 441,
+   "file": "function-gaps/trino__doris.json"
+  },
+  "trino->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "counts": {
+    "A": 148,
+    "B": 48,
+    "C": 3,
+    "D": 242
+   },
+   "subCounts": {
+    "A_arity_compatible": 143,
+    "A_arity_suspect": 5,
+    "A_arity_unknown": 0,
+    "A_sqlglot_translates_differently": 15,
+    "B_render_ok": 47,
+    "B_render_error": 1,
+    "C_with_c1_or_c2": 1,
+    "C_c3_hint_only": 2
+   },
+   "entryCount": 441,
+   "file": "function-gaps/trino__starrocks.json"
+  },
+  "trino->clickhouse": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "targetEvidence": "engine-catalog: system.functions 26.5.1.1",
+   "counts": {
+    "A": 115,
+    "B": 55,
+    "C": 25,
+    "D": 246
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 115,
+    "A_sqlglot_translates_differently": 19,
+    "B_render_ok": 55,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 4,
+    "C_c3_hint_only": 21
+   },
+   "entryCount": 441,
+   "file": "function-gaps/trino__clickhouse.json"
+  },
+  "doris->duckdb": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "targetEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "counts": {
+    "A": 191,
+    "B": 57,
+    "C": 28,
+    "D": 445
+   },
+   "subCounts": {
+    "A_arity_compatible": 157,
+    "A_arity_suspect": 1,
+    "A_arity_unknown": 33,
+    "A_sqlglot_translates_differently": 19,
+    "B_render_ok": 54,
+    "B_render_error": 3,
+    "C_with_c1_or_c2": 12,
+    "C_c3_hint_only": 16
+   },
+   "entryCount": 721,
+   "file": "function-gaps/doris__duckdb.json"
+  },
+  "doris->trino": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "counts": {
+    "A": 151,
+    "B": 62,
+    "C": 22,
+    "D": 486
+   },
+   "subCounts": {
+    "A_arity_compatible": 133,
+    "A_arity_suspect": 3,
+    "A_arity_unknown": 15,
+    "A_sqlglot_translates_differently": 10,
+    "B_render_ok": 62,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 15,
+    "C_c3_hint_only": 7
+   },
+   "entryCount": 721,
+   "file": "function-gaps/doris__trino.json"
+  },
+  "doris->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "counts": {
+    "A": 310,
+    "B": 22,
+    "C": 16,
+    "D": 373
+   },
+   "subCounts": {
+    "A_arity_compatible": 269,
+    "A_arity_suspect": 3,
+    "A_arity_unknown": 38,
+    "A_sqlglot_translates_differently": 20,
+    "B_render_ok": 21,
+    "B_render_error": 1,
+    "C_with_c1_or_c2": 11,
+    "C_c3_hint_only": 5
+   },
+   "entryCount": 721,
+   "file": "function-gaps/doris__starrocks.json"
+  },
+  "doris->clickhouse": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "targetEvidence": "engine-catalog: system.functions 26.5.1.1",
+   "counts": {
+    "A": 156,
+    "B": 41,
+    "C": 119,
+    "D": 405
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 156,
+    "A_sqlglot_translates_differently": 28,
+    "B_render_ok": 41,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 10,
+    "C_c3_hint_only": 109
+   },
+   "entryCount": 721,
+   "file": "function-gaps/doris__clickhouse.json"
+  },
+  "starrocks->duckdb": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "counts": {
+    "A": 173,
+    "B": 54,
+    "C": 12,
+    "D": 581
+   },
+   "subCounts": {
+    "A_arity_compatible": 162,
+    "A_arity_suspect": 2,
+    "A_arity_unknown": 9,
+    "A_sqlglot_translates_differently": 22,
+    "B_render_ok": 53,
+    "B_render_error": 1,
+    "C_with_c1_or_c2": 1,
+    "C_c3_hint_only": 11
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__duckdb.json"
+  },
+  "starrocks->trino": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "counts": {
+    "A": 148,
+    "B": 60,
+    "C": 4,
+    "D": 608
+   },
+   "subCounts": {
+    "A_arity_compatible": 143,
+    "A_arity_suspect": 5,
+    "A_arity_unknown": 0,
+    "A_sqlglot_translates_differently": 12,
+    "B_render_ok": 60,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 1,
+    "C_c3_hint_only": 3
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__trino.json"
+  },
+  "starrocks->doris": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "counts": {
+    "A": 351,
+    "B": 7,
+    "C": 10,
+    "D": 452
+   },
+   "subCounts": {
+    "A_arity_compatible": 308,
+    "A_arity_suspect": 4,
+    "A_arity_unknown": 39,
+    "A_sqlglot_translates_differently": 29,
+    "B_render_ok": 7,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 3,
+    "C_c3_hint_only": 7
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__doris.json"
+  },
+  "starrocks->clickhouse": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "engine-catalog: system.functions 26.5.1.1",
+   "counts": {
+    "A": 163,
+    "B": 37,
+    "C": 43,
+    "D": 577
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 163,
+    "A_sqlglot_translates_differently": 34,
+    "B_render_ok": 37,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 4,
+    "C_c3_hint_only": 39
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__clickhouse.json"
+  },
+  "clickhouse->duckdb": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: system.functions 26.5.1.1",
+   "targetEvidence": "engine-catalog: duckdb_functions() 1.5.5",
+   "counts": {
+    "A": 98,
+    "B": 71,
+    "C": 65,
+    "D": 1336
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 98,
+    "A_sqlglot_translates_differently": 10,
+    "B_render_ok": 65,
+    "B_render_error": 6,
+    "C_with_c1_or_c2": 43,
+    "C_c3_hint_only": 22
+   },
+   "entryCount": 1570,
+   "file": "function-gaps/clickhouse__duckdb.json"
+  },
+  "clickhouse->trino": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: system.functions 26.5.1.1",
+   "targetEvidence": "engine-catalog: vendor/data/trino-functions-483.tsv",
+   "counts": {
+    "A": 65,
+    "B": 79,
+    "C": 52,
+    "D": 1374
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 65,
+    "A_sqlglot_translates_differently": 8,
+    "B_render_ok": 78,
+    "B_render_error": 1,
+    "C_with_c1_or_c2": 33,
+    "C_c3_hint_only": 19
+   },
+   "entryCount": 1570,
+   "file": "function-gaps/clickhouse__trino.json"
+  },
+  "clickhouse->doris": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: system.functions 26.5.1.1",
+   "targetEvidence": "engine-catalog: vendor/data/doris-signatures.json",
+   "counts": {
+    "A": 104,
+    "B": 61,
+    "C": 152,
+    "D": 1253
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 104,
+    "A_sqlglot_translates_differently": 11,
+    "B_render_ok": 61,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 47,
+    "C_c3_hint_only": 105
+   },
+   "entryCount": 1570,
+   "file": "function-gaps/clickhouse__doris.json"
+  },
+  "clickhouse->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: system.functions 26.5.1.1",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "counts": {
+    "A": 92,
+    "B": 68,
+    "C": 81,
+    "D": 1329
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 92,
+    "A_sqlglot_translates_differently": 9,
+    "B_render_ok": 68,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 44,
+    "C_c3_hint_only": 37
+   },
+   "entryCount": 1570,
+   "file": "function-gaps/clickhouse__starrocks.json"
+  },
+  "starrocks->sqlglot": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 198,
+    "B": 11,
+    "C": 17,
+    "D": 594
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 198,
+    "A_sqlglot_translates_differently": 37,
+    "B_render_ok": 11,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 7,
+    "C_c3_hint_only": 10
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__sqlglot.json"
+  },
+  "sqlglot->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 198,
+    "B": 165,
+    "C": 6,
+    "D": 279
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 198,
+    "A_sqlglot_translates_differently": 19,
+    "B_render_ok": 153,
+    "B_render_error": 12,
+    "C_with_c1_or_c2": 0,
+    "C_c3_hint_only": 6
+   },
+   "entryCount": 648,
+   "file": "function-gaps/sqlglot__starrocks.json"
+  },
+  "starrocks->mysql": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 204,
+    "B": 5,
+    "C": 20,
+    "D": 591
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 204,
+    "A_sqlglot_translates_differently": 29,
+    "B_render_ok": 5,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 7,
+    "C_c3_hint_only": 13
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__mysql.json"
+  },
+  "mysql->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 204,
+    "B": 173,
+    "C": 6,
+    "D": 279
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 204,
+    "A_sqlglot_translates_differently": 22,
+    "B_render_ok": 159,
+    "B_render_error": 14,
+    "C_with_c1_or_c2": 0,
+    "C_c3_hint_only": 6
+   },
+   "entryCount": 662,
+   "file": "function-gaps/mysql__starrocks.json"
+  },
+  "starrocks->presto": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 203,
+    "B": 9,
+    "C": 14,
+    "D": 594
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 203,
+    "A_sqlglot_translates_differently": 48,
+    "B_render_ok": 9,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 4,
+    "C_c3_hint_only": 10
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__presto.json"
+  },
+  "presto->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 203,
+    "B": 187,
+    "C": 5,
+    "D": 279
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 203,
+    "A_sqlglot_translates_differently": 24,
+    "B_render_ok": 175,
+    "B_render_error": 12,
+    "C_with_c1_or_c2": 0,
+    "C_c3_hint_only": 5
+   },
+   "entryCount": 674,
+   "file": "function-gaps/presto__starrocks.json"
+  },
+  "starrocks->postgres": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 201,
+    "B": 10,
+    "C": 17,
+    "D": 592
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 201,
+    "A_sqlglot_translates_differently": 46,
+    "B_render_ok": 10,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 4,
+    "C_c3_hint_only": 13
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__postgres.json"
+  },
+  "postgres->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 201,
+    "B": 180,
+    "C": 6,
+    "D": 279
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 201,
+    "A_sqlglot_translates_differently": 25,
+    "B_render_ok": 168,
+    "B_render_error": 12,
+    "C_with_c1_or_c2": 0,
+    "C_c3_hint_only": 6
+   },
+   "entryCount": 666,
+   "file": "function-gaps/postgres__starrocks.json"
+  },
+  "starrocks->hive": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 205,
+    "B": 9,
+    "C": 16,
+    "D": 590
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 205,
+    "A_sqlglot_translates_differently": 44,
+    "B_render_ok": 9,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 6,
+    "C_c3_hint_only": 10
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__hive.json"
+  },
+  "hive->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 205,
+    "B": 170,
+    "C": 6,
+    "D": 280
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 205,
+    "A_sqlglot_translates_differently": 25,
+    "B_render_ok": 159,
+    "B_render_error": 11,
+    "C_with_c1_or_c2": 0,
+    "C_c3_hint_only": 6
+   },
+   "entryCount": 661,
+   "file": "function-gaps/hive__starrocks.json"
+  },
+  "starrocks->spark2": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 206,
+    "B": 9,
+    "C": 16,
+    "D": 589
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 206,
+    "A_sqlglot_translates_differently": 40,
+    "B_render_ok": 9,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 6,
+    "C_c3_hint_only": 10
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__spark2.json"
+  },
+  "spark2->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 206,
+    "B": 188,
+    "C": 6,
+    "D": 278
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 206,
+    "A_sqlglot_translates_differently": 27,
+    "B_render_ok": 176,
+    "B_render_error": 12,
+    "C_with_c1_or_c2": 0,
+    "C_c3_hint_only": 6
+   },
+   "entryCount": 678,
+   "file": "function-gaps/spark2__starrocks.json"
+  },
+  "starrocks->spark": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 207,
+    "B": 8,
+    "C": 19,
+    "D": 586
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 207,
+    "A_sqlglot_translates_differently": 44,
+    "B_render_ok": 8,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 6,
+    "C_c3_hint_only": 13
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__spark.json"
+  },
+  "spark->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 207,
+    "B": 207,
+    "C": 6,
+    "D": 277
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 207,
+    "A_sqlglot_translates_differently": 27,
+    "B_render_ok": 194,
+    "B_render_error": 13,
+    "C_with_c1_or_c2": 0,
+    "C_c3_hint_only": 6
+   },
+   "entryCount": 697,
+   "file": "function-gaps/spark__starrocks.json"
+  },
+  "starrocks->bigquery": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 200,
+    "B": 11,
+    "C": 20,
+    "D": 589
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 200,
+    "A_sqlglot_translates_differently": 44,
+    "B_render_ok": 11,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 6,
+    "C_c3_hint_only": 14
+   },
+   "entryCount": 820,
+   "file": "function-gaps/starrocks__bigquery.json"
+  },
+  "bigquery->starrocks": {
+   "analysisStatus": "classified",
+   "sourceEvidence": "sqlglot-codegen: pinned parser/canonical-node/generator evidence only",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "semanticEvidence": "unavailable unless a live hazard scope exists; certification refuses uncovered concepts",
+   "counts": {
+    "A": 200,
+    "B": 198,
+    "C": 7,
+    "D": 277
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 200,
+    "A_sqlglot_translates_differently": 24,
+    "B_render_ok": 184,
+    "B_render_error": 14,
+    "C_with_c1_or_c2": 2,
+    "C_c3_hint_only": 5
+   },
+   "entryCount": 682,
+   "file": "function-gaps/bigquery__starrocks.json"
+  },
+  "starrocks->datafusion": {
+   "analysisStatus": "unavailable",
+   "sourceEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "targetEvidence": "unavailable: brikk-native; no SQLGlot oracle or extracted catalog",
+   "reason": "DataFusion is brikk-native and has no SQLGlot oracle or extracted engine catalog",
+   "counts": {
+    "A": 0,
+    "B": 0,
+    "C": 0,
+    "D": 0
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 0,
+    "A_sqlglot_translates_differently": 0,
+    "B_render_ok": 0,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 0,
+    "C_c3_hint_only": 0
+   },
+   "entryCount": 0,
+   "file": "function-gaps/starrocks__datafusion.json"
+  },
+  "datafusion->starrocks": {
+   "analysisStatus": "unavailable",
+   "sourceEvidence": "unavailable: brikk-native; no SQLGlot oracle or extracted catalog",
+   "targetEvidence": "engine-catalog: SHOW FULL BUILTIN FUNCTIONS 4.1.4",
+   "reason": "DataFusion is brikk-native and has no SQLGlot oracle or extracted engine catalog",
+   "counts": {
+    "A": 0,
+    "B": 0,
+    "C": 0,
+    "D": 0
+   },
+   "subCounts": {
+    "A_arity_compatible": 0,
+    "A_arity_suspect": 0,
+    "A_arity_unknown": 0,
+    "A_sqlglot_translates_differently": 0,
+    "B_render_ok": 0,
+    "B_render_error": 0,
+    "C_with_c1_or_c2": 0,
+    "C_c3_hint_only": 0
+   },
+   "entryCount": 0,
+   "file": "function-gaps/datafusion__starrocks.json"
+  }
+ }
+}

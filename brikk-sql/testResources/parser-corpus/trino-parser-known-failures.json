@@ -1,4 +1,17 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
- "cases": []
+    "sqlglot_version": "v30.17.0-93-gdcc36544a",
+    "cases": [
+        {
+            "sql": "ALTER TABLE people SET PROPERTIES x = 'y'",
+            "reason": "ast-mismatch at #0: expected Command"
+        },
+        {
+            "sql": "ALTER TABLE people SET PROPERTIES foo = 123, 'foo bar' = 456",
+            "reason": "ast-mismatch at #0: expected Command"
+        },
+        {
+            "sql": "ALTER TABLE people SET PROPERTIES x = DEFAULT",
+            "reason": "ast-mismatch at #0: expected Command"
+        }
+    ]
 }

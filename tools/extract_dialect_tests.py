@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import copy
 import json
 import random
 import re
@@ -224,6 +225,80 @@ def class_dialect(cls: ast.ClassDef) -> str:
     return ""
 
 
+def _const_str_list(node: ast.AST) -> Optional[list]:
+    """A `[...]`/`(...)` of string literals -> list[str], else None."""
+    if not isinstance(node, (ast.List, ast.Tuple)):
+        return None
+    out = []
+    for elt in node.elts:
+        try:
+            out.append(fold_string(elt))
+        except Dynamic:
+            return None
+    return out
+
+
+def expand_loops(
+    scope: ast.AST, bucket: Dict[str, list], skipped: Counter, path: Path
+) -> None:
+    """Unroll `for <var> in <str-literal list>: validate_identity/all(<var>, ...)`.
+
+    Handles both an inline list and a name-bound list (`stmts = [...]; for s in stmts:`),
+    scoped to [scope] (a single test method) so a list name can't leak across methods.
+    Each iteration is expanded by substituting the literal for the loop var; the normal
+    ast.walk pass sees the same call as Dynamic (var arg) and skips it, so no duplication.
+    """
+    bindings: Dict[str, list] = {}
+    for n in ast.walk(scope):
+        if (
+            isinstance(n, ast.Assign)
+            and len(n.targets) == 1
+            and isinstance(n.targets[0], ast.Name)
+        ):
+            lits = _const_str_list(n.value)
+            if lits is not None:
+                bindings[n.targets[0].id] = lits
+
+    for for_node in [n for n in ast.walk(scope) if isinstance(n, ast.For)]:
+        if not isinstance(for_node.target, ast.Name):
+            continue
+        it = for_node.iter
+        if isinstance(it, (ast.List, ast.Tuple)):
+            literals = _const_str_list(it)
+        elif isinstance(it, ast.Name):
+            literals = bindings.get(it.id)
+        else:
+            literals = None
+        if not literals:
+            continue
+
+        var = for_node.target.id
+        for call in [n for n in ast.walk(for_node) if isinstance(n, ast.Call)]:
+            func = call.func
+            if not (isinstance(func, ast.Attribute) and func.attr in METHODS):
+                continue
+            # Only expand when the SQL arg is the loop variable itself.
+            if not (call.args and isinstance(call.args[0], ast.Name) and call.args[0].id == var):
+                continue
+            for lit in literals:
+                class SubstituteLoopVariable(ast.NodeTransformer):
+                    def visit_Name(self, node: ast.Name) -> ast.AST:
+                        if node.id == var:
+                            return ast.copy_location(ast.Constant(value=lit), node)
+                        return node
+
+                synth = SubstituteLoopVariable().visit(copy.deepcopy(call))
+                try:
+                    if func.attr == "validate_identity":
+                        bucket["identity"].append(extract_identity(synth))
+                    else:
+                        entry = extract_all(synth)
+                        if entry is not None:
+                            bucket["transpile"].append(entry)
+                except Dynamic as exc:
+                    skipped[f"{path.name}: loop {exc}"] += 1
+
+
 def extract_file(path: Path) -> Tuple[Dict[str, Dict[str, list]], Counter, int]:
     """Extract one test file.
 
@@ -259,6 +334,12 @@ def extract_file(path: Path) -> Tuple[Dict[str, Dict[str, list]], Counter, int]:
                         bucket["transpile"].append(entry)
             except Dynamic as exc:
                 skipped[f"{path.name}: {exc}"] += 1
+
+        # Unroll simple `for x in [<literals>]: validate_*(x)` loops (per test method,
+        # so a list name can't leak across methods).
+        for item in cls.body:
+            if isinstance(item, ast.FunctionDef):
+                expand_loops(item, bucket, skipped, path)
 
     return per_dialect, skipped, empty_all
 
@@ -432,7 +513,17 @@ def main() -> int:
     }
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    # This script owns only the per-dialect `<name>.json` transpile-input files. Other
+    # JSON in this dir is produced elsewhere and MUST be preserved, otherwise a re-run
+    # silently deletes it:
+    #   *-known-failures.json  — curated gate ledgers (written by the corpus gate tests)
+    #   datafusion-*.json      — import_polyglot_datafusion_fixtures.py /
+    #                            extract_datafusion_slt_corpus.py
+    # Only prune stale dialect-input files (removes inputs for dropped dialects).
     for stale in OUT_DIR.glob("*.json"):
+        name = stale.name
+        if name.endswith("-known-failures.json") or name.startswith("datafusion-"):
+            continue
         stale.unlink()
 
     rows = []

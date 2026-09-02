@@ -1,10 +1,13 @@
 package dev.brikk.house.sql
 
 import dev.brikk.house.sql.dialects.transpile
+import dev.brikk.house.sql.generator.UnsupportedError
 import dev.brikk.house.sql.parser.parseOne
 import dev.brikk.house.sql.dialects.sql
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * Hand assertions for the Doris dialect wiring, each verified against the Python
@@ -69,6 +72,124 @@ class DorisDialectTest {
         assertEquals(
             "SELECT LAG(a, 1, NULL) OVER (ORDER BY b) FROM t",
             transpile("SELECT LAG(a) OVER (ORDER BY b) FROM t", read = "", write = "doris"),
+        )
+    }
+
+    // ------------------------------------------------------------------
+    // brikk extension (NOT sqlglot parity): FILTER -> CASE rewrite for Doris.
+    // Doris has no FILTER clause; sqlglot passes it through (invalid Doris SQL).
+    // ------------------------------------------------------------------
+
+    @Test
+    fun filterCountStarRewritesToCaseOne() {
+        assertEquals(
+            "SELECT COUNT(CASE WHEN `status` = 'ok' THEN 1 END) FROM `events`",
+            transpile("SELECT COUNT(*) FILTER(WHERE status = 'ok') FROM events", read = "duckdb", write = "doris"),
+        )
+    }
+
+    @Test
+    fun filterSumRewritesToCaseExpr() {
+        assertEquals(
+            "SELECT SUM(CASE WHEN region = 'EU' THEN amount END) AS eu_total FROM sales",
+            transpile(
+                "SELECT SUM(amount) FILTER(WHERE region = 'EU') AS eu_total FROM sales",
+                read = "duckdb",
+                write = "doris",
+            ),
+        )
+    }
+
+    @Test
+    fun filterCountDistinctRewritesInsideDistinct() {
+        assertEquals(
+            "SELECT COUNT(DISTINCT CASE WHEN amount > 100 THEN user_id END) FROM sales",
+            transpile(
+                "SELECT COUNT(DISTINCT user_id) FILTER(WHERE amount > 100) FROM sales",
+                read = "duckdb",
+                write = "doris",
+            ),
+        )
+    }
+
+    @Test
+    fun filterArrayAggSimpleRewritesThroughCollectList() {
+        // ARRAY_AGG -> COLLECT_LIST is the normal Doris mapping; the CASE lands inside it
+        assertEquals(
+            "SELECT COLLECT_LIST(CASE WHEN x > 0 THEN x END) FROM t",
+            transpile("SELECT ARRAY_AGG(x) FILTER(WHERE x > 0) FROM t", read = "duckdb", write = "doris"),
+        )
+    }
+
+    @Test
+    fun filterOnNonAllowlistedAggregateRaisesUnsupported() {
+        // GROUP_CONCAT separators are not result-identical under the CASE rewrite
+        val error = assertFailsWith<UnsupportedError> {
+            transpile("SELECT STRING_AGG(x, ',') FILTER(WHERE y) FROM t", read = "duckdb", write = "doris")
+        }
+        assertTrue(
+            error.message!!.contains("Doris has no FILTER clause"),
+            "unexpected message: ${error.message}",
+        )
+    }
+
+    @Test
+    fun filterOnOrderedArrayAggRaisesUnsupported() {
+        assertFailsWith<UnsupportedError> {
+            transpile("SELECT ARRAY_AGG(x ORDER BY y) FILTER(WHERE z) FROM t", read = "duckdb", write = "doris")
+        }
+    }
+
+    // brikk extension #9 (docs/brikk-extensions.md): Doris CREATE TABLE requires a
+    // partition-definition list after PARTITION BY (cols); sqlglot emits the bare form,
+    // which the FE parser rejects. Engine-side acceptance is pinned in
+    // SqlVerifierTest.dorisAcceptsBrikkPartitionByRenderings (brikk-sql-verify).
+    @Test
+    fun createTablePartitionByColumnsGetsEmptyPartitionDefList() {
+        assertEquals(
+            "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2) ()",
+            roundTrip("CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)"),
+        )
+        assertEquals(
+            "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2) ()",
+            roundTrip("CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2)"),
+        )
+    }
+
+    @Test
+    fun createTablePartitionByFunctionRendersAutoRangeForm() {
+        // A function partition key is only analyzer-valid as (auto) RANGE in Doris's
+        // internal catalog; the FE infers AUTO from the function expression itself.
+        assertEquals(
+            "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY RANGE (DATE_TRUNC(c2, 'MONTH')) ()",
+            roundTrip("CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (DATE_TRUNC(c2, 'MONTH'))"),
+        )
+    }
+
+    @Test
+    fun explicitPartitionKindsAreUntouchedByTheCompletion() {
+        // PartitionByRangeProperty (explicit RANGE/LIST + definitions) is a different
+        // node and must keep sqlglot-parity rendering.
+        val rangeSql = "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY RANGE (`c2`) " +
+            "(PARTITION `p201701` VALUES LESS THAN ('2017-02-01'))"
+        assertEquals(rangeSql, roundTrip(rangeSql))
+    }
+
+    // brikk extension #10 (docs/brikk-extensions.md): Doris MV column lists take bare
+    // column names (types derive from the query); sqlglot re-emits typed column defs.
+    @Test
+    fun materializedViewColumnListDropsColumnTypes() {
+        assertEquals(
+            "CREATE MATERIALIZED VIEW test_table (c1, c2) KEY (c1)",
+            roundTrip("CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1)"),
+        )
+    }
+
+    @Test
+    fun createTableColumnTypesAreKeptOutsideMaterializedViews() {
+        assertEquals(
+            "CREATE TABLE test_table (c1 INT, c2 INT) UNIQUE KEY (c1)",
+            roundTrip("CREATE TABLE test_table (c1 INT, c2 INT) UNIQUE KEY (c1)"),
         )
     }
 }

@@ -2,6 +2,8 @@ package dev.brikk.house.sql.dialects
 
 import dev.brikk.house.sql.ast.GeneratedTypingMetadata
 import dev.brikk.house.sql.generator.Generator
+import dev.brikk.house.sql.metadata.CLICKHOUSE_FUNCTION_CATALOG
+import dev.brikk.house.sql.metadata.FunctionCatalog
 import dev.brikk.house.sql.parser.ClickhouseTokenizerTables
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.Parser
@@ -57,11 +59,15 @@ open class ClickhouseDialect : Dialect() {
     // sqlglot: ClickHouse.EXPRESSION_METADATA (sqlglot/typing/clickhouse.py)
     override val expressionMetadata get() = GeneratedTypingMetadata.CLICKHOUSE
 
+    // ClickHouse 26.5.1.1 system.functions dump; generated deterministically from the
+    // vendored engine registry by tools/generate_clickhouse_functions.py.
+    override val functionCatalog: FunctionCatalog get() = CLICKHOUSE_FUNCTION_CATALOG
+
     override val tokenizerConfig: TokenizerConfig get() = ClickhouseTokenizerTables.CONFIG
 
     override fun parser(errorLevel: ErrorLevel?): Parser =
         ClickhouseParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        ClickhouseGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        ClickhouseGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 }

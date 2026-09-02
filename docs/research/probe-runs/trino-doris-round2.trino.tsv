@@ -1,0 +1,47 @@
+# trino-doris-round2.trino.tsv — live Trino outputs for the trino<->doris round-2 (43-row) probe
+# engine=Trino 481 (standalone trinodb/trino:481, scalar SELECTs, no catalog)
+# rendered=raw (TSV output-format; raw UTF-8; arrays native e.g. [1, 2, 3])
+# NULL -> literal token NULL; errors -> <ERR:...>; booleans true/false (not normalized); no rows errored
+char_length	2
+length_bytes	6
+left_via_substr	bri
+right_via_substr	kk
+ends_with	true
+strpos	3
+reverse	x文中
+chr	A
+lpad	007
+rpad	700
+split_part	b
+regexp_like	true
+bitand	8
+bitor	14
+bitxor	6
+sqrt	4.0
+exp	1.0
+power	1024.0
+truncate	2
+mod_neg	-1
+round_half	3
+greatest_null	NULL
+least_null	NULL
+nullif	NULL
+coalesce	5
+nvl_ifnull	7
+dayofweek	7
+dayofyear	61
+week	52
+quarter	2
+extract_month	6
+last_day	2024-02-29
+date_format	2024-06-16 13:45:07
+datediff	60
+from_unixtime	2024-01-01 00:00:00
+cardinality	3
+element_at	20
+array_contains	true
+array_join	a-b-c
+array_max	3
+array_distinct	[1, 2, 3]
+json_scalar	x
+json_len	3

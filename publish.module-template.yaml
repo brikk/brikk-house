@@ -1,0 +1,61 @@
+# Shared publishing configuration for the public Brikk libraries.
+# Applied by each publishable module via `apply: [ ../publish.module-template.yaml ]`.
+#
+# Credentials for the regular Central snapshots repo are read from the project-root `.env`
+# file (gitignored) under `brikk.mavencentral.user` / `brikk.mavencentral.pass`.
+# On CI, write those keys into `.env` from the org secrets before publishing (the regular-repo
+# path has NO env-var credential fallback).
+#
+# Publish targets:
+#   ./kotlin publish mavenLocal       -> local ~/.m2 (pipeline smoke test)
+#   ./kotlin publish centralSnapshots -> Central snapshots repo (SNAPSHOT ok; regular deploy)
+#   ./kotlin publish mavenCentral     -> Central release (NON-snapshot only; Portal bundle API,
+#                                        needs KOTLIN_TOOLCHAIN_* env vars + signing; see below)
+#
+# NOTE (KMP): only JVM libraries publish fully-consumable artifacts today. For the
+# `kmp/lib` modules, consumers should depend on the per-platform JVM artifact, e.g.
+#   dev.brikk.house:brikk-sql-jvm:0.1.0-SNAPSHOT
+repositories:
+  # Central Portal SNAPSHOT repo. This is a *regular* Maven repo (not the Portal bundle API),
+  # so it accepts -SNAPSHOT versions and bypasses the release-only publish path.
+  # Publish with: `./kotlin publish centralSnapshots`
+  # resolve: false -> publish-only (the snapshots repo 403s for release artifacts like
+  # kotlin-stdlib/antlr, which would otherwise spam warnings and slow resolution).
+  - id: centralSnapshots
+    url: https://central.sonatype.com/repository/maven-snapshots/
+    publish: true
+    resolve: false
+    credentials:
+      file: .env
+      usernameKey: brikk.mavencentral.user
+      passwordKey: brikk.mavencentral.pass
+  # Local install for testing the publication pipeline: `./kotlin publish mavenLocal`
+  - url: mavenLocal
+    publish: true
+    resolve: false
+
+settings:
+  publishing:
+    enabled: true
+    group: dev.brikk.house
+    version: 1.0.0-SNAPSHOT
+    publishSources: true
+    # --- Central RELEASE toggle (leave disabled for normal dev/snapshot work) ---
+    # `mavenCentral: enabled` turns on the Central Portal release path (`./kotlin publish
+    # mavenCentral`). It is validated eagerly: enabling it forces `signArtifacts: true`
+    # (which is GLOBAL — then EVERY publish, incl. centralSnapshots/mavenLocal,
+    # needs KOTLIN_TOOLCHAIN_SIGNING_KEY), and it REJECTS -SNAPSHOT versions.
+    # To cut a release, uncomment the two lines below, set `version` to a release (e.g.
+    # 0.1.0), and run from CI (creds/signing from KOTLIN_TOOLCHAIN_* env vars). Toolchain
+    # 0.11 also flags a required `publishing.artifact` property here — set it at that time.
+    #mavenCentral: enabled
+    #signArtifacts: true
+    pom:
+      url: https://github.com/brikk/brikk-house
+      scm: https://github.com/brikk/brikk-house.git
+      licenses:
+        - name: The Apache License, Version 2.0
+          url: https://www.apache.org/licenses/LICENSE-2.0.txt
+      developers:
+        - name: Jayson Minard
+        - name: Sortdev SRL

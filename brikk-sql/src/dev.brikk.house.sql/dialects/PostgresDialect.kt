@@ -16,6 +16,9 @@ open class PostgresDialect : Dialect() {
 
     override val name: String get() = "postgres"
 
+    // sqlglot: Postgres.ASCII_ONLY_NORMALIZATION = True
+    override val asciiOnlyNormalization: Boolean get() = true
+
     // sqlglot: Postgres.TABLES_REFERENCEABLE_AS_COLUMNS
     override val tablesReferenceableAsColumns: Boolean get() = true
 
@@ -37,8 +40,8 @@ open class PostgresDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         PostgresParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        PostgresGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        PostgresGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     companion object {
         // sqlglot: Postgres.TIME_MAPPING
@@ -84,7 +87,10 @@ open class PostgresDialect : Dialect() {
         )
 
         // sqlglot: Postgres.INVERSE_TIME_MAPPING ({v: k for k, v} keeps the last key)
+        // + _with_strict_time_inverse so %mstrict etc. degrade and never leak.
         val INVERSE_TIME_MAPPING: Map<String, String> =
-            TIME_MAPPING.entries.associate { (k, v) -> v to k }
+            dev.brikk.house.sql.parser.withStrictTimeInverse(
+                TIME_MAPPING.entries.associate { (k, v) -> v to k },
+            )
     }
 }

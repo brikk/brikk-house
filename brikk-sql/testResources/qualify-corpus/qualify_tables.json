@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.12.0-44-g93d16591",
+ "sqlglot_version": "v30.17.0-93-gdcc36544a",
  "fixture": "qualify_tables",
  "cases": [
   {
@@ -219,6 +219,11 @@
    "title": "lateral unnest without alias"
   },
   {
+   "sql": "SELECT x FROM t, LATERAL UNNEST(t.xs), LATERAL UNNEST(t.ys)",
+   "expected": "SELECT x FROM c.db.t AS t, LATERAL UNNEST(t.xs) AS _0, LATERAL UNNEST(t.ys) AS _1",
+   "title": "multiple lateral unnests without aliases each get a distinct alias"
+  },
+  {
    "sql": "SELECT * FROM t CROSS JOIN JSON_ARRAY_ELEMENTS(t.response) WITH ORDINALITY AS kv_json",
    "expected": "SELECT * FROM c.db.t AS t CROSS JOIN JSON_ARRAY_ELEMENTS(t.response) WITH ORDINALITY AS kv_json",
    "title": "table with ordinality"
@@ -355,6 +360,22 @@
    }
   },
   {
+   "sql": "SELECT t.a, x FROM t, UNNEST(t.arr) AS x",
+   "expected": "SELECT _0.a, x FROM c.db.t AS _0, UNNEST(_0.arr) AS _1",
+   "title": "canonicalize table referenced by lateral unnest",
+   "flags": {
+    "canonicalize_table_aliases": true
+   }
+  },
+  {
+   "sql": "SELECT t.a, x, z FROM t, UNNEST(t.arr) AS x, UNNEST(x.b) AS z",
+   "expected": "SELECT _0.a, x, z FROM c.db.t AS _0, UNNEST(_0.arr) AS _1, UNNEST(_1.b) AS _2",
+   "title": "canonicalize lateral unnest referencing a previous unnest",
+   "flags": {
+    "canonicalize_table_aliases": true
+   }
+  },
+  {
    "sql": "SELECT generate_series FROM GENERATE_SERIES(1,2)",
    "expected": "SELECT generate_series FROM GENERATE_SERIES(1, 2) AS _0(generate_series)",
    "title": "Qualify GENERATE_SERIES with its default column generate_series",
@@ -380,6 +401,27 @@
    "flags": {
     "canonicalize_table_aliases": true
    }
+  },
+  {
+   "sql": "SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10))",
+   "expected": "SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10)) AS _0(generate_series)",
+   "title": "Qualify TABLE(GENERATE_SERIES()) with its default column generate_series",
+   "dialect": "starrocks",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10)) AS t",
+   "expected": "SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10)) AS t(generate_series)",
+   "title": "Qualify TABLE(GENERATE_SERIES()) with a table alias, which does not rename the column",
+   "dialect": "starrocks",
+   "dialect_supported": false
+  },
+  {
+   "sql": "SELECT g FROM TABLE(GENERATE_SERIES(0, 10)) AS t(g)",
+   "expected": "SELECT g FROM TABLE(GENERATE_SERIES(0, 10)) AS t(g)",
+   "title": "Qualify TABLE(GENERATE_SERIES()) with alias on table and columns",
+   "dialect": "starrocks",
+   "dialect_supported": false
   },
   {
    "sql": "SELECT jsonvalue.id FROM deal, JSONB_TO_RECORDSET(CAST(deal.type AS JSONB)) AS jsonvalue(id INT, key VARCHAR, text VARCHAR)",

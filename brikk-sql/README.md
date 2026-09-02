@@ -6,7 +6,7 @@ extension: **BigQuery/GoogleSQL pipe syntax (`|>`) is kept first-class in the AS
 of being desugared away at parse time.
 
 Parity with sqlglot is enforced by differential test gates against the pinned upstream
-(`v30.12.0-44-g93d16591`): token streams, AST structure (serde-compared), and generated SQL
+(`v30.17.0-93-gdcc36544a`): token streams, AST structure (serde-compared), and generated SQL
 are verified byte-for-byte against the Python implementation across thousands of corpus
 cases. See `docs/parsing-research-and-plan.md` at the repo root for architecture and status.
 
@@ -154,6 +154,62 @@ All three placeholder forms tokenize/parse/generate across dialects: positional 
 (`Placeholder`), named `:name` (`Placeholder(this="name")`), and `@name` (`Parameter`).
 These are the anchor points for brikk's binding and (future) table-valued fragment slots.
 
+## Semantic layer
+
+The full sqlglot semantic pipeline is ported and oracle-gated:
+
+- **Type inference** — `annotateTypes(ast, schema, dialect)` (`optimizer/AnnotateTypes.kt`,
+  per-dialect metadata generated from sqlglot's typing tables); gated against
+  Python-annotated serde dumps for every dialect corpus.
+- **Qualification** — `qualify(ast, schema, dialect)` (`optimizer/Qualify.kt`:
+  normalize/qualify tables + columns, schema-aware star expansion, validation); gated
+  against sqlglot's own optimizer fixture files.
+- **Column-level lineage** — `lineage(column, sql, schema)` (`optimizer/Lineage.kt`):
+  provenance DAG through CTEs, subqueries, set ops, pivots, star expansion; 54-case
+  structural parity with Python.
+- **Shape contracts** — `shape/SqlFragment`: `outputShape(inputs)`, three-way shape
+  comparison (SATISFIES / HAS_ADDITIONAL / HAS_LESS), TVF-style slot detection,
+  `describe()`/`contract()` serializable payloads.
+- **Source mapping** — AST nodes carry original source positions; `transpileTo(target,
+  trackSourceMap = true)` maps errors in *generated* SQL back to the original text.
+- **Native-grammar verification** — the `brikk-sql-verify` module (JVM) checks emitted
+  SQL against the target engine's real parser (Doris FE, Trino, DuckDB embedded).
+- **Function catalogs + semantics** — the `brikk-sql-metadata` module (featherweight,
+  ~100KB) ships each engine's registered functions with signatures where extractable,
+  per-function `SemanticProfile`s (null propagation from Doris's own source; DuckDB
+  parameter names on 96% of overloads), grammar-builtin allowlists for names the
+  engine parses at the grammar level instead of registering (Trino `COALESCE`/`CAST`/
+  `EXTRACT`, DuckDB `COALESCE`/`GROUPING` — `FunctionCatalog.isKnown`), and the
+  probe-verified `HazardRegistry` (trino↔duckdb semantic verdicts with provenance).
+  Powers engine-exact `unmappableFunctions(target)` capability checks and
+  certification below.
+
+### Certified transpilation
+
+`transpileTo()` is best-effort by design. `SqlFragment.certify(target)` rolls every
+diagnostic channel into one `TranspileReport`: unmappable functions (Class-3 capability
+holes), generator `unsupported` flags, raw-passthrough statements (Command/Pragma), and
+probe-verified semantic hazards (`HazardRegistry` in brikk-sql-metadata; trino↔duckdb,
+trino↔doris, duckdb↔doris). Hazard detection is **verdict-driven and multi-key**: each
+source function is looked up under every name it can be known by for the pair (its parsed
+`sqlName`/aliases plus the names it renders to under the source and target dialects, so a
+translated cross-name function still matches), and the **verdict decides** — divergent/
+unclear are refusals, conditionally-equivalent are warnings, identical/no-equivalent clear.
+A dedicated renderer no longer blanket-trusts a mapping: trust lives in the probe data (an
+`identical` entry is verified-safe; a `divergent` one refuses whether or not a renderer
+exists). Machine mode
+("must work or error"): `transpileStrict(target)` / `report.orThrow()`. Human mode
+("warn me, I'll hand-edit"): read `report.findings`, ship `report.result.sql` anyway.
+Pipe-syntax fragments targeting a real engine should pass `desugarPipes = true`
+(engines don't speak `|>`; available on `transpileTo`/`certify`/`transpileStrict`).
+For full belt-and-braces, follow with a brikk-sql-verify grammar check of the output.
+
+Verdicts stay faithful to the research, but a consumer can accept a refusal its own data
+makes irrelevant via `report.okAccepting { predicate }` — `ok` where every refusal is
+accepted. Each `SEMANTIC_HAZARD` finding carries the hazard's `areas` tags, so an
+ASCII-only corpus can waive the unicode case-folding hazard with
+`report.okAccepting { "unicode" in it.areas }` while any other refusal still blocks.
+
 ## Errors
 
 - `ParseError` — structured (message, line, col, context highlight)
@@ -165,19 +221,24 @@ there is no silent misparsing.
 
 ## Status / known gaps
 
-- `annotate_types` is fully ported (`optimizer/AnnotateTypes.kt` + generated
-  `ast/GeneratedTypingMetadata.kt` from `tools/gen_typing_metadata.py`), gated against
-  Python-annotated serde dumps (`testResources/ast-corpus/*-annotated-serde.json`,
-  regenerated via `tools/gen_serde_corpus.py --annotate [--dialect d]`). Type-driven
-  parser/generator paths (`apply_index_offset`, concat coalesce-wrapping,
-  `CONCAT`→`||` under `CONCAT_COALESCE`, Presto struct `CAST(ROW(...) AS ROW(...))`)
-  run the annotator like Python does.
-- `qualify` and lineage are not ported yet; `annotate_types` therefore only resolves
-  table-qualified columns, exactly like the Python function on unqualified input.
-- Per-dialect gate status lives in the `testResources/**/known-failures*.json` ledgers;
-  they are enforced two-directionally in CI tests (a stale ledger entry fails the
-  build). The remaining transpile ledger entries are non-typing gaps (UPDATE ... FROM
-  rewrites, `explode_projection_to_unnest`).
+- Optimizer rules beyond the semantic pipeline are not ported (pushdown_projections/
+  predicates, merge/eliminate subqueries, canonicalize, full normalize/simplify) —
+  nothing currently depends on them.
+- UDF typing is stubbed (`Schema.getUdfType` → UNKNOWN); function `sinceVersion`
+  metadata awaits a doris-website docs source; Trino semantic profiles (null handling)
+  are not exposed by `SHOW FUNCTIONS`.
+- Hazard coverage is trino↔duckdb only today; other pairs gain entries as they get
+  probe-verified evidence.
+- Platforms are temporarily narrowed to JVM while Amper KMP publishing matures (the
+  code is pure common Kotlin; restore note in `module.yaml`).
+- Per-dialect gate status lives in the `testResources/**/known-failures*.json` ledgers,
+  enforced two-directionally (a stale ledger entry fails the build). Remaining entries
+  are few and documented (e.g. UPDATE ... FROM rewrites, `explode_projection_to_unnest`).
+- Deliberate divergences from upstream sqlglot are registered in
+  `docs/brikk-extensions.md` (18 entries, most upstream-PR candidates).
+  Verifier-backed entries there are intentional and must not be copied into
+  actionable TODO inventories or "fixed" toward SQLGlot unless that policy is
+  reversed.
 
 ## Attribution
 

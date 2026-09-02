@@ -1,10 +1,15 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "clickhouse",
   "identity": [
     {
       "sql": "cast(notEmpty(report_task_id)?report_task_id:'-1' AS text)",
       "expected": "CAST(CASE WHEN notEmpty(report_task_id) THEN report_task_id ELSE '-1' END AS String)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT $$a\\$b$$",
+      "expected": "SELECT 'a\\\\$b'",
       "pretty": false
     },
     {
@@ -203,6 +208,11 @@
       "pretty": false
     },
     {
+      "sql": "SELECT x, COUNT() FROM y GROUP BY x WITH TOTALS LIMIT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "SELECT INTERVAL t.days DAY",
       "expected": null,
       "pretty": false
@@ -230,6 +240,21 @@
     {
       "sql": "SELECT * FROM x AS y FINAL",
       "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT event_id FROM \"analytics\".\"events_view\"(final = 1)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT event_id FROM \"analytics\".\"uniqExactIf\"(final = 1)",
+      "expected": "SELECT event_id FROM \"analytics\".uniqExactIf(final = 1)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT event_id FROM \"analytics\".\"sum\"(final = 1)",
+      "expected": "SELECT event_id FROM \"analytics\".sum(final = 1)",
       "pretty": false
     },
     {
@@ -571,12 +596,12 @@
     },
     {
       "sql": "SELECT and(1, 2)",
-      "expected": "SELECT 1 AND 2",
+      "expected": "SELECT (1 AND 2)",
       "pretty": false
     },
     {
       "sql": "SELECT or(1, 2)",
-      "expected": "SELECT 1 OR 2",
+      "expected": "SELECT (1 OR 2)",
       "pretty": false
     },
     {
@@ -621,6 +646,16 @@
     },
     {
       "sql": "SELECT SUBSTRING_INDEX('a.b.c.d', '.', -2)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT lagInFrame(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT leadInFrame(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees",
       "expected": null,
       "pretty": false
     },
@@ -767,6 +802,32 @@
     },
     {
       "sql": "DELETE FROM tbl ON CLUSTER '{cluster}' WHERE date = '2019-01-01'",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE t MODIFY COLUMN IF EXISTS c Int64",
+      "expected": "ALTER TABLE t ALTER COLUMN IF EXISTS c TYPE Int64",
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE t ALTER COLUMN IF EXISTS c TYPE Int64",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE t MODIFY COLUMN c REMOVE DEFAULT",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "ALTER TABLE t MODIFY TTL d + INTERVAL 1 DAY",
+      "expected": "ALTER TABLE t MODIFY TTL d + INTERVAL '1' DAY",
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE t MODIFY COMMENT 'hi'",
       "expected": null,
       "pretty": false
     },
@@ -922,17 +983,17 @@
     },
     {
       "sql": "SELECT or(0, 1, -2)",
-      "expected": "SELECT 0 OR 1 OR -2",
+      "expected": "SELECT (0 OR 1 OR -2)",
       "pretty": false
     },
     {
       "sql": "SELECT and(1, 2, 3)",
-      "expected": "SELECT 1 AND 2 AND 3",
+      "expected": "SELECT (1 AND 2 AND 3)",
       "pretty": false
     },
     {
       "sql": "SELECT or(and(3, 0), 5)",
-      "expected": "SELECT (3 AND 0) OR 5",
+      "expected": "SELECT ((3 AND 0) OR 5)",
       "pretty": false
     },
     {
@@ -963,6 +1024,16 @@
     {
       "sql": "INSERT INTO t (col1, col2) FORMAT Values('abcd', 1234)",
       "expected": "INSERT INTO t (col1, col2) VALUES (('abcd'), (1234))",
+      "pretty": false
+    },
+    {
+      "sql": "INSERT INTO t (col1, col2) VALUES (('abcd'), (1234))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM VALUES ((1), (2), (3))",
+      "expected": null,
       "pretty": false
     },
     {
@@ -1246,6 +1317,11 @@
       "pretty": false
     },
     {
+      "sql": "arrayMap((x, y, z) -> x + y + z, [1, 2], [3, 4], [5, 6])",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "splitByChar('', x)",
       "expected": null,
       "pretty": false
@@ -1266,6 +1342,16 @@
       "pretty": false
     },
     {
+      "sql": "SELECT x FROM view(SELECT 1 AS x)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT country, sum(installs) AS installs FROM cluster('default', view(SELECT 'US' AS country, count() AS installs FROM numbers(1) GROUP BY country)) GROUP BY country",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "trunc(3.14159, 2)",
       "expected": null,
       "pretty": false
@@ -1278,6 +1364,11 @@
     {
       "sql": "1 AS FORMAT",
       "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE t MODIFY COLUMN c Int64",
+      "expected": "ALTER TABLE t ALTER COLUMN c TYPE Int64",
       "pretty": false
     },
     {
@@ -1314,6 +1405,22 @@
       "sql": "arrayFilter(x -> x > 0, arr)",
       "expected": null,
       "pretty": false
+    },
+    {
+      "sql": "arrayFilter((x, y) -> y, [1, 2, 3], [1, 0, 1])",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v TO db.t AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH AS SELECT 1",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
     },
     {
       "sql": "CREATE TABLE t1 (a String MATERIALIZED func())",
@@ -1424,6 +1531,96 @@
       "sql": "@macro",
       "expected": null,
       "pretty": false
+    },
+    {
+      "sql": "SELECT quantileExactInclusive(0.25)(number) AS x FROM numbers(5)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT arrayMap((a, b) -> a * b, [1, 2, 3], [10, 20, 30]) AS products",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v DEFINER='alice' SQL SECURITY DEFINER AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v SQL SECURITY DEFINER DEFINER='alice' AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v SQL SECURITY DEFINER DEFINER=CURRENT_USER AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v SQL SECURITY INVOKER AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE VIEW v SQL SECURITY NONE AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v TO t SQL SECURITY DEFINER DEFINER='alice' AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v TO t SQL SECURITY INVOKER AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v TO t SQL SECURITY NONE AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE v MODIFY SQL SECURITY DEFINER DEFINER='alice'",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE v MODIFY SQL SECURITY DEFINER DEFINER=CURRENT_USER",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH EVERY 30 SECOND AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH AFTER 5 MINUTE AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH DEPENDS ON db.x, db.y APPEND TO db.t AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v ON CLUSTER '{cluster}' REFRESH EVERY 1 MONTH OFFSET 5 DAY 2 HOUR RANDOMIZE FOR 1 HOUR DEPENDS ON db.x, db.y SETTINGS refresh_retries = 5 APPEND TO db.t AS SELECT 1",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH EVERY 1 HOUR (id UInt64) AS SELECT 1 AS id",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE MATERIALIZED VIEW v REFRESH DEPENDS ON dep (id UInt64) AS SELECT 1",
+      "expected": null,
+      "pretty": false
     }
   ],
   "transpile": [
@@ -1470,20 +1667,22 @@
       "write": {}
     },
     {
-      "sql": "SELECT lagInFrame(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees",
+      "sql": "SELECT lag(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees",
       "read": {
-        "clickhouse": "SELECT lagInFrame(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees",
         "oracle": "SELECT LAG(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees"
       },
-      "write": {}
+      "write": {
+        "duckdb": "SELECT LAG(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees"
+      }
     },
     {
-      "sql": "SELECT leadInFrame(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees",
+      "sql": "SELECT lead(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees",
       "read": {
-        "clickhouse": "SELECT leadInFrame(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees",
         "oracle": "SELECT LEAD(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees"
       },
-      "write": {}
+      "write": {
+        "duckdb": "SELECT LEAD(salary, 1, 0) OVER (ORDER BY hire_date) AS prev_sal FROM employees"
+      }
     },
     {
       "sql": "SELECT CAST(STR_TO_DATE('05 12 2000', '%d %m %Y') AS Nullable(DATE))",
@@ -1803,11 +2002,46 @@
       }
     },
     {
+      "sql": "ALTER TABLE t ALTER COLUMN c TYPE Nullable(Int64)",
+      "read": {
+        "clickhouse": "ALTER TABLE t ALTER COLUMN c TYPE Nullable(Int64)",
+        "postgres": "ALTER TABLE t ALTER COLUMN c TYPE BIGINT"
+      },
+      "write": {}
+    },
+    {
       "sql": "INSERT INTO t (col1, col2) VALUES ('abcd', 1234)",
       "read": {},
       "write": {
         "clickhouse": "INSERT INTO t (col1, col2) VALUES (('abcd'), (1234))",
         "postgres": "INSERT INTO t (col1, col2) VALUES (('abcd'), (1234))"
+      }
+    },
+    {
+      "sql": "SELECT trimLeft(s, 'xy'), trimRight(s, 'xy'), trimBoth(s, 'xy')",
+      "read": {},
+      "write": {
+        "clickhouse": "SELECT TRIM(LEADING 'xy' FROM s), TRIM(TRAILING 'xy' FROM s), TRIM(BOTH 'xy' FROM s)",
+        "duckdb": "SELECT LTRIM(s, 'xy'), RTRIM(s, 'xy'), TRIM(s, 'xy')",
+        "postgres": "SELECT TRIM(LEADING 'xy' FROM s), TRIM(TRAILING 'xy' FROM s), TRIM('xy' FROM s)"
+      }
+    },
+    {
+      "sql": "SELECT LTRIM(s), RTRIM(s), TRIM(s)",
+      "read": {
+        "clickhouse": "SELECT trimLeft(s), trimRight(s), trimBoth(s)"
+      },
+      "write": {
+        "duckdb": "SELECT LTRIM(s), RTRIM(s), TRIM(s)"
+      }
+    },
+    {
+      "sql": "a / b",
+      "read": {},
+      "write": {
+        "clickhouse": "a / b",
+        "mysql": "a / b",
+        "postgres": "CAST(a AS DOUBLE PRECISION) / b"
       }
     },
     {
@@ -2015,6 +2249,19 @@
       }
     },
     {
+      "sql": "dateTrunc('MONTH', x)",
+      "read": {
+        "clickhouse": "dateTrunc('MONTH', x)"
+      },
+      "write": {
+        "clickhouse": "dateTrunc('MONTH', x)",
+        "databricks": "TRUNC(x, 'MONTH')",
+        "duckdb": "DATE_TRUNC('MONTH', x)",
+        "presto": "DATE_TRUNC('MONTH', x)",
+        "spark": "TRUNC(x, 'MONTH')"
+      }
+    },
+    {
       "sql": "date_trunc('WEEK', today())",
       "read": {},
       "write": {
@@ -2060,8 +2307,8 @@
     }
   ],
   "stats": {
-    "identity_count": 284,
-    "transpile_count": 74,
-    "skipped_dynamic": 22
+    "identity_count": 323,
+    "transpile_count": 79,
+    "skipped_dynamic": 23
   }
 }

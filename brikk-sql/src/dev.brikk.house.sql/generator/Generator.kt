@@ -6,8 +6,11 @@ import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.ast.Any as AnyNode
 import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.ast.Set as SetNode
+import dev.brikk.house.sql.parser.TokenType
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
+import dev.brikk.house.sql.parser.withStrictTimeInverse
+import dev.brikk.house.sql.optimizer.findAllInScope
 import kotlin.Boolean
 import kotlin.String
 import kotlin.collections.List
@@ -51,10 +54,20 @@ open class Generator(
     // "upper" | "lower" | true | false (sqlglot: normalize_functions; base dialect default "upper")
     val normalizeFunctions: kotlin.Any = "upper",
     val leadingComma: Boolean = false,
-    val maxTextWidth: Int = 80,
+    // brikk: pretty-mode wrap width. sqlglot's default is 80; brikk widens it to 120 to
+    // suit modern editors (only affects pretty=true line wrapping — non-pretty output is
+    // single-line regardless).
+    val maxTextWidth: Int = 120,
     val comments: Boolean = true,
     val tokenizerConfig: TokenizerConfig = TokenizerConfig.BASE,
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    // Source-aware generation (SPIKE-source-aware-generator-transforms): the dialect the AST
+    // was parsed FROM, when known. Lets a semantic-changing TRANSFORMS entry fire only on
+    // genuine cross-dialect transpilation and stay faithful on same-dialect generation
+    // (`toStandardSql`/pipe desugaring, or transpile read==write). null = unknown; treated
+    // as faithful/native (preserves the behavior of direct Expression.sql(...) call sites).
+    // Set by transpile(read,write) and SqlFragment paths. See [isCrossDialectFrom].
+    val sourceDialect: String? = null,
 ) {
     // ------------------------------------------------------------------
     // 1. Options / state
@@ -62,6 +75,16 @@ open class Generator(
 
     var identify: kotlin.Any = identify
         protected set
+
+    /**
+     * True iff we KNOW the AST came from a dialect other than [nativeDialect] — i.e. this is
+     * a genuine cross-dialect transpile into [nativeDialect]. A semantic-changing rewrite
+     * (e.g. `lower`→`lowerUTF8` when targeting ClickHouse) should gate on this so it does
+     * NOT fire on same-dialect generation (pipe desugaring / `toStandardSql`, transpile
+     * read==write) or on source-unknown direct `Expression.sql(...)` (both stay faithful).
+     */
+    fun isCrossDialectFrom(nativeDialect: String): Boolean =
+        sourceDialect != null && !sourceDialect.equals(nativeDialect, ignoreCase = true)
 
     private val indentWidth: Int = indent
 
@@ -71,6 +94,15 @@ open class Generator(
     protected val dispatch: Map<KClass<out Expression>, GenMethod> =
         if (overrides.isEmpty()) GeneratorTables.DISPATCH
         else GeneratorTables.DISPATCH + overrides
+
+    /**
+     * Whether this generator has a dedicated renderer for [kclass] (dispatch entry /
+     * dialect transform), as opposed to the generic function-fallback that emits
+     * `NAME(args)` verbatim. Capability checks use this to separate grammar-shaped
+     * functions (CAST, EXTRACT, ...) from names that pass through to the engine.
+     */
+    fun hasDedicatedRenderer(kclass: KClass<out Expression>): Boolean =
+        dispatch.containsKey(kclass)
 
     // sqlglot: dialect QUOTE_START/QUOTE_END/IDENTIFIER_START/IDENTIFIER_END (from tokenizer tables)
     protected val quoteStart: String = tokenizerConfig.quotes.keys.first()
@@ -88,6 +120,35 @@ open class Generator(
     private var nextNameCounter = -1
     protected fun nextName(): String { nextNameCounter += 1; return "_t$nextNameCounter" }
 
+    // --- brikk-native: emit-span tracking (see SourceMap.kt) ------------------
+    //
+    // Design: generation is bottom-up string concatenation (each dispatch handler
+    // returns a fragment its parent embeds), so a fragment's absolute offset is
+    // unknown at dispatch time. When [trackSpans] is on, the central [sql] dispatch
+    // records, per rendered node, the exact returned fragment plus the fragments of
+    // its (recursively recorded) children — an offset TREE keyed by fragment
+    // strings. After generation, [buildSourceMap] resolves absolute offsets top-down:
+    // the root fragment is the whole raw output; each child fragment is located
+    // inside its parent's window via a cursor-advancing verbatim search (with a
+    // from-the-start retry for handlers that reorder args). Children whose fragment
+    // was transformed after rendering (pretty-mode re-indentation of multi-line
+    // blocks) get no span, but their descendants are re-resolved against the parent
+    // window, so leaf/inline nodes keep exact spans even in pretty output. Final
+    // offsets are then remapped through generate()'s post-passes (trim + pretty
+    // SENTINEL_LINE_BREAK replacement). Overhead when disabled: one boolean check
+    // per sql() call, no allocations.
+
+    /** brikk-native: enable emit-span recording for subsequent [generate] calls. */
+    var trackSpans: Boolean = false
+
+    /** brikk-native: the [SourceMap] of the last [generate] call (when [trackSpans]). */
+    var lastSourceMap: SourceMap? = null
+        protected set
+
+    private class SpanRecord(val node: Expression, val fragment: String, val children: List<SpanRecord>)
+
+    private val spanStack = ArrayDeque<MutableList<SpanRecord>>()
+
     // --- Generator class-level flags (base dialect values; open for dialect subclasses) ---
     // sqlglot: NULL_ORDERING_SUPPORTED and friends (only flags used by ported methods)
     open val nullOrderingSupported: Boolean? get() = true
@@ -98,6 +159,10 @@ open class Generator(
     open val createFunctionReturnAs: Boolean get() = true
     open val singleStringInterval: Boolean get() = false
     open val intervalAllowsPluralForm: Boolean get() = true
+
+    // sqlglot: Generator.AUTO_REFRESH_BARE_INTERVALS — intervals in a REFRESH schedule
+    // (AutoRefreshProperty) render without the INTERVAL keyword (ClickHouse).
+    open val autoRefreshBareIntervals: Boolean get() = false
     open val limitFetch: String get() = "ALL"
     // sqlglot: Generator.LIMIT_ONLY_LITERALS
     open val limitOnlyLiterals: Boolean get() = false
@@ -105,6 +170,9 @@ open class Generator(
     open val unpivotAliasesAreIdentifiers: Boolean get() = true
     open val renameTableWithDb: Boolean get() = true
     open val groupingsSep: String get() = ","
+
+    // sqlglot: Generator.DECLARE_DEFAULT_ASSIGNMENT (base "="; bigquery/trino use "DEFAULT")
+    open val declareDefaultAssignment: String get() = "="
     open val indexOn: String get() = "ON"
     open val joinHints: Boolean get() = true
     open val directedJoins: Boolean get() = false
@@ -192,6 +260,12 @@ open class Generator(
     open val expressionPrecedesPropertiesCreatables: Set<String> get() = emptySet()
     open val inoutSeparator: String get() = " "
     open val supportsUescape: Boolean get() = true
+    open val supportsAlterColumnIfExists: Boolean get() = false
+    open val historicalDataPostAlias: Boolean get() = false
+    // sqlglot: Dialect.SET_OP_DISTINCT_BY_DEFAULT (base: all true)
+    open fun setOpDistinctByDefault(expression: SetOperation): Boolean? = true
+    // sqlglot: Generator.SAFE_JSON_PATH_KEY_RE
+    open val safeJsonPathKeyRegex: Regex get() = SAFE_IDENTIFIER_RE
 
     // --- Dialect-level flags (base dialect values) ---
     // sqlglot: Generator.dialect (the umbrella Dialect object; used by annotate_types-
@@ -247,7 +321,7 @@ open class Generator(
         val REAL_TYPES: Set<DType> = setOf(
             DType.DOUBLE, DType.FLOAT, DType.BIGDECIMAL, DType.DECIMAL, DType.DECIMAL32,
             DType.DECIMAL64, DType.DECIMAL128, DType.DECIMAL256, DType.DECFLOAT,
-            DType.MONEY, DType.SMALLMONEY, DType.UDECIMAL, DType.UDOUBLE,
+            DType.MONEY, DType.NUMBER, DType.SMALLMONEY, DType.UDECIMAL, DType.UDOUBLE,
         )
 
         // sqlglot: expressions.datatypes.DataType.TEXT_TYPES
@@ -264,14 +338,114 @@ open class Generator(
     open fun generate(expression: Expression, copy: Boolean = true): String {
         val expr = if (copy) expression.copy() else expression
         unsupportedMessages.clear()
-        var sql = sql(preprocess(expr)).trim()
+        // brikk-native: span tracking bookkeeping (no-op unless trackSpans)
+        lastSourceMap = null
+        if (trackSpans) {
+            spanStack.clear()
+            spanStack.addLast(mutableListOf())
+        }
+        val raw = sql(preprocess(expr))
+        var sql = raw.trim()
         if (pretty) sql = sql.replace(SENTINEL_LINE_BREAK, "\n")
+        if (trackSpans) {
+            lastSourceMap = buildSourceMap(raw, sql)
+            spanStack.clear()
+        }
         return sql
     }
 
-    // sqlglot: Generator.preprocess (base dialect: EXPRESSIONS_WITHOUT_NESTED_CTES empty,
-    // ENSURE_BOOLS false -> identity)
-    open fun preprocess(expression: Expression): Expression = expression
+    /**
+     * brikk-native: resolves the recorded span tree into absolute offsets over the
+     * final output. [raw] is the pre-trim generator output; [final] the returned SQL
+     * (raw trimmed, and with SENTINEL_LINE_BREAK replaced by \n in pretty mode).
+     */
+    private fun buildSourceMap(raw: String, final: String): SourceMap {
+        val entries = mutableListOf<SourceMap.Entry>()
+
+        // Offset remap raw -> final: subtract the leading trim cut, then account for
+        // each SENTINEL_LINE_BREAK (len N) collapsing to "\n" (len 1) in pretty mode.
+        val leadCut = raw.length - raw.trimStart().length
+        val trimmed = raw.trim()
+        val sentinelPositions: List<Int> =
+            if (pretty && trimmed.contains(SENTINEL_LINE_BREAK)) {
+                val positions = mutableListOf<Int>()
+                var i = trimmed.indexOf(SENTINEL_LINE_BREAK)
+                while (i >= 0) {
+                    positions.add(i)
+                    i = trimmed.indexOf(SENTINEL_LINE_BREAK, i + SENTINEL_LINE_BREAK.length)
+                }
+                positions
+            } else emptyList()
+        val sentinelLen = SENTINEL_LINE_BREAK.length
+
+        fun remap(rawOffset: Int): Int {
+            var o = rawOffset - leadCut
+            if (o < 0) o = 0
+            if (o > trimmed.length) o = trimmed.length
+            var shift = 0
+            for (p in sentinelPositions) {
+                when {
+                    p + sentinelLen <= o -> shift += sentinelLen - 1
+                    p < o -> return (p - shift + 1).coerceIn(0, final.length) // mid-sentinel: clamp past the "\n"
+                    else -> {}
+                }
+                if (p >= o) break
+            }
+            return (o - shift).coerceIn(0, final.length)
+        }
+
+        fun addEntry(node: Expression, rawStart: Int, rawEnd: Int) {
+            val s = remap(rawStart)
+            val e = remap(rawEnd)
+            if (e > s) entries.add(SourceMap.Entry(s, e, node))
+        }
+
+        // Locates each child fragment inside its parent's window (cursor scan with a
+        // from-the-start retry for arg-reordering handlers); unresolved children are
+        // skipped but their descendants are re-resolved against the same window.
+        fun resolve(children: List<SpanRecord>, windowStart: Int, window: String) {
+            var cursor = 0
+            for (child in children) {
+                val frag = child.fragment
+                if (frag.isEmpty()) {
+                    resolve(child.children, windowStart, window)
+                    continue
+                }
+                var idx = window.indexOf(frag, cursor)
+                if (idx < 0) idx = window.indexOf(frag)
+                if (idx < 0) {
+                    resolve(child.children, windowStart, window)
+                    continue
+                }
+                addEntry(child.node, windowStart + idx, windowStart + idx + frag.length)
+                resolve(child.children, windowStart + idx, frag)
+                cursor = idx + frag.length
+            }
+        }
+
+        val roots = spanStack.firstOrNull() ?: mutableListOf()
+        resolve(roots, 0, raw)
+        return SourceMap(final, entries)
+    }
+
+    // sqlglot: Generator.EXPRESSIONS_WITHOUT_NESTED_CTES (base: empty set). Dialects that
+    // only allow top-level CTEs (Hive/Spark<3, T-SQL) override this.
+    open val expressionsWithoutNestedCtes: Set<kotlin.reflect.KClass<out Expression>> get() = emptySet()
+
+    // sqlglot: Generator.preprocess -> Generator._move_ctes_to_top_level. ENSURE_BOOLS is
+    // false for every dialect we currently model, so only the nested-CTE hoist runs.
+    open fun preprocess(expression: Expression): Expression = moveCtesToTopLevelIfNeeded(expression)
+
+    // sqlglot: Generator._move_ctes_to_top_level
+    protected fun moveCtesToTopLevelIfNeeded(expression: Expression): Expression {
+        if (expression.parent == null &&
+            expression::class in expressionsWithoutNestedCtes &&
+            expression.findAll(dev.brikk.house.sql.ast.With::class).any { it.parent !== expression }
+        ) {
+            return moveCtesToTopLevel(expression)
+        }
+        return expression
+    }
 
     // sqlglot: Generator.unsupported (unsupported_level WARN: collect only)
     open fun unsupported(message: String) {
@@ -392,17 +566,31 @@ open class Generator(
             return if (isTruthyArg(value)) sql(value) else ""
         }
 
+        // brikk-native: span recording — push a child collector for this node's frame
+        val collecting = trackSpans && spanStack.isNotEmpty()
+        if (collecting) spanStack.addLast(mutableListOf())
+
         val handler = dispatch[expression::class]
-        val sql = when {
-            handler != null -> handler(this, expression)
-            expression is Func -> functionFallbackSql(expression)
-            expression is Property -> propertySql(expression)
-            else -> throw UnsupportedError(
-                "Unsupported expression type ${expression::class.simpleName}"
-            )
+        val sql = try {
+            when {
+                handler != null -> handler(this, expression)
+                expression is Func -> functionFallbackSql(expression)
+                expression is Property -> propertySql(expression)
+                else -> throw UnsupportedError(
+                    "Unsupported expression type ${expression::class.simpleName}"
+                )
+            }
+        } catch (t: Throwable) {
+            if (collecting) spanStack.removeLast()
+            throw t
         }
 
-        return if (comments && comment) maybeComment(sql, expression) else sql
+        val out = if (comments && comment) maybeComment(sql, expression) else sql
+        if (collecting) {
+            val children = spanStack.removeLast()
+            spanStack.last().add(SpanRecord(expression, out, children))
+        }
+        return out
     }
 
     // Python truthiness for arg values in `sql(expression, key)`.
@@ -524,10 +712,119 @@ open class Generator(
     // sqlglot: Generator.too_wide
     fun tooWide(args: Iterable<String>): Boolean = args.sumOf { it.length } > maxTextWidth
 
+    // Cached inverse with strict-token degradation/padding (sqlglot metaclass
+    // _with_strict_time_inverse applied to every dialect's INVERSE_TIME_MAPPING).
+    private val effectiveInverseTimeMapping: Map<String, String> by lazy {
+        withStrictTimeInverse(inverseTimeMapping)
+    }
+
     // sqlglot: Generator.format_time — renders args["format"] and converts python
     // strftime specifiers back into this dialect's (INVERSE_TIME_MAPPING).
-    open fun formatTime(expression: Expression): String? =
-        formatTimeString(sql(expression, "format"), inverseTimeMapping)
+    // Optional [inverseTimeMappingOverride] matches upstream's inverse_time_mapping kwarg
+    // (e.g. Presto strtounix routing through Hive.INVERSE_TIME_MAPPING).
+    open fun formatTime(
+        expression: Expression,
+        inverseTimeMappingOverride: Map<String, String>? = null,
+    ): String? {
+        val mapping = if (inverseTimeMappingOverride != null) {
+            withStrictTimeInverse(inverseTimeMappingOverride)
+        } else {
+            effectiveInverseTimeMapping
+        }
+        return formatTimeString(sql(expression, "format"), mapping)
+    }
+
+    // sqlglot: Generator.declare_sql
+    open fun declareSql(expression: Declare): String {
+        val replace = if (expression.args["replace"] == true) "OR REPLACE " else ""
+        return "DECLARE $replace${expressions(expression, flat = true)}"
+    }
+
+    // sqlglot: Generator.querytransform_sql
+    open fun querytransformSql(expression: QueryTransform): String {
+        val transform = func("TRANSFORM", *expression.expressionsArg.toTypedArray())
+        val rowFormatBefore = sql(expression, "row_format_before").let { if (it.isNotEmpty()) " $it" else "" }
+        val recordWriter = sql(expression, "record_writer").let { if (it.isNotEmpty()) " RECORDWRITER $it" else "" }
+        val using = " USING ${sql(expression, "command_script")}"
+        val schema = sql(expression, "schema").let { if (it.isNotEmpty()) " AS $it" else "" }
+        val rowFormatAfter = sql(expression, "row_format_after").let { if (it.isNotEmpty()) " $it" else "" }
+        val recordReader = sql(expression, "record_reader").let { if (it.isNotEmpty()) " RECORDREADER $it" else "" }
+        return "$transform$rowFormatBefore$recordWriter$using$schema$rowFormatAfter$recordReader"
+    }
+
+    // sqlglot bac1a897b: Generator.export_sql.
+    open fun exportSql(expression: Export): String {
+        val connection = sql(expression, "connection").let {
+            if (it.isNotEmpty()) "WITH CONNECTION $it " else ""
+        }
+        return "EXPORT DATA $connection${sql(expression, "options")} AS ${sql(expression, "this")}"
+    }
+
+    // sqlglot: Generator.declareitem_sql
+    open fun declareitemSql(expression: DeclareItem): String {
+        val variables = expressions(expression, key = "this")
+        var default = sql(expression, "default")
+        default = if (default.isNotEmpty()) " $declareDefaultAssignment $default" else ""
+        var kind = sql(expression, "kind")
+        if (expression.args["kind"] is Schema) kind = "TABLE $kind"
+        kind = if (kind.isNotEmpty()) " $kind" else ""
+        return "$variables$kind$default"
+    }
+
+    // sqlglot: Generator.block_sql
+    open fun blockSql(expression: Block): String {
+        val exprs = expressions(expression, sep = "; ", flat = true)
+        val begin = if (expression.args["begin"] == true) "BEGIN " else ""
+        return if (exprs.isNotEmpty()) "$begin$exprs" else ""
+    }
+
+    // sqlglot: Generator.functionspecification_sql (base: unsupported; dialects override)
+    open fun functionspecificationSql(expression: FunctionSpecification): String {
+        unsupported("Unsupported Inline UDFs syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.ifblock_sql (base: unsupported; dialects override)
+    open fun ifblockSql(expression: IfBlock): String {
+        unsupported("Unsupported If block syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.casestatement_sql (base: unsupported; dialects override)
+    open fun casestatementSql(expression: CaseStatement): String {
+        unsupported("Unsupported Case statement syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.whileblock_sql (base: unsupported; dialects override)
+    open fun whileblockSql(expression: WhileBlock): String {
+        unsupported("Unsupported While block syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.loopblock_sql (base: unsupported; dialects override)
+    open fun loopblockSql(expression: LoopBlock): String {
+        unsupported("Unsupported Loop block syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.repeatblock_sql (base: unsupported; dialects override)
+    open fun repeatblockSql(expression: RepeatBlock): String {
+        unsupported("Unsupported Repeat block syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.leave_sql (base: unsupported; dialects override)
+    open fun leaveSql(expression: Leave): String {
+        unsupported("Unsupported Leave syntax")
+        return ""
+    }
+
+    // sqlglot: Generator.iterate_sql (base: unsupported; dialects override)
+    open fun iterateSql(expression: Iterate): String {
+        unsupported("Unsupported Iterate syntax")
+        return ""
+    }
 
     // sqlglot: Generator.binary
     open fun binary(expression: Binary, op: String): String {
@@ -1029,12 +1326,16 @@ open class Generator(
 
     // sqlglot: Generator.with_sql
     open fun withSql(expression: With): String {
+        var udfs = expressions(expression, key = "udfs", flat = true)
+        udfs = if (udfs.isNotEmpty()) "WITH $udfs" else ""
+
         val sqlText = expressions(expression, flat = true)
         val recursive =
             if (cteRecursiveKeywordRequired && expression.args["recursive"] == true) "RECURSIVE " else ""
         var search = sql(expression, "search")
         if (search.isNotEmpty()) search = " $search"
-        return "WITH $recursive$sqlText$search"
+        val ctes = if (sqlText.isNotEmpty()) "WITH $recursive$sqlText$search" else ""
+        return if (udfs.isNotEmpty() && ctes.isNotEmpty()) "$udfs $ctes" else "$udfs$ctes"
     }
 
     // sqlglot: Generator.cte_sql
@@ -1081,8 +1382,37 @@ open class Generator(
 
     // sqlglot: Generator.rawstring_sql (base: no backslash escapes)
     open fun rawstringSql(expression: RawString): String {
-        val string = escapeStr(expression.thisArg as? String ?: "", escapeBackslash = false)
+        var string = expression.thisArg as? String ?: ""
+        if ('\\' in tokenizerConfig.stringEscapes) string = string.replace("\\", "\\\\")
+        string = escapeStr(string, escapeBackslash = false)
         return "$quoteStart$string$quoteEnd"
+    }
+
+    // sqlglot: Generator.unicodestring_sql
+    open fun unicodestringSql(expression: UnicodeString): String {
+        var text = sql(expression, "this")
+        val escape = expression.args["escape"] as? Expression
+        val unicodeFormat = tokenizerConfig.formatStrings.entries
+            .firstOrNull { it.value.tokenType == TokenType.UNICODE_STRING }
+        val unicodeStart = unicodeFormat?.key
+        val unicodeEnd = unicodeFormat?.value?.end.orEmpty()
+
+        val escapeSql = if (escape != null && supportsUescape) " UESCAPE ${sql(escape)}" else ""
+        if (unicodeStart == null || (escape != null && !supportsUescape)) {
+            val pattern = if (escape != null) {
+                Regex("${Regex.escape(escape.name)}(\\d+)")
+            } else {
+                Regex("""\\(\d+)""")
+            }
+            text = pattern.replace(text) { "\\u${it.groupValues[1]}" }
+        }
+
+        text = if (unicodeStart != null) {
+            replaceLineBreaks(text).replace(unicodeEnd, unicodeEnd + unicodeEnd)
+        } else {
+            escapeStr(text, escapeBackslash = false)
+        }
+        return "${unicodeStart ?: quoteStart}$text${if (unicodeStart != null) unicodeEnd else quoteEnd}$escapeSql"
     }
 
     // sqlglot: Generator.datatypeparam_sql
@@ -1176,7 +1506,7 @@ open class Generator(
 
     // sqlglot: Generator.drop_sql
     open fun dropSql(expression: Drop): String {
-        val thisSql = sql(expression, "this")
+        val tables = expressions(expression, key = "tables", flat = true)
         var exprs = expressions(expression, flat = true)
         if (exprs.isNotEmpty()) exprs = " ($exprs)"
         var kind = expression.args["kind"] as? String ?: ""
@@ -1194,7 +1524,8 @@ open class Generator(
         val constraints = if (expression.args["constraints"] == true) " CONSTRAINTS" else ""
         val purge = if (expression.args["purge"] == true) " PURGE" else ""
         val sync = if (expression.args["sync"] == true) " SYNC" else ""
-        return "DROP$temporary$materialized$iceberg $kind$concurrentlySql$existsSql$thisSql$onCluster$exprs$cascade$restrict$constraints$purge$sync"
+        val force = if (expression.args["force"] == true) " FORCE" else ""
+        return "DROP$temporary$materialized$iceberg $kind$concurrentlySql$existsSql$tables$onCluster$exprs$cascade$restrict$constraints$purge$sync$force"
     }
 
     // sqlglot: Generator.set_operation
@@ -1210,12 +1541,14 @@ open class Generator(
             unsupported("$opName ALL is not supported")
         }
 
-        // sqlglot: Dialect.SET_OP_DISTINCT_BY_DEFAULT (base: all true)
-        val defaultDistinct = true
+        val defaultDistinct = setOpDistinctByDefault(expression)
 
-        if (distinct == null) distinct = defaultDistinct
+        if (distinct == null) {
+            distinct = defaultDistinct
+            if (distinct == null) unsupported("$opName requires DISTINCT or ALL to be specified")
+        }
 
-        val distinctOrAll = if (distinct == defaultDistinct) "" else if (distinct) " DISTINCT" else " ALL"
+        val distinctOrAll = if (distinct == defaultDistinct) "" else if (distinct == true) " DISTINCT" else " ALL"
 
         var sideKind = listOf(expression.text("side").uppercase(), expression.text("kind").uppercase())
             .filter { it.isNotEmpty() }
@@ -1758,6 +2091,8 @@ open class Generator(
     // sqlglot: Generator.table_sql
     open fun tableSql(expression: Table, sep: String = " AS "): String {
         var table = tableParts(expression)
+        val branch = sql(expression, "branch")
+        if (branch.isNotEmpty()) table = "$table@$branch"
         val only = if (expression.args["only"] == true) "ONLY " else ""
         var partition = sql(expression, "partition")
         if (partition.isNotEmpty()) partition = " $partition"
@@ -1798,7 +2133,9 @@ open class Generator(
         }
 
         val whenSql = sql(expression, "when")
-        if (whenSql.isNotEmpty()) table = "$table $whenSql"
+        if (whenSql.isNotEmpty()) {
+            if (historicalDataPostAlias) alias = "$alias $whenSql" else table = "$table $whenSql"
+        }
 
         var changes = sql(expression, "changes")
         if (changes.isNotEmpty()) changes = " $changes"
@@ -1910,11 +2247,48 @@ open class Generator(
     open fun tupleSql(expression: Tuple): String =
         "(${expressions(expression, dynamic = true, newLine = true, skipFirst = true, skipLast = true)})"
 
-    // sqlglot: Generator.update_sql (base: UPDATE_STATEMENT_SUPPORTS_FROM=true)
+    // sqlglot: Generator._update_from_joins_sql
+    protected open fun updateFromJoinsSql(expression: Update): Pair<String, String> {
+        val from = expression.args["from_"] as? From
+        if (updateStatementSupportsFrom || from == null) {
+            return "" to sql(expression, "from_")
+        }
+
+        val target = expression.thisArg as? Table
+        if (target != null) {
+            val targetName = toIdentifier(target.aliasOrName)
+            for (assignment in expression.expressionsArg.filterIsInstance<EQ>()) {
+                val column = assignment.thisArg as? Column
+                if (column != null && column.table.isEmpty()) column.set("table", targetName?.copy())
+            }
+        }
+
+        val table = from.thisArg as? Expression ?: return "" to ""
+        val nestedJoins = (table.args["joins"] as? List<*>)?.filterIsInstance<Join>().orEmpty()
+        if (nestedJoins.isNotEmpty()) table.set("joins", null)
+
+        var joinsSql = sql(
+            Join(
+                args(
+                    "this" to table,
+                    "on" to BooleanNode(args("this" to true)),
+                )
+            )
+        )
+        for (nested in nestedJoins) {
+            if (nested.args["on"] == null && nested.args["using"] == null) {
+                nested.set("on", BooleanNode(args("this" to true)))
+            }
+            joinsSql += sql(nested)
+        }
+        return joinsSql to ""
+    }
+
+    // sqlglot: Generator.update_sql
     open fun updateSql(expression: Update): String {
         val hint = sql(expression, "hint")
         val thisSql = sql(expression, "this")
-        val fromSql = sql(expression, "from_")
+        val (joinSql, fromSql) = updateFromJoinsSql(expression)
         val setSql = expressions(expression, flat = true)
         val whereSql = sql(expression, "where")
         val returning = sql(expression, "returning")
@@ -1927,7 +2301,7 @@ open class Generator(
         }
         var options = expressions(expression, key = "options")
         if (options.isNotEmpty()) options = " OPTION($options)"
-        val sqlText = "UPDATE$hint $thisSql SET $setSql$expressionSql$order$limit$options"
+        val sqlText = "UPDATE$hint $thisSql$joinSql SET $setSql$expressionSql$order$limit$options"
         return prependCtes(expression, sqlText)
     }
 
@@ -2395,8 +2769,10 @@ open class Generator(
 
             if (!nullOrderingWindowFunc) {
                 if (windowThis != null && spec != null) {
+                    val funcName = (windowThis as? Func)?.sqlName()
+                        ?: windowThis::class.simpleName
                     unsupported(
-                        "'${nullsSortChange.trim()}' translation not supported in window functions"
+                        "'${nullsSortChange.trim()}' translation not supported in window function $funcName"
                     )
                     nullsSortChange = ""
                 } else if (nullOrderingSupported == false &&
@@ -2413,9 +2789,11 @@ open class Generator(
                     }
                     if (ancestor is Window) ancestor = ancestor.thisArg as? Expression
                     if (ancestor is AggFunc) {
+                        val funcName = (ancestor as? Func)?.sqlName()
+                            ?: ancestor::class.simpleName
                         unsupported(
                             "'${nullsSortChange.trim()}' translation not supported for " +
-                                "aggregate functions with$sortOrder sort order"
+                                "aggregate function $funcName with $sortOrder sort order"
                         )
                         nullsSortChange = ""
                     }
@@ -2502,7 +2880,17 @@ open class Generator(
 
     // sqlglot: Generator.query_modifiers (base: LIMIT_FETCH="ALL" -> no fetch/limit conversion)
     open fun queryModifiers(expression: Expression, vararg sqls: String): String {
-        val limit = expression.args["limit"] as? Expression
+        var limit = expression.args["limit"] as? Expression
+
+        // sqlglot: LIMIT_FETCH conversion between Fetch and Limit
+        if (limitFetch == "LIMIT" && limit is Fetch) {
+            val count = limit.args["count"] as? Expression
+            limit = Limit(args("expression" to (count?.copy() ?: Literal.number("1"))))
+        } else if (limitFetch == "FETCH" && limit is Limit) {
+            limit = Fetch(
+                args("direction" to "FIRST", "count" to (limit.args["expression"] as? Expression)?.copy())
+            )
+        }
 
         val parts = mutableListOf<String>()
         parts.addAll(sqls)
@@ -3138,7 +3526,7 @@ open class Generator(
         val quoted = expression.args["quoted"] == true
         if (
             !(quoted && jsonPathKeyQuotedForcesBrackets) &&
-            thisArg is String && SAFE_IDENTIFIER_RE.matches(thisArg)
+            thisArg is String && safeJsonPathKeyRegex.matches(thisArg)
         ) {
             return ".$thisArg"
         }
@@ -3246,6 +3634,11 @@ open class Generator(
     // sqlglot: Generator.interval_sql (base: SINGLE_STRING_INTERVAL=false,
     // INTERVAL_ALLOWS_PLURAL_FORM=true)
     open fun intervalSql(expression: Interval): String {
+        // sqlglot #7990: bare intervals inside a ClickHouse REFRESH schedule omit INTERVAL.
+        val includeKeyword = !autoRefreshBareIntervals ||
+            expression.findAncestor(AutoRefreshProperty::class, Select::class) !is AutoRefreshProperty
+        var intervalKeyword = if (includeKeyword) "INTERVAL" else ""
+
         val unitExpression = expression.args["unit"]
         var unit = if (unitExpression != null) sql(unitExpression) else ""
         if (!intervalAllowsPluralForm) unit = GeneratorTables.TIME_PART_SINGULARS[unit] ?: unit
@@ -3254,19 +3647,24 @@ open class Generator(
         if (singleStringInterval) {
             val thisName = (expression.args["this"] as? Expression)?.name ?: ""
             if (thisName.isNotEmpty()) {
-                if (unitExpression is IntervalSpan) return "INTERVAL '$thisName'$unit"
-                return "INTERVAL '$thisName$unit'"
+                intervalKeyword = if (intervalKeyword.isNotEmpty()) "$intervalKeyword " else ""
+                if (unitExpression is IntervalSpan) return "$intervalKeyword'$thisName'$unit"
+                return "$intervalKeyword'$thisName$unit'"
             }
-            return "INTERVAL$unit"
+            return "$intervalKeyword$unit"
         }
 
+        val thisExpr = expression.args["this"]
         var thisSql = sql(expression, "this")
         if (thisSql.isNotEmpty()) {
-            val unwrapped = isUnwrappedIntervalValue(expression.args["this"])
-            thisSql = if (unwrapped) " $thisSql" else " ($thisSql)"
+            if (!includeKeyword && (thisExpr as? Expression)?.isString == true) {
+                thisSql = (thisExpr as Expression).name
+            }
+            if (!isUnwrappedIntervalValue(thisExpr)) thisSql = "($thisSql)"
+            if (includeKeyword) thisSql = " $thisSql"
         }
 
-        return "INTERVAL$thisSql$unit"
+        return "$intervalKeyword$thisSql$unit"
     }
 
     // sqlglot: Generator.UNWRAPPED_INTERVAL_VALUES (base: Column, Literal, Neg, Paren)
@@ -3355,6 +3753,19 @@ open class Generator(
     open fun attimezoneSql(expression: AtTimeZone): String =
         "${sql(expression, "this")} AT TIME ZONE ${sql(expression, "zone")}"
 
+    open fun atlocalSql(expression: AtLocal): String =
+        "${sql(expression, "this")} AT LOCAL"
+
+    open fun matchpredicateSql(expression: MatchPredicate): String {
+        val operand = sql(expression, "this").let { if (it.isEmpty()) "" else "$it " }
+        val unique = if (expression.args["unique"] == true) " UNIQUE" else ""
+        val matchType = expression.text("match_type").let { if (it.isEmpty()) "" else " $it" }
+        return "${operand}MATCH$unique$matchType ${wrap(sql(expression, "query"))}"
+    }
+
+    open fun uniquepredicateSql(expression: UniquePredicate): String =
+        "UNIQUE ${wrap(expression)}"
+
     // sqlglot: Generator.fromtimezone_sql
     open fun fromtimezoneSql(expression: FromTimeZone): String =
         "${sql(expression, "this")} AT TIME ZONE ${sql(expression, "zone")} AT TIME ZONE 'UTC'"
@@ -3374,7 +3785,12 @@ open class Generator(
         connectorSql(expression, "XOR", stack)
 
     // sqlglot: Generator.cast_sql
-    open fun castSql(expression: Cast, safePrefix: String? = null): String {
+    open fun castSql(expression: Cast, safePrefix: String? = null): String =
+        baseCastSql(expression, safePrefix)
+
+    // Base implementation, callable by grandchild dialects that must bypass an
+    // intermediate override (sqlglot: `super(HiveGenerator, self).cast_sql(...)`).
+    protected fun baseCastSql(expression: Cast, safePrefix: String? = null): String {
         var formatSql = sql(expression, "format")
         if (formatSql.isNotEmpty()) formatSql = " FORMAT $formatSql"
         var toSql = sql(expression, "to")
@@ -3438,8 +3854,18 @@ open class Generator(
     }
 
     // sqlglot: Generator.altercolumn_sql
-    open fun altercolumnSql(expression: AlterColumn): String {
+    open fun altercolumnSql(expression: AlterColumn): String = baseAltercolumnSql(expression)
+
+    // Base impl callable by grandchild dialects (sqlglot: super(HiveGenerator, self)).
+    protected fun baseAltercolumnSql(expression: AlterColumn): String {
         val thisSql = sql(expression, "this")
+
+        val exists = if (expression.args["exists"] == true) {
+            if (supportsAlterColumnIfExists) " IF EXISTS" else {
+                unsupported("ALTER COLUMN IF EXISTS is not supported by this dialect")
+                ""
+            }
+        } else ""
 
         val dtype = sql(expression, "dtype")
         if (dtype.isNotEmpty()) {
@@ -3448,17 +3874,17 @@ open class Generator(
             var using = sql(expression, "using")
             if (using.isNotEmpty()) using = " USING $using"
             val alterSetTypeSql = if (alterSetType.isNotEmpty()) "$alterSetType " else ""
-            return "ALTER COLUMN $thisSql $alterSetTypeSql$dtype$collate$using"
+            return "ALTER COLUMN$exists $thisSql $alterSetTypeSql$dtype$collate$using"
         }
 
         val default = sql(expression, "default")
-        if (default.isNotEmpty()) return "ALTER COLUMN $thisSql SET DEFAULT $default"
+        if (default.isNotEmpty()) return "ALTER COLUMN$exists $thisSql SET DEFAULT $default"
 
         val comment = sql(expression, "comment")
-        if (comment.isNotEmpty()) return "ALTER COLUMN $thisSql COMMENT $comment"
+        if (comment.isNotEmpty()) return "ALTER COLUMN$exists $thisSql COMMENT $comment"
 
         val visible = expression.args["visible"] as? String
-        if (!visible.isNullOrEmpty()) return "ALTER COLUMN $thisSql SET $visible"
+        if (!visible.isNullOrEmpty()) return "ALTER COLUMN$exists $thisSql SET $visible"
 
         val allowNull = expression.args["allow_null"]
         val drop = expression.args["drop"]
@@ -3469,10 +3895,10 @@ open class Generator(
 
         if (allowNull != null) {
             val keyword = if (drop == true) "DROP" else "SET"
-            return "ALTER COLUMN $thisSql $keyword NOT NULL"
+            return "ALTER COLUMN$exists $thisSql $keyword NOT NULL"
         }
 
-        return "ALTER COLUMN $thisSql DROP DEFAULT"
+        return "ALTER COLUMN$exists $thisSql DROP DEFAULT"
     }
 
     // sqlglot: Generator.alterrename_sql (base: RENAME_TABLE_WITH_DB=true)
@@ -3490,7 +3916,10 @@ open class Generator(
     }
 
     // sqlglot: Generator.renamecolumn_sql
-    open fun renamecolumnSql(expression: RenameColumn): String {
+    open fun renamecolumnSql(expression: RenameColumn): String = baseRenamecolumnSql(expression)
+
+    // Base impl callable by grandchild dialects (sqlglot: super(HiveGenerator, self)).
+    protected fun baseRenamecolumnSql(expression: RenameColumn): String {
         val exists = if (expression.args["exists"] == true) " IF EXISTS" else ""
         val oldColumn = sql(expression, "this")
         val newColumn = sql(expression, "to")
@@ -3592,6 +4021,10 @@ open class Generator(
         val visible = if (expression.args["visible"] == true) "VISIBLE" else "INVISIBLE"
         return "ALTER INDEX $thisSql $visible"
     }
+
+    // sqlglot: Generator.altermodifysqlsecurity_sql
+    open fun altermodifysqlsecuritySql(expression: AlterModifySqlSecurity): String =
+        "MODIFY ${expressions(expression, sep = " ")}"
 
     // sqlglot: Generator.renameindex_sql
     open fun renameindexSql(expression: RenameIndex): String {
@@ -4188,9 +4621,15 @@ open class Generator(
         return "ADD $exists${sql(expression.thisArg)}$location"
     }
 
-    // sqlglot: Generator.distinct_sql (base: MULTI_ARG_DISTINCT=true)
+    // sqlglot: Generator.distinct_sql
     open fun distinctSql(expression: Distinct): String {
         var thisSql = expressions(expression, flat = true)
+        if (!multiArgDistinct && expression.expressionsArg.size > 1) {
+            val nullCases = expression.expressionsArg.filterIsInstance<Expression>().joinToString(" ") {
+                "WHEN ${sql(Is(args("this" to it.copy(), "expression" to Null())))} THEN NULL"
+            }
+            thisSql = "CASE $nullCases ELSE ($thisSql) END"
+        }
         if (thisSql.isNotEmpty()) thisSql = " $thisSql"
         var on = sql(expression, "on")
         if (on.isNotEmpty()) on = " ON $on"
@@ -4223,7 +4662,7 @@ open class Generator(
         if (ignoreNullsInFunc && expression.metaOrNull?.get("inline") != true) {
             if (ignoreNullsBeforeOrder) {
                 // The first modifier here will be the one closest to the AggFunc's arg
-                val mods = expression.findAll(HavingMax::class, Order::class, Limit::class)
+                val mods = findAllInScope(expression, HavingMax::class, Order::class, Limit::class)
                     .sortedBy { if (it is HavingMax) 0 else if (it is Order) 1 else 2 }
                     .toList()
 
@@ -4325,6 +4764,20 @@ open class Generator(
         return binary(expression, "/")
     }
 
+    // sqlglot: Generator.safedivide_sql
+    open fun safedivideSql(expression: SafeDivide): String {
+        val denominator = expression.expressionArg as Expression
+        return sql(
+            If(
+                args(
+                    "this" to NEQ(args("this" to denominator.copy(), "expression" to Literal.number("0"))),
+                    "true" to Div(args("this" to expression.thisArg, "expression" to denominator)),
+                    "false" to Null(),
+                )
+            )
+        )
+    }
+
     // sqlglot: Expression.is_type — only Cast carries syntactic type info in untyped ASTs
     protected fun isCastToType(expression: Expression?, types: kotlin.collections.Set<DType>): Boolean {
         val cast = expression as? Cast ?: return false
@@ -4343,12 +4796,14 @@ open class Generator(
 
     // sqlglot: Generator.is_sql (base: IS_BOOL_ALLOWED=true)
     open fun isSql(expression: Is): String {
+        val negate = expression.args["negate"] == true
         if (!isBoolAllowed && expression.expressionArg is BooleanNode) {
             val rhs = expression.expressionArg as BooleanNode
-            return if (rhs.thisArg == true) sql(expression, "this")
+            val positive = (rhs.thisArg == true) != negate
+            return if (positive) sql(expression, "this")
             else sql(Not(args("this" to expression.args["this"])))
         }
-        return binary(expression, "IS")
+        return binary(expression, if (negate) "IS NOT" else "IS")
     }
 
     // sqlglot: Generator._like_sql (base: SUPPORTS_LIKE_QUANTIFIERS=true -> plain binary)
@@ -4366,8 +4821,14 @@ open class Generator(
     // sqlglot: Generator.trycast_sql
     open fun trycastSql(expression: TryCast): String = castSql(expression, safePrefix = "TRY_")
 
-    // sqlglot: Generator.try_sql (base: TRY_SUPPORTED=true)
-    open fun trySql(expression: Try): String = func("TRY", expression.thisArg)
+    // sqlglot: Generator.try_sql
+    open fun trySql(expression: Try): String {
+        if (!trySupported) {
+            unsupported("Unsupported TRY function")
+            return sql(expression, "this")
+        }
+        return func("TRY", expression.thisArg)
+    }
 
     // sqlglot: Generator.log_sql (base: LOG_BASE_FIRST=true)
     open fun logSql(expression: Log): String =
@@ -4500,15 +4961,50 @@ open class Generator(
         return func("${prefix}PAD", expression.thisArg, expression.expressionArg, fillPattern)
     }
 
-    // sqlglot: Generator.arrayagg_sql (base: ARRAY_AGG_INCLUDES_NULLS=true; the NULL
-    // filter only fires when nulls_excluded is set, which base parsing doesn't do)
+    // sqlglot: Generator.arrayagg_sql / _add_arrayagg_null_filter
     open fun arrayaggSql(expression: ArrayAgg): String {
         val arrayAgg = functionFallbackSql(expression)
-        if (dialectArrayAggIncludesNulls && expression.args["nulls_excluded"] == true) {
-            unsupported("ARRAY_AGG null filtering is not supported")
+        if (!dialectArrayAggIncludesNulls || expression.args["nulls_excluded"] != true) {
+            return arrayAgg
+        }
+
+        val columnExpression = ((expression.thisArg as? Order)?.thisArg ?: expression.thisArg) as? Expression
+            ?: return arrayAgg
+        val parent = expression.parent
+        if (parent is Filter) {
+            val where = parent.expressionArg as? Where
+            val condition = where?.thisArg as? Expression
+            if (condition != null) {
+                where.set(
+                    "this",
+                    And(
+                        args(
+                            "this" to condition,
+                            "expression" to Not(
+                                args(
+                                    "this" to Is(
+                                        args("this" to columnExpression.copy(), "expression" to Null())
+                                    )
+                                )
+                            ),
+                        )
+                    ),
+                )
+            }
+        } else if (columnExpression.find(Column::class) != null) {
+            val columnSql = if (columnExpression is Distinct) {
+                expressions(columnExpression)
+            } else {
+                sql(columnExpression)
+            }
+            return "$arrayAgg FILTER(WHERE $columnSql IS NOT NULL)"
         }
         return arrayAgg
     }
+
+    // sqlglot: Generator.forin_sql
+    open fun forinSql(expression: ForIn): String =
+        "FOR ${sql(expression, "this")} DO ${sql(expression, "expression")}"
 
     // sqlglot: Generator.slice_sql
     open fun sliceSql(expression: Slice): String {
@@ -4644,8 +5140,8 @@ open class Generator(
         if (options.isNotEmpty()) options = " $options"
         var kind = sql(expression, "kind")
         if (kind.isNotEmpty()) kind = " $kind"
-        var thisSql = sql(expression, "this")
-        if (thisSql.isNotEmpty()) thisSql = " $thisSql"
+        var tables = expressions(expression, key = "tables", flat = true)
+        if (tables.isNotEmpty()) tables = " $tables"
         var mode = sql(expression, "mode")
         if (mode.isNotEmpty()) mode = " $mode"
         var properties = sql(expression, "properties")
@@ -4654,11 +5150,14 @@ open class Generator(
         if (partition.isNotEmpty()) partition = " $partition"
         var innerExpression = sql(expression, "expression")
         if (innerExpression.isNotEmpty()) innerExpression = " $innerExpression"
-        return "ANALYZE$options$kind$thisSql$partition$mode$innerExpression$properties"
+        return "ANALYZE$options$kind$tables$partition$mode$innerExpression$properties"
     }
 
     // sqlglot: Generator.struct_sql
-    open fun structSql(expression: Struct): String {
+    open fun structSql(expression: Struct): String = baseStructSql(expression)
+
+    // Base impl callable by grandchild dialects (sqlglot: Generator.struct_sql(self, e)).
+    protected fun baseStructSql(expression: Struct): String {
         expression.set(
             "expressions",
             expression.expressionsArg.map { e ->
@@ -4746,6 +5245,21 @@ open class Generator(
     }
 
     // sqlglot: Generator.function_fallback_sql
+    /**
+     * Renderer for [Count] that normalizes the zero-arg form `count()` to `COUNT(*)`.
+     * ClickHouse allows a bare `count()` (== count all rows); most engines (MySQL/Doris,
+     * Trino/Presto, the SQL standard) REJECT `COUNT()` and require `COUNT(*)` or an argument.
+     * Registered in the TRANSFORMS of the generators that need it (Mysql/Presto and thus
+     * Doris/Trino); ClickHouse and DuckDB keep their native bare form. Any `this`/argument
+     * (including `*`, an expression, or DISTINCT ...) falls through to the normal fallback.
+     */
+    open fun countStarSql(expression: Count): String {
+        if (expression.args["this"] == null && expression.expressionsArg.isEmpty()) {
+            return "COUNT(*)"
+        }
+        return functionFallbackSql(expression)
+    }
+
     open fun functionFallbackSql(expression: Func): String {
         val node = expression as Expression
         val args = mutableListOf<kotlin.Any?>()
@@ -4764,6 +5278,68 @@ open class Generator(
             expression.sqlName()
         }
         return func(name, *args.toTypedArray())
+    }
+
+    // sqlglot bac1a897b: Generator._ml_sql and specialized BigQuery ML/AI TVFs.
+    open fun mlSql(expression: Expression, name: String): String {
+        val model = "MODEL ${sql(expression, "this")}"
+        val expressionArg = expression.args["expression"]
+        val expressionSql = if (expressionArg != null && expressionArg != false) {
+            val rendered = sql(expression, "expression")
+            if (expressionArg is Table) "TABLE $rendered" else rendered
+        } else null
+        val parameters = sql(expression, "params_struct").ifEmpty { null }
+        return func(name, model, expressionSql, parameters)
+    }
+
+    open fun predictSql(expression: Predict): String = mlSql(expression, "PREDICT")
+
+    open fun generateembeddingSql(expression: GenerateEmbedding): String =
+        mlSql(expression, if (expression.args["is_text"] == true) "GENERATE_TEXT_EMBEDDING" else "GENERATE_EMBEDDING")
+
+    open fun generatetextSql(expression: GenerateText): String = mlSql(expression, "GENERATE_TEXT")
+    open fun generatetableSql(expression: GenerateTable): String = mlSql(expression, "GENERATE_TABLE")
+    open fun generateboolSql(expression: GenerateBool): String = mlSql(expression, "GENERATE_BOOL")
+    open fun generateintSql(expression: GenerateInt): String = mlSql(expression, "GENERATE_INT")
+    open fun generatedoubleSql(expression: GenerateDouble): String = mlSql(expression, "GENERATE_DOUBLE")
+    open fun mltranslateSql(expression: MLTranslate): String = mlSql(expression, "TRANSLATE")
+    open fun mlforecastSql(expression: MLForecast): String = mlSql(expression, "FORECAST")
+
+    open fun aiforecastSql(expression: AIForecast): String {
+        val thisArg = expression.args["this"]
+        val thisSql = (if (thisArg is Table) "TABLE " else "") + sql(expression, "this")
+        return func(
+            "FORECAST", thisSql, expression.args["data_col"], expression.args["timestamp_col"],
+            expression.args["model"], expression.args["id_cols"], expression.args["horizon"],
+            expression.args["forecast_end_timestamp"], expression.args["confidence_level"],
+            expression.args["output_historical_time_series"], expression.args["context_window"],
+        )
+    }
+
+    open fun featuresattimeSql(expression: FeaturesAtTime): String {
+        val thisArg = expression.args["this"]
+        val thisSql = (if (thisArg is Table) "TABLE " else "") + sql(expression, "this")
+        return func(
+            "FEATURES_AT_TIME", thisSql, expression.args["time"], expression.args["num_rows"],
+            expression.args["ignore_feature_nulls"],
+        )
+    }
+
+    open fun vectorsearchSql(expression: VectorSearch): String {
+        val thisArg = expression.args["this"]
+        val queryArg = expression.args["query_table"]
+        val thisSql = (if (thisArg is Table) "TABLE " else "") + sql(expression, "this")
+        val querySql = (if (queryArg is Table) "TABLE " else "") + sql(expression, "query_table")
+        return func(
+            "VECTOR_SEARCH", thisSql, expression.args["column_to_search"], querySql,
+            expression.args["query_column_to_search"], expression.args["top_k"],
+            expression.args["distance_type"], expression.args["options"],
+        )
+    }
+
+    open fun gapfillSql(expression: GapFill): String {
+        val rest = expression.args.entries.filter { it.key != "this" }.map { it.value }.toTypedArray()
+        return func("GAP_FILL", "TABLE ${sql(expression, "this")}", *rest)
     }
 
     // sqlglot: Generator.parameterizedagg_sql
@@ -4933,6 +5509,29 @@ open class Generator(
         val offset = expression.thisArg as Offset
         return "|> OFFSET ${sql(offset, "expression")}"
     }
+
+    // googlesql: pipe SET (docs/pipe-syntax.md ~664) — EQ elements render `col = expr`
+    open fun pipesetSql(expression: PipeSet): String =
+        "|> SET ${expressions(expression, flat = true)}"
+
+    // googlesql: pipe DROP (docs/pipe-syntax.md ~713)
+    open fun pipedropSql(expression: PipeDrop): String =
+        "|> DROP ${expressions(expression, flat = true)}"
+
+    // googlesql: pipe RENAME (docs/pipe-syntax.md ~763) — Alias elements render `old AS new`
+    open fun piperenameSql(expression: PipeRename): String =
+        "|> RENAME ${expressions(expression, flat = true)}"
+
+    // googlesql: pipe CALL (docs/pipe-syntax.md ~1323)
+    open fun pipecallSql(expression: PipeCall): String {
+        val alias = sql(expression, "alias")
+        val aliasSql = if (alias.isNotEmpty()) " AS $alias" else ""
+        return "|> CALL ${sql(expression, "this")}$aliasSql"
+    }
+
+    // googlesql: pipe WINDOW (docs/pipe-syntax.md ~2361, deprecated alias of EXTEND)
+    open fun pipewindowSql(expression: PipeWindow): String =
+        "|> WINDOW ${expressions(expression, flat = true)}"
 
     open fun pipetablesampleSql(expression: PipeTableSample): String =
         "|> ${sql(expression, "this").trim()}"

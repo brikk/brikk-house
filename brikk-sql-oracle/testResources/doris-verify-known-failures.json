@@ -1,0 +1,15 @@
+{
+    "engine": "doris",
+    "notes": [
+        "Remaining case: CREATE MATERIALIZED VIEW — brikk extension #10 (docs/brikk-extensions.md) now renders the MV column list as the bare names Doris's simpleColumnDef grammar requires (the FE parser advances past the columns), but the corpus input itself (upstream sqlglot test) has no AS <query>, which the createMTMV rule makes mandatory; a query cannot be derived from the AST, so the statement stays inherently unverifiable. Complete MV statements with brikk's rendering are engine-pinned in SqlVerifierTest.dorisAcceptsBrikkMaterializedViewColumnRendering.",
+        "Resolved (brikk extension #9): the bare CREATE TABLE ... PARTITION BY (cols) emissions are completed to grammar-legal forms (`PARTITION BY (cols) ()`, `PARTITION BY RANGE (func) ()`), accepted by the FE parser (SqlVerifierTest.dorisAcceptsBrikkPartitionByRenderings).",
+        "Known bug NOT visible to this gate: the Doris dialect inherits MySQL's array rejection although Doris supports arrays, so no array case survives into ast-corpus/doris-serde.json (0 cases contain arrays) and the engine-side acceptance of arrays cannot be exercised here. Queued as a separate dialect fix."
+    ],
+    "cases": [
+        {
+            "sql": "CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1)",
+            "generated": "CREATE MATERIALIZED VIEW test_table (c1, c2) KEY (c1)",
+            "error": "statement: mismatched input '<EOF>' expecting {'(', 'AS', 'COMMENT', 'DISTRIBUTED', 'PARTITION', 'PROPERTIES', 'SELECT', 'VALUES', 'WITH'}(line 1, pos 53) (line 1, col 54) | expression: extraneous input 'CREATE' expecting {'(', '[', '{', '}', 'ACTIONS', 'ADD', 'AFTER', 'AGG_STATE', 'AGGREGATE', 'ALIAS', 'ANALYZED', 'ARRAY', 'AT', 'AUTHORS', 'AU… (line 1, col 1)"
+        }
+    ]
+}

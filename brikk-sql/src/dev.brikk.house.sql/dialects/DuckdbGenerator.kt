@@ -48,6 +48,7 @@ open class DuckdbGenerator(
     tokenizerConfig: TokenizerConfig = DuckdbTokenizerTables.CONFIG,
     // extra dispatch overlay for subclasses (sqlglot: further TRANSFORMS merges)
     overrides: Map<KClass<out Expression>, GenMethod> = emptyMap(),
+    sourceDialect: String? = null,
 ) : Generator(
     pretty = pretty,
     identify = identify,
@@ -55,10 +56,12 @@ open class DuckdbGenerator(
     normalizeFunctions = normalizeFunctions,
     tokenizerConfig = tokenizerConfig,
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
     override val dialect: Dialect get() = Dialects.DUCKDB
+    override val historicalDataPostAlias: Boolean get() = true
 
     // ------------------------------------------------------------------
     // Flags (sqlglot: DuckDBGenerator class attributes)
@@ -101,7 +104,6 @@ open class DuckdbGenerator(
     // sqlglot: DuckDB dialect-level flags read by the generator
     override val dialectNullOrdering: String get() = "nulls_are_last"
     override val dialectIndexOffset: Int get() = 1
-    override val dialectSafeDivision: Boolean get() = true
     override val dialectConcatCoalesce: Boolean get() = true
     override val dialectConcatWsCoalesce: Boolean get() = true
     override val inverseTimeMapping: Map<String, String> get() = INVERSE_TIME_MAPPING
@@ -130,6 +132,20 @@ open class DuckdbGenerator(
             if (v is List<*>) v else listOf(v)
         }
         return func(name, *flattened.toTypedArray())
+    }
+
+    // Cross-dialect function RENAMES that reach the DuckDB generator as an unmapped
+    // Anonymous call (chiefly ClickHouse->DuckDB: ClickHouse's camelCase array/bit names
+    // parse to Anonymous, and DuckDB has no such name). Rewrite to the DuckDB spelling.
+    // SAFE for DuckDB->DuckDB: the keys are ClickHouse camelCase names that DuckDB neither
+    // parses nor accepts (verified vs DuckDB 1.5.4), so they never fire on native DuckDB
+    // input. Reverse of ClickhouseGenerator.ANON_FUNC_RENAMES; probe-verified value-equal
+    // (chdb 26.5.1.1 + DuckDB 1.5.4). See CLICKHOUSE-rename-map.md.
+    override fun anonymousSql(expression: Anonymous): String {
+        ANON_FUNC_RENAMES[expression.name]?.let { target ->
+            return func(target, *expression.expressionsArg.toTypedArray())
+        }
+        return super.anonymousSql(expression)
     }
 
     // ------------------------------------------------------------------
@@ -300,6 +316,10 @@ open class DuckdbGenerator(
     // sqlglot: generators.duckdb._arrow_json_extract_sql (+ dialect.arrow_json_extract_sql)
     open fun arrowJsonExtractSql(expression: Binary): String {
         val op = if (expression is JSONExtract) "->" else "->>"
+        val path = expression.expressionArg
+        if (path is Binary || path is Predicate || path is Not) {
+            expression.set("expression", Paren(args("this" to path)))
+        }
         var arrowSql = binary(expression, op)
         val parent = expression.parent
         val sameParent = parent != null && parent::class == expression::class
@@ -469,6 +489,260 @@ open class DuckdbGenerator(
 
         return func("LISTAGG", "$argsSql$modifiers")
     }
+
+    // sqlglot: DuckDBGenerator.strposition_sql (VARCHAR path)
+    open fun strpositionSql(expression: StrPosition): String {
+        var string = expression.thisArg as? Expression
+        val substr = expression.args["substr"]
+        val position = expression.args["position"] as? Expression
+        if (position != null) {
+            string = Substring(args("this" to string, "start" to position))
+        }
+
+        val strpos = Anonymous(args("this" to "STRPOS", "expressions" to listOfNotNull(string, substr)))
+        if (position == null) return sql(strpos)
+
+        val zero = Literal.number("0")
+        return sql(
+            If(
+                args(
+                    "this" to EQ(args("this" to strpos.copy(), "expression" to zero.copy())),
+                    "true" to zero,
+                    "false" to Sub(
+                        args(
+                            "this" to Add(args("this" to strpos, "expression" to position)),
+                            "expression" to Literal.number("1"),
+                        )
+                    ),
+                )
+            )
+        )
+    }
+
+    // sqlglot: generators.duckdb._explode_to_unnest_sql
+    open fun explodeToUnnestSql(expression: Lateral): String {
+        val explode = expression.thisArg as? Expression ?: return lateralSql(expression)
+        val alias = expression.args["alias"] as? TableAlias
+
+        if (explode is Inline) {
+            val unnest = Unnest(
+                args(
+                    "expressions" to listOf(
+                        explode.thisArg,
+                        Kwarg(
+                            args(
+                                "this" to Var(args("this" to "max_depth")),
+                                "expression" to Literal.number("2"),
+                            )
+                        ),
+                    )
+                )
+            )
+            val subquery = Subquery(
+                args("this" to Select(args("expressions" to listOf(unnest))))
+            )
+            if (alias != null && alias.thisArg == null) {
+                alias.set("this", toIdentifier("_u_${expression.index ?: 0}"))
+            }
+            return sql(
+                Join(
+                    args(
+                        "this" to Lateral(args("this" to subquery, "alias" to alias)),
+                        "kind" to "CROSS",
+                    )
+                )
+            )
+        }
+
+        val aliasColumns = alias?.columns?.filterIsInstance<Expression>().orEmpty()
+        val crossJoinExpression: Expression? = when {
+            explode is Posexplode && alias != null && aliasColumns.isNotEmpty() -> {
+                val pos = aliasColumns.first()
+                val columns = aliasColumns.drop(1)
+                val selectExpressions = listOf(
+                    Alias(
+                        args(
+                            "this" to Sub(
+                                args(
+                                    "this" to column(pos.name),
+                                    "expression" to Literal.number("1"),
+                                )
+                            ),
+                            "alias" to toIdentifier(pos.name),
+                        )
+                    )
+                ) + columns.map { column(it.name) }
+                val unnest = Unnest(
+                    args(
+                        "expressions" to listOf((explode.thisArg as Expression).copy()),
+                        "offset" to true,
+                        "alias" to TableAlias(
+                            args(
+                                "this" to (alias.thisArg as? Expression)?.copy(),
+                                "columns" to (columns.map { it.copy() } + pos.copy()),
+                            )
+                        ),
+                    )
+                )
+                val subquery = Subquery(
+                    args(
+                        "this" to Select(
+                            args(
+                                "expressions" to selectExpressions,
+                                "from_" to From(args("this" to unnest)),
+                            )
+                        )
+                    )
+                )
+                Lateral(args("this" to subquery))
+            }
+            explode is Explode -> Unnest(
+                args("expressions" to listOf(explode.thisArg), "alias" to alias)
+            )
+            else -> null
+        }
+
+        return if (crossJoinExpression != null) {
+            sql(Join(args("this" to crossJoinExpression, "kind" to "CROSS")))
+        } else {
+            lateralSql(expression)
+        }
+    }
+
+    override fun aliasesSql(expression: Aliases): String {
+        val thisExpression = expression.thisArg
+        return if (thisExpression is Posexplode) posexplodeSql(thisExpression)
+        else super.aliasesSql(expression)
+    }
+
+    // sqlglot: DuckDBGenerator.posexplode_sql
+    open fun posexplodeSql(expression: Posexplode): String {
+        val array = expression.thisArg as Expression
+        val parent = expression.parent
+        var pos: Expression = toIdentifier("pos")!!
+        var col: Expression = toIdentifier("col")!!
+
+        if (parent is Aliases) {
+            val aliases = parent.expressionsArg.filterIsInstance<Expression>()
+            pos = aliases.getOrNull(0) ?: pos
+            col = aliases.getOrNull(1) ?: col
+        } else if (parent is Table) {
+            val alias = parent.args["alias"] as? TableAlias
+            val columns = alias?.columns?.filterIsInstance<Expression>().orEmpty()
+            if (columns.isNotEmpty()) {
+                pos = columns.getOrNull(0) ?: pos
+                col = columns.getOrNull(1) ?: col
+            }
+            alias?.pop()
+        }
+
+        val unnestSql = sql(
+            Unnest(
+                args(
+                    "expressions" to listOf(array.copy()),
+                    "alias" to TableAlias(args("this" to col.copy())),
+                )
+            )
+        )
+        val generateSubscripts = sql(
+            Alias(
+                args(
+                    "this" to Sub(
+                        args(
+                            "this" to Anonymous(
+                                args(
+                                    "this" to "GENERATE_SUBSCRIPTS",
+                                    "expressions" to listOf(array.copy(), Literal.number("1")),
+                                )
+                            ),
+                            "expression" to Literal.number("1"),
+                        )
+                    ),
+                    "alias" to pos.copy(),
+                )
+            )
+        )
+        val result = formatArgs(generateSubscripts, unnestSql)
+        return if (parent is From || parent?.parent is From) {
+            sql(Subquery(args("this" to Select(args("expressions" to listOf(result))))))
+        } else {
+            result
+        }
+    }
+
+    // sqlglot: dialect.months_between_sql
+    open fun monthsBetweenSql(expression: MonthsBetween): String {
+        val date1 = Cast(
+            args("this" to expression.thisArg, "to" to DataType(args("this" to DType.DATE)))
+        )
+        val date2 = Cast(
+            args("this" to expression.args["expression"], "to" to DataType(args("this" to DType.DATE)))
+        )
+        val day1 = Day(args("this" to date1.copy()))
+        val day2 = Day(args("this" to date2.copy()))
+        val bothLastDay = And(
+            args(
+                "this" to EQ(
+                    args(
+                        "this" to day1.copy(),
+                        "expression" to Day(args("this" to LastDay(args("this" to date1.copy())))),
+                    )
+                ),
+                "expression" to EQ(
+                    args(
+                        "this" to day2.copy(),
+                        "expression" to Day(args("this" to LastDay(args("this" to date2.copy())))),
+                    )
+                ),
+            )
+        )
+        val fractional = Div(
+            args(
+                "this" to Paren(
+                    args("this" to Sub(args("this" to day1.copy(), "expression" to day2.copy())))
+                ),
+                "expression" to Literal.number("31.0"),
+            )
+        )
+        return sql(
+            Add(
+                args(
+                    "this" to DateDiff(
+                        args(
+                            "this" to date1,
+                            "expression" to date2,
+                            "unit" to Var(args("this" to "MONTH")),
+                        )
+                    ),
+                    "expression" to If(
+                        args(
+                            "this" to bothLastDay,
+                            "true" to Literal.number("0"),
+                            "false" to fractional,
+                        )
+                    ),
+                )
+            )
+        )
+    }
+
+    open fun timeToStrSql(expression: TimeToStr): String {
+        val thisExpression = expression.thisArg as? Expression
+        val value = if (thisExpression is TsOrDsToTimestamp || thisExpression is TimeStrToTime) {
+            Cast(
+                args(
+                    "this" to thisExpression.thisArg,
+                    "to" to DataType(args("this" to DType.TIMESTAMP)),
+                )
+            )
+        } else {
+            thisExpression
+        }
+        return func("STRFTIME", value, formatTime(expression))
+    }
+
+    open fun unixToStrSql(expression: UnixToStr): String =
+        func("STRFTIME", func("TO_TIMESTAMP", expression.thisArg), formatTime(expression))
 
     // sqlglot: dialect.date_delta_to_binary_interval_op wrapped by
     // generators.duckdb._date_delta_to_binary_interval_op (nanosecond and
@@ -861,6 +1135,156 @@ open class DuckdbGenerator(
         }
 
         return func("REGEXP_MATCHES", this_, pattern, flag)
+    }
+
+    // sqlglot: DuckDBGenerator.regexpreplace_sql
+    // Semantics (trino-duckdb-hazards.json "regexp_replace", verdict=divergent): Trino
+    // replaces ALL matches by default while DuckDB replaces only the FIRST unless the 'g'
+    // modifier is set — so replace-all sources (occurrence absent/0, no single_replace
+    // marker) must have 'g' forced. DuckDB-parsed calls carry single_replace=true
+    // (DuckdbParser) and keep their literal flags for a byte-identical round trip.
+    open fun regexpreplaceSql(expression: RegexpReplace): String {
+        var subject = expression.thisArg as? Expression
+        val pattern = expression.args["expression"]
+        val replacement = expression.args["replacement"] as? Expression ?: Literal.string("")
+        val position = expression.args["position"] as? Expression
+        val occurrence = expression.args["occurrence"] as? Expression
+        val modifiers = expression.args["modifiers"] as? Expression
+
+        var validatedFlags = validateRegexpFlags(modifiers, supportedFlags = "cimsg") ?: ""
+
+        // Handle occurrence (only literals supported)
+        if (occurrence != null && !occurrence.isInt) {
+            unsupported("REGEXP_REPLACE with non-literal occurrence")
+        } else {
+            val occurrenceValue = if (occurrence != null && occurrence.isInt) {
+                occurrence.name.toIntOrNull() ?: 0
+            } else 0
+            if (occurrenceValue > 1) {
+                unsupported("REGEXP_REPLACE occurrence=$occurrenceValue not supported")
+            } else if (
+                occurrenceValue == 0 &&
+                'g' !in validatedFlags &&
+                expression.args["single_replace"] != true
+            ) {
+                // flag duckdb to do either all or none, single_replace check is for
+                // duckdb round trip
+                validatedFlags += "g"
+            }
+        }
+
+        // Handle position (only literals supported)
+        var prefix: Expression? = null
+        if (position != null && !position.isInt) {
+            unsupported("REGEXP_REPLACE with non-literal position")
+        } else if (position != null && position.isInt) {
+            val pos = position.name.toIntOrNull() ?: 0
+            if (pos > 1) {
+                prefix = Substring(
+                    args(
+                        "this" to subject?.copy(),
+                        "start" to Literal.number("1"),
+                        "length" to Literal.number((pos - 1).toString()),
+                    )
+                )
+                subject = Substring(
+                    args("this" to subject, "start" to Literal.number(pos.toString()))
+                )
+            }
+        }
+
+        val result: Expression = Anonymous(
+            args(
+                "this" to "REGEXP_REPLACE",
+                "expressions" to listOf(
+                    subject,
+                    pattern,
+                    replacement,
+                    if (validatedFlags.isNotEmpty()) Literal.string(validatedFlags) else null,
+                ),
+            )
+        )
+
+        if (prefix != null) {
+            return sql(Concat(args("expressions" to listOf(prefix, result))))
+        }
+
+        return sql(result)
+    }
+
+    // sqlglot: DuckDBGenerator._greatest_least_sql (greatest_sql / least_sql)
+    // Semantics (trino-duckdb-hazards.json "greatest / least", verdict=divergent): Trino
+    // returns NULL if ANY argument is NULL, DuckDB SKIPS NULLs. ignore_nulls=false
+    // (Presto/Trino/MySQL/Doris-parsed) therefore needs the NULL-propagating CASE wrap;
+    // ignore_nulls=true (DuckDB/Postgres-parsed) keeps the native call.
+    open fun greatestLeastSql(expression: Expression): String {
+        val allArgs = listOf(expression.thisArg as? Expression) +
+            expression.expressionsArg.map { it as? Expression }
+        val fallbackSql = functionFallbackSql(expression as Func)
+
+        if (expression.args["ignore_nulls"] == true) {
+            // DuckDB/PostgreSQL behavior: use native GREATEST/LEAST (ignores NULLs)
+            return fallbackSql
+        }
+
+        // return NULL if any argument is NULL
+        var condition: Expression? = null
+        for (arg in allArgs) {
+            val isNull = Is(args("this" to arg?.copy(), "expression" to Null()))
+            condition = if (condition == null) isNull
+            else Or(args("this" to condition, "expression" to isNull))
+        }
+        return sql(
+            Case(
+                args(
+                    "ifs" to listOf(If(args("this" to condition, "true" to Null()))),
+                    "default" to fallbackSql,
+                )
+            )
+        )
+    }
+
+    // sqlglot: TRANSFORMS[exp.Time] = no_time_sql (dialects/dialect.py), which transpiles
+    // TIME(x, zone) to CAST(CAST(x AS TIMESTAMPTZ) AT TIME ZONE zone AS TIME).
+    // brikk extension: when `zone` is absent (e.g. Doris/MySQL TIME(x), which extracts the
+    // wall-clock time part), the Python oracle emits `... AT TIME ZONE  AS TIME` — an
+    // empty zone operand the DuckDB parser rejects (grammar-invalid; pinned in
+    // SqlVerifierTest). We instead route through the session-zone-invariant wall-clock
+    // tier (docs/research/function-semantics-trino-duckdb.md "Datetime / timezone":
+    // DATE/TIMESTAMP extracts are probe-verified session-zone invariant, while every
+    // TIMESTAMPTZ read is reinterpreted through the session zone):
+    // CAST(CAST(x AS TIMESTAMP) AS TIME).
+    open fun noTimeSql(expression: Time): String {
+        val zone = expression.args["zone"] as? Expression
+        if (zone == null) {
+            return sql(
+                Cast(
+                    args(
+                        "this" to Cast(
+                            args(
+                                "this" to expression.thisArg,
+                                "to" to DataType(args("this" to DType.TIMESTAMP)),
+                            )
+                        ),
+                        "to" to DataType(args("this" to DType.TIME)),
+                    )
+                )
+            )
+        }
+        val inner = Cast(
+            args(
+                "this" to expression.thisArg,
+                "to" to DataType(args("this" to DType.TIMESTAMPTZ)),
+            )
+        )
+        return sql(
+            Cast(
+                args(
+                    "this" to AtTimeZone(args("this" to inner, "zone" to zone)),
+                    "to" to DataType(args("this" to DType.TIME)),
+                )
+            )
+        )
     }
 
     // sqlglot: DuckDBGenerator.split_sql
@@ -1423,6 +1847,27 @@ open class DuckdbGenerator(
 
     companion object {
 
+        // Reverse-direction (ClickHouse -> DuckDB) function-name renames applied to unmapped
+        // Anonymous calls. Key = the ClickHouse spelling (as it parses to Anonymous), value
+        // = the DuckDB name. Only names DuckDB does NOT already accept are listed (gcd/lcm/
+        // isFinite work verbatim in DuckDB and are omitted). All value-equal live-probed
+        // (chdb 26.5.1.1 + DuckDB 1.5.4); arrayElement stays a divergent hazard (indexing).
+        val ANON_FUNC_RENAMES: Map<String, String> = mapOf(
+            "arraySort" to "array_sort",
+            "arrayReverseSort" to "array_reverse_sort",
+            "arrayUniq" to "list_unique",
+            "arrayIntersect" to "array_intersect",
+            "arrayDotProduct" to "list_dot_product",
+            "hasAll" to "list_has_all",
+            "hasAny" to "list_has_any",
+            "arrayElement" to "list_element", // divergent (indexing edges) — hazard kept
+            "bitCount" to "bit_count",
+            "tgamma" to "gamma",
+            "jaroSimilarity" to "jaro_similarity",
+            "toDayOfMonth" to "dayofmonth",
+            "toDayOfYear" to "dayofyear",
+        )
+
         // sqlglot: expressions.datatypes.DataType type groups (the members needed here)
         val INTEGER_TYPES: Set<DType> = setOf(
             DType.BIGINT, DType.INT, DType.INT128, DType.INT256, DType.MEDIUMINT,
@@ -1468,21 +1913,24 @@ open class DuckdbGenerator(
         val TIMEZONE_PATTERN: Regex = Regex(":\\d{2}.*?[+\\-]\\d{2}(?::\\d{2})?")
 
         // sqlglot: DuckDB.INVERSE_TIME_MAPPING (auto-inverse of empty TIME_MAPPING
-        // merged with the class-level overrides)
-        val INVERSE_TIME_MAPPING: Map<String, String> = mapOf(
-            "%e" to "%-d",
-            "%:z" to "%z",
-            "%-z" to "%z",
-            "%f_zero" to "%n",
-            "%f_one" to "%n",
-            "%f_two" to "%n",
-            "%f_three" to "%g",
-            "%f_four" to "%n",
-            "%f_five" to "%n",
-            "%f_seven" to "%n",
-            "%f_eight" to "%n",
-            "%f_nine" to "%n",
-        )
+        // merged with the class-level overrides) + _with_strict_time_inverse
+        val INVERSE_TIME_MAPPING: Map<String, String> =
+            dev.brikk.house.sql.parser.withStrictTimeInverse(
+                mapOf(
+                    "%e" to "%-d",
+                    "%:z" to "%z",
+                    "%-z" to "%z",
+                    "%f_zero" to "%n",
+                    "%f_one" to "%n",
+                    "%f_two" to "%n",
+                    "%f_three" to "%g",
+                    "%f_four" to "%n",
+                    "%f_five" to "%n",
+                    "%f_seven" to "%n",
+                    "%f_eight" to "%n",
+                    "%f_nine" to "%n",
+                ),
+            )
 
         // sqlglot: generator.Generator.TYPE_MAPPING (the base entries DuckDB inherits)
         private val BASE_TYPE_MAPPING: Map<DType, String> = mapOf(
@@ -1695,6 +2143,28 @@ open class DuckdbGenerator(
             reg(EuclideanDistance::class) { e -> dg().renameFuncSql("LIST_DISTANCE", e) }
             reg(GenerateSeries::class) { e -> dg().generateseriesSql(e as GenerateSeries) }
             reg(Explode::class) { e -> dg().renameFuncSql("UNNEST", e) }
+            reg(ArrayUniqueAgg::class) { e ->
+                val value = e.thisArg as Expression
+                sql(
+                    Filter(
+                        args(
+                            "this" to Anonymous(
+                                args(
+                                    "this" to "LIST",
+                                    "expressions" to listOf(Distinct(args("expressions" to listOf(value)))),
+                                )
+                            ),
+                            "expression" to Where(
+                                args(
+                                    "this" to Not(
+                                        args("this" to Is(args("this" to value.copy(), "expression" to Null())))
+                                    )
+                                )
+                            ),
+                        )
+                    )
+                )
+            }
             reg(IntDiv::class) { e -> binary(e as Binary, "//") }
             reg(IsInf::class) { e -> dg().renameFuncSql("ISINF", e) }
             reg(IsNan::class) { e -> dg().renameFuncSql("ISNAN", e) }
@@ -1742,6 +2212,68 @@ open class DuckdbGenerator(
             reg(ParseJSON::class) { e -> dg().parsejsonSql(e as ParseJSON) }
             reg(ArrayDistinct::class) { e -> dg().arraydistinctSql(e as ArrayDistinct) }
             reg(RegexpLike::class) { e -> dg().regexplikeSql(e as RegexpLike) }
+            reg(RegexpReplace::class) { e -> dg().regexpreplaceSql(e as RegexpReplace) }
+            // sqlglot: DuckDBGenerator.{getignorecase,compress,encrypt,decrypt,decryptraw,
+            // encryptraw,parseurl,parseip,decompressstring,decompressbinary,soundex}_sql —
+            // explicit "not supported in DuckDB" flags over the fallback rendering.
+            // Semantic evidence for keeping them flagged (not mapped):
+            //  - PARSE_URL: DuckDB core has no URL accessors; the netquack community
+            //    extension was probe-REJECTED (NULL-vs-'' divergence, port type mismatch)
+            //    — trino-duckdb-hazards.json / hazards doc "Extensions" section.
+            //  - COMPRESS/DECOMPRESS_*: no DuckDB equivalent at all.
+            //  - SOUNDEX: only exists via the splink_udfs community extension
+            //    (hazards verdict: conditionally-equivalent, not core).
+            reg(GetIgnoreCase::class) { e ->
+                unsupported("DuckDB does not support the GET_IGNORE_CASE() function")
+                functionFallbackSql(e as Func)
+            }
+            reg(Compress::class) { e ->
+                unsupported("DuckDB does not support the COMPRESS() function")
+                functionFallbackSql(e as Func)
+            }
+            reg(Encrypt::class) { e ->
+                unsupported("ENCRYPT is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(Decrypt::class) { e ->
+                val safe = e.args["safe"] != null && e.args["safe"] != false
+                val funcName = if (safe) "TRY_DECRYPT" else "DECRYPT"
+                unsupported("$funcName is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(DecryptRaw::class) { e ->
+                val safe = e.args["safe"] != null && e.args["safe"] != false
+                val funcName = if (safe) "TRY_DECRYPT_RAW" else "DECRYPT_RAW"
+                unsupported("$funcName is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(EncryptRaw::class) { e ->
+                unsupported("ENCRYPT_RAW is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(ParseUrl::class) { e ->
+                unsupported("PARSE_URL is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(ParseIp::class) { e ->
+                unsupported("PARSE_IP is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(DecompressString::class) { e ->
+                unsupported("DECOMPRESS_STRING is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(DecompressBinary::class) { e ->
+                unsupported("DECOMPRESS_BINARY is not supported in DuckDB")
+                functionFallbackSql(e as Func)
+            }
+            reg(Soundex::class) { e ->
+                unsupported("SOUNDEX is not supported in DuckDB")
+                func("SOUNDEX", e.thisArg)
+            }
+            reg(Greatest::class) { e -> dg().greatestLeastSql(e) }
+            reg(Least::class) { e -> dg().greatestLeastSql(e) }
+            reg(Time::class) { e -> dg().noTimeSql(e as Time) }
             reg(Split::class) { e -> dg().splitSql(e as Split) }
             reg(BitwiseXor::class) { e -> dg().bitwisexorSql(e as BitwiseXor) }
             reg(BitwiseOrAgg::class) { e -> dg().bitwiseAggSql(e) }
@@ -1759,6 +2291,7 @@ open class DuckdbGenerator(
                 ""
             }
             reg(IcebergProperty::class) { _ -> "" }
+            reg(Lateral::class) { e -> dg().explodeToUnnestSql(e as Lateral) }
             reg(ArrayCompact::class) { e -> dg().arraycompactSql(e as ArrayCompact) }
             reg(ArrayConstructCompact::class) { e ->
                 sql(ArrayCompact(args("this" to ArrayNode(args("expressions" to e.expressionsArg)))))
@@ -1773,6 +2306,8 @@ open class DuckdbGenerator(
             }
             reg(PercentileCont::class) { e -> dg().renameFuncSql("QUANTILE_CONT", e) }
             reg(PercentileDisc::class) { e -> dg().renameFuncSql("QUANTILE_DISC", e) }
+            reg(Posexplode::class) { e -> dg().posexplodeSql(e as Posexplode) }
+            reg(MonthsBetween::class) { e -> dg().monthsBetweenSql(e as MonthsBetween) }
             reg(RegexpExtract::class) { e -> dg().regexpExtractSql(e) }
             reg(RegexpExtractAll::class) { e -> dg().regexpExtractSql(e) }
             reg(RegexpILike::class) { e ->
@@ -1785,9 +2320,10 @@ open class DuckdbGenerator(
             reg(StrToUnix::class) { e ->
                 func("EPOCH", func("STRPTIME", e.thisArg, formatTime(e)))
             }
+            reg(StrPosition::class) { e -> dg().strpositionSql(e as StrPosition) }
             reg(Struct::class) { e -> dg().duckdbStructSql(e as Struct) }
             reg(Transform::class) { e -> dg().renameFuncSql("LIST_TRANSFORM", e) }
-            reg(TimeToStr::class) { e -> func("STRFTIME", e.thisArg, formatTime(e)) }
+            reg(TimeToStr::class) { e -> dg().timeToStrSql(e as TimeToStr) }
             reg(TimeToUnix::class) { e -> dg().renameFuncSql("EPOCH", e) }
             reg(TimestampDiff::class) { e ->
                 func(
@@ -1798,6 +2334,7 @@ open class DuckdbGenerator(
                 )
             }
             reg(UnixToTime::class) { e -> dg().unixToTimeSql(e as UnixToTime) }
+            reg(UnixToStr::class) { e -> dg().unixToStrSql(e as UnixToStr) }
             reg(UnixToTimeStr::class) { e -> "CAST(TO_TIMESTAMP(${sql(e, "this")}) AS TEXT)" }
             reg(VariancePop::class) { e -> dg().renameFuncSql("VAR_POP", e) }
             reg(WeekOfYear::class) { e -> dg().renameFuncSql("WEEKOFYEAR", e) }

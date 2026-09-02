@@ -1,6 +1,8 @@
 package dev.brikk.house.sql.dialects
 
 import dev.brikk.house.sql.generator.Generator
+import dev.brikk.house.sql.metadata.DUCKDB_FUNCTION_CATALOG
+import dev.brikk.house.sql.metadata.FunctionCatalog
 import dev.brikk.house.sql.parser.DuckdbTokenizerTables
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.Parser
@@ -22,6 +24,13 @@ open class DuckdbDialect : Dialect() {
     // sqlglot: DuckDB.NORMALIZATION_STRATEGY
     override val normalizationStrategy get() = NormalizationStrategy.CASE_INSENSITIVE
 
+    // sqlglot: DuckDB.ASCII_ONLY_NORMALIZATION = True
+    override val asciiOnlyNormalization: Boolean get() = true
+
+    // Generated from the embedded engine's duckdb_functions() registry
+    // (tools/generate_duckdb_functions.py).
+    override val functionCatalog: FunctionCatalog get() = DUCKDB_FUNCTION_CATALOG
+
     override val tokenizerConfig: TokenizerConfig get() = DuckdbTokenizerTables.CONFIG
 
     // sqlglot: DuckDB.TIME_MAPPING is the base (empty) mapping; only
@@ -30,6 +39,6 @@ open class DuckdbDialect : Dialect() {
     override fun parser(errorLevel: ErrorLevel?): Parser =
         DuckdbParser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
-    override fun generator(pretty: Boolean): Generator =
-        DuckdbGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    override fun generator(pretty: Boolean, sourceDialect: String?): Generator =
+        DuckdbGenerator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 }

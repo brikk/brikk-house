@@ -1,0 +1,16 @@
+{
+    "cases": [
+        {
+            "case": "write|bigquery|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
+            "reason": "expected `FORMAT_DATE('%Y-%m-%d %H:%M:%S', CAST('2020-01-01' AS DATETIME))` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', TIME_STR_TO_TIME('2020-01-01'))`"
+        },
+        {
+            "case": "write|bigquery|DATE_ADD('2020-01-01', 1)",
+            "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1, DAY)`"
+        },
+        {
+            "case": "write|bigquery|DATE_SUB('2020-01-01', 1)",
+            "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL (1 * -1) DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1 * -1, DAY)`"
+        }
+    ]
+}

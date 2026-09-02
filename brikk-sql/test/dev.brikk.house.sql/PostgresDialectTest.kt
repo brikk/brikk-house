@@ -1,14 +1,22 @@
 package dev.brikk.house.sql
 
+import dev.brikk.house.sql.ast.Cast
+import dev.brikk.house.sql.ast.JSONExtract
+import dev.brikk.house.sql.ast.Literal
+import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.dialects.transpile
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 
 /**
  * Hand assertions for the Postgres dialect wiring, each verified against the Python
- * oracle (reference/sqlglot v30.12.0-44-g93d16591): :: casts, JSON arrow operators,
+ * oracle (reference/sqlglot v30.17.0-93-gdcc36544a): :: casts, JSON arrow operators,
  * regex operators, TO_CHAR time mapping, SERIAL-to-GENERATED, array slices with the
  * bracket-paren rule, GENERATE_SERIES transpilation and ON CONFLICT ... RETURNING.
  */
@@ -22,14 +30,55 @@ class PostgresDialectTest {
     }
 
     @Test
+    fun quotedOneByteCharTypeIsPreserved() {
+        assertEquals("SELECT CAST(65 AS \"char\")", roundTrip("SELECT 65::\"char\""))
+        assertEquals("SELECT CAST(65 AS CHAR)", roundTrip("SELECT 65::\"CHAR\""))
+        assertEquals("SELECT CAST(x AS \"char\"[])", roundTrip("SELECT CAST(x AS \"char\"[])"))
+    }
+
+    @Test
+    fun lockStatementIsPreservedAsCommand() {
+        assertEquals(
+            "LOCK TABLE foo, bar IN SHARE ROW EXCLUSIVE MODE",
+            roundTrip("LOCK TABLE foo, bar IN SHARE ROW EXCLUSIVE MODE"),
+        )
+    }
+
+    @Test
     fun jsonArrowOperators() {
         // COLUMN_OPERATORS[ARROW] via build_json_extract_path (arrow_req_json_type=True)
         assertEquals("SELECT x -> 'a' -> 0 FROM t", roundTrip("SELECT x -> 'a' -> 0 FROM t"))
-        // `?` -> JSONBContains; base renders the function name
+        // sqlglot #8156: `?` -> JSONBContainsTopKey; base renders the `?` operator.
         assertEquals(
-            "SELECT JSONB_CONTAINS(x, 'k')",
+            "SELECT x ? 'k'",
             transpile("SELECT x ? 'k'", read = "postgres", write = ""),
         )
+    }
+
+    @Test
+    fun dynamicJsonArrowFromLiteralCastsSource() {
+        assertEquals(
+            "SELECT CAST('{\"a\": 1}' AS JSON) -> key FROM t",
+            roundTrip("SELECT '{\"a\": 1}' -> key FROM t"),
+        )
+    }
+
+    @Test
+    fun literalJsonArrowPreservesOwnershipWithCopyFalse() {
+        val extract = assertIs<JSONExtract>(parseOne("'{\"a\": 1}' -> key", "postgres"))
+        val originalLiteral = assertIs<Literal>(extract.thisArg)
+
+        assertEquals(
+            "CAST('{\"a\": 1}' AS JSON) -> key",
+            Dialects.POSTGRES.generate(extract, copy = false),
+        )
+
+        val cast = assertIs<Cast>(extract.thisArg)
+        val castLiteral = assertIs<Literal>(cast.thisArg)
+        assertSame(extract, cast.parent)
+        assertSame(cast, castLiteral.parent)
+        assertNotSame(originalLiteral, castLiteral)
+        assertNull(originalLiteral.parent)
     }
 
     @Test

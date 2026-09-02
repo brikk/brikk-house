@@ -222,11 +222,21 @@ val Expression.namedSelects: List<String>
             }
             selected
         }
-        // sqlglot: SetOperation.named_selects (maps _named_selects over the left-most branch)
+        // sqlglot: SetOperation.named_selects (walks the left-most branch, merging
+        // operand names for BY NAME set operations)
         is SetOperation -> {
             var expr: Expression = this
-            while (expr is SetOperation) expr = expr.left.unnest()
-            expr.selects.map { it.outputName }
+            var byNameSelects: List<String>? = null
+            while (expr is SetOperation) {
+                if (expr.args["by_name"] == true) {
+                    val left = expr.left.unnest().namedSelects
+                    val right = expr.right.unnest().namedSelects
+                    byNameSelects = (left + right).distinct()
+                    break
+                }
+                expr = expr.left.unnest()
+            }
+            byNameSelects ?: expr.selects.map { it.outputName }
         }
         // sqlglot: Table.named_selects = []
         is Table -> emptyList()

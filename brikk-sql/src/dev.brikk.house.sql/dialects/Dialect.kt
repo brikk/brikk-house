@@ -9,6 +9,7 @@ import dev.brikk.house.sql.ast.toIdentifier
 import dev.brikk.house.sql.ast.TypingSpec
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.generator.Generator
+import dev.brikk.house.sql.metadata.FunctionCatalog
 import dev.brikk.house.sql.parser.ErrorLevel
 import dev.brikk.house.sql.parser.ParseError
 import dev.brikk.house.sql.parser.Parser
@@ -16,6 +17,7 @@ import dev.brikk.house.sql.parser.Token
 import dev.brikk.house.sql.parser.Tokenizer
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
+import dev.brikk.house.sql.parser.withStrictTimeInverse
 
 /**
  * Port of sqlglot's Dialect (reference/sqlglot/sqlglot/dialects/dialect.py) — the
@@ -50,8 +52,20 @@ open class Dialect {
     /** Registry name ("" is the base sqlglot dialect). */
     open val name: String get() = ""
 
+    /**
+     * The engine's full built-in function catalog (names/aliases/kinds; overloads once
+     * signature extraction lands), when one has been generated for this dialect. Null
+     * means "unknown surface" — consumers fall back to the parser's translation
+     * registries. See FunctionCatalog docs and vendor/README.md.
+     */
+    open val functionCatalog: FunctionCatalog? get() = null
+
     // sqlglot: Dialect.NORMALIZATION_STRATEGY
     open val normalizationStrategy: NormalizationStrategy get() = NormalizationStrategy.LOWERCASE
+
+    // sqlglot: Dialect.ASCII_ONLY_NORMALIZATION — when true, identifier case-folding only
+    // touches ASCII A-Z/a-z (non-ASCII letters are left as-is).
+    open val asciiOnlyNormalization: Boolean get() = false
 
     // sqlglot: Dialect.EXPRESSION_METADATA (type inference & validation rules; see
     // GeneratedTypingMetadata — doris shares mysql, trino shares presto)
@@ -129,9 +143,14 @@ open class Dialect {
     // sqlglot: Dialect.TIME_MAPPING (dialect format specifier -> python strftime)
     open val timeMapping: Map<String, String> get() = emptyMap()
 
-    // sqlglot: Dialect.INVERSE_TIME_MAPPING ({v: k for k, v in TIME_MAPPING.items()})
+    // sqlglot: Dialect.FORMAT_MAPPING (CAST ... FORMAT specifier -> python strftime;
+    // empty = fall back to TIME_MAPPING in _parse_cast)
+    open val formatMapping: Map<String, String> get() = emptyMap()
+
+    // sqlglot: Dialect.INVERSE_TIME_MAPPING — auto-inverse of TIME_MAPPING, then
+    // _with_strict_time_inverse so %mstrict never leaks / pads correctly on strict dialects.
     val inverseTimeMapping: Map<String, String> by lazy {
-        timeMapping.entries.associate { (k, v) -> v to k }
+        withStrictTimeInverse(timeMapping.entries.associate { (k, v) -> v to k })
     }
 
     // sqlglot: Dialect.parser
@@ -139,8 +158,10 @@ open class Dialect {
         Parser(errorLevel = errorLevel, tokenizerConfig = tokenizerConfig)
 
     // sqlglot: Dialect.generator
-    open fun generator(pretty: Boolean = false): Generator =
-        Generator(pretty = pretty, tokenizerConfig = tokenizerConfig)
+    // sourceDialect: the dialect the AST was parsed from (source-aware generation). null =
+    // unknown/native (faithful). See Generator.isCrossDialectFrom.
+    open fun generator(pretty: Boolean = false, sourceDialect: String? = null): Generator =
+        Generator(pretty = pretty, tokenizerConfig = tokenizerConfig, sourceDialect = sourceDialect)
 
     // sqlglot: Dialect.tokenize
     fun tokenize(sql: String): List<Token> = Tokenizer(tokenizerConfig).tokenize(sql)
@@ -153,8 +174,13 @@ open class Dialect {
         parse(sql).firstOrNull() ?: throw ParseError("No expression was parsed from '$sql'")
 
     // sqlglot: Dialect.generate
-    fun generate(expression: Expression, pretty: Boolean = false, copy: Boolean = true): String =
-        generator(pretty = pretty).generate(expression, copy = copy)
+    fun generate(
+        expression: Expression,
+        pretty: Boolean = false,
+        copy: Boolean = true,
+        sourceDialect: String? = null,
+    ): String =
+        generator(pretty = pretty, sourceDialect = sourceDialect).generate(expression, copy = copy)
 
     /**
      * sqlglot: Dialect.normalize_identifier — transforms an identifier in a way that
@@ -172,18 +198,29 @@ open class Dialect {
                 )
         ) {
             val name = expression.thisArg as String
-            val normalized =
-                if (
-                    normalizationStrategy == NormalizationStrategy.UPPERCASE ||
+            val upper =
+                normalizationStrategy == NormalizationStrategy.UPPERCASE ||
                     normalizationStrategy == NormalizationStrategy.CASE_INSENSITIVE_UPPERCASE
-                ) {
-                    name.uppercase()
-                } else {
-                    name.lowercase()
-                }
+            val normalized = when {
+                upper && asciiOnlyNormalization -> asciiTranslate(name, toUpper = true)
+                upper -> name.uppercase()
+                asciiOnlyNormalization -> asciiTranslate(name, toUpper = false)
+                else -> name.lowercase()
+            }
             expression.set("this", normalized)
         }
         return expression
+    }
+
+    // sqlglot: ASCII_LOWER / ASCII_UPPER translation tables (ASCII letters only).
+    private fun asciiTranslate(s: String, toUpper: Boolean): String = buildString(s.length) {
+        for (c in s) append(
+            when {
+                toUpper && c in 'a'..'z' -> c - 32
+                !toUpper && c in 'A'..'Z' -> c + 32
+                else -> c
+            }
+        )
     }
 
     /**
@@ -248,21 +285,35 @@ object Dialects {
     val BASE: Dialect = Dialect()
     val MYSQL: Dialect = MysqlDialect()
     val DORIS: Dialect = DorisDialect()
+    val STARROCKS: Dialect = StarrocksDialect()
     val PRESTO: Dialect = PrestoDialect()
     val TRINO: Dialect = TrinoDialect()
     val DUCKDB: Dialect = DuckdbDialect()
     val POSTGRES: Dialect = PostgresDialect()
     val CLICKHOUSE: Dialect = ClickhouseDialect()
+    val HIVE: Dialect = HiveDialect()
+    val SPARK2: Dialect = Spark2Dialect()
+    val SPARK: Dialect = SparkDialect()
+    val BIGQUERY: Dialect = BigqueryDialect()
+
+    // brikk-native: no sqlglot oracle — see DatafusionDialect.kt.
+    val DATAFUSION: Dialect = DatafusionDialect()
 
     fun forNameOrNull(name: String): Dialect? = when (name.lowercase().trim()) {
         "", "sqlglot" -> BASE
         "mysql" -> MYSQL
         "doris" -> DORIS
+        "starrocks" -> STARROCKS
         "presto" -> PRESTO
         "trino" -> TRINO
         "duckdb" -> DUCKDB
         "postgres", "postgresql" -> POSTGRES
         "clickhouse" -> CLICKHOUSE
+        "hive" -> HIVE
+        "spark2" -> SPARK2
+        "spark", "sparksql" -> SPARK
+        "bigquery" -> BIGQUERY
+        "datafusion", "arrow-datafusion" -> DATAFUSION
         else -> null
     }
 
@@ -275,7 +326,13 @@ object Dialects {
  * Single-statement convenience (Python returns a list over all statements).
  */
 fun transpile(sql: String, read: String = "", write: String = "", pretty: Boolean = false): String =
-    Dialects.forName(write).generate(Dialects.forName(read).parseOne(sql), pretty = pretty)
+    Dialects.forName(write).generate(
+        Dialects.forName(read).parseOne(sql),
+        pretty = pretty,
+        // source-aware generation: tell the target generator which dialect we parsed from so
+        // semantic-changing cross-dialect rewrites fire (and same-dialect stays faithful).
+        sourceDialect = read.ifBlank { null },
+    )
 
 /** sqlglot: Expression.sql(dialect=...) convenience. */
 fun Expression.sql(dialect: String = "", pretty: Boolean = false): String =

@@ -1,10 +1,25 @@
 {
-  "sqlglot_version": "v30.12.0-44-g93d16591",
+  "sqlglot_version": "v30.17.0-93-gdcc36544a",
   "dialect": "oracle",
   "identity": [
     {
       "sql": "1 /* /* */",
       "expected": "1 /* / * */",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT NTH_VALUE(x, 2) FROM FIRST OVER (ORDER BY y) AS c FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT NTH_VALUE(x, 2) FROM LAST IGNORE NULLS OVER (ORDER BY y) AS c FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT NTH_VALUE(x, 2) FROM FIRST RESPECT NULLS OVER (ORDER BY y) AS c FROM t",
+      "expected": null,
       "pretty": false
     },
     {
@@ -213,6 +228,16 @@
       "pretty": false
     },
     {
+      "sql": "SELECT * FROM sales UNPIVOT(q FOR p IN (q1 AS 'Prod1', q2 AS 'Prod2'))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT * FROM sales UNPIVOT(q FOR p IN (q1 AS 1, q2 AS 2))",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "SELECT last_name, employee_id, manager_id, LEVEL FROM employees START WITH employee_id = 100 CONNECT BY PRIOR employee_id = manager_id ORDER SIBLINGS BY last_name",
       "expected": null,
       "pretty": false
@@ -319,6 +344,16 @@
     },
     {
       "sql": "SELECT * FROM t START WITH col CONNECT BY NOCYCLE PRIOR col1 = col2",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT id FROM t START WITH (parent_id IS NULL) CONNECT BY PRIOR id = parent_id",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT id FROM t START WITH (x) CONNECT BY PRIOR id = parent_id",
       "expected": null,
       "pretty": false
     },
@@ -859,6 +894,42 @@
       "sql": "UTC_TIMESTAMP(6)",
       "expected": null,
       "pretty": false
+    },
+    {
+      "sql": "GRANT purchases_reader_role TO george, maria",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT USAGE ON TYPE price TO finance_role",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "GRANT USAGE ON DERBY AGGREGATE types.maxPrice TO sales_role",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE purchases_reader_role FROM george, maria",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE USAGE ON TYPE price FROM finance_role",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
+    },
+    {
+      "sql": "REVOKE USAGE ON DERBY AGGREGATE types.maxPrice FROM sales_role",
+      "expected": null,
+      "pretty": false,
+      "check_command_warning": true
     }
   ],
   "transpile": [
@@ -876,6 +947,18 @@
       "write": {
         "oracle": "SELECT fred FROM barney WHERE dino <> 'wilma'",
         "postgres": "SELECT fred FROM barney WHERE dino <> 'wilma'"
+      }
+    },
+    {
+      "sql": "SELECT NTH_VALUE(x, 2) FROM LAST OVER (ORDER BY y) AS c FROM t",
+      "read": {},
+      "write": {
+        "oracle": "SELECT NTH_VALUE(x, 2) FROM LAST OVER (ORDER BY y) AS c FROM t",
+        "snowflake": "SELECT NTH_VALUE(x, 2) FROM LAST OVER (ORDER BY y) AS c FROM t",
+        "duckdb": "SELECT NTH_VALUE(x, 2) OVER (ORDER BY y) AS c FROM t",
+        "postgres": {
+          "error": "UnsupportedError"
+        }
       }
     },
     {
@@ -1086,6 +1169,20 @@
       }
     },
     {
+      "sql": "SELECT * FROM t UNPIVOT(revenue FOR month IN (t.jan, t.feb)) AS u",
+      "read": {},
+      "write": {
+        "oracle": "SELECT * FROM t UNPIVOT(revenue FOR month IN (jan, feb)) u"
+      }
+    },
+    {
+      "sql": "SELECT * FROM t PIVOT(SUM(t.val) FOR t.cat IN ('a' AS a)) AS p",
+      "read": {},
+      "write": {
+        "oracle": "SELECT * FROM t PIVOT(SUM(t.val) FOR cat IN ('a' AS a)) p"
+      }
+    },
+    {
       "sql": "SELECT e1.x, e2.x FROM e e1, e e2 WHERE e1.y = e2.y (+)",
       "read": {},
       "write": {
@@ -1166,8 +1263,8 @@
     }
   ],
   "stats": {
-    "identity_count": 171,
-    "transpile_count": 30,
+    "identity_count": 184,
+    "transpile_count": 33,
     "skipped_dynamic": 9
   }
 }

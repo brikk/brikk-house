@@ -1,11 +1,16 @@
 package dev.brikk.house.sql
 
+import dev.brikk.house.sql.parser.BigqueryTokenizerTables
 import dev.brikk.house.sql.parser.ClickhouseTokenizerTables
 import dev.brikk.house.sql.parser.DorisTokenizerTables
+import dev.brikk.house.sql.parser.StarrocksTokenizerTables
 import dev.brikk.house.sql.parser.DuckdbTokenizerTables
+import dev.brikk.house.sql.parser.HiveTokenizerTables
 import dev.brikk.house.sql.parser.MysqlTokenizerTables
 import dev.brikk.house.sql.parser.PostgresTokenizerTables
 import dev.brikk.house.sql.parser.PrestoTokenizerTables
+import dev.brikk.house.sql.parser.Spark2TokenizerTables
+import dev.brikk.house.sql.parser.SparkTokenizerTables
 import dev.brikk.house.sql.parser.TokenError
 import dev.brikk.house.sql.parser.TrinoTokenizerTables
 import dev.brikk.house.sql.parser.Tokenizer
@@ -44,14 +49,8 @@ class TokenCorpusDifferentialTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun loadCorpus(name: String): Corpus {
-        val stream = javaClass.classLoader.getResourceAsStream("token-corpus/$name")
-            ?: java.io.File("brikk-sql/testResources/token-corpus/$name")
-                .takeIf { it.exists() }
-                ?.inputStream()
-            ?: fail("corpus token-corpus/$name not found on classpath or filesystem")
-        return stream.use { json.decodeFromString(Corpus.serializer(), it.readBytes().decodeToString()) }
-    }
+    private fun loadCorpus(name: String): Corpus =
+        json.decodeFromString(Corpus.serializer(), testResource("token-corpus/$name"))
 
     private fun runCorpus(name: String, config: TokenizerConfig) {
         val corpus = loadCorpus(name)
@@ -118,6 +117,10 @@ class TokenCorpusDifferentialTest {
     fun dorisCorpusMatchesPythonOracle() = runCorpus("doris.json", DorisTokenizerTables.CONFIG)
 
     @Test
+    fun starrocksCorpusMatchesPythonOracle() =
+        runCorpus("starrocks.json", StarrocksTokenizerTables.CONFIG)
+
+    @Test
     fun prestoCorpusMatchesPythonOracle() = runCorpus("presto.json", PrestoTokenizerTables.CONFIG)
 
     @Test
@@ -133,4 +136,16 @@ class TokenCorpusDifferentialTest {
     @Test
     fun clickhouseCorpusMatchesPythonOracle() =
         runCorpus("clickhouse.json", ClickhouseTokenizerTables.CONFIG)
+
+    @Test
+    fun hiveCorpusMatchesPythonOracle() = runCorpus("hive.json", HiveTokenizerTables.CONFIG)
+
+    @Test
+    fun spark2CorpusMatchesPythonOracle() = runCorpus("spark2.json", Spark2TokenizerTables.CONFIG)
+
+    @Test
+    fun sparkCorpusMatchesPythonOracle() = runCorpus("spark.json", SparkTokenizerTables.CONFIG)
+
+    @Test
+    fun bigqueryCorpusMatchesPythonOracle() = runCorpus("bigquery.json", BigqueryTokenizerTables.CONFIG)
 }

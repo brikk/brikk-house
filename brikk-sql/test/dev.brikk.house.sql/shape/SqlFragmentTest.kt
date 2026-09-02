@@ -26,8 +26,13 @@ class SqlFragmentTest {
         )
         val fragment = SqlFragment("SELECT SUM(sold) AS total_sold, COUNT(*) AS n FROM produce")
         // Python-verified: SUM(INT) -> BIGINT, COUNT(*) -> BIGINT.
+        // brikk-native nullability: SUM is a NULL-over-empty-group aggregate (nullable),
+        // COUNT returns 0 over an empty group (not-null).
         assertEquals(
-            Shape.of("total_sold" to "BIGINT", "n" to "BIGINT"),
+            Shape(listOf(
+                ColumnShape("total_sold", "BIGINT", nullable = true),
+                ColumnShape("n", "BIGINT", nullable = false),
+            )),
             fragment.outputShape(catalog),
         )
     }
@@ -102,8 +107,13 @@ class SqlFragmentTest {
         assertEquals(3, fragment.stages.size)
         // Python-verified group-key typing: item TEXT flows through the CTE chain;
         // SUM(INT) -> BIGINT as in plainSelectShapeTypesFlowFromCatalog.
+        // brikk-native nullability: item is undeclared (unknown); SUM is a nullable
+        // aggregate — both survive the pipe's CTE-chain desugar.
         assertEquals(
-            Shape.of("item" to "TEXT", "total_sold" to "BIGINT"),
+            Shape(listOf(
+                ColumnShape("item", "TEXT", nullable = null),
+                ColumnShape("total_sold", "BIGINT", nullable = true),
+            )),
             fragment.outputShape(catalog),
         )
     }
@@ -223,6 +233,30 @@ class SqlFragmentTest {
             "WITH __tmp1 AS (SELECT * FROM t) SELECT * FROM __tmp1",
             fragment.toStandardSql(),
         )
+    }
+
+    // ------------------------------------------------------- transpileTo pipes
+
+    @Test
+    fun transpileToRendersPipeSyntaxByDefault() {
+        // Default false preserves pipe rendering (pipe-aware consumers, round-trips).
+        val fragment = SqlFragment("FROM t |> WHERE a > 1 |> SELECT a")
+        val result = fragment.transpileTo("doris")
+        assertTrue("|>" in result.sql, result.sql)
+    }
+
+    @Test
+    fun transpileToDesugarsPipesOnRequest() {
+        // Real engines don't speak |>: desugarPipes=true runs ast/PipeDesugar.kt on a
+        // copy before generating — WITH __tmp form, no pipe operator in the output.
+        val fragment = SqlFragment("FROM t |> WHERE a > 1 |> SELECT a")
+        val result = fragment.transpileTo("doris", desugarPipes = true)
+        assertTrue("|>" !in result.sql, result.sql)
+        assertTrue("__tmp" in result.sql, result.sql)
+        assertEquals(emptyList(), result.unsupportedMessages)
+        // The fragment itself is untouched (copy semantics) and still pipe-shaped.
+        assertTrue(fragment.isPipe)
+        assertTrue("|>" in fragment.transpileTo("doris").sql)
     }
 
     // ------------------------------------------------------- guards and describe

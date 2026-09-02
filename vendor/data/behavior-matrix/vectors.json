@@ -1,0 +1,556 @@
+{
+ "vectors": [
+  {
+   "id": "null_concat_000",
+   "function": "concat",
+   "area": "null",
+   "sql": "concat('a', NULL, 'b')"
+  },
+  {
+   "id": "null_concat_ws_001",
+   "function": "concat_ws",
+   "area": "null",
+   "sql": "concat_ws(',', 'a', NULL, 'b')"
+  },
+  {
+   "id": "null_coalesce_002",
+   "function": "coalesce",
+   "area": "null",
+   "sql": "coalesce(NULL, NULL, 3)"
+  },
+  {
+   "id": "null_nullif_003",
+   "function": "nullif",
+   "area": "null",
+   "sql": "nullif(1, 1)"
+  },
+  {
+   "id": "null_ifnull_004",
+   "function": "ifnull",
+   "area": "null",
+   "sql": "ifnull(NULL, 'x')"
+  },
+  {
+   "id": "null_if_005",
+   "function": "if",
+   "area": "null",
+   "sql": "if(NULL, 'a', 'b')"
+  },
+  {
+   "id": "null_greatest_006",
+   "function": "greatest",
+   "area": "null",
+   "sql": "greatest(1, NULL, 3)"
+  },
+  {
+   "id": "null_least_007",
+   "function": "least",
+   "area": "null",
+   "sql": "least(1, NULL, 3)"
+  },
+  {
+   "id": "null_length_008",
+   "function": "length",
+   "area": "null",
+   "sql": "length(NULL)"
+  },
+  {
+   "id": "null_abs_009",
+   "function": "abs",
+   "area": "null",
+   "sql": "abs(NULL)"
+  },
+  {
+   "id": "null_upper_010",
+   "function": "upper",
+   "area": "null",
+   "sql": "upper(NULL)"
+  },
+  {
+   "id": "null_array_contains_011",
+   "function": "array_contains",
+   "area": "null",
+   "sql": "array_contains([1, NULL, 3], NULL)"
+  },
+  {
+   "id": "rounding_round_012",
+   "function": "round",
+   "area": "rounding",
+   "sql": "round(2.5)"
+  },
+  {
+   "id": "rounding_round_013",
+   "function": "round",
+   "area": "rounding",
+   "sql": "round(3.5)"
+  },
+  {
+   "id": "rounding_round_014",
+   "function": "round",
+   "area": "rounding",
+   "sql": "round(-2.5)"
+  },
+  {
+   "id": "rounding_round_015",
+   "function": "round",
+   "area": "rounding",
+   "sql": "round(2.345, 2)"
+  },
+  {
+   "id": "rounding_truncate_016",
+   "function": "truncate",
+   "area": "rounding",
+   "sql": "truncate(2.567, 1)"
+  },
+  {
+   "id": "rounding_floor_017",
+   "function": "floor",
+   "area": "rounding",
+   "sql": "floor(-2.5)"
+  },
+  {
+   "id": "rounding_ceil_018",
+   "function": "ceil",
+   "area": "rounding",
+   "sql": "ceil(2.1)"
+  },
+  {
+   "id": "rounding_divide_zero_int_019",
+   "function": "divide_zero_int",
+   "area": "rounding",
+   "sql": "1 / 0"
+  },
+  {
+   "id": "rounding_divide_zero_float_020",
+   "function": "divide_zero_float",
+   "area": "rounding",
+   "sql": "1.0 / 0.0"
+  },
+  {
+   "id": "rounding_mod_021",
+   "function": "mod",
+   "area": "rounding",
+   "sql": "mod(-5, 3)"
+  },
+  {
+   "id": "rounding_mod_zero_022",
+   "function": "mod_zero",
+   "area": "rounding",
+   "sql": "mod(5, 0)"
+  },
+  {
+   "id": "rounding_pmod_023",
+   "function": "pmod",
+   "area": "rounding",
+   "sql": "pmod(-5, 3)"
+  },
+  {
+   "id": "rounding_pow_024",
+   "function": "pow",
+   "area": "rounding",
+   "sql": "pow(2, 10)"
+  },
+  {
+   "id": "rounding_bin_025",
+   "function": "bin",
+   "area": "rounding",
+   "sql": "bin(5)"
+  },
+  {
+   "id": "string_length_026",
+   "function": "length",
+   "area": "string",
+   "sql": "length('h\u00e9llo')"
+  },
+  {
+   "id": "string_char_length_027",
+   "function": "char_length",
+   "area": "string",
+   "sql": "char_length('h\u00e9llo')"
+  },
+  {
+   "id": "string_upper_028",
+   "function": "upper",
+   "area": "string",
+   "sql": "upper('h\u00e9llo')"
+  },
+  {
+   "id": "string_lower_029",
+   "function": "lower",
+   "area": "string",
+   "sql": "lower('H\u00c9LLO')"
+  },
+  {
+   "id": "string_substring_030",
+   "function": "substring",
+   "area": "string",
+   "sql": "substring('hello', 2, 3)"
+  },
+  {
+   "id": "string_substring_031",
+   "function": "substring",
+   "area": "string",
+   "sql": "substring('hello', 0, 3)"
+  },
+  {
+   "id": "string_substring_032",
+   "function": "substring",
+   "area": "string",
+   "sql": "substring('hello', -2, 2)"
+  },
+  {
+   "id": "string_left_033",
+   "function": "left",
+   "area": "string",
+   "sql": "left('hello', 2)"
+  },
+  {
+   "id": "string_right_034",
+   "function": "right",
+   "area": "string",
+   "sql": "right('hello', 2)"
+  },
+  {
+   "id": "string_locate_035",
+   "function": "locate",
+   "area": "string",
+   "sql": "locate('l', 'hello')"
+  },
+  {
+   "id": "string_instr_036",
+   "function": "instr",
+   "area": "string",
+   "sql": "instr('hello', 'l')"
+  },
+  {
+   "id": "string_lpad_037",
+   "function": "lpad",
+   "area": "string",
+   "sql": "lpad('x', 4, 'ab')"
+  },
+  {
+   "id": "string_rpad_038",
+   "function": "rpad",
+   "area": "string",
+   "sql": "rpad('x', 4, 'ab')"
+  },
+  {
+   "id": "string_trim_039",
+   "function": "trim",
+   "area": "string",
+   "sql": "trim('  x  ')"
+  },
+  {
+   "id": "string_ltrim_040",
+   "function": "ltrim",
+   "area": "string",
+   "sql": "ltrim('  x  ')"
+  },
+  {
+   "id": "string_repeat_041",
+   "function": "repeat",
+   "area": "string",
+   "sql": "repeat('ab', 3)"
+  },
+  {
+   "id": "string_reverse_042",
+   "function": "reverse",
+   "area": "string",
+   "sql": "reverse('abc')"
+  },
+  {
+   "id": "string_ascii_043",
+   "function": "ascii",
+   "area": "string",
+   "sql": "ascii('A')"
+  },
+  {
+   "id": "string_split_part_044",
+   "function": "split_part",
+   "area": "string",
+   "sql": "split_part('a,b,c', ',', 2)"
+  },
+  {
+   "id": "string_replace_045",
+   "function": "replace",
+   "area": "string",
+   "sql": "replace('aaa', 'a', 'bb')"
+  },
+  {
+   "id": "string_concat_empty_046",
+   "function": "concat_empty",
+   "area": "string",
+   "sql": "concat('', 'x')"
+  },
+  {
+   "id": "regex_regexp_replace_047",
+   "function": "regexp_replace",
+   "area": "regex",
+   "sql": "regexp_replace('abc123', '[0-9]+', '#')"
+  },
+  {
+   "id": "regex_regexp_extract_048",
+   "function": "regexp_extract",
+   "area": "regex",
+   "sql": "regexp_extract('abc123', '([a-z]+)([0-9]+)', 2)"
+  },
+  {
+   "id": "regex_regexp_extract_049",
+   "function": "regexp_extract",
+   "area": "regex",
+   "sql": "regexp_extract('abc123', '[0-9]+', 0)"
+  },
+  {
+   "id": "datetime_date_format_050",
+   "function": "date_format",
+   "area": "datetime",
+   "sql": "date_format('2024-03-05 13:07:09', '%Y-%m-%d')"
+  },
+  {
+   "id": "datetime_date_add_051",
+   "function": "date_add",
+   "area": "datetime",
+   "sql": "date_add('2024-01-31', INTERVAL 1 MONTH)"
+  },
+  {
+   "id": "datetime_date_sub_052",
+   "function": "date_sub",
+   "area": "datetime",
+   "sql": "date_sub('2024-03-31', INTERVAL 1 MONTH)"
+  },
+  {
+   "id": "datetime_datediff_053",
+   "function": "datediff",
+   "area": "datetime",
+   "sql": "datediff('2024-03-01', '2024-01-01')"
+  },
+  {
+   "id": "datetime_date_trunc_054",
+   "function": "date_trunc",
+   "area": "datetime",
+   "sql": "date_trunc('month', '2024-03-15 12:34:56')"
+  },
+  {
+   "id": "datetime_day_of_week_055",
+   "function": "day_of_week",
+   "area": "datetime",
+   "sql": "dayofweek('2024-03-05')"
+  },
+  {
+   "id": "datetime_day_of_year_056",
+   "function": "day_of_year",
+   "area": "datetime",
+   "sql": "dayofyear('2024-03-05')"
+  },
+  {
+   "id": "datetime_last_day_057",
+   "function": "last_day",
+   "area": "datetime",
+   "sql": "last_day('2024-02-10')"
+  },
+  {
+   "id": "datetime_to_date_058",
+   "function": "to_date",
+   "area": "datetime",
+   "sql": "to_date('2024-03-05 12:00:00')"
+  },
+  {
+   "id": "datetime_unix_timestamp_059",
+   "function": "unix_timestamp",
+   "area": "datetime",
+   "sql": "unix_timestamp('1970-01-01 00:00:01')"
+  },
+  {
+   "id": "datetime_from_unixtime_060",
+   "function": "from_unixtime",
+   "area": "datetime",
+   "sql": "from_unixtime(0)"
+  },
+  {
+   "id": "datetime_hour_061",
+   "function": "hour",
+   "area": "datetime",
+   "sql": "hour('2024-03-05 13:07:09')"
+  },
+  {
+   "id": "datetime_months_add_062",
+   "function": "months_add",
+   "area": "datetime",
+   "sql": "months_add('2024-01-31', 1)"
+  },
+  {
+   "id": "array_array_length_063",
+   "function": "array_length",
+   "area": "array",
+   "sql": "array_length([10, 20, 30])"
+  },
+  {
+   "id": "array_array_contains_064",
+   "function": "array_contains",
+   "area": "array",
+   "sql": "array_contains([1, 2, 3], 2)"
+  },
+  {
+   "id": "array_array_position_065",
+   "function": "array_position",
+   "area": "array",
+   "sql": "array_position([10, 20, 30], 20)"
+  },
+  {
+   "id": "array_element_at_066",
+   "function": "element_at",
+   "area": "array",
+   "sql": "element_at([10, 20, 30], 1)"
+  },
+  {
+   "id": "array_element_at_067",
+   "function": "element_at",
+   "area": "array",
+   "sql": "element_at([10, 20, 30], -1)"
+  },
+  {
+   "id": "array_array_slice_068",
+   "function": "array_slice",
+   "area": "array",
+   "sql": "array_slice([1, 2, 3, 4, 5], 2, 2)"
+  },
+  {
+   "id": "array_array_sort_069",
+   "function": "array_sort",
+   "area": "array",
+   "sql": "array_to_string(array_sort([3, 1, 2]), ',')"
+  },
+  {
+   "id": "array_array_join_070",
+   "function": "array_join",
+   "area": "array",
+   "sql": "array_join([1, 2, 3], '_')"
+  },
+  {
+   "id": "array_array_distinct_071",
+   "function": "array_distinct",
+   "area": "array",
+   "sql": "array_to_string(array_distinct([1, 1, 2]), ',')"
+  },
+  {
+   "id": "array_array_max_072",
+   "function": "array_max",
+   "area": "array",
+   "sql": "array_max([1, 5, 3])"
+  },
+  {
+   "id": "array_array_avg_073",
+   "function": "array_avg",
+   "area": "array",
+   "sql": "array_avg([1, 2, 3])"
+  },
+  {
+   "id": "array_arrays_overlap_074",
+   "function": "arrays_overlap",
+   "area": "array",
+   "sql": "arrays_overlap([1, 2], [2, 3])"
+  },
+  {
+   "id": "array_json_extract_075",
+   "function": "json_extract",
+   "area": "array",
+   "sql": "json_extract('{\"a\": 1}', '$.a')"
+  },
+  {
+   "id": "array_json_length_076",
+   "function": "json_length",
+   "area": "array",
+   "sql": "json_length('[1, 2, 3]')"
+  },
+  {
+   "id": "array_get_json_string_077",
+   "function": "get_json_string",
+   "area": "array",
+   "sql": "get_json_string('{\"a\": \"x\"}', '$.a')"
+  },
+  {
+   "id": "agg_count_distinct_078",
+   "function": "count_distinct",
+   "area": "agg",
+   "sql": "(SELECT count(DISTINCT c) FROM (SELECT 1 c UNION ALL SELECT 1 UNION ALL SELECT 2) t)"
+  },
+  {
+   "id": "agg_sum_079",
+   "function": "sum",
+   "area": "agg",
+   "sql": "(SELECT sum(c) FROM (SELECT 1 c UNION ALL SELECT 2 UNION ALL SELECT NULL) t)"
+  },
+  {
+   "id": "agg_avg_080",
+   "function": "avg",
+   "area": "agg",
+   "sql": "(SELECT avg(c) FROM (SELECT 1 c UNION ALL SELECT 2) t)"
+  },
+  {
+   "id": "agg_group_concat_081",
+   "function": "group_concat",
+   "area": "agg",
+   "sql": "(SELECT group_concat(c) FROM (SELECT 'a' c UNION ALL SELECT 'b') t)"
+  },
+  {
+   "id": "agg_any_value_082",
+   "function": "any_value",
+   "area": "agg",
+   "sql": "(SELECT any_value(c) FROM (SELECT 7 c) t)"
+  },
+  {
+   "id": "agg_min_083",
+   "function": "min",
+   "area": "agg",
+   "sql": "(SELECT min(c) FROM (SELECT 3 c UNION ALL SELECT 1) t)"
+  },
+  {
+   "id": "agg_stddev_084",
+   "function": "stddev",
+   "area": "agg",
+   "sql": "(SELECT round(stddev(c), 4) FROM (SELECT 1 c UNION ALL SELECT 2 UNION ALL SELECT 3) t)"
+  },
+  {
+   "id": "agg_variance_085",
+   "function": "variance",
+   "area": "agg",
+   "sql": "(SELECT round(variance(c), 4) FROM (SELECT 1 c UNION ALL SELECT 2 UNION ALL SELECT 3) t)"
+  },
+  {
+   "id": "boundary_abs_min_086",
+   "function": "abs_min",
+   "area": "boundary",
+   "sql": "abs(-9223372036854775807)"
+  },
+  {
+   "id": "boundary_cast_overflow_087",
+   "function": "cast_overflow",
+   "area": "boundary",
+   "sql": "cast(300 AS TINYINT)"
+  },
+  {
+   "id": "boundary_substring_oob_088",
+   "function": "substring_oob",
+   "area": "boundary",
+   "sql": "substring('abc', 10, 5)"
+  },
+  {
+   "id": "boundary_array_empty_089",
+   "function": "array_empty",
+   "area": "boundary",
+   "sql": "array_length([])"
+  },
+  {
+   "id": "boundary_concat_num_090",
+   "function": "concat_num",
+   "area": "boundary",
+   "sql": "concat(1, 2)"
+  },
+  {
+   "id": "boundary_power_big_091",
+   "function": "power_big",
+   "area": "boundary",
+   "sql": "pow(10, 18)"
+  }
+ ]
+}

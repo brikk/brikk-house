@@ -1,0 +1,182 @@
+abs	5
+acos	NaN
+asin	NaN
+at_timezone	<ERR:Query 20260714_002827_00004_r2wsb failed: 'aBc' is not a val >
+atan	1.1902899496825317
+atan2	0.7853981633974483
+bar	[38;5;196m█[38;5;214m█[38;5;226m█[38;5;154m█[38;5;46m█[0m
+beta_cdf	<ERR:Query 20260714_002830_00008_r2wsb failed: value must be 0 >= >
+bit_count	2
+bitwise_and	5
+bitwise_left_shift	160
+bitwise_not	-6
+bitwise_or	5
+bitwise_right_shift	0
+bitwise_right_shift_arithmetic	0
+bitwise_xor	0
+cbrt	1.3572088082974534
+ceil	5
+ceiling	5
+chr	
+codepoint	<ERR:Query 20260714_002840_00021_r2wsb failed: line 1:8: Unexpect >
+color	<ERR:Query 20260714_002840_00022_r2wsb failed: Invalid color: 'aB >
+concat	<ERR:Query 20260714_002841_00023_r2wsb failed: There must be two  >
+concat_ws	aBc
+cos	-0.8011436155469337
+cosh	6.132289479663686
+cosine_distance	0.0
+cosine_similarity	1.0
+crc32	1233267864
+create_hll	<ERR:Query 20260714_002846_00030_r2wsb failed: line 1:8: Function >
+custom_add	<ERR:Query 20260714_002847_00031_r2wsb failed: line 1:8: Function >
+date	2024-06-16
+date_add	<ERR:Query 20260714_002848_00033_r2wsb failed: 'aBc' is not a val >
+date_diff	<ERR:Query 20260714_002849_00034_r2wsb failed: 'aBc' is not a val >
+date_format	aBc
+date_parse	1970-01-01 00:00:00.000
+date_trunc	<ERR:Query 20260714_002852_00037_r2wsb failed: 'aBc' is not a val >
+day	16
+day_of_month	16
+day_of_week	7
+day_of_year	168
+degrees	143.2394487827058
+dot_product	6.25
+dow	7
+doy	168
+euclidean_distance	0.0
+exp	12.182493960703473
+floor	5
+format_datetime	<ERR:Query 20260714_002900_00049_r2wsb failed: Illegal pattern co >
+format_number	5
+from_base	<ERR:Query 20260714_002902_00051_r2wsb failed: Not a valid base-5 >
+from_base32	<ERR:Query 20260714_002902_00052_r2wsb failed: Unrecognized chara >
+from_base64	<ERR:Query 20260714_002903_00053_r2wsb failed: Illegal base64 cha >
+from_base64url	<ERR:Query 20260714_002904_00054_r2wsb failed: Illegal base64 cha >
+from_big_endian_32	<ERR:Query 20260714_002905_00055_r2wsb failed: expected 4-byte in >
+from_big_endian_64	<ERR:Query 20260714_002905_00056_r2wsb failed: expected 8-byte in >
+from_hex	<ERR:Query 20260714_002906_00057_r2wsb failed: not a hexadecimal  >
+from_ieee754_32	<ERR:Query 20260714_002907_00058_r2wsb failed: Input floating-poi >
+from_ieee754_64	<ERR:Query 20260714_002908_00059_r2wsb failed: Input floating-poi >
+from_iso8601_date	<ERR:Query 20260714_002909_00060_r2wsb failed: Invalid format: "a >
+from_iso8601_timestamp	<ERR:Query 20260714_002909_00061_r2wsb failed: Invalid format: "a >
+from_iso8601_timestamp_nanos	<ERR:Query 20260714_002910_00062_r2wsb failed: Text 'aBc' could n >
+from_unixtime	1970-01-01 00:00:02.500 UTC
+from_unixtime_nanos	1970-01-01 00:00:00.000000005 UTC
+from_utf8	��
+hamming_distance	0
+hmac_md5	64 15 71 59 aa dd 2a dd 0a 05 7a 1c 0a 49 17 62
+hmac_sha1	b9 d1 64 45 64 e0 9b 4b e4 ab 27 88 7e ca 79 8a 2b 37 5a 90
+hmac_sha256	f9 df 94 fd b8 f8 1d 17 ac e3 d4 b5 51 1b 60 bd 51 f5 ab 8e 2b b9 dc 08 45 b9 96 36 a6 36 23 10
+hmac_sha512	20 da 3b 56 79 53 3d 70 33 72 8b 89 eb d8 e3 a9 41 7c f6 7c cb c1 61 43 ac 9d d5 48 26 b1 b5 1e 59 4a 79 f6 e6 72 3e 38 e7 0c fa 11 2c 7f 57 11 42 a6 2c 48 6a bb 6c 89 ce c0 9d 18 0f a5 d5 1d
+hour	13
+human_readable_seconds	3 seconds
+inverse_beta_cdf	<ERR:Query 20260714_002918_00073_r2wsb failed: p must be 0 >= p > >
+inverse_normal_cdf	<ERR:Query 20260714_002919_00074_r2wsb failed: p must be 0 > p >  >
+is_finite	true
+is_infinite	false
+is_json_scalar	false
+is_nan	false
+json_array_contains	NULL
+json_array_get	NULL
+json_array_length	NULL
+json_format	{"a":1}
+json_parse	<ERR:Query 20260714_002927_00086_r2wsb failed: Cannot convert val >
+last_day_of_month	2024-06-30
+length	3
+levenshtein_distance	0
+ln	0.9162907318741551
+log	1.0
+log10	0.3979400086720376
+log2	1.3219280948873624
+lower	abc
+lpad	aa bb aa aa bb
+ltrim	aBc
+luhn_check	<ERR:Query 20260714_002936_00097_r2wsb failed: Input contains non >
+md5	58 ce a1 f6 b2 b0 65 20 61 3e 09 af 90 dc 1c 47
+millisecond	0
+minute	45
+mod	0
+month	6
+murmur3	94 19 d5 fa 35 7f 34 5e 70 8a a1 b7 9f fe 3e 20
+normal_cdf	0.5
+normalize	<ERR:Query 20260714_002942_00105_r2wsb failed: line 1:25: mismatc >
+parse_data_size	<ERR:Query 20260714_002943_00106_r2wsb failed: Invalid data size: >
+parse_datetime	<ERR:Query 20260714_002944_00107_r2wsb failed: Illegal pattern co >
+parse_duration	<ERR:Query 20260714_002944_00108_r2wsb failed: duration is not a  >
+parse_presto_data_size	<ERR:Query 20260714_002945_00109_r2wsb failed: Invalid data size: >
+pow	9.882117688026186
+power	9.882117688026186
+quarter	2
+radians	0.04363323129985824
+rand	4
+random	3
+render	[38;5;2m✓[0m
+replace	
+reverse	cBa
+rgb	#050505
+round	5
+rpad	aa bb aa bb aa
+rtrim	aBc
+second	7
+sequence	[5]
+sha1	65 b1 e3 51 a6 cb fe b4 1c 92 72 22 bc 9e f5 3a ad 33 96 b0
+sha256	d7 98 d1 fa c6 bd 4b b1 c1 1f 50 31 27 60 35 10 13 37 9a 0a b6 f0 a8 c0 af 8a 50 6b 96 b2 52 5a
+sha512	13 86 8e 66 e1 0c 88 25 be 20 54 b8 fa 56 fa f0 69 38 a2 c6 a7 e8 e3 83 0f 0c 27 47 77 b0 43 1f 19 5e 00 1e 68 0b 85 c5 16 16 c3 75 8e 86 ad 3f fe e8 81 60 61 b1 a2 6f b0 0c 5a 3c 88 27 f2 6f
+sign	1
+sin	0.5984721441039564
+sinh	6.0502044810397875
+soundex	A120
+split	[, ]
+split_part	NULL
+split_to_map	<ERR:Query 20260714_003006_00136_r2wsb failed: entryDelimiter and >
+split_to_multimap	<ERR:Query 20260714_003006_00137_r2wsb failed: entryDelimiter and >
+spooky_hash_v2_32	05 b7 43 d4
+spooky_hash_v2_64	18 ec 64 ae 05 b7 43 d4
+sqrt	1.5811388300841898
+starts_with	true
+strpos	1
+substr	
+substring	
+t_cdf	0.9477150184609223
+t_pdf	0.040398008558866376
+tan	-0.7470222972386603
+tanh	0.9866142981514303
+timezone	UTC
+timezone_hour	0
+timezone_minute	0
+to_base	10
+to_base32	VK5Q====
+to_base64	qrs=
+to_base64url	qrs=
+to_big_endian_32	00 00 00 05
+to_big_endian_64	00 00 00 00 00 00 00 05
+to_hex	AABB
+to_ieee754_32	40 20 00 00
+to_ieee754_64	40 04 00 00 00 00 00 00
+to_iso8601	2024-06-16
+to_unixtime	1.718545507E9
+to_utf8	61 42 63
+translate	aBc
+trim	aBc
+truncate	2
+upper	ABC
+url_decode	aBc
+url_encode	aBc
+url_extract_fragment	
+url_extract_host	
+url_extract_parameter	NULL
+url_extract_path	aBc
+url_extract_port	NULL
+url_extract_protocol	
+url_extract_query	
+week	24
+week_of_year	24
+width_bucket	1
+wilson_interval_lower	0.4444444444444444
+wilson_interval_upper	1.0
+with_timezone	<ERR:Query 20260714_003046_00190_r2wsb failed: 'aBc' is not a val >
+word_stem	aBc
+xxhash64	75 78 cb 29 56 9a de 02
+year	2024
+year_of_week	2024
+yow	2024

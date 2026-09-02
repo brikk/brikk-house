@@ -7,6 +7,9 @@ package dev.brikk.house.sql.parser
  * The Python implementation walks a trie with single-symbol backtracking, which is
  * equivalent to a greedy longest-match at each position; we implement the latter
  * directly (mappings are tiny, performance is irrelevant here).
+ *
+ * Longest-match correctly handles multi-char tokens like `%mstrict` when present
+ * in [mapping] (greedy prefers `%mstrict` over `%m`).
  */
 // sqlglot: time.format_time
 fun formatTimeString(string: String?, mapping: Map<String, String>): String? {
@@ -36,6 +39,45 @@ fun formatTimeString(string: String?, mapping: Map<String, String>): String? {
         }
     }
     return sb.toString()
+}
+
+/**
+ * sqlglot: dialects.dialect.STRICT_TIME_FORMATS
+ *
+ * "Strict" dialects (e.g. modern Hive, Spark 3+) map their zero-padded MM/dd/HH/hh/mm/ss
+ * to these in TIME_MAPPING so they roundtrip, since a lax %m/%d renders non-padded there
+ * for parse expressions (see HiveGenerator.formatTime).
+ */
+// sqlglot: dialects.dialect.STRICT_TIME_FORMATS
+val STRICT_TIME_FORMATS: Map<String, String> = mapOf(
+    "%mstrict" to "%m",
+    "%dstrict" to "%d",
+    "%Hstrict" to "%H",
+    "%Istrict" to "%I",
+    "%Mstrict" to "%M",
+    "%Sstrict" to "%S",
+)
+
+/**
+ * sqlglot: dialects.dialect._with_strict_time_inverse
+ *
+ * Augments an inverse time/format mapping so strict tokens never leak into non-strict
+ * dialects, and so strict dialects format a foreign lax %m the same padded way as %mstrict.
+ */
+// sqlglot: dialects.dialect._with_strict_time_inverse
+fun withStrictTimeInverse(inverseMapping: Map<String, String>): Map<String, String> {
+    if (STRICT_TIME_FORMATS.isEmpty()) return inverseMapping
+    val out = inverseMapping.toMutableMap()
+    for ((strictFormat, laxFormat) in STRICT_TIME_FORMATS) {
+        if (strictFormat in out) {
+            // In strict dialects, a foreign lax %m formats the same padded way as %mstrict (MM)
+            out.putIfAbsent(laxFormat, out.getValue(strictFormat))
+        } else {
+            // Elsewhere, the strict format degrades to its lax counterpart so it never leaks
+            out.putIfAbsent(strictFormat, out[laxFormat] ?: laxFormat)
+        }
+    }
+    return out
 }
 
 /**

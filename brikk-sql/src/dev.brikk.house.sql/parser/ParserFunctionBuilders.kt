@@ -87,6 +87,9 @@ internal fun toJsonPath(path: Expression?): Expression? {
             // base: STRICT_JSON_PATH_SYNTAX=true and paths don't start with
             // "lax"/"strict" — Python only logs a warning here, then falls
             // through to return the raw path literal.
+        } catch (e: TokenError) {
+            // sqlglot 88419b1aa: the JSON path tokenizer can raise TokenError (a sibling of
+            // ParseError under SqlglotError) when an operand isn't a JSON path; fall back too.
         }
     }
     return path

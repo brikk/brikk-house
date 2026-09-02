@@ -1,0 +1,418 @@
+# doris-clickhouse-mass.doris.tsv — live Doris outputs for the 413-call mass scalar probe
+# engine=Doris (FE doris-0.0.0/P-series pr62767-local, BE apache/doris:be-4.1.2)
+# rendered=raw; strings raw UTF-8; NULL->NULL; errors-><ERR:first line ~60 chars> (kept)
+# binary/invalid bytes -> \xNN; booleans un-normalized; ai_*/ML/geo/session errors expected & kept
+# 6 binary-output fns (aes_encrypt,char,compress,sm4_encrypt,st_circle,st_point) rendered \xNN from hex()
+abs	2.5
+acos	NULL
+acosh	1.566799236972411
+aes_decrypt	NULL
+aes_encrypt	\xc3\x1e\xdd\xca\xb7\xa6\x5e\x52\x25\xdc\xa5\xfe\xe9\x62\x61\x9e	# adjusted: binary output rendered as \xNN (from hex())
+ai_classify	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+ai_extract	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+ai_filter	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+ai_fixgrammar	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+ai_generate	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+ai_mask	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+ai_sentiment	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+ai_similarity	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+ai_summarize	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+ai_translate	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+append_trailing_char_if_absent	NULL
+arrays_overlap	1
+array_avg	2
+array_compact	[1, 2, 3]
+array_concat	[1, 2, 3]
+array_contains_all	1
+array_count	3
+array_cross_product	[0, 0, 0]
+array_cum_sum	[1, 3, 6]
+array_difference	[0, 1, 1]
+array_distinct	[1, 2, 3]
+array_enumerate	[1, 2, 3]
+array_enumerate_uniq	[1, 1, 1]
+array_except	[]
+array_exists	[1, 1, 1]
+array_filter	[1, 2, 3]
+array_first	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+array_first_index	1
+array_intersect	[2, 1, 3]
+array_join	1aBc2aBc3
+array_last	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+array_last_index	3
+array_match_all	1
+array_match_any	1
+array_max	3
+array_min	1
+array_popback	[1, 2]
+array_popfront	[2, 3]
+array_product	6
+array_range	[0, 1, 2, 3, 4]
+array_reverse_sort	[3, 2, 1]
+array_reverse_split	[[1], [2], [3]]
+array_shuffle	[3, 1, 2]
+array_size	3
+array_slice	[]
+array_sort	[1, 2, 3]
+array_sortby	[1, 2, 3]
+array_split	[[1], [2], [3]]
+array_sum	6
+array_union	[2, 1, 3]
+ascii	97
+asin	NULL
+asinh	1.647231146371096
+assert_true	1
+atan	1.190289949682532
+atan2	0.7853981633974483
+atanh	NULL
+auto_partition_name	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = f >
+bin	101
+bitmap_from_array	NULL
+bitmap_from_base64	NULL
+bitmap_from_string	NULL
+bitmap_hash	NULL
+bitmap_hash64	NULL
+bit_count	2
+bit_length	24
+bit_shift_left	160
+bit_shift_right	0
+bit_test	0
+cbrt	1.357208808297453
+ceil	3
+century	21
+char	\x05	# adjusted: binary output rendered as \xNN (from hex())
+char_length	3
+compress	\x03\x00\x00\x00\x78\x9c\x4b\x74\x4a\x06\x00\x02\x0d\x01\x07	# adjusted: binary output rendered as \xNN (from hex())
+concat	aBc
+concat_ws	1aBc2aBc3
+conv	0
+convert_to	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+convert_tz	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+cos	-0.8011436155469337
+cosh	6.132289479663686
+cosine_distance	0
+cosine_similarity	1
+cot	-1.338648128304151
+count_substrings	1
+crc32	2694866272
+csc	1.67092154555868
+cut_to_first_significant_subdomain	
+damerau_levenshtein_distance	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+date	2024-06-16
+datev2	2024-06-16
+date_format	aBc
+day	16
+dayname	Sunday
+dayofweek	1
+dayofyear	168
+days_add	2024-06-21 13:45:07
+days_sub	2024-06-11 13:45:07
+day_ceil	2024-06-17 00:00:00
+day_floor	2024-06-16 00:00:00
+day_hour	16 13
+day_microsecond	16 13:45:07.000000
+day_minute	16 13:45
+day_second	16 13:45:07
+dceil	3
+decode_as_varchar	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+degrees	143.2394487827058
+dexp	12.18249396070347
+dfloor	2
+digital_masking	aBc****aBc
+dlog10	0.3979400086720376
+domain	
+domain_without_www	
+dpow	9.882117688026186
+dround	3
+dsqrt	1.58113883008419
+element_at	NULL
+elt	NULL
+embed	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = C >
+encode_as_bigint	3504136410896531459
+encode_as_int	815870339
+encode_as_largeint	64639907571175449905262134191399632899
+encode_as_smallint	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+ends_with	1
+even	4
+exp	12.18249396070347
+export_set	aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc,aBc
+extract_url_parameter	
+factorial	120
+field	1
+find_in_set	1
+first_significant_subdomain	
+floor	2
+fmod	0
+format	aBc
+format_number	2.50
+format_round	5.00000
+fpow	9.882117688026186
+from_base64	NULL
+from_base64_binary	NULL
+from_days	0000-01-05
+from_iso8601_date	NULL
+from_microsecond	1970-01-01 00:00:00.000005
+from_millisecond	1970-01-01 00:00:00.005
+from_second	1970-01-01 00:00:05
+from_unixtime	1970-01-01 00:00:05
+g	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+gcd	5
+get_format	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = I >
+hamming_distance	0
+hex	5
+hll_from_base64	NULL
+hll_hash	NULL
+hour	13
+hours_add	2024-06-16 18:45:07
+hours_sub	2024-06-16 08:45:07
+hour_ceil	2024-06-16 14:00:00
+hour_floor	2024-06-16 13:00:00
+hour_from_unixtime	0
+hour_microsecond	13:45:07.000000
+hour_minute	13:45
+hour_second	13:45:07
+initcap	Abc
+inner_product	14
+inner_product_approximate	14
+instr	1
+interval	1
+int_to_uuid	05000000-0000-0000-0000-000000000000
+ipv4_num_to_string	0.0.0.5
+ipv4_string_to_num	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+ipv4_string_to_num_or_default	0
+ipv4_string_to_num_or_null	NULL
+ipv6_from_uint128_string_or_null	NULL
+ipv6_num_to_string	6142:6300::
+ipv6_string_to_num	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+ipv6_string_to_num_or_default	\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0
+ipv6_string_to_num_or_null	NULL
+isinf	0
+isnan	0
+is_ipv4_compat	0
+is_ipv4_mapped	0
+is_ipv4_string	0
+is_ipv6_string	0
+is_uuid	0
+is_valid_utf8	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+jsonb_parse	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+jsonb_parse_error_to_null	NULL
+jsonb_valid	0
+json_quote	"aBc"
+json_unquote	aBc
+json_valid	0
+l1_distance	0
+l2_distance	0
+l2_distance_approximate	0
+last_day	2024-06-30
+lcase	abc
+lcm	5
+left	aBc
+length	3
+levenshtein	0
+like	1
+ln	0.9162907318741551
+log	0.9162907318741551
+log10	0.3979400086720376
+log2	1.321928094887362
+lpad	aBaBc
+ltrim	
+ltrim_in	
+maketime	05:05:05
+make_set	aBc
+mask	xXx
+mask_first_n	xXx
+mask_last_n	xXx
+md5	dbbbbe4975e026e04a687871f296a2b2
+md5sum	dbbbbe4975e026e04a687871f296a2b2
+microsecond	0
+microseconds_add	2024-06-16 13:45:07.000005
+microsecond_timestamp	1718545507000000
+millisecond_timestamp	1718545507000
+minute	45
+minutes_add	2024-06-16 13:50:07
+minutes_sub	2024-06-16 13:40:07
+minute_ceil	2024-06-16 13:46:00
+minute_floor	2024-06-16 13:45:00
+minute_from_unixtime	0
+minute_microsecond	45:07.000000
+minute_second	45:07
+money_format	5.00
+month	6
+monthname	June
+months_add	2024-11-16 13:45:07
+months_between	0
+months_sub	2024-01-16 13:45:07
+month_ceil	2024-07-01 00:00:00
+month_floor	2024-06-01 00:00:00
+multi_match	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+multi_match_any	0
+multi_search_all_positions	[0, 0, 0]
+murmur_hash3_128	-46610570392540912061750269681630830470
+murmur_hash3_32	-217427899
+murmur_hash3_64	4709487934249619171
+murmur_hash3_64_v2	6082119207083974778
+murmur_hash3_u128	293671796528397551401624337750137380986
+murmur_hash3_u64_v2	6082119207083974778
+negative	-5
+next_day	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+ngram_search	0
+normal_cdf	0.5
+not_null_or_empty	1
+null_or_empty	0
+parse_data_size	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+parse_url	NULL
+password	*454E715F026E5D3DAA2FD3CD67DC287D803A7A06
+period_add	200010
+period_diff	0
+position	1
+positive	5
+pow	9.882117688026186
+power	9.882117688026186
+previous_day	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+protocol	
+quantile_state_from_base64	NULL
+quarter	2
+quarters_add	2025-09-16 13:45:07
+quarters_sub	2023-03-16 13:45:07
+quarter_ceil	2024-07-01 00:00:00
+quarter_floor	2024-04-01 00:00:00
+quote	'aBc'
+radians	0.04363323129985824
+random_bytes	0x797e5e9cc2
+regexp	1
+regexp_count	1
+regexp_extract	
+regexp_extract_all	
+regexp_extract_or_null	NULL
+regexp_replace	aBc
+regexp_replace_one	aBc
+repeat	aBcaBcaBcaBcaBc
+replace	aBc
+replace_empty	aBc
+reverse	[3, 2, 1]
+right	aBc
+round	3
+round_bankers	2
+rpad	aBcaB
+rtrim	
+rtrim_in	
+search	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = s >
+sec	-1.248215651468818
+second	7
+seconds_add	2024-06-16 13:45:12
+seconds_sub	2024-06-16 13:45:02
+second_ceil	2024-06-16 13:45:07
+second_floor	2024-06-16 13:45:07
+second_from_unixtime	5
+second_microsecond	07.000000
+second_timestamp	1718545507
+sec_to_time	00:00:05
+sha1	a792075841df16e50563ef4d3aab7424604a505b
+sha2	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = s >
+sign	1
+signbit	0
+sin	0.5984721441039564
+sinh	6.050204481039787
+sleep	0
+sm3	c42cf0141ccb8e5cc5ed6a7a475176ccc7f5d3bc23e587ca70f66f49479bc22f
+sm3sum	c42cf0141ccb8e5cc5ed6a7a475176ccc7f5d3bc23e587ca70f66f49479bc22f
+sm4_decrypt	NULL
+sm4_encrypt	\x6d\xe6\x31\x40\x6c\xed\x45\x62\x2e\x18\x9d\x24\xa6\x76\x9e\xa4	# adjusted: binary output rendered as \xNN (from hex())
+soundex	A120
+space	
+split_by_regexp	["", ""]
+split_by_string	["", ""]
+split_part	NULL
+sqrt	1.58113883008419
+starts_with	1
+strcmp	0
+str_to_date	NULL
+str_to_map	{"aBc":null}
+st_angle	NULL
+st_area_square_km	NULL
+st_area_square_meters	NULL
+st_asbinary	NULL
+st_astext	NULL
+st_aswkt	NULL
+st_azimuth	NULL
+st_circle	\x00\x07\xd2\x0a\x0c\xda\x69\xf0\xef\x3f\x03\x81\xc2\xb8\xd6\x4f\xa6\x3f\x11\x4e\x69\xc4\x47\x55\xa6\x3f\xc6\xa9\xf6\xf9\xb3\xab\x45\x3d	# adjusted: binary output rendered as \xNN (from hex())
+st_contains	NULL
+st_disjoint	NULL
+st_distance	NULL
+st_geometries	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+st_geometryfromtext	NULL
+st_geometryfromwkb	NULL
+st_geometrytype	NULL
+st_geomfromtext	NULL
+st_geomfromwkb	NULL
+st_intersects	NULL
+st_length	NULL
+st_linefromtext	NULL
+st_linestringfromtext	NULL
+st_numgeometries	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+st_numpoints	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+st_point	\x00\x01\xd2\x0a\x0c\xda\x69\xf0\xef\x3f\x03\x81\xc2\xb8\xd6\x4f\xa6\x3f\x11\x4e\x69\xc4\x47\x55\xa6\x3f	# adjusted: binary output rendered as \xNN (from hex())
+st_polyfromtext	NULL
+st_polygon	NULL
+st_polygonfromtext	NULL
+st_touches	NULL
+st_x	NULL
+st_y	NULL
+substr	
+substring_index	aBc
+sub_replace	NULL
+tan	-0.7470222972386603
+tanh	0.9866142981514303
+time	13:45:07
+timestamp	2024-06-16 13:45:07
+tokenize	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = t >
+top_level_domain	
+to_base64	YUJj
+to_binary	NULL
+to_bitmap	NULL
+to_bitmap_with_check	NULL
+to_date	2024-06-16
+to_datev2	2024-06-16
+to_days	739418
+to_ipv4	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+to_ipv4_or_default	0.0.0.0
+to_ipv4_or_null	NULL
+to_ipv6	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+to_ipv6_or_default	::
+to_ipv6_or_null	NULL
+to_iso8601	2024-06-16T13:45:07.000000
+to_monday	2024-06-10
+to_quantile_state	NULL
+to_seconds	63885764707
+translate	aBc
+trim	
+trim_in	
+truncate	2.5
+ucase	ABC
+uncompress	NULL
+unhex	
+unhex_null	NULL
+unicode_normalize	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+uniform	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = T >
+url_decode	aBc
+url_encode	aBc
+uuid_to_int	NULL
+week	24
+weekday	6
+weekofyear	24
+weeks_add	2024-07-21 13:45:07
+weeks_sub	2024-05-12 13:45:07
+week_ceil	2024-06-17 00:00:00
+week_floor	2024-06-10 00:00:00
+xor	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage =  >
+xpath_string	<ERR:ERROR 1105 (HY000) at line 1: errCode = 2, detailMessage = ( >
+xxhash_32	1032354407
+xxhash_64	-4742896892862040694
+year	2024
+years_add	2029-06-16 13:45:07
+years_sub	2019-06-16 13:45:07
+yearweek	202424
+year_ceil	2025-01-01 00:00:00
+year_floor	2024-01-01 00:00:00
+year_month	2024-06
+year_of_week	2024

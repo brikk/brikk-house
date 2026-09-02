@@ -27,12 +27,14 @@ open class TrinoGenerator(
     identify: kotlin.Any = false,
     comments: Boolean = true,
     tokenizerConfig: TokenizerConfig = TrinoTokenizerTables.CONFIG,
+    sourceDialect: String? = null,
 ) : PrestoGenerator(
     pretty = pretty,
     identify = identify,
     comments = comments,
     tokenizerConfig = tokenizerConfig,
     overrides = TRANSFORMS,
+    sourceDialect = sourceDialect,
 ) {
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
@@ -40,6 +42,9 @@ open class TrinoGenerator(
 
     // sqlglot: TrinoGenerator.EXCEPT_INTERSECT_SUPPORT_ALL_CLAUSE = True
     override val exceptIntersectSupportAllClause: Boolean get() = true
+
+    // sqlglot: Trino.Generator.DECLARE_DEFAULT_ASSIGNMENT = "DEFAULT"
+    override val declareDefaultAssignment: String get() = "DEFAULT"
 
     // sqlglot: Trino.CONCAT_WS_COALESCE = True
     override val dialectConcatWsCoalesce: Boolean get() = true
@@ -54,6 +59,35 @@ open class TrinoGenerator(
     // sqlglot: Generator.log_sql (LOG_BASE_FIRST True restores the base behavior)
     override fun logSql(expression: Log): String =
         func("LOG", expression.thisArg, expression.args["expression"])
+
+    override fun structSql(expression: Struct): String {
+        if (expression.args["trino_row_syntax"] != true ||
+            expression.expressionsArg.none { it is PropertyEQ }
+        ) return super.structSql(expression)
+
+        val fields = expression.expressionsArg.joinToString(", ") { field ->
+            if (field is PropertyEQ) {
+                "${sql(field, "expression")} AS ${sql(field, "this")}"
+            } else {
+                sql(field)
+            }
+        }
+        return "ROW($fields)"
+    }
+
+    // Reverse direction (ClickHouse -> Trino): ClickHouse camelCase names that reach the
+    // generator as an unmapped Anonymous, rewritten to the Trino spelling. Key = ClickHouse
+    // name UPPERCASED, value = Trino name. Live-verified value-equal on Trino 481 +
+    // ClickHouse 26.5.1.1 (doris-ducklake agent, reverse-doris-trino.results.tsv).
+    // Round-trip safe: keys are camelCase (no underscores) that Trino neither parses to a
+    // node nor accepts, so native Trino generation is untouched. arrayElement->element_at
+    // is value-equal here but stays a divergent hazard (negative-index semantics).
+    override fun anonymousSql(expression: Anonymous): String {
+        REVERSE_CLICKHOUSE_RENAMES[expression.name.uppercase()]?.let { target ->
+            return func(target, *expression.expressionsArg.toTypedArray())
+        }
+        return super.anonymousSql(expression)
+    }
 
     // sqlglot: dialect.trim_sql (Trino TRANSFORMS[exp.Trim])
     open fun trinoTrimSql(expression: Trim): String {
@@ -165,6 +199,119 @@ open class TrinoGenerator(
         return mergeSql(expression)
     }
 
+    // brikk extension (docs/brikk-extensions.md #8, NOT sqlglot parity): Trino's grammar
+    // (reference/trino .../SqlBase.g4 `jsonQueryWrapperBehavior : WITHOUT ARRAY? | WITH
+    // (CONDITIONAL | UNCONDITIONAL)? ARRAY?`) only allows the CONDITIONAL/UNCONDITIONAL
+    // modifier after WITH; sqlglot's JSON_QUERY_OPTIONS cross-products both keywords with
+    // every modifier and re-emits e.g. `WITHOUT CONDITIONAL WRAPPER`, which Trino rejects.
+    // Under WITHOUT no wrapping happens at all, so the modifier is vacuous and dropping it
+    // preserves semantics. Also repairs sqlglot's "WRAPPED" option-table typo.
+    protected open fun normalizeJsonQueryWrapperOption(option: String): String {
+        val tokens = option.split(" ").toMutableList()
+        if (tokens.lastOrNull() == "WRAPPED") tokens[tokens.size - 1] = "WRAPPER"
+        if (tokens.firstOrNull() == "WITHOUT") {
+            tokens.removeAll(listOf("CONDITIONAL", "UNCONDITIONAL"))
+        }
+        return tokens.joinToString(" ")
+    }
+
+    // brikk extension (docs/brikk-extensions.md #8, NOT sqlglot parity): sqlglot leaves
+    // ALTER TABLE ... SET PROPERTIES as a Command; our TrinoParser parses it into AlterSet
+    // (option=PROPERTIES) so property keys can be rendered as the identifiers Trino's
+    // grammar requires (`property : identifier EQ propertyValue`).
+    override fun altersetSql(expression: AlterSet): String {
+        val option = (expression.args["option"] as? Var)?.args?.get("this")
+        if (option == "PROPERTIES") {
+            return "SET PROPERTIES ${expressions(expression, flat = true)}"
+        }
+        return super.altersetSql(expression)
+    }
+
+    // sqlglot: TrinoGenerator.functionspecification_sql
+    override fun functionspecificationSql(expression: FunctionSpecification): String {
+        val characteristics = expression.args["characteristics"] as? Properties
+        val characteristicsSql =
+            if (characteristics != null) {
+                properties(characteristics, prefix = " ", sep = " ", wrapped = false)
+            } else {
+                ""
+            }
+        val props = expression.args["properties"] as? Properties
+        val withSql = if (props != null) " ${withProperties(props)}" else ""
+        val body = sql(expression, "expression")
+        return "FUNCTION ${sql(expression, "this")}$characteristicsSql$withSql $body"
+    }
+
+    // sqlglot: TrinoGenerator.ifblock_sql
+    override fun ifblockSql(expression: IfBlock): String {
+        // ELSEIF chains nest into `false` at parse time; flatten rather than recurse.
+        val branches = mutableListOf<String>()
+        var node: Expression? = expression
+
+        while (node is IfBlock) {
+            val keyword = if (branches.isEmpty()) "IF" else "ELSEIF"
+            branches.add("$keyword ${sql(node, "this")} THEN ${sql(node, "true")};")
+            node = node.args["false"] as? Expression
+        }
+
+        if (node != null) {
+            branches.add("ELSE ${sql(node)};")
+        }
+
+        return "${branches.joinToString(" ")} END IF"
+    }
+
+    // sqlglot: TrinoGenerator.casestatement_sql
+    override fun casestatementSql(expression: CaseStatement): String {
+        val thisSql = sql(expression, "this")
+        val branches = mutableListOf(if (thisSql.isNotEmpty()) "CASE $thisSql" else "CASE")
+
+        for (node in expression.args["ifs"] as? List<*> ?: emptyList<Any?>()) {
+            val ifNode = node as? Expression ?: continue
+            branches.add("WHEN ${sql(ifNode, "this")} THEN ${sql(ifNode, "true")};")
+        }
+
+        val default = expression.args["default"] as? Expression
+        if (default != null) {
+            branches.add("ELSE ${sql(default)};")
+        }
+
+        branches.add("END CASE")
+        return branches.joinToString(" ")
+    }
+
+    // sqlglot: TrinoGenerator.whileblock_sql
+    override fun whileblockSql(expression: WhileBlock): String {
+        val label = expression.args["label"] as? Expression
+        val labelSql = if (label != null) "${sql(label)}: " else ""
+        val condition = sql(expression, "this")
+        val body = sql(expression, "body")
+        return "${labelSql}WHILE $condition DO $body; END WHILE"
+    }
+
+    // sqlglot: TrinoGenerator.loopblock_sql
+    override fun loopblockSql(expression: LoopBlock): String {
+        val label = expression.args["label"] as? Expression
+        val labelSql = if (label != null) "${sql(label)}: " else ""
+        val body = sql(expression, "body")
+        return "${labelSql}LOOP $body; END LOOP"
+    }
+
+    // sqlglot: TrinoGenerator.repeatblock_sql
+    override fun repeatblockSql(expression: RepeatBlock): String {
+        val label = expression.args["label"] as? Expression
+        val labelSql = if (label != null) "${sql(label)}: " else ""
+        val body = sql(expression, "body")
+        val until = sql(expression, "until")
+        return "${labelSql}REPEAT $body; UNTIL $until END REPEAT"
+    }
+
+    // sqlglot: TrinoGenerator.leave_sql
+    override fun leaveSql(expression: Leave): String = "LEAVE ${sql(expression, "this")}"
+
+    // sqlglot: TrinoGenerator.iterate_sql
+    override fun iterateSql(expression: Iterate): String = "ITERATE ${sql(expression, "this")}"
+
     // sqlglot: TrinoGenerator.jsonextract_sql
     override fun jsonextractSql(expression: JSONExtract): String {
         if (!isTruthy(expression.args["json_query"])) {
@@ -174,6 +321,8 @@ open class TrinoGenerator(
         val jsonPath = sql(expression, "expression")
 
         var option = sql(expression, "option")
+        // brikk extension (docs/brikk-extensions.md #8): see normalizeJsonQueryWrapperOption.
+        if (option.isNotEmpty()) option = normalizeJsonQueryWrapperOption(option)
         option = if (option.isNotEmpty()) " $option" else ""
 
         var quote = sql(expression, "quote")
@@ -190,6 +339,20 @@ open class TrinoGenerator(
     }
 
     companion object {
+
+        // Reverse direction (ClickHouse -> Trino) function-name renames; see anonymousSql.
+        // Live-verified value-equal (Trino 481 + ClickHouse 26.5.1.1). EXCLUDED:
+        // splitByRegexp->regexp_split (Trino treats the CH backslash literally, so '\\d'
+        // does not split — a real regex-escape divergence, not a clean rename).
+        private val REVERSE_CLICKHOUSE_RENAMES: Map<String, String> = mapOf(
+            "ARRAYSORT" to "ARRAY_SORT",
+            "ARRAYINTERSECT" to "ARRAY_INTERSECT",
+            "ARRAYELEMENT" to "ELEMENT_AT", // divergent (negative-index) — hazard kept
+            "BITSHIFTLEFT" to "BITWISE_LEFT_SHIFT",
+            "BITSHIFTRIGHT" to "BITWISE_RIGHT_SHIFT",
+            "DOTPRODUCT" to "DOT_PRODUCT",
+            "ISINFINITE" to "IS_INFINITE",
+        )
 
         // sqlglot: TrinoGenerator.PROPERTIES_LOCATION
         val TRINO_PROPERTIES_LOCATION: Map<KClass<out Expression>, GeneratorTables.PropLocation> =
@@ -214,6 +377,21 @@ open class TrinoGenerator(
             reg(GroupConcat::class) { e -> tg().groupconcatSql(e as GroupConcat) }
             reg(LocationProperty::class) { e -> propertySql(e as Property) }
             reg(Merge::class) { e -> tg().mergeWithoutTargetSql(e as Merge) }
+            // sqlglot: TrinoGenerator.TRANSFORMS[StabilityProperty]
+            reg(StabilityProperty::class) { e ->
+                if (e.name == "IMMUTABLE") "DETERMINISTIC" else "NOT DETERMINISTIC"
+            }
+            // sqlglot: Trino inline-UDF / routine body renderers
+            reg(FunctionSpecification::class) { e ->
+                tg().functionspecificationSql(e as FunctionSpecification)
+            }
+            reg(IfBlock::class) { e -> tg().ifblockSql(e as IfBlock) }
+            reg(CaseStatement::class) { e -> tg().casestatementSql(e as CaseStatement) }
+            reg(WhileBlock::class) { e -> tg().whileblockSql(e as WhileBlock) }
+            reg(LoopBlock::class) { e -> tg().loopblockSql(e as LoopBlock) }
+            reg(RepeatBlock::class) { e -> tg().repeatblockSql(e as RepeatBlock) }
+            reg(Leave::class) { e -> tg().leaveSql(e as Leave) }
+            reg(Iterate::class) { e -> tg().iterateSql(e as Iterate) }
             reg(TimeStrToTime::class) { e -> tg().timestrtotimeSql(e, includePrecision = true) }
             reg(Trim::class) { e -> tg().trinoTrimSql(e as Trim) }
         }

@@ -18,6 +18,13 @@ sealed class TypingSpec {
     /** {"returns": exp.DType.X} */
     data class Returns(val dtype: DType) : TypingSpec()
 
+    /**
+     * {"returns": exp.DataType(...)} — a nested/parametrized return type such as
+     * hive's RegexpSplit -> ARRAY<TEXT> or StrToMap -> MAP<TEXT, TEXT>. The codegen
+     * (tools/gen_typing_metadata.py) reconstructs the full DataType node.
+     */
+    data class ReturnsDataType(val dtype: DataType) : TypingSpec()
+
     /** {"annotator": lambda self, e: ...} */
     data class Annotate(val ref: AnnotatorRef) : TypingSpec()
 }
@@ -100,6 +107,20 @@ sealed class AnnotatorRef {
     object RandThisOrDouble : AnnotatorRef()
 
     /**
+     * spark2 exp.ApproxQuantile: self._annotate_by_args(e, "this",
+     * array=e.args["quantile"].is_type(exp.DType.ARRAY)) — annotate by "this" with the
+     * array flag driven by whether the "quantile" arg resolves to an ARRAY type.
+     */
+    object ApproxQuantileByArgs : AnnotatorRef()
+
+    /**
+     * spark2 _annotate_by_similar_args (CONCAT/LPAD/RPAD family, sqlglot/typing/spark2.py):
+     * gather the args under [keys]; all-BINARY -> BINARY; else if any arg has a known,
+     * non-ARRAY, non-BINARY type -> TEXT; else UNKNOWN.
+     */
+    data class BySimilarArgs(val keys: List<String>) : AnnotatorRef()
+
+    /**
      * clickhouse exp.MD5Digest: self._set_type(e, exp.DataType.build("FixedString(16)",
      * dialect="clickhouse")) — a parametrized, non-nullable type with a single integer
      * DataTypeParam.
@@ -109,4 +130,69 @@ sealed class AnnotatorRef {
         val size: kotlin.Int,
         val nullable: kotlin.Boolean = false,
     ) : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_math_functions (CEIL/FLOOR/AVG/... family, sqlglot/typing/
+     * bigquery.py): INT64 input -> FLOAT64, otherwise the first arg's own type.
+     */
+    object MathFunctionsBq : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_by_args_with_coerce (SafeAdd/SafeSubtract/SafeMultiply/
+     * PercentileCont): _maybe_coerce(this.type, expression.type).
+     */
+    object ByArgsWithCoerceBq : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_safe_divide: INT64/INT64 -> FLOAT64, else by-args-with-coerce.
+     */
+    object SafeDivideBq : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_concat: by_args over "expressions"; unless BINARY/UNKNOWN,
+     * coerce the result to VARCHAR.
+     */
+    object ConcatBq : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_date_func (DATE_ADD/DATE_SUB/TRUNC family): a string-literal first
+     * arg takes the function's own temporal type ([literalType]); otherwise by_args("this").
+     */
+    data class DateFuncBq(val literalType: DType) : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_array: ARRAY(SELECT ...) / ARRAY(SELECT AS STRUCT ...) /
+     * ARRAY(set-op) projection typing; falls back to by_args("expressions", array=true).
+     */
+    object ArrayBq : AnnotatorRef()
+
+    /**
+     * bigquery _annotate_by_args_approx_top (APPROX_TOP_K/APPROX_TOP_SUM): result is
+     * ARRAY<STRUCT<this.type, INT64>>.
+     */
+    object ApproxTopKBq : AnnotatorRef()
+
+    /**
+     * mysql/doris _annotate_bit_func (BIT_AND/BIT_OR/... family, sqlglot #8261):
+     * UNKNOWN `this` -> UNKNOWN; BINARY/VARBINARY `this` -> VARBINARY; otherwise UBIGINT.
+     */
+    object BitFunc : AnnotatorRef()
+
+    /** mysql _annotate_reverse: BINARY/VARBINARY/UNKNOWN `this` -> by args("this"); else VARCHAR. */
+    object Reverse : AnnotatorRef()
+
+    /** mysql _annotate_truncate: TEXT `this` -> DOUBLE; else by args("this"). */
+    object Truncate : AnnotatorRef()
+
+    /** mysql _annotate_regexp_replace: any UNKNOWN arg -> UNKNOWN; any BINARY arg -> LONGBLOB; else LONGTEXT. */
+    object RegexpReplace : AnnotatorRef()
+
+    /** mysql _annotate_compress: type-set dispatch of `this` -> VARBINARY / LONGBLOB / BLOB / UNKNOWN. */
+    object Compress : AnnotatorRef()
+
+    /**
+     * Fixed-type annotator: unconditionally sets a plain DType (e.g. clickhouse
+     * `_set_type(e, DataType.build("Float64", ...))` -> DOUBLE).
+     */
+    data class SetType(val dtype: DType) : AnnotatorRef()
 }

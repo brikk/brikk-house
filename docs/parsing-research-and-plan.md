@@ -2,7 +2,7 @@
 
 Status: research complete, plan is rough/for discussion.
 Scope: SQL parsing side of brikk (pipe-stage parsing first, sqlglot-level parity as the horizon).
-Reference repos live in `reference/` (sqlglot @ `v30.12.0-44-g93d16591` — all sqlglot claims
+Reference repos live in `reference/` (sqlglot @ `v30.17.0-93-gdcc36544a` — all sqlglot claims
 below are pinned to that version; the pipe operator table in particular grows most releases —
 plus polyglot, sql-glot-rust, trino, doris, datafusion, calcite, googlesql).
 
@@ -356,7 +356,20 @@ Work items:
 ### Phase 5 — Dialects, incrementally
 
 - Priority order (decided): **mysql → doris → trino → duckdb → postgresql → clickhouse**;
-  everything else whenever — explicitly not a priority for now.
+  all landed with gates.
+- Follow-on dialects (decided order; good "overnight" tasks when the near-term queue is
+  empty — no more beyond these except by demand):
+  1. **datafusion** — top open-source community we care about and can test in our own work.
+     *(Status: **thin phase 1 landed** — brikk-native dialect, NO sqlglot oracle. Gated by
+     polyglot-derived fixtures (`DatafusionFixtureTest`, ≥80% identity modulo ledger) +
+     DataFusion sqllogictest parse-acceptance (`DatafusionSltParseTest`) + pipe smoke +
+     hand assertions. Engine verifier, typing metadata and a FunctionCatalog are deferred
+     to phase 2. See docs/brikk-extensions.md §16.)*
+  2. **sparksql** — same rationale (sqlglot chain: Spark(Spark2(Hive))).
+  3. **bigquery/googlesql** — mainly because of pipe syntax: it's the origin dialect and
+     can oracle-guide our pipe work; Google open-sources the ZetaSQL parser (the Java
+     wrapper looked outdated — revisit; "king of pipe syntax" as a verifier in
+     brikk-sql-verify would be the prize).
   (Status: mysql, doris, presto+trino, duckdb, postgres landed with gates. Before
   clickhouse: **full `annotate_types` port** — decided full-scope, not a slice, because
   type inference is brikk's shape-contract primitive (input shape → SQL → output shape
