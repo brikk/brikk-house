@@ -15,24 +15,12 @@
 # NOTE (KMP): only JVM libraries publish fully-consumable artifacts today. For the
 # `kmp/lib` modules, consumers should depend on the per-platform JVM artifact, e.g.
 #   dev.brikk.house:brikk-sql-jvm:0.1.0-SNAPSHOT
-repositories:
-  # Central Portal SNAPSHOT repo. This is a *regular* Maven repo (not the Portal bundle API),
-  # so it accepts -SNAPSHOT versions and bypasses the release-only publish path.
-  # Publish with: `./kotlin publish centralSnapshots`
-  # resolve: false -> publish-only (the snapshots repo 403s for release artifacts like
-  # kotlin-stdlib/antlr, which would otherwise spam warnings and slow resolution).
-  - id: centralSnapshots
-    url: https://central.sonatype.com/repository/maven-snapshots/
-    publish: true
-    resolve: false
-    credentials:
-      file: .env
-      usernameKey: brikk.mavencentral.user
-      passwordKey: brikk.mavencentral.pass
-  # Local install for testing the publication pipeline: `./kotlin publish mavenLocal`
-  - url: mavenLocal
-    publish: true
-    resolve: false
+#
+# The publish-target `repositories` (centralSnapshots, mavenLocal) live in
+# publish-targets.module-template.yaml so non-published modules can share them; see the
+# note there about Kotlin Toolchain 0.12's `publish` behaviour.
+apply:
+  - ./publish-targets.module-template.yaml
 
 settings:
   publishing:

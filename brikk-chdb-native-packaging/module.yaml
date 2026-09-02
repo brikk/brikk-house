@@ -2,7 +2,13 @@
 # generated module resources; native archives never live in Git.
 product: jvm/amper-plugin
 
+# Not published; see publish-targets.module-template.yaml for why this is applied anyway.
+apply:
+  - ../publish-targets.module-template.yaml
+
 settings:
   jvm:
     jdk:
       version: 25
+  kotlin:
+    version: 2.4.10

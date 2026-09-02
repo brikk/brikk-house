@@ -3,9 +3,13 @@
 # composed pipeline value back to dialect SQL via brikk-sql.
 product: jvm/lib
 
+# Not published; see publish-targets.module-template.yaml for why this is applied anyway.
+apply:
+  - ../publish-targets.module-template.yaml
+
 dependencies:
   - ../brikk-sql: exported
 
 settings:
   kotlin:
-    version: 2.4.0
+    version: 2.4.10

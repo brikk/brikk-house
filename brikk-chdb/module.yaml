@@ -14,3 +14,5 @@ settings:
     # The final java.lang.foreign API is required; this is intentionally not JNI/JNA.
     jdk:
       version: 25
+  kotlin:
+    version: 2.4.10

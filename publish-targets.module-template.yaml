@@ -1,0 +1,32 @@
+# Publish-target repositories, shared by EVERY module (published or not).
+#
+# Kotlin Toolchain 0.12 changed `./kotlin publish <repo-id>` (no `-m`): it now resolves the
+# repository id against every module in project.yaml before filtering on
+# `settings.publishing.enabled`, and aborts with
+#   ERROR: Module '<name>' does not have repository with id '<repo-id>'
+# for any module that lacks it. So the publish-only repos live here, and
+#   - publish.module-template.yaml applies this (nested template) for published libraries;
+#   - non-published modules (compiler plugin, smoke, runtime, toolchain plugin) apply it directly
+#     so the project-wide publish command does not trip over them. Nothing here enables
+#     publication; that is still only `publish.module-template.yaml`.
+#
+# Credentials for the snapshots repo come from the project-root `.env` (gitignored) under
+# `brikk.mavencentral.user` / `brikk.mavencentral.pass`.
+repositories:
+  # Central Portal SNAPSHOT repo. This is a *regular* Maven repo (not the Portal bundle API),
+  # so it accepts -SNAPSHOT versions and bypasses the release-only publish path.
+  # Publish with: `./kotlin publish centralSnapshots`
+  # resolve: false -> publish-only (the snapshots repo 403s for release artifacts like
+  # kotlin-stdlib/antlr, which would otherwise spam warnings and slow resolution).
+  - id: centralSnapshots
+    url: https://central.sonatype.com/repository/maven-snapshots/
+    publish: true
+    resolve: false
+    credentials:
+      file: .env
+      usernameKey: brikk.mavencentral.user
+      passwordKey: brikk.mavencentral.pass
+  # Local install for testing the publication pipeline: `./kotlin publish mavenLocal`
+  - url: mavenLocal
+    publish: true
+    resolve: false

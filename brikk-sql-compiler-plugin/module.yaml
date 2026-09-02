@@ -1,26 +1,31 @@
 product: jvm/lib
 
+# Not published; see publish-targets.module-template.yaml for why this is applied anyway.
+apply:
+  - ../publish-targets.module-template.yaml
+
 dependencies:
   # Compile against the embeddable compiler: the Kotlin Toolchain runs JVM
   # compilation in-process via the Build Tools API (embeddable), so the plugin
   # jar must be embeddable-compatible.
-  - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0: compile-only
+  - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.10: compile-only
   # The SQL brain: parse/qualify/annotate the literals at compile time. For a distributable
   # plugin jar this must be shaded+relocated (KEFS requirement); in-repo we rely on the
   # module classpath (kctfork tests) and explicit -Xplugin entries (smoke module).
   - ../brikk-sql
 
 test-dependencies:
-  # kctfork = maintained fork of kotlin-compile-testing (0.13.0 is built for Kotlin 2.4.0).
+  # kctfork = maintained fork of kotlin-compile-testing (0.13.0 is built for Kotlin 2.4.0; the
+  # explicit embeddable dep below pins the compiler it runs to 2.4.10).
   # In-process compilation with in-memory plugin registrar registration.
   - dev.zacsweers.kctfork:core:0.13.0
-  - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.0
+  - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.10
   # User-facing runtime types (Rel/Shape/Partial/Sql) on the test compilation classpath.
   - ../brikk-sql-runtime
 
 settings:
   kotlin:
-    version: 2.4.0
+    version: 2.4.10
     # FIR checker overrides use context parameters (the 2.4 checker API signature).
     freeCompilerArgs: [ -Xcontext-parameters ]
     optIns:

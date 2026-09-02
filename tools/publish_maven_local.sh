@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Publishes the JVM artifacts of brikk-sql modules to Maven Local (~/.m2/repository).
 #
-# Why not `./kotlin publish`: Amper 0.11's publishing is preview and KMP-library
+# Why not `./kotlin publish`: Kotlin Toolchain's publishing is preview and KMP-library
 # publications are not yet consumable by other projects (JVM-only works). Until that
 # lands, this script installs the JVM jars with hand-written POMs. Re-run after any
 # change you want consumers to pick up:
@@ -17,8 +17,10 @@ cd "$(dirname "$0")/.."
 
 GROUP="dev.brikk.house"
 VERSION="${VERSION:-0.1.0-SNAPSHOT}"
-KOTLIN_STDLIB="2.3.21"
-KX_SERIALIZATION_JSON="1.10.0"
+# Keep in sync with `settings.kotlin.version` in the module.yaml files and the toolchain's
+# default kotlinx.serialization version (0.12.0 -> 1.11.0).
+KOTLIN_STDLIB="2.4.10"
+KX_SERIALIZATION_JSON="1.11.0"
 
 pom() { # pom <artifact> <deps-xml>
   cat > "/tmp/brikk-pom-$1.xml" << EOF

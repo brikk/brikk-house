@@ -53,6 +53,7 @@ settings:
       # can segfault.
       freeJvmArgs: ["--enable-native-access=ALL-UNNAMED"]
   kotlin:
+    version: 2.4.10
     serialization: json
   internal:
     # excludeDependencies is per-module in Amper/Toolchain 0.11 (it does not propagate

@@ -9,12 +9,16 @@
 # Acceptable for a smoke module, not for production wiring (see KEFS notes in docs/).
 product: jvm/lib
 
+# Not published; see publish-targets.module-template.yaml for why this is applied anyway.
+apply:
+  - ../publish-targets.module-template.yaml
+
 dependencies:
   - ../brikk-sql-runtime
 
 settings:
   kotlin:
-    version: 2.4.0
+    version: 2.4.10
     freeCompilerArgs:
       - -Xplugin=build/brikk-sql-compiler-plugin-all.jar
       - -P

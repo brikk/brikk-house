@@ -54,6 +54,7 @@ settings:
     jdk:
       version: 25
   kotlin:
+    version: 2.4.10
     serialization: json
   internal:
     # ShardingSphere pulls org.apache.groovy:groovy (~7.2 MB) solely for its inline
