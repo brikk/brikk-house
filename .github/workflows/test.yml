@@ -2,15 +2,20 @@ name: Test
 
 # Builds every module and runs the full test suite — including the exact known-failure
 # corpus gates in brikk-sql and the engine verify gates in brikk-sql-oracle — on every pull
-# request. Pushes to main and release/** are covered too: snapshot.yml and release.yml call
-# this workflow first and refuse to publish unless it is green (EVAL-03,
-# TODO-rectify-from-eval.md). Not triggered on push directly so main runs it exactly once.
+# request and feature-branch push. For main and release/**, snapshot.yml and
+# release.yml call this workflow first and refuse to publish unless it is green (EVAL-03,
+# TODO-rectify-from-eval.md). Those branches are excluded here so their gate runs once.
 #
 # Requirements satisfied by ubuntu-latest: linux-amd64 for the embedded PostgreSQL oracle
 # (zonky ships no arm64 binary), JDK 25 provisioned by the ./kotlin wrapper. chDB tests are
-# no-ops unless -Dbrikk.chdb.integrationLibrary is set, so no native archive is downloaded.
+# no-ops unless -Dbrikk.chdb.integrationLibrary is set. Packaging still builds the
+# pinned native-resource artifacts for local publication verification.
 
 on:
+  push:
+    branches-ignore:
+      - main
+      - 'release/**'
   pull_request:
   workflow_call:
   workflow_dispatch:
