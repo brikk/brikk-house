@@ -13,12 +13,16 @@ import dev.brikk.house.sql.ast.Exists
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.Func
 import dev.brikk.house.sql.ast.Is
+import dev.brikk.house.sql.ast.Join
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Null
 import dev.brikk.house.sql.ast.Paren
+import dev.brikk.house.sql.ast.Select
+import dev.brikk.house.sql.ast.Subquery
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.TryCast
 import dev.brikk.house.sql.ast.Unary
+import dev.brikk.house.sql.ast.aliasColumnNames
 import dev.brikk.house.sql.ast.selects
 import dev.brikk.house.sql.ast.sqlName
 import dev.brikk.house.sql.dialects.Dialect
@@ -106,6 +110,7 @@ private class NullabilityAnnotator(
     // into upstream (CTE/derived-table) projections.
     private val scopeOutputs =
         java.util.IdentityHashMap<Scope, Map<String, Boolean>>()
+    private val nullSupplyingSources = java.util.IdentityHashMap<Scope, Set<String>>()
 
     private var currentScope: Scope? = null
 
@@ -266,8 +271,14 @@ private class NullabilityAnnotator(
             var s: Scope? = scope
             while (s != null) {
                 val source = s.sources[table]
+                if (source != null && table in nullableSources(s)) return true
                 when (source) {
-                    is Table -> return declaredNullability(table, column.name)
+                    is Table -> {
+                        val position = source.aliasColumnNames.indexOfFirst {
+                            normalizeName(it, dialect = dialect).name == normalizeName(column.name, dialect = dialect).name
+                        }.takeIf { it >= 0 }
+                        return declaredNullability(source.name, column.name, position)
+                    }
                     is Scope -> {
                         val d = Dialects.forName(dialect.name)
                         val wanted = normalizeName(column.name, dialect = d).name
@@ -286,6 +297,36 @@ private class NullabilityAnnotator(
         return declaredNullability(table, column.name)
     }
 
+    private fun nullableSources(scope: Scope): Set<String> = nullSupplyingSources.getOrPut(scope) {
+        val nullable = mutableSetOf<String>()
+        fun relation(node: Expression?): MutableSet<String> {
+            if (node == null) return mutableSetOf()
+            val left = when {
+                node is Select -> relation((node.args["from_"] as? Expression)?.thisArg as? Expression)
+                node is Paren || node is Subquery && node.alias.isEmpty() -> relation(node.thisArg as? Expression)
+                else -> mutableSetOf(node.aliasOrName).apply { remove("") }
+            }
+            val all = left.toMutableSet()
+            for (join in (node.args["joins"] as? List<*>).orEmpty().filterIsInstance<Join>()) {
+                val right = relation(join.thisArg as? Expression)
+                if (join.isSemiOrAntiJoin) continue
+                // A bare join is a comma, which starts a new explicit-join group.
+                // Equal-precedence dialects parse commas as CROSS instead.
+                if (join.side.isEmpty() && join.kind.isEmpty() && join.text("method").isEmpty() &&
+                    join.args["on"] == null && join.args["using"] == null) left.clear()
+                // RIGHT/FULL extend the whole accumulated left relation, including
+                // earlier joins. Do not undo this on a later null-rejecting filter.
+                if (join.side == "RIGHT" || join.side == "FULL") nullable.addAll(left)
+                if (join.side == "LEFT" || join.side == "FULL") nullable.addAll(right)
+                left.addAll(right)
+                all.addAll(right)
+            }
+            return all
+        }
+        relation(scope.expression)
+        nullable
+    }
+
     /**
      * Declared nullability of [columnName] from the input source named [sourceName] (a
      * table or slot name — qualify reduces a dotted table like `db.t` to its final part
@@ -293,18 +334,20 @@ private class NullabilityAnnotator(
      * uses the dialect's identifier normalization; the verdict is present only when the
      * caller declared [dev.brikk.house.sql.shape.ColumnShape.nullable].
      */
-    private fun declaredNullability(sourceName: String, columnName: String): Boolean? {
+    private fun declaredNullability(sourceName: String, columnName: String, position: Int? = null): Boolean? {
         val d = Dialects.forName(dialect.name)
         val wanted = normalizeName(sourceName, dialect = d).name
         for ((tableName, shape) in inputs.tables) {
             val lastPart = tableName.substringAfterLast(".")
             if (normalizeName(lastPart, dialect = d).name == wanted) {
-                return shape.byName(columnName, dialect = dialect.name)?.nullable
+                return (if (position != null) shape.columns.getOrNull(position)
+                    else shape.byName(columnName, dialect = dialect.name))?.nullable
             }
         }
         for ((slotName, shape) in inputs.slots) {
             if (normalizeName(slotName, dialect = d).name == wanted) {
-                return shape.byName(columnName, dialect = dialect.name)?.nullable
+                return (if (position != null) shape.columns.getOrNull(position)
+                    else shape.byName(columnName, dialect = dialect.name))?.nullable
             }
         }
         return null

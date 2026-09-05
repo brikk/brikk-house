@@ -64,6 +64,33 @@ class BrikkSqlPluginTest {
         fun recent(start: Instant) = Sql.postgres("FROM public.events |> WHERE event_at >= :start")
     """.trimIndent()
 
+    @Test
+    fun `outer joins generate nullable Kotlin properties only on null supplying sides`() {
+        val schema = File.createTempFile("brikk-join-schema", ".sql").apply {
+            deleteOnExit()
+            writeText("CREATE TABLE public.a (x INT NOT NULL); CREATE TABLE public.b (x INT NOT NULL);")
+        }
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql
+            fun leftJoined() = Sql.postgres("SELECT a.x AS lx, b.x AS rx FROM public.a LEFT JOIN public.b ON a.x = b.x")
+            @BrikkSql
+            fun rightJoined() = Sql.postgres("SELECT a.x AS lx, b.x AS rx FROM public.a RIGHT JOIN public.b ON a.x = b.x")
+            @BrikkSql
+            fun fullJoined() = Sql.postgres("SELECT a.x AS lx, b.x AS rx FROM public.a FULL JOIN public.b ON a.x = b.x")
+        """.trimIndent(), schema = schema.absolutePath)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        for ((name, types) in listOf(
+            "LeftJoinedOut" to listOf("int", "java.lang.Integer"),
+            "RightJoinedOut" to listOf("java.lang.Integer", "int"),
+            "FullJoinedOut" to listOf("java.lang.Integer", "java.lang.Integer"),
+        )) {
+            val out = result.classLoader.loadClass("demo.$name")
+            assertEquals(types, listOf("getLx", "getRx").map { out.getMethod(it).returnType.name }, name)
+        }
+    }
+
     // ------------------------------------------------------------------ schema file resolution
     //
     // The IDE runs the plugin with a working directory that is not the project root, and re-runs
