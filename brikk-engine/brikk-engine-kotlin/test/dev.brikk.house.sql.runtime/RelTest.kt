@@ -15,6 +15,52 @@ import kotlin.test.assertTrue
 class RelTest {
 
     @Test
+    fun nativeSqlKeepsItsExactTextInTheSameDialect() {
+        val queries = mapOf(
+            "postgres" to " \n-- leading\nselect /* keep */ 1::int as \"n\"; -- trailing\n ",
+            "duckdb" to "\tselect  1::INTEGER AS n;\n",
+            "doris" to " select /*+ SET_VAR(exec_mem_limit=1234) */ 1 as n;\n",
+            "clickhouse" to "select lower('AbC') AS n SETTINGS max_threads = 1;\n",
+        )
+        for ((dialect, sql) in queries) assertEquals(sql, Rel<Partial>(sql, dialect).render(), dialect)
+        assertEquals(queries.getValue("postgres"), Rel<Partial>(queries.getValue("postgres"), "postgresql").render("postgres"))
+    }
+
+    @Test
+    fun nativeParametersDoNotCauseUnrelatedSqlRewriting() {
+        val sql = " \nselect :n::BIGINT AS n, ':n |> text' AS note /* :n */;\n "
+        val query = Rel<Partial>(sql, "postgres").bind("n", 3)
+        assertEquals(sql, query.render())
+        assertEquals(mapOf("n" to 3), query.bindings())
+        assertEquals(3, scalar(query))
+    }
+
+    @Test
+    fun explicitTranslationAndNestedPipesStillLower() {
+        val sql = " select 1::INTEGER AS n; "
+        val translated = Rel<Partial>(sql, "postgres").render("doris")
+        assertTrue(translated != sql)
+        assertContains(translated, "CAST(1 AS INT)")
+
+        val nested = Rel<Partial>(
+            "SELECT id FROM (FROM (SELECT 1 AS id) AS raw |> SELECT id) AS nested", "postgres",
+        )
+        assertTrue(!nested.render().contains("|>"), nested.render())
+        assertEquals(1, scalar(nested))
+    }
+
+    @Test
+    fun fromFirstIsNativeOnlyWhereTheTargetSupportsIt() {
+        val sql = "FROM (SELECT 1 AS id) AS source"
+        assertEquals(sql, Rel<Partial>(sql, "duckdb").render())
+        for (dialect in listOf("postgres", "doris")) {
+            assertTrue(Rel<Partial>(sql, dialect).render().startsWith("SELECT * FROM"))
+            val nested = Rel<Partial>("WITH q AS ($sql SELECT id) SELECT id FROM q", dialect)
+            assertContains(nested.render(), "WITH q AS (SELECT id FROM")
+        }
+    }
+
+    @Test
     fun singleStageRendersDirectly() {
         val src = Rel<Partial>("FROM public.events |> WHERE event_at >= :start", "postgres").bind("start", 1)
         val sql = src.render()

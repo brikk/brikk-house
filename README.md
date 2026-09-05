@@ -38,8 +38,11 @@ written. Parameters, relation slots, and pipe lowering permit only their necessa
 changes; cross-dialect translation must be explicit. Parsing for checks does not
 require regenerating SQL or applying an optimizer or canonicalization pass.
 
-This is not implemented end-to-end: `Rel.render()` currently reparses and regenerates
-all queries. AST round-trip tests do not prove source-text preservation. The
+Standalone same-dialect native queries now retain their source text when no
+binding-name rewrite is needed. Composed queries, pipes, and explicit translation
+still use generation; source preservation during those changes remains work.
+Driver-specific placeholder adaptation is separate. AST round-trip tests alone
+do not prove source-text preservation. The
 [SQL preservation policy](brikk-engine/README.md#sql-preservation)
 requires output-diff checks alongside semantic tests. Pipe lowering is the highest-risk
 step; failures need fixes and regressions in `brikk-sql`, not permanent handwritten

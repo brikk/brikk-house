@@ -27,8 +27,9 @@ The earlier green slice is not acceptance of the newer SQL preservation requirem
 - [brikk-engine/brikk-engine-kotlin/](../brikk-engine/brikk-engine-kotlin/): `Partial` (minimum requirements), `Shape : Partial` (full, closed),
   `@BrikkSql`, `@BrikkTrait`, `@BrikkSqlDialect`, `Sql.postgres/doris/clickhouse/duckdb`,
   `Rel<out T : Partial>(sql, dialect).input(slot, rel).bind(name, v)` with `render()` (CTE
-  chain, slot → CTE name) and `bindings()`. Rendering currently reparses and regenerates
-  every fragment, even a single same-dialect native query without inputs.
+  chain, slot → CTE name) and `bindings()`. Standalone same-dialect native queries
+  retain their text unless binding names need rewriting. Other paths still generate
+  SQL. Binding-name and CTE collisions are isolated; slot aliases are preserved.
 - [brikk-engine/brikk-engine-kotlin-compiler-plugin/](../brikk-engine/brikk-engine-kotlin-compiler-plugin/): `analysis/` (TypeMap, SqlAnalyzer over raw function facts),
   `fir/` (session component with catalog/traits/analyses; `ShapeDeclarationGenerator` emitting
   `<Fn>Out : Shape|Partial, <satisfied traits>` with abstract vals; `BrikkSqlCallRefinement`
@@ -61,7 +62,8 @@ require only necessary slot/CTE changes. Pipe lowering may change required struc
 but must preserve unaffected native SQL as close to source as possible, including
 important hints/comments and statement semantics. Cross-dialect changes are explicit.
 
-This is not current `Rel.render()` behavior. Parsing for validation or shape checks
+Only the standalone native path currently satisfies the text-preservation policy.
+Parsing for validation or shape checks
 does not imply regeneration, automatic optimization, or canonicalization of the
 executed SQL. AST round-trip equality does not prove source-text preservation.
 Pipe lowering is the largest risk: inspect source/output diffs, test mixed native

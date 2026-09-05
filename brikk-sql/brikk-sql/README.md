@@ -55,8 +55,9 @@ Cross-dialect translation is explicit. Unchanged SQL must not go through automat
 optimization or canonicalization.
 
 This is a requirement, not a source-preserving parse/generate API claim. The AST
-generator regenerates SQL, and `Rel.render()` currently uses that path even for a
-single unchanged native query. The [SQL preservation policy](../../brikk-engine/README.md#sql-preservation)
+generator regenerates SQL. Engine's `Rel.render()` now bypasses generation for a
+standalone same-dialect native query unless its binding names need rewriting;
+other composition/lowering paths still use generation. The [SQL preservation policy](../../brikk-engine/README.md#sql-preservation)
 requires output-diff inspection as well as semantic tests. Pipe lowering is the
 largest migration risk: fix failures here with synthetic regressions rather than
 keeping permanent copied handwritten SQL in the consumer as a workaround.

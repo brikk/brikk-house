@@ -35,8 +35,13 @@ Cross-dialect changes must be requested explicitly. Parsing for checks is not
 permission to regenerate, optimize, or canonicalize unchanged SQL.
 
 This policy is not yet implemented end-to-end. [Rel.render()](brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/Rel.kt)
-currently reparses and regenerates every fragment, including native queries with
-no inputs. AST round-trip equality does not prove text preservation. Check
+preserves standalone same-dialect native queries when no binding-name rewrite is
+needed. This includes their parameter spelling, whitespace, and comments. The
+compiler no longer applies an unrequested outer trim. Composed queries, pipes,
+and explicit dialect translation still use generation; source preservation for
+those paths remains work. Driver placeholder adaptation is separate, and binding
+keys must come from `bindings()` rather than being guessed from parameter names.
+AST round-trip equality does not prove text preservation. Check
 source/output diffs alongside result-equivalence tests for each required lowering.
 Pipe lowering is the largest risk; fix failures in `brikk-sql` with regressions,
 not permanent copied handwritten SQL in consumers.

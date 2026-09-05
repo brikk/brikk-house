@@ -50,9 +50,14 @@ import kotlinx.serialization.Transient
 class SqlFragment(val sql: String, val dialect: String = "") {
 
     private val dialectObj: Dialect by lazy { Dialects.forName(dialect) }
+    private var parsedFromFirstQuery = false
 
     private val statements: List<Expression> by lazy {
-        dialectObj.parse(sql).filterNotNull()
+        val parser = dialectObj.parser()
+        val parsed = parser.parse(dialectObj.tokenize(sql), sql)
+        parsedFromFirstQuery = parser.hasFromFirstQuery
+        // The parser represents comments on statement separators with standalone nodes.
+        parsed.filterNotNull().filterNot { it is dev.brikk.house.sql.ast.Semicolon }
     }
 
     /**
@@ -73,6 +78,9 @@ class SqlFragment(val sql: String, val dialect: String = "") {
 
     /** Whether the fragment is written in pipe (`|>`) syntax at the top level. */
     val isPipe: Boolean by lazy { ast is PipeQuery }
+
+    /** Includes nested FROM-first queries, even when parsing produced ordinary Select nodes. */
+    val hasFromFirstQuery: Boolean get() { ast; return parsedFromFirstQuery }
 
     /**
      * The root statement's node kind (AST class simple name): "Select", "Insert",

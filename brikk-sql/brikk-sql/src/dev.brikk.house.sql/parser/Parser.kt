@@ -894,6 +894,10 @@ open class Parser(
     var sql: String = ""
         protected set
 
+    /** Source syntax that ordinary Select nodes no longer distinguish after parsing. */
+    internal var hasFromFirstQuery: kotlin.Boolean = false
+        private set
+
     val errors: MutableList<ParseError> = mutableListOf()
 
     protected var tokens: List<Token> = emptyList()
@@ -923,6 +927,7 @@ open class Parser(
     // sqlglot: Parser.reset
     fun reset() {
         sql = ""
+        hasFromFirstQuery = false
         errors.clear()
         tokens = emptyList()
         tokensSize = 0
@@ -1844,6 +1849,7 @@ open class Parser(
 
         // duckdb supports leading with FROM x
         var from = if (match(TokenType.FROM, advance = false)) {
+            hasFromFirstQuery = true
             parseFrom(joins = true, consumePipe = true)
         } else {
             null
@@ -1997,6 +2003,7 @@ open class Parser(
                 isUnpivot = prevToken.tokenType == TokenType.UNPIVOT
             )
         } else if (match(TokenType.FROM)) {
+            hasFromFirstQuery = true
             val from = parseFrom(joins = true, skipFromToken = true, consumePipe = true)
             // Support parentheses for duckdb FROM-first syntax
             val select = parseSelect(from = from)

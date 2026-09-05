@@ -4,6 +4,7 @@ import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.Parameter
+import dev.brikk.house.sql.ast.PipeQuery
 import dev.brikk.house.sql.ast.Placeholder
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.TableAlias
@@ -79,13 +80,22 @@ class Rel<out T : Partial>(
     /**
      * Renders the pipeline as a single standard-SQL statement:
      * `WITH s0 AS (...), s1 AS (...) SELECT * FROM sN`, where each stage's slot references
-     * are rewired to the CTE of the input feeding them. A single stage without inputs
-     * renders directly.
+     * are rewired to the CTE of the input feeding them. A single native stage in the
+     * same dialect preserves its text unless binding-name collisions require rewriting.
+     * Driver-specific placeholder adaptation is separate from this SQL representation.
      */
     fun render(target: String = dialect): String {
         val order = topologicalOrder()
         val bindings = bindingNames(order)
-        val trees = order.associateWith { desugarPipes(SqlFragment(it.sql, it.dialect).ast, copy = true) }
+        val fragments = order.associateWith { SqlFragment(it.sql, it.dialect) }
+        val gen = Dialects.forName(target)
+        if (order.size == 1 && gen.name == Dialects.forName(dialect).name &&
+            fragments.getValue(this).ast.find(PipeQuery::class) == null &&
+            (gen.name == "duckdb" || !fragments.getValue(this).hasFromFirstQuery) &&
+            bindings.getValue(this).all { (original, rendered) -> original == rendered }
+        ) return sql
+
+        val trees = fragments.mapValues { (_, fragment) -> desugarPipes(fragment.ast, copy = true) }
         val reserved = trees.values.flatMap { it.findAll(Identifier::class).map { id -> id.name.lowercase() } }.toMutableSet()
         val names = HashMap<Rel<*>, String>()
         var next = 0
@@ -95,7 +105,6 @@ class Rel<out T : Partial>(
             names[node] = name
         }
 
-        val gen = Dialects.forName(target)
         if (order.size == 1) {
             return gen.generate(standardTree(trees.getValue(this), emptyMap(), bindings.getValue(this)), sourceDialect = dialect)
         }

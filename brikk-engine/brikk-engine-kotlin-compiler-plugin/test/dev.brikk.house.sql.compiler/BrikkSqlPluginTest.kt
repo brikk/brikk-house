@@ -429,6 +429,32 @@ class BrikkSqlPluginTest {
     // ------------------------------------------------------------------ $ template entries
 
     @Test
+    fun `native templates retain source whitespace and parameter spelling`() {
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            @BrikkSql
+            fun native(n: Long) = Sql.postgres("  \n-- leading\nselect CAST(${'$'}n AS BIGINT) AS n; -- trailing\n  ")
+
+            @BrikkSql
+            fun trimmed() = Sql.postgres("  SELECT 1 AS n  ".trimIndent())
+
+            fun rendered(): String = native(3L).render()
+            fun stored(): String = native(3L).sql
+            fun explicitTrim(): String = trimmed().render()
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val main = result.classLoader.loadClass("demo.MainKt")
+        val expected = "  \n-- leading\nselect CAST(:n AS BIGINT) AS n; -- trailing\n  "
+        assertEquals(expected, main.getMethod("stored").invoke(null))
+        assertEquals(expected, main.getMethod("rendered").invoke(null))
+        assertEquals("  SELECT 1 AS n  ".trimIndent(), main.getMethod("explicitTrim").invoke(null))
+    }
+
+    @Test
     fun `shadowed interpolation binds the local while plain placeholders bind the parameter`() {
         val result = compile(
             """

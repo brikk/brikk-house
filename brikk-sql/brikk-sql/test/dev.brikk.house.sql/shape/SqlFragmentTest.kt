@@ -17,6 +17,30 @@ class SqlFragmentTest {
 
     private val json = Json
 
+    @Test
+    fun separatorCommentsDoNotCreateAnExtraStatement() {
+        val fragment = SqlFragment("SELECT :n AS id; -- trailing :not_a_bind\n", "postgres")
+        assertEquals("Select", fragment.rootKind)
+        assertEquals(listOf("n"), fragment.scalarParams.map { it.name })
+        assertEquals(listOf("id"), fragment.outputShape().names())
+        assertFailsWith<ShapeError> { SqlFragment("SELECT 1; -- separator\nSELECT 2", "postgres").ast }
+        assertFailsWith<ShapeError> { SqlFragment("; -- no query", "postgres").ast }
+    }
+
+    @Test
+    fun fromFirstSyntaxIsRecordedBeforeTheAstLosesIt() {
+        assertTrue(SqlFragment("FROM t", "duckdb").hasFromFirstQuery)
+        assertTrue(SqlFragment("SELECT * FROM (FROM t SELECT id) AS q", "postgres").hasFromFirstQuery)
+        assertTrue(SqlFragment("WITH q AS (FROM t) SELECT * FROM q", "doris").hasFromFirstQuery)
+        assertTrue(!SqlFragment("SELECT 'FROM t' AS note FROM t", "postgres").hasFromFirstQuery)
+        val dialect = dev.brikk.house.sql.dialects.Dialects.forName("duckdb")
+        val parser = dialect.parser()
+        parser.parse(dialect.tokenize("FROM t"), "FROM t")
+        assertTrue(parser.hasFromFirstQuery)
+        parser.parse(dialect.tokenize("SELECT * FROM t"), "SELECT * FROM t")
+        assertTrue(!parser.hasFromFirstQuery)
+    }
+
     // ------------------------------------------------------------- output shapes
 
     @Test

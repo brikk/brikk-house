@@ -123,7 +123,7 @@ private class SqlCallTransformer(
         val sqlParam = callee.parameters.firstOrNull { it.kind == IrParameterKind.Regular } ?: return expression
         val sqlExpression = expression.arguments[sqlParam.indexInParameters] ?: return expression
         val template = sqlExpression.sqlTemplate() ?: return expression
-        val sql = template.sql.trim()
+        val sql = template.sql
         val dialect = callee.name.asString()
 
         intercepted++
