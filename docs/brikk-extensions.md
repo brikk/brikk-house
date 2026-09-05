@@ -608,6 +608,32 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
   keywords at the upstream member. If upstream adds Doris DDL parsing, compare node
   shapes and prefer theirs when equivalent; `DorisDialectTest` defines required behavior.
 
+## 20. Outer explosion cardinality and positions
+
+- **ASTRA-002:** `explodeProjectionToUnnest` now includes the pinned upstream
+  empty/null array normalization for EXPLODE_OUTER and POSEXPLODE_OUTER. A safe
+  first-element lookup creates a correctly typed null singleton for missing input.
+- **Local corrections:** outer maps use LEFT JOIN UNNEST ON TRUE, since maps cannot
+  contain synthetic null keys. Outer positional output puts position before value,
+  uses zero-based positions, and returns null position for the synthetic row.
+  Private UNNEST columns avoid capturing source predicates; default public names
+  remain `col`, `pos`, `key`, and `value`. Map dispatch requires type evidence,
+  as with the existing non-outer map path.
+- **Verification:** `OuterExplodeResultTest` checks target grammar and output names
+  on every run. With `BRIKK_TRINO_CONTAINER` set to a running Trino 483 Docker
+  container it executes the actual Presto/Trino-generated SQL and compares row
+  multisets, including nulls and duplicate counts. This mode was run for this fix.
+  It is Trino execution, not a live Presto or Spark check. The normal full suite
+  does not start Docker. No corpus ledger changes were needed.
+- **Separate inherited defect:** non-outer zipped explosion with an empty input
+  still loses rows, independently of outer normalization. The focused test executes
+  a DuckDB source returning `(NULL, 1)` and records the existing empty Trino result.
+  See ASTRA-002-ZIP in `TODO-BUGS-rewrites.md`; this is not a correctness divergence
+  to protect or a claim that the zipped algorithm is fixed.
+- **Upstream sync:** retain these result tests when adopting changes to
+  `explode_projection_to_unnest`. The array branch follows the pinned upstream;
+  map/position/name corrections are local. Upstream reporting/adoption is pending.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),
