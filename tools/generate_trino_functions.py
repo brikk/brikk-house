@@ -44,7 +44,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DEFAULT_TSV = ROOT / "vendor" / "data" / "trino-functions-483.tsv"
-OUT = ROOT / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata" / "GeneratedTrinoFunctionCatalog.kt"
+OUT = ROOT / "brikk-sql" / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata" / "GeneratedTrinoFunctionCatalog.kt"
 
 KIND_MAP = {
     "scalar": "SCALAR",

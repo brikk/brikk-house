@@ -4,7 +4,7 @@
 Parses reference/sqlglot/tests/dialects/test_*.py with the `ast` module (never
 executes test code) and extracts every statically-resolvable
 `validate_identity` / `validate_all` assertion, grouped by dialect, into
-brikk-sql/testResources/dialect-corpus/<dialect>.json.
+brikk-sql/brikk-sql/testResources/dialect-corpus/<dialect>.json.
 
 Output schema per dialect file:
     {
@@ -58,7 +58,7 @@ from typing import Any, Dict, List, Optional, Tuple
 ROOT = Path(__file__).resolve().parent.parent
 SQLGLOT_DIR = ROOT / "reference" / "sqlglot"
 DIALECTS_DIR = SQLGLOT_DIR / "tests" / "dialects"
-OUT_DIR = ROOT / "brikk-sql" / "testResources" / "dialect-corpus"
+OUT_DIR = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "dialect-corpus"
 
 METHODS = ("validate_identity", "validate_all")
 

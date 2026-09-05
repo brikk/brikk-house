@@ -1,5 +1,5 @@
 # Shared publishing configuration for the public Brikk libraries.
-# Applied by each publishable module via `apply: [ ../publish.module-template.yaml ]`.
+# Applied by each publishable module via `apply: [ ../../publish.module-template.yaml ]`.
 #
 # Credentials for the regular Central snapshots repo are read from the project-root `.env`
 # file (gitignored) under `brikk.mavencentral.user` / `brikk.mavencentral.pass`.
@@ -9,7 +9,7 @@
 # Publish targets:
 #   ./kotlin publish mavenLocal       -> local ~/.m2 (pipeline smoke test)
 #   ./kotlin publish centralSnapshots -> Central snapshots repo (SNAPSHOT ok; regular deploy)
-#   ./kotlin publish mavenCentral     -> Central release (NON-snapshot only; Portal bundle API,
+#   ./publish-release.sh <version>    -> Central release (Portal tasks; NON-snapshot only,
 #                                        needs KOTLIN_TOOLCHAIN_* env vars + signing; see below)
 #
 # NOTE (KMP): only JVM libraries publish fully-consumable artifacts today. For the
@@ -29,8 +29,9 @@ settings:
     version: 1.0.0-SNAPSHOT
     publishSources: true
     # --- Central RELEASE toggle (leave disabled for normal dev/snapshot work) ---
-    # `mavenCentral: enabled` turns on the Central Portal release path (`./kotlin publish
-    # mavenCentral`). It is validated eagerly: enabling it forces `signArtifacts: true`
+    # `mavenCentral: enabled` registers the Central Portal release tasks. The launcher
+    # bypasses Toolchain 0.12's broken `publish mavenCentral` repository validation.
+    # It is validated eagerly: enabling it forces `signArtifacts: true`
     # (which is GLOBAL — then EVERY publish, incl. centralSnapshots/mavenLocal,
     # needs KOTLIN_TOOLCHAIN_SIGNING_KEY), and it REJECTS -SNAPSHOT versions.
     # To cut a release, uncomment the two lines below, set `version` to a release (e.g.

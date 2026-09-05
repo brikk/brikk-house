@@ -7,14 +7,14 @@ parse with the base sqlglot dialect, dump via sqlglot.serde.dump, and record
 dump, re-dumps it, and requires structural equality with the original payloads —
 the same round-trip sqlglot's own tests/test_serde.py performs.
 
-Output: brikk-sql/testResources/ast-corpus/identity-serde.json
+Output: brikk-sql/brikk-sql/testResources/ast-corpus/identity-serde.json
         (gzipped as identity-serde.json.gz instead if the raw file exceeds 25MB)
 
 Run from anywhere:  python3 tools/gen_serde_corpus.py
 
 Dialect mode (--dialect mysql): reads the identity SQLs from
-brikk-sql/testResources/dialect-corpus/<dialect>.json, Python-parses each with
-read=<dialect>, and writes brikk-sql/testResources/ast-corpus/<dialect>-serde.json
+brikk-sql/brikk-sql/testResources/dialect-corpus/<dialect>.json, Python-parses each with
+read=<dialect>, and writes brikk-sql/brikk-sql/testResources/ast-corpus/<dialect>-serde.json
 with {"sql", "generated" (= .sql(dialect=<dialect>)), "dump"}.
 
 Annotate mode (--annotate [--dialect d]): parse_one(sql, read=d) ->
@@ -34,7 +34,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SQLGLOT = ROOT / "reference" / "sqlglot"
-OUT_DIR = ROOT / "brikk-sql" / "testResources" / "ast-corpus"
+OUT_DIR = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "ast-corpus"
 FIXTURE = SQLGLOT / "tests" / "fixtures" / "identity.sql"
 
 sys.path.insert(0, str(SQLGLOT))
@@ -63,7 +63,7 @@ def iter_sqls(dialect: str | None):
                 continue
             yield sql
     else:
-        corpus_file = ROOT / "brikk-sql" / "testResources" / "dialect-corpus" / f"{dialect}.json"
+        corpus_file = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "dialect-corpus" / f"{dialect}.json"
         corpus = json.loads(corpus_file.read_text())
         for case in corpus["identity"]:
             yield case["sql"]

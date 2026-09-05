@@ -105,7 +105,7 @@ from `tools/gen_behavior_vectors.py`):
   once (StarRocks 4.1.4 / Doris 4.1.3 all-in-one Docker). Pairwise SAME/DIFF verdicts are
   DERIVED from these, avoiding O(n²) hand-maintained probes.
 - Raw pairwise evidence: `docs/research/probe-runs/<ts>-starrocks-doris.tsv`.
-- Verdicts feed `brikk-sql/testResources/semantics/doris-starrocks-hazards.json` (source
+- Verdicts feed `brikk-sql/brikk-sql/testResources/semantics/doris-starrocks-hazards.json` (source
   of truth for `GeneratedDorisStarrocksHazards.kt`). This is an explicitly **PARTIAL**
   scope: 92 vectors yielded 82 named concepts against an 820-function StarRocks catalog;
   unlisted functions remain unprobed and certification refuses them. Never infers
@@ -114,7 +114,7 @@ from `tools/gen_behavior_vectors.py`):
 Refresh: bring both engines up (`docker run … starrocks/allin1-ubuntu:4.1.4` and
 `apache/doris:all-in-one-4.1.3`), then
 `python3 tools/probe_behavior_matrix.py all && python3 tools/generate_hazards_registry.py
-brikk-sql/testResources/semantics/doris-starrocks-hazards.json && python3
+brikk-sql/brikk-sql/testResources/semantics/doris-starrocks-hazards.json && python3
 tools/generate_semantic_coverage.py`.
 
 ## `data/trino-functions-481.tsv`

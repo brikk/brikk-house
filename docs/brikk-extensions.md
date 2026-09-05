@@ -7,7 +7,7 @@ can arise: when a future sqlglot version adds its own handling for one of these,
 sync MUST reconcile here (adopt upstream, keep ours, or merge) and update this registry.
 
 All divergence sites are marked in code with the greppable phrase **`brikk extension`**
-(`rg "brikk extension" brikk-sql/src`).
+(`rg "brikk extension" brikk-sql/brikk-sql/src`).
 
 **Protected policy.** Verifier-backed intentional divergences registered here must
 **never** be copied into actionable TODO/problem inventories (e.g. `TODO-BUGS-*.md`)
@@ -15,10 +15,10 @@ or "fixed" toward SQLGlot unless this policy is explicitly reversed in this regi
 Their parity ledger entries are **expected and protected**. Generation-ledger
 exceptions today:
 
-- **4 Doris** in `brikk-sql/testResources/generator-corpus/doris-generator-known-failures.json`
+- **4 Doris** in `brikk-sql/brikk-sql/testResources/generator-corpus/doris-generator-known-failures.json`
   — §9 (3× `PARTITION BY` clause completion) and §10 (1× MV column list). §19 (Doris DDL
   parsing) adds no ledger entries.
-- **1 Trino** in `brikk-sql/testResources/generator-corpus/trino-generator-known-failures.json`
+- **1 Trino** in `brikk-sql/brikk-sql/testResources/generator-corpus/trino-generator-known-failures.json`
   — §8 (`JSON_QUERY` wrapper clause).
 
 ## 1. First-class pipe syntax (Phase 4)
@@ -570,7 +570,7 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),
    run the full gate suite.
-2. `rg "brikk extension" brikk-sql/src` and revisit each site against the upstream diff
+2. `rg "brikk extension" brikk-sql/brikk-sql/src` and revisit each site against the upstream diff
    (especially `parser.py` pipe handlers and `generators/doris.py`).
 3. For each conflict: adopt upstream / keep ours / merge — then update this registry and
    the affected gate expectations in the same commit.

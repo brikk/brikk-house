@@ -64,7 +64,7 @@ SIGNATURES_JSON = ROOT / "vendor" / "data" / "doris-signatures.json"
 SINCE_VERSIONS_JSON = ROOT / "vendor" / "data" / "doris-since-versions.json"
 # Pin of the vendored registry copy (update when refreshing vendor/data/doris-registry/):
 VENDORED_VERSION = "v0.8.2-31011-gd8fd23f7f38"
-OUT = ROOT / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata" / "GeneratedDorisFunctionCatalog.kt"
+OUT = ROOT / "brikk-sql" / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata" / "GeneratedDorisFunctionCatalog.kt"
 
 IDENT = re.compile(r"[A-Za-z][A-Za-z0-9_]*$")
 QUOTED = re.compile(r'"([^"]+)"')

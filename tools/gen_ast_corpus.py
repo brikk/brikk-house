@@ -3,7 +3,7 @@
 
 Each case hand-builds an expression tree with DIRECT sqlglot node constructors
 (explicit args, no parsing, no fluent builders) so the Kotlin twin in
-brikk-sql/test@jvm/dev.brikk.house.sql/AstCorpusDifferentialTest.kt is unambiguous:
+brikk-sql/brikk-sql/test@jvm/dev.brikk.house.sql/AstCorpusDifferentialTest.kt is unambiguous:
 the Kotlin test builds the exact same tree by recipe id and asserts that our
 Serde.dump output matches `sqlglot.serde.dump` structurally.
 
@@ -21,7 +21,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SQLGLOT = ROOT / "reference" / "sqlglot"
-OUT_DIR = ROOT / "brikk-sql" / "testResources" / "ast-corpus"
+OUT_DIR = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "ast-corpus"
 
 sys.path.insert(0, str(SQLGLOT))
 

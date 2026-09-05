@@ -18,7 +18,7 @@ Each source file has schema:
                         "read":  {dialect: source, ...},   # optional
                         "description": "..."}]}
 
-We emit brikk-sql/testResources/dialect-corpus/datafusion-fixtures.json:
+We emit brikk-sql/brikk-sql/testResources/dialect-corpus/datafusion-fixtures.json:
     {
       "provenance": {...},
       "identity":  [{"sql": "...", "category": "...", "description": "..."}],
@@ -46,7 +46,7 @@ SRC_DIR = os.path.join(
     "reference/polyglot/crates/polyglot-sql/tests/custom_fixtures/datafusion",
 )
 OUT = os.path.join(
-    ROOT, "brikk-sql/testResources/dialect-corpus/datafusion-fixtures.json"
+    ROOT, "brikk-sql/brikk-sql/testResources/dialect-corpus/datafusion-fixtures.json"
 )
 
 # In dependency order roughly matches how polyglot ships them; category comes from

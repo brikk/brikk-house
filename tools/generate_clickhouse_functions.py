@@ -15,7 +15,7 @@ import pathlib
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "vendor" / "data" / "clickhouse-functions-26.5.1.1.tsv"
 OUT = (
-    ROOT / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata"
+    ROOT / "brikk-sql" / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata"
     / "GeneratedClickhouseFunctionCatalog.kt"
 )
 

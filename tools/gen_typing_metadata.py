@@ -3,7 +3,7 @@
 
 Introspects sqlglot's EXPRESSION_METADATA (sqlglot/typing/__init__.py for the base
 dialect and sqlglot/typing/<dialect>.py for the ported dialects) and emits:
-  - brikk-sql/src/dev.brikk.house.sql/ast/GeneratedTypingMetadata.kt
+  - brikk-sql/brikk-sql/src/dev.brikk.house.sql/ast/GeneratedTypingMetadata.kt
 
 Each metadata entry maps an expression class to either {"returns": DType} (emitted as
 TypingSpec.Returns) or {"annotator": <lambda>}. The annotator lambdas are a small
@@ -32,7 +32,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SQLGLOT = ROOT / "reference" / "sqlglot"
-OUT = ROOT / "brikk-sql" / "src" / "dev.brikk.house.sql" / "ast" / "GeneratedTypingMetadata.kt"
+OUT = ROOT / "brikk-sql" / "brikk-sql" / "src" / "dev.brikk.house.sql" / "ast" / "GeneratedTypingMetadata.kt"
 
 sys.path.insert(0, str(SQLGLOT))
 

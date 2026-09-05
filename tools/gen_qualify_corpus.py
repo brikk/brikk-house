@@ -22,7 +22,7 @@ fixture's expected text; mismatches are recorded as skipped-with-reason (there s
 be ~none). Cases whose meta dialect is not one of brikk-sql's 8 supported dialects are
 emitted with "dialect_supported": false so the Kotlin gate can skip them explicitly.
 
-The Kotlin twin is brikk-sql/test@jvm/dev.brikk.house.sql/QualifyCorpusTest.kt.
+The Kotlin twin is brikk-sql/brikk-sql/test@jvm/dev.brikk.house.sql/QualifyCorpusTest.kt.
 
 Run from anywhere:  python3 tools/gen_qualify_corpus.py
 Re-run whenever reference/sqlglot is updated or fixtures change.
@@ -38,7 +38,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SQLGLOT = ROOT / "reference" / "sqlglot"
 FIXTURES = SQLGLOT / "tests" / "fixtures" / "optimizer"
-OUT_DIR = ROOT / "brikk-sql" / "testResources" / "qualify-corpus"
+OUT_DIR = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "qualify-corpus"
 
 sys.path.insert(0, str(SQLGLOT))
 

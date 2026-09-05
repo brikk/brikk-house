@@ -35,7 +35,7 @@ jobs:
           path: |
             ~/.cache/JetBrains/Kotlin/cli
             ~/.cache/JetBrains/Kotlin/download.cache
-          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', 'publish.module-template.yaml') }}
+          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', '**/plugin.yaml', 'publish.module-template.yaml', 'publish-targets.module-template.yaml') }}
           restore-keys: |
             kotlin-toolchain-${{ runner.os }}-
 
@@ -48,11 +48,19 @@ jobs:
           umask 077
           printf 'brikk.mavencentral.user=ci-placeholder\nbrikk.mavencentral.pass=ci-placeholder\n' > .env
 
+      - name: Assemble Brikk Engine Kotlin compiler plugin
+        run: ./kotlin do assemblePluginJar
+
       - name: Build
         run: ./kotlin build
 
       - name: Test
         run: ./kotlin test
+
+      # Exercise the public publication graph and package sources/native resources
+      # without credentials, signing, or uploading anything to a remote repository.
+      - name: Verify Maven publications locally
+        run: ./kotlin publish mavenLocal
 
       # On a red gate, the refreshed *-ledger-actual.json files are exactly what a developer
       # needs to update the committed *-known-failures.json ledgers (see TODO-BUGS-*.md).

@@ -1,18 +1,18 @@
 modules:
-  - brikk-chdb
-  - brikk-chdb-native-linux-arm64
-  - brikk-chdb-native-linux-x64
-  - brikk-chdb-native-macos-arm64
-  - brikk-chdb-native-packaging
-  - brikk-sql
-  - brikk-sql-compiler-plugin
-  - brikk-sql-metadata
-  - brikk-sql-oracle
-  - brikk-sql-plugin-smoke
-  - brikk-sql-plugin-tooling
-  - brikk-sql-runtime
-  - brikk-sql-verify
+  - brikk-chdb/brikk-chdb
+  - brikk-chdb/brikk-chdb-native-linux-arm64
+  - brikk-chdb/brikk-chdb-native-linux-x64
+  - brikk-chdb/brikk-chdb-native-macos-arm64
+  - brikk-chdb/brikk-chdb-native-packaging
+  - brikk-engine/brikk-engine-kotlin
+  - brikk-engine/brikk-engine-kotlin-compiler-plugin
+  - brikk-engine/brikk-engine-kotlin-smoke
+  - brikk-engine/brikk-engine-kotlin-tooling
+  - brikk-sql/brikk-sql
+  - brikk-sql/brikk-sql-metadata
+  - brikk-sql/brikk-sql-oracle
+  - brikk-sql/brikk-sql-verify
 
 plugins:
-  - ./brikk-chdb-native-packaging
-  - ./brikk-sql-plugin-tooling
+  - ./brikk-chdb/brikk-chdb-native-packaging
+  - ./brikk-engine/brikk-engine-kotlin-tooling

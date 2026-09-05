@@ -70,7 +70,19 @@ sed -i \
   "$TMPL"
 
 echo ">> Publishing release ${VERSION} to Maven Central (all modules)..."
-./kotlin publish mavenCentral
+# Toolchain 0.12's publish command rejects the Portal target during repository
+# validation. Invoke its registered Portal tasks directly until that bug is fixed.
+# Keep this explicit public-library list in sync with publishing.enabled modules;
+# Engine tooling and private consumers must never enter the release graph.
+./kotlin task \
+  :brikk-sql:publishToMavenCentral \
+  :brikk-sql-metadata:publishToMavenCentral \
+  :brikk-sql-verify:publishToMavenCentral \
+  :brikk-sql-oracle:publishToMavenCentral \
+  :brikk-chdb:publishToMavenCentral \
+  :brikk-chdb-native-linux-x64:publishToMavenCentral \
+  :brikk-chdb-native-linux-arm64:publishToMavenCentral \
+  :brikk-chdb-native-macos-arm64:publishToMavenCentral
 
 echo ""
 echo ">> Bundles uploaded and validated. In 'manual' mode, finish (or drop) each deployment at:"

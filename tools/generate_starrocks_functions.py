@@ -60,7 +60,7 @@ LIVE_TSV = VENDOR / "starrocks-builtin-functions-4.1.4.tsv"
 FUNCTIONS_PY = VENDOR / "starrocks-registry" / "functions.py"
 FUNCTIONSET_JAVA = VENDOR / "starrocks-registry" / "FunctionSet.java"
 TABLEFUNCTION_JAVA = VENDOR / "starrocks-registry" / "TableFunction.java"
-OUT = ROOT / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata" / "GeneratedStarrocksFunctionCatalog.kt"
+OUT = ROOT / "brikk-sql" / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata" / "GeneratedStarrocksFunctionCatalog.kt"
 
 STARROCKS_VERSION = "4.1.4"  # git tag 4.1.4 -> commit 4a9848edf03f5c936dac664b2d52527f48e72eb0
 DOCKER_DIGEST = "sha256:faf7ce9c24d9c29c9431b4e8cbd4bb7a74cd169907c63f0c5ebaacc7f9df276b"

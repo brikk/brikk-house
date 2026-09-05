@@ -2,9 +2,9 @@
 """Generate the Doris semantic-probe worklist from gap-report bucket-A entries.
 
 Reads:
-  - brikk-sql/testResources/semantics/gap-report.json (manifest/index)
-  - brikk-sql/testResources/semantics/function-gaps/<src>__<tgt>.json (per-pair detail)
-  - brikk-sql/testResources/semantics/trino-duckdb-hazards.json (prior evidence)
+  - brikk-sql/brikk-sql/testResources/semantics/gap-report.json (manifest/index)
+  - brikk-sql/brikk-sql/testResources/semantics/function-gaps/<src>__<tgt>.json (per-pair detail)
+  - brikk-sql/brikk-sql/testResources/semantics/trino-duckdb-hazards.json (prior evidence)
 
 Writes:
   - docs/research/doris-probe-worklist.md
@@ -26,7 +26,7 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-SEMANTICS = ROOT / "brikk-sql" / "testResources" / "semantics"
+SEMANTICS = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "semantics"
 GAP_REPORT = SEMANTICS / "gap-report.json"
 TRINO_DUCKDB_HAZARDS = SEMANTICS / "trino-duckdb-hazards.json"
 OUT = ROOT / "docs" / "research" / "doris-probe-worklist.md"
@@ -244,7 +244,7 @@ def main() -> None:
         "",
         "## Expected deliverable format",
         "",
-        "Fill `brikk-sql/testResources/semantics/{duckdb,trino}-doris-hazards.json` `pairs`",
+        "Fill `brikk-sql/brikk-sql/testResources/semantics/{duckdb,trino}-doris-hazards.json` `pairs`",
         "arrays with one object per probed function (same schema as `trino-duckdb-hazards.json`):",
         "",
         "```json",

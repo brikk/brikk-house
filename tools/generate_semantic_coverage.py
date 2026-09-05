@@ -15,9 +15,9 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-SEMANTICS = ROOT / "brikk-sql" / "testResources" / "semantics"
+SEMANTICS = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "semantics"
 OUT = (
-    ROOT / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata"
+    ROOT / "brikk-sql" / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata"
     / "GeneratedSemanticCoverage.kt"
 )
 IDENT = re.compile(r"^[A-Za-z_][A-Za-z_0-9]*$")
@@ -79,7 +79,7 @@ def main() -> None:
                 "source_catalog": str(catalogs.get(source, "unversioned hazard source")),
                 "target_catalog": str(catalogs.get(target, "unversioned hazard source")),
                 "scope": scope,
-                "evidence": f"brikk-sql/testResources/semantics/{path.name}",
+                "evidence": f"brikk-sql/brikk-sql/testResources/semantics/{path.name}",
                 "keys": keys,
             })
 

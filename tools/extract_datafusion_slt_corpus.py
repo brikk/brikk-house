@@ -31,7 +31,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 SLT_DIR = os.path.join(ROOT, "reference/datafusion/datafusion/sqllogictest/test_files")
 OUT = os.path.join(
-    ROOT, "brikk-sql/testResources/dialect-corpus/datafusion-slt-parse.json"
+    ROOT, "brikk-sql/brikk-sql/testResources/dialect-corpus/datafusion-slt-parse.json"
 )
 
 # Mainstream files covering the core SELECT surface, plus every new SLT file added

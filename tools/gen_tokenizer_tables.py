@@ -2,9 +2,9 @@
 """Generates Kotlin token tables for brikk-sql from the pinned sqlglot checkout.
 
 Reads reference/sqlglot (see git describe for the pin) and emits:
-  - brikk-sql/src/dev.brikk.house.sql/parser/TokenType.kt
-  - brikk-sql/src/dev.brikk.house.sql/parser/BaseTokenizerTables.kt
-  - brikk-sql/src/dev.brikk.house.sql/parser/<Dialect>TokenizerTables.kt for each
+  - brikk-sql/brikk-sql/src/dev.brikk.house.sql/parser/TokenType.kt
+  - brikk-sql/brikk-sql/src/dev.brikk.house.sql/parser/BaseTokenizerTables.kt
+  - brikk-sql/brikk-sql/src/dev.brikk.house.sql/parser/<Dialect>TokenizerTables.kt for each
     non-base dialect in DIALECTS (with a fully-wired `CONFIG: TokenizerConfig`).
 
 The emitted tables mirror EXACTLY what sqlglot/tokens.py Tokenizer._init_core passes
@@ -24,7 +24,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SQLGLOT = ROOT / "reference" / "sqlglot"
-OUT_DIR = ROOT / "brikk-sql" / "src" / "dev.brikk.house.sql" / "parser"
+OUT_DIR = ROOT / "brikk-sql" / "brikk-sql" / "src" / "dev.brikk.house.sql" / "parser"
 
 sys.path.insert(0, str(SQLGLOT))
 

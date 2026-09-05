@@ -1,50 +1,88 @@
-# Virtual pipelines in Kotlin — wiring notes (working doc)
+# Brikk Engine virtual pipelines in Kotlin
 
-Status: Sep 2026. Builds on `sql-compiler-plugin-learnings.md` §9–§13 and
-`parsing-research-and-plan.md` "North star".
+Status: Sep 2026. Builds on [compiler-plugin learnings](sql-compiler-plugin-learnings.md)
+sections 9-13 and [parsing research](parsing-research-and-plan.md) "North star".
 
-**The minimum see-it-work slice is implemented and green** (option C, Postgres, three-step
-pipeline): `brikk-sql-runtime` (Shape/Partial/Rel/Sql), the plugin's declaration generation +
+**The original minimum see-it-work slice was implemented and green** (option C, Postgres, three-step
+pipeline): `brikk-engine-kotlin` (Shape/Partial/Rel/Sql), the plugin's declaration generation +
 call refinement + checkers + IR rewrite, DDL-file schema cache, kctfork e2e tests, and the
 smoke module compiled by the real toolchain. Mechanics and verified gotchas:
-`docs/RESEARCH-fir-refinement-and-generation.md`. Sections below that describe design intent
+[FIR refinement and generation](RESEARCH-fir-refinement-and-generation.md). Sections below that describe design intent
 still hold; "What exists" is updated.
+
+The modules now live under `brikk-engine/`, `brikk-sql/`, and `brikk-chdb/`; see the
+[repository map](../README.md#repository-layout) and [Brikk Engine README](../brikk-engine/README.md).
+Kotlin packages, `@BrikkSql` and related annotations, and compiler ID
+`dev.brikk.house.sql.compiler` are unchanged. Public SQL/chDB Maven IDs are unchanged;
+the assembled/local KEFS artifact is `brikk-engine-kotlin-compiler-plugin`.
+The earlier green slice is not acceptance of the newer SQL preservation requirement below.
 
 ## What exists
 
-- `brikk-sql/shape/` — `Shape`, `ColumnShape`, `ShapeCatalog` (+ slots), `ShapeVerdict`,
+- [brikk-sql shape layer](../brikk-sql/brikk-sql/src/dev.brikk.house.sql/shape/): `Shape`, `ColumnShape`, `ShapeCatalog` (+ slots), `ShapeVerdict`,
   `SqlFragment` (one statement → scalar params, TVF slots, sources, output shape, lineage,
   serializable `FragmentDescription`/`FragmentContract`), `DdlCatalog` (DDL text → catalog).
   Slots nest under a synthetic qualifier so they coexist with qualified tables. Shape-layer
   typing override: scalar JSON extraction is TEXT (dialect tables stay sqlglot-faithful).
-- `brikk-sql-runtime/` — `Partial` (minimum requirements), `Shape : Partial` (full, closed),
+- [brikk-engine/brikk-engine-kotlin/](../brikk-engine/brikk-engine-kotlin/): `Partial` (minimum requirements), `Shape : Partial` (full, closed),
   `@BrikkSql`, `@BrikkTrait`, `@BrikkSqlDialect`, `Sql.postgres/doris/clickhouse/duckdb`,
   `Rel<out T : Partial>(sql, dialect).input(slot, rel).bind(name, v)` with `render()` (CTE
-  chain, slot → CTE name) and `bindings()`.
-- `brikk-sql-compiler-plugin/` — `analysis/` (TypeMap, SqlAnalyzer over raw function facts),
+  chain, slot → CTE name) and `bindings()`. Rendering currently reparses and regenerates
+  every fragment, even a single same-dialect native query without inputs.
+- [brikk-engine/brikk-engine-kotlin-compiler-plugin/](../brikk-engine/brikk-engine-kotlin-compiler-plugin/): `analysis/` (TypeMap, SqlAnalyzer over raw function facts),
   `fir/` (session component with catalog/traits/analyses; `ShapeDeclarationGenerator` emitting
   `<Fn>Out : Shape|Partial, <satisfied traits>` with abstract vals; `BrikkSqlCallRefinement`
   typing `Sql.x()` inside `@BrikkSql` as `Rel<FnOut>` and generic pipe call sites as a local
   full Shape; checkers: non-const, outside-@BrikkSql, analysis failure, unbound `:param`,
   unknown column), `ir/` (rewrite to `Rel(...).input(...).bind(...)`, constructor bodies for
   local shapes). Options: `schema`, `schemaDialect`, `defaultSchema`, `debug`.
-- `brikk-sql-plugin-smoke/` — the same three-step pipeline compiled by the real toolchain via
-  `-Xplugin=build/plugin/brikk-sql-compiler-plugin-2.4.10-0.2.0.jar` (merged by
-  `./kotlin do assemblePluginJar`, a `brikk-sql-plugin-tooling` task) + `-P plugin:...:schema=...`.
-- `brikk-sql-plugin-tooling/` — local Kotlin Toolchain plugin with the dev-loop tasks
-  `assemblePluginJar` / `publishKefsRepo` (below). Applied to `brikk-sql-compiler-plugin`.
+- [brikk-engine/brikk-engine-kotlin-smoke/](../brikk-engine/brikk-engine-kotlin-smoke/): the same three-step pipeline compiled by the real toolchain via
+  `-Xplugin=build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar` (merged by
+  `./kotlin do assemblePluginJar`, a `brikk-engine-kotlin-tooling` task) and
+  `-P plugin:dev.brikk.house.sql.compiler:schema=brikk-engine/brikk-engine-kotlin-smoke/schema/events.sql`.
+- [brikk-engine/brikk-engine-kotlin-tooling/](../brikk-engine/brikk-engine-kotlin-tooling/): local Kotlin Toolchain plugin with the dev-loop tasks
+  `assemblePluginJar` / `publishKefsRepo` (below). Applied to `brikk-engine-kotlin-compiler-plugin`.
+
+Keep one runtime module, `brikk-engine-kotlin`. Helpers such as a future
+`brikk-engine-doris` should come from migration needs, not empty modules created
+in advance. The ignored `brikk-engine/dogfood/` consumer stays outside the public
+manifest. Toolchain 0.12 uses leaf-directory names with no `name` override; missing
+explicit includes fail and there is no `project.local.yaml` overlay. Follow the
+[temporary local add/remove procedure](../brikk-engine/README.md#private-consumer)
+with synthetic content first. Remove the dogfood include before finishing; public
+builds and publication must not require private content.
+
+## SQL preservation requirement
+
+Never change more SQL than necessary. The [SQL preservation policy](../brikk-engine/README.md#sql-preservation)
+requires unchanged same-dialect native SQL to run as written, parameter-only
+changes to stay within parameter representation, and native relation inputs to
+require only necessary slot/CTE changes. Pipe lowering may change required structure
+but must preserve unaffected native SQL as close to source as possible, including
+important hints/comments and statement semantics. Cross-dialect changes are explicit.
+
+This is not current `Rel.render()` behavior. Parsing for validation or shape checks
+does not imply regeneration, automatic optimization, or canonicalization of the
+executed SQL. AST round-trip equality does not prove source-text preservation.
+Pipe lowering is the largest risk: inspect source/output diffs, test mixed native
+SQL and stage semantics, and fix failures in `brikk-sql` with regressions. Do not
+keep permanent copied handwritten SQL in the consumer as a workaround. Compare
+the authored and executed SQL as well as their results.
 
 ## Division of labour (proposed)
 
-**Plugin = FIR checker + shape-type generator. brikk-sql = value, composition, render.**
+The Engine compiler checks and generates shape types. `brikk-engine-kotlin` owns
+relation values, bindings, and composition; generic SQL analysis and lowering stay
+in `brikk-sql`. The proposals below must obey the SQL preservation requirement.
 
 - Plugin reads schema JSON (build-tool introspection cache) → `ShapeCatalog`; parses each
   literal in its dialect; qualifies against catalog + parameter shapes; annotate-types +
   lineage; reports diagnostics with sub-literal ranges.
 - Plugin generates nominal shape types (§9) and checks call-site compatibility.
 - IR shrinks to: embed `FragmentDescription` + typed bindings. Composition
-  (`f(g(h(x)))`) is a runtime slot bind in brikk-sql; graft/desugar/render happens at
-  execution. No OwnerChain / packed-AST store / `inline` machinery for MVP.
+  (`f(g(h(x)))`) is a runtime slot bind in `brikk-engine-kotlin`; required lowering
+  uses `brikk-sql` when rendering. No OwnerChain / packed-AST store / `inline`
+  machinery for MVP, and no general materialized-view planner before migration.
 - §12 execution modes: static requirements (output ⊆ target, key lineage) are FIR checks over
   `SqlFragment` shapes/lineage; lowering (INSERT wrap, watermark inject) is runtime.
 - Open: is runtime-only rendering acceptable, or do we want rendered SQL as an inspectable
@@ -134,13 +172,13 @@ or by not being a compiler plugin (= §10a SQL-file surface).
 
 Mechanisms:
 - **KEFS** (Kotlin External FIR Support, marketplace plugin; recommended by toolchain docs).
-  Vendored docs: `docs/vendor/kefs/`. Loads a compiler plugin built against the *IDE's*
+  [Vendored docs](vendor/kefs/). Loads a compiler plugin built against the *IDE's*
   compiler version, not the project's.
 - **Own IntelliJ plugin** (Metro): `compiler-compat/` per-version `CompatContext` +
   ServiceLoader; relies on registry flag `kotlin.k2.only.bundled.compiler.plugins.enabled=false`
   for FIR loading. Most expensive; defer.
 
-KEFS hard requirements (`docs/vendor/kefs/PLUGIN_AUTHORS.md`):
+KEFS hard requirements ([plugin authors guide](vendor/kefs/PLUGIN_AUTHORS.md)):
 1. Published to a Maven repo (local dir OK). `-Xplugin=<path>` is invisible.
 2. Version `<kotlin-version>-<lib-version>`, both semver. KEFS swaps the prefix for the IDE
    compiler (e.g. `2.4.20-ij262-34-0.2.0`) and looks that up; missing → silently no IDE support.
@@ -156,20 +194,25 @@ Useful: hot-reload via local repo + file watching (`PLUGIN_AUTHORS.md` §3) repl
 **Net:** the FIR path's real cost is a compiler-version matrix in CI plus a shaded single-jar
 build. Required for B as much as for C.
 
-### Local IDE loop (KEFS hot-reload) — set up, not yet exercised
+### Local IDE loop (KEFS hot-reload)
+
+The local publishing setup exists; rebuilding after relocation is not proof of IDE
+compatibility. Check the loaded JAR and diagnostics in the actual IDE.
 
 ```sh
 ./kotlin do publishKefsRepo     # compiles the plugin, runs assemblePluginJar, then publishes
 ```
-publishes `dev.brikk.house:brikk-sql-compiler-plugin:<ide>-0.2.0` into `build/repo` (Maven
-layout). `<ide>` is `plugins.brikk-sql-plugin-tooling.ideKotlinVersion` in
-`brikk-sql-compiler-plugin/module.yaml` (from "KEFS: Copy Kotlin IDE Version"; `./kotlin do`
+publishes `dev.brikk.house:brikk-engine-kotlin-compiler-plugin:<ide>-0.2.0` into `build/repo` (Maven
+layout). `<ide>` is `plugins.brikk-engine-kotlin-tooling.ideKotlinVersion` in
+[brikk-engine/brikk-engine-kotlin-compiler-plugin/module.yaml](../brikk-engine/brikk-engine-kotlin-compiler-plugin/module.yaml) (from "KEFS: Copy Kotlin IDE Version"; `./kotlin do`
 takes no task arguments, so it lives in the yaml). The assembled jar's own name uses the real
 `settings.kotlin.version` of the plugin module, read by the task, so it cannot drift. KEFS: add `build/repo` as a Local repository and a bundle with those coordinates
 ("Latest" matching); leave the three replacement patterns at their defaults
 (`<kotlin-version>-<lib-version>`, `<artifact-id>`, `<artifact-id>`). KEFS detects the plugin
 from the `-Xplugin` jar *file name*, matched as `<detect>-<version>.jar`, which is why the
-assembled jar is named `brikk-sql-compiler-plugin-2.4.10-0.2.0.jar` and not `...-all.jar`.
+assembled jar is named `brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar` and not `...-all.jar`.
+Update existing KEFS bundles to the new artifact ID; do not change the compiler ID
+`dev.brikk.house.sql.compiler` in `-P` options.
 KEFS file-watches the repo: re-run `./kotlin do publishKefsRepo` after a plugin change. The
 jar is compiled against 2.4.10 regardless of the name — the first thing to learn is whether the
 IDE's compiler build accepts it (the exception analyzer says so).
@@ -182,7 +225,7 @@ between the two is a runtime link error, not a compile error. Two rules keep thi
   failures into `SQL_ANALYSIS_FAILED` diagnostics or "no refinement"; cancellation exceptions are
   rethrown by name. The IDE re-runs resolution on every keystroke from several passes at once,
   so one throwing line shows up as hundreds of stacks in `idea.log`.
-- **`fir/CompilerCompat.kt` shims the known API differences** (`KtFakeSourceElementKind.
+- **[fir/CompilerCompat.kt](../brikk-engine/brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/fir/CompilerCompat.kt) shims the known API differences** (`KtFakeSourceElementKind.
   PluginGenerated` object -> sealed class in 2.4.20; `FirResolvedQualifier.classId` removed).
   When a new `NoSuchFieldError`/`NoSuchMethodError` appears, add the shim there rather than
   around the call site. The remaining IDE-only difference is lazy bodies (`FirLazyBlock`),
@@ -242,7 +285,7 @@ above identically — sqlglot's Doris dialect (15-line dialect, 135-line parser:
 property, dynamic granularity, MV BUILD/REFRESH; rest inherited from MySQL) is used for
 transpiling queries *into* Doris, never for parsing Doris DDL. No upstream sync fixes this.
 
-**DONE (Sep 2026): Doris DDL parsing — `docs/brikk-extensions.md` #19.** Every PARSE
+**DONE (Sep 2026): Doris DDL parsing, [brikk extensions](brikk-extensions.md) #19.** Every PARSE
 FAIL / Command-fallback case above now parses to a `Create` and round-trips; each
 rendering is accepted by the real Doris FE parser
 (`SqlVerifierTest.dorisAcceptsBrikkDdlRenderings`). Deviations from the plan as written:
@@ -252,6 +295,9 @@ rendering is accepted by the real Doris FE parser
 - `PARTITION BY LIST (c) ()` now yields a LIST node (sqlglot's port always built RANGE).
 - Still lossy: `BUCKETS AUTO` is dropped (absent = AUTO); `DECIMALV3` renders as `DECIMAL`.
 
+These probes establish parser/generator coverage, not source-text preservation.
+They do not authorize rewriting native statements under the newer minimum-change policy.
+
 **Separate TODO, do not conflate:** general resync of the port to a newer sqlglot pin
 (upstream also restructured into `parsers/` and `generators/` packages). The pin moved
 to `v30.17.0-93` with the `sqlglot-catchup` merge; the Doris probe was re-run against
@@ -259,6 +305,8 @@ the merged tree before the work above and failed identically.
 
 ## Open items
 
+- Implement the minimum-change rendering paths and output-diff acceptance tests.
+  Prioritize pipe-lowering correctness; fix failures in `brikk-sql` with regressions.
 - Runtime-only render vs compile-time rendered artifact (see above).
 - ~~Two-slot `Rel<Base, Ext>` vs refinement for EXTEND-on-generic~~ → refinement (C) built;
   works. Known limitation: a call-site local shape cannot escape through a plain helper with an

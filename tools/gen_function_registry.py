@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerates brikk-sql/src/dev.brikk.house.sql/parser/GeneratedFunctionRegistry.kt.
+"""Regenerates brikk-sql/brikk-sql/src/dev.brikk.house.sql/parser/GeneratedFunctionRegistry.kt.
 
 Emits the base layer of Parser.FUNCTIONS — {name: func.from_arg_list for name, func
 in exp.FUNCTION_BY_NAME.items()} — as a Kotlin map. The hand-ported custom builders
@@ -15,14 +15,14 @@ import sys
 sys.path.insert(0, "reference/sqlglot")
 from sqlglot import expressions as exp  # noqa: E402
 
-OUT = "brikk-sql/src/dev.brikk.house.sql/parser/GeneratedFunctionRegistry.kt"
+OUT = "brikk-sql/brikk-sql/src/dev.brikk.house.sql/parser/GeneratedFunctionRegistry.kt"
 
 
 def kotlin_classes() -> set:
     classes = set()
     for path, pattern in [
-        ("brikk-sql/src/dev.brikk.house.sql/ast/GeneratedRegistry.kt", r'm\["([A-Za-z0-9_]+)"\]'),
-        ("brikk-sql/src/dev.brikk.house.sql/ast/Nodes.kt", r"class ([A-Za-z0-9_]+)"),
+        ("brikk-sql/brikk-sql/src/dev.brikk.house.sql/ast/GeneratedRegistry.kt", r'm\["([A-Za-z0-9_]+)"\]'),
+        ("brikk-sql/brikk-sql/src/dev.brikk.house.sql/ast/Nodes.kt", r"class ([A-Za-z0-9_]+)"),
     ]:
         classes.update(re.findall(pattern, open(path).read()))
     return classes

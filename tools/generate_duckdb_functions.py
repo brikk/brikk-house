@@ -41,7 +41,7 @@ import sys
 import duckdb
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-OUT = ROOT / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata" / "GeneratedDuckdbFunctionCatalog.kt"
+OUT = ROOT / "brikk-sql" / "brikk-sql-metadata" / "src" / "dev.brikk.house.sql.metadata" / "GeneratedDuckdbFunctionCatalog.kt"
 
 IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 

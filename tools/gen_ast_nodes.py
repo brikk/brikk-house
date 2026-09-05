@@ -2,16 +2,16 @@
 """Generates the full sqlglot expression-node catalog for brikk-sql.
 
 Reads reference/sqlglot (see git describe for the pin) and emits:
-  - brikk-sql/src/dev.brikk.house.sql/ast/GeneratedNodes<Module>.kt   (one per
+  - brikk-sql/brikk-sql/src/dev.brikk.house.sql/ast/GeneratedNodes<Module>.kt   (one per
     sqlglot.expressions submodule; every Expression subclass in EXPR_CLASSES that
     is not already handwritten in Nodes.kt / DataType.kt / Expression.kt)
-  - brikk-sql/src/dev.brikk.house.sql/ast/GeneratedTraits.kt          (marker
+  - brikk-sql/brikk-sql/src/dev.brikk.house.sql/ast/GeneratedTraits.kt          (marker
     interfaces for the python mixin "traits" not yet represented in Kotlin)
-  - brikk-sql/src/dev.brikk.house.sql/ast/GeneratedRegistry.kt        (serde
+  - brikk-sql/brikk-sql/src/dev.brikk.house.sql/ast/GeneratedRegistry.kt        (serde
     registry entries for every class not registered by hand in Serde.kt)
   - a full DType enum spliced into ast/DataType.kt (surgical replacement of the
     `enum class DType { ... }` block only)
-  - brikk-sql/testResources/ast-corpus/arg-types-manifest.json        (arg_types
+  - brikk-sql/brikk-sql/testResources/ast-corpus/arg-types-manifest.json        (arg_types
     oracle for ALL Expression subclasses, including the handwritten ones)
 
 The handwritten skip-list is scraped from the Kotlin sources at generation time,
@@ -31,8 +31,8 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SQLGLOT = ROOT / "reference" / "sqlglot"
-AST_DIR = ROOT / "brikk-sql" / "src" / "dev.brikk.house.sql" / "ast"
-CORPUS_DIR = ROOT / "brikk-sql" / "testResources" / "ast-corpus"
+AST_DIR = ROOT / "brikk-sql" / "brikk-sql" / "src" / "dev.brikk.house.sql" / "ast"
+CORPUS_DIR = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "ast-corpus"
 
 sys.path.insert(0, str(SQLGLOT))
 

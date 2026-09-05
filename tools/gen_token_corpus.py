@@ -3,10 +3,10 @@
 
 For each dialect in DIALECTS, tokenizes every statement in
 reference/sqlglot/tests/fixtures/identity.sql with the pinned Python sqlglot and
-writes the resulting token streams as JSON to brikk-sql/testResources/token-corpus/.
+writes the resulting token streams as JSON to brikk-sql/brikk-sql/testResources/token-corpus/.
 
 The corpus is consumed by the JVM-only differential test
-brikk-sql/test@jvm/dev.brikk.house.sql/TokenCorpusDifferentialTest.kt.
+brikk-sql/brikk-sql/test@jvm/dev.brikk.house.sql/TokenCorpusDifferentialTest.kt.
 
 Run from anywhere:  python3 tools/gen_token_corpus.py
 Re-run whenever reference/sqlglot is updated.
@@ -22,7 +22,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SQLGLOT = ROOT / "reference" / "sqlglot"
 FIXTURE = SQLGLOT / "tests" / "fixtures" / "identity.sql"
-OUT_DIR = ROOT / "brikk-sql" / "testResources" / "token-corpus"
+OUT_DIR = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "token-corpus"
 
 sys.path.insert(0, str(SQLGLOT))
 

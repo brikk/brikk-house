@@ -3,7 +3,7 @@
 
 Each case is a SQL string parsed with the base ("sqlglot") dialect via
 sqlglot.parse_one and dumped with sqlglot.serde.dump. The Kotlin twin in
-brikk-sql/test@jvm/dev.brikk.house.sql/ParserCorpusDifferentialTest.kt parses the
+brikk-sql/brikk-sql/test@jvm/dev.brikk.house.sql/ParserCorpusDifferentialTest.kt parses the
 same SQL with our Parser and asserts a structural match on the dumps (with meta
 and comments stripped on both sides).
 
@@ -20,7 +20,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SQLGLOT = ROOT / "reference" / "sqlglot"
-OUT_DIR = ROOT / "brikk-sql" / "testResources" / "parser-corpus"
+OUT_DIR = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "parser-corpus"
 
 sys.path.insert(0, str(SQLGLOT))
 

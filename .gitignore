@@ -1,6 +1,13 @@
 # Build output (Kotlin Toolchain / Amper)
 /build/
 /*/build/
+/*/*/build/
+
+# Private Brikk Engine consumer: never part of public module includes or publication.
+/brikk-engine/dogfood/
+
+# Owner-review specification remains local until approved for publication.
+/docs/DRAFT-sql-to-brikk-migration.md
 
 # Reference repos: full clones of sqlglot, polyglot, trino, doris, etc.
 # Not part of this project — clone them locally as needed (see docs/parsing-research-and-plan.md)
@@ -8,7 +15,7 @@
 
 # Test-run artifact: actual parser-identity failure set in ledger format
 # (regenerate testResources/parser-corpus/known-failures.json by copying it)
-/brikk-sql/parser-identity-ledger-actual.json
+/brikk-sql/brikk-sql/parser-identity-ledger-actual.json
 
 # IDE
 /.idea/

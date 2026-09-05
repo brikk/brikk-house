@@ -34,7 +34,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 MATRIX_DIR = ROOT / "vendor" / "data" / "behavior-matrix"
 PROBE_RUNS = ROOT / "docs" / "research" / "probe-runs"
-SEMANTICS = ROOT / "brikk-sql" / "testResources" / "semantics"
+SEMANTICS = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "semantics"
 VECTORS_JSON = MATRIX_DIR / "vectors.json"
 
 # Live engine connections (MySQL protocol via docker exec).

@@ -1,7 +1,49 @@
 # brikk-house
 
-SQL parser, transpiler, and optimizer for Kotlin — a multiplatform port of
+SQL libraries, embedded chDB bindings, and Brikk Engine for typed SQL pipelines in
+Kotlin. The generic SQL parser, transpiler, and optimizer is a multiplatform port of
 [sqlglot](https://github.com/tobymao/sqlglot).
+
+## Repository layout
+
+The parent directories group modules; Kotlin Toolchain 0.12 derives each module's
+name from its leaf directory, with no `name` override. Module selectors such as
+`-m brikk-sql` still use that leaf name. [project.yaml](project.yaml) lists the
+public modules explicitly.
+
+| Group | Modules |
+| --- | --- |
+| [Brikk Engine](brikk-engine/README.md) | [brikk-engine-kotlin](brikk-engine/brikk-engine-kotlin/), [brikk-engine-kotlin-compiler-plugin](brikk-engine/brikk-engine-kotlin-compiler-plugin/), [brikk-engine-kotlin-tooling](brikk-engine/brikk-engine-kotlin-tooling/), [brikk-engine-kotlin-smoke](brikk-engine/brikk-engine-kotlin-smoke/) |
+| [Generic SQL](brikk-sql/brikk-sql/README.md) | [brikk-sql](brikk-sql/brikk-sql/), [brikk-sql-metadata](brikk-sql/brikk-sql-metadata/), [brikk-sql-verify](brikk-sql/brikk-sql-verify/), [brikk-sql-oracle](brikk-sql/brikk-sql-oracle/) |
+| [chDB](docs/design/brikk-chdb.md) | [brikk-chdb](brikk-chdb/brikk-chdb/), [brikk-chdb-native-linux-x64](brikk-chdb/brikk-chdb-native-linux-x64/), [brikk-chdb-native-linux-arm64](brikk-chdb/brikk-chdb-native-linux-arm64/), [brikk-chdb-native-macos-arm64](brikk-chdb/brikk-chdb-native-macos-arm64/), [brikk-chdb-native-packaging](brikk-chdb/brikk-chdb-native-packaging/) |
+
+Brikk Engine keeps one runtime module, `brikk-engine-kotlin`. Database helpers such
+as a future `brikk-engine-doris` will be extracted from working migrations, not
+created as empty modules. Kotlin packages, `@BrikkSql` and related annotations,
+and compiler ID `dev.brikk.house.sql.compiler` are unchanged by the relocation.
+Public SQL/chDB Maven coordinates are also unchanged; the assembled compiler and
+local KEFS artifact is now `brikk-engine-kotlin-compiler-plugin`.
+
+The ignored `brikk-engine/dogfood/` consumer is private and excluded from the public
+manifest. Toolchain has no `project.local.yaml` overlay and an explicit missing
+module entry is an error. See the [local add/remove workflow](brikk-engine/README.md#private-consumer)
+before enabling it locally. Public builds must work without it; private SQL and
+schemas do not belong in public examples or artifacts.
+
+## SQL preservation
+
+Brikk Engine's requirement is to change no more SQL than the requested operation
+needs. Same-dialect native SQL without composition or transpilation must run as
+written. Parameters, relation slots, and pipe lowering permit only their necessary
+changes; cross-dialect translation must be explicit. Parsing for checks does not
+require regenerating SQL or applying an optimizer or canonicalization pass.
+
+This is not implemented end-to-end: `Rel.render()` currently reparses and regenerates
+all queries. AST round-trip tests do not prove source-text preservation. The
+[SQL preservation policy](brikk-engine/README.md#sql-preservation)
+requires output-diff checks alongside semantic tests. Pipe lowering is the highest-risk
+step; failures need fixes and regressions in `brikk-sql`, not permanent handwritten
+SQL copies that bypass the failed lowering.
 
 ## Libraries
 
@@ -14,6 +56,11 @@ consumable (hence the `-jvm` suffix on the two multiplatform modules).
 | `dev.brikk.house:brikk-sql-jvm` | SQL parser, transpiler, and optimizer (Kotlin port of sqlglot). |
 | `dev.brikk.house:brikk-sql-metadata-jvm` | Per-engine SQL function and type metadata catalogs. |
 | `dev.brikk.house:brikk-sql-verify` | Native-grammar SQL verification oracles (Trino, DuckDB, Doris). |
+| `dev.brikk.house:brikk-sql-oracle` | Heavyweight real-engine checks, including PostgreSQL and chDB ClickHouse. |
+| `dev.brikk.house:brikk-chdb` | In-process Kotlin/JVM chDB binding. |
+| `dev.brikk.house:brikk-chdb-native-linux-x64` | chDB native resource for Linux x64. |
+| `dev.brikk.house:brikk-chdb-native-linux-arm64` | chDB native resource for Linux arm64. |
+| `dev.brikk.house:brikk-chdb-native-macos-arm64` | chDB native resource for macOS arm64. |
 
 ### Dialects
 
@@ -114,13 +161,17 @@ Release versions (non-`-SNAPSHOT`) are published to **Maven Central** and resolv
 
 ## Building
 
+Run from the repository root using the pinned Kotlin Toolchain 0.12 wrapper. On a
+clean checkout, assemble the compiler plugin before compiling its smoke consumer:
+
 ```bash
+./kotlin do assemblePluginJar
 ./kotlin build   # compile every module
 ./kotlin test    # run every test, including the exact-ledger corpus gates
 ```
 
-The build config references a gitignored `.env` as the snapshots-repo credentials file, and
-Toolchain 0.11 refuses to load the project model when it is missing — even for build/test.
+The build config references a gitignored `.env` as the snapshots-repo credentials file.
+Keep it present for project-model loading, even for build/test.
 On a fresh clone create a placeholder (real credentials are only needed to publish):
 
 ```bash
@@ -129,9 +180,11 @@ printf 'brikk.mavencentral.user=x\nbrikk.mavencentral.pass=x\n' > .env
 
 ## Publishing (maintainers)
 
-The version and all publishing config live in [`publish.module-template.yaml`](publish.module-template.yaml)
-(shared by every module). Credentials come from a gitignored `.env` (regular repos) and,
-for Central releases, the `KOTLIN_TOOLCHAIN_*` environment variables / org secrets.
+The version and library publishing config live in [`publish.module-template.yaml`](publish.module-template.yaml).
+Non-published public modules use [`publish-targets.module-template.yaml`](publish-targets.module-template.yaml)
+for repository validation without enabling publication. Credentials come from a
+gitignored `.env` for regular repos and, for Central releases, the
+`KOTLIN_TOOLCHAIN_*` environment variables / org secrets.
 
 ### Snapshots
 
@@ -184,7 +237,13 @@ export KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE=...   # if the key is encrypted
 ./publish-release.sh 0.2.0
 ```
 
-# Local Dev for Kotlin Compiler Plugin
+On Toolchain 0.12 the release launcher invokes the eight public libraries' Portal
+tasks directly because `./kotlin publish mavenCentral` fails repository validation.
+Keep that explicit task list in sync when adding publishable libraries. Engine
+modules and private consumers are excluded. CI checks Maven Local publication;
+it does not exercise Central credentials, signing, or remote bundle acceptance.
+
+## Brikk Engine development
 
 ```bash
 ./kotlin do publishKefsRepo     # the whole IDE loop: compile plugin -> assemble jar -> build/repo
@@ -192,3 +251,13 @@ export KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE=...   # if the key is encrypted
 ./kotlin check                  # everything (needs the jar above once; build/ persists)
 ./kotlin show commands          # lists both
 ```
+
+The assembled JAR is
+`build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar`. KEFS uses
+`dev.brikk.house:brikk-engine-kotlin-compiler-plugin:<ide>-0.2.0` from `build/repo`.
+Update an existing KEFS bundle to the new artifact ID and rebuild; the compiler's
+`-P plugin:dev.brikk.house.sql.compiler:...` option prefix stays unchanged.
+
+See [Brikk Engine](brikk-engine/README.md) and the [current wiring notes](docs/virtual-pipelines-wiring.md). The
+[review guide](docs/REVIEW-compiler-plugin.md) and [findings](TODO-review-findings.md)
+record the pre-relocation review, with paths updated for navigation.

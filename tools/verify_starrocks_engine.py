@@ -28,7 +28,7 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-CORPUS = ROOT / "brikk-sql" / "testResources" / "dialect-corpus" / "starrocks.json"
+CORPUS = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "dialect-corpus" / "starrocks.json"
 OUT = ROOT / "docs" / "research" / "starrocks-engine-verification.md"
 
 # Analyzer errors that PROVE the grammar accepted the statement (no schema is set up).

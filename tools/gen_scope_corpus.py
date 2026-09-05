@@ -7,9 +7,9 @@ and run sqlglot.optimizer.scope.traverse_scope. Queries that yield scopes emit a
 per-scope summary in traversal order; queries that raise or yield no scopes are recorded
 as skipped-with-reason.
 
-The Kotlin twin in brikk-sql/test@jvm/dev.brikk.house.sql/ScopeCorpusTest.kt builds the
+The Kotlin twin in brikk-sql/brikk-sql/test@jvm/dev.brikk.house.sql/ScopeCorpusTest.kt builds the
 same summaries with our traverseScope and asserts a structural match, ledgering known
-failures in brikk-sql/testResources/scope-corpus/known-failures.json.
+failures in brikk-sql/brikk-sql/testResources/scope-corpus/known-failures.json.
 
 Run from anywhere:  python3 tools/gen_scope_corpus.py
 Re-run whenever reference/sqlglot is updated or cases are added.
@@ -24,7 +24,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SQLGLOT = ROOT / "reference" / "sqlglot"
-OUT_DIR = ROOT / "brikk-sql" / "testResources" / "scope-corpus"
+OUT_DIR = ROOT / "brikk-sql" / "brikk-sql" / "testResources" / "scope-corpus"
 
 sys.path.insert(0, str(SQLGLOT))
 

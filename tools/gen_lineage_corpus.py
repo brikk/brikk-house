@@ -41,7 +41,7 @@ TEST_FILE = os.path.join(
     os.path.dirname(__file__), "..", "reference", "sqlglot", "tests", "test_lineage.py"
 )
 OUT_FILE = os.path.join(
-    os.path.dirname(__file__), "..", "brikk-sql", "testResources", "lineage-corpus", "base.json"
+    os.path.dirname(__file__), "..", "brikk-sql", "brikk-sql", "testResources", "lineage-corpus", "base.json"
 )
 
 # Curated additions: categories the extracted suite covers only via unsupported
