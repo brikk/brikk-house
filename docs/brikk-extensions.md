@@ -20,6 +20,8 @@ exceptions today:
   parsing) adds no ledger entries.
 - **1 Trino** in `brikk-sql/brikk-sql/testResources/generator-corpus/trino-generator-known-failures.json`
   — §8 (`JSON_QUERY` wrapper clause).
+- **1 StarRocks** in `brikk-sql/brikk-sql/testResources/generator-corpus/starrocks-generator-known-failures.json`
+  for the ASTRA-001 final ordering correction in section 6.
 
 ## 1. First-class pipe syntax (Phase 4)
 
@@ -72,7 +74,7 @@ exceptions today:
   no Python counterpart; `ArgTypesManifestTest` allowlists them explicitly.
 - **Conflict risk:** LOW — only if upstream ever introduces same-named classes.
 
-## 6. eliminate_qualify: outer-star duplicate-column fix
+## 6. Window-filter lowering: output shape and clause order
 
 - **What:** In sqlglot's `eliminate_qualify` (QUALIFY → subquery rewrite), an original
   projection containing a star produces `SELECT *, rn FROM (subquery)` — the outer star
@@ -81,12 +83,42 @@ exceptions today:
   the bare star. Verified as result-shape-breaking on DuckDB→Doris/Trino by customer
   agents. **Upstream bug candidate — worth reporting to sqlglot.**
 - **Where:** `generator/Transforms.kt` `eliminateQualify` (outer projection branch).
+- **ASTRA-001 correctness divergence:** QUALIFY lowering now moves DISTINCT, final
+  ORDER BY, OFFSET, and LIMIT/FETCH to the filtering query. WITH moves with them so
+  pagination subqueries retain CTE visibility. DISTINCT ON lowering keeps final
+  ordering and pagination outside its row-number filter, and runs after QUALIFY.
+  Its ranking window resolves ORDER BY ordinals and standalone projection aliases.
+- **Counterexample:** `SELECT x FROM (VALUES (1), (2)) AS t(x) QUALIFY
+  ROW_NUMBER() OVER (ORDER BY x DESC) = 1 ORDER BY x LIMIT 1` must return `2`.
+  The pinned upstream and the previous Kotlin lowering instead return no rows.
+- **Hidden expressions:** sorting expressions stay intact in the inner scope and
+  use collision-free helper names outside it. Explicit outer projections exclude
+  helpers from both output and DISTINCT. Plain DISTINCT with a hidden sort key is
+  refused rather than emitting SQL rejected by PostgreSQL/Trino or changing the
+  deduplication key. Unresolved compound output-alias references and star orderings
+  requiring new hidden columns are also refused pending input-schema expansion.
+- **Regressions:** `QualifyLoweringResultTest` executes the source and actual generated
+  SQL in DuckDB JDBC 1.5.5.0, comparing ordered rows and column names. It covers the
+  counterexample, pagination, DISTINCT, DISTINCT ON composition, qualified names,
+  helper-name collisions, aggregate/subquery ordering, and CTE visibility. These are
+  executed-result checks for the tested DuckDB-compatible target SQL, not live
+  Presto/PostgreSQL/MySQL execution. The Trino counterexample also passes its native
+  parser. `TransformsTest` checks FETCH placement and explicit unsupported cases.
+- **Corpus impact:** one intentional StarRocks generator mismatch for `SELECT
+  DISTINCT ON (a) a, b FROM x ORDER BY c DESC`. The upstream fixture remains intact;
+  only its exact divergence is ledgered. No oracle-gate behavior changes.
+- **Upstream tracking:** ASTRA-001 is inherited from the pinned
+  `v30.17.0-93-gdcc36544a`. Owner: Brikk maintainers. Reporting status: pending;
+  no upstream issue/PR has been filed by this change. Adoption revision: none.
+  On each upstream sync, check `eliminate_qualify` and `eliminate_distinct_on`
+  against these result regressions before adopting them, then reconcile this entry
+  and the exact StarRocks ledger entry. String parity alone is insufficient.
 - **Deliberately kept upstream behavior:** the Case-B star leak (`SELECT * FROM t QUALIFY
   row_number() OVER (...) = 1` exports the synthetic `_w` helper through the outer star)
   is unchanged — dropping it requires schema-based star expansion; revisit if customers
   hit it.
-- **Conflict risk:** MEDIUM — if upstream fixes eliminate_qualify, adopt theirs and
-  retire this branch.
+- **Conflict risk:** MEDIUM. Adopt an upstream fix only when both output shape and
+  clause-order result regressions pass; retire the matching local branches then.
 
 ## 7. Doris: first-class arrays
 

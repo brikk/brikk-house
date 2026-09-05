@@ -87,7 +87,8 @@ import dev.brikk.house.sql.optimizer.Scope
 fun eliminateQualify(expression: Expression): Expression {
     if (expression !is Select || expression.args["qualify"] == null) return expression
 
-    val taken = expression.namedSelects.toMutableSet()
+    val taken = (expression.namedSelects + expression.findAll<Column>().map { it.name }.toList())
+        .flatMap { listOf(it, it.lowercase()) }.toMutableSet()
     for (select in expression.selects) {
         if (select !is Expression) continue
         if (select.aliasOrName.isEmpty()) {
@@ -140,7 +141,8 @@ fun eliminateQualify(expression: Expression): Expression {
                 }
             }
 
-            val alias = findNewName(expression.namedSelects, "_w")
+            val alias = findNewName(taken, "_w")
+            taken.add(alias)
             expression.append("expressions", aliasExpression(candidate, alias))
             val col = column(alias)
 
@@ -156,7 +158,80 @@ fun eliminateQualify(expression: Expression): Expression {
 
     outerSelects.set("from_", From(args("this" to subquery(expression, alias = "_t"))))
     outerSelects.set("where", Where(args("this" to qualifyFilters)))
+    movePostWindowModifiers(expression, outerSelects)
     return outerSelects
+}
+
+// brikk extension (ASTRA-001, docs/brikk-extensions.md #6): filtering a window
+// result must precede DISTINCT, final ordering, and pagination. References moved
+// across the subquery boundary need output aliases, not the original table names.
+private fun movePostWindowModifiers(inner: Select, outer: Select) {
+    val outputs = outer.namedSelects.toSet()
+    val projections = inner.selects.filterIsInstance<Expression>().toList()
+    val taken = (inner.namedSelects + inner.findAll<Column>().map { it.name }.toList())
+        .flatMap { listOf(it, it.lowercase()) }.toMutableSet()
+
+    fun outerReference(node: Expression, ordinal: Boolean = false): Expression {
+        if (ordinal && node is Literal) return node
+        if (node is Column && node.table.isEmpty()) {
+            val output = projections.firstOrNull {
+                it.aliasOrName in outputs && it.aliasOrName.equals(node.name,
+                    ignoreCase = (node.thisArg as? Identifier)?.args?.get("quoted") != true &&
+                        ((it.args["alias"] ?: it.thisArg) as? Identifier)?.args?.get("quoted") != true)
+            }
+            if (output != null) {
+                val identifier = (output.args["alias"] ?: output.thisArg) as? Identifier
+                return column(output.aliasOrName, quoted = identifier?.args?.get("quoted") as? Boolean)
+            }
+        }
+        val projection = projections.firstOrNull { !it.isStar && it.unalias() == node }
+        if (projection != null) {
+            val identifier = (projection.args["alias"] ?: projection.thisArg) as? Identifier
+            return column(projection.aliasOrName, quoted = identifier?.args?.get("quoted") as? Boolean)
+        }
+        if (node is Column && inner.isStar && inner.args["joins"] == null &&
+            projections.any { it is Star || it is Column && it.isStar && it.table == node.table }) {
+            return column(node.name, quoted = (node.thisArg as? Identifier)?.args?.get("quoted") as? Boolean)
+        }
+        // Keep each sort expression intact in its original scope. Splitting it
+        // changes alias binding and can separate FILTER/EXISTS from their inputs.
+        if (outer.isStar) {
+            throw UnsupportedError("Cannot preserve ordering through a window filter without expanding star projections")
+        }
+        val aliases = projections.filterIsInstance<Alias>().filter { it.alias in outputs }
+        val inputNames = aliases.flatMap { it.unalias().findAll<Column>().map { col -> col.name.lowercase() }.toList() }
+        if (node !is Column && node.findAll<Column>().any { col ->
+                col.table.isEmpty() && aliases.any { it.alias.equals(col.name, ignoreCase = true) } &&
+                    col.name.lowercase() !in inputNames
+            }) {
+            throw UnsupportedError("Cannot resolve output aliases in a compound ORDER BY through a window filter without input schema")
+        }
+        val alias = findNewName(taken, "_o")
+        taken.add(alias)
+        inner.append("expressions", aliasExpression(node.copy(), alias))
+        return column(alias)
+    }
+
+    for (key in listOf("distinct", "order", "offset", "limit", "with_")) {
+        val modifier = (inner.args[key] as? Expression)?.pop() ?: continue
+        if (modifier is Order) {
+            for (ordered in modifier.expressionsArg.filterIsInstance<Ordered>()) {
+                val reference = outerReference(ordered.thisArg as Expression, ordinal = true)
+                val distinct = outer.args["distinct"] as? Distinct
+                if (distinct != null && distinct.args["on"] == null &&
+                    reference !is Literal && (reference !is Column || reference.name !in outputs)) {
+                    throw UnsupportedError("Cannot preserve DISTINCT ordering by a hidden expression through a window filter")
+                }
+                ordered.set("this", reference)
+            }
+        } else if (modifier is Distinct) {
+            val on = modifier.args["on"] as? Tuple
+            if (on != null) {
+                on.set("expressions", on.expressionsArg.filterIsInstance<Expression>().map { outerReference(it) })
+            }
+        }
+        outer.set(key, modifier)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -408,8 +483,15 @@ fun eliminateDistinctOn(expression: Expression): Expression {
     val distinct = expression.args["distinct"] as? Distinct ?: return expression
     val on = distinct.args["on"]
     if (on !is Tuple) return expression
+    // QUALIFY must filter rows before DISTINCT ON chooses each group's first row,
+    // even in dialect pipelines that invoke eliminateDistinctOn first.
+    if (expression.args["qualify"] != null) return eliminateDistinctOn(eliminateQualify(expression))
 
-    val rowNumberWindowAlias = findNewName(expression.namedSelects, "_row_number")
+    val rowNumberWindowAlias = findNewName(
+        (expression.namedSelects + expression.findAll<Column>().map { it.name }.toList())
+            .flatMap { listOf(it, it.lowercase()) },
+        "_row_number",
+    )
 
     val distinctCols = ((distinct.pop() as Distinct).args["on"] as Tuple)
         .expressionsArg.filterIsInstance<Expression>()
@@ -419,7 +501,19 @@ fun eliminateDistinctOn(expression: Expression): Expression {
 
     val order = expression.args["order"] as? Order
     if (order != null) {
-        window.set("order", order.pop())
+        val windowOrder = order.copy() as Order
+        for (ordered in windowOrder.expressionsArg.filterIsInstance<Ordered>()) {
+            val term = ordered.thisArg as Expression
+            val projection = when {
+                term is Literal && !term.isString ->
+                    term.name.toIntOrNull()?.let { expression.selects.getOrNull(it - 1) as? Expression }
+                term is Column && term.table.isEmpty() ->
+                    expression.selects.filterIsInstance<Alias>().firstOrNull { it.alias == term.name }
+                else -> null
+            }
+            if (projection != null) ordered.set("this", projection.unalias().copy())
+        }
+        window.set("order", windowOrder)
     } else {
         window.set(
             "order",
@@ -456,6 +550,7 @@ fun eliminateDistinctOn(expression: Expression): Expression {
         "where",
         Where(args("this" to EQ(args("this" to column(rowNumberWindowAlias), "expression" to Literal.number("1"))))),
     )
+    movePostWindowModifiers(expression, outer)
     return outer
 }
 

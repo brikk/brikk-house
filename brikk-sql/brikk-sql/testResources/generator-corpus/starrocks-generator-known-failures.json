@@ -1,4 +1,9 @@
 {
     "sqlglot_version": "v30.17.0-93-gdcc36544a",
-    "cases": []
+    "cases": [
+        {
+            "sql": "SELECT DISTINCT ON (a) a, b FROM x ORDER BY c DESC",
+            "reason": "brikk extension ASTRA-001: preserve final ORDER BY after DISTINCT ON filtering, using a hidden sort projection. Intentional correctness divergence; docs/brikk-extensions.md #6 and QualifyLoweringResultTest.distinctOnBeforeOffsetAndLimitKeepsFinalOrdering."
+        }
+    ]
 }
