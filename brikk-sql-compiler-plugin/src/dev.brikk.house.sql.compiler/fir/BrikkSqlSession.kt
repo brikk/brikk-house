@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.fir.declarations.hasAnnotation
 import org.jetbrains.kotlin.fir.types.FirUserTypeRef
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
@@ -118,9 +119,18 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         return null
     }
 
-    /** Source paths of the module's files that the provider can enumerate (anchors for the schema search). */
+    /** Package of the declaration currently being analyzed; a second anchor source for the schema search. */
+    private var currentPackage: FqName? = null
+
+    /**
+     * Source paths of module files the provider can enumerate (anchors for the schema search):
+     * files of the current declaration's package (independent of the predicate index) plus
+     * files of every known @BrikkSql function's package.
+     */
     private fun knownSourcePaths(): List<String> = try {
-        val packages = functionsByOutClassId.values.mapTo(HashSet()) { it.callableId.packageName }
+        val packages = LinkedHashSet<FqName>()
+        currentPackage?.let { packages += it }
+        functionsByOutClassId.values.mapTo(packages) { it.callableId.packageName }
         packages.flatMap { pkg -> session.firProvider.getFirFilesByPackage(pkg) }.mapNotNull { it.sourceFile?.path }
     } catch (e: Exception) {
         emptyList()
@@ -204,6 +214,7 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         if (!analyzing.add(symbol)) return null // cycle: Rel<AOut> param inside A's own chain
         try {
             val containerFile = containerFileOf(symbol)
+            currentPackage = symbol.callableId.packageName
             val analyzer = analyzerFor(containerFile?.sourceFile?.path.also { if (it == null) noteNoAnchor(symbol) })
             val analysis = try {
                 analyzer.analyze(RawFir.rawFunction(symbol.fir as FirNamedFunction, session, containerFile))

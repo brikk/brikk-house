@@ -60,7 +60,7 @@ fun loginDaily(logins: Rel<LoginInput>) = Sql.doris("""
        GROUP BY user_id, CAST(event_at AS DATE) AS day
 """)
 
-fun report(start: Instant, end: Instant) = loginDaily( extractEvent(eventsInRange(start, end)))
+fun report(start: Instant, end: Instant) = loginDaily(extractEvent(eventsInRange(start, end)))
 
 /** Column access through generated shapes type-checks. */
 fun describe(row: LoginDailyOut, src: EventsInRangeOut): String =

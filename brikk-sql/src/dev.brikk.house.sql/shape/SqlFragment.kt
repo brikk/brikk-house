@@ -567,6 +567,10 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         // still resolve through the trie's unique-suffix match.
         val slotPrefix = List(depth - 1) { SLOT_QUALIFIER }
         for ((slotName, shape) in inputs.slots) {
+            // A slot with no known columns (`Rel<Partial>` input, or an upstream shape that could
+            // not be computed) is legitimate: it contributes nothing to `*` and resolves no
+            // columns. MappingSchema rejects empty tables, so leave it out of the mapping.
+            if (shape.columns.isEmpty()) continue
             nestedSet(mapping, slotPrefix + slotName, shape.toSchemaMapping())
         }
         return MappingSchema(schema = mapping, dialect = dialectObj)

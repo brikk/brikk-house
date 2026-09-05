@@ -142,12 +142,14 @@ class BrikkSqlCallRefinement(session: FirSession) : FirFunctionCallRefinementExt
             val shapeClassId = shapeType.classId
                 ?: return giveUp("argument '${rp.name}' Rel type argument has no class id")
             val shapeSymbol = shapeType.toRegularClassSymbol(session)
-            inputs[rp.slot] = when {
-                shapeSymbol != null -> columnsOfShapeClass(shapeSymbol)
-                // Generated `XyzOut` that this session did not generate (IDE sessions with an empty
-                // predicate index): its columns are the analysis of `fun xyz`, reachable by ClassId.
-                else -> brikk.analysisOf(shapeClassId)?.takeIf { it.error == null }?.output
-            } ?: return giveUp("no columns known for argument '${rp.name}' shape $shapeClassId")
+            // Prefer the analysis of the producing function: it is what the columns *are*, and
+            // it exists even when this session did not generate the `XyzOut` class (IDE sessions
+            // with an empty predicate index). Its error (e.g. schema not found) is the real cause.
+            val upstream = brikk.analysisOf(shapeClassId)
+            if (upstream?.error != null) return giveUp("input '${rp.name}' ($shapeClassId) failed analysis: ${upstream.error}")
+            inputs[rp.slot] = upstream?.output
+                ?: shapeSymbol?.let { columnsOfShapeClass(it) }
+                ?: return giveUp("no columns known for argument '${rp.name}' shape $shapeClassId")
         }
 
         val output = try {
