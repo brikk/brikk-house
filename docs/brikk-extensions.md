@@ -31,6 +31,13 @@ exceptions today:
   (AST → `|>` text) exists — sqlglot has no equivalent.
 - **Where:** `ast/PipeNodes.kt`, `ast/PipeDesugar.kt`, parser `parsePipeSyntax*` handlers,
   generator `pipe*Sql` methods.
+- **ASTRA-005:** requested lowering at `transpileTo`/`toExecutable` and analysis
+  preparation is recursive even when the root is not a pipe. Subqueries and CTEs
+  therefore reach shape inference, lineage, and certification in standard form.
+  Explicit pipe-rendering mode and the author AST remain unchanged.
+  `NestedPipeEntryPointsTest` covers those APIs and source-map consistency;
+  `SqlVerifierTest.nestedPipesLowerBeforeNativeVerification` adds native parser
+  acceptance and executed DuckDB results for self-contained nested queries.
 - **Conflict risk on upstream sync:** HIGH for the desugar semantics (sqlglot's pipe
   handler table grows most releases — e.g. DISTINCT was added in 30.x; new upstream
   operators must be mirrored in both our parser and `desugarPipes`, with their tests

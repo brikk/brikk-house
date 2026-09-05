@@ -11,6 +11,30 @@ import kotlin.test.assertTrue
 
 class SqlVerifierTest {
 
+    @Test
+    fun nestedPipesLowerBeforeNativeVerification() {
+        for (source in listOf(
+            "SELECT * FROM (FROM (SELECT 1 AS metric) AS t |> SELECT metric) AS s",
+            "WITH s AS (FROM (SELECT 1 AS metric) AS t |> SELECT metric) SELECT * FROM s",
+        )) {
+            for (target in listOf("doris", "trino", "duckdb")) {
+                val result = SqlFragment(source, "duckdb").toExecutable(target)
+                assertTrue(SqlVerifiers.forEngine(target)!!.verify(result.sql).accepted, result.sql)
+                if (target == "duckdb") {
+                    java.sql.DriverManager.getConnection("jdbc:duckdb:").use { connection ->
+                        connection.createStatement().use { statement ->
+                            statement.executeQuery(result.sql).use { rows ->
+                                assertTrue(rows.next())
+                                assertEquals(1, rows.getInt("metric"))
+                                assertFalse(rows.next())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // -- registry --------------------------------------------------------------------------
 
     @Test

@@ -100,8 +100,8 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * continues). A non-empty [TranspileResult.unsupportedMessages] means the output
      * is best-effort and should be reviewed / gate-skipped.
      *
-     * [desugarPipes]: when true and the fragment is pipe syntax ([isPipe]), the AST is
-     * desugared to standard syntax (ast/PipeDesugar.kt, on a copy) before generating.
+     * [desugarPipes]: when true, every pipe in the AST, including subqueries and CTEs,
+     * is desugared to standard syntax (ast/PipeDesugar.kt, on a copy) before generating.
      * Real engines don't speak `|>` — when targeting one with a pipe-syntax fragment,
      * pass true (or pre-desugar manually via [toStandardSql]). The default false keeps
      * the historical behavior of rendering the pipe stages verbatim.
@@ -118,7 +118,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         generator.trackSpans = trackSourceMap
         // Qualified call: the boolean param shadows the imported desugarPipes function.
         val tree =
-            if (desugarPipes && isPipe) dev.brikk.house.sql.ast.desugarPipes(ast, copy = true)
+            if (desugarPipes) dev.brikk.house.sql.ast.desugarPipes(ast, copy = true)
             else ast
         val out = generator.generate(tree, copy = true)
         return TranspileResult(
@@ -133,8 +133,8 @@ class SqlFragment(val sql: String, val dialect: String = "") {
     /**
      * One-call "give me the executable SQL and a source map that corresponds to it".
      *
-     * Real engines don't speak pipe syntax, so this ALWAYS desugars pipe fragments
-     * ([isPipe]) to the standard CTE-chain form before generating, and it tracks the
+     * Real engines don't speak pipe syntax, so this ALWAYS desugars pipes at every
+     * nesting level to the standard CTE-chain form before generating, and it tracks the
      * source map by default. The returned [TranspileResult.sql] and
      * [TranspileResult.sourceMap] come from the SAME single generator pass over the
      * SAME (desugared) tree — they can never be from different renderings, so mapped
@@ -516,9 +516,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
 
     /** Copy + desugar pipes + rewrite bound slots into plain table references. */
     private fun prepareTree(tree: Expression, inputs: ShapeCatalog): Expression {
-        var t = tree.copy()
-        if (t is PipeQuery) t = desugarPipes(t, copy = false)
-        return bindSlots(t, inputs)
+        return bindSlots(desugarPipes(tree, copy = true), inputs)
     }
 
     /**
