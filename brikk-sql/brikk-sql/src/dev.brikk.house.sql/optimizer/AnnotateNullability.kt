@@ -11,13 +11,16 @@ import dev.brikk.house.sql.ast.Connector
 import dev.brikk.house.sql.ast.DPipe
 import dev.brikk.house.sql.ast.Exists
 import dev.brikk.house.sql.ast.Expression
+import dev.brikk.house.sql.ast.Except
 import dev.brikk.house.sql.ast.Func
 import dev.brikk.house.sql.ast.Is
+import dev.brikk.house.sql.ast.Intersect
 import dev.brikk.house.sql.ast.Join
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Null
 import dev.brikk.house.sql.ast.Paren
 import dev.brikk.house.sql.ast.Select
+import dev.brikk.house.sql.ast.SetOperation
 import dev.brikk.house.sql.ast.Subquery
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.TryCast
@@ -58,9 +61,11 @@ import dev.brikk.house.sql.metadata.NullPropagation
 /** Result of [annotateNullability]: a sidecar mapping from AST node -> tri-state nullability. */
 class NullabilityResult internal constructor(
     private val map: java.util.IdentityHashMap<Expression, Boolean>,
+    private val outputs: java.util.IdentityHashMap<Expression, List<Pair<String, Boolean?>>>,
 ) {
     /** Tri-state: true (nullable) / false (not null) / null (unknown). */
     fun nullableOf(expression: Expression): Boolean? = map[expression]
+    internal fun nullableOfOutput(query: Expression, index: Int): Boolean? = outputs[query]?.getOrNull(index)?.second
 }
 
 /**
@@ -96,7 +101,7 @@ fun annotateNullability(
     } else {
         for (scope in scopes) pass.visitScope(scope)
     }
-    return NullabilityResult(pass.map)
+    return NullabilityResult(pass.map, pass.scopeOutputs)
 }
 
 private class NullabilityAnnotator(
@@ -105,11 +110,10 @@ private class NullabilityAnnotator(
 ) {
     val map = java.util.IdentityHashMap<Expression, Boolean>()
 
-    // Per-scope output-column nullability: scope identity -> {aliasOrName -> verdict}.
+    // Ordered output verdicts retain unknowns and duplicate aliases for positional set operations.
     // Populated as each scope is finished so downstream scopes can resolve column refs
     // into upstream (CTE/derived-table) projections.
-    private val scopeOutputs =
-        java.util.IdentityHashMap<Scope, Map<String, Boolean>>()
+    val scopeOutputs = java.util.IdentityHashMap<Expression, List<Pair<String, Boolean?>>>()
     private val nullSupplyingSources = java.util.IdentityHashMap<Scope, Set<String>>()
 
     private var currentScope: Scope? = null
@@ -127,11 +131,41 @@ private class NullabilityAnnotator(
         val nodes = scope.walk().toList()
         for (node in nodes.asReversed()) visit(node)
 
-        val outputs = LinkedHashMap<String, Boolean>()
-        for (sel in scope.expression.selects) {
-            get(sel)?.let { outputs[sel.aliasOrName] = it }
+        val outputs = mutableListOf<Pair<String, Boolean?>>()
+        val setop = scope.expression as? SetOperation
+        if (setop != null) {
+            val left = setop.left.unnest()
+            val right = setop.right.unnest()
+            val leftOutputs = scopeOutputs[left].orEmpty()
+            val rightOutputs = scopeOutputs[right].orEmpty()
+            val leftNames = leftOutputs.map { it.first }
+            val rightNames = rightOutputs.map { it.first }
+            for ((name, l, r) in setOperationColumnPairs(setop, leftNames, rightNames)) {
+                val lv = if (l != null) leftOutputs[l].second
+                    else if (setop.args["by_name"] == true && "*" !in leftNames) true else null
+                val rv = if (r != null) rightOutputs[r].second
+                    else if (setop.args["by_name"] == true && "*" !in rightNames) true else null
+                val verdict = when (setop) {
+                    is Except -> lv
+                    is Intersect -> when {
+                        lv == false || rv == false -> false
+                        lv == true && rv == true -> true
+                        else -> null
+                    }
+                    else -> when {
+                        lv == true || rv == true -> true
+                        lv == false && rv == false -> false
+                        else -> null
+                    }
+                }
+                outputs.add(name to verdict)
+            }
+        } else {
+            for (sel in scope.expression.selects) {
+                outputs.add(sel.aliasOrName to get(sel))
+            }
         }
-        scopeOutputs[scope] = outputs
+        scopeOutputs[scope.expression] = outputs
         currentScope = null
     }
 
@@ -282,11 +316,8 @@ private class NullabilityAnnotator(
                     is Scope -> {
                         val d = Dialects.forName(dialect.name)
                         val wanted = normalizeName(column.name, dialect = d).name
-                        val outputs = scopeOutputs[source] ?: return null
-                        for ((colName, verdict) in outputs) {
-                            if (normalizeName(colName, dialect = d).name == wanted) return verdict
-                        }
-                        return null
+                        val outputs = scopeOutputs[source.expression] ?: return null
+                        return outputs.singleOrNull { (name, _) -> normalizeName(name, dialect = d).name == wanted }?.second
                     }
                     else -> s = s.parent
                 }

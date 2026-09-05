@@ -67,6 +67,16 @@ exceptions today:
 - **What:** `shape/` package — `SqlFragment`, `Shape`, contracts, slot detection. No
   sqlglot counterpart; consumes only parity-verified primitives.
 - **Conflict risk:** none directly; it inherits behavior changes from everything above.
+- **ASTRA-004:** output contracts reconcile set-operation columns recursively rather
+  than reading types/nullability from the left SELECT. Ordered summaries retain
+  duplicate positional names and unknown verdicts. UNION combines nullable inputs,
+  INTERSECT is non-null when either input excludes nulls, and EXCEPT retains the left
+  verdict. BY NAME aligns columns, null-pads missing inputs, and honors INNER/LEFT/ON
+  output selection. This also corrects the core type annotator's nested alias handling
+  and BY NAME scope names, with no changes to generated SQL or corpus ledgers.
+  `SqlFragmentTest`, `NullabilityTest`, and the compiler's generated getter checks
+  cover these contracts. These are analysis/compiler regressions, not engine-result
+  equivalence claims; existing type-coercion rules still bound numeric inference.
 
 ## 5. Native pipe nodes in serde
 

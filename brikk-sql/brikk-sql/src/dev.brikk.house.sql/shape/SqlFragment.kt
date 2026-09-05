@@ -6,6 +6,7 @@ import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.Func
 import dev.brikk.house.sql.ast.sqlNames
 import dev.brikk.house.sql.ast.DataType
+import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.Parameter
@@ -19,12 +20,13 @@ import dev.brikk.house.sql.ast.Subquery
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.ast.desugarPipes
+import dev.brikk.house.sql.ast.intoExpr
 import dev.brikk.house.sql.dialects.Dialect
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.optimizer.MappingSchema
 import dev.brikk.house.sql.optimizer.Node
+import dev.brikk.house.sql.optimizer.TypeAnnotator
 import dev.brikk.house.sql.optimizer.annotateNullability
-import dev.brikk.house.sql.optimizer.annotateTypes
 import dev.brikk.house.sql.optimizer.lineage
 import dev.brikk.house.sql.optimizer.lineageAll
 import dev.brikk.house.sql.optimizer.nestedSet
@@ -393,16 +395,28 @@ class SqlFragment(val sql: String, val dialect: String = "") {
             schema = schema,
             validateQualifyColumns = false,
         )
-        val annotated = annotateTypes(
-            qualified,
+        val typeAnnotator = TypeAnnotator(
             schema = schema,
-            dialect = dialectObj,
             expressionMetadata = dialectObj.expressionMetadata + SHAPE_LAYER_TYPING,
         )
+        val annotated = typeAnnotator.annotate(qualified)
         // brikk-native: nullability lives in a sidecar (keyed by node identity), NOT in
         // node meta — the annotated-serde gates compare our Serde dumps exact-equal, so
         // an extra meta key would fail them. See AnnotateNullability.kt.
         val nullability = annotateNullability(annotated, inputs = inputs, dialect = dialectObj)
+        val query = annotated.unnest()
+        if (query is SetOperation) {
+            val columns = typeAnnotator.getSetopColumns(query)
+            if (columns.isEmpty()) throw ShapeError("Cannot reconcile set-operation output columns")
+            return Shape(columns.mapIndexed { index, (name, type) ->
+                ColumnShape(name, renderType(when (type) {
+                    DType.NULL -> dialectObj.defaultNullType.intoExpr()
+                    is DType -> type.intoExpr()
+                    is Expression -> type
+                    else -> null
+                }), nullable = nullability.nullableOfOutput(query, index))
+            })
+        }
         val selects = outermostSelect(annotated).selects.filterIsInstance<Expression>()
         return Shape(
             selects.map { sel ->

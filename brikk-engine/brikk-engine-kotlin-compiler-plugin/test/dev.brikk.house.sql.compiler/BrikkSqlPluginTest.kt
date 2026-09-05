@@ -91,6 +91,21 @@ class BrikkSqlPluginTest {
         }
     }
 
+    @Test
+    fun `set operations generate reconciled numeric and nullable Kotlin properties`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql
+            fun widened() = Sql.postgres("SELECT 1 AS x UNION ALL SELECT CAST(2147483648 AS BIGINT) AS x")
+            @BrikkSql
+            fun nullableUnion() = Sql.postgres("SELECT 1 AS x UNION ALL SELECT NULL AS x")
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        assertEquals("long", result.classLoader.loadClass("demo.WidenedOut").getMethod("getX").returnType.name)
+        assertEquals("java.lang.Integer", result.classLoader.loadClass("demo.NullableUnionOut").getMethod("getX").returnType.name)
+    }
+
     // ------------------------------------------------------------------ schema file resolution
     //
     // The IDE runs the plugin with a working directory that is not the project root, and re-runs

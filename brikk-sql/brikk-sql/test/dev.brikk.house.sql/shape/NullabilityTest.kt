@@ -136,6 +136,21 @@ class NullabilityTest {
         assertEquals(true, singleNullable("SELECT b.x FROM a LEFT JOIN b ON a.x = b.x", unknownCatalog, "postgres"))
     }
 
+    @Test
+    fun setOperationsKeepUnknownNullabilityConservative() {
+        val catalog = ShapeCatalog(tables = mapOf("t" to Shape.of("x" to "INT")))
+        for ((sql, expected) in listOf(
+            "SELECT x FROM t UNION SELECT 1 AS x" to null,
+            "SELECT x FROM t UNION SELECT NULL AS x" to true,
+            "SELECT x FROM t INTERSECT SELECT 1 AS x" to false,
+            "SELECT x FROM t INTERSECT SELECT NULL AS x" to null,
+            "SELECT x FROM t EXCEPT SELECT 1 AS x" to null,
+        )) {
+            assertEquals(expected, singleNullable(sql, catalog, "postgres"), sql)
+            assertEquals(expected, singleNullable("WITH s AS ($sql) SELECT x FROM s", catalog, "postgres"), sql)
+        }
+    }
+
     // ------------------------------------------------------------------ COALESCE
 
     @Test

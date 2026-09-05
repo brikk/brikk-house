@@ -58,6 +58,26 @@ import dev.brikk.house.sql.dialects.Dialects
 // sqlglot: helper.seq_get
 private fun <T> seqGet(seq: List<T>?, index: Int): T? = seq?.getOrNull(index)
 
+/** Column alignment shared by type and nullability summaries of a set operation. */
+internal fun setOperationColumnPairs(
+    setop: SetOperation, left: List<String>, right: List<String>,
+): List<Triple<String, Int?, Int?>> {
+    if (setop.args["by_name"] != true) {
+        if (left.size != right.size) {
+            if ("*" !in left && "*" !in right) return emptyList()
+            return left.mapIndexed { i, name -> Triple(name, i, null) }
+        }
+        return left.mapIndexed { i, name -> Triple(name, i, i) }
+    }
+    val on = (setop.args["on"] as? List<*>)?.filterIsInstance<Expression>()?.map { it.name }
+    val names = on ?: when {
+        setop.text("kind").equals("INNER", ignoreCase = true) -> left.filter { it in right }
+        setop.text("side").equals("LEFT", ignoreCase = true) -> left
+        else -> (left + right).distinct()
+    }
+    return names.map { name -> Triple(name, left.indexOf(name).takeIf { it >= 0 }, right.indexOf(name).takeIf { it >= 0 }) }
+}
+
 /** Python truthiness for arg values (None/False/""/empty list are falsy). */
 private fun truthy(value: Any?): Boolean = when (value) {
     null, false, "" -> false
@@ -220,7 +240,7 @@ class TypeAnnotator(
     private val supportsNullType = dialect.supportsNullType
 
     // Maps a SetOperation's id (e.g. UNION) to its projection types
-    private val setopColumnTypes = HashMap<Long, Map<String, Any>>()
+    private val setopColumnTypes = HashMap<Long, List<Pair<String, Any>>>()
 
     // Maps (Scope, source_name) to its column projections and types
     private val scopeSourceSelects = HashMap<Pair<Scope, String>, Map<String, Any>>()
@@ -407,10 +427,7 @@ class TypeAnnotator(
                         }
                         result = map
                     }
-                } else if (
-                    expression is SetOperation &&
-                    expression.left.selects.size == expression.right.selects.size
-                ) {
+                } else if (expression is SetOperation) {
                     result = getSetopColumnTypes(expression)
                 } else if (expression is dev.brikk.house.sql.ast.Selectable) {
                     val map = LinkedHashMap<String, Any>()
@@ -510,6 +527,8 @@ class TypeAnnotator(
         // Iterate through all the expressions of the current scope in post-order, and annotate
         annotateExpression(scope.expression, scope)
         fixupOrderByAliases(scope)
+        // Cache reconciled types before NULL placeholders become dialect defaults.
+        (scope.expression as? SetOperation)?.let { getSetopColumns(it) }
 
         if (dialect.queryResultsAreStructs && scope.expression is Query) {
             val structType = DataType(
@@ -1026,45 +1045,30 @@ class TypeAnnotator(
     }
 
     // sqlglot: TypeAnnotator._get_setop_column_types
-    private fun getSetopColumnTypes(setop: SetOperation): Map<String, Any> {
+    private fun getSetopColumnTypes(setop: SetOperation): Map<String, Any> = getSetopColumns(setop).toMap()
+
+    internal fun getSetopColumns(setop: SetOperation): List<Pair<String, Any>> {
         val setopId = setop.objectId
         setopColumnTypes[setopId]?.let { return it }
 
-        val colTypes = LinkedHashMap<String, Any>()
+        val colTypes = mutableListOf<Pair<String, Any>>()
 
-        // Validate that left and right have same number of projections
-        if (
-            setop.left.selects.isEmpty() ||
-            setop.right.selects.isEmpty() ||
-            setop.left.selects.size != setop.right.selects.size
-        ) {
-            return colTypes
+        fun branchTypes(branch: Expression): List<Pair<String, Any?>> {
+            val query = branch.unnest()
+            return if (query is SetOperation) getSetopColumns(query)
+                else query.selects.map { it.aliasOrName to it.type }
         }
-
-        // Process a chain / sub-tree of set operations
-        for (setOp in setop.walk(prune = { it !is SetOperation && it !is Subquery })) {
-            if (setOp !is SetOperation) continue
-
-            val setopCols = LinkedHashMap<String, Any>()
-            if (truthy(setOp.args["by_name"])) {
-                val rTypeBySelect = HashMap<String, Expression?>()
-                for (s in setOp.right.selects) rTypeBySelect[s.aliasOrName] = s.type
-                for (s in setOp.left.selects) {
-                    setopCols[s.aliasOrName] = maybeCoerce(
-                        s.type,
-                        rTypeBySelect[s.aliasOrName] ?: DType.UNKNOWN,
-                    )
-                }
-            } else {
-                for ((ls, rs) in setOp.left.selects.zip(setOp.right.selects)) {
-                    setopCols[ls.aliasOrName] = maybeCoerce(ls.type, rs.type)
-                }
-            }
-
-            // Coerce intermediate results with the previously registered types
-            for ((colName, colType) in setopCols) {
-                colTypes[colName] = maybeCoerce(colType, colTypes[colName] ?: DType.NULL)
-            }
+        val left = branchTypes(setop.left)
+        val right = branchTypes(setop.right)
+        // brikk extension (ASTRA-004): reconcile children before moving to the parent. Flattening
+        // a whole subtree by alias loses types when nested branches rename columns.
+        for ((name, l, r) in setOperationColumnPairs(setop, left.map { it.first }, right.map { it.first })) {
+            val missingLeft = if (setop.args["by_name"] == true && left.none { it.first == "*" }) DType.NULL else DType.UNKNOWN
+            val missingRight = if (setop.args["by_name"] == true && right.none { it.first == "*" }) DType.NULL else DType.UNKNOWN
+            colTypes.add(name to maybeCoerce(
+                if (l == null) missingLeft else left[l].second ?: DType.UNKNOWN,
+                if (r == null) missingRight else right[r].second ?: DType.UNKNOWN,
+            ))
         }
 
         setopColumnTypes[setopId] = colTypes

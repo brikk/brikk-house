@@ -50,6 +50,67 @@ class SqlFragmentTest {
     }
 
     @Test
+    fun setOperationShapesReconcileTypesAndNullability() {
+        for ((sql, type, nullable) in listOf(
+            Triple("SELECT 1 AS x UNION ALL SELECT CAST(2147483648 AS BIGINT) AS y", "BIGINT", false),
+            Triple("SELECT 1 AS x UNION ALL SELECT NULL AS y", "INT", true),
+            Triple("SELECT NULL AS x INTERSECT SELECT 1 AS y", "INT", false),
+            Triple("SELECT NULL AS x EXCEPT SELECT 1 AS y", "INT", true),
+            Triple("SELECT 1 AS x EXCEPT SELECT NULL AS y", "INT", false),
+            Triple("SELECT 1 AS x UNION ALL (SELECT 2 AS y UNION ALL SELECT CAST(2147483648 AS BIGINT) AS z)", "BIGINT", false),
+            Triple("SELECT 1 AS x UNION ALL (SELECT 2 AS y UNION ALL SELECT NULL AS z)", "INT", true),
+        )) {
+            val expected = Shape(listOf(ColumnShape("x", type, nullable = nullable)))
+            assertEquals(expected, SqlFragment(sql, "duckdb").outputShape(), sql)
+            assertEquals(expected, SqlFragment("SELECT x FROM ($sql) AS s", "duckdb").outputShape(), "derived: $sql")
+        }
+    }
+
+    @Test
+    fun unionByNameMatchesNamesAndNullPadsMissingColumns() {
+        for ((sql, expected) in listOf(
+            "SELECT 1 AS x, 2 AS y UNION ALL BY NAME SELECT NULL AS y, CAST(2147483648 AS BIGINT) AS x" to
+                listOf(ColumnShape("x", "BIGINT", nullable = false), ColumnShape("y", "INT", nullable = true)),
+            "SELECT 1 AS x UNION ALL BY NAME SELECT CAST(2147483648 AS BIGINT) AS y" to
+                listOf(ColumnShape("x", "INT", nullable = true), ColumnShape("y", "BIGINT", nullable = true)),
+            "SELECT 1 AS x UNION ALL BY NAME SELECT 2 AS x, 3 AS y" to
+                listOf(ColumnShape("x", "INT", nullable = false), ColumnShape("y", "INT", nullable = true)),
+        )) {
+            assertEquals(Shape(expected), SqlFragment(sql, "duckdb").outputShape(), sql)
+            assertEquals(Shape(expected), SqlFragment("SELECT * FROM ($sql) AS s", "duckdb").outputShape(), "derived: $sql")
+        }
+    }
+
+    @Test
+    fun positionalSetOperationsKeepDuplicateAliasesAndUnknownStars() {
+        assertEquals(Shape(listOf(ColumnShape("x", "INT", false), ColumnShape("x", "INT", false))),
+            SqlFragment("SELECT 1 AS x, 2 AS x UNION ALL SELECT 3 AS a, 4 AS b", "duckdb").outputShape())
+        assertEquals(Shape(listOf(ColumnShape("a", "INT", false), ColumnShape("b", "BIGINT", false))),
+            SqlFragment("SELECT 1 AS a, 2 AS b UNION ALL (SELECT 3 AS z, 4 AS z " +
+                "UNION ALL SELECT 5 AS p, CAST(2147483648 AS BIGINT) AS q)", "duckdb").outputShape())
+        val sql = "SELECT CAST(NULL AS INT) AS x, 1 AS y INTERSECT SELECT CAST(NULL AS INT) AS z, 1 AS z"
+        val expected = Shape(listOf(ColumnShape("x", "INT", true), ColumnShape("y", "INT", false)))
+        assertEquals(expected, SqlFragment(sql, "duckdb").outputShape())
+        assertEquals(expected, SqlFragment("SELECT * FROM ($sql) AS s", "duckdb").outputShape())
+        assertEquals(Shape.of("x" to "UNKNOWN", "y" to "UNKNOWN"),
+            SqlFragment("SELECT 1 AS x, 2 AS y UNION ALL SELECT * FROM t", "duckdb").outputShape())
+    }
+
+    @Test
+    fun byNameModifiersPreserveOutputSubsetAndOrder() {
+        for ((operator, expected) in listOf(
+            "INNER UNION ALL BY NAME" to listOf(ColumnShape("y", "BIGINT", false)),
+            "LEFT OUTER UNION ALL BY NAME" to listOf(ColumnShape("x", "INT", true), ColumnShape("y", "BIGINT", false)),
+            "FULL OUTER UNION ALL BY NAME ON (z, y, x)" to
+                listOf(ColumnShape("z", "INT", true), ColumnShape("y", "BIGINT", false), ColumnShape("x", "INT", true)),
+        )) {
+            val sql = "SELECT 1 AS x, 2 AS y $operator SELECT CAST(3 AS BIGINT) AS y, 4 AS z"
+            assertEquals(Shape(expected), SqlFragment(sql, "bigquery").outputShape(), sql)
+            assertEquals(Shape(expected), SqlFragment("SELECT * FROM ($sql) AS s", "bigquery").outputShape(), "derived: $sql")
+        }
+    }
+
+    @Test
     fun stringFunctionShapeCrossChecked() {
         val catalog = ShapeCatalog(
             tables = mapOf("people" to Shape.of("first_name" to "TEXT", "last_name" to "TEXT")),
