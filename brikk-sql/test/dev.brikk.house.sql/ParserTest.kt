@@ -18,8 +18,12 @@ import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.Union
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.With
+import dev.brikk.house.sql.dialects.Dialects
+import dev.brikk.house.sql.dialects.UnknownDialectException
 import dev.brikk.house.sql.dialects.sql
+import dev.brikk.house.sql.dialects.transpile
 import dev.brikk.house.sql.parser.ParseError
+import dev.brikk.house.sql.parser.TokenizerConfigs
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -66,6 +70,29 @@ class ParserTest {
     @Test
     fun grantWithoutPrivilegesRaisesParseError() {
         assertFailsWith<ParseError> { parseOne("GRANT ON TABLE tbl TO bob") }
+    }
+
+    /** EVAL-07: every entry point rejects unknown dialect names the same way — no base fallback. */
+    @Test
+    fun unknownDialectIsRejectedConsistentlyByEveryEntryPoint() {
+        for (bad in listOf("snowflake", "postgress", "tsql", "SQL Server")) {
+            val e1 = assertFailsWith<UnknownDialectException>("parseOne($bad)") { parseOne("SELECT 1", bad) }
+            assertEquals(bad, e1.dialectName)
+            assertFailsWith<UnknownDialectException>("transpile(read=$bad)") { transpile("SELECT 1", read = bad) }
+            assertFailsWith<UnknownDialectException>("transpile(write=$bad)") { transpile("SELECT 1", write = bad) }
+            assertFailsWith<UnknownDialectException>("sql($bad)") { parseOne("SELECT 1").sql(bad) }
+            assertFailsWith<UnknownDialectException>("TokenizerConfigs($bad)") { TokenizerConfigs.forName(bad) }
+            assertEquals(null, Dialects.forNameOrNull(bad))
+        }
+        // The message lists what IS accepted, and every listed name resolves.
+        val message = assertFailsWith<UnknownDialectException> { parseOne("SELECT 1", "nope") }.message!!
+        for (name in Dialects.NAMES) {
+            assertNotNull(Dialects.forNameOrNull(name), "NAMES entry '$name' must resolve")
+            assertEquals(true, name in message, "message should list '$name'")
+        }
+        // Case/whitespace-insensitive aliases keep working.
+        assertEquals("SELECT 1", parseOne("SELECT 1", " PostgreSQL ").sql())
+        assertEquals("SELECT 1", transpile("SELECT 1", read = "SparkSQL", write = "Arrow-DataFusion"))
     }
 
     @Test

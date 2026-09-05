@@ -21,9 +21,11 @@ import kotlinx.serialization.json.jsonPrimitive
  *  - write direction (`write`): parse `sql` under <dialect>, generate under the write
  *    dialect, expect the recorded output — or an UnsupportedError marker.
  *
- * Directions whose dialect is not registered are counted and printed as skipped (not
- * failures). Genuine failures must match dialect-corpus/<dialect>-transpile-known-failures.json
- * — no unledgered failure, no stale ledger entry (see [LedgerGate]).
+ * Direction names resolve through [CorpusDialects]: out-of-scope dialects are counted and
+ * printed as skipped; version-qualified in-scope names (`"postgres, version=16"`) run under
+ * the base dialect; anything else unresolvable fails the gate. Genuine failures must match
+ * dialect-corpus/<dialect>-transpile-known-failures.json — no unledgered failure, no stale
+ * ledger entry (see [LedgerGate]).
  *
  * Each dialect gets a concrete subclass (one line) so gates stay individually addressable
  * via `--include-classes` and report per-dialect in test output.
@@ -49,7 +51,8 @@ abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
 
             // read direction: parseOne(read_sql, read_dialect).sql(dialect) == sql
             for ((readDialect, readValue) in (case["read"] as? JsonObject ?: emptyMap<String, JsonElement>())) {
-                if (Dialects.forNameOrNull(readDialect) == null) {
+                val reader = CorpusDialects.resolveOrSkip(readDialect)
+                if (reader == null) {
                     skippedUnavailable += 1
                     continue
                 }
@@ -57,7 +60,7 @@ abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
                 val key = "read|$readDialect|$sql"
                 ran += 1
                 val result = runCatching {
-                    Dialects.forName(dialect).generate(Dialects.forName(readDialect).parseOne(readSql))
+                    Dialects.forName(dialect).generate(reader.parseOne(readSql))
                 }
                 val actual = result.getOrNull()
                 if (actual == sql) {
@@ -71,7 +74,8 @@ abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
 
             // write direction: parseOne(sql, dialect) generated under write dialect
             for ((writeDialect, writeValue) in (case["write"] as? JsonObject ?: emptyMap<String, JsonElement>())) {
-                if (Dialects.forNameOrNull(writeDialect) == null) {
+                val writer = CorpusDialects.resolveOrSkip(writeDialect)
+                if (writer == null) {
                     skippedUnavailable += 1
                     continue
                 }
@@ -81,7 +85,7 @@ abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
                 val expectsError = writeValue is JsonObject &&
                     (writeValue["error"] as? JsonPrimitive)?.content == "UnsupportedError"
 
-                val generator = Dialects.forName(writeDialect).generator(pretty = pretty)
+                val generator = writer.generator(pretty = pretty)
                 val result = runCatching {
                     generator.generate(Dialects.forName(dialect).parseOne(sql))
                 }
@@ -110,7 +114,7 @@ abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
             ledger = ledger,
             failures = failures,
             summary = "${javaClass.simpleName}: $passedCount pass / ${failures.size} ledgered (of $ran run), " +
-                "$skippedUnavailable directions skipped (unavailable dialect)",
+                "$skippedUnavailable directions skipped (out-of-scope dialect)",
             actualLedgerName = "$dialect-transpile-ledger-actual.json",
             caseKey = "case",
         )

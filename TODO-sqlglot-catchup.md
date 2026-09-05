@@ -56,7 +56,9 @@ canonicalization, and full simplification passes.
 ## Durable Rules
 
 - Treat `reference/sqlglot` as the behavioral oracle at the target pin.
-- Regenerate source metadata and corpora after every pin change.
+- Regenerate source metadata and corpora after every pin change, and bump
+  `SQLGLOT_PIN` in `brikk-sql/test@jvm/.../FixturePinSyncTest.kt` — that test
+  fails if any fixture's `sqlglot_version` stamp disagrees with the pin.
 - Remove passing entries from exact known-failure ledgers; never mask new gaps.
 - Preserve verifier-backed intentional divergences registered in
   `docs/brikk-extensions.md`.
