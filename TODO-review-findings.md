@@ -2,7 +2,8 @@
 
 Review of the compiler-plugin work at `d9d3970`, using
 [review guide](docs/REVIEW-compiler-plugin.md) and its `d3df965..d9d3970` scope.
-Reviewed on 2026-09-05. No fixes have been applied.
+Reviewed on 2026-09-05. Original reproductions are retained below; checked items
+include resolution notes and regression coverage.
 
 Relocation note: the runtime/compiler/tooling/smoke modules now live under
 [Brikk Engine](brikk-engine/README.md), and generic SQL lives under `brikk-sql/`.
@@ -18,7 +19,12 @@ R15 is based on static tracing. The temporary tests were removed after the revie
 
 ### R1. Namespace bindings by relation node
 
-- [ ] **P1** Fix bindings from different stages overwriting each other.
+- [x] **P1** Fix bindings from different stages overwriting each other.
+
+Resolved: colliding parameter names receive deterministic per-node keys, reserved
+case-insensitively. SQL placeholders and `bindings()` use the same mapping;
+unbound placeholders cannot borrow another node's value. `RelTest` covers chained
+and independent inputs, existing generated-looking names, and case-folding.
 
 Location: [Rel.kt:45-48](brikk-engine/brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/Rel.kt#L45-L48).
 
@@ -39,7 +45,11 @@ Both placeholder names and binding keys need matching per-node namespacing.
 
 ### R2. Preserve qualified slot references
 
-- [ ] **P1** Fix slot replacement breaking qualified column references.
+- [x] **P1** Fix slot replacement breaking qualified column references.
+
+Resolved: slot replacement retains explicit aliases or adds the original slot
+name with its original quoting. `RelTest` executes qualified and two-input pipe
+joins in embedded DuckDB and checks PostgreSQL alias quoting.
 
 Location: [Rel.kt:79-82](brikk-engine/brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/Rel.kt#L79-L82).
 
@@ -126,7 +136,11 @@ generated classes.
 
 ### R7. Avoid capture by user-defined CTEs
 
-- [ ] **P2** Allocate generated CTE names without colliding with fragment names.
+- [x] **P2** Allocate generated CTE names without colliding with fragment names.
+
+Resolved: generated CTE names avoid identifiers in all lowered fragments.
+`RelTest` executes inner-CTE and physical-table collision cases in embedded
+DuckDB. Shared graph nodes remain shared, and cyclic inputs fail explicitly.
 
 Location: [Rel.kt:59-60](brikk-engine/brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/Rel.kt#L59-L60).
 

@@ -10,6 +10,12 @@ apply:
 dependencies:
   - ../../brikk-sql/brikk-sql: exported
 
+test-dependencies:
+  - org.duckdb:duckdb_jdbc:1.5.5.0
+
 settings:
+  jvm:
+    test:
+      freeJvmArgs: ["--enable-native-access=ALL-UNNAMED"]
   kotlin:
     version: 2.4.10
