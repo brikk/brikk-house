@@ -14,7 +14,7 @@
         },
         {
             "case": "write|bigquery|EDIT_DISTANCE(col1, col2, max_distance => 3)",
-            "reason": "expected `EDIT_DISTANCE(col1, col2, max_distance => 3)` actual `LEVENSHTEIN(col1, col2, 3)`"
+            "reason": "expected `EDIT_DISTANCE(col1, col2, max_distance => 3)` actual `EDIT_DISTANCE(col1, col2, 3)`"
         },
         {
             "case": "write|duckdb|EDIT_DISTANCE(col1, col2, max_distance => 3)",
@@ -99,22 +99,6 @@
         {
             "case": "write|duckdb|SELECT TIME(15, 30, 00)",
             "reason": "expected `SELECT MAKE_TIME(15, 30, 00)` actual `SELECT TIME_FROM_PARTS(15, 30, 00)`"
-        },
-        {
-            "case": "write|duckdb|SELECT TIME('2008-12-25 15:30:00')",
-            "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIME)` actual `SELECT TS_OR_DS_TO_TIME('2008-12-25 15:30:00')`"
-        },
-        {
-            "case": "write|mysql|SELECT TIME('2008-12-25 15:30:00')",
-            "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIME)` actual `SELECT TS_OR_DS_TO_TIME('2008-12-25 15:30:00')`"
-        },
-        {
-            "case": "write|postgres|SELECT TIME('2008-12-25 15:30:00')",
-            "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIME)` actual `SELECT TS_OR_DS_TO_TIME('2008-12-25 15:30:00')`"
-        },
-        {
-            "case": "write|spark|SELECT TIME('2008-12-25 15:30:00')",
-            "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIMESTAMP)` actual `SELECT TS_OR_DS_TO_TIME('2008-12-25 15:30:00')`"
         },
         {
             "case": "write|bigquery|SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0), minute)",
@@ -222,7 +206,7 @@
         },
         {
             "case": "read|clickhouse|SHA256(x)",
-            "reason": "expected `SHA256(x)` actual `SHA2(x, 256)`"
+            "reason": "expected `SHA256(x)` actual `SHA256(x, 256)`"
         },
         {
             "case": "read|presto|SHA256(x)",
@@ -242,11 +226,11 @@
         },
         {
             "case": "write|bigquery|SHA256(x)",
-            "reason": "expected `SHA256(x)` actual `S_H_A2_DIGEST(x, 256)`"
+            "reason": "expected `SHA256(x)` actual `SHA256(x, 256)`"
         },
         {
             "case": "read|clickhouse|SHA512(x)",
-            "reason": "expected `SHA512(x)` actual `SHA2(x, 512)`"
+            "reason": "expected `SHA512(x)` actual `SHA512(x, 512)`"
         },
         {
             "case": "read|presto|SHA512(x)",
@@ -258,7 +242,7 @@
         },
         {
             "case": "write|bigquery|SHA512(x)",
-            "reason": "expected `SHA512(x)` actual `S_H_A2_DIGEST(x, 512)`"
+            "reason": "expected `SHA512(x)` actual `SHA512(x, 512)`"
         },
         {
             "case": "read|spark|WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(arr)) - 1)) AS pos CROSS JOIN UNNEST(arr) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(arr) - 1) AND pos_2 = (ARRAY_LENGTH(arr) - 1))",
@@ -325,10 +309,6 @@
             "reason": "expected `SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL` actual `SELECT `u`.`user_email` AS `user_email`, `_q_0`.`d`.`user_id` AS `user_id`, `_q_1`.`account_id` AS `account_id` FROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `_q_0`, UNNEST(`_q_0`.`d`.`account_ids`) AS `_q_1` WHERE NOT `_q_1`.`account_id` IS NULL`"
         },
         {
-            "case": "write|duckdb|SELECT DATETIME('2020-01-01')",
-            "reason": "expected `SELECT CAST('2020-01-01' AS TIMESTAMP)` actual `SELECT TS_OR_DS_TO_DATETIME('2020-01-01')`"
-        },
-        {
             "case": "write|duckdb|SELECT DATETIME('2020-01-01', TIME '23:59:59')",
             "reason": "expected `SELECT CAST(CAST('2020-01-01' AS DATE) + CAST('23:59:59' AS TIME) AS TIMESTAMP)` actual `SELECT DATETIME('2020-01-01')`"
         },
@@ -374,31 +354,31 @@
         },
         {
             "case": "write|hive|SAFE_DIVIDE(x, y)",
-            "reason": "expected `IF(y <> 0, x / y, NULL)` actual `SAFE_DIVIDE(x, y)`"
+            "reason": "expected `IF(y <> 0, x / y, NULL)` actual `CASE WHEN y <> 0 THEN x / y ELSE NULL END`"
         },
         {
             "case": "write|duckdb|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `CASE WHEN (2 * y) <> 0 THEN (x + 1) / (2 * y) ELSE NULL END` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+            "reason": "expected `CASE WHEN (2 * y) <> 0 THEN (x + 1) / (2 * y) ELSE NULL END` actual `CASE WHEN 2 * y <> 0 THEN x + 1 / 2 * y ELSE NULL END`"
         },
         {
             "case": "write|presto|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `IF((2 * y) <> 0, CAST((x + 1) AS DOUBLE) / (2 * y), NULL)` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+            "reason": "expected `IF((2 * y) <> 0, CAST((x + 1) AS DOUBLE) / (2 * y), NULL)` actual `IF(2 * y <> 0, CAST(x + 1 AS DOUBLE) / 2 * y, NULL)`"
         },
         {
             "case": "write|trino|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `IF((2 * y) <> 0, CAST((x + 1) AS DOUBLE) / (2 * y), NULL)` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+            "reason": "expected `IF((2 * y) <> 0, CAST((x + 1) AS DOUBLE) / (2 * y), NULL)` actual `IF(2 * y <> 0, CAST(x + 1 AS DOUBLE) / 2 * y, NULL)`"
         },
         {
             "case": "write|hive|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `IF((2 * y) <> 0, (x + 1) / (2 * y), NULL)` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+            "reason": "expected `IF((2 * y) <> 0, (x + 1) / (2 * y), NULL)` actual `CASE WHEN 2 * y <> 0 THEN x + 1 / 2 * y ELSE NULL END`"
         },
         {
             "case": "write|spark2|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `IF((2 * y) <> 0, (x + 1) / (2 * y), NULL)` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+            "reason": "expected `IF((2 * y) <> 0, (x + 1) / (2 * y), NULL)` actual `IF(2 * y <> 0, x + 1 / 2 * y, NULL)`"
         },
         {
             "case": "write|postgres|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `CASE WHEN (2 * y) <> 0 THEN CAST((x + 1) AS DOUBLE PRECISION) / (2 * y) ELSE NULL END` actual `SAFE_DIVIDE(x + 1, 2 * y)`"
+            "reason": "expected `CASE WHEN (2 * y) <> 0 THEN CAST((x + 1) AS DOUBLE PRECISION) / (2 * y) ELSE NULL END` actual `CASE WHEN 2 * y <> 0 THEN CAST(x + 1 AS DOUBLE PRECISION) / 2 * y ELSE NULL END`"
         },
         {
             "case": "write|duckdb|SELECT JSON_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')",
@@ -593,26 +573,6 @@
             "reason": "expected `SELECT ARRAY_EXTRACT(REGEXP_EXTRACT_ALL(NULLIF(SUBSTRING(abc, 2), ''), 'pattern(group)', 1), 3) FROM \"table\"` actual `SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 1) FROM \"table\"`"
         },
         {
-            "case": "write|duckdb|SELECT FORMAT_DATETIME('%Y%m%d %H:%M:%S', DATETIME '2023-12-25 15:30:00')",
-            "reason": "expected `SELECT STRFTIME(CAST('2023-12-25 15:30:00' AS TIMESTAMP), '%Y%m%d %H:%M:%S')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2023-12-25 15:30:00' AS TIMESTAMP)), '%Y%m%d %H:%M:%S')`"
-        },
-        {
-            "case": "write|duckdb|SELECT FORMAT_DATETIME('%x', '2023-12-25 15:30:00')",
-            "reason": "expected `SELECT STRFTIME(CAST('2023-12-25 15:30:00' AS TIMESTAMP), '%m/%d/%y')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME('2023-12-25 15:30:00'), '%m/%d/%y')`"
-        },
-        {
-            "case": "write|duckdb|SELECT FORMAT_DATETIME('%F %T', DATETIME '2023-10-15 14:30:45')",
-            "reason": "expected `SELECT STRFTIME(CAST('2023-10-15 14:30:45' AS TIMESTAMP), '%Y-%m-%d %H:%M:%S')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2023-10-15 14:30:45' AS TIMESTAMP)), '%Y-%m-%d %H:%M:%S')`"
-        },
-        {
-            "case": "write|duckdb|SELECT FORMAT_DATETIME('%c', DATETIME '2008-12-25 15:30:00')",
-            "reason": "expected `SELECT STRFTIME(CAST('2008-12-25 15:30:00' AS TIMESTAMP), '%a %b %-d %H:%M:%S %Y')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2008-12-25 15:30:00' AS TIMESTAMP)), '%a %b %-d %H:%M:%S %Y')`"
-        },
-        {
-            "case": "write|duckdb|SELECT FORMAT_DATETIME('%Y-%m-%e', DATETIME '2020-09-09 10:15:30')",
-            "reason": "expected `SELECT STRFTIME(CAST('2020-09-09 10:15:30' AS TIMESTAMP), '%Y-%m-%-d')` actual `SELECT STRFTIME(TS_OR_DS_TO_DATETIME(CAST('2020-09-09 10:15:30' AS TIMESTAMP)), '%Y-%m-%-d')`"
-        },
-        {
             "case": "write|duckdb|SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08')",
             "reason": "expected `SELECT CAST(GENERATE_SERIES(CAST('2016-10-05' AS DATE), CAST('2016-10-08' AS DATE), INTERVAL '1' DAY) AS DATE[])` actual `SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' DAY)`"
         },
@@ -730,7 +690,7 @@
         },
         {
             "case": "write|duckdb|APPROX_QUANTILES(DISTINCT x, 2)",
-            "reason": "expected `APPROX_QUANTILE(DISTINCT x, [0, 0.5, 1])` actual `APPROX_QUANTILES(DISTINCT x, 2)`"
+            "reason": "expected `APPROX_QUANTILE(DISTINCT x, [0, 0.5, 1])` actual `APPROX_QUANTILES(DISTINCT CASE WHEN x IS NULL THEN NULL WHEN 2 IS NULL THEN NULL ELSE (x, 2) END)`"
         },
         {
             "case": "write|spark|SELECT DATETIME_ADD('2023-01-01T00:00:00', INTERVAL 1 MILLISECOND)",

@@ -10691,16 +10691,9 @@ open class Parser(
 
 /**
  * sqlglot: sqlglot.parse_one — tokenize + parse and return the single statement.
- * Routes through the [dev.brikk.house.sql.dialects.Dialects] registry; dialects with
- * tokenizer tables but no Dialect port yet fall back to their tokenizer config on the
- * base parser (the pre-registry behavior).
+ * Routes through the [dev.brikk.house.sql.dialects.Dialects] registry; an unregistered
+ * [dialect] throws [dev.brikk.house.sql.dialects.UnknownDialectException], the same as
+ * [dev.brikk.house.sql.dialects.transpile] (EVAL-07 — there is no silent base-dialect fallback).
  */
-fun parseOne(sql: String, dialect: String = ""): Expression {
-    val registered = dev.brikk.house.sql.dialects.Dialects.forNameOrNull(dialect)
-    if (registered != null) return registered.parseOne(sql)
-
-    val config = TokenizerConfigs.forName(dialect)
-    val tokens = Tokenizer(config).tokenize(sql)
-    val result = Parser(tokenizerConfig = config).parse(tokens, sql)
-    return result.firstOrNull() ?: throw ParseError("No expression was parsed from '$sql'")
-}
+fun parseOne(sql: String, dialect: String = ""): Expression =
+    dev.brikk.house.sql.dialects.Dialects.forName(dialect).parseOne(sql)

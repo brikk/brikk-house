@@ -78,7 +78,7 @@ object PipeStageSplitter {
 
     /**
      * [config] defaults to null, in which case it is resolved from [dialect] via
-     * [TokenizerConfigs.forName] (unknown dialects fall back to the base config).
+     * [TokenizerConfigs.forName] (unknown dialects throw UnknownDialectException).
      * Pass an explicit [config] to override.
      */
     fun split(

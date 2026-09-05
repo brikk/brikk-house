@@ -7,6 +7,9 @@ import kotlin.collections.List
 import kotlin.collections.Map
 import kotlin.collections.MutableList
 import kotlin.collections.MutableMap
+import kotlin.concurrent.atomics.AtomicLong
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.reflect.KClass
 
 /**
@@ -19,8 +22,11 @@ typealias Args = Map<String, kotlin.Any?>
 /** Convenience builder preserving insertion order (mirrors Python kwargs order). */
 fun args(vararg pairs: Pair<String, kotlin.Any?>): Args = linkedMapOf(*pairs)
 
-// Monotonic counter backing Expression.objectId (single-threaded use, like the tests).
-private var nextObjectId: Long = 0L
+// Monotonic counter backing Expression.objectId. Atomic: trees are built concurrently by
+// independent callers of the shared Dialects singletons, and objectId is used as an identity
+// key (id()-keyed optimizer caches), so a racy `++` would hand two nodes the same id (EVAL-02).
+@OptIn(ExperimentalAtomicApi::class)
+private val nextObjectId = AtomicLong(0L)
 
 // sqlglot: expressions/core.py POSITION_META_KEYS
 val POSITION_META_KEYS: kotlin.Array<String> = arrayOf("line", "col", "start", "end")
@@ -87,7 +93,8 @@ abstract class Expression(initArgs: Args = emptyMap()) {
      * id(expression) in TypeAnnotator._visited etc). Content-based hashCode/equals
      * can't serve: annotation mutates nodes in place.
      */
-    val objectId: Long = ++nextObjectId
+    @OptIn(ExperimentalAtomicApi::class)
+    val objectId: Long = nextObjectId.incrementAndFetch()
 
     // sqlglot: Expression._hash_raw_args
     open val hashRawArgs: kotlin.Boolean get() = false
@@ -151,9 +158,9 @@ abstract class Expression(initArgs: Args = emptyMap()) {
         }
 
     /**
-     * sqlglot: Expression.is_type — checks the annotated type slot (`_type`; NOT the
-     * [type] property, so an unannotated Cast does not fall back to its "to" arg,
-     * matching Python). DataType overrides this with structural self-comparison.
+     * sqlglot: Expression.is_type — checks the annotated type slot (`_type`, NOT the
+     * [type] property). DataType overrides this with structural self-comparison and
+     * Cast overrides it to compare its "to" target (sqlglot: Cast.is_type).
      * [dtypes] accepts [DType] and [DataType] values.
      */
     open fun isType(vararg dtypes: kotlin.Any?, checkNullable: kotlin.Boolean = false): kotlin.Boolean {

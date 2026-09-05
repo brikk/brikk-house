@@ -726,9 +726,13 @@ open class DuckdbGenerator(
         )
     }
 
+    // sqlglot: exp.TimeToStr: lambda self, e: self.func("STRFTIME", e.this, self.format_time(e))
+    // A TsOrDsToTimestamp `this` renders via the base tsordstotimestampSql (idempotent CAST).
+    // TODO(EVAL-01 follow-up): DuckDB has no TimeStrToTime registration (Python: timestrtotime_sql),
+    // so that case is still coerced locally here.
     open fun timeToStrSql(expression: TimeToStr): String {
         val thisExpression = expression.thisArg as? Expression
-        val value = if (thisExpression is TsOrDsToTimestamp || thisExpression is TimeStrToTime) {
+        val value = if (thisExpression is TimeStrToTime) {
             Cast(
                 args(
                     "this" to thisExpression.thisArg,

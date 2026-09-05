@@ -1,26 +1,17 @@
 package dev.brikk.house.sql.parser
 
+import dev.brikk.house.sql.dialects.Dialects
+
 /**
- * Registry mapping dialect names to their [TokenizerConfig].
+ * Dialect-name -> [TokenizerConfig] lookup.
  *
- * Unknown dialects fall back to [TokenizerConfig.BASE] for now; the registry
- * grows as each dialect phase lands its generated tables.
+ * Delegates to the [Dialects] registry so there is exactly one list of accepted names.
+ * Unknown names throw [dev.brikk.house.sql.dialects.UnknownDialectException] — they used
+ * to fall back to [TokenizerConfig.BASE], which let typos and non-ported dialects
+ * (`snowflake`, `postgress`, ...) tokenize silently under the wrong rules (EVAL-07).
  */
 object TokenizerConfigs {
-    fun forName(dialect: String): TokenizerConfig = when (dialect.lowercase()) {
-        "", "sqlglot" -> TokenizerConfig.BASE
-        "mysql" -> MysqlTokenizerTables.CONFIG
-        // brikk-native: generated tables + Doris DDL type keywords (see DorisDialect)
-        "doris" -> dev.brikk.house.sql.dialects.DorisDialect.TOKENIZER_CONFIG
-        "presto" -> PrestoTokenizerTables.CONFIG
-        "trino" -> TrinoTokenizerTables.CONFIG
-        "duckdb" -> DuckdbTokenizerTables.CONFIG
-        "postgres", "postgresql" -> PostgresTokenizerTables.CONFIG
-        "clickhouse" -> ClickhouseTokenizerTables.CONFIG
-        "hive" -> HiveTokenizerTables.CONFIG
-        "spark2" -> Spark2TokenizerTables.CONFIG
-        "spark", "sparksql" -> SparkTokenizerTables.CONFIG
-        "bigquery" -> BigqueryTokenizerTables.CONFIG
-        else -> TokenizerConfig.BASE
-    }
+    fun forName(dialect: String): TokenizerConfig = Dialects.forName(dialect).tokenizerConfig
+
+    fun forNameOrNull(dialect: String): TokenizerConfig? = Dialects.forNameOrNull(dialect)?.tokenizerConfig
 }

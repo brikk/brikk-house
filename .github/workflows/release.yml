@@ -6,6 +6,8 @@ name: Release to Maven Central
 # bundles, then waits for you to release them at https://central.sonatype.com/publishing/deployments
 #
 # A manual run (workflow_dispatch) with an explicit version input is also supported.
+#
+# The full test suite (test.yml) must be green first; a red gate blocks the release (EVAL-03).
 
 on:
   push:
@@ -24,16 +26,24 @@ permissions:
   contents: read
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
   release:
+    needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Determine version
         id: ver
+        # The dispatch input is passed through env rather than interpolated into the script,
+        # so a crafted value cannot inject shell (GitHub's script-injection guidance).
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VERSION="${{ github.event.inputs.version }}"
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
           else
             VERSION="${GITHUB_REF_NAME#release/}"
           fi

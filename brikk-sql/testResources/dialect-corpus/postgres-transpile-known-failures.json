@@ -23,6 +23,14 @@
         {
             "case": "write|bigquery|SELECT y, GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b FROM t",
             "reason": "expected `SELECT y, a, b FROM t CROSS JOIN UNNEST(GENERATE_ARRAY(1, 2)) AS a CROSS JOIN UNNEST(GENERATE_ARRAY(11, 13)) AS b` actual `SELECT y, GENERATE_SERIES(1, 2) AS a, GENERATE_SERIES(11, 13) AS b FROM t`"
+        },
+        {
+            "case": "write|postgres, version=15|SELECT ANY_VALUE(1) AS col",
+            "reason": "expected `SELECT MAX(1) AS col` actual `SELECT ANY_VALUE(1) AS col`"
+        },
+        {
+            "case": "write|postgres, version=13.9|SELECT ANY_VALUE(1) AS col",
+            "reason": "expected `SELECT MAX(1) AS col` actual `SELECT ANY_VALUE(1) AS col`"
         }
     ]
 }

@@ -572,6 +572,9 @@ object GeneratorTables {
         reg(HexString::class) { e -> hexstringSql(e as HexString) }
         reg(UsingData::class) { e -> "USING DATA ${sql(e, "this")}" }
         reg(TsOrDsToDate::class) { e -> tsordstodateSql(e as TsOrDsToDate) }
+        reg(TsOrDsToTime::class) { e -> tsordstotimeSql(e as TsOrDsToTime) }
+        reg(TsOrDsToTimestamp::class) { e -> tsordstotimestampSql(e as TsOrDsToTimestamp) }
+        reg(TsOrDsToDatetime::class) { e -> tsordstodatetimeSql(e as TsOrDsToDatetime) }
         reg(PartitionByRangeProperty::class) { e -> partitionbyrangepropertySql(e as PartitionByRangeProperty) }
         reg(AddConstraint::class) { e -> addconstraintSql(e as AddConstraint) }
         reg(AddPartition::class) { e -> addpartitionSql(e as AddPartition) }

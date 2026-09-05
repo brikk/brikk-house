@@ -278,8 +278,21 @@ open class Dialect {
 }
 
 /**
+ * Thrown by every public entry point ([Dialects.forName], [transpile], [Expression.sql],
+ * [dev.brikk.house.sql.parser.parseOne], ...) when a dialect name is not registered. Unknown
+ * names — including non-ported sqlglot dialects such as `snowflake` and typos such as
+ * `postgress` — are always rejected, never silently parsed with the base dialect (EVAL-07).
+ * Subclasses IllegalArgumentException for source compatibility with earlier releases.
+ */
+class UnknownDialectException(val dialectName: String) : IllegalArgumentException(
+    "Unknown dialect: '$dialectName'. Registered dialects: ${Dialects.NAMES.joinToString(", ")}"
+)
+
+/**
  * sqlglot: Dialect registry (Dialect.__getitem__ / get_or_raise). Unknown names
- * raise; use [forNameOrNull] for availability checks.
+ * raise [UnknownDialectException]; use [forNameOrNull] for availability checks.
+ * This is the single source of truth for dialect names — tokenizer-config lookup
+ * ([dev.brikk.house.sql.parser.TokenizerConfigs]) and `parseOne` route through it.
  */
 object Dialects {
     val BASE: Dialect = Dialect()
@@ -318,7 +331,15 @@ object Dialects {
     }
 
     fun forName(name: String): Dialect =
-        forNameOrNull(name) ?: throw IllegalArgumentException("Unknown dialect: '$name'")
+        forNameOrNull(name) ?: throw UnknownDialectException(name)
+
+    /** Every accepted spelling (canonical names first, then aliases), for messages and docs. */
+    val NAMES: List<String> = listOf(
+        "sqlglot", "mysql", "doris", "starrocks", "presto", "trino", "duckdb", "postgres",
+        "clickhouse", "hive", "spark2", "spark", "bigquery", "datafusion",
+        // aliases
+        "postgresql", "sparksql", "arrow-datafusion",
+    )
 }
 
 /**

@@ -1,3 +1,12 @@
 {
-    "cases": []
+    "cases": [
+        {
+            "case": "write|clickhouse, version=23.8|toMonday(x)",
+            "reason": "expected `dateTrunc('week', x)` actual `dateTrunc('WEEK', x)`"
+        },
+        {
+            "case": "write|clickhouse, version=23.8|date_trunc('WEEK', today())",
+            "reason": "expected `dateTrunc('week', today())` actual `dateTrunc('WEEK', today())`"
+        }
+    ]
 }

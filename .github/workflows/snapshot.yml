@@ -1,7 +1,8 @@
 name: Publish Snapshot
 
 # Every push to main publishes the current -SNAPSHOT of all modules to the Central Portal
-# snapshots repo. Publishing builds the modules first, so a broken build blocks the publish.
+# snapshots repo — but only after the full test suite (test.yml: build + every corpus and
+# verify gate) is green. A red gate blocks the publish (EVAL-03).
 
 on:
   push:
@@ -16,10 +17,14 @@ permissions:
   contents: read
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
   snapshot:
+    needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Verify template version is a -SNAPSHOT
         run: |

@@ -719,6 +719,12 @@ open class Cast(initArgs: Args = emptyMap()) : Expression(initArgs), Func {
     // sqlglot: Cast.to
     val to: DataType get() = args["to"] as DataType
 
+    // sqlglot: Cast.is_type — compares against the cast's target DataType, not the type slot.
+    override fun isType(vararg dtypes: kotlin.Any?, checkNullable: kotlin.Boolean): kotlin.Boolean {
+        val target = args["to"] as? DataType ?: return false
+        return target.isType(*dtypes, checkNullable = checkNullable)
+    }
+
     companion object {
         private val ARG_TYPES = argTypesOf(
             "this" to true, "to" to true, "format" to false,

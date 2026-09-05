@@ -1,6 +1,14 @@
 {
     "cases": [
         {
+            "case": "write|duckdb, version=1.1.0|SELECT TRY_ELEMENT_AT(ARRAY(1, 2, 3), 2)",
+            "reason": "expected `SELECT ([1, 2, 3])[2]` actual `SELECT [1, 2, 3][2]`"
+        },
+        {
+            "case": "write|duckdb, version=1.1.0|SELECT TRY_ELEMENT_AT(MAP(1, 'a', 2, 'b'), 2)",
+            "reason": "expected `SELECT (MAP([1, 2], ['a', 'b'])[2])[1]` actual `SELECT MAP([1, 2], ['a', 'b'])[2]`"
+        },
+        {
             "case": "write|bigquery|SELECT TO_UTC_TIMESTAMP('2016-08-31', 'Asia/Seoul')",
             "reason": "expected `SELECT DATETIME(TIMESTAMP(CAST('2016-08-31' AS DATETIME), 'Asia/Seoul'), 'UTC')` actual `SELECT CAST('2016-08-31' AS DATETIME) AT TIME ZONE 'Asia/Seoul' AT TIME ZONE 'UTC'`"
         },
@@ -11,6 +19,14 @@
         {
             "case": "write|bigquery|SELECT DATE_ADD(my_date_column, 1)",
             "reason": "expected `SELECT DATE_ADD(CAST(CAST(my_date_column AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `SELECT TS_OR_DS_ADD(my_date_column, 1, DAY)`"
+        },
+        {
+            "case": "write|spark, version=3.0.0|STRING_AGG(x, ', ')",
+            "reason": "expected `ARRAY_JOIN(COLLECT_LIST(x), ', ')` actual `LISTAGG(x, ', ')`"
+        },
+        {
+            "case": "write|spark, version=3.0.0|LISTAGG(x, ', ')",
+            "reason": "expected `ARRAY_JOIN(COLLECT_LIST(x), ', ')` actual `LISTAGG(x, ', ')`"
         },
         {
             "case": "write|bigquery|SELECT EXPLODE(x) FROM tbl",
