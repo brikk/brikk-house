@@ -79,7 +79,14 @@ because its relative option string matches.
 
 ### R4. Bind the referenced local instead of a shadowed parameter
 
-- [ ] **P2** Preserve symbol identity when choosing template binding values.
+- [x] **P2** Preserve symbol identity when choosing template binding values.
+
+Resolved for built/resolved FIR: interpolation supplies the referenced local's
+value; plain placeholders retain parameter binding. Mixed forms naming different
+declarations report a collision instead of silently sharing a value. Compiler
+query tests cover shadowing, real placeholder detection, and single evaluation
+of computed locals. Parameters used to compute local binds are no longer flagged
+unused or bound redundantly. IDE lazy-body local discovery remains separate work.
 
 Location: [BrikkSqlIrGenerationExtension.kt:170-171](brikk-engine/brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/ir/BrikkSqlIrGenerationExtension.kt#L170-L171).
 

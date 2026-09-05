@@ -7,8 +7,10 @@ import dev.brikk.house.sql.compiler.analysis.FunctionAnalysis
 import dev.brikk.house.sql.compiler.analysis.toShape
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.shape.ShapeCatalog
+import dev.brikk.house.sql.shape.SqlFragment
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
@@ -20,11 +22,15 @@ import org.jetbrains.kotlin.fir.analysis.extensions.FirAdditionalCheckersExtensi
 import org.jetbrains.kotlin.fir.declarations.FirNamedFunction
 import org.jetbrains.kotlin.fir.declarations.hasAnnotation
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
+import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.expressions.arguments
 import org.jetbrains.kotlin.fir.extensions.FirExtensionApiInternals
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
+import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
+import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 
 @OptIn(FirExtensionApiInternals::class)
 class BrikkSqlFirExtensionRegistrar(private val options: BrikkSqlOptions) : FirExtensionRegistrar() {
@@ -138,12 +144,47 @@ object BrikkSqlFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common)
                 reporter.reportOn(anchor, BrikkSqlDiagnostics.SQL_UNBOUND_PARAM, p, declared.sorted().joinToString(", "))
             }
         }
-        // The body is only the SQL, so a scalar parameter it never references is a mistake, not
-        // a warning. (K2 has no UNUSED_PARAMETER; the IDE inspection cannot see `:name` text.)
-        val usedRoots = used.mapTo(HashSet()) { it.substringBefore('.') }
+        // Probe only the names introduced by interpolation. The SQL parser, not a text scan,
+        // distinguishes plain placeholders from comments, strings and casts.
+        val params = declaration.valueParameters.associateBy { it.name.asString() }
+        var probeName = "__brikk_template_bind"
+        while (probeName in params) probeName += "_"
+        val references = ArrayList<FirPropertyAccessExpression>()
+        val sqlArg = call?.arguments?.firstOrNull() ?: return
+        val scope = TemplateScope(emptySet(), emptySet(), emptySet()) { null }
+        val probe = SqlTemplateFir.read(sqlArg, scope) { entry ->
+            references += entry
+            probeName
+        } as? TemplateOutcome.Ok ?: return // The call checker diagnoses unsupported templates.
+        val plainRoots = SqlFragment(probe.template.sql, analysis.dialect).scalarParams
+            .mapNotNullTo(HashSet()) { it.name?.substringBefore('.') }
+        for (entry in references) {
+            val name = entry.calleeReference.name.asString()
+            val param = params[name] ?: continue
+            if (name in analysis.scalarParams && name in plainRoots && entry.calleeReference.toResolvedCallableSymbol() != param.symbol) {
+                reporter.reportOn(
+                    entry.source, BrikkSqlDiagnostics.SQL_BAD_INTERPOLATION,
+                    "plain SQL placeholder '$name' binds the parameter, but '${'$'}$name' refers to a different Kotlin declaration; " +
+                        "rename the interpolated local or property",
+                )
+            }
+        }
+
+        // Parameters can be consumed by local computations as well as by SQL. Compare symbols:
+        // a same-named local or lambda parameter is not a use of the enclosing parameter.
+        val referencedParams = HashSet<FirValueParameterSymbol>()
+        declaration.body?.accept(object : FirVisitorVoid() {
+            override fun visitElement(element: FirElement) {
+                element.acceptChildren(this)
+            }
+
+            override fun visitResolvedNamedReference(resolvedNamedReference: FirResolvedNamedReference) {
+                (resolvedNamedReference.resolvedSymbol as? FirValueParameterSymbol)?.let { referencedParams += it }
+            }
+        })
         for (param in declaration.valueParameters) {
             val name = param.name.asString()
-            if (name in analysis.scalarParams && name !in usedRoots) {
+            if (name in analysis.scalarParams && name !in plainRoots && param.symbol !in referencedParams) {
                 reporter.reportOn(param.source, BrikkSqlDiagnostics.SQL_UNUSED_PARAM, name)
             }
         }

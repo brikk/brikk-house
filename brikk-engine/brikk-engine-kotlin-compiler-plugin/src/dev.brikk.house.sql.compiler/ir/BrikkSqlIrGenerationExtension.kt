@@ -2,6 +2,7 @@ package dev.brikk.house.sql.compiler.ir
 
 import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.BrikkSqlOptions
+import dev.brikk.house.sql.shape.SqlFragment
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -50,9 +51,9 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
  *     Rel<Out>("FROM src() |> WHERE event_at >= :start", "postgres").input("src", src).bind("start", start)
  *
  * The frontend has already typed the call as `Rel<Out>`; the constructor call reuses that
- * type. Parameter roles mirror the frontend analysis: every `Rel` parameter is a slot named
- * after itself (the SQL references it as `FROM name()`), everything else is a scalar binding
- * by name. The SQL text is passed through unchanged.
+ * type. `Rel` parameters supply slots named after themselves (`FROM name()`); scalar
+ * parameters supply referenced plain placeholders. Template binds use their own resolved
+ * expressions. The SQL text is passed through unchanged after template substitution.
  */
 class BrikkSqlIrGenerationExtension(
     private val messageCollector: MessageCollector,
@@ -144,9 +145,10 @@ private class SqlCallTransformer(
             arguments[1] = builder.irString(dialect)
         }
 
-        // Every Rel parameter is a slot; every scalar parameter is bound by name (it may be
-        // referenced as `:name` text or as `$name`); `$name` entries that are locals or
-        // properties are bound with the entry's own expression.
+        // Template references own their binding values, including locals shadowing parameters.
+        // FIR rejects a plain placeholder sharing that name with a different template symbol.
+        val templateNames = template.binds.mapTo(HashSet()) { it.first }
+        val usedNames = SqlFragment(sql, dialect).scalarParams.mapNotNullTo(HashSet()) { it.name?.substringBefore('.') }
         val bound = HashSet<String>()
         for (param in enclosing.parameters.filter { it.kind == IrParameterKind.Regular }) {
             val name = param.name.asString()
@@ -158,6 +160,7 @@ private class SqlCallTransformer(
                     arguments[2] = builder.irGet(param)
                 }
             } else {
+                if (name in templateNames || name !in usedNames) continue
                 bound += name
                 builder.irCall(relBind).apply {
                     type = relType

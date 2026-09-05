@@ -4,6 +4,8 @@ import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.PluginOption
 import com.tschuchort.compiletesting.SourceFile
+import dev.brikk.house.sql.compiler.analysis.SqlPiece
+import dev.brikk.house.sql.compiler.fir.TemplateScope
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.io.File
 import kotlin.test.Test
@@ -425,6 +427,185 @@ class BrikkSqlPluginTest {
     }
 
     // ------------------------------------------------------------------ $ template entries
+
+    @Test
+    fun `shadowed interpolation binds the local while plain placeholders bind the parameter`() {
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            @BrikkSql
+            fun local(n: Long): Rel<Partial> {
+                val n = n + 1
+                return Sql.postgres("SELECT CAST(${'$'}n AS BIGINT) AS n")
+            }
+
+            @BrikkSql
+            fun plain(n: Long): Rel<Partial> {
+                val n = n + 1
+                return Sql.postgres("SELECT CAST(:n AS BIGINT) AS n")
+            }
+
+            @BrikkSql
+            fun same(n: Long) = Sql.postgres("SELECT CAST(:n AS BIGINT) + CAST(${'$'}n AS BIGINT) AS n")
+
+            fun bindings(): List<List<Any?>> = listOf(
+                local(1L).bindings().values.toList(),
+                plain(1L).bindings().values.toList(),
+                same(1L).bindings().values.toList(),
+            )
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val bindings = result.classLoader.loadClass("demo.MainKt").getMethod("bindings").invoke(null)
+        assertEquals(listOf(listOf(2L), listOf(1L), listOf(1L)), bindings)
+    }
+
+    @Test
+    fun `plain and shadowed template bindings cannot share a name`() {
+        for (sql in listOf(
+            "SELECT CAST(:n AS BIGINT) + CAST(${'$'}n AS BIGINT) AS n",
+            "SELECT CAST(${'$'}n AS BIGINT) + CAST(:n AS BIGINT) AS n",
+            "SELECT CAST(${'$'}n AS BIGINT) + ${'$'}PLAIN AS n",
+        )) {
+            val result = compile(
+                """
+                package demo
+                import dev.brikk.house.sql.runtime.*
+                const val PLAIN = "CAST(:n AS BIGINT)"
+
+                @BrikkSql
+                fun bad(n: Long): Rel<Partial> {
+                    val n = n + 1
+                    return Sql.postgres($q
+                        |$sql
+                    $q.trimMargin())
+                }
+                """.trimIndent(),
+            )
+            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+            assertContains(result.messages, "plain SQL placeholder 'n' binds the parameter, but '${'$'}n' refers to a different Kotlin declaration")
+            assertContains(result.messages, "rename the interpolated local or property")
+            val diagnostic = result.messages.lines().first { it.contains("plain SQL placeholder") }
+            assertContains(diagnostic, "main.kt:9:") // The template entry, not the function or parameter.
+        }
+    }
+
+    @Test
+    fun `shadow collision detection ignores quoted and commented placeholders`() {
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            @BrikkSql
+            fun local(n: Long, __brikk_template_bind: Long): Rel<Partial> {
+                val n = n + 1
+                return Sql.postgres($q
+                    |SELECT ${'$'}n::BIGINT AS n, ':n' AS note,
+                    |       CAST(:__brikk_template_bind AS BIGINT) AS other
+                    |/* :n */ -- :n
+                $q.trimMargin())
+            }
+
+            fun bindings(): Set<Any?> = local(1L, 3L).bindings().values.toSet()
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val bindings = result.classLoader.loadClass("demo.MainKt").getMethod("bindings").invoke(null)
+        assertEquals(setOf(2L, 3L), bindings)
+    }
+
+    @Test
+    fun `parameters used in local computations are not unused or redundantly bound`() {
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            var effects = ""
+            fun input(): Long { effects += "input;"; return 1L }
+            fun advance(n: Long): Long { effects += "advance;"; return n + 1 }
+
+            @BrikkSql
+            fun computed(n: Long): Rel<Partial> {
+                val next = advance(n)
+                return Sql.postgres("SELECT CAST(${'$'}next AS BIGINT) AS n, CAST(${'$'}next AS BIGINT) AS again")
+            }
+
+            @BrikkSql
+            fun shadowed(n: Long): Rel<Partial> {
+                val n = advance(n)
+                return Sql.postgres("SELECT CAST(${'$'}n AS BIGINT) AS n, CAST(${'$'}n AS BIGINT) AS again")
+            }
+
+            fun result(): List<Any?> {
+                val computedValues = computed(input()).bindings().values.toList()
+                val shadowedValues = shadowed(input()).bindings().values.toList()
+                return listOf(effects, computedValues, shadowedValues)
+            }
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val actual = result.classLoader.loadClass("demo.MainKt").getMethod("result").invoke(null)
+        assertEquals(listOf("input;advance;input;advance;", listOf(2L), listOf(2L)), actual)
+    }
+
+    @Test
+    fun `same-named locals and lambda parameters do not mark outer parameters used`() {
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            @BrikkSql
+            fun unusedLocal(n: Long): Rel<Partial> {
+                val n = 2L
+                return Sql.postgres("SELECT CAST(${'$'}n AS BIGINT) AS n")
+            }
+
+            @BrikkSql
+            fun unusedLambda(m: Long): Rel<Partial> {
+                val next = 1L.let { m -> m + 1 }
+                return Sql.postgres("SELECT CAST(${'$'}next AS BIGINT) AS n")
+            }
+
+            @BrikkSql
+            fun unusedProbe(__brikk_template_bind: Long): Rel<Partial> {
+                val next = 2L
+                return Sql.postgres("SELECT CAST(${'$'}next AS BIGINT) AS n")
+            }
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "parameter 'n' is never referenced by the SQL")
+        assertContains(result.messages, "parameter 'm' is never referenced by the SQL")
+        assertContains(result.messages, "parameter '__brikk_template_bind' is never referenced by the SQL")
+    }
+
+    @Test
+    fun `local shadowing a rel parameter is a bind while the plain slot remains an input`() {
+        val scope = TemplateScope(setOf("src"), emptySet(), setOf("src")) { null }
+        assertEquals(SqlPiece.Bind("src"), scope.classify("src"))
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            @BrikkSql
+            fun local(src: Rel<Partial>): Rel<Partial> {
+                val src = 2L
+                return Sql.postgres("SELECT CAST(${'$'}src AS BIGINT) AS n FROM src()")
+            }
+
+            fun bindings(): List<Any?> = local(Rel<Partial>("SELECT 1 AS id", "postgres")).bindings().values.toList()
+            """.trimIndent(),
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val bindings = result.classLoader.loadClass("demo.MainKt").getMethod("bindings").invoke(null)
+        assertEquals(listOf(2L), bindings)
+    }
 
     @Test
     fun `local val and top-level val interpolate as binds, const val is spliced as text`() {

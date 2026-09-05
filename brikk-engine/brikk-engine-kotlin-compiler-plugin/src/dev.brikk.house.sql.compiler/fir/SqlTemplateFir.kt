@@ -53,8 +53,9 @@ class TemplateScope(
     val constByName: (String) -> String?,
 ) {
     fun classify(name: String): SqlPiece = when (name) {
+        in locals -> SqlPiece.Bind(name)
         in relParams -> SqlPiece.Slot(name)
-        in otherParams, in locals -> SqlPiece.Bind(name)
+        in otherParams -> SqlPiece.Bind(name)
         else -> constByName(name)?.let { SqlPiece.Const(it) } ?: SqlPiece.Bind(name)
     }
 }
@@ -64,8 +65,13 @@ object SqlTemplateFir {
     /**
      * Reads `expr` (a literal, a template, or either wrapped in `.trimIndent()`/`.trimMargin()`)
      * into a [SqlTemplate], classifying every `$name` entry.
+     * The checker overrides [bindName] to distinguish template binds from plain SQL placeholders.
      */
-    fun read(expr: FirExpression, scope: TemplateScope): TemplateOutcome = when (expr) {
+    fun read(
+        expr: FirExpression,
+        scope: TemplateScope,
+        bindName: ((FirPropertyAccessExpression) -> String)? = null,
+    ): TemplateOutcome = when (expr) {
         is FirLiteralExpression ->
             if (expr.kind == ConstantValueKind.String) TemplateOutcome.Ok(SqlTemplate.text(expr.value as String))
             else TemplateOutcome.NotSql
@@ -73,11 +79,14 @@ object SqlTemplateFir {
         is FirStringConcatenationCall -> {
             val pieces = ArrayList<SqlPiece>()
             for (entry in expr.arguments) {
-                pieces += classifyEntry(entry, scope) ?: return TemplateOutcome.Rejected(
+                val piece = classifyEntry(entry, scope) ?: return TemplateOutcome.Rejected(
                     entry,
                     "only a parameter, a local val, a property or a const val can be interpolated here; " +
                         "extract this expression to a val",
                 )
+                pieces += if (piece is SqlPiece.Bind && entry is FirPropertyAccessExpression && bindName != null) {
+                    SqlPiece.Bind(bindName(entry))
+                } else piece
             }
             TemplateOutcome.Ok(SqlTemplate(pieces))
         }
@@ -87,8 +96,8 @@ object SqlTemplateFir {
             val receiver = expr.explicitReceiver
             when {
                 receiver == null || expr.arguments.isNotEmpty() -> TemplateOutcome.NotSql
-                name == "trimIndent" -> read(receiver, scope).trimmedBy { it.trimIndent() }
-                name == "trimMargin" -> read(receiver, scope).trimmedBy { it.trimMargin() }
+                name == "trimIndent" -> read(receiver, scope, bindName).trimmedBy { it.trimIndent() }
+                name == "trimMargin" -> read(receiver, scope, bindName).trimmedBy { it.trimMargin() }
                 else -> TemplateOutcome.NotSql
             }
         }
