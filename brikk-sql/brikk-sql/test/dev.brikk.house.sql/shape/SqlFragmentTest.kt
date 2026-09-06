@@ -228,6 +228,64 @@ class SqlFragmentTest {
         assertEquals(listOf("db.y", "cat.db.x"), fragment.sourceTables)
     }
 
+    @Test
+    fun sourceTablesResolveCtesWithinTheirActualScope() {
+        val catalog = ShapeCatalog(tables = mapOf("t" to Shape.of("a" to "INT"), "u" to Shape.of("a" to "INT")))
+        val nested = SqlFragment("SELECT a FROM t UNION ALL SELECT a FROM (WITH t AS (SELECT a FROM u) SELECT a FROM t) AS s", "postgres")
+        assertEquals(listOf("t", "u"), nested.sourceTables)
+        val contract = nested.contract(catalog)
+        assertEquals(listOf("t", "u"), contract.inputsUsed)
+        assertEquals(mapOf("a" to setOf("t", "u")), contract.dependencies)
+        assertEquals(listOf("t"), SqlFragment("WITH t AS (SELECT a FROM t) SELECT a FROM t", "postgres").sourceTables)
+        assertEquals(listOf("u"), SqlFragment("WITH T AS (SELECT a FROM U) SELECT a FROM t", "postgres").sourceTables)
+        assertEquals(listOf("t", "u"), SqlFragment("WITH \"T\" AS (SELECT a FROM u) SELECT a FROM t", "postgres").sourceTables)
+        assertEquals(listOf("db.t", "u"), SqlFragment("WITH t AS (SELECT a FROM u) SELECT a FROM db.t", "postgres").sourceTables)
+    }
+
+    @Test
+    fun physicalInputsIncludeFilterSourcesButNotSlotsOrPlaceholders() {
+        val catalog = ShapeCatalog(tables = mapOf("t" to Shape.of("a" to "INT"), "u" to Shape.of("a" to "INT")),
+            slots = mapOf("src" to Shape.of("a" to "INT")))
+        val fragment = SqlFragment("SELECT a FROM src() UNION ALL SELECT a FROM t", "postgres")
+        assertEquals(listOf("t"), fragment.sourceTables)
+        assertEquals(listOf("src"), fragment.tableSlots)
+        val contract = fragment.contract(catalog)
+        assertEquals(listOf("t", "src"), contract.inputsUsed)
+        assertTrue(contract.dependencies.values.flatten().all { it in contract.inputsUsed })
+        val filtered = SqlFragment("SELECT t.a FROM t WHERE EXISTS(SELECT 1 FROM u WHERE u.a = t.a)", "postgres")
+        assertEquals(listOf("t", "u"), filtered.sourceTables)
+        assertEquals(mapOf("a" to setOf("t")), filtered.columnDependencies(inputs = catalog.copy(slots = emptyMap())))
+        assertEquals(listOf("t", "u"), SqlFragment("SELECT t.a FROM t SEMI JOIN u ON t.a = u.a", "spark").sourceTables)
+        assertEquals(emptyList(), SqlFragment("SELECT missing", "postgres").sourceTables)
+        assertEquals(listOf("t"), SqlFragment("UPDATE t SET a = 1", "postgres").sourceTables)
+    }
+
+    @Test
+    fun derivedJoinsAndExtendedNamesKeepTheirPhysicalInputs() {
+        val catalog = ShapeCatalog(tables = mapOf("t" to Shape.of("a" to "INT"), "u" to Shape.of("b" to "INT")))
+        val joined = SqlFragment("SELECT s.a, s.b FROM (t JOIN u ON t.a = u.b) AS s", "postgres").contract(catalog)
+        assertEquals(listOf("t", "u"), joined.inputsUsed)
+        assertTrue(joined.dependencies.values.flatten().all { it in joined.inputsUsed })
+        val extended = SqlFragment("SELECT t.a FROM lake.ns1.ns2.t AS t", "spark")
+        assertEquals(listOf("lake.ns1.ns2.t"), extended.sourceTables)
+        assertEquals(mapOf("a" to setOf("lake.ns1.ns2.t")), extended.columnDependencies())
+    }
+
+    @Test
+    fun recursiveAndPivotedCtesAreNotPhysicalTables() {
+        for (body in listOf(
+            "SELECT a FROM t UNION ALL SELECT a + 1 FROM r WHERE a < 3",
+            "(SELECT a FROM t UNION ALL SELECT a + 1 FROM r WHERE a < 3)",
+        )) {
+            assertEquals(listOf("t"), SqlFragment("WITH RECURSIVE r(a) AS ($body) SELECT a FROM r", "postgres").sourceTables)
+        }
+        assertEquals(listOf("t"), SqlFragment("WITH RECURSIVE x AS (SELECT a FROM y), y AS (SELECT a FROM t) SELECT a FROM x", "postgres").sourceTables)
+        assertEquals(listOf("y", "t"), SqlFragment("WITH x AS (SELECT a FROM y), y AS (SELECT a FROM t) SELECT a FROM x", "postgres").sourceTables)
+        val pivot = SqlFragment("WITH c AS (SELECT a, b FROM t) SELECT c.one FROM c PIVOT (SUM(a) FOR b IN (1 AS one)) AS c", "duckdb")
+        assertEquals(listOf("t"), pivot.sourceTables)
+        assertEquals(mapOf("one" to setOf("t")), pivot.columnDependencies())
+    }
+
     // -------------------------------------------------------------- scalar params
 
     @Test
