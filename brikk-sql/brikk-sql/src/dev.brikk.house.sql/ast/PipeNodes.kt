@@ -34,12 +34,12 @@ class PipeQuery(initArgs: Args = emptyMap()) : Expression(initArgs) {
     }
 }
 
-/** `|> SELECT <projections>` — expressions holds the projection list. */
+/** `|> SELECT [DISTINCT [ON (...)]] <projections>` — expressions holds the projection list. */
 class PipeSelect(initArgs: Args = emptyMap()) : Expression(initArgs) {
     override val argTypes get() = ARG_TYPES
 
     companion object {
-        private val ARG_TYPES = argTypesOf("expressions" to true)
+        private val ARG_TYPES = argTypesOf("expressions" to true, "distinct" to false)
     }
 }
 

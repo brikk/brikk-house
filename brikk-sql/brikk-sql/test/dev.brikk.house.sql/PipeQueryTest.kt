@@ -1,5 +1,6 @@
 package dev.brikk.house.sql
 
+import dev.brikk.house.sql.ast.Distinct
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.Limit
 import dev.brikk.house.sql.ast.Literal
@@ -8,10 +9,13 @@ import dev.brikk.house.sql.ast.Order
 import dev.brikk.house.sql.ast.PipeAggregate
 import dev.brikk.house.sql.ast.PipeOrderBy
 import dev.brikk.house.sql.ast.PipeQuery
+import dev.brikk.house.sql.ast.PipeSelect
 import dev.brikk.house.sql.ast.PipeWhere
 import dev.brikk.house.sql.ast.Select
+import dev.brikk.house.sql.ast.Serde
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.desugarPipes
+import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -58,6 +62,44 @@ class PipeQueryTest {
         val where = assertIs<Where>(assertIs<Select>(desugared).args["where"])
         // Two WHERE stages AND-merge into a single condition (sqlglot: query.where(...))
         assertEquals("And", (where.thisArg as Expression)::class.simpleName)
+    }
+
+    @Test
+    fun selectDistinctSurvivesParseCopySerdeRenderAndDesugar() {
+        for (modifier in listOf("", "DISTINCT ", "DISTINCT ON (a) ")) {
+            val source = "FROM t |> SELECT ${modifier}a"
+            val ast = assertIs<PipeQuery>(parseOne(source))
+            val stage = assertIs<PipeSelect>(ast.expressionsArg.single())
+            if (modifier.isNotEmpty()) assertIs<Distinct>(stage.args["distinct"])
+            val copy = ast.copy()
+            val loaded = Serde.loadExpression(Serde.dump(ast))
+            assertEquals(ast, loaded)
+            assertEquals(source, loaded.sql())
+            assertEquals(ast, parseOne(loaded.sql()))
+            assertEquals(
+                "WITH __tmp1 AS (SELECT ${modifier}a FROM t) SELECT * FROM __tmp1",
+                desugarPipes(ast).sql(),
+            )
+            assertEquals(copy, ast, "desugaring must not mutate the pipe AST")
+        }
+    }
+
+    @Test
+    fun selectDistinctKeepsExistingStageBoundaries() {
+        for (modifier in listOf("", "ALL ")) {
+            assertEquals(
+                "WITH __tmp1 AS (SELECT DISTINCT a FROM t) SELECT * FROM __tmp1",
+                desugarPipes(parseOne("FROM t |> DISTINCT |> SELECT ${modifier}a")).sql(),
+            )
+        }
+        assertEquals(
+            "WITH __tmp1 AS (SELECT DISTINCT a, b FROM t), __tmp2 AS (SELECT a FROM __tmp1) SELECT * FROM __tmp2",
+            desugarPipes(parseOne("FROM t |> SELECT DISTINCT a, b |> SELECT a")).sql(),
+        )
+        assertEquals(
+            "WITH __tmp1 AS (SELECT DISTINCT a FROM t) SELECT * FROM __tmp1",
+            desugarPipes(parseOne("SELECT ALL * FROM t |> SELECT DISTINCT a", "datafusion")).sql("datafusion"),
+        )
     }
 
     @Test

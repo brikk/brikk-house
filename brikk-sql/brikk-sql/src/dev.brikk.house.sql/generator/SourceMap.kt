@@ -61,11 +61,19 @@ class SourceMap(
         IntArray(starts.size) { starts[it] }
     }
 
-    /** Converts a 1-based UTF-16 (line, col) position in [output] to an offset, or null. */
+    /**
+     * Converts a 1-based UTF-16 (line, col) position in [output] to an offset, or null.
+     * Allows the position just after line content (before LF/CRLF, or at EOF), but
+     * never lets a column spill into another line.
+     */
     fun offsetOf(line: Int, col: Int): Int? {
         if (line < 1 || line > lineStarts.size || col < 1) return null
-        val offset = lineStarts[line - 1] + (col - 1)
-        return if (offset <= output.length) offset else null
+        val start = lineStarts[line - 1]
+        var end = if (line < lineStarts.size) lineStarts[line] - 1 else output.length
+        if (line < lineStarts.size && end > start && output[end - 1] == '\r') end--
+        // Check the relative column before adding the line start to avoid Int overflow.
+        val relative = col - 1
+        return if (relative <= end - start) start + relative else null
     }
 
     /** The innermost (smallest-span) node covering [offset], or null. */

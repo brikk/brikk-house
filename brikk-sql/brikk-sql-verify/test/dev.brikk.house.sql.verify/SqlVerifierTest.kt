@@ -204,12 +204,18 @@ class SqlVerifierTest {
 
     @Test
     fun dorisErrorColumnsAreNormalizedToUtf16() {
-        val sql = "SELECT '\uD83D\uDE00' FROM WHERE"
-        val result = SqlVerifiers.forEngine("doris")!!.verify(sql)
-
-        assertFalse(result.accepted)
-        assertEquals(1, result.line)
-        assertEquals(sql.indexOf("WHERE") + 1, result.col)
+        val verifier = SqlVerifiers.forEngine("doris")!!
+        for (payload in listOf("ascii", "\uD83D\uDE00", "\uD83D\uDE00\uD83D\uDE80")) {
+            for (separator in listOf(" ", "\n", "\r\n")) {
+                val sql = "SELECT$separator'$payload' FROM WHERE"
+                val result = verifier.verify(sql)
+                val offset = sql.indexOf("WHERE")
+                assertTrue(result.verified)
+                assertFalse(result.accepted)
+                assertEquals(sql.take(offset).count { it == '\n' } + 1, result.line, sql)
+                assertEquals(offset - sql.lastIndexOf('\n', offset - 1), result.col, sql)
+            }
+        }
     }
 
     @Test

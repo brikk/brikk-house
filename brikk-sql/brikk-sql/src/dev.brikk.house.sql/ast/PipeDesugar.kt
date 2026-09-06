@@ -140,6 +140,14 @@ private fun applyPipeStage(query: Expression, stage: Expression, counter: PipeCt
     when (stage) {
         // sqlglot: Parser._parse_pipe_syntax_select
         is PipeSelect -> {
+            if (stage.args["distinct"] != null) {
+                query.set("distinct", stage.args["distinct"])
+                // Explicit DISTINCT replaces any preserved SELECT ALL on the head.
+                val modifiers = query.args["operation_modifiers"] as? List<*>
+                if (modifiers != null) {
+                    query.set("operation_modifiers", modifiers.filterNot { it is Var && it.name == "ALL" })
+                }
+            }
             query.set("expressions", stage.args["expressions"])
             buildPipeCte(query, listOf(Star()), counter)
         }

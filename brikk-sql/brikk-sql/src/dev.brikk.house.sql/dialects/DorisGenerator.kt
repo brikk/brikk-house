@@ -9,6 +9,9 @@ import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.generator.UnsupportedError
+import dev.brikk.house.sql.generator.eliminateDistinctOn
+import dev.brikk.house.sql.generator.eliminateQualify
+import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
 import kotlin.String
@@ -940,6 +943,14 @@ open class DorisGenerator(
             // Split / StringToArray nodes correctly keep SPLIT_BY_STRING below.
             reg(RegexpSplit::class) { e -> dg().renameFuncSql("SPLIT_BY_REGEXP", e) }
             reg(SchemaCommentProperty::class) { e -> nakedProperty(e as Property) }
+            // brikk extension #20: Doris supports native FULL OUTER JOIN. MySQL's
+            // elimination splits aggregates and DISTINCT across UNION ALL branches.
+            reg(Select::class) { e ->
+                var s = eliminateDistinctOn(e)
+                s = eliminateSemiAndAntiJoins(s)
+                s = eliminateQualify(s)
+                if (s is Select) selectSql(s) else sql(s)
+            }
             reg(Split::class) { e -> dg().renameFuncSql("SPLIT_BY_STRING", e) }
             reg(StringToArray::class) { e -> dg().renameFuncSql("SPLIT_BY_STRING", e) }
             reg(StrToUnix::class) { e -> func("UNIX_TIMESTAMP", e.thisArg, formatTime(e)) }
