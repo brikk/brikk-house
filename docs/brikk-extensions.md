@@ -715,6 +715,26 @@ plugin JDBC coverage. No dependency was added.
 Upstream syncs must retain this override unless upstream also preserves Doris's
 native full join. Existing corpus ledgers are unchanged.
 
+## 24. BigQuery relation-lowering guards (ASTRA-009)
+
+`BigqueryGenerator.cteSql` pushes CTE column names into explicit projections,
+including the left side of set operations. Partial lists leave trailing columns
+intact. Unexpanded stars and overlong lists produce unsupported diagnostics.
+Unlike the pin, alias shadowing also produces a diagnostic when query modifiers
+refer to the old alias, rather than silently emitting an invalid reference.
+
+Derived VALUES become UNNEST arrays of named structs. The rewrite walks only
+direct rows, not nested tuples, and checks row/alias widths before pairing cells
+with names. VALUES-local ordering/limits are diagnosed, not dropped. INSERT
+VALUES stays unchanged. These checks are local correctness guards around the
+pinned SQLGlot rewrites; retain them on upstream sync.
+
+`BigqueryRelationLoweringTest` checks exact SQL, quoted names, duplicates, NULLs,
+partial CTE lists, alias shadowing, set operations, diagnostics, and source-AST
+immutability. `BigqueryUnnestResultTest` checks the BigQuery output after conversion
+to Presto/Trino and optionally executes it with `BRIKK_TRINO_CONTAINER`. There is
+no live BigQuery execution claim.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

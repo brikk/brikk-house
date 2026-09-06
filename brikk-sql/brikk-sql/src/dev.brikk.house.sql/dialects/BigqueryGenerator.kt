@@ -36,11 +36,9 @@ private fun unitToVar(expression: Expression, default: String = "DAY"): Expressi
  * method overrides are handed to the base constructor as a dispatch overlay; flag
  * overrides are open-val overrides.
  *
- * NOT PORTED (need transform/annotate infrastructure the port lacks):
- *  - the remaining exp.Select preprocess steps (explode_projection_to_unnest and
- *    unqualify_unnest);
- *  - exp.CTE _pushdown_cte_column_names, the exp.Values -> UNNEST(ARRAY<STRUCT>) rewrite,
- *    ArrayFilter/ArrayRemove filter_array_using_unnest;
+ * NOT PORTED:
+ *  - the remaining exp.Select preprocess step explode_projection_to_unnest;
+ *  - ArrayFilter/ArrayRemove filter_array_using_unnest;
  *  - annotate_types-dependent branches of bracket_sql (STRUCT field access);
  */
 // sqlglot: generators.bigquery.BigQueryGenerator
@@ -133,6 +131,69 @@ open class BigqueryGenerator(
                 expression.args["this"], expression.args["expression"],
             )
         return func(name, *theseArgs.toTypedArray())
+    }
+
+    // sqlglot: generators.bigquery._pushdown_cte_column_names
+    override fun cteSql(expression: CTE): String {
+        val alias = expression.args["alias"] as? TableAlias
+        val columns = alias?.columns.orEmpty().filterIsInstance<Expression>()
+        if (columns.isNotEmpty()) {
+            val query = expression.thisArg as Expression
+            val projections = query.selects
+            if (query.isStar || projections.size < columns.size) {
+                unsupported("BigQuery CTE column names require explicit, matching projections; expand stars first")
+            } else {
+                // brikk extension (ASTRA-009): do not silently break references to shadowed aliases.
+                val renamed = projections.zip(columns).mapNotNull { (projection, column) ->
+                    projection.alias.takeIf { it.isNotEmpty() && it != column.name }
+                }.toSet()
+                val hasAliasReferences = sequenceOf(query, projections.firstOrNull()?.parent)
+                    .filterNotNull().flatMap { owner ->
+                        listOf("order", "group", "having", "qualify").asSequence()
+                            .mapNotNull { owner.args[it] as? Expression }
+                    }.any { clause -> clause.findAll<Column>().any { it.table.isEmpty() && it.name in renamed } }
+                if (hasAliasReferences) {
+                    unsupported("BigQuery CTE column renaming cannot preserve references to shadowed projection aliases")
+                } else {
+                    alias!!.set("columns", null)
+                    for ((projection, column) in projections.zip(columns)) {
+                        val value = if (projection is Alias) projection.thisArg as Expression else projection
+                        projection.replace(Alias(args("this" to value.copy(), "alias" to column.copy())))
+                    }
+                }
+            }
+        }
+        return super.cteSql(expression)
+    }
+
+    // sqlglot: generators.bigquery._derived_table_values_to_unnest
+    override fun valuesSql(expression: Values, valuesAsTableParam: Boolean): String {
+        if (expression.findAncestor(From::class, Join::class) == null) {
+            return super.valuesSql(expression, valuesAsTableParam)
+        }
+        val alias = expression.args["alias"] as? TableAlias
+        val columns = alias?.columns.orEmpty().filterIsInstance<Expression>()
+        val rows = expression.expressionsArg.filterIsInstance<Tuple>()
+        val width = rows.firstOrNull()?.expressionsArg?.size ?: 0
+        // brikk extension (ASTRA-009): zip/recursive tuple traversal must not discard cells or create extra rows.
+        if (width == 0 || rows.size != expression.expressionsArg.size ||
+            rows.any { it.expressionsArg.size != width } || (columns.isNotEmpty() && columns.size != width) ||
+            listOf("order", "limit", "offset").any { expression.args[it] != null }) {
+            unsupported("BigQuery derived VALUES require matching row/column widths and no VALUES-local modifiers")
+            return super.valuesSql(expression, valuesAsTableParam)
+        }
+        val names = columns.ifEmpty { (0 until width).map { Identifier(args("this" to "_c$it")) } }
+        val structs = rows.map { row ->
+            Struct(args("expressions" to row.expressionsArg.zip(names).map { (value, name) ->
+                PropertyEQ(args("this" to name.copy(), "expression" to (value as Expression).copy()))
+            }))
+        }
+        val valueAlias = (alias?.thisArg as? Expression)?.let {
+            TableAlias(args("columns" to listOf(it.copy())))
+        }
+        return unnestSql(Unnest(args(
+            "expressions" to listOf(ArrayNode(args("expressions" to structs))), "alias" to valueAlias,
+        )))
     }
 
     // sqlglot: BigQueryGenerator.datetrunc_sql

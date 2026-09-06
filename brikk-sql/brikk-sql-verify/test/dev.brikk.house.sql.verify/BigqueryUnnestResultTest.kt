@@ -20,6 +20,24 @@ import kotlin.test.assertTrue
 
 class BigqueryUnnestResultTest {
     @Test
+    fun loweredValuesAndCteColumnsKeepResults() {
+        val cases = listOf(
+            Triple("SELECT t.a, t.b FROM (VALUES (1, 'x'), (2, CAST(NULL AS TEXT)), (1, 'x')) AS t(a, b)",
+                listOf("a", "b"), listOf("{\"a\":1,\"b\":\"x\"}", "{\"a\":2,\"b\":null}", "{\"a\":1,\"b\":\"x\"}")),
+            Triple("SELECT t.a, u.b FROM (VALUES (1), (2)) AS t(a) CROSS JOIN (VALUES (3), (4)) AS u(b)",
+                listOf("a", "b"), listOf("{\"a\":1,\"b\":3}", "{\"a\":1,\"b\":4}", "{\"a\":2,\"b\":3}", "{\"a\":2,\"b\":4}")),
+            Triple("WITH cte(foo) AS (SELECT 1 AS bar UNION ALL SELECT 2) SELECT foo FROM cte",
+                listOf("foo"), listOf("{\"foo\":1}", "{\"foo\":2}")),
+        )
+        for ((source, columns, expected) in cases) {
+            val generator = Dialects.BIGQUERY.generator(sourceDialect = "postgres")
+            val sql = generator.generate(Dialects.POSTGRES.parseOne(source))
+            assertEquals(emptyList(), generator.unsupportedMessages, source)
+            check(sql, columns, expected, struct = source.contains("VALUES"))
+        }
+    }
+
+    @Test
     fun nativeAliasesAndImplicitReferencesStayScopeCorrect() {
         for ((source, expected) in listOf(
             "SELECT x.a FROM UNNEST([STRUCT(1 AS a)]) AS x" to "SELECT x.a FROM UNNEST([STRUCT(1 AS a)]) AS x",

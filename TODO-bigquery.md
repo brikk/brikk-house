@@ -10,7 +10,7 @@
 
 ---
 
-**187 transpile items across 19 source-to-target routes.**
+**181 transpile items across 19 source-to-target routes.**
 
 ## BigQuery as source (141)
 
@@ -28,14 +28,14 @@
 | bigquery -> spark2 | 3 |
 | bigquery -> base | 2 |
 
-## BigQuery as target (46)
+## BigQuery as target (40)
 
 The `bigquery -> bigquery` cases are counted only in the source table above.
 
 | Route | Items |
 |---|---:|
-| spark -> bigquery | 13 |
-| postgres -> bigquery | 11 |
+| spark -> bigquery | 11 |
+| postgres -> bigquery | 7 |
 | duckdb -> bigquery | 7 |
 | presto -> bigquery | 6 |
 | hive -> bigquery | 4 |
@@ -44,6 +44,19 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 | base -> bigquery | 1 |
 
 ## Main clusters
+
+ASTRA-009 closed six exact ledger keys covering seven input assertions. Derived
+VALUES now become arrays of named structs, and explicit CTE column lists become
+projection aliases. The BigQuery ledger has 144 keys. Unexpanded CTE stars,
+shadowed aliases used in query modifiers, and mismatched VALUES widths remain
+diagnosed rather than silently losing names or cells.
+
+Execution follow-up: converting BigQuery
+`SELECT t.b FROM UNNEST([STRUCT('x' AS b), STRUCT(NULL AS b)]) AS t` to
+Presto/Trino casts the NULL field as BIGINT, making the array's row types
+incompatible. The ASTRA-009 cross-engine execution check uses an explicit
+string cast for NULL; its direct BigQuery generation test retains untyped NULL.
+Fix array-wide field type reconciliation rather than changing VALUES lowering.
 
 ASTRA-008 closed the 18 exact stale transpile keys reported in
 `build/astra-008-core.log`: 16 from the BigQuery ledger and two from the Presto
