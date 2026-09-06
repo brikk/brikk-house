@@ -800,6 +800,46 @@ open class DorisGenerator(
         return sql(holderCopy)
     }
 
+    // brikk extension #21: native QUALIFY hides ranking columns and applies final
+    // LIMIT/OFFSET after DISTINCT ON rather than before the rank filter.
+    private fun qualifyDistinctOn(expression: Select): Boolean {
+        val distinct = expression.args["distinct"] as? Distinct ?: return false
+        val on = distinct.args["on"] as? Tuple ?: return false
+        // isStar also descends into scalar subqueries; only projection-level stars count.
+        val hasStar = expression.selects.any { (it is Star || it is Column || it is Dot) && it.isStar }
+        if (!hasStar && expression.args["limit"] == null && expression.args["offset"] == null) return false
+
+        fun fail(reason: String): Nothing = throw UnsupportedError(
+            "Doris DISTINCT ON cannot be safely lowered to native QUALIFY: $reason"
+        )
+        if (expression.args["qualify"] != null) fail("existing QUALIFY requires a separate filtering stage")
+
+        val aliases = expression.selects.filterIsInstance<Alias>().map { it.alias.lowercase() }.toSet()
+        val partition = on.expressionsArg.filterIsInstance<Expression>()
+        val order = expression.args["order"] as? Order
+        val keys = partition + order?.expressionsArg.orEmpty().filterIsInstance<Expression>()
+        for (key in keys) {
+            val value = if (key is Ordered) key.thisArg as Expression else key
+            if (value.unnest().isInt) fail("positional DISTINCT ON or ORDER BY needs a known projection schema")
+            for (node in value.walk()) {
+                when {
+                    node is Window -> fail("window expressions in DISTINCT ON or ORDER BY cannot be nested")
+                    node is Query -> fail("subqueries in DISTINCT ON or ORDER BY require scope resolution")
+                    node is Column && node.table.isEmpty() && node.name.lowercase() in aliases ->
+                        fail("projection alias '${node.name}' in DISTINCT ON or ORDER BY requires resolution")
+                }
+            }
+        }
+
+        // Doris 7027772afcb accepts direct window expressions in QUALIFY and preserves
+        // the original output slots (FillUpQualifyMissingSlot), without a projected helper.
+        expression.set("distinct", null)
+        val windowOrder = order?.copy() ?: Order(args("expressions" to partition.map { it.copy() }))
+        val window = Window(args("this" to RowNumber(), "partition_by" to partition, "order" to windowOrder))
+        expression.set("qualify", Qualify(args("this" to EQ(args("this" to window, "expression" to Literal.number("1"))))))
+        return true
+    }
+
     // sqlglot: DorisGenerator.table_sql — no AS keyword in UPDATE and DELETE statements
     override fun tableSql(expression: Table, sep: String): String {
         val ancestor = expression.findAncestor(Update::class, Delete::class, Select::class)
@@ -946,9 +986,11 @@ open class DorisGenerator(
             // brikk extension #20: Doris supports native FULL OUTER JOIN. MySQL's
             // elimination splits aggregates and DISTINCT across UNION ALL branches.
             reg(Select::class) { e ->
-                var s = eliminateDistinctOn(e)
+                val nativeQualify = dg().qualifyDistinctOn(e as Select)
+                var s = if (nativeQualify) e else eliminateDistinctOn(e)
                 s = eliminateSemiAndAntiJoins(s)
-                s = eliminateQualify(s)
+                // Eliminating the synthesized QUALIFY would project and leak the rank again.
+                if (!nativeQualify) s = eliminateQualify(s)
                 if (s is Select) selectSql(s) else sql(s)
             }
             reg(Split::class) { e -> dg().renameFuncSql("SPLIT_BY_STRING", e) }

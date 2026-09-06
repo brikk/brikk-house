@@ -1,5 +1,9 @@
 package dev.brikk.house.sql.ast
 
+import dev.brikk.house.sql.generator.UnsupportedError
+import dev.brikk.house.sql.optimizer.buildScope
+import dev.brikk.house.sql.optimizer.walkInScope
+
 // Explicit imports shield the kotlin builtins from same-package expression classes.
 import kotlin.String
 import kotlin.collections.List
@@ -11,7 +15,8 @@ import kotlin.collections.MutableList
  *
  * This is a direct port of the desugar semantics in reference/sqlglot/sqlglot/parser.py
  * (`_build_pipe_cte` and the `_parse_pipe_syntax_*` methods, ~9869-10061), operating on
- * brikk's first-class stage nodes post-parse instead of on the token stream:
+ * brikk's first-class stage nodes post-parse instead of on the token stream, with
+ * SELECT/DISTINCT input boundaries where merging would change rows or bindings:
  *
  *  - stages that mutate the current Select in place: WHERE (AND-merge), ORDER BY
  *    (replace, not append), LIMIT (keep-min) / OFFSET (sum), DISTINCT, TABLESAMPLE, JOIN;
@@ -41,11 +46,12 @@ import kotlin.collections.MutableList
 fun desugarPipes(expression: Expression, copy: kotlin.Boolean = true): Expression {
     val root = if (copy) expression.copy() else expression
     // sqlglot: Parser._pipe_cte_counter (per-statement)
-    val counter = PipeCteCounter()
+    val counter = PipeCteCounter(root.findAll(Table::class, TableAlias::class)
+        .flatMap { listOf(it.name.lowercase(), it.alias.lowercase()) }.toSet())
     return desugarNode(root, counter)
 }
 
-private class PipeCteCounter {
+private class PipeCteCounter(val takenNames: kotlin.collections.Set<String>) {
     var n: Int = 0
 }
 
@@ -103,7 +109,7 @@ private fun buildPipeCte(
     aliasCte: TableAlias? = null,
 ): Select {
     val newCte: TableAlias = aliasCte ?: run {
-        counter.n += 1
+        do { counter.n += 1 } while ("__tmp${counter.n}" in counter.takenNames)
         TableAlias(args("this" to Identifier(args("this" to "__tmp${counter.n}", "quoted" to false))))
     }
 
@@ -136,8 +142,24 @@ private fun buildPipeCte(
     return newSelect
 }
 
-private fun applyPipeStage(query: Expression, stage: Expression, counter: PipeCteCounter): Expression =
-    when (stage) {
+private fun applyPipeStage(input: Expression, stage: Expression, counter: PipeCteCounter): Expression {
+    var query = input
+    val directProjection = query.expressionsArg.singleOrNull() is Star || (
+        query.expressionsArg.all { it is Column && !it.isStar } &&
+            stage.expressionsArg.all { it is Column && it in query.expressionsArg }
+        )
+    val positionalOrder = (query.args["order"] as? Order)?.expressionsArg.orEmpty().any {
+        ((it as? Ordered)?.thisArg as? Expression)?.unnest()?.isInt == true
+    }
+    // brikk extension: projection/deduplication consumes the previous stage's rows,
+    // not its FROM clause. Keep prior row selection and projected aliases intact.
+    if ((stage is PipeSelect || stage is PipeDistinct) && (
+            listOf("limit", "offset", "distinct", "group", "having", "qualify").any { query.args[it] != null } ||
+                (stage is PipeSelect && (!directProjection || positionalOrder))
+            )) {
+        query = pipeInputCte(query, stage, counter)
+    }
+    return when (stage) {
         // sqlglot: Parser._parse_pipe_syntax_select
         is PipeSelect -> {
             if (stage.args["distinct"] != null) {
@@ -205,6 +227,8 @@ private fun applyPipeStage(query: Expression, stage: Expression, counter: PipeCt
         // sqlglot: PIPE_SYNTAX_TRANSFORM_PARSERS["DISTINCT"] — query.distinct(copy=False)
         is PipeDistinct -> {
             query.set("distinct", Distinct())
+            val modifiers = query.args["operation_modifiers"] as? List<*>
+            if (modifiers != null) query.set("operation_modifiers", modifiers.filterNot { it is Var && it.name == "ALL" })
             query
         }
 
@@ -340,6 +364,91 @@ private fun applyPipeStage(query: Expression, stage: Expression, counter: PipeCt
 
         else -> error("Unknown pipe stage node: ${stage::class.simpleName}")
     }
+}
+
+private fun pipeInputCte(query: Expression, stage: Expression, counter: PipeCteCounter): Select {
+    val projections = query.expressionsArg.filterIsInstance<Expression>()
+    val hasStar = projections.any { (it is Star || it is Column || it is Dot) && it.isStar }
+    val hasJoins = walkInScope(query).any { it is Join }
+    if (hasJoins && hasStar) {
+        throw UnsupportedError("Cannot preserve a pipe SELECT/DISTINCT input boundary over joined stars without explicit, uniquely named input columns")
+    }
+    if (!hasStar && (projections.any { it.outputName.isEmpty() } ||
+            projections.map { it.outputName.lowercase() }.toSet().size != projections.size)) {
+        throw UnsupportedError("Pipe SELECT/DISTINCT input boundaries require uniquely named input columns; add explicit aliases")
+    }
+
+    val source = (query.args["from_"] as? From)?.thisArg as? Expression
+    val sourceAlias = (source?.args?.get("alias") as? TableAlias)?.thisArg as? Identifier
+        ?: if (source is Table || source is TableAlias) source.thisArg as? Identifier else null
+    // Scope.columns includes child-query correlations but excludes their local bindings.
+    val stageScope = buildScope(Select(args("expressions" to listOf(stage.copy()))))!!
+    val stageColumns = stageScope.columns + stageScope.stars.filterIsInstance<Column>()
+    if (stageColumns.any { it.db.isNotEmpty() || it.catalog.isNotEmpty() }) {
+        throw UnsupportedError("Pipe SELECT/DISTINCT input boundaries require table aliases rather than database-qualified column references")
+    }
+    // Scope's table-name lookup cannot distinguish db1.t from db2.t. Check full
+    // names in child queries before considering a multipart reference locally bound.
+    for (col in stage.findAll<Column>().filter { it.db.isNotEmpty() || it.catalog.isNotEmpty() }) {
+        var ancestor = col.parent
+        var local = false
+        while (ancestor != null && ancestor !== stage) {
+            if (ancestor is Select && walkInScope(ancestor).filterIsInstance<Table>().any {
+                    it.alias.isEmpty() && it.name == col.table && it.db == col.db && it.catalog == col.catalog
+                }) {
+                local = true
+                break
+            }
+            ancestor = ancestor.parent
+        }
+        if (!local) throw UnsupportedError("Cannot preserve a correlated database-qualified reference across a pipe input boundary; use distinct table aliases")
+    }
+    if (hasJoins && stageColumns.any { it.table.isNotEmpty() }) {
+        throw UnsupportedError("Pipe SELECT/DISTINCT input boundaries over joins require references to the input's explicit output names")
+    }
+    if (stageColumns.any { it.isStar && it.table.isNotEmpty() } &&
+        !(projections.size == 1 && projections.single().isStar)) {
+        throw UnsupportedError("Cannot preserve a qualified star across a pipe input boundary with additional or renamed projections; use explicit columns")
+    }
+
+    val rankingOrder = if ((stage.args["distinct"] as? Distinct)?.args?.get("on") is Tuple) {
+        (query.args["order"] as? Order)?.copy()?.also { order ->
+            for (key in order.expressionsArg.filterIsInstance<Expression>()) {
+                val value = if (key is Ordered) key.thisArg as Expression else key
+                if (value.unnest().isInt) {
+                    throw UnsupportedError("Pipe DISTINCT ON input boundaries require named ORDER BY expressions, not positional references")
+                }
+                val projected = if (value is Column && value.table.isEmpty()) {
+                    projections.firstOrNull { !it.isStar && it.outputName == value.name }
+                        ?: projections.firstOrNull { it.unalias() == value }
+                } else projections.firstOrNull { it.unalias() == value }
+                val identifier = if (!hasStar && projected != null) {
+                    (projected.args["alias"] as? Identifier ?: projected.thisArg as? Identifier)?.copy()
+                } else if (projections.size == 1 && hasStar && value is Column &&
+                    value.db.isEmpty() && value.catalog.isEmpty() &&
+                    (value.table.isEmpty() || value.table == sourceAlias?.name)) {
+                    (value.thisArg as? Identifier)?.copy()
+                } else null
+                if (identifier == null) {
+                    throw UnsupportedError("Pipe DISTINCT ON cannot preserve an ORDER BY expression across its input boundary; expose the computed sort key with a unique alias")
+                }
+                identifier.updatePositions(if (value is Column) value.thisArg as Expression else value)
+                val bound = Column(args("this" to identifier))
+                bound.updatePositions(value)
+                value.replace(bound)
+            }
+        }
+    } else null
+    val outer = buildPipeCte(query, listOf(Star()), counter)
+    // Retain the single input namespace, including references inside correlated
+    // stage expressions, without stripping qualifiers or changing source positions.
+    if (!hasJoins && sourceAlias != null) {
+        ((outer.args["from_"] as From).thisArg as Table).set("alias", TableAlias(args("this" to sourceAlias.copy())))
+    }
+    // Ranking still needs the input order; the original stays with its restriction.
+    if (rankingOrder != null) outer.set("order", rankingOrder)
+    return outer
+}
 
 // sqlglot: Parser._parse_pipe_syntax_limit (offset part)
 private fun applyPipeOffset(query: Expression, offset: Offset?) {

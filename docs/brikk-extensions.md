@@ -25,14 +25,30 @@ exceptions today:
 
 - **What:** `|>` queries parse into `PipeQuery` + per-operator stage nodes instead of
   sqlglot's parse-time desugaring into `__tmpN` CTE chains. Desugaring is an explicit
-  transform (`desugarPipes`) matching sqlglot's output byte-for-byte; pipe *generation*
+  transform (`desugarPipes`), with the stage-boundary corrections below; pipe *generation*
   (AST → `|>` text) exists — sqlglot has no equivalent.
 - **Where:** `ast/PipeNodes.kt`, `ast/PipeDesugar.kt`, parser `parsePipeSyntax*` handlers,
   generator `pipe*Sql` methods.
 - `PipeSelect` preserves the SELECT's optional `Distinct` node, including `ON` keys,
   through parsing, copying, serialization, pipe rendering, and desugaring. Earlier
-  versions silently dropped `|> SELECT DISTINCT`. The modifier belongs on the
-  projection-bearing SELECT before its CTE boundary, not on a new outer stage.
+  versions silently dropped `|> SELECT DISTINCT`. Projection and deduplication must
+  consume the preceding stage's result. Prior LIMIT/OFFSET, DISTINCT (including ON),
+  grouping/QUALIFY, and computed or renamed projections stay inside an input CTE
+  before the next SELECT/DISTINCT. Simple direct projections still fuse when safe.
+  ORDER BY remains with the restriction; DISTINCT ON also retains a copy for ranking.
+  Copied ranking keys bind to existing input output columns, including renamed or
+  computed sort keys. Unexported expressions are refused rather than re-evaluated
+  after the boundary, which would change volatile values or aggregate semantics.
+  Whole-row DISTINCT followed by plain projection can return duplicate projected
+  values. The older test expecting these to collapse was incorrect and is replaced
+  by row-result assertions.
+- Input boundaries preserve a single source alias, source positions and explicit
+  output names. Generated CTE names avoid both user relation names and aliases.
+  Unresolved joined stars, duplicate/unnamed input columns, database-qualified or
+  joined-source references requiring rebinding, and ambiguous qualified stars raise
+  `UnsupportedError` rather than guessing. Correlated stage references are checked
+  without rewriting local subquery bindings. Use explicit, uniquely named input
+  columns and table aliases for these cases.
 - **Conflict risk on upstream sync:** HIGH for the desugar semantics (sqlglot's pipe
   handler table grows most releases — e.g. DISTINCT was added in 30.x; new upstream
   operators must be mirrored in both our parser and `desugarPipes`, with their tests
@@ -592,6 +608,36 @@ plugin JDBC coverage. No dependency was added.
 
 Upstream syncs must retain this override unless upstream also preserves Doris's
 native full join. Existing corpus ledgers are unchanged.
+
+## 21. Doris: DISTINCT ON output columns and row restrictions
+
+For DISTINCT ON with projection-level stars or final LIMIT/OFFSET, Doris uses native
+`QUALIFY ROW_NUMBER() OVER (...) = 1`. No ranking helper is projected. User columns
+named `_row_number` remain untouched, as do qualified stars and mixed projections.
+Original ordering is copied into the ranking window and retained for final output;
+LIMIT/OFFSET remain after ranking. Unrestricted explicit projections keep the
+existing subquery rewrite.
+
+The pinned Doris source `7027772afcb` supports direct window expressions in QUALIFY
+(`DorisParser.g4`, `FillUpQualifyMissingSlot`). The synthesized clause deliberately
+bypasses `eliminateQualify`, which would reintroduce the helper-column leak. This
+path refuses existing QUALIFY, window/subquery ranking keys, positional keys, and
+unresolved projection-alias references with `UnsupportedError` rather than emit a
+silently different query. The ordinary QUALIFY behavior described in entry 6 is
+unchanged.
+
+The shared `eliminateDistinctOn` also distinguishes a projection star from a star
+inside a scalar subquery. The latter needs an explicit outer scalar projection,
+not `SELECT *` exporting its ranking helper.
+
+Tests: `DorisDistinctOnTest`, `PipeQueryTest`, `SourceMapTest`, and verifier module
+`DorisDistinctSemanticsTest`. Result tests execute generated SQL unchanged in
+embedded DuckDB, asserting row multiplicities and actual column names/order, and
+check the native Doris grammar. They include prior restrictions, head DISTINCT ON,
+qualified references, alias/CTE collisions, correlated and shadowed namespaces,
+NULL groups, empty inputs, mixed stars, and real helper-like column names. No live
+Doris execution is claimed; other dialects' unresolved star rewrites are not fixed
+by this Doris-specific path. Existing corpus expectations and ledgers are unchanged.
 
 ## Upstream sync protocol
 

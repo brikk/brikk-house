@@ -300,6 +300,29 @@ class SourceMapTest {
     }
 
     @Test
+    fun distinctInputBoundariesKeepExactQualifiedAndAliasReferences() {
+        for ((source, token) in listOf(
+            "FROM t AS x\n|> WHERE x.id > 0\n|> ORDER BY x.id\n|> LIMIT 3\n|> SELECT DISTINCT x.category" to "category",
+            "SELECT category AS bucket FROM t ORDER BY id LIMIT 3\n|> SELECT DISTINCT bucket" to "bucket",
+            "FROM t\n|> SELECT DISTINCT ON (category) *" to "category",
+        )) {
+            for (pretty in listOf(false, true)) {
+                val result = SqlFragment(source, "doris").toExecutable("doris", pretty = pretty)
+                val outputOffset = if (token == "bucket") {
+                    result.sql.indexOf(token, result.sql.indexOf("DISTINCT"))
+                } else result.sql.indexOf(token)
+                assertTrue(outputOffset >= 0, result.sql)
+                val map = assertNotNull(result.sourceMap)
+                assertTrue(result.sql === map.output)
+                val position = assertNotNull(map.sourcePosition(outputOffset, exact = true), result.sql)
+                assertEquals(source.lastIndexOf(token), position.start)
+                assertEquals(token, source.substring(position.start, position.end + 1))
+                assertEquals(source.take(position.start).count { it == '\n' } + 1, position.lineStart)
+            }
+        }
+    }
+
+    @Test
     fun executableSourceMapStaysExactAfterSupplementaryCharacters() {
         val source =
             "FROM t |> EXTEND '\uD83D\uDE00' AS label |> WHERE missing_column > 0 |> LIMIT 5"
