@@ -64,7 +64,7 @@ class RelTest {
     fun singleStageRenderingPreservesSourceDialectContext() {
         assertEquals("SELECT lowerUTF8(x) AS x FROM t",
             Rel<Partial>("SELECT LOWER(x) AS x FROM t", "duckdb").render("clickhouse"))
-        assertEquals("SELECT lower(x) AS x FROM t",
+        assertEquals("WITH __tmp1 AS (SELECT lower(x) AS x FROM t) SELECT * FROM __tmp1",
             Rel<Partial>("FROM t |> SELECT LOWER(x) AS x", "clickhouse").render())
     }
 
@@ -85,11 +85,11 @@ class RelTest {
     fun runtimeAlsoAppliesSourceSpecificWeekAndRoundingRules() {
         assertEquals("SELECT toISOWeek(d) AS w FROM t",
             Rel<Partial>("SELECT WEEK(d) AS w FROM t", "duckdb").render("clickhouse"))
-        assertEquals("SELECT week(d) AS w FROM t",
+        assertEquals("WITH __tmp1 AS (SELECT week(d) AS w FROM t) SELECT * FROM __tmp1",
             Rel<Partial>("FROM t |> SELECT WEEK(d) AS w", "clickhouse").render())
         assertEquals("SELECT sign(x) * floor(abs(x) * pow(10, 0) + 0.5) / pow(10, 0) AS n FROM t",
             Rel<Partial>("SELECT ROUND(x) AS n FROM t", "duckdb").render("clickhouse"))
-        assertEquals("SELECT ROUND(x) AS n FROM t",
+        assertEquals("WITH __tmp1 AS (SELECT ROUND(x) AS n FROM t) SELECT * FROM __tmp1",
             Rel<Partial>("FROM t |> SELECT ROUND(x) AS n", "clickhouse").render())
     }
 
