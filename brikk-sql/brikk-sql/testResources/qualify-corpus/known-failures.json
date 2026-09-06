@@ -1,3 +1,56 @@
 {
-    "cases": []
+    "cases": [
+        {
+            "key": "qualify_columns::SELECT * FROM ((SELECT 1 AS foo, 2 AS bar) FULL OUTER UNION ALL BY NAME (SELECT 3 AS bar, 4 AS baz))",
+            "reason": "ASTRA-014/G3: Resolver rejects parenthesized SELECT operands of a set operation as Unknown set operation. Pre-existing production defect exposed by enabling BigQuery coverage; docs/corpus-coverage.md."
+        },
+        {
+            "key": "qualify_columns::SELECT aa FROM x, UNNEST(a) AS aa",
+            "reason": "ASTRA-014/G1: BigQuery scalar UNNEST alias is treated as a relation alias, producing aa.aa instead of aa; part of ASTRA-008."
+        },
+        {
+            "key": "qualify_columns::select * from unnest ([1, 2]) as x with offset",
+            "reason": "ASTRA-014/G1: BigQuery UNNEST star expansion loses the value column x and emits only x.offset; part of ASTRA-008."
+        },
+        {
+            "key": "qualify_columns::select * from unnest ([1, 2]) as x with offset as y",
+            "reason": "ASTRA-014/G1: BigQuery UNNEST star expansion loses the value column x and emits only x.y; part of ASTRA-008."
+        },
+        {
+            "key": "qualify_columns::select x, a, x.a from unnest([STRUCT(1 AS a)]) as x CROSS JOIN m",
+            "reason": "ASTRA-014/G1: BigQuery struct-array UNNEST alias binds to m.x and qualifies bare field a; part of ASTRA-008."
+        },
+        {
+            "key": "qualify_columns::WITH cte AS (SELECT [STRUCT(1 AS a)] AS x) select a, x, m.a from cte, UNNEST(x) AS m CROSS JOIN n",
+            "reason": "ASTRA-014/G1: BigQuery UNNEST field qualification differs, m.a instead of bare a. Canonical-output mismatch, not independently claimed invalid SQL; part of ASTRA-008."
+        },
+        {
+            "key": "qualify_columns::WITH cte AS (SELECT 1 AS col) SELECT * FROM cte LEFT JOIN UNNEST((SELECT ARRAY_AGG(DISTINCT x) AS agg FROM UNNEST([1]) AS x WHERE col = 1))",
+            "reason": "ASTRA-014/G1: BigQuery UNNEST incorrectly binds correlated col to x.col instead of cte.col and emits x.x; part of ASTRA-008."
+        },
+        {
+            "key": "qualify_columns::SELECT * FROM UNNEST(ARRAY<STRUCT<percentile STRING, value INT64, score FLOAT64>>[(\"p10\", 1, 0.0)])",
+            "reason": "ASTRA-014/G1: BigQuery UNNEST adds synthetic _0 alias and field qualifiers absent from the oracle. Canonical-output mismatch; part of ASTRA-008."
+        },
+        {
+            "key": "qualify_columns::WITH scores AS (SELECT * FROM UNNEST((SELECT ARRAY<STRUCT<percentile STRING, value INT64, score FLOAT64>>[(\"p10\", 1, 0.0)]))) SELECT percentile FROM scores",
+            "reason": "ASTRA-014/G1: BigQuery UNNEST adds synthetic _0 alias and field qualifiers inside the CTE. Canonical-output mismatch; part of ASTRA-008."
+        },
+        {
+            "key": "qualify_tables::SELECT results FROM Coordinates, coordinates.position AS results",
+            "reason": "ASTRA-014/G2: Missing BigQuery implicit UNNEST normalization treats coordinates.position as a physical table; part of ASTRA-008."
+        },
+        {
+            "key": "qualify_tables::SELECT results FROM db.coordinates, Coordinates.position AS results",
+            "reason": "ASTRA-014/G2: Missing BigQuery implicit UNNEST normalization treats Coordinates.position as a physical table; part of ASTRA-008."
+        },
+        {
+            "key": "qualify_tables::SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10))",
+            "reason": "ASTRA-014/G4: QualifyTables omits StarRocks TableFromRows default output columns, missing _0(generate_series); docs/corpus-coverage.md."
+        },
+        {
+            "key": "qualify_tables::SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10)) AS t",
+            "reason": "ASTRA-014/G4: QualifyTables omits StarRocks TableFromRows default output columns, missing t(generate_series); docs/corpus-coverage.md."
+        }
+    ]
 }

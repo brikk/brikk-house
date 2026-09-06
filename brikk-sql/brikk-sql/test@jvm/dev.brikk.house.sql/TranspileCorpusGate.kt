@@ -42,6 +42,8 @@ abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
         var ran = 0
         var passedCount = 0
         var skippedUnavailable = 0
+        var unextractable = 0
+        var oracleFailed = 0
         val failures = LinkedHashMap<String, String>() // "dir|dialect|sql" -> reason
 
         for (caseElem in transpile) {
@@ -56,7 +58,11 @@ abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
                     skippedUnavailable += 1
                     continue
                 }
-                val readSql = (readValue as? JsonPrimitive)?.content ?: continue
+                if (readValue !is JsonPrimitive || !readValue.isString) {
+                    if (readValue is JsonObject && "error" in readValue) oracleFailed++ else unextractable++
+                    continue
+                }
+                val readSql = readValue.content
                 val key = "read|$readDialect|$sql"
                 ran += 1
                 val result = runCatching {
@@ -80,10 +86,13 @@ abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
                     continue
                 }
                 val key = "write|$writeDialect|$sql"
-                ran += 1
-
                 val expectsError = writeValue is JsonObject &&
                     (writeValue["error"] as? JsonPrimitive)?.content == "UnsupportedError"
+                if (!expectsError && (writeValue !is JsonPrimitive || !writeValue.isString)) {
+                    if (writeValue is JsonObject && "error" in writeValue) oracleFailed++ else unextractable++
+                    continue
+                }
+                ran += 1
 
                 val generator = writer.generator(pretty = pretty)
                 val result = runCatching {
@@ -110,11 +119,16 @@ abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
             }
         }
 
+        val totalDirections = transpile.sumOf { case ->
+            listOf("read", "write").sumOf { (case.jsonObject[it] as? JsonObject)?.size ?: 0 }
+        }
+        check(ran + skippedUnavailable + unextractable + oracleFailed == totalDirections) { "Unaccounted transpile directions" }
         enforceLedger(
             ledger = ledger,
             failures = failures,
-            summary = "${javaClass.simpleName}: $passedCount pass / ${failures.size} ledgered (of $ran run), " +
-                "$skippedUnavailable directions skipped (out-of-scope dialect)",
+            summary = "${javaClass.simpleName}: $passedCount pass / ${ran - passedCount} failing executions " +
+                "(${failures.size} ledger keys, of $ran run), " +
+                "excluded=$skippedUnavailable (out-of-scope dialect), unextractable=$unextractable, oracle-failed=$oracleFailed",
             actualLedgerName = "$dialect-transpile-ledger-actual.json",
             caseKey = "case",
         )

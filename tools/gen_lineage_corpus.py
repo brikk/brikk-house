@@ -4,7 +4,7 @@
 Extracts lineage() calls from reference/sqlglot/tests/test_lineage.py (the calls are
 stereotyped: lineage("col", "sql", schema={...}, sources={...}, dialect=...)) via ast
 parsing, resolving simple in-function variable assignments. Cases whose dialect is not
-one of brikk-sql's 8 supported dialects are recorded as skipped-with-reason. A curated
+in the shared corpus policy are recorded as skipped-with-reason. A curated
 EXTRA_CASES list adds coverage for categories the Python suite only exercises through
 unsupported dialects (pivots via duckdb, etc.).
 
@@ -31,12 +31,13 @@ def sqlglot_version() -> str:
     """`git describe --tags` of the reference clone. Aborts rather than stamping a guess:
     the fixture stamp is asserted against the pin by FixturePinSyncTest (EVAL-05)."""
     return subprocess.run(
-        ["git", "describe", "--tags"], cwd=SQLGLOT_DIR, capture_output=True, text=True, check=True
+        ["git", "describe", "--tags", "--abbrev=9"], cwd=SQLGLOT_DIR, capture_output=True, text=True, check=True
     ).stdout.strip()
 
 
 VERSION = sqlglot_version()
-SUPPORTED_DIALECTS = {"", "mysql", "doris", "presto", "trino", "duckdb", "postgres", "clickhouse"}
+with open(os.path.join(os.path.dirname(__file__), "..", "brikk-sql", "brikk-sql", "testResources", "corpus-policy.json")) as policy_file:
+    SUPPORTED_DIALECTS = set(json.load(policy_file)["sqlglot_dialects"])
 TEST_FILE = os.path.join(
     os.path.dirname(__file__), "..", "reference", "sqlglot", "tests", "test_lineage.py"
 )

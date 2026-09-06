@@ -1,6 +1,5 @@
 package dev.brikk.house.sql
 
-import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.optimizer.Node
 import dev.brikk.house.sql.optimizer.lineage
@@ -153,6 +152,28 @@ class LineageCorpusTest {
         check(cases.isNotEmpty()) { "empty lineage corpus" }
         val ledger = loadLedger()
 
+        var excluded = 0
+        var unextractable = 0
+        var duplicates = 0
+        for (skip in root.getValue("skipped").jsonArray) {
+            val entry = skip.jsonObject
+            val reason = entry.getValue("reason").jsonPrimitive.content
+            when {
+                reason.startsWith("unsupported dialect: ") -> {
+                    val dialect = reason.removePrefix("unsupported dialect: ")
+                    check(CorpusDialects.resolveOrSkip(dialect) == null) {
+                        "Lineage case ${entry["id"]} skips supported dialect '$dialect'; regenerate the corpus"
+                    }
+                    excluded++
+                }
+                reason == "duplicate of earlier case" -> duplicates++
+                reason.startsWith("unresolvable") || reason.startsWith("unsupported kwargs:") ||
+                    reason.startsWith("non-literal arg:") || reason == "**kwargs call" ||
+                    reason == "sql arg is not a string literal" || reason == "fewer than 2 positional args" -> unextractable++
+                else -> fail("Unclassified lineage extraction skip: $entry")
+            }
+        }
+
         val failures = LinkedHashMap<String, String>()
         var compared = 0
 
@@ -165,7 +186,7 @@ class LineageCorpusTest {
             val schema = (case["schema"] as? JsonObject)?.let { toPlainMap(it) }
             val sources = (case["sources"] as? JsonObject)
                 ?.mapValues { (_, v) -> v.jsonPrimitive.content as Any }
-            val dialect = Dialects.forName(dialectName)
+            val dialect = checkNotNull(CorpusDialects.resolveOrSkip(dialectName)) { "Runnable lineage case uses excluded dialect '$dialectName'" }
 
             compared++
 
@@ -224,11 +245,15 @@ class LineageCorpusTest {
             }
         }
 
+        check(compared + excluded + unextractable + duplicates == cases.size + root.getValue("skipped").jsonArray.size) {
+            "Unaccounted lineage extraction records"
+        }
         val passed = compared - failures.size
         val rate = if (compared > 0) 100.0 * passed / compared else 100.0
         println(
             "LineageCorpusTest: $passed/$compared pass (${"%.1f".format(rate)}%), " +
-                "${failures.size} failing"
+                "${failures.size} failing, excluded=$excluded, unextractable=$unextractable, duplicate=$duplicates, " +
+                "oracle-raised=${cases.count { it["error"] != null }} (executed as error assertions)"
         )
 
         // Always write the actual failure set in ledger format for easy regeneration.

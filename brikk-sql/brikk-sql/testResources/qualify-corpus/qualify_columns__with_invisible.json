@@ -28,7 +28,22 @@
    "quoted": "STRUCT<\"foo bar\" INT>"
   },
   "t_bool": {
-   "a": "BOOLEAN"
+   "a": "BOOLEAN",
+   "b": "BOOLEAN"
+  },
+  "unpivotable": {
+   "id": "INT",
+   "jan": "INT",
+   "feb": "INT",
+   "north": "INT",
+   "south": "INT"
+  },
+  "pivotable": {
+   "id": "INT",
+   "cat": "TEXT",
+   "val": "INT",
+   "kind": "TEXT",
+   "amt": "INT"
   }
  },
  "visible": {

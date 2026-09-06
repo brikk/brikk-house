@@ -19,7 +19,7 @@ tests/test_optimizer.py functions pass:
 
 For every pair case the Python function is RUN and its output compared with the
 fixture's expected text; mismatches are recorded as skipped-with-reason (there should
-be ~none). Cases whose meta dialect is not one of brikk-sql's 8 supported dialects are
+be ~none). Cases whose meta dialect is outside the shared corpus policy are
 emitted with "dialect_supported": false so the Kotlin gate can skip them explicitly.
 
 The Kotlin twin is brikk-sql/brikk-sql/test@jvm/dev.brikk.house.sql/QualifyCorpusTest.kt.
@@ -50,7 +50,7 @@ from sqlglot.optimizer import qualify_tables as qualify_tables_mod  # noqa: E402
 from sqlglot.optimizer import normalize_identifiers as normalize_identifiers_mod  # noqa: E402
 from sqlglot.schema import MappingSchema  # noqa: E402
 
-SUPPORTED_DIALECTS = {"", "mysql", "doris", "presto", "trino", "duckdb", "postgres", "clickhouse"}
+SUPPORTED_DIALECTS = set(json.loads((OUT_DIR.parent / "corpus-policy.json").read_text())["sqlglot_dialects"])
 
 # tests/test_optimizer.py TestOptimizer.setUp
 SCHEMA = {
@@ -64,7 +64,9 @@ SCHEMA = {
         "nested_0": "STRUCT<a_1 INT, nested_1 STRUCT<a_2 INT, nested_2 STRUCT<a_3 INT>>>",
         "quoted": 'STRUCT<"foo bar" INT>',
     },
-    "t_bool": {"a": "BOOLEAN"},
+    "t_bool": {"a": "BOOLEAN", "b": "BOOLEAN"},
+    "unpivotable": {"id": "INT", "jan": "INT", "feb": "INT", "north": "INT", "south": "INT"},
+    "pivotable": {"id": "INT", "cat": "TEXT", "val": "INT", "kind": "TEXT", "amt": "INT"},
 }
 
 # tests/test_optimizer.py test_qualify_columns__with_invisible
@@ -73,7 +75,7 @@ VISIBLE = {"x": ["a"], "y": ["b"], "z": ["b"]}
 
 def sqlglot_version() -> str:
     return subprocess.check_output(
-        ["git", "describe", "--tags", "--always"], cwd=SQLGLOT, text=True
+        ["git", "describe", "--tags", "--always", "--abbrev=9"], cwd=SQLGLOT, text=True
     ).strip()
 
 

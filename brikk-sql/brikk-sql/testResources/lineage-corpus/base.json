@@ -1249,6 +1249,178 @@
       }
     },
     {
+      "id": "test_unpivot_multi_column#1",
+      "column": "first_half_sales",
+      "sql": "\n        SELECT product, semesters, first_half_sales, second_half_sales\n        FROM produce\n        UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((q1, q2) AS 'semester_1', (q3, q4) AS 'semester_2'))\n        ",
+      "dialect": "bigquery",
+      "trim_selects": true,
+      "schema": {
+        "produce": {
+          "product": "string",
+          "q1": "int64",
+          "q2": "int64",
+          "q3": "int64",
+          "q4": "int64"
+        }
+      },
+      "expected": {
+        "name": "first_half_sales",
+        "expression": "produce.first_half_sales AS first_half_sales",
+        "source": "SELECT produce.first_half_sales AS first_half_sales FROM produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+        "source_name": "",
+        "reference_node_name": "",
+        "downstream": [
+          {
+            "name": "produce.q1",
+            "expression": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          },
+          {
+            "name": "produce.q3",
+            "expression": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "test_unpivot_multi_column#2",
+      "column": "second_half_sales",
+      "sql": "\n        SELECT product, semesters, first_half_sales, second_half_sales\n        FROM produce\n        UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((q1, q2) AS 'semester_1', (q3, q4) AS 'semester_2'))\n        ",
+      "dialect": "bigquery",
+      "trim_selects": true,
+      "schema": {
+        "produce": {
+          "product": "string",
+          "q1": "int64",
+          "q2": "int64",
+          "q3": "int64",
+          "q4": "int64"
+        }
+      },
+      "expected": {
+        "name": "second_half_sales",
+        "expression": "produce.second_half_sales AS second_half_sales",
+        "source": "SELECT produce.second_half_sales AS second_half_sales FROM produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+        "source_name": "",
+        "reference_node_name": "",
+        "downstream": [
+          {
+            "name": "produce.q2",
+            "expression": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          },
+          {
+            "name": "produce.q4",
+            "expression": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "test_unpivot_multi_column#3",
+      "column": "semesters",
+      "sql": "\n        SELECT product, semesters, first_half_sales, second_half_sales\n        FROM produce\n        UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((q1, q2) AS 'semester_1', (q3, q4) AS 'semester_2'))\n        ",
+      "dialect": "bigquery",
+      "trim_selects": true,
+      "schema": {
+        "produce": {
+          "product": "string",
+          "q1": "int64",
+          "q2": "int64",
+          "q3": "int64",
+          "q4": "int64"
+        }
+      },
+      "expected": {
+        "name": "semesters",
+        "expression": "produce.semesters AS semesters",
+        "source": "SELECT produce.semesters AS semesters FROM produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+        "source_name": "",
+        "reference_node_name": "",
+        "downstream": [
+          {
+            "name": "produce.q1",
+            "expression": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          },
+          {
+            "name": "produce.q2",
+            "expression": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          },
+          {
+            "name": "produce.q3",
+            "expression": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          },
+          {
+            "name": "produce.q4",
+            "expression": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "test_unpivot_multi_column#4",
+      "column": "product",
+      "sql": "\n        SELECT product, semesters, first_half_sales, second_half_sales\n        FROM produce\n        UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((q1, q2) AS 'semester_1', (q3, q4) AS 'semester_2'))\n        ",
+      "dialect": "bigquery",
+      "trim_selects": true,
+      "schema": {
+        "produce": {
+          "product": "string",
+          "q1": "int64",
+          "q2": "int64",
+          "q3": "int64",
+          "q4": "int64"
+        }
+      },
+      "expected": {
+        "name": "product",
+        "expression": "produce.product AS product",
+        "source": "SELECT produce.product AS product FROM produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+        "source_name": "",
+        "reference_node_name": "",
+        "downstream": [
+          {
+            "name": "produce.product",
+            "expression": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source": "produce AS produce UNPIVOT((first_half_sales, second_half_sales) FOR semesters IN ((produce.q1, produce.q2) AS 'semester_1', (produce.q3, produce.q4) AS 'semester_2')) AS produce",
+            "source_name": "",
+            "reference_node_name": "",
+            "downstream": []
+          }
+        ]
+      }
+    },
+    {
       "id": "test_chained_pivots_consuming_alias_columns#1",
       "column": "hi",
       "sql": "\n        SELECT hi, lo FROM sales\n        UNPIVOT(score FOR month IN (jan, feb)) AS u1(a, b, c, d)\n        UNPIVOT((hi, lo) FOR region IN ((b, c)))\n        ",
@@ -2450,22 +2622,6 @@
     {
       "id": "test_unpivot_with_cte#2",
       "reason": "unsupported dialect: snowflake"
-    },
-    {
-      "id": "test_unpivot_multi_column#1",
-      "reason": "unsupported dialect: bigquery"
-    },
-    {
-      "id": "test_unpivot_multi_column#2",
-      "reason": "unsupported dialect: bigquery"
-    },
-    {
-      "id": "test_unpivot_multi_column#3",
-      "reason": "unsupported dialect: bigquery"
-    },
-    {
-      "id": "test_unpivot_multi_column#4",
-      "reason": "unsupported dialect: bigquery"
     },
     {
       "id": "test_unpivot_with_alias_columns#1",

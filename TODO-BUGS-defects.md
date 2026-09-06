@@ -10,9 +10,19 @@
 
 ---
 
-**0 actionable items.**
+**13 newly exposed qualification cases in four defect groups.**
 
-The previous 162-item inventory is resolved:
+ASTRA-014 enabled previously skipped supported cases. Their exact keys and reviewed
+causes are in `brikk-sql/brikk-sql/testResources/qualify-corpus/known-failures.json`;
+see `docs/corpus-coverage.md` for the execution inventory. These remain open:
+
+- [ ] G1: eight BigQuery UNNEST alias, field, star-expansion, and correlation cases,
+  under ASTRA-008's coordinated parser/resolver/generator work.
+- [ ] G2: two BigQuery implicit UNNEST conversions, also ASTRA-008.
+- [ ] G3: unwrap parenthesized SELECT operands during set-operation column discovery.
+- [ ] G4: preserve StarRocks TableFromRows default output-column aliases, two cases.
+
+The previous 162-item inventory remains resolved:
 
 - 157 parser and semantic-analysis defects now match the pinned sqlglot oracle.
 - 2 DataFusion entries were fixed: regex operators now parse natively, and the

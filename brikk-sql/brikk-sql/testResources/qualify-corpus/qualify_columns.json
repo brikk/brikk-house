@@ -28,7 +28,22 @@
    "quoted": "STRUCT<\"foo bar\" INT>"
   },
   "t_bool": {
-   "a": "BOOLEAN"
+   "a": "BOOLEAN",
+   "b": "BOOLEAN"
+  },
+  "unpivotable": {
+   "id": "INT",
+   "jan": "INT",
+   "feb": "INT",
+   "north": "INT",
+   "south": "INT"
+  },
+  "pivotable": {
+   "id": "INT",
+   "cat": "TEXT",
+   "val": "INT",
+   "kind": "TEXT",
+   "amt": "INT"
   }
  },
  "cases": [
@@ -191,8 +206,7 @@
   {
    "sql": "WITH x AS (select 'a' as a, 1 as b) SELECT x.a AS c, y.a as d, SUM(x.b) AS y, FROM x join x as y on x.a = y.a group by 1, 2",
    "expected": "WITH x AS (SELECT 'a' AS a, 1 AS b) SELECT x.a AS c, y.a AS d, SUM(x.b) AS y FROM x AS x JOIN x AS y ON x.a = y.a GROUP BY x.a, 2",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT SUM(x.a) AS c FROM x JOIN y ON x.b = y.b GROUP BY c",
@@ -260,14 +274,12 @@
   {
    "sql": "SELECT DATE_TRUNC('week', a) AS a FROM x",
    "expected": "SELECT DATE_TRUNC('WEEK', x.a) AS a FROM x AS x",
-   "dialect": "starrocks",
-   "dialect_supported": false
+   "dialect": "starrocks"
   },
   {
    "sql": "SELECT DATE_TRUNC(a, MONTH) AS a FROM x",
    "expected": "SELECT DATE_TRUNC(x.a, MONTH) AS a FROM x AS x",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT x FROM READ_PARQUET('path.parquet', hive_partition=1)",
@@ -336,14 +348,12 @@
   {
    "sql": "WITH t AS (SELECT 1 AS c) SELECT TO_JSON_STRING(t) FROM t",
    "expected": "WITH t AS (SELECT 1 AS c) SELECT TO_JSON_STRING(t) AS _col_0 FROM t AS t",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT DATE_TRUNC(col1, WEEK(MONDAY)), col2 FROM t",
    "expected": "SELECT DATE_TRUNC(t.col1, WEEK(MONDAY)) AS _col_0, t.col2 AS col2 FROM t AS t",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT first, second FROM (SELECT 'val' AS col, STACK(2, 1, 2, 3) AS (first, second)) AS tbl",
@@ -414,44 +424,37 @@
   {
    "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar INNER UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz)",
    "expected": "SELECT _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar INNER UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar UNION ALL CORRESPONDING SELECT 3 AS bar, 4 AS baz)",
    "expected": "SELECT _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar INNER UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz)",
    "expected": "SELECT _0.foo AS foo, _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz)",
    "expected": "SELECT _0.foo AS foo, _0.bar AS bar, _0.baz AS baz FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar LEFT UNION ALL CORRESPONDING SELECT 3 AS bar, 4 AS baz)",
    "expected": "SELECT _0.foo AS foo, _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL CORRESPONDING SELECT 3 AS bar, 4 AS baz)",
    "expected": "SELECT _0.foo AS foo, _0.bar AS bar, _0.baz AS baz FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL CORRESPONDING BY (foo, bar) SELECT 3 AS bar, 4 AS baz)",
    "expected": "SELECT _0.foo AS foo, _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME ON (foo, bar) SELECT 3 AS bar, 4 AS baz) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) ORDER BY bar",
@@ -466,51 +469,43 @@
   {
    "sql": "SELECT * FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME ON (foo, bar) SELECT 3 AS bar, 4 AS baz)",
    "expected": "SELECT _0.foo AS foo, _0.bar AS bar FROM (SELECT 1 AS foo, 2 AS bar FULL UNION ALL BY NAME ON (foo, bar) SELECT 3 AS bar, 4 AS baz) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM ((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) LEFT UNION ALL BY NAME ON (bar) SELECT 3 AS foo, 4 AS bar)",
    "expected": "SELECT _0.bar AS bar FROM ((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) LEFT UNION ALL BY NAME ON (bar) SELECT 3 AS foo, 4 AS bar) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM ((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) FULL UNION ALL BY NAME ON (foo, qux) SELECT 3 AS qux, 4 AS bar)",
    "expected": "SELECT _0.foo AS foo, _0.qux AS qux FROM ((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) FULL UNION ALL BY NAME ON (foo, qux) SELECT 3 AS qux, 4 AS bar) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM ((SELECT 1 AS foo, 2 AS bar) FULL OUTER UNION ALL BY NAME (SELECT 3 AS bar, 4 AS baz))",
    "expected": "SELECT _0.foo AS foo, _0.bar AS bar, _0.baz AS baz FROM ((SELECT 1 AS foo, 2 AS bar) FULL OUTER UNION ALL BY NAME (SELECT 3 AS bar, 4 AS baz)) AS _0",
    "title": "parenthesized set operation operands with side & kind",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM (((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) FULL UNION ALL BY NAME ON (foo, qux) SELECT 3 AS qux, 4 AS bar) INNER UNION ALL BY NAME ON (foo) SELECT 6 AS foo)",
    "expected": "SELECT _0.foo AS foo FROM (((SELECT 1 AS foo, 2 AS bar LEFT UNION ALL BY NAME SELECT 3 AS bar, 4 AS baz) FULL UNION ALL BY NAME ON (foo, qux) SELECT 3 AS qux, 4 AS bar) INNER UNION ALL BY NAME ON (foo) SELECT 6 AS foo) AS _0",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH t1 AS (SELECT 1 AS a, 2 AS b), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS e, 3 AS f) SELECT * FROM ((SELECT * FROM t1 FULL OUTER UNION ALL BY NAME (SELECT * FROM t2 FULL OUTER UNION ALL BY NAME (SELECT * FROM t3 FULL OUTER UNION ALL BY NAME SELECT * FROM t4))))",
    "expected": "WITH t1 AS (SELECT 1 AS a, 2 AS b), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS e, 3 AS f) SELECT _0.a AS a, _0.b AS b, _0.c AS c, _0.d AS d, _0.e AS e, _0.f AS f FROM ((SELECT t1.a AS a, t1.b AS b FROM t1 AS t1 FULL OUTER UNION ALL BY NAME (SELECT t2.b AS b, t2.c AS c FROM t2 AS t2 FULL OUTER UNION ALL BY NAME (SELECT t3.c AS c, t3.d AS d FROM t3 AS t3 FULL OUTER UNION ALL BY NAME SELECT t4.e AS e, t4.f AS f FROM t4 AS t4))) AS _0)",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH t1 AS (SELECT 1 AS a, 2 AS b), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS e, 3 AS f) SELECT * FROM ((SELECT * FROM t1 FULL OUTER UNION ALL BY NAME (SELECT * FROM t2 INNER UNION ALL BY NAME (SELECT * FROM t3 FULL OUTER UNION ALL BY NAME SELECT * FROM t4))))",
    "expected": "WITH t1 AS (SELECT 1 AS a, 2 AS b), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS e, 3 AS f) SELECT _0.a AS a, _0.b AS b, _0.c AS c FROM ((SELECT t1.a AS a, t1.b AS b FROM t1 AS t1 FULL OUTER UNION ALL BY NAME (SELECT t2.b AS b, t2.c AS c FROM t2 AS t2 INNER UNION ALL BY NAME (SELECT t3.c AS c, t3.d AS d FROM t3 AS t3 FULL OUTER UNION ALL BY NAME SELECT t4.e AS e, t4.f AS f FROM t4 AS t4))) AS _0)",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH t1 AS (SELECT 1 AS a, 2 AS b, 3 AS c, 4 AS d), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS d, 3 AS e) SELECT * FROM ((SELECT * FROM t1 FULL OUTER UNION ALL BY NAME (SELECT * FROM t2 FULL UNION ALL BY NAME (SELECT * FROM t3 LEFT UNION ALL BY NAME SELECT * FROM t4))))",
    "expected": "WITH t1 AS (SELECT 1 AS a, 2 AS b, 3 AS c, 4 AS d), t2 AS (SELECT 2 AS b, 3 AS c), t3 AS (SELECT 2 AS c, 3 AS d), t4 AS (SELECT 2 AS d, 3 AS e) SELECT _0.a AS a, _0.b AS b, _0.c AS c, _0.d AS d FROM ((SELECT t1.a AS a, t1.b AS b, t1.c AS c, t1.d AS d FROM t1 AS t1 FULL OUTER UNION ALL BY NAME (SELECT t2.b AS b, t2.c AS c FROM t2 AS t2 FULL UNION ALL BY NAME (SELECT t3.c AS c, t3.d AS d FROM t3 AS t3 LEFT UNION ALL BY NAME SELECT t4.d AS d, t4.e AS e FROM t4 AS t4))) AS _0)",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT a FROM x WHERE b IN (SELECT c FROM y)",
@@ -623,56 +618,48 @@
   {
    "sql": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct(\"test\" AS col1, Struct(3 AS col2) AS lvl2) AS lvl1) AS col), tbl2 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct(\"test\" AS col1, Struct(3 AS col2) AS lvl2) AS lvl1) AS col) SELECT tbl1.col.*, tbl2.col.* FROM tbl1, tbl2",
    "expected": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct('test' AS col1, Struct(3 AS col2) AS lvl2) AS lvl1) AS col), tbl2 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct('test' AS col1, Struct(3 AS col2) AS lvl2) AS lvl1) AS col) SELECT tbl1.col.col1 AS col1, tbl1.col.col2 AS col2, tbl1.col.lvl1 AS lvl1, tbl2.col.col1 AS col1, tbl2.col.col2 AS col2, tbl2.col.lvl1 AS lvl1 FROM tbl1 AS tbl1 CROSS JOIN tbl2 AS tbl2",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct(\"test\" AS col1, Struct(3 AS col2) AS lvl2) AS lvl1, 3 AS col3) AS col) SELECT tbl1.col.lvl1.* FROM tbl1",
    "expected": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col2, Struct('test' AS col1, Struct(3 AS col2) AS lvl2) AS lvl1, 3 AS col3) AS col) SELECT tbl1.col.lvl1.col1 AS col1, tbl1.col.lvl1.lvl2 AS lvl2 FROM tbl1 AS tbl1",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, Struct(5 AS col1)) AS col) SELECT tbl1.col.* FROM tbl1",
    "expected": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, Struct(5 AS col1)) AS col) SELECT tbl1.col.* FROM tbl1 AS tbl1",
    "title": "Cannot expand struct star with unnamed fields",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col1) AS col) SELECT tbl1.col.* FROM tbl1",
    "expected": "WITH tbl1 AS (SELECT STRUCT(1 AS col1, 2 AS col1) AS col) SELECT tbl1.col.* FROM tbl1 AS tbl1",
    "title": "Cannot expand struct star with ambiguous fields",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH tbl1 AS (SELECT STRUCT(1 AS f0, 2 as f1) AS col) SELECT tbl1.col.* from tbl1",
    "expected": "WITH tbl1 AS (SELECT STRUCT(1 AS f0, 2 AS f1) AS col) SELECT tbl1.col.f0 AS f0, tbl1.col.f1 AS f1 FROM tbl1 AS tbl1",
    "title": "BigQuery - Expand struct literal",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT one.* FROM structs",
    "expected": "SELECT structs.one.a_1 AS a_1, structs.one.b_1 AS b_1 FROM structs AS structs",
    "title": "BigQuery - Expand top level nested struct",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH one AS (SELECT 1 AS x) SELECT one.* FROM structs",
    "expected": "WITH one AS (SELECT 1 AS x) SELECT structs.one.a_1 AS a_1, structs.one.b_1 AS b_1 FROM structs AS structs",
    "title": "BigQuery - Unreferenced CTE does not shadow struct column in star expansion",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH one AS (SELECT 1 AS x) SELECT one.* FROM structs, one",
    "expected": "WITH one AS (SELECT 1 AS x) SELECT one.x AS x FROM structs AS structs CROSS JOIN one AS one",
    "title": "BigQuery - CTE in FROM takes precedence over struct column in star expansion",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT (one).* FROM structs",
@@ -692,8 +679,7 @@
    "sql": "SELECT nested_0.nested_1.* FROM structs",
    "expected": "SELECT structs.nested_0.nested_1.a_2 AS a_2, structs.nested_0.nested_1.nested_2 AS nested_2 FROM structs AS structs",
    "title": "BigQuery - Expand midlevel struct",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT ((nested_0).nested_1).* FROM structs",
@@ -978,8 +964,7 @@
   {
    "sql": "SELECT /*+ BROADCAST(y) */ x.b FROM x JOIN y ON x.b = y.b",
    "expected": "SELECT /*+ BROADCAST(y) */ x.b AS b FROM x AS x JOIN y AS y ON x.b = y.b",
-   "dialect": "spark",
-   "dialect_supported": false
+   "dialect": "spark"
   },
   {
    "sql": "SELECT c FROM x LATERAL VIEW EXPLODE (a) AS c",
@@ -1000,32 +985,27 @@
   {
    "sql": "SELECT aa FROM x, UNNEST(a) AS aa",
    "expected": "SELECT aa AS aa FROM x AS x CROSS JOIN UNNEST(x.a) AS aa",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "select * from unnest ([1, 2]) as x with offset",
    "expected": "SELECT x AS x, offset AS offset FROM UNNEST([1, 2]) AS x WITH OFFSET AS offset",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "select * from unnest ([1, 2]) as x with offset as y",
    "expected": "SELECT x AS x, y AS y FROM UNNEST([1, 2]) AS x WITH OFFSET AS y",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "select x, a, x.a from unnest([STRUCT(1 AS a)]) as x CROSS JOIN m",
    "expected": "SELECT x AS x, a AS a, x.a AS a FROM UNNEST([STRUCT(1 AS a)]) AS x CROSS JOIN m AS m",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH cte AS (SELECT [STRUCT(1 AS a)] AS x) select a, x, m.a from cte, UNNEST(x) AS m CROSS JOIN n",
    "expected": "WITH cte AS (SELECT [STRUCT(1 AS a)] AS x) SELECT a AS a, cte.x AS x, m.a AS a FROM cte AS cte CROSS JOIN UNNEST(cte.x) AS m CROSS JOIN n AS n",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT x.a, i.b FROM x CROSS JOIN UNNEST(SPLIT(CAST(b AS VARCHAR), ',')) AS i(b)",
@@ -1053,20 +1033,17 @@
   {
    "sql": "WITH cte AS (SELECT 1 AS col) SELECT * FROM cte LEFT JOIN UNNEST((SELECT ARRAY_AGG(DISTINCT x) AS agg FROM UNNEST([1]) AS x WHERE col = 1))",
    "expected": "WITH cte AS (SELECT 1 AS col) SELECT * FROM cte AS cte LEFT JOIN UNNEST((SELECT ARRAY_AGG(DISTINCT x) AS agg FROM UNNEST([1]) AS x WHERE cte.col = 1))",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM UNNEST(ARRAY<STRUCT<percentile STRING, value INT64, score FLOAT64>>[(\"p10\", 1, 0.0)])",
    "expected": "SELECT percentile AS percentile, value AS value, score AS score FROM UNNEST(ARRAY<STRUCT<percentile STRING, value INT64, score FLOAT64>>[('p10', 1, 0.0)])",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH scores AS (SELECT * FROM UNNEST((SELECT ARRAY<STRUCT<percentile STRING, value INT64, score FLOAT64>>[(\"p10\", 1, 0.0)]))) SELECT percentile FROM scores",
    "expected": "WITH scores AS (SELECT percentile AS percentile, value AS value, score AS score FROM UNNEST((SELECT ARRAY<STRUCT<percentile STRING, value INT64, score FLOAT64>>[('p10', 1, 0.0)] AS _col_0))) SELECT scores.percentile AS percentile FROM scores AS scores",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT a + 1 AS a, ROW_NUMBER() OVER (PARTITION BY b ORDER BY a) AS row_num FROM x ORDER BY a, row_num",
@@ -1076,14 +1053,12 @@
   {
    "sql": "SELECT ROW_NUMBER() OVER (PARTITION BY a ORDER BY b) AS row_num FROM x QUALIFY row_num = 1",
    "expected": "SELECT ROW_NUMBER() OVER (PARTITION BY x.a ORDER BY x.b) AS row_num FROM x AS x QUALIFY ROW_NUMBER() OVER (PARTITION BY x.a ORDER BY x.b) = 1",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT x.b, x.a FROM x LEFT JOIN y ON x.b = y.b QUALIFY ROW_NUMBER() OVER(PARTITION BY x.b ORDER BY x.a DESC) = 1 ORDER BY x.b, x.a",
    "expected": "SELECT x.b AS b, x.a AS a FROM x AS x LEFT JOIN y AS y ON x.b = y.b QUALIFY ROW_NUMBER() OVER (PARTITION BY x.b ORDER BY x.a DESC) = 1 ORDER BY x.b, x.a",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM x QUALIFY COUNT(a) OVER (PARTITION BY b) > 1",
@@ -1093,15 +1068,13 @@
    "sql": "SELECT a, MAX(b) AS x FROM x GROUP BY a QUALIFY ROW_NUMBER() OVER (PARTITION BY x ORDER BY a) = 1",
    "expected": "SELECT x.a AS a, MAX(x.b) AS x FROM x AS x GROUP BY a QUALIFY ROW_NUMBER() OVER (PARTITION BY x ORDER BY a) = 1",
    "title": "BigQuery alias expansion in QUALIFY with source shadowing",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT x.a, MAX(x.b) AS x FROM x GROUP BY 1 QUALIFY ROW_NUMBER() OVER (PARTITION BY x ORDER BY a) = 1",
    "expected": "SELECT x.a AS a, MAX(x.b) AS x FROM x AS x GROUP BY 1 QUALIFY ROW_NUMBER() OVER (PARTITION BY x ORDER BY a) = 1",
    "title": "BigQuery alias expansion in QUALIFY with source shadowing and GROUP BY positional ref",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT 2 AS d, d + 1 FROM x WHERE d = 2 GROUP BY d",
@@ -1312,8 +1285,7 @@
    "sql": "SELECT * FROM unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south))",
    "expected": "SELECT unpivotable.id AS id, unpivotable.month AS month, unpivotable.revenue AS revenue, unpivotable.region AS region, unpivotable.headcount AS headcount FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS unpivotable",
    "title": "chained UNPIVOT, source columns come from the schema",
-   "dialect": "duckdb",
-   "skipped": "oracle output differs from fixture: SELECT * FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS unpivotable"
+   "dialect": "duckdb"
   },
   {
    "sql": "WITH t AS (SELECT 1 AS id, 100 AS jan, 200 AS feb, 7 AS north, 8 AS south) SELECT u.month, u.headcount FROM t UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS u",
@@ -1325,22 +1297,19 @@
    "sql": "SELECT * FROM pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) PIVOT(SUM(amt) FOR kind IN ('x' AS x, 'y' AS y))",
    "expected": "SELECT _0.id AS id, _0.a AS a, _0.b AS b, _0.x AS x, _0.y AS y FROM pivotable AS pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) PIVOT(SUM(amt) FOR kind IN ('x' AS x, 'y' AS y)) AS _0",
    "title": "chained PIVOT, the second groups by what the first produced",
-   "dialect": "duckdb",
-   "skipped": "oracle output differs from fixture: SELECT * FROM pivotable AS pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) PIVOT(SUM(amt) FOR kind IN ('x' AS x, 'y' AS y)) AS _0"
+   "dialect": "duckdb"
   },
   {
    "sql": "SELECT * FROM pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) UNPIVOT(v FOR c IN (a, b))",
    "expected": "SELECT pivotable.id AS id, pivotable.kind AS kind, pivotable.amt AS amt, pivotable.c AS c, pivotable.v AS v FROM pivotable AS pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) UNPIVOT(v FOR c IN (a, b)) AS pivotable",
    "title": "PIVOT then UNPIVOT of the columns it produced",
-   "dialect": "duckdb",
-   "skipped": "oracle output differs from fixture: SELECT * FROM pivotable AS pivotable PIVOT(SUM(val) FOR cat IN ('a' AS a, 'b' AS b)) UNPIVOT(v FOR c IN (a, b)) AS pivotable"
+   "dialect": "duckdb"
   },
   {
    "sql": "SELECT * FROM x JOIN unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = u.id",
    "expected": "SELECT x.a AS a, x.b AS b, u.id AS id, u.north AS north, u.south AS south, u.month AS month, u.revenue AS revenue FROM x AS x JOIN unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = u.id",
    "title": "a source joined next to a pivoted one is not expanded through its operators",
-   "dialect": "duckdb",
-   "skipped": "oracle output differs from fixture: SELECT * FROM x AS x JOIN unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = unpivotable.u.id"
+   "dialect": "duckdb"
   },
   {
    "sql": "WITH t AS (SELECT 1 AS \"Id\", 2 AS \"Jan\", 3 AS \"Feb\", 4 AS \"Nor\", 5 AS \"Sou\") SELECT * FROM t UNPIVOT(v1 FOR n1 IN (\"Jan\", \"Feb\")) UNPIVOT(v2 FOR n2 IN (\"Nor\", \"Sou\"))",
@@ -1353,15 +1322,13 @@
    "sql": "SELECT u.* FROM unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u",
    "expected": "SELECT u.id AS id, u.north AS north, u.south AS south, u.month AS month, u.revenue AS revenue FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u",
    "title": "qualified star over the pivot alias of a pivoted table",
-   "dialect": "duckdb",
-   "skipped": "oracle output differs from fixture: SELECT unpivotable.u.* FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u"
+   "dialect": "duckdb"
   },
   {
    "sql": "SELECT x.b, u.* FROM x JOIN unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = u.id",
    "expected": "SELECT x.b AS b, u.id AS id, u.north AS north, u.south AS south, u.month AS month, u.revenue AS revenue FROM x AS x JOIN unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = u.id",
    "title": "qualified star over the pivot alias, next to a joined plain source",
-   "dialect": "duckdb",
-   "skipped": "oracle output differs from fixture: SELECT x.b AS b, unpivotable.u.* FROM x AS x JOIN unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) AS u ON x.a = unpivotable.u.id"
+   "dialect": "duckdb"
   },
   {
    "sql": "WITH c AS (SELECT id, jan, feb FROM unpivotable) SELECT piv.* FROM c UNPIVOT(revenue FOR month IN (jan, feb)) AS piv",
@@ -1379,8 +1346,7 @@
    "sql": "SELECT u.* FROM unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS u",
    "expected": "SELECT u.id AS id, u.month AS month, u.revenue AS revenue, u.region AS region, u.headcount AS headcount FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS u",
    "title": "qualified star over the alias of a chain of operators",
-   "dialect": "duckdb",
-   "skipped": "oracle output differs from fixture: SELECT unpivotable.u.* FROM unpivotable AS unpivotable UNPIVOT(revenue FOR month IN (jan, feb)) UNPIVOT(headcount FOR region IN (north, south)) AS u"
+   "dialect": "duckdb"
   },
   {
    "sql": "WITH t AS (SELECT PARSE_JSON('{\"id\": 1}') AS data, 'file' AS filepath) SELECT t.$1:\"id\"::INT AS id, t.$2 AS filename FROM t",

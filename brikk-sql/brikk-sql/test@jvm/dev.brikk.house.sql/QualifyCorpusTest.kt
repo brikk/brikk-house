@@ -1,8 +1,6 @@
 package dev.brikk.house.sql
 
 import dev.brikk.house.sql.ast.Expression
-import dev.brikk.house.sql.dialects.Dialects
-import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.optimizer.MappingSchema
 import dev.brikk.house.sql.optimizer.OptimizeError
 import dev.brikk.house.sql.optimizer.SchemaError
@@ -33,9 +31,8 @@ import kotlinx.serialization.json.put
  * passes).
  *
  * Per corpus we compare output SQL strings exactly (or expect OptimizeError/SchemaError
- * for the __invalid corpus). Cases whose fixture dialect is not one of our 8 supported
- * dialects are skipped ("dialect_supported": false), as are cases where the Python
- * oracle itself deviated from the fixture ("skipped", ~none).
+ * for the __invalid corpus). Availability follows the shared corpus policy, not stale
+ * fixture flags. Dialect exclusions and oracle failures are reported separately.
  *
  * Failures must exactly match the ledger in qualify-corpus/known-failures.json — no
  * unledgered failure, no stale entry. The actual failure set is always written to
@@ -75,7 +72,8 @@ class QualifyCorpusTest {
 
     private data class CorpusResult(
         val compared: Int,
-        val skipped: Int,
+        val excluded: Int,
+        val oracleFailed: Int,
         val failures: LinkedHashMap<String, String>,
     )
 
@@ -89,20 +87,26 @@ class QualifyCorpusTest {
 
         val failures = LinkedHashMap<String, String>()
         var compared = 0
-        var skipped = 0
+        var excluded = 0
+        var oracleFailed = 0
 
         for (case in cases) {
             val sql = case.getValue("sql").jsonPrimitive.content
             val key = "$name::$sql"
 
-            if (case["dialect_supported"]?.jsonPrimitive?.content == "false" ||
-                case["skipped"] != null
-            ) {
-                skipped++
+            val dialectName = case["dialect"]?.jsonPrimitive?.content ?: ""
+            val dialect = CorpusDialects.resolveOrSkip(dialectName)
+            if (dialect == null) {
+                excluded++
                 continue
             }
-
-            val dialectName = case["dialect"]?.jsonPrimitive?.content ?: ""
+            check(case["dialect_supported"]?.jsonPrimitive?.content != "false") {
+                "$name marks supported dialect '$dialectName' unavailable; regenerate the corpus"
+            }
+            if (case["skipped"] != null) {
+                oracleFailed++
+                continue
+            }
             val flags = case["flags"] as? JsonObject
             val validate = flags?.get("validate_qualify_columns")
                 ?.jsonPrimitive?.content != "false"
@@ -132,8 +136,7 @@ class QualifyCorpusTest {
             val expected = case.getValue("expected").jsonPrimitive.content
 
             val actual = try {
-                val dialect = Dialects.forName(dialectName)
-                val expr: Expression = parseOne(sql, dialectName)
+                val expr: Expression = dialect.parseOne(sql)
                 val result: Expression = when (name) {
                     "qualify_tables" -> qualifyTables(
                         expr,
@@ -156,7 +159,7 @@ class QualifyCorpusTest {
                         identify = false,
                     )
                 }
-                result.sql(dialectName)
+                dialect.generate(result)
             } catch (e: Exception) {
                 failures[key] = "${e::class.simpleName}: ${e.message}"
                 continue
@@ -167,7 +170,8 @@ class QualifyCorpusTest {
             }
         }
 
-        return CorpusResult(compared, skipped, failures)
+        check(compared + excluded + oracleFailed == cases.size) { "Unaccounted qualification cases in $name" }
+        return CorpusResult(compared, excluded, oracleFailed, failures)
     }
 
     @Test
@@ -193,7 +197,7 @@ class QualifyCorpusTest {
             println(
                 "QualifyCorpusTest[$name]: $passed/${result.compared} pass " +
                     "(${"%.1f".format(rate)}%), ${result.failures.size} failing, " +
-                    "${result.skipped} skipped (unsupported dialect / oracle skip)"
+                    "excluded=${result.excluded}, oracle-failed=${result.oracleFailed}, unextractable=0 (fixture records)"
             )
             if (rate < 90.0) {
                 problems.add("$name below 90% gate: $passed/${result.compared}")

@@ -26,29 +26,25 @@
    "sql": "SELECT * FROM information_schema.tables",
    "expected": "SELECT * FROM c.db.`information_schema.tables` AS tables",
    "title": "only information schema",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM y.information_schema.tables",
    "expected": "SELECT * FROM c.y.`information_schema.tables` AS tables",
    "title": "information schema with db",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM x.y.information_schema.tables",
    "expected": "SELECT * FROM x.y.`information_schema.tables` AS tables",
    "title": "information schema with db, catalog",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT * FROM x.y.information_schema.tables AS z",
    "expected": "SELECT * FROM x.y.`information_schema.tables` AS z",
    "title": "information schema with db, catalog, alias",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT 1 FROM y.z AS z, z.a",
@@ -61,22 +57,19 @@
    "sql": "SELECT results FROM Coordinates, coordinates.position AS results",
    "expected": "SELECT results FROM c.db.Coordinates AS coordinates CROSS JOIN UNNEST(coordinates.position) AS results",
    "title": "bigquery implicit unnest syntax, coordinates.position should be a column, not a table",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT results FROM db.coordinates, Coordinates.position AS results",
    "expected": "SELECT results FROM c.db.coordinates AS coordinates CROSS JOIN UNNEST(Coordinates.position) AS results",
    "title": "bigquery implicit unnest syntax, table is already qualified",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH Coordinates AS (SELECT [1, 2] AS position) SELECT results FROM Coordinates, `Coordinates.position` AS results",
    "expected": "WITH Coordinates AS (SELECT [1, 2] AS position) SELECT results FROM Coordinates AS Coordinates CROSS JOIN `c.Coordinates.position` AS results",
    "title": "bigquery schema name clashes with CTE name - this is a join, not an implicit unnest",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "WITH a AS (SELECT 1 FROM z) SELECT 1 FROM a",
@@ -247,8 +240,7 @@
    "sql": "WITH cte AS (SELECT b FROM y) INSERT INTO s SELECT * FROM cte",
    "expected": "WITH cte AS (SELECT b FROM c.db.y AS y) INSERT INTO c.db.s SELECT * FROM cte AS cte",
    "title": "insert statement with cte",
-   "dialect": "spark",
-   "dialect_supported": false
+   "dialect": "spark"
   },
   {
    "sql": "(SELECT x FROM t)",
@@ -406,22 +398,19 @@
    "sql": "SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10))",
    "expected": "SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10)) AS _0(generate_series)",
    "title": "Qualify TABLE(GENERATE_SERIES()) with its default column generate_series",
-   "dialect": "starrocks",
-   "dialect_supported": false
+   "dialect": "starrocks"
   },
   {
    "sql": "SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10)) AS t",
    "expected": "SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10)) AS t(generate_series)",
    "title": "Qualify TABLE(GENERATE_SERIES()) with a table alias, which does not rename the column",
-   "dialect": "starrocks",
-   "dialect_supported": false
+   "dialect": "starrocks"
   },
   {
    "sql": "SELECT g FROM TABLE(GENERATE_SERIES(0, 10)) AS t(g)",
    "expected": "SELECT g FROM TABLE(GENERATE_SERIES(0, 10)) AS t(g)",
    "title": "Qualify TABLE(GENERATE_SERIES()) with alias on table and columns",
-   "dialect": "starrocks",
-   "dialect_supported": false
+   "dialect": "starrocks"
   },
   {
    "sql": "SELECT jsonvalue.id FROM deal, JSONB_TO_RECORDSET(CAST(deal.type AS JSONB)) AS jsonvalue(id INT, key VARCHAR, text VARCHAR)",
@@ -436,8 +425,7 @@
    "sql": "CREATE TEMPORARY FUNCTION f() RETURNS STRING AS ((((SELECT 'foo'))))",
    "expected": "CREATE TEMPORARY FUNCTION c.db.f() RETURNS STRING AS ((SELECT 'foo'))",
    "title": "Preserve wrapping parens of a query used as a function body",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   }
  ]
 }

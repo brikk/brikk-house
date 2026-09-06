@@ -40,6 +40,7 @@ class FixturePinSyncTest {
 
     private fun isOracleDerived(rel: String): Boolean =
         !rel.contains("known-failures") &&
+            rel != "corpus-policy.json" && // Brikk-owned execution policy, not an upstream oracle fixture
             !rel.startsWith("semantics/") &&
             !rel.contains("datafusion") && // brikk-native dialect: Polyglot/SLT provenance, no sqlglot oracle
             rel.endsWith(".json")
