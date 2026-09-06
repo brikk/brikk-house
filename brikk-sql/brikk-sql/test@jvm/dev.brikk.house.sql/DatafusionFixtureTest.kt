@@ -3,9 +3,8 @@ package dev.brikk.house.sql
 import dev.brikk.house.sql.dialects.Dialects
 import kotlin.test.Test
 import kotlin.test.fail
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -31,21 +30,7 @@ import kotlinx.serialization.json.put
  * ledger is exact and currently empty: every imported identity and available transpile
  * case must pass.
  */
-class DatafusionFixtureTest {
-
-    private val json = Json { ignoreUnknownKeys = true }
-
-    private fun loadLedger(): Map<String, String> {
-        val text = runCatching {
-            testResource("dialect-corpus/datafusion-fixtures-known-failures.json")
-        }.getOrNull() ?: return emptyMap()
-        val root = json.parseToJsonElement(text).jsonObject
-        return root.getValue("cases").jsonArray.associate { entry ->
-            val obj = entry.jsonObject
-            obj.getValue("case").jsonPrimitive.content to
-                obj.getValue("reason").jsonPrimitive.content
-        }
-    }
+class DatafusionFixtureTest : LedgerGate() {
 
     @Test
     fun fixtureCorpusModuloLedger() {
@@ -53,14 +38,15 @@ class DatafusionFixtureTest {
         val identity = root.getValue("identity").jsonArray
         val transpile = root.getValue("transpile").jsonArray
         check(identity.isNotEmpty()) { "empty identity corpus" }
-        val ledger = loadLedger()
+        val ledger = loadLedger("dialect-corpus/datafusion-fixtures-known-failures.json", "case")
+        val assertionIds = CorpusAssertionIds("datafusion-fixtures")
 
         var identityRan = 0
         var identityPass = 0
         var transpileRan = 0
         var transpilePass = 0
         var skippedUnavailable = 0
-        val failures = LinkedHashMap<String, String>()
+        val failures = LinkedHashMap<String, CorpusFailure>()
 
         val df = Dialects.forName("datafusion")
 
@@ -69,15 +55,21 @@ class DatafusionFixtureTest {
             val case = elem.jsonObject
             val sql = case.getValue("sql").jsonPrimitive.content
             val key = "identity|$sql"
+            val assertionId = assertionIds.next(buildJsonObject {
+                put("operation", "identity")
+                put("read", "datafusion")
+                put("write", "datafusion")
+                put("case", JsonObject(case.filterKeys { it != "description" }))
+                put("expected", sql)
+            })
             identityRan += 1
-            val result = runCatching { df.generate(df.parseOne(sql)) }
-            val actual = result.getOrNull()
-            if (actual == sql) {
+            val failure = transpileAssertionFailure(
+                key, JsonPrimitive(sql), parse = { df.parseOne(sql) }, generate = { df.generate(it) },
+            )
+            if (failure == null) {
                 identityPass += 1
             } else {
-                failures[key] = result.exceptionOrNull()?.let { e ->
-                    "${e::class.simpleName}: ${e.message?.take(140)}"
-                } ?: "expected `$sql` actual `$actual`"
+                failures[assertionId] = failure
             }
         }
 
@@ -93,64 +85,38 @@ class DatafusionFixtureTest {
                 continue
             }
             val key = "transpile|$readDialect|$readSql"
+            val assertionId = assertionIds.next(buildJsonObject {
+                put("operation", "transpile")
+                put("read", readDialect)
+                put("write", "datafusion")
+                put("case", JsonObject(case.filterKeys { it != "description" }))
+                put("expected", sql)
+            })
             transpileRan += 1
-            val result = runCatching { df.generate(reader.parseOne(readSql)) }
-            val actual = result.getOrNull()
-            if (actual == sql) {
+            val failure = transpileAssertionFailure(
+                key, JsonPrimitive(sql), parse = { reader.parseOne(readSql) }, generate = { df.generate(it) },
+            )
+            if (failure == null) {
                 transpilePass += 1
             } else {
-                failures[key] = result.exceptionOrNull()?.let { e ->
-                    "${e::class.simpleName}: ${e.message?.take(140)}"
-                } ?: "expected `$sql` actual `$actual`"
+                failures[assertionId] = failure
             }
         }
 
-        val actualLedger = buildJsonObject {
-            put("cases", buildJsonArray {
-                for ((key, reason) in failures) {
-                    add(buildJsonObject {
-                        put("case", key)
-                        put("reason", reason)
-                    })
-                }
-            })
-        }
-        val outDir = java.io.File("build").takeIf { it.isDirectory } ?: java.io.File(".")
-        java.io.File(outDir, "datafusion-fixtures-ledger-actual.json")
-            .writeText(Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), actualLedger))
-
-        val unledgered = failures.keys - ledger.keys
-        val stale = ledger.keys - failures.keys
-
         val identityPct = if (identityRan == 0) 0.0 else identityPass * 100.0 / identityRan
-        println(
-            "DatafusionFixtureTest: identity $identityPass/$identityRan " +
+        enforceLedger(
+            ledger = ledger,
+            failures = failures,
+            summary = "DatafusionFixtureTest: identity $identityPass/$identityRan " +
                 "(%.1f%%)".format(identityPct) +
                 ", transpile $transpilePass/$transpileRan, " +
-                "${failures.size} ledgered, $skippedUnavailable transpile dirs skipped"
+                "${failures.size} ledgered, $skippedUnavailable transpile dirs skipped",
+            actualLedgerName = "datafusion-fixtures-ledger-actual.json",
+            caseKey = "case",
         )
 
-        val problems = mutableListOf<String>()
         if (identityPct < 80.0) {
-            problems.add("identity pass rate ${"%.1f".format(identityPct)}% is below the 80% target")
-        }
-        if (unledgered.isNotEmpty()) {
-            problems.add(
-                "${unledgered.size} UNLEDGERED failures (showing up to 25):\n" +
-                    unledgered.take(25).joinToString("\n") { "  $it\n    reason: ${failures[it]}" }
-            )
-        }
-        if (stale.isNotEmpty()) {
-            problems.add(
-                "${stale.size} STALE ledger entries now pass (showing up to 25):\n" +
-                    stale.take(25).joinToString("\n") { "  $it" }
-            )
-        }
-        if (problems.isNotEmpty()) {
-            fail(
-                problems.joinToString("\n\n") +
-                    "\n\nActual ledger written to ${java.io.File(outDir, "datafusion-fixtures-ledger-actual.json").absolutePath}"
-            )
+            fail("identity pass rate ${"%.1f".format(identityPct)}% is below the 80% target")
         }
     }
 }

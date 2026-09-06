@@ -2,8 +2,10 @@
     "sqlglot_version": "v30.17.0-93-gdcc36544a",
     "cases": [
         {
+            "id": "assertion:v1:sha256:beb1e0e0df912abf58d9027c43f48f2a87584a99927fb428fd4caa838fbdff77:1",
             "sql": "JSON_QUERY(content, 'strict $.HY.*' WITHOUT CONDITIONAL WRAPPER)",
-            "reason": "output mismatch: expected `JSON_QUERY(content, 'strict $.HY.*' WITHOUT CONDITIONAL WRAPPER)` actual `JSON_QUERY(content, 'strict $.HY.*' WITHOUT WRAPPER)`"
+            "reason": "output mismatch: expected `JSON_QUERY(content, 'strict $.HY.*' WITHOUT CONDITIONAL WRAPPER)` actual `JSON_QUERY(content, 'strict $.HY.*' WITHOUT WRAPPER)`",
+            "signature": "sql-mismatch:v1:sha256:bba54d4e5ccbb080eb638fa9b860ec603726ed8a7bafba33a3c6bee72d88bcdd"
         }
     ]
 }

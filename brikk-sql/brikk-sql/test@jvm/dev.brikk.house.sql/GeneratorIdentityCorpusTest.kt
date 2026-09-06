@@ -3,10 +3,10 @@ package dev.brikk.house.sql
 import dev.brikk.house.sql.ast.Serde
 import dev.brikk.house.sql.generator.Generator
 import kotlin.test.Test
-import kotlin.test.fail
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /**
  * Gate B: for every ast-corpus case, Serde.load(dump) -> Generator().generate(ast) is
@@ -14,7 +14,7 @@ import kotlinx.serialization.json.JsonArray
  * testResources/generator-corpus/known-failures.json; ledgered cases that actually pass
  * are stale and also fail the test.
  */
-class GeneratorIdentityCorpusTest {
+class GeneratorIdentityCorpusTest : LedgerGate() {
 
     @Serializable
     private data class OracleCase(val sql: String, val generated: String, val dump: JsonArray)
@@ -22,63 +22,56 @@ class GeneratorIdentityCorpusTest {
     @Serializable
     private data class Corpus(val sqlglot_version: String, val cases: List<OracleCase>)
 
-    @Serializable
-    private data class LedgerCase(val sql: String, val reason: String)
-
-    @Serializable
-    private data class Ledger(val cases: List<LedgerCase>) // brikk-side ledger: no oracle stamp
-
-    private val json = Json { ignoreUnknownKeys = true }
-
     @Test
     fun identityCorpusMatchesPythonGeneratorModuloLedger() {
         val corpus = json.decodeFromString(Corpus.serializer(), testResource("ast-corpus/identity-serde.json"))
-        val ledger = json.decodeFromString(Ledger.serializer(), testResource("generator-corpus/known-failures.json"))
+        val ledger = loadLedger("generator-corpus/known-failures.json", "sql")
         check(corpus.cases.isNotEmpty()) { "empty identity corpus" }
 
-        val ledgered = ledger.cases.associateBy { it.sql }
-        val unledgeredFailures = mutableListOf<String>()
-        val staleLedgerEntries = mutableListOf<String>()
+        val ids = CorpusAssertionIds("GeneratorIdentityCorpusTest:identity-serde")
+        val failures = LinkedHashMap<String, CorpusFailure>()
+        val details = mutableListOf<String>()
         var passed = 0
-        val failedSqls = mutableSetOf<String>()
 
         for (case in corpus.cases) {
-            val result = runCatching { Generator().generate(Serde.loadExpression(case.dump)) }
-            val actual = result.getOrNull()
+            val id = ids.next(buildJsonObject {
+                put("sql", case.sql)
+                put("dump", case.dump)
+                put("expected", case.generated)
+                put("dialect", "")
+                put("options", buildJsonObject {
+                    put("generator", "default")
+                    put("copy", true)
+                })
+            })
+            var phase = "load"
+            val actual = try {
+                val expression = Serde.loadExpression(case.dump)
+                phase = "generation"
+                Generator().generate(expression)
+            } catch (e: Exception) {
+                failures[id] = CorpusFailure.exception(case.sql, phase, e)
+                continue
+            }
 
             if (actual == case.generated) {
                 passed += 1
             } else {
-                failedSqls.add(case.sql)
-                if (case.sql !in ledgered) {
-                    val reason = result.exceptionOrNull()
-                        ?.let { "${it::class.simpleName}: ${it.message}" }
-                        ?: "mismatch"
-                    unledgeredFailures.add(
-                        "SQL: ${case.sql}\n  reason: $reason\n  expected: ${case.generated}\n  actual:   $actual"
-                    )
-                }
+                val failure = CorpusFailure.sqlMismatch(case.sql, case.generated, actual)
+                failures[id] = failure
+                details.add(
+                    "SQL: ${case.sql}\n  reason: ${failure.reason}\n  expected: ${case.generated}\n  actual:   $actual"
+                )
             }
         }
 
-        for (entry in ledger.cases) {
-            if (entry.sql !in failedSqls) {
-                staleLedgerEntries.add("stale ledger entry (now passes): ${entry.sql} [${entry.reason}]")
-            }
-        }
-
-        println("GeneratorIdentityCorpus: $passed pass / ${ledger.cases.size} ledgered (of ${corpus.cases.size})")
-
-        val problems = mutableListOf<String>()
-        if (unledgeredFailures.isNotEmpty()) {
-            problems.add(
-                "${unledgeredFailures.size} unledgered failures (showing up to 40):\n" +
-                    unledgeredFailures.take(40).joinToString("\n\n")
-            )
-        }
-        if (staleLedgerEntries.isNotEmpty()) {
-            problems.add(staleLedgerEntries.joinToString("\n"))
-        }
-        if (problems.isNotEmpty()) fail(problems.joinToString("\n\n"))
+        enforceLedger(
+            ledger = ledger,
+            failures = failures,
+            summary = "GeneratorIdentityCorpus: $passed pass / ${ledger.size} ledgered (of ${corpus.cases.size})",
+            actualLedgerName = "generator-identity-ledger-actual.json",
+            caseKey = "sql",
+            mismatchDetails = details,
+        )
     }
 }

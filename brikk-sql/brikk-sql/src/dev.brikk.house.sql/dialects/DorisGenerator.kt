@@ -983,7 +983,7 @@ open class DorisGenerator(
             // Split / StringToArray nodes correctly keep SPLIT_BY_STRING below.
             reg(RegexpSplit::class) { e -> dg().renameFuncSql("SPLIT_BY_REGEXP", e) }
             reg(SchemaCommentProperty::class) { e -> nakedProperty(e as Property) }
-            // brikk extension #20: Doris supports native FULL OUTER JOIN. MySQL's
+            // brikk extension #23: Doris supports native FULL OUTER JOIN. MySQL's
             // elimination splits aggregates and DISTINCT across UNION ALL branches.
             reg(Select::class) { e ->
                 val nativeQualify = dg().qualifyDistinctOn(e as Select)

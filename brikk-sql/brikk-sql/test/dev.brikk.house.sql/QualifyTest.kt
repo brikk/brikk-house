@@ -1,8 +1,12 @@
 package dev.brikk.house.sql
 
 import dev.brikk.house.sql.dialects.sql
+import dev.brikk.house.sql.dialects.Dialects
+import dev.brikk.house.sql.ast.TableFromRows
+import dev.brikk.house.sql.ast.aliasColumnNames
 import dev.brikk.house.sql.optimizer.OptimizeError
 import dev.brikk.house.sql.optimizer.qualify
+import dev.brikk.house.sql.optimizer.qualifyTables
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,6 +18,23 @@ import kotlin.test.assertFailsWith
  * (reference/sqlglot @ v30.12.0-44-g93d16591).
  */
 class QualifyTest {
+
+    @Test
+    fun tableFromRowsUsesDefaultColumnsWithoutReplacingExplicitAliases() {
+        val dialect = Dialects.STARROCKS
+        for ((suffix, table, columns) in listOf(
+            Triple("", "_0", listOf("generate_series")),
+            Triple(" AS t", "t", listOf("generate_series")),
+            Triple(" AS t(custom)", "t", listOf("custom")),
+        )) {
+            val tree = qualifyTables(dialect.parseOne("SELECT * FROM TABLE(GENERATE_SERIES(0, 10))$suffix"), dialect = dialect)
+            val udtf = tree.find<TableFromRows>()!!
+            assertEquals(table, udtf.alias)
+            assertEquals(columns, udtf.aliasColumnNames)
+        }
+        val unknown = qualifyTables(dialect.parseOne("SELECT * FROM TABLE(my_function()) AS t"), dialect = dialect)
+        assertEquals(emptyList(), unknown.find<TableFromRows>()!!.aliasColumnNames)
+    }
 
     private val schema: Map<String, Any?> = mapOf(
         "lineitem" to mapOf(

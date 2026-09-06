@@ -5,6 +5,8 @@ import dev.brikk.house.sql.generator.Generator
 import kotlin.test.Test
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /**
  * Shared harness for the per-dialect generator gates.
@@ -39,21 +41,37 @@ abstract class GeneratorCorpusGate(
         val ledger = loadLedger("generator-corpus/$dialect-generator-known-failures.json", caseKey = "sql")
         check(corpus.cases.isNotEmpty()) { "empty $dialect corpus" }
 
-        val failures = LinkedHashMap<String, String>() // sql -> reason
+        val failures = LinkedHashMap<String, CorpusFailure>()
+        val ids = CorpusAssertionIds("generator:$dialect")
         var passed = 0
 
         for (case in corpus.cases) {
-            val result = runCatching { generatorFactory().generate(Serde.loadExpression(case.dump)) }
-            val actual = result.getOrNull()
+            val id = ids.next(buildJsonObject {
+                put("dialect", dialect)
+                put("sql", case.sql)
+                put("dump", case.dump)
+                put("expected", case.generated)
+            })
+            val expression = try {
+                Serde.loadExpression(case.dump)
+            } catch (e: Exception) {
+                failures[id] = CorpusFailure.exception(case.sql, "load", e)
+                continue
+            }
+            val actual = try {
+                generatorFactory().generate(expression)
+            } catch (e: Exception) {
+                failures[id] = CorpusFailure.exception(case.sql, "generation", e)
+                continue
+            }
 
             if (actual == case.generated) {
                 passed += 1
             } else {
-                failures[case.sql] = result.exceptionOrNull()?.let { e ->
-                    "${e::class.simpleName}: ${e.message?.take(140)}"
-                } ?: "output mismatch: expected `${case.generated.take(120)}` actual `${actual?.take(120)}`"
+                failures[id] = CorpusFailure.sqlMismatch(case.sql, case.generated, actual)
             }
         }
+        check(corpus.cases.size == passed + failures.size) { "Unaccounted generator assertions" }
 
         enforceLedger(
             ledger = ledger,

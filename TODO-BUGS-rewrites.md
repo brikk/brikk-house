@@ -15,10 +15,25 @@
 
 ---
 
-**9 items, all in one cluster: version-qualified targets.**
+**9 parity-ledger items, all in one cluster: version-qualified targets.**
 
-The non-BigQuery mixed-dialect rewrite backlog is otherwise complete for the pinned
-SQLGlot version.
+The other pinned non-BigQuery parity cases pass. Separately reproduced semantic
+defects not covered by that corpus are tracked below.
+
+## ASTRA-002-ZIP: empty zipped input row loss, resolved
+
+- [x] Repair the inherited `explodeProjectionToUnnest` zipped-input algorithm.
+  DuckDB `SELECT UNNEST(CAST([] AS INT[])) AS x, UNNEST([1]) AS y` returns one row
+  `(NULL, 1)`. The previous generated SQL cross-joined both UNNEST inputs and
+  returned no rows in Trino 483. LEFT JOIN UNNEST now retains padding rows; null
+  sizes become zero, and all-empty inputs get an empty position series.
+- [x] Compare empty, null, unequal-length, all-empty, duplicate, and per-row inputs.
+  `OuterExplodeResultTest.zippedInputsPadEmptyNullAndUnequalLengths` compares the
+  DuckDB source and actual generated SQL executed in Trino 483.
+- This is a separate fix from ASTRA-002's outer-array/map correction. Three
+  nonempty corpus cases now use the corrected general lowering; their exact
+  expected divergences are registered in `docs/brikk-extensions.md` section 20.
+  Upstream baseline: `v30.17.0-93-gdcc36544a`; issue/PR status: not reported.
 
 ## Version-qualified targets (brikk has no dialect-version model)
 

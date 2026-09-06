@@ -74,6 +74,69 @@ class SqlFragmentTest {
     }
 
     @Test
+    fun setOperationShapesReconcileTypesAndNullability() {
+        for ((sql, type, nullable) in listOf(
+            Triple("SELECT 1 AS x UNION ALL SELECT CAST(2147483648 AS BIGINT) AS y", "BIGINT", false),
+            Triple("SELECT 1 AS x UNION ALL SELECT NULL AS y", "INT", true),
+            Triple("SELECT NULL AS x INTERSECT SELECT 1 AS y", "INT", false),
+            Triple("SELECT NULL AS x EXCEPT SELECT 1 AS y", "INT", true),
+            Triple("SELECT 1 AS x EXCEPT SELECT NULL AS y", "INT", false),
+            Triple("SELECT 1 AS x UNION ALL (SELECT 2 AS y UNION ALL SELECT CAST(2147483648 AS BIGINT) AS z)", "BIGINT", false),
+            Triple("SELECT 1 AS x UNION ALL (SELECT 2 AS y UNION ALL SELECT NULL AS z)", "INT", true),
+        )) {
+            val expected = Shape(listOf(ColumnShape("x", type, nullable = nullable)))
+            assertEquals(expected, SqlFragment(sql, "duckdb").outputShape(), sql)
+            assertEquals(expected, SqlFragment("SELECT x FROM ($sql) AS s", "duckdb").outputShape(), "derived: $sql")
+        }
+    }
+
+    @Test
+    fun unionByNameMatchesNamesAndNullPadsMissingColumns() {
+        for ((sql, expected) in listOf(
+            "SELECT 1 AS x, 2 AS y UNION ALL BY NAME SELECT NULL AS y, CAST(2147483648 AS BIGINT) AS x" to
+                listOf(ColumnShape("x", "BIGINT", nullable = false), ColumnShape("y", "INT", nullable = true)),
+            "SELECT 1 AS x UNION ALL BY NAME SELECT CAST(2147483648 AS BIGINT) AS y" to
+                listOf(ColumnShape("x", "INT", nullable = true), ColumnShape("y", "BIGINT", nullable = true)),
+            "SELECT 1 AS x UNION ALL BY NAME SELECT 2 AS x, 3 AS y" to
+                listOf(ColumnShape("x", "INT", nullable = false), ColumnShape("y", "INT", nullable = true)),
+        )) {
+            assertEquals(Shape(expected), SqlFragment(sql, "duckdb").outputShape(), sql)
+            assertEquals(Shape(expected), SqlFragment("SELECT * FROM ($sql) AS s", "duckdb").outputShape(), "derived: $sql")
+        }
+    }
+
+    @Test
+    fun positionalSetOperationsKeepDuplicateAliasesAndUnknownStars() {
+        assertEquals(Shape(listOf(ColumnShape("x", "INT", false), ColumnShape("x", "INT", false))),
+            SqlFragment("SELECT 1 AS x, 2 AS x UNION ALL SELECT 3 AS a, 4 AS b", "duckdb").outputShape())
+        assertEquals(Shape(listOf(ColumnShape("a", "INT", false), ColumnShape("b", "BIGINT", false))),
+            SqlFragment("SELECT 1 AS a, 2 AS b UNION ALL (SELECT 3 AS z, 4 AS z " +
+                "UNION ALL SELECT 5 AS p, CAST(2147483648 AS BIGINT) AS q)", "duckdb").outputShape())
+        val sql = "SELECT CAST(NULL AS INT) AS x, 1 AS y INTERSECT SELECT CAST(NULL AS INT) AS z, 1 AS z"
+        val expected = Shape(listOf(ColumnShape("x", "INT", true), ColumnShape("y", "INT", false)))
+        assertEquals(expected, SqlFragment(sql, "duckdb").outputShape())
+        assertEquals(expected, SqlFragment("SELECT * FROM ($sql) AS s", "duckdb").outputShape())
+        assertEquals(Shape.of("x" to "UNKNOWN", "y" to "UNKNOWN"),
+            SqlFragment("SELECT 1 AS x, 2 AS y UNION ALL SELECT * FROM t", "duckdb").outputShape())
+    }
+
+    @Test
+    fun byNameModifiersPreserveOutputSubsetAndOrder() {
+        for ((operator, expected) in listOf(
+            "INNER UNION ALL BY NAME" to listOf(ColumnShape("y", "BIGINT", false)),
+            "LEFT OUTER UNION ALL BY NAME" to listOf(ColumnShape("x", "INT", true), ColumnShape("y", "BIGINT", false)),
+            "FULL OUTER UNION ALL BY NAME ON (z, y, x)" to
+                listOf(ColumnShape("z", "INT", true), ColumnShape("y", "BIGINT", false), ColumnShape("x", "INT", true)),
+        )) {
+            val sql = "SELECT 1 AS x, 2 AS y $operator SELECT CAST(3 AS BIGINT) AS y, 4 AS z"
+            assertEquals(Shape(expected), SqlFragment(sql, "bigquery").outputShape(), sql)
+            assertEquals(Shape(expected), SqlFragment("SELECT * FROM ($sql) AS s", "bigquery").outputShape(), "derived: $sql")
+            val wrapped = "((SELECT 1 AS x, 2 AS y)) $operator ((SELECT CAST(3 AS BIGINT) AS y, 4 AS z))"
+            assertEquals(Shape(expected), SqlFragment("SELECT * FROM ($wrapped) AS s", "bigquery").outputShape(), "wrapped: $wrapped")
+        }
+    }
+
+    @Test
     fun stringFunctionShapeCrossChecked() {
         val catalog = ShapeCatalog(
             tables = mapOf("people" to Shape.of("first_name" to "TEXT", "last_name" to "TEXT")),
@@ -189,6 +252,64 @@ class SqlFragmentTest {
         // Order is deterministic AST traversal order (the WITH clause is attached to
         // the Select after its body, so outer sources precede CTE-body sources).
         assertEquals(listOf("db.y", "cat.db.x"), fragment.sourceTables)
+    }
+
+    @Test
+    fun sourceTablesResolveCtesWithinTheirActualScope() {
+        val catalog = ShapeCatalog(tables = mapOf("t" to Shape.of("a" to "INT"), "u" to Shape.of("a" to "INT")))
+        val nested = SqlFragment("SELECT a FROM t UNION ALL SELECT a FROM (WITH t AS (SELECT a FROM u) SELECT a FROM t) AS s", "postgres")
+        assertEquals(listOf("t", "u"), nested.sourceTables)
+        val contract = nested.contract(catalog)
+        assertEquals(listOf("t", "u"), contract.inputsUsed)
+        assertEquals(mapOf("a" to setOf("t", "u")), contract.dependencies)
+        assertEquals(listOf("t"), SqlFragment("WITH t AS (SELECT a FROM t) SELECT a FROM t", "postgres").sourceTables)
+        assertEquals(listOf("u"), SqlFragment("WITH T AS (SELECT a FROM U) SELECT a FROM t", "postgres").sourceTables)
+        assertEquals(listOf("t", "u"), SqlFragment("WITH \"T\" AS (SELECT a FROM u) SELECT a FROM t", "postgres").sourceTables)
+        assertEquals(listOf("db.t", "u"), SqlFragment("WITH t AS (SELECT a FROM u) SELECT a FROM db.t", "postgres").sourceTables)
+    }
+
+    @Test
+    fun physicalInputsIncludeFilterSourcesButNotSlotsOrPlaceholders() {
+        val catalog = ShapeCatalog(tables = mapOf("t" to Shape.of("a" to "INT"), "u" to Shape.of("a" to "INT")),
+            slots = mapOf("src" to Shape.of("a" to "INT")))
+        val fragment = SqlFragment("SELECT a FROM src() UNION ALL SELECT a FROM t", "postgres")
+        assertEquals(listOf("t"), fragment.sourceTables)
+        assertEquals(listOf("src"), fragment.tableSlots)
+        val contract = fragment.contract(catalog)
+        assertEquals(listOf("t", "src"), contract.inputsUsed)
+        assertTrue(contract.dependencies.values.flatten().all { it in contract.inputsUsed })
+        val filtered = SqlFragment("SELECT t.a FROM t WHERE EXISTS(SELECT 1 FROM u WHERE u.a = t.a)", "postgres")
+        assertEquals(listOf("t", "u"), filtered.sourceTables)
+        assertEquals(mapOf("a" to setOf("t")), filtered.columnDependencies(inputs = catalog.copy(slots = emptyMap())))
+        assertEquals(listOf("t", "u"), SqlFragment("SELECT t.a FROM t SEMI JOIN u ON t.a = u.a", "spark").sourceTables)
+        assertEquals(emptyList(), SqlFragment("SELECT missing", "postgres").sourceTables)
+        assertEquals(listOf("t"), SqlFragment("UPDATE t SET a = 1", "postgres").sourceTables)
+    }
+
+    @Test
+    fun derivedJoinsAndExtendedNamesKeepTheirPhysicalInputs() {
+        val catalog = ShapeCatalog(tables = mapOf("t" to Shape.of("a" to "INT"), "u" to Shape.of("b" to "INT")))
+        val joined = SqlFragment("SELECT s.a, s.b FROM (t JOIN u ON t.a = u.b) AS s", "postgres").contract(catalog)
+        assertEquals(listOf("t", "u"), joined.inputsUsed)
+        assertTrue(joined.dependencies.values.flatten().all { it in joined.inputsUsed })
+        val extended = SqlFragment("SELECT t.a FROM lake.ns1.ns2.t AS t", "spark")
+        assertEquals(listOf("lake.ns1.ns2.t"), extended.sourceTables)
+        assertEquals(mapOf("a" to setOf("lake.ns1.ns2.t")), extended.columnDependencies())
+    }
+
+    @Test
+    fun recursiveAndPivotedCtesAreNotPhysicalTables() {
+        for (body in listOf(
+            "SELECT a FROM t UNION ALL SELECT a + 1 FROM r WHERE a < 3",
+            "(SELECT a FROM t UNION ALL SELECT a + 1 FROM r WHERE a < 3)",
+        )) {
+            assertEquals(listOf("t"), SqlFragment("WITH RECURSIVE r(a) AS ($body) SELECT a FROM r", "postgres").sourceTables)
+        }
+        assertEquals(listOf("t"), SqlFragment("WITH RECURSIVE x AS (SELECT a FROM y), y AS (SELECT a FROM t) SELECT a FROM x", "postgres").sourceTables)
+        assertEquals(listOf("y", "t"), SqlFragment("WITH x AS (SELECT a FROM y), y AS (SELECT a FROM t) SELECT a FROM x", "postgres").sourceTables)
+        val pivot = SqlFragment("WITH c AS (SELECT a, b FROM t) SELECT c.one FROM c PIVOT (SUM(a) FOR b IN (1 AS one)) AS c", "duckdb")
+        assertEquals(listOf("t"), pivot.sourceTables)
+        assertEquals(mapOf("one" to setOf("t")), pivot.columnDependencies())
     }
 
     // -------------------------------------------------------------- scalar params

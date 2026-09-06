@@ -10,41 +10,72 @@
 
 ---
 
-**216 transpile items across 20 source-to-target routes.**
+**183 failing transpile assertions across 19 source-to-target routes.**
 
-## BigQuery as source (162)
+## BigQuery as source (143)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 93 |
-| bigquery -> spark | 13 |
-| bigquery -> presto | 12 |
-| bigquery -> bigquery | 12 |
-| bigquery -> trino | 7 |
+| bigquery -> duckdb | 88 |
+| bigquery -> spark | 12 |
+| bigquery -> presto | 5 |
+| bigquery -> bigquery | 9 |
+| bigquery -> trino | 3 |
 | bigquery -> hive | 6 |
-| bigquery -> postgres | 5 |
+| bigquery -> postgres | 6 |
 | bigquery -> clickhouse | 5 |
 | bigquery -> mysql | 4 |
 | bigquery -> spark2 | 3 |
 | bigquery -> base | 2 |
 
-## BigQuery as target (54)
+## BigQuery as target (40)
 
 The `bigquery -> bigquery` cases are counted only in the source table above.
 
 | Route | Items |
 |---|---:|
-| spark -> bigquery | 14 |
-| postgres -> bigquery | 11 |
-| duckdb -> bigquery | 10 |
-| presto -> bigquery | 9 |
+| spark -> bigquery | 11 |
+| postgres -> bigquery | 7 |
+| duckdb -> bigquery | 7 |
+| presto -> bigquery | 6 |
 | hive -> bigquery | 4 |
 | trino -> bigquery | 2 |
 | clickhouse -> bigquery | 2 |
-| mysql -> bigquery | 1 |
 | base -> bigquery | 1 |
 
 ## Main clusters
+
+ASTRA-009 closed six exact ledger keys covering seven input assertions. Derived
+VALUES now become arrays of named structs, and explicit CTE column lists become
+projection aliases. This left 144 old-style BigQuery ledger keys. Unexpanded CTE stars,
+shadowed aliases used in query modifiers, and mismatched VALUES widths remain
+diagnosed rather than silently losing names or cells.
+
+Execution follow-up: converting BigQuery
+`SELECT t.b FROM UNNEST([STRUCT('x' AS b), STRUCT(NULL AS b)]) AS t` to
+Presto/Trino casts the NULL field as BIGINT, making the array's row types
+incompatible. The ASTRA-009 cross-engine execution check uses an explicit
+string cast for NULL; its direct BigQuery generation test retains untyped NULL.
+Fix array-wide field type reconciliation rather than changing VALUES lowering.
+
+ASTRA-015 replaced SQL-based keys with assertion IDs and exact failure signatures.
+The BigQuery ledger now records 146 failing assertions. Two repeated byte-literal
+assertions were previously collapsed, one each for DuckDB and Postgres. They have
+the same output mismatch as their sibling, so the total rises from 181 old keys
+to 183 assertions without adding a new SQL failure.
+
+ASTRA-008 closed the 18 exact stale transpile keys reported in
+`build/astra-008-core.log`: 16 from the BigQuery ledger and two from the Presto
+ledger. By read/write ownership, these remove 11 BigQuery-source items and seven
+BigQuery-target items, reducing the total from 205 to 187. The ledgers now contain
+150 and four keys respectively. This does not close all struct-array or offset
+conversions; remaining entries and the clusters below stay open.
+
+ASTRA-010 closed 11 temporal cases: native TIMESTAMP_DIFF unit preservation,
+Presto/Trino TimestampDiff and DatetimeDiff dispatch, and week-start alignment.
+`TemporalDiffResultTest` adds executed Trino 483 checks for negative/fractional
+differences, all seven week starts, microsecond boundary rounding, and elapsed
+days across DST. Other temporal items in the cluster below remain open.
 
 - BigQuery temporal semantics: `DATE_*`, `DATETIME_*`, `TIMESTAMP_*`, week
   boundaries, time zones, epoch conversion, and format strings.
@@ -59,11 +90,15 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 
 ## Workflow
 
-For a `write|target|sql` ledger key, the ledger file's dialect is the source.
-For a `read|source|sql` key, the ledger file's dialect is the target. Select any
+For a `write|target|sql` display label, the ledger file's dialect is the source.
+For a `read|source|sql` label, the ledger file's dialect is the target. Select any
 entry where either side is `bigquery`, compare with the pinned Python oracle,
 port the behavior, remove the passing ledger entry, and run the affected
 concrete transpile gate.
+
+The `id` and `signature` fields determine approval; `case` is only a display label.
+Remove only the exact stale assertion IDs. Review signature changes against the
+full actual output, and retain curated explanations when updating a ledger.
 
 Run every transpile gate (needed because cases targeting BigQuery live under
 their source dialects), then the native BigQuery generator gate:

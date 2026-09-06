@@ -2,20 +2,28 @@
     "sqlglot_version": "v30.17.0-93-gdcc36544a",
     "cases": [
         {
+            "id": "assertion:v1:sha256:3891cae68d18e0b2eeee52219f732d52372856dbe9fbb636f275ecad0741a06e:1",
             "sql": "CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1)",
-            "reason": "output mismatch: expected `CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1)` actual `CREATE MATERIALIZED VIEW test_table (c1, c2) KEY (c1)`"
+            "reason": "output mismatch: expected `CREATE MATERIALIZED VIEW test_table (c1 INT, c2 INT) KEY (c1)` actual `CREATE MATERIALIZED VIEW test_table (c1, c2) KEY (c1)`",
+            "signature": "sql-mismatch:v1:sha256:a2fffa3220806c9a838e4db3745e3186fb743af2fa87fe24398a8aec82fe83e6"
         },
         {
+            "id": "assertion:v1:sha256:210c424f9f0d0707d4ec5b45aa1d333776fcbe66bb5082ef7bb91f8bbb658f5f:1",
             "sql": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)",
-            "reason": "output mismatch: expected `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)` actual `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2) ()`"
+            "reason": "output mismatch: expected `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2)` actual `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c2) ()`",
+            "signature": "sql-mismatch:v1:sha256:911793ad7fc9eda8e0457a99c1d29f128d454cb3cef1921db0995fb24be76a9b"
         },
         {
+            "id": "assertion:v1:sha256:56738370c2baccbaa9cf503aafbee7e0c9de8497eb88b2d467a26304b806266c:1",
             "sql": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2)",
-            "reason": "output mismatch: expected `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2)` actual `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2) ()`"
+            "reason": "output mismatch: expected `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2)` actual `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (c1, c2) ()`",
+            "signature": "sql-mismatch:v1:sha256:068a1169c5564a3d62f7a698f699c2b6a25f439d1b068e092270f1496f0d814e"
         },
         {
+            "id": "assertion:v1:sha256:b3fc2a08991fa3602e5cab208d355eb68e248fd85d96864b8c651125ef780ef2:1",
             "sql": "CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (DATE_TRUNC(c2, 'MONTH'))",
-            "reason": "output mismatch: expected `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (DATE_TRUNC(c2, 'MONTH'))` actual `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY RANGE (DATE_TRUNC(c2, 'MONTH')) ()`"
+            "reason": "output mismatch: expected `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY (DATE_TRUNC(c2, 'MONTH'))` actual `CREATE TABLE test_table (c1 INT, c2 DATE) PARTITION BY RANGE (DATE_TRUNC(c2, 'MONTH')) ()`",
+            "signature": "sql-mismatch:v1:sha256:3912c9554a5b834bfc39c0b68e5f226291c6d6e0951c665ab49c44284103cea4"
         }
     ]
 }

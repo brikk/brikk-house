@@ -42,7 +42,7 @@ class DorisDialectTest {
 
     private fun roundTrip(sqlText: String): String = parseOne(sqlText, "doris").sql("doris")
 
-    // brikk extension #20: Doris supports FULL JOIN; MySQL's emulation changes results.
+    // brikk extension #23: Doris supports FULL JOIN; MySQL's emulation changes results.
     @Test
     fun fullJoinsStayNativeForDoris() {
         for (sql in listOf(

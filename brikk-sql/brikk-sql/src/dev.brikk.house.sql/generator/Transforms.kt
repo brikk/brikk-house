@@ -11,6 +11,8 @@ import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.Array as ArrayNode
 import dev.brikk.house.sql.ast.ArraySize
 import dev.brikk.house.sql.ast.ApproxQuantile
+import dev.brikk.house.sql.ast.Bracket
+import dev.brikk.house.sql.ast.Coalesce
 import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.ColumnDef
@@ -20,6 +22,7 @@ import dev.brikk.house.sql.ast.Distinct
 import dev.brikk.house.sql.ast.EQ
 import dev.brikk.house.sql.ast.Exists
 import dev.brikk.house.sql.ast.Explode
+import dev.brikk.house.sql.ast.ExplodeOuter
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.From
 import dev.brikk.house.sql.ast.GenerateSeries
@@ -27,6 +30,7 @@ import dev.brikk.house.sql.ast.Greatest
 import dev.brikk.house.sql.ast.GT
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.If
+import dev.brikk.house.sql.ast.Is
 import dev.brikk.house.sql.ast.Inline
 import dev.brikk.house.sql.ast.Join
 import dev.brikk.house.sql.ast.Lambda
@@ -35,6 +39,7 @@ import dev.brikk.house.sql.ast.Like
 import dev.brikk.house.sql.ast.ILike
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Not
+import dev.brikk.house.sql.ast.Null
 import dev.brikk.house.sql.ast.Order
 import dev.brikk.house.sql.ast.Ordered
 import dev.brikk.house.sql.ast.Or
@@ -74,6 +79,7 @@ import dev.brikk.house.sql.ast.toIdentifier
 import dev.brikk.house.sql.optimizer.findAllInScope
 import dev.brikk.house.sql.optimizer.findNewName
 import dev.brikk.house.sql.optimizer.Scope
+import dev.brikk.house.sql.optimizer.traverseScope
 
 /**
  * sqlglot: transforms.eliminate_qualify — converts SELECT statements that contain the
@@ -87,7 +93,8 @@ import dev.brikk.house.sql.optimizer.Scope
 fun eliminateQualify(expression: Expression): Expression {
     if (expression !is Select || expression.args["qualify"] == null) return expression
 
-    val taken = expression.namedSelects.toMutableSet()
+    val taken = (expression.namedSelects + expression.findAll<Column>().map { it.name }.toList())
+        .flatMap { listOf(it, it.lowercase()) }.toMutableSet()
     for (select in expression.selects) {
         if (select !is Expression) continue
         if (select.aliasOrName.isEmpty()) {
@@ -140,7 +147,8 @@ fun eliminateQualify(expression: Expression): Expression {
                 }
             }
 
-            val alias = findNewName(expression.namedSelects, "_w")
+            val alias = findNewName(taken, "_w")
+            taken.add(alias)
             expression.append("expressions", aliasExpression(candidate, alias))
             val col = column(alias)
 
@@ -156,7 +164,80 @@ fun eliminateQualify(expression: Expression): Expression {
 
     outerSelects.set("from_", From(args("this" to subquery(expression, alias = "_t"))))
     outerSelects.set("where", Where(args("this" to qualifyFilters)))
+    movePostWindowModifiers(expression, outerSelects)
     return outerSelects
+}
+
+// brikk extension (ASTRA-001, docs/brikk-extensions.md #6): filtering a window
+// result must precede DISTINCT, final ordering, and pagination. References moved
+// across the subquery boundary need output aliases, not the original table names.
+private fun movePostWindowModifiers(inner: Select, outer: Select) {
+    val outputs = outer.namedSelects.toSet()
+    val projections = inner.selects.filterIsInstance<Expression>().toList()
+    val taken = (inner.namedSelects + inner.findAll<Column>().map { it.name }.toList())
+        .flatMap { listOf(it, it.lowercase()) }.toMutableSet()
+
+    fun outerReference(node: Expression, ordinal: Boolean = false): Expression {
+        if (ordinal && node is Literal) return node
+        if (node is Column && node.table.isEmpty()) {
+            val output = projections.firstOrNull {
+                it.aliasOrName in outputs && it.aliasOrName.equals(node.name,
+                    ignoreCase = (node.thisArg as? Identifier)?.args?.get("quoted") != true &&
+                        ((it.args["alias"] ?: it.thisArg) as? Identifier)?.args?.get("quoted") != true)
+            }
+            if (output != null) {
+                val identifier = (output.args["alias"] ?: output.thisArg) as? Identifier
+                return column(output.aliasOrName, quoted = identifier?.args?.get("quoted") as? Boolean)
+            }
+        }
+        val projection = projections.firstOrNull { !it.isStar && it.unalias() == node }
+        if (projection != null) {
+            val identifier = (projection.args["alias"] ?: projection.thisArg) as? Identifier
+            return column(projection.aliasOrName, quoted = identifier?.args?.get("quoted") as? Boolean)
+        }
+        if (node is Column && inner.isStar && inner.args["joins"] == null &&
+            projections.any { it is Star || it is Column && it.isStar && it.table == node.table }) {
+            return column(node.name, quoted = (node.thisArg as? Identifier)?.args?.get("quoted") as? Boolean)
+        }
+        // Keep each sort expression intact in its original scope. Splitting it
+        // changes alias binding and can separate FILTER/EXISTS from their inputs.
+        if (outer.isStar) {
+            throw UnsupportedError("Cannot preserve ordering through a window filter without expanding star projections")
+        }
+        val aliases = projections.filterIsInstance<Alias>().filter { it.alias in outputs }
+        val inputNames = aliases.flatMap { it.unalias().findAll<Column>().map { col -> col.name.lowercase() }.toList() }
+        if (node !is Column && node.findAll<Column>().any { col ->
+                col.table.isEmpty() && aliases.any { it.alias.equals(col.name, ignoreCase = true) } &&
+                    col.name.lowercase() !in inputNames
+            }) {
+            throw UnsupportedError("Cannot resolve output aliases in a compound ORDER BY through a window filter without input schema")
+        }
+        val alias = findNewName(taken, "_o")
+        taken.add(alias)
+        inner.append("expressions", aliasExpression(node.copy(), alias))
+        return column(alias)
+    }
+
+    for (key in listOf("distinct", "order", "offset", "limit", "with_")) {
+        val modifier = (inner.args[key] as? Expression)?.pop() ?: continue
+        if (modifier is Order) {
+            for (ordered in modifier.expressionsArg.filterIsInstance<Ordered>()) {
+                val reference = outerReference(ordered.thisArg as Expression, ordinal = true)
+                val distinct = outer.args["distinct"] as? Distinct
+                if (distinct != null && distinct.args["on"] == null &&
+                    reference !is Literal && (reference !is Column || reference.name !in outputs)) {
+                    throw UnsupportedError("Cannot preserve DISTINCT ordering by a hidden expression through a window filter")
+                }
+                ordered.set("this", reference)
+            }
+        } else if (modifier is Distinct) {
+            val on = modifier.args["on"] as? Tuple
+            if (on != null) {
+                on.set("expressions", on.expressionsArg.filterIsInstance<Expression>().map { outerReference(it) })
+            }
+        }
+        outer.set(key, modifier)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -305,16 +386,21 @@ fun unqualifyColumns(expression: Expression): Expression {
  */
 fun unqualifyUnnest(expression: Expression): Expression {
     if (expression is Select) {
-        val unnestAliases = findAllInScope(expression, Unnest::class)
-            .filter { it.parent is From || it.parent is Join }
-            .map { it.alias }
-            .filter { it.isNotEmpty() }
-            .toSet()
-        if (unnestAliases.isNotEmpty()) {
-            for (column in expression.findAll(Column::class).toList()) {
-                val leftmost = (column as Column).parts.first()
-                if (leftmost.argKey != "this" && leftmost.name in unnestAliases) {
-                    leftmost.pop()
+        // Resolve each prefix in its own scope: a nested relation may shadow an
+        // outer UNNEST alias, while correlated references still need stripping.
+        for (scope in traverseScope(expression)) {
+            for (column in scope.walk().filterIsInstance<Column>()) {
+                val leftmost = column.parts.first()
+                if (leftmost.argKey == "this") continue
+                var owner: Scope? = scope
+                while (owner != null) {
+                    val source = owner.sources[leftmost.name]
+                    if (source != null) {
+                        val unnest = (source as? Scope)?.expression as? Unnest
+                        if (unnest != null && unnest.alias == leftmost.name) leftmost.pop()
+                        break
+                    }
+                    owner = owner.parent
                 }
             }
         }
@@ -408,8 +494,15 @@ fun eliminateDistinctOn(expression: Expression): Expression {
     val distinct = expression.args["distinct"] as? Distinct ?: return expression
     val on = distinct.args["on"]
     if (on !is Tuple) return expression
+    // QUALIFY must filter rows before DISTINCT ON chooses each group's first row,
+    // even in dialect pipelines that invoke eliminateDistinctOn first.
+    if (expression.args["qualify"] != null) return eliminateDistinctOn(eliminateQualify(expression))
 
-    val rowNumberWindowAlias = findNewName(expression.namedSelects, "_row_number")
+    val rowNumberWindowAlias = findNewName(
+        (expression.namedSelects + expression.findAll<Column>().map { it.name }.toList())
+            .flatMap { listOf(it, it.lowercase()) },
+        "_row_number",
+    )
 
     val distinctCols = ((distinct.pop() as Distinct).args["on"] as Tuple)
         .expressionsArg.filterIsInstance<Expression>()
@@ -419,7 +512,19 @@ fun eliminateDistinctOn(expression: Expression): Expression {
 
     val order = expression.args["order"] as? Order
     if (order != null) {
-        window.set("order", order.pop())
+        val windowOrder = order.copy() as Order
+        for (ordered in windowOrder.expressionsArg.filterIsInstance<Ordered>()) {
+            val term = ordered.thisArg as Expression
+            val projection = when {
+                term is Literal && !term.isString ->
+                    term.name.toIntOrNull()?.let { expression.selects.getOrNull(it - 1) as? Expression }
+                term is Column && term.table.isEmpty() ->
+                    expression.selects.filterIsInstance<Alias>().firstOrNull { it.alias == term.name }
+                else -> null
+            }
+            if (projection != null) ordered.set("this", projection.unalias().copy())
+        }
+        window.set("order", windowOrder)
     } else {
         window.set(
             "order",
@@ -456,6 +561,7 @@ fun eliminateDistinctOn(expression: Expression): Expression {
         "where",
         Where(args("this" to EQ(args("this" to column(rowNumberWindowAlias), "expression" to Literal.number("1"))))),
     )
+    movePostWindowModifiers(expression, outer)
     return outer
 }
 
@@ -690,7 +796,12 @@ fun explodeProjectionToUnnest(
     if (expression !is Select) return expression
 
     val takenSelectNames = expression.namedSelects.toMutableSet()
+    if (expression.selects.filterIsInstance<Expression>().any { sel -> sel.findAll<Explode>().any { it is ExplodeOuter } }) {
+        takenSelectNames.addAll(expression.findAll<Column>().map { it.name }.toList())
+    }
     val takenSourceNames = Scope(expression).references.map { it.first }.toMutableSet()
+    val zip = expression.selects.filterIsInstance<Expression>()
+        .mapNotNull { it.find<Explode>() }.count { !(it.thisArg as Expression).isType(DType.MAP) } > 1
     fun newName(names: MutableSet<String>, base: String): String =
         findNewName(names, base).also { names.add(it) }
 
@@ -713,7 +824,40 @@ fun explodeProjectionToUnnest(
             continue
         }
 
-        val explodeArg = explode.thisArg as Expression
+        var explodeArg = explode.thisArg as Expression
+        if (unnestMap && explode is ExplodeOuter && explodeArg.isType(DType.MAP)) {
+            // brikk extension (ASTRA-002): a map cannot contain a null key, so
+            // preserve an empty/null map with LEFT JOIN rather than a fake entry.
+            val positional = explode is Posexplode
+            val aliases = if (selection is Aliases) selection.expressionsArg.filterIsInstance<Identifier>()
+                else (if (positional) listOf("pos", "key", "value") else listOf("key", "value"))
+                    .map { toIdentifier(it)!! }
+            if (aliases.size != if (positional) 3 else 2) {
+                throw UnsupportedError("Outer map explosion requires key/value aliases and an optional position alias")
+            }
+            val sourceAlias = newName(takenSourceNames, "_u")
+            val position = aliases.first().takeIf { positional }
+            val values = if (positional) aliases.drop(1) else aliases
+            val innerPosition = position?.let { toIdentifier(newName(takenSelectNames, "_ordinal"))!! }
+            val innerValues = listOf("_key", "_value").map { toIdentifier(newName(takenSelectNames, it))!! }
+            if (position != null) {
+                selections.add(aliasExpression(Sub(args("this" to column(innerPosition!!, table = sourceAlias),
+                    "expression" to Literal.number(indexOffset.toString()))), position, copy = false))
+            }
+            for ((inner, value) in innerValues.zip(values)) {
+                selections.add(aliasExpression(column(inner, table = sourceAlias), value, copy = false))
+            }
+            if (expression.args["from_"] == null) {
+                expression.set("from_", From(args("this" to subquery(
+                    Select(args("expressions" to listOf(Literal.number("1")))), alias = newName(takenSourceNames, "_seed"),
+                ))))
+            }
+            val unnest = aliasExpression(Unnest(args("expressions" to listOf(explodeArg.copy()), "offset" to innerPosition)),
+                sourceAlias, tableColumns = innerValues, copy = false)
+            expression.append("joins", Join(args("this" to unnest, "side" to "LEFT",
+                "on" to dev.brikk.house.sql.ast.Boolean(args("this" to true)))))
+            continue
+        }
         if (
             unnestMap &&
             explode::class == Explode::class &&
@@ -766,20 +910,33 @@ fun explodeProjectionToUnnest(
         }
         explode = alias.find(Explode::class) as Explode
         val isPosexplode = explode is Posexplode
+        val emptyOuter = if (explode is ExplodeOuter) EQ(args(
+            "this" to ArraySize(args("this" to Coalesce(args("this" to explodeArg.copy(), "expressions" to listOf(ArrayNode()))))),
+            "expression" to Literal.number("0"),
+        )) else null
+        if (emptyOuter != null) {
+            // sqlglot: replace empty/null outer inputs with one typed null element.
+            val first = Bracket(args("this" to explodeArg.copy(), "expressions" to listOf(Literal.number("1")),
+                "offset" to 1, "safe" to true))
+            explodeArg = If(args("this" to emptyOuter.copy(), "true" to ArrayNode(args("expressions" to listOf(first))),
+                "false" to explodeArg))
+        }
         if (explodeArg is Column) takenSelectNames.add(explodeArg.outputName)
 
         val unnestSourceAlias = newName(takenSourceNames, "_u")
         if (explodeAlias == null || explodeAlias.name.isEmpty()) {
-            explodeAlias = toIdentifier(newName(takenSelectNames, "col"))
-            if (isPosexplode) posAlias = toIdentifier(newName(takenSelectNames, "pos"))
+            explodeAlias = toIdentifier(if (emptyOuter != null) "col" else newName(takenSelectNames, "col"))
+            if (isPosexplode) posAlias = toIdentifier(if (emptyOuter != null) "pos" else newName(takenSelectNames, "pos"))
         }
         if (posAlias == null || posAlias.name.isEmpty()) {
-            posAlias = toIdentifier(newName(takenSelectNames, "pos"))
+            posAlias = toIdentifier(if (emptyOuter != null) "pos" else newName(takenSelectNames, "pos"))
         }
         val finalExplodeAlias = requireNotNull(explodeAlias)
         val finalPosAlias = requireNotNull(posAlias)
-        val explodedName = finalExplodeAlias.name
-        val positionName = finalPosAlias.name
+        val innerExplodeAlias = if (emptyOuter != null) toIdentifier(newName(takenSelectNames, "_value"))!! else finalExplodeAlias
+        val innerPosAlias = if (emptyOuter != null) toIdentifier(newName(takenSelectNames, "_ordinal"))!! else finalPosAlias
+        val explodedName = innerExplodeAlias.name
+        val positionName = innerPosAlias.name
         alias.set("alias", finalExplodeAlias)
 
         fun qualified(name: String, table: String): Expression = column(name, table = table)
@@ -800,24 +957,31 @@ fun explodeProjectionToUnnest(
         selections.add(alias)
 
         if (isPosexplode) {
-            selections.add(
-                Alias(
+            val positionSelect = Alias(
                     args(
                         "this" to If(
                             args(
-                                "this" to EQ(
+                                "this" to if (emptyOuter != null) And(args(
+                                    "this" to positionMatches.copy(), "expression" to Not(args("this" to emptyOuter.copy())),
+                                )) else EQ(
                                     args(
                                         "this" to qualified(seriesAlias, seriesSourceAlias),
                                         "expression" to qualified(positionName, unnestSourceAlias),
                                     )
                                 ),
-                                "true" to qualified(positionName, unnestSourceAlias),
+                                "true" to if (emptyOuter != null) Sub(args(
+                                    "this" to qualified(positionName, unnestSourceAlias),
+                                    "expression" to Literal.number(indexOffset.toString()),
+                                )) else qualified(positionName, unnestSourceAlias),
                             )
                         ),
                         "alias" to finalPosAlias,
                     )
                 )
-            )
+            // Spark exposes position before value, with null position for the
+            // synthetic outer row. Keep non-outer upstream behavior separate.
+            if (emptyOuter != null) selections.add(selections.lastIndex, positionSelect)
+            else selections.add(positionSelect)
         }
 
         if (arrays.isEmpty()) {
@@ -829,19 +993,23 @@ fun explodeProjectionToUnnest(
         }
 
         var size: Expression = ArraySize(args("this" to explodeArg.copy()))
-        arrays.add(size)
+        arrays.add(if (zip) Coalesce(args("this" to size.copy(), "expressions" to listOf(Literal.number("0")))) else size)
         val unnest = aliasExpression(
             Unnest(
                 args(
                     "expressions" to listOf(explodeArg.copy()),
-                    "offset" to finalPosAlias.copy(),
+                    "offset" to innerPosAlias.copy(),
                 )
             ),
             unnestSourceAlias,
-            tableColumns = listOf(finalExplodeAlias.copy()),
+            tableColumns = listOf(innerExplodeAlias.copy()),
             copy = false,
         )
-        expression.append("joins", Join(args("this" to unnest, "kind" to "CROSS")))
+        // brikk extension (ASTRA-002-ZIP): an empty input contributes nulls to
+        // the longest input's positions instead of annihilating the zipped row.
+        expression.append("joins", if (zip) Join(args("this" to unnest, "side" to "LEFT",
+            "on" to dev.brikk.house.sql.ast.Boolean(args("this" to true))))
+            else Join(args("this" to unnest, "kind" to "CROSS")))
 
         if (indexOffset != 1) {
             size = Sub(args("this" to size, "expression" to Literal.number("1")))
@@ -852,7 +1020,7 @@ fun explodeProjectionToUnnest(
                 "expression" to size.copy(),
             )
         )
-        val condition = Or(
+        var condition: Expression = Or(
             args(
                 "this" to EQ(
                     args(
@@ -877,6 +1045,8 @@ fun explodeProjectionToUnnest(
                 ),
             )
         )
+        if (zip) condition = Or(args("this" to condition,
+            "expression" to Is(args("this" to qualified(positionName, unnestSourceAlias), "expression" to Null()))))
         val where = expression.args["where"] as? Where
         if (where == null) {
             expression.set("where", Where(args("this" to condition)))
@@ -890,13 +1060,20 @@ fun explodeProjectionToUnnest(
 
     expression.set("expressions", selections)
     if (arrays.isNotEmpty()) {
-        var end: Expression = Greatest(
+        val maxSize: Expression = Greatest(
             args("this" to arrays.first(), "expressions" to arrays.drop(1))
         )
+        var end = maxSize.copy()
         if (indexOffset != 1) {
             end = Sub(args("this" to end, "expression" to Literal.number((1 - indexOffset).toString())))
         }
         seriesExpression.set("end", end)
+        if (zip) {
+            // SEQUENCE(1, 0) counts down in Presto/Trino. All-empty inputs need
+            // an empty sequence, not two synthetic rows.
+            seriesExpression.replace(If(args("this" to EQ(args("this" to maxSize, "expression" to Literal.number("0"))),
+                "true" to ArrayNode(), "false" to seriesExpression.copy())))
+        }
     }
     return expression
 }

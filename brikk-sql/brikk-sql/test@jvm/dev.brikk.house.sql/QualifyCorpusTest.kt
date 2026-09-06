@@ -1,8 +1,6 @@
 package dev.brikk.house.sql
 
 import dev.brikk.house.sql.ast.Expression
-import dev.brikk.house.sql.dialects.Dialects
-import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.optimizer.MappingSchema
 import dev.brikk.house.sql.optimizer.OptimizeError
 import dev.brikk.house.sql.optimizer.SchemaError
@@ -14,16 +12,14 @@ import dev.brikk.house.sql.optimizer.validateQualifyColumns
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
 import kotlin.test.fail
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.add
 import kotlinx.serialization.json.put
 
 /**
@@ -33,31 +29,14 @@ import kotlinx.serialization.json.put
  * passes).
  *
  * Per corpus we compare output SQL strings exactly (or expect OptimizeError/SchemaError
- * for the __invalid corpus). Cases whose fixture dialect is not one of our 8 supported
- * dialects are skipped ("dialect_supported": false), as are cases where the Python
- * oracle itself deviated from the fixture ("skipped", ~none).
+ * for the __invalid corpus). Availability follows the shared corpus policy, not stale
+ * fixture flags. Dialect exclusions and oracle failures are reported separately.
  *
  * Failures must exactly match the ledger in qualify-corpus/known-failures.json — no
  * unledgered failure, no stale entry. The actual failure set is always written to
  * build/qualify-ledger-actual.json.
  */
-class QualifyCorpusTest {
-
-    private val json = Json { ignoreUnknownKeys = true }
-
-    private fun loadLedger(): Map<String, String> {
-        val text = try {
-            testResource("qualify-corpus/known-failures.json")
-        } catch (e: AssertionError) {
-            return emptyMap()
-        }
-        val root = json.parseToJsonElement(text).jsonObject
-        return root.getValue("cases").jsonArray.associate { entry ->
-            val obj = entry.jsonObject
-            obj.getValue("key").jsonPrimitive.content to
-                obj.getValue("reason").jsonPrimitive.content
-        }
-    }
+class QualifyCorpusTest : LedgerGate() {
 
     /** Nested JsonObject -> plain Map (schema dicts hold string leaf values). */
     private fun toPlainMap(obj: JsonObject): MutableMap<String, Any?> {
@@ -75,11 +54,12 @@ class QualifyCorpusTest {
 
     private data class CorpusResult(
         val compared: Int,
-        val skipped: Int,
-        val failures: LinkedHashMap<String, String>,
+        val excluded: Int,
+        val oracleFailed: Int,
+        val failures: LinkedHashMap<String, CorpusFailure>,
     )
 
-    private fun runCorpus(name: String): CorpusResult {
+    private fun runCorpus(name: String, assertionIds: CorpusAssertionIds): CorpusResult {
         val root = json.parseToJsonElement(testResource("qualify-corpus/$name.json")).jsonObject
         val cases = root.getValue("cases").jsonArray.map { it.jsonObject }
         check(cases.isNotEmpty()) { "empty corpus: $name" }
@@ -87,53 +67,94 @@ class QualifyCorpusTest {
         val schemaMap = (root["schema"] as? JsonObject)?.let { toPlainMap(it) }
         val visibleMap = (root["visible"] as? JsonObject)?.let { toPlainMap(it) }
 
-        val failures = LinkedHashMap<String, String>()
+        val failures = LinkedHashMap<String, CorpusFailure>()
         var compared = 0
-        var skipped = 0
+        var excluded = 0
+        var oracleFailed = 0
 
         for (case in cases) {
             val sql = case.getValue("sql").jsonPrimitive.content
             val key = "$name::$sql"
 
-            if (case["dialect_supported"]?.jsonPrimitive?.content == "false" ||
-                case["skipped"] != null
-            ) {
-                skipped++
+            val dialectName = case["dialect"]?.jsonPrimitive?.content ?: ""
+            val dialect = CorpusDialects.resolveOrSkip(dialectName)
+            if (dialect == null) {
+                excluded++
                 continue
             }
-
-            val dialectName = case["dialect"]?.jsonPrimitive?.content ?: ""
+            check(case["dialect_supported"]?.jsonPrimitive?.content != "false") {
+                "$name marks supported dialect '$dialectName' unavailable; regenerate the corpus"
+            }
+            if (case["skipped"] != null) {
+                oracleFailed++
+                continue
+            }
             val flags = case["flags"] as? JsonObject
             val validate = flags?.get("validate_qualify_columns")
                 ?.jsonPrimitive?.content != "false"
             val canonicalize = flags?.get("canonicalize_table_aliases")
                 ?.jsonPrimitive?.content == "true"
+            val raises = case["raises"]?.jsonPrimitive?.content == "true"
+            val assertionId = assertionIds.next(buildJsonObject {
+                put("corpus", name)
+                put("schema", root["schema"] ?: JsonNull)
+                put("visible", root["visible"] ?: JsonNull)
+                put("case", JsonObject(case.filterKeys { it != "title" }))
+                put("options", buildJsonObject {
+                    put("dialect", if (raises) "" else dialectName)
+                    when {
+                        raises -> {
+                            put("operation", "qualifyColumns+validateQualifyColumns")
+                            put("expected_error", "OptimizeError/SchemaError")
+                        }
+                        name == "qualify_tables" -> {
+                            put("operation", "qualifyTables")
+                            put("db", "db")
+                            put("catalog", "c")
+                            put("canonicalize_table_aliases", canonicalize)
+                        }
+                        name == "normalize_identifiers" -> put("operation", "normalizeIdentifiers")
+                        else -> {
+                            put("operation", "qualify")
+                            put("infer_schema", true)
+                            put("validate_qualify_columns", validate)
+                            put("identify", false)
+                        }
+                    }
+                })
+            })
 
             compared++
 
-            if (case["raises"]?.jsonPrimitive?.content == "true") {
+            if (raises) {
                 // qualify_columns__invalid: qualify_columns + validate must raise
                 // (OptimizeError, SchemaError)
+                var phase = "parse"
                 try {
                     val expr = parseOne(sql)
-                    validateQualifyColumns(qualifyColumns(expr, schemaMap))
-                    failures[key] = "expected OptimizeError/SchemaError, none raised"
+                    phase = "qualifyColumns"
+                    val qualified = qualifyColumns(expr, schemaMap)
+                    phase = "validateQualifyColumns"
+                    validateQualifyColumns(qualified)
+                    failures[assertionId] = CorpusFailure.missingError(key, "OptimizeError/SchemaError")
                 } catch (e: OptimizeError) {
                     // expected
                 } catch (e: SchemaError) {
                     // expected
                 } catch (e: Exception) {
-                    failures[key] = "expected OptimizeError/SchemaError, got " +
-                        "${e::class.simpleName}: ${e.message}"
+                    failures[assertionId] = CorpusFailure.exception(
+                        key, "$phase (expected OptimizeError/SchemaError)", e,
+                    )
                 }
                 continue
             }
 
             val expected = case.getValue("expected").jsonPrimitive.content
 
+            var phase = "parse"
             val actual = try {
-                val dialect = Dialects.forName(dialectName)
-                val expr: Expression = parseOne(sql, dialectName)
+                val expr: Expression = dialect.parseOne(sql)
+                phase = name
                 val result: Expression = when (name) {
                     "qualify_tables" -> qualifyTables(
                         expr,
@@ -156,18 +177,20 @@ class QualifyCorpusTest {
                         identify = false,
                     )
                 }
-                result.sql(dialectName)
+                phase = "generate"
+                dialect.generate(result)
             } catch (e: Exception) {
-                failures[key] = "${e::class.simpleName}: ${e.message}"
+                failures[assertionId] = CorpusFailure.exception(key, phase, e)
                 continue
             }
 
             if (actual != expected) {
-                failures[key] = "output mismatch:\n      expected: $expected\n      actual:   $actual"
+                failures[assertionId] = CorpusFailure.sqlMismatch(key, expected, actual)
             }
         }
 
-        return CorpusResult(compared, skipped, failures)
+        check(compared + excluded + oracleFailed == cases.size) { "Unaccounted qualification cases in $name" }
+        return CorpusResult(compared, excluded, oracleFailed, failures)
     }
 
     @Test
@@ -179,13 +202,14 @@ class QualifyCorpusTest {
             "normalize_identifiers",
             "qualify_columns__invalid",
         )
-        val ledger = loadLedger()
+        val ledger = loadLedger("qualify-corpus/known-failures.json", "key")
+        val assertionIds = CorpusAssertionIds("qualify-corpus")
 
-        val allFailures = LinkedHashMap<String, String>()
+        val allFailures = LinkedHashMap<String, CorpusFailure>()
         val problems = mutableListOf<String>()
 
         for (name in corpora) {
-            val result = runCorpus(name)
+            val result = runCorpus(name, assertionIds)
             allFailures.putAll(result.failures)
 
             val passed = result.compared - result.failures.size
@@ -193,45 +217,22 @@ class QualifyCorpusTest {
             println(
                 "QualifyCorpusTest[$name]: $passed/${result.compared} pass " +
                     "(${"%.1f".format(rate)}%), ${result.failures.size} failing, " +
-                    "${result.skipped} skipped (unsupported dialect / oracle skip)"
+                    "excluded=${result.excluded}, oracle-failed=${result.oracleFailed}, unextractable=0 (fixture records)"
             )
             if (rate < 90.0) {
                 problems.add("$name below 90% gate: $passed/${result.compared}")
             }
         }
 
-        // Always write the actual failure set in ledger format for easy regeneration.
-        val actualLedger = buildJsonObject {
-            put("cases", buildJsonArray {
-                for ((key, reason) in allFailures) {
-                    add(buildJsonObject { put("key", key); put("reason", reason) })
-                }
-            })
-        }
-        val outDir = java.io.File("build").takeIf { it.isDirectory } ?: java.io.File(".")
-        java.io.File(outDir, "qualify-ledger-actual.json")
-            .writeText(Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), actualLedger))
-
-        val unledgered = allFailures.keys - ledger.keys
-        val stale = ledger.keys - allFailures.keys
-
-        if (unledgered.isNotEmpty()) {
-            problems.add(
-                "${unledgered.size} UNLEDGERED failures (showing up to 20):\n" +
-                    unledgered.take(20).joinToString("\n") { "  $it\n    reason: ${allFailures[it]}" }
-            )
-        }
-        if (stale.isNotEmpty()) {
-            problems.add(
-                "${stale.size} STALE ledger entries now pass (showing up to 20):\n" +
-                    stale.take(20).joinToString("\n") { "  $it" }
-            )
-        }
+        enforceLedger(
+            ledger = ledger,
+            failures = allFailures,
+            summary = "QualifyCorpusTest: ${allFailures.size} failing across ${corpora.size} corpora",
+            actualLedgerName = "qualify-ledger-actual.json",
+            caseKey = "key",
+        )
         if (problems.isNotEmpty()) {
-            fail(
-                problems.joinToString("\n\n") +
-                    "\n\nActual ledger written to ${java.io.File(outDir, "qualify-ledger-actual.json").absolutePath}"
-            )
+            fail(problems.joinToString("\n\n"))
         }
     }
 }

@@ -20,6 +20,8 @@ exceptions today:
   parsing) adds no ledger entries.
 - **1 Trino** in `brikk-sql/brikk-sql/testResources/generator-corpus/trino-generator-known-failures.json`
   — §8 (`JSON_QUERY` wrapper clause).
+- **1 StarRocks** in `brikk-sql/brikk-sql/testResources/generator-corpus/starrocks-generator-known-failures.json`
+  for the ASTRA-001 final ordering correction in section 6.
 
 ## 1. First-class pipe syntax (Phase 4)
 
@@ -29,6 +31,13 @@ exceptions today:
   (AST → `|>` text) exists — sqlglot has no equivalent.
 - **Where:** `ast/PipeNodes.kt`, `ast/PipeDesugar.kt`, parser `parsePipeSyntax*` handlers,
   generator `pipe*Sql` methods.
+- **ASTRA-005:** requested lowering at `transpileTo`/`toExecutable` and analysis
+  preparation is recursive even when the root is not a pipe. Subqueries and CTEs
+  therefore reach shape inference, lineage, and certification in standard form.
+  Explicit pipe-rendering mode and the author AST remain unchanged.
+  `NestedPipeEntryPointsTest` covers those APIs and source-map consistency;
+  `SqlVerifierTest.nestedPipesLowerBeforeNativeVerification` adds native parser
+  acceptance and executed DuckDB results for self-contained nested queries.
 - `PipeSelect` preserves the SELECT's optional `Distinct` node, including `ON` keys,
   through parsing, copying, serialization, pipe rendering, and desugaring. Earlier
   versions silently dropped `|> SELECT DISTINCT`. Projection and deduplication must
@@ -85,6 +94,16 @@ exceptions today:
 - **What:** `shape/` package — `SqlFragment`, `Shape`, contracts, slot detection. No
   sqlglot counterpart; consumes only parity-verified primitives.
 - **Conflict risk:** none directly; it inherits behavior changes from everything above.
+- **ASTRA-004:** output contracts reconcile set-operation columns recursively rather
+  than reading types/nullability from the left SELECT. Ordered summaries retain
+  duplicate positional names and unknown verdicts. UNION combines nullable inputs,
+  INTERSECT is non-null when either input excludes nulls, and EXCEPT retains the left
+  verdict. BY NAME aligns columns, null-pads missing inputs, and honors INNER/LEFT/ON
+  output selection. This also corrects the core type annotator's nested alias handling
+  and BY NAME scope names, with no changes to generated SQL or corpus ledgers.
+  `SqlFragmentTest`, `NullabilityTest`, and the compiler's generated getter checks
+  cover these contracts. These are analysis/compiler regressions, not engine-result
+  equivalence claims; existing type-coercion rules still bound numeric inference.
 
 ## 5. Native pipe nodes in serde
 
@@ -92,7 +111,7 @@ exceptions today:
   no Python counterpart; `ArgTypesManifestTest` allowlists them explicitly.
 - **Conflict risk:** LOW — only if upstream ever introduces same-named classes.
 
-## 6. eliminate_qualify: outer-star duplicate-column fix
+## 6. Window-filter lowering: output shape and clause order
 
 - **What:** In sqlglot's `eliminate_qualify` (QUALIFY → subquery rewrite), an original
   projection containing a star produces `SELECT *, rn FROM (subquery)` — the outer star
@@ -101,12 +120,42 @@ exceptions today:
   the bare star. Verified as result-shape-breaking on DuckDB→Doris/Trino by customer
   agents. **Upstream bug candidate — worth reporting to sqlglot.**
 - **Where:** `generator/Transforms.kt` `eliminateQualify` (outer projection branch).
+- **ASTRA-001 correctness divergence:** QUALIFY lowering now moves DISTINCT, final
+  ORDER BY, OFFSET, and LIMIT/FETCH to the filtering query. WITH moves with them so
+  pagination subqueries retain CTE visibility. DISTINCT ON lowering keeps final
+  ordering and pagination outside its row-number filter, and runs after QUALIFY.
+  Its ranking window resolves ORDER BY ordinals and standalone projection aliases.
+- **Counterexample:** `SELECT x FROM (VALUES (1), (2)) AS t(x) QUALIFY
+  ROW_NUMBER() OVER (ORDER BY x DESC) = 1 ORDER BY x LIMIT 1` must return `2`.
+  The pinned upstream and the previous Kotlin lowering instead return no rows.
+- **Hidden expressions:** sorting expressions stay intact in the inner scope and
+  use collision-free helper names outside it. Explicit outer projections exclude
+  helpers from both output and DISTINCT. Plain DISTINCT with a hidden sort key is
+  refused rather than emitting SQL rejected by PostgreSQL/Trino or changing the
+  deduplication key. Unresolved compound output-alias references and star orderings
+  requiring new hidden columns are also refused pending input-schema expansion.
+- **Regressions:** `QualifyLoweringResultTest` executes the source and actual generated
+  SQL in DuckDB JDBC 1.5.5.0, comparing ordered rows and column names. It covers the
+  counterexample, pagination, DISTINCT, DISTINCT ON composition, qualified names,
+  helper-name collisions, aggregate/subquery ordering, and CTE visibility. These are
+  executed-result checks for the tested DuckDB-compatible target SQL, not live
+  Presto/PostgreSQL/MySQL execution. The Trino counterexample also passes its native
+  parser. `TransformsTest` checks FETCH placement and explicit unsupported cases.
+- **Corpus impact:** one intentional StarRocks generator mismatch for `SELECT
+  DISTINCT ON (a) a, b FROM x ORDER BY c DESC`. The upstream fixture remains intact;
+  only its exact divergence is ledgered. No oracle-gate behavior changes.
+- **Upstream tracking:** ASTRA-001 is inherited from the pinned
+  `v30.17.0-93-gdcc36544a`. Owner: Brikk maintainers. Reporting status: pending;
+  no upstream issue/PR has been filed by this change. Adoption revision: none.
+  On each upstream sync, check `eliminate_qualify` and `eliminate_distinct_on`
+  against these result regressions before adopting them, then reconcile this entry
+  and the exact StarRocks ledger entry. String parity alone is insufficient.
 - **Deliberately kept upstream behavior:** the Case-B star leak (`SELECT * FROM t QUALIFY
   row_number() OVER (...) = 1` exports the synthetic `_w` helper through the outer star)
   is unchanged — dropping it requires schema-based star expansion; revisit if customers
   hit it.
-- **Conflict risk:** MEDIUM — if upstream fixes eliminate_qualify, adopt theirs and
-  retire this branch.
+- **Conflict risk:** MEDIUM. Adopt an upstream fix only when both output shape and
+  clause-order result regressions pass; retire the matching local branches then.
 
 ## 7. Doris: first-class arrays
 
@@ -586,7 +635,80 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
   keywords at the upstream member. If upstream adds Doris DDL parsing, compare node
   shapes and prefer theirs when equivalent; `DorisDialectTest` defines required behavior.
 
-## 20. Doris: preserve native FULL OUTER JOIN
+## 20. Outer explosion cardinality and positions
+
+- **ASTRA-002:** `explodeProjectionToUnnest` now includes the pinned upstream
+  empty/null array normalization for EXPLODE_OUTER and POSEXPLODE_OUTER. A safe
+  first-element lookup creates a correctly typed null singleton for missing input.
+- **Local corrections:** outer maps use LEFT JOIN UNNEST ON TRUE, since maps cannot
+  contain synthetic null keys. Outer positional output puts position before value,
+  uses zero-based positions, and returns null position for the synthetic row.
+  Private UNNEST columns avoid capturing source predicates; default public names
+  remain `col`, `pos`, `key`, and `value`. Map dispatch requires type evidence,
+  as with the existing non-outer map path.
+- **Verification:** `OuterExplodeResultTest` checks target grammar and output names
+  on every run. With `BRIKK_TRINO_CONTAINER` set to a running Trino 483 Docker
+  container it executes the actual Presto/Trino-generated SQL and compares row
+  multisets, including nulls and duplicate counts. This mode was run for this fix.
+  It is Trino execution, not a live Presto or Spark check. The normal full suite
+  does not start Docker. The original outer correction needed no ledger changes.
+- **ASTRA-002-ZIP:** the inherited empty zipped-input defect is fixed separately.
+  Multiple array inputs use LEFT JOIN UNNEST ON TRUE with null-ordinal padding.
+  Null cardinalities become zero; when every input is empty, an empty position
+  array avoids Presto/Trino's descending `SEQUENCE(1, 0)`. The focused regression
+  compares DuckDB source results with the actual Trino output for empty, null,
+  unequal-length, duplicate, and per-row inputs. Three nonempty corpus cases
+  change SQL spelling under this general correction: two DuckDB and one Spark
+  `write|presto` cases. Those exact transpile-ledger entries are intentional and
+  protected, while the upstream fixtures and gates remain unchanged.
+- **Upstream sync:** retain these result tests when adopting changes to
+  `explode_projection_to_unnest`. The array branch follows the pinned upstream;
+  map/position/name corrections are local. Upstream reporting/adoption is pending.
+
+## 21. Temporal difference precision and elapsed days
+
+- **ASTRA-010:** the missing BigQuery TIMESTAMP_DIFF unit and Presto/Trino
+  TimestampDiff/DatetimeDiff mappings are restored, including the upstream
+  week-start alignment. Eleven exact BigQuery transpile failures now pass.
+- **Local corrections:** timestamp DAY differences use complete elapsed hours
+  divided by 24, avoiding calendar-day differences across DST. Newly coerced
+  timestamp literals retain six-digit precision; fractional typed literals also
+  avoid millisecond rounding across a boundary. BigQuery's unzoned timestamp
+  strings get UTC explicitly, independently of the target session timezone.
+  Unsupported units and unknown week starts report generator diagnostics.
+- **Where:** `PrestoGenerator.dateDiffSql`. `TemporalDiffResultTest` runs actual
+  Presto/Trino output on Trino 483 when `BRIKK_TRINO_CONTAINER` is set, including
+  UTC and America/New_York sessions. No live BigQuery or Presto execution is claimed.
+  The native BigQuery and cross-dialect corpus gates retain their upstream fixtures.
+- **Upstream sync:** keep elapsed-day and precision regressions when adopting
+  `_date_diff_sql` changes. Local correctness corrections have no new corpus
+  mismatches at the current pin; reporting/adoption status is pending.
+
+## 22. BigQuery UNNEST alias and offset contracts
+
+- **ASTRA-008:** explicit and implicit BigQuery UNNEST aliases use the upstream
+  column-only AST representation. Implicit paths resolve against preceding sources
+  using BigQuery's identifier rules, including quoted physical-table names.
+  Generator cleanup removes internal relation qualifiers by scope, without stripping
+  struct-value prefixes or nested aliases that shadow an outer UNNEST.
+- **Cross-dialect corrections:** Presto/Trino keep named struct elements intact with
+  a single-field ROW wrapper. Named BigQuery offsets use a lateral projection that
+  exposes zero-based positions. In the reverse source-aware route, named relation
+  columns become fields of an ARRAY subquery's STRUCT, preserving qualifications
+  and renamed fields; explicit ordinality becomes offset plus one.
+- **Limits:** unknown element types, unresolved bare/star/nested struct references,
+  offsets without the required aliases, and filtered correlated outer offset joins
+  report unsupported diagnostics. Supplied schema annotations are retained. This
+  does not implement all array operations or every relational UNNEST form.
+- **Verification:** `BigqueryUnnestResultTest` executes forward output on Trino 483
+  when `BRIKK_TRINO_CONTAINER` is set. Native BigQuery and reverse output have
+  parser/SQL-shape checks, not live BigQuery execution. All ten remaining exposed
+  qualification cases and eighteen existing transpile-ledger cases now pass.
+- **Upstream sync:** the parser/normalization representation follows the pin; row
+  preservation, offset conversion, and scope-aware cleanup are local corrections.
+  Retain these regressions rather than reverting toward silent upstream mistakes.
+
+## 23. Doris: preserve native FULL OUTER JOIN
 
 Doris supports `FULL OUTER JOIN`, so its SELECT preprocessing must not inherit
 MySQL's `eliminateFullOuterJoin`. That rewrite aggregates and deduplicates each
@@ -609,7 +731,27 @@ plugin JDBC coverage. No dependency was added.
 Upstream syncs must retain this override unless upstream also preserves Doris's
 native full join. Existing corpus ledgers are unchanged.
 
-## 21. Doris: DISTINCT ON output columns and row restrictions
+## 24. BigQuery relation-lowering guards (ASTRA-009)
+
+`BigqueryGenerator.cteSql` pushes CTE column names into explicit projections,
+including the left side of set operations. Partial lists leave trailing columns
+intact. Unexpanded stars and overlong lists produce unsupported diagnostics.
+Unlike the pin, alias shadowing also produces a diagnostic when query modifiers
+refer to the old alias, rather than silently emitting an invalid reference.
+
+Derived VALUES become UNNEST arrays of named structs. The rewrite walks only
+direct rows, not nested tuples, and checks row/alias widths before pairing cells
+with names. VALUES-local ordering/limits are diagnosed, not dropped. INSERT
+VALUES stays unchanged. These checks are local correctness guards around the
+pinned SQLGlot rewrites; retain them on upstream sync.
+
+`BigqueryRelationLoweringTest` checks exact SQL, quoted names, duplicates, NULLs,
+partial CTE lists, alias shadowing, set operations, diagnostics, and source-AST
+immutability. `BigqueryUnnestResultTest` checks the BigQuery output after conversion
+to Presto/Trino and optionally executes it with `BRIKK_TRINO_CONTAINER`. There is
+no live BigQuery execution claim.
+
+## 25. Doris: DISTINCT ON output columns and row restrictions
 
 For DISTINCT ON with projection-level stars or final LIMIT/OFFSET, Doris uses native
 `QUALIFY ROW_NUMBER() OVER (...) = 1`. No ranking helper is projected. User columns

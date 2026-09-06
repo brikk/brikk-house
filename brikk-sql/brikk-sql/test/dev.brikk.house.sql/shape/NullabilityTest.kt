@@ -69,6 +69,88 @@ class NullabilityTest {
         assertNull(singleNullable("SELECT a AS c FROM t", catalog))
     }
 
+    private val joinCatalog = ShapeCatalog(tables = listOf("a", "b", "c").associateWith {
+        Shape(listOf(ColumnShape("x", "INT", nullable = false)))
+    })
+
+    @Test
+    fun outerJoinsNullExtendOnlyTheirSupplyingSides() {
+        for (dialect in listOf("duckdb", "postgres", "doris")) {
+            for ((join, expected) in listOf(
+                "INNER" to listOf(false, false), "LEFT" to listOf(false, true),
+                "RIGHT" to listOf(true, false), "FULL" to listOf(true, true),
+            )) {
+                val sql = "SELECT l.x AS lx, r.x AS rx FROM a AS l $join JOIN b AS r ON l.x = r.x"
+                val shape = SqlFragment(sql, dialect).outputShape(joinCatalog)
+                assertEquals(expected, shape.columns.map { it.nullable }, "$dialect: $sql")
+            }
+        }
+    }
+
+    @Test
+    fun outerJoinNullabilitySurvivesDerivedTablesAndCtes() {
+        for (sql in listOf(
+            "SELECT r.x FROM a LEFT JOIN (SELECT x FROM b) AS r ON a.x = r.x",
+            "WITH r AS (SELECT x FROM b) SELECT r.x FROM a LEFT JOIN r ON a.x = r.x",
+            "SELECT r.x FROM a LEFT JOIN (SELECT 1 AS x) AS r ON a.x = r.x",
+            "SELECT s.x FROM (SELECT b.x FROM a LEFT JOIN b ON a.x = b.x) AS s",
+            "WITH s AS (SELECT b.x FROM a LEFT JOIN b ON a.x = b.x) SELECT x FROM s",
+        )) {
+            assertEquals(true, singleNullable(sql, joinCatalog, "postgres"), sql)
+        }
+    }
+
+    @Test
+    fun joinChainsNullExtendTheAccumulatedLeftRelation() {
+        for ((joins, expected) in listOf(
+            "LEFT JOIN b ON a.x = b.x INNER JOIN c ON a.x = c.x" to listOf(false, true, false),
+            "INNER JOIN b ON a.x = b.x RIGHT JOIN c ON b.x = c.x" to listOf(true, true, false),
+            "LEFT JOIN b ON a.x = b.x FULL JOIN c ON b.x = c.x" to listOf(true, true, true),
+            "LEFT JOIN (b INNER JOIN c ON b.x = c.x) ON a.x = b.x" to listOf(false, true, true),
+            ", b RIGHT JOIN c ON b.x = c.x" to listOf(false, true, false),
+            "CROSS JOIN b RIGHT JOIN c ON b.x = c.x" to listOf(true, true, false),
+        )) {
+            val sql = "SELECT a.x AS ax, b.x AS bx, c.x AS cx FROM a $joins"
+            assertEquals(expected, SqlFragment(sql, "postgres").outputShape(joinCatalog).columns.map { it.nullable }, sql)
+        }
+    }
+
+    @Test
+    fun tableColumnAliasListsKeepPositionalNullability() {
+        val catalog = ShapeCatalog(tables = mapOf("t" to Shape(listOf(
+            ColumnShape("x", "INT", nullable = true), ColumnShape("y", "INT", nullable = false),
+        ))))
+        val shape = SqlFragment("SELECT s.y, s.x FROM t AS s(y, x)", "postgres").outputShape(catalog)
+        assertEquals(listOf(true, false), shape.columns.map { it.nullable })
+    }
+
+    @Test
+    fun outerJoinRemainsConservativeButCoalesceCanGuaranteeNonNull() {
+        assertEquals(true, singleNullable(
+            "SELECT b.x FROM a LEFT JOIN b ON a.x = b.x WHERE b.x IS NOT NULL", joinCatalog, "postgres",
+        ))
+        assertEquals(false, singleNullable(
+            "SELECT COALESCE(b.x, 0) FROM a LEFT JOIN b ON a.x = b.x", joinCatalog, "postgres",
+        ))
+        val unknownCatalog = ShapeCatalog(tables = mapOf("a" to Shape.of("x" to "INT"), "b" to Shape.of("x" to "INT")))
+        assertEquals(true, singleNullable("SELECT b.x FROM a LEFT JOIN b ON a.x = b.x", unknownCatalog, "postgres"))
+    }
+
+    @Test
+    fun setOperationsKeepUnknownNullabilityConservative() {
+        val catalog = ShapeCatalog(tables = mapOf("t" to Shape.of("x" to "INT")))
+        for ((sql, expected) in listOf(
+            "SELECT x FROM t UNION SELECT 1 AS x" to null,
+            "SELECT x FROM t UNION SELECT NULL AS x" to true,
+            "SELECT x FROM t INTERSECT SELECT 1 AS x" to false,
+            "SELECT x FROM t INTERSECT SELECT NULL AS x" to null,
+            "SELECT x FROM t EXCEPT SELECT 1 AS x" to null,
+        )) {
+            assertEquals(expected, singleNullable(sql, catalog, "postgres"), sql)
+            assertEquals(expected, singleNullable("WITH s AS ($sql) SELECT x FROM s", catalog, "postgres"), sql)
+        }
+    }
+
     // ------------------------------------------------------------------ COALESCE
 
     @Test

@@ -111,8 +111,7 @@
   {
    "sql": "SELECT `foo`, `BaR` FROM baz CROSS JOIN `bla` CROSS JOIN bloo",
    "expected": "SELECT `FOO`, `BAR` FROM BAZ CROSS JOIN `BLA` CROSS JOIN BLOO",
-   "dialect": "bigquery,normalization_strategy=case_insensitive_uppercase",
-   "dialect_supported": false
+   "dialect": "bigquery,normalization_strategy=case_insensitive_uppercase"
   },
   {
    "sql": "SELECT \"Fo\u00c4\" FROM \"Ba\u00dc\"",
@@ -130,8 +129,7 @@
    "sql": "SELECT `Fo\u00c4` FROM `Ba\u00dc`",
    "expected": "SELECT `fo\u00c4` FROM `ba\u00dc`",
    "title": "bigquery only normalizes ascii characters",
-   "dialect": "bigquery",
-   "dialect_supported": false
+   "dialect": "bigquery"
   },
   {
    "sql": "SELECT \"Fo\u00c4\" FROM \"Ba\u00dc\"",
@@ -144,8 +142,7 @@
    "sql": "SELECT `Fo\u00c4` FROM `Ba\u00dc`",
    "expected": "SELECT `fo\u00e4` FROM `ba\u00fc`",
    "title": "spark normalizes unicode characters",
-   "dialect": "spark",
-   "dialect_supported": false
+   "dialect": "spark"
   },
   {
    "sql": "SELECT \"Fo\u00c4\" FROM \"Ba\u00dc\"",

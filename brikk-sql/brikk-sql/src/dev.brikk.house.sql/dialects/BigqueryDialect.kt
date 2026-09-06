@@ -95,6 +95,8 @@ open class BigqueryDialect : Dialect() {
      * table names are case-sensitive by default. Uses a heuristic to detect tables
      * based on whether they are qualified.
      */
+    override fun <E : Expression> normalizeIdentifier(expression: E): E = normalizeIdentifierBq(expression)
+
     fun <E : Expression> normalizeIdentifierBq(expression: E): E {
         if (
             expression is Identifier &&
@@ -112,19 +114,15 @@ open class BigqueryDialect : Dialect() {
                         parent is Table &&
                             parent.args["db"] != null &&
                             (
-                                meta?.get("quoted_table") == true ||
-                                    meta?.get("maybe_column") != true
+                                parent.metaOrNull?.get("quoted_table") == true ||
+                                    parent.metaOrNull?.get("maybe_column") != true
                                 )
                         ) ||
                     meta?.get("is_table") == true
-            if (!caseSensitive) {
-                expression.set("this", (expression.thisArg as String).lowercase())
-            }
-            @Suppress("UNCHECKED_CAST")
-            return expression as E
+            if (caseSensitive) return expression
         }
 
-        return normalizeIdentifier(expression)
+        return super.normalizeIdentifier(expression)
     }
 
     companion object {

@@ -1,18 +1,13 @@
 package dev.brikk.house.sql
 
 import dev.brikk.house.sql.ast.Table
-import dev.brikk.house.sql.optimizer.OptimizeError
 import dev.brikk.house.sql.optimizer.Scope
 import dev.brikk.house.sql.optimizer.traverseScope
 import dev.brikk.house.sql.parser.ParseError
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
-import kotlin.test.fail
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
@@ -32,23 +27,7 @@ import kotlinx.serialization.json.put
  *
  * The actual failure set is always written to build/scope-ledger-actual.json.
  */
-class ScopeCorpusTest {
-
-    private val json = Json { ignoreUnknownKeys = true }
-
-    private fun loadLedger(): Map<String, String> {
-        val text = try {
-            testResource("scope-corpus/known-failures.json")
-        } catch (e: AssertionError) {
-            return emptyMap()
-        }
-        val root = json.parseToJsonElement(text).jsonObject
-        return root.getValue("cases").jsonArray.associate { entry ->
-            val obj = entry.jsonObject
-            obj.getValue("sql").jsonPrimitive.content to
-                obj.getValue("reason").jsonPrimitive.content
-        }
-    }
+class ScopeCorpusTest : LedgerGate() {
 
     private fun qualifiedName(column: dev.brikk.house.sql.ast.Column): String {
         val table = column.text("table")
@@ -83,33 +62,6 @@ class ScopeCorpusTest {
         put("is_correlated_subquery", scope.isCorrelatedSubquery)
     }
 
-    /** Mirrors tools/gen_scope_corpus.py build_case: scopes | skipped | error. */
-    private fun buildCase(sql: String): JsonObject {
-        val ast = try {
-            parseOne(sql)
-        } catch (e: ParseError) {
-            return buildJsonObject { put("sql", sql); put("skipped", "parse error") }
-        } catch (e: Exception) {
-            return buildJsonObject { put("sql", sql); put("skipped", "parse error") }
-        }
-
-        return try {
-            val scopes = traverseScope(ast)
-            if (scopes.isEmpty()) {
-                buildJsonObject { put("sql", sql); put("skipped", "no scopes") }
-            } else {
-                buildJsonObject {
-                    put("sql", sql)
-                    put("scopes", buildJsonArray { for (s in scopes) add(summarize(s)) })
-                }
-            }
-        } catch (e: OptimizeError) {
-            buildJsonObject { put("sql", sql); put("error", "OptimizeError") }
-        } catch (e: Exception) {
-            buildJsonObject { put("sql", sql); put("error", e::class.simpleName ?: "Exception") }
-        }
-    }
-
     private fun mismatchReason(expected: JsonObject, actual: JsonObject): String {
         val expectedKind = listOf("scopes", "skipped", "error").first { it in expected }
         val actualKind = listOf("scopes", "skipped", "error").first { it in actual }
@@ -142,15 +94,58 @@ class ScopeCorpusTest {
         val version = root.getValue("sqlglot_version").jsonPrimitive.content
         val cases = root.getValue("cases").jsonArray.map { it.jsonObject }
         check(cases.isNotEmpty()) { "empty corpus" }
-        val ledger = loadLedger()
+        val ledger = loadLedger("scope-corpus/known-failures.json", "sql")
+        val ids = CorpusAssertionIds("ScopeCorpusTest:base")
 
-        val failures = LinkedHashMap<String, String>() // sql -> reason
+        val failures = LinkedHashMap<String, CorpusFailure>()
         var compared = 0
 
         for (expected in cases) {
             val sql = expected.getValue("sql").jsonPrimitive.content
-            val actual = buildCase(sql)
+            val id = ids.next(buildJsonObject {
+                put("sql", sql)
+                put("expected", expected)
+                put("dialect", "")
+                put("skipComparison", "any-legitimate-skip")
+                put("errorComparison", "class-name")
+            })
             compared++
+
+            val ast = try {
+                parseOne(sql)
+            } catch (e: ParseError) {
+                if ("skipped" !in expected) {
+                    failures[id] = CorpusFailure.exception(sql, "parse", e)
+                    continue
+                }
+                null
+            } catch (e: Exception) {
+                failures[id] = CorpusFailure.exception(sql, "parse", e)
+                continue
+            }
+            val actual = if (ast == null) {
+                buildJsonObject { put("sql", sql); put("skipped", "parse error") }
+            } else {
+                var phase = "traverse"
+                try {
+                    val scopes = traverseScope(ast)
+                    phase = "summarize"
+                    if (scopes.isEmpty()) {
+                        buildJsonObject { put("sql", sql); put("skipped", "no scopes") }
+                    } else {
+                        buildJsonObject {
+                            put("sql", sql)
+                            put("scopes", buildJsonArray { for (s in scopes) add(summarize(s)) })
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Oracle error cases compare the class, not the exception message.
+                    if (expected["error"]?.jsonPrimitive?.content != (e::class.simpleName ?: "Exception")) {
+                        failures[id] = CorpusFailure.exception(sql, phase, e)
+                    }
+                    continue
+                }
+            }
 
             val equal = when {
                 "scopes" in expected ->
@@ -159,45 +154,24 @@ class ScopeCorpusTest {
                 // Python skipped (parse error or no scopes): we must skip too, any reason.
                 else -> "skipped" in actual
             }
-            if (!equal) failures[sql] = mismatchReason(expected, actual)
-        }
-
-        // Always write the actual failure set in ledger format for easy regeneration.
-        val actualLedger = buildJsonObject {
-            put("sqlglot_version", version)
-            put("cases", buildJsonArray {
-                for ((sql, reason) in failures) {
-                    add(buildJsonObject { put("sql", sql); put("reason", reason) })
+            if (!equal) {
+                failures[id] = if ("error" in expected) {
+                    CorpusFailure.missingError(sql, expected.getValue("error").jsonPrimitive.content, actual.toString())
+                } else {
+                    CorpusFailure.mismatch(
+                        sql, expected, actual, kind = "scope-mismatch", reason = mismatchReason(expected, actual),
+                    )
                 }
-            })
+            }
         }
-        val outDir = java.io.File("build").takeIf { it.isDirectory } ?: java.io.File(".")
-        java.io.File(outDir, "scope-ledger-actual.json")
-            .writeText(Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), actualLedger))
 
-        val unledgered = failures.keys - ledger.keys
-        val stale = ledger.keys - failures.keys
-
-        println("ScopeCorpusTest: ${compared - failures.size} pass / ${failures.size} ledgered (of $compared)")
-
-        val problems = mutableListOf<String>()
-        if (unledgered.isNotEmpty()) {
-            problems.add(
-                "${unledgered.size} UNLEDGERED failures (showing up to 20):\n" +
-                    unledgered.take(20).joinToString("\n") { "  $it\n    reason: ${failures[it]}" }
-            )
-        }
-        if (stale.isNotEmpty()) {
-            problems.add(
-                "${stale.size} STALE ledger entries now pass (showing up to 20):\n" +
-                    stale.take(20).joinToString("\n") { "  $it" }
-            )
-        }
-        if (problems.isNotEmpty()) {
-            fail(
-                problems.joinToString("\n\n") +
-                    "\n\nActual ledger written to ${java.io.File(outDir, "scope-ledger-actual.json").absolutePath}"
-            )
-        }
+        enforceLedger(
+            ledger = ledger,
+            failures = failures,
+            summary = "ScopeCorpusTest: ${compared - failures.size} pass / ${failures.size} ledgered (of $compared)",
+            actualLedgerName = "scope-ledger-actual.json",
+            caseKey = "sql",
+            sqlglotVersion = version,
+        )
     }
 }

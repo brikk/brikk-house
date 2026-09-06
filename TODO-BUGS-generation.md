@@ -28,8 +28,10 @@
 > known-failures ledger (`*-known-failures.json`). Build/test from the repo root with
 > `./kotlin build` and `./kotlin test`. Each run also writes `brikk-sql/*-ledger-actual.json`
 > (gitignored) with the current failing set. **When you fix an actionable item, delete its line
-> from the matching committed `*-known-failures.json`** (or copy the refreshed actual over it);
-> the gate then proves it passes. Do **not** delete protected intentional-divergence entries.
+> from the matching committed `*-known-failures.json`** by its exact assertion ID;
+> the gate then proves it passes. Do not copy the actual ledger wholesale: new IDs
+> and changed failure signatures require review, and curated reasons must survive.
+> Do **not** delete protected intentional-divergence entries.
 > Reproduce a single item by parsing/generating with the noted dialect(s)
 > and diffing against `reference/sqlglot` (e.g. `python3 -c "import sqlglot; print(sqlglot.transpile(SQL, read=SRC, write=TGT)[0])"`).
 >

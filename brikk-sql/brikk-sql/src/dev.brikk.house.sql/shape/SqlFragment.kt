@@ -2,10 +2,10 @@ package dev.brikk.house.sql.shape
 
 import dev.brikk.house.sql.ast.Alias
 import dev.brikk.house.sql.ast.Anonymous
-import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.Func
 import dev.brikk.house.sql.ast.sqlNames
 import dev.brikk.house.sql.ast.DataType
+import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.Parameter
@@ -17,18 +17,22 @@ import dev.brikk.house.sql.ast.SetOperation
 import dev.brikk.house.sql.ast.Star
 import dev.brikk.house.sql.ast.Subquery
 import dev.brikk.house.sql.ast.Table
+import dev.brikk.house.sql.ast.With
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.ast.desugarPipes
+import dev.brikk.house.sql.ast.intoExpr
 import dev.brikk.house.sql.dialects.Dialect
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.optimizer.MappingSchema
 import dev.brikk.house.sql.optimizer.Node
+import dev.brikk.house.sql.optimizer.TypeAnnotator
 import dev.brikk.house.sql.optimizer.annotateNullability
-import dev.brikk.house.sql.optimizer.annotateTypes
 import dev.brikk.house.sql.optimizer.lineage
 import dev.brikk.house.sql.optimizer.lineageAll
 import dev.brikk.house.sql.optimizer.nestedSet
+import dev.brikk.house.sql.optimizer.normalizeIdentifiers
 import dev.brikk.house.sql.optimizer.qualify
+import dev.brikk.house.sql.optimizer.traverseScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -106,8 +110,8 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * continues). A non-empty [TranspileResult.unsupportedMessages] means the output
      * is best-effort and should be reviewed / gate-skipped.
      *
-     * [desugarPipes]: when true and the fragment is pipe syntax ([isPipe]), the AST is
-     * desugared to standard syntax (ast/PipeDesugar.kt, on a copy) before generating.
+     * [desugarPipes]: when true, every pipe in the AST, including subqueries and CTEs,
+     * is desugared to standard syntax (ast/PipeDesugar.kt, on a copy) before generating.
      * Real engines don't speak `|>` — when targeting one with a pipe-syntax fragment,
      * pass true (or pre-desugar manually via [toStandardSql]). The default false keeps
      * the historical behavior of rendering the pipe stages verbatim.
@@ -124,7 +128,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         generator.trackSpans = trackSourceMap
         // Qualified call: the boolean param shadows the imported desugarPipes function.
         val tree =
-            if (desugarPipes && isPipe) dev.brikk.house.sql.ast.desugarPipes(ast, copy = true)
+            if (desugarPipes) dev.brikk.house.sql.ast.desugarPipes(ast, copy = true)
             else ast
         val out = generator.generate(tree, copy = true)
         return TranspileResult(
@@ -139,8 +143,8 @@ class SqlFragment(val sql: String, val dialect: String = "") {
     /**
      * One-call "give me the executable SQL and a source map that corresponds to it".
      *
-     * Real engines don't speak pipe syntax, so this ALWAYS desugars pipe fragments
-     * ([isPipe]) to the standard CTE-chain form before generating, and it tracks the
+     * Real engines don't speak pipe syntax, so this ALWAYS desugars pipes at every
+     * nesting level to the standard CTE-chain form before generating, and it tracks the
      * source map by default. The returned [TranspileResult.sql] and
      * [TranspileResult.sourceMap] come from the SAME single generator pass over the
      * SAME (desugared) tree — they can never be from different renderings, so mapped
@@ -303,19 +307,41 @@ class SqlFragment(val sql: String, val dialect: String = "") {
     /**
      * Plain table references (fully-qualified, parts joined with '.') that the caller
      * may treat as inputs. CTE self-references defined inside the fragment are
-     * excluded; slots are reported separately via [tableSlots].
+     * excluded by scope; slots are reported separately via [tableSlots]. Identifiers
+     * use dialect normalization, including its quoted-name rules, as lineage does.
      */
     val sourceTables: List<String> by lazy {
-        val cteNames = ast.findAll(CTE::class).map { it.alias }.toSet()
+        val tree = normalizeIdentifiers(desugarPipes(ast, copy = true), dialect = dialectObj)
+        val resolved = java.util.IdentityHashMap<Table, Boolean>()
+        for (scope in traverseScope(tree)) {
+            // references includes SEMI/ANTI inputs that selectedSources omits.
+            for ((name, node) in scope.references) {
+                // A derived-table reference may unwrap to a Table without being
+                // a table reference in this scope (parenthesized joins).
+                if (node !is Table || scope.tables.none { it === node }) continue
+                var cte = node.db.isEmpty() && node.name in scope.cteSources
+                if (node.db.isEmpty()) {
+                    // Recursive WITH makes all sibling names visible, including
+                    // forward references and parenthesized recursive bodies.
+                    var owner: dev.brikk.house.sql.optimizer.Scope? = scope
+                    while (!cte && owner != null) {
+                        val with = owner.expression.args["with_"] as? With
+                        cte = with?.recursive == true && with.expressionsArg.filterIsInstance<Expression>().any { it.alias == node.name }
+                        owner = owner.parent
+                    }
+                }
+                resolved[node] = !cte && scope.sources[name] is Table
+            }
+        }
         val out = LinkedHashSet<String>()
         // DFS arg order: deterministic, though the WITH clause is attached after the
         // Select body parses, so outer sources precede CTE-body sources.
-        for (table in ast.findAll(Table::class, bfs = false)) {
-            if (table.thisArg is Anonymous) continue
-            val parts = (table as Table).parts.map { it.name }
-            if (parts.isEmpty()) continue
-            if (parts.size == 1 && parts[0] in cteNames) continue
-            out.add(parts.joinToString("."))
+        for (table in tree.findAll<Table>(bfs = false)) {
+            // Tables outside query scopes (e.g. DML targets) retain the existing
+            // inventory behavior. Functions and unresolved placeholders are not tables.
+            val parts = table.parts
+            if (resolved[table] == false || parts.isEmpty() || parts.any { it !is Identifier }) continue
+            out.add(parts.joinToString(".") { it.name })
         }
         out.toList()
     }
@@ -401,16 +427,28 @@ class SqlFragment(val sql: String, val dialect: String = "") {
             schema = schema,
             validateQualifyColumns = false,
         )
-        val annotated = annotateTypes(
-            qualified,
+        val typeAnnotator = TypeAnnotator(
             schema = schema,
-            dialect = dialectObj,
             expressionMetadata = dialectObj.expressionMetadata + SHAPE_LAYER_TYPING,
         )
+        val annotated = typeAnnotator.annotate(qualified)
         // brikk-native: nullability lives in a sidecar (keyed by node identity), NOT in
         // node meta — the annotated-serde gates compare our Serde dumps exact-equal, so
         // an extra meta key would fail them. See AnnotateNullability.kt.
         val nullability = annotateNullability(annotated, inputs = inputs, dialect = dialectObj)
+        val query = annotated.unnest()
+        if (query is SetOperation) {
+            val columns = typeAnnotator.getSetopColumns(query)
+            if (columns.isEmpty()) throw ShapeError("Cannot reconcile set-operation output columns")
+            return Shape(columns.mapIndexed { index, (name, type) ->
+                ColumnShape(name, renderType(when (type) {
+                    DType.NULL -> dialectObj.defaultNullType.intoExpr()
+                    is DType -> type.intoExpr()
+                    is Expression -> type
+                    else -> null
+                }), nullable = nullability.nullableOfOutput(query, index))
+            })
+        }
         val selects = outermostSelect(annotated).selects.filterIsInstance<Expression>()
         return Shape(
             selects.map { sel ->
@@ -510,9 +548,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
 
     /** Copy + desugar pipes + rewrite bound slots into plain table references. */
     private fun prepareTree(tree: Expression, inputs: ShapeCatalog): Expression {
-        var t = tree.copy()
-        if (t is PipeQuery) t = desugarPipes(t, copy = false)
-        return bindSlots(t, inputs)
+        return bindSlots(desugarPipes(tree, copy = true), inputs)
     }
 
     /**
