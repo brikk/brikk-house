@@ -119,9 +119,8 @@ class Resolver(
         if (expression is Select) {
             return expression.namedSelects
         }
-        if (expression is Subquery && expression.thisArg is SetOperation) {
-            // Different types of SET modifiers can be chained together if they're
-            // explicitly grouped by nesting
+        if (expression is Subquery) {
+            // Parentheses may wrap either a SELECT or another set operation.
             return getSourceColumnsFromSetOp(expression.thisArg as Expression)
         }
         if (expression !is SetOperation) {

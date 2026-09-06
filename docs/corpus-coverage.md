@@ -40,7 +40,10 @@ They continue to execute; no comparison or pass-rate gate was weakened.
 - G4: two StarRocks `TableFromRows` default-column-list omissions in `QualifyTables`.
   Apply the existing default-column mapping while preserving explicit aliases.
 
-These groups remain open production work. The coverage task does not claim to fix them.
+The coverage task did not fix these groups. G3 has since been fixed: wrapped SELECT
+operands resolve correctly, including repeated parentheses, while wrapped non-query
+operands still raise OptimizeError. Its exact ledger entry was removed after the
+public shape and resolver regressions passed. G1, G2, and G4 remain open.
 
 ## Base deferral
 

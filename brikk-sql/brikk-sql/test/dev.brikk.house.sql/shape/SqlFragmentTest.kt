@@ -107,6 +107,8 @@ class SqlFragmentTest {
             val sql = "SELECT 1 AS x, 2 AS y $operator SELECT CAST(3 AS BIGINT) AS y, 4 AS z"
             assertEquals(Shape(expected), SqlFragment(sql, "bigquery").outputShape(), sql)
             assertEquals(Shape(expected), SqlFragment("SELECT * FROM ($sql) AS s", "bigquery").outputShape(), "derived: $sql")
+            val wrapped = "((SELECT 1 AS x, 2 AS y)) $operator ((SELECT CAST(3 AS BIGINT) AS y, 4 AS z))"
+            assertEquals(Shape(expected), SqlFragment("SELECT * FROM ($wrapped) AS s", "bigquery").outputShape(), "wrapped: $wrapped")
         }
     }
 

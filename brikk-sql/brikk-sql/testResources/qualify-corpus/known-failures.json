@@ -1,10 +1,6 @@
 {
     "cases": [
         {
-            "key": "qualify_columns::SELECT * FROM ((SELECT 1 AS foo, 2 AS bar) FULL OUTER UNION ALL BY NAME (SELECT 3 AS bar, 4 AS baz))",
-            "reason": "ASTRA-014/G3: Resolver rejects parenthesized SELECT operands of a set operation as Unknown set operation. Pre-existing production defect exposed by enabling BigQuery coverage; docs/corpus-coverage.md."
-        },
-        {
             "key": "qualify_columns::SELECT aa FROM x, UNNEST(a) AS aa",
             "reason": "ASTRA-014/G1: BigQuery scalar UNNEST alias is treated as a relation alias, producing aa.aa instead of aa; part of ASTRA-008."
         },

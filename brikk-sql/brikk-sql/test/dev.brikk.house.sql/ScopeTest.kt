@@ -2,11 +2,15 @@ package dev.brikk.house.sql
 
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.Select
+import dev.brikk.house.sql.ast.Subquery
+import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.Union
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.optimizer.OptimizeError
+import dev.brikk.house.sql.optimizer.MappingSchema
+import dev.brikk.house.sql.optimizer.Resolver
 import dev.brikk.house.sql.optimizer.Scope
 import dev.brikk.house.sql.optimizer.ScopeType
 import dev.brikk.house.sql.optimizer.buildScope
@@ -115,6 +119,15 @@ class ScopeTest {
             )
         )
         assertFailsWith<OptimizeError> { traverseScope(invalid) }
+    }
+
+    @Test
+    fun setOperationColumnDiscoveryUnwrapsQueriesButRejectsInvalidOperands() {
+        val resolver = Resolver(Scope(Select()), MappingSchema())
+        assertEquals(listOf("x"), resolver.getSourceColumnsFromSetOp(parseOne("((SELECT 1 AS x))")))
+        assertFailsWith<OptimizeError> {
+            resolver.getSourceColumnsFromSetOp(Subquery(args("this" to Literal.number("1"))))
+        }
     }
 
     @Test
