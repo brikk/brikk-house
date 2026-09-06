@@ -160,7 +160,7 @@ dependencies {
 ### Releases
 
 Release versions (non-`-SNAPSHOT`) are published to **Maven Central** and resolve from
-`mavenCentral()` with no extra repository configuration. Latest release: **`0.10.3`**.
+`mavenCentral()` with no extra repository configuration. Latest release: **`0.11.0`**.
 
 ## Building
 
