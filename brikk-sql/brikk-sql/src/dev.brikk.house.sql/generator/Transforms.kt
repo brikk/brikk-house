@@ -30,6 +30,7 @@ import dev.brikk.house.sql.ast.Greatest
 import dev.brikk.house.sql.ast.GT
 import dev.brikk.house.sql.ast.Identifier
 import dev.brikk.house.sql.ast.If
+import dev.brikk.house.sql.ast.Is
 import dev.brikk.house.sql.ast.Inline
 import dev.brikk.house.sql.ast.Join
 import dev.brikk.house.sql.ast.Lambda
@@ -38,6 +39,7 @@ import dev.brikk.house.sql.ast.Like
 import dev.brikk.house.sql.ast.ILike
 import dev.brikk.house.sql.ast.Literal
 import dev.brikk.house.sql.ast.Not
+import dev.brikk.house.sql.ast.Null
 import dev.brikk.house.sql.ast.Order
 import dev.brikk.house.sql.ast.Ordered
 import dev.brikk.house.sql.ast.Or
@@ -792,6 +794,8 @@ fun explodeProjectionToUnnest(
         takenSelectNames.addAll(expression.findAll<Column>().map { it.name }.toList())
     }
     val takenSourceNames = Scope(expression).references.map { it.first }.toMutableSet()
+    val zip = expression.selects.filterIsInstance<Expression>()
+        .mapNotNull { it.find<Explode>() }.count { !(it.thisArg as Expression).isType(DType.MAP) } > 1
     fun newName(names: MutableSet<String>, base: String): String =
         findNewName(names, base).also { names.add(it) }
 
@@ -983,7 +987,7 @@ fun explodeProjectionToUnnest(
         }
 
         var size: Expression = ArraySize(args("this" to explodeArg.copy()))
-        arrays.add(size)
+        arrays.add(if (zip) Coalesce(args("this" to size.copy(), "expressions" to listOf(Literal.number("0")))) else size)
         val unnest = aliasExpression(
             Unnest(
                 args(
@@ -995,7 +999,11 @@ fun explodeProjectionToUnnest(
             tableColumns = listOf(innerExplodeAlias.copy()),
             copy = false,
         )
-        expression.append("joins", Join(args("this" to unnest, "kind" to "CROSS")))
+        // brikk extension (ASTRA-002-ZIP): an empty input contributes nulls to
+        // the longest input's positions instead of annihilating the zipped row.
+        expression.append("joins", if (zip) Join(args("this" to unnest, "side" to "LEFT",
+            "on" to dev.brikk.house.sql.ast.Boolean(args("this" to true))))
+            else Join(args("this" to unnest, "kind" to "CROSS")))
 
         if (indexOffset != 1) {
             size = Sub(args("this" to size, "expression" to Literal.number("1")))
@@ -1006,7 +1014,7 @@ fun explodeProjectionToUnnest(
                 "expression" to size.copy(),
             )
         )
-        val condition = Or(
+        var condition: Expression = Or(
             args(
                 "this" to EQ(
                     args(
@@ -1031,6 +1039,8 @@ fun explodeProjectionToUnnest(
                 ),
             )
         )
+        if (zip) condition = Or(args("this" to condition,
+            "expression" to Is(args("this" to qualified(positionName, unnestSourceAlias), "expression" to Null()))))
         val where = expression.args["where"] as? Where
         if (where == null) {
             expression.set("where", Where(args("this" to condition)))
@@ -1044,13 +1054,20 @@ fun explodeProjectionToUnnest(
 
     expression.set("expressions", selections)
     if (arrays.isNotEmpty()) {
-        var end: Expression = Greatest(
+        val maxSize: Expression = Greatest(
             args("this" to arrays.first(), "expressions" to arrays.drop(1))
         )
+        var end = maxSize.copy()
         if (indexOffset != 1) {
             end = Sub(args("this" to end, "expression" to Literal.number((1 - indexOffset).toString())))
         }
         seriesExpression.set("end", end)
+        if (zip) {
+            // SEQUENCE(1, 0) counts down in Presto/Trino. All-empty inputs need
+            // an empty sequence, not two synthetic rows.
+            seriesExpression.replace(If(args("this" to EQ(args("this" to maxSize, "expression" to Literal.number("0"))),
+                "true" to ArrayNode(), "false" to seriesExpression.copy())))
+        }
     }
     return expression
 }

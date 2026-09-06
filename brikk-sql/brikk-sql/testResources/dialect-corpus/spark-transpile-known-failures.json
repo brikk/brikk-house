@@ -1,6 +1,10 @@
 {
     "cases": [
         {
+            "case": "write|presto|SELECT POSEXPLODE(ARRAY(2, 3)), EXPLODE(ARRAY(4, 5, 6)) FROM tbl",
+            "reason": "brikk extension ASTRA-002-ZIP: empty-safe zipped UNNEST uses left joins and a zero-length series guard. Protected correctness divergence; docs/brikk-extensions.md #20, OuterExplodeResultTest.zippedInputsPadEmptyNullAndUnequalLengths."
+        },
+        {
             "case": "write|duckdb, version=1.1.0|SELECT TRY_ELEMENT_AT(ARRAY(1, 2, 3), 2)",
             "reason": "expected `SELECT ([1, 2, 3])[2]` actual `SELECT [1, 2, 3][2]`"
         },

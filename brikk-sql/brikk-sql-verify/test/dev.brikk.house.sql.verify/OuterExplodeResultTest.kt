@@ -5,6 +5,9 @@ import dev.brikk.house.sql.ast.selects
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.optimizer.annotateTypes
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import java.util.concurrent.TimeUnit
 import java.sql.DriverManager
@@ -17,6 +20,24 @@ class OuterExplodeResultTest {
     private fun check(sql: String, columns: List<String>, expected: List<String>, annotate: Boolean = true, read: String = "spark") {
         val source = Dialects.forName(read).parseOne(sql)
         val tree = if (annotate) annotateTypes(source, dialect = read) else source
+        val wanted = expected.map { Json.parseToJsonElement(it).jsonObject }
+        if (read == "duckdb") {
+            DriverManager.getConnection("jdbc:duckdb:").use { connection ->
+                connection.createStatement().use { statement ->
+                    statement.executeQuery(sql).use { result ->
+                        val actual = buildList {
+                            while (result.next()) add(buildJsonObject {
+                                columns.forEachIndexed { i, name ->
+                                    val value = result.getObject(i + 1) as Number?
+                                    put(name, if (value == null) JsonNull else JsonPrimitive(value))
+                                }
+                            })
+                        }
+                        assertEquals(wanted.groupingBy { it }.eachCount(), actual.groupingBy { it }.eachCount(), sql)
+                    }
+                }
+            }
+        }
         for (target in listOf("presto", "trino")) {
             val generated = Dialects.forName(target).generate(tree, sourceDialect = read)
             assertFalse(generated.contains("EXPLODE"), generated)
@@ -33,7 +54,6 @@ class OuterExplodeResultTest {
                 val output = process.inputStream.bufferedReader().readText()
                 assertEquals(0, process.exitValue(), "$generated\n$output")
                 val actual = output.lineSequence().filter { it.startsWith("{") }.map { Json.parseToJsonElement(it).jsonObject }.toList()
-                val wanted = expected.map { Json.parseToJsonElement(it).jsonObject }
                 assertEquals(wanted.groupingBy { it }.eachCount(), actual.groupingBy { it }.eachCount(), generated)
             } finally {
                 process.destroyForcibly()
@@ -91,20 +111,21 @@ class OuterExplodeResultTest {
     }
 
     @Test
-    fun zippedEmptyInputDocumentsSeparateInheritedRowLoss() {
-        // The shared upstream zip algorithm cross-joins each UNNEST. An empty
-        // non-outer input still annihilates the row; outer normalization cannot fix it.
-        val source = "SELECT UNNEST(CAST([] AS INT[])) AS x, UNNEST([1]) AS y"
-        DriverManager.getConnection("jdbc:duckdb:").use { connection ->
-            connection.createStatement().use { statement ->
-                statement.executeQuery(source).use { result ->
-                    assertTrue(result.next())
-                    assertEquals(null, result.getObject(1))
-                    assertEquals(1, result.getInt(2))
-                    assertFalse(result.next())
-                }
-            }
+    fun zippedInputsPadEmptyNullAndUnequalLengths() {
+        for (empty in listOf("CAST([] AS INT[])", "CAST(NULL AS INT[])")) {
+            check("SELECT UNNEST($empty) AS x, UNNEST([1, 1]) AS y", listOf("x", "y"),
+                listOf("{\"x\":null,\"y\":1}", "{\"x\":null,\"y\":1}"), read = "duckdb")
+            check("SELECT UNNEST([1, 2]) AS x, UNNEST($empty) AS y", listOf("x", "y"),
+                listOf("{\"x\":1,\"y\":null}", "{\"x\":2,\"y\":null}"), read = "duckdb")
+            check("SELECT UNNEST($empty) AS x, UNNEST(CAST([] AS INT[])) AS y", listOf("x", "y"),
+                emptyList(), read = "duckdb")
         }
-        check(source, listOf("x", "y"), emptyList(), read = "duckdb")
+        check("SELECT UNNEST([1]) AS x, UNNEST([2, 3, 4]) AS y", listOf("x", "y"),
+            listOf("{\"x\":1,\"y\":2}", "{\"x\":null,\"y\":3}", "{\"x\":null,\"y\":4}"), read = "duckdb")
+        check("SELECT UNNEST([1, 2]) AS x, UNNEST(CAST(NULL AS INT[])) AS y, UNNEST([3]) AS z",
+            listOf("x", "y", "z"), listOf("{\"x\":1,\"y\":null,\"z\":3}", "{\"x\":2,\"y\":null,\"z\":null}"), read = "duckdb")
+        check("SELECT id, UNNEST(a) AS x, UNNEST(b) AS y FROM (VALUES " +
+            "(1, CAST([] AS INT[]), [2]), (2, [3], CAST(NULL AS INT[])), (3, [], [])) AS t(id, a, b)",
+            listOf("id", "x", "y"), listOf("{\"id\":1,\"x\":null,\"y\":2}", "{\"id\":2,\"x\":3,\"y\":null}"), read = "duckdb")
     }
 }

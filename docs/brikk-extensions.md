@@ -631,12 +631,16 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
   container it executes the actual Presto/Trino-generated SQL and compares row
   multisets, including nulls and duplicate counts. This mode was run for this fix.
   It is Trino execution, not a live Presto or Spark check. The normal full suite
-  does not start Docker. No corpus ledger changes were needed.
-- **Separate inherited defect:** non-outer zipped explosion with an empty input
-  still loses rows, independently of outer normalization. The focused test executes
-  a DuckDB source returning `(NULL, 1)` and records the existing empty Trino result.
-  See ASTRA-002-ZIP in `TODO-BUGS-rewrites.md`; this is not a correctness divergence
-  to protect or a claim that the zipped algorithm is fixed.
+  does not start Docker. The original outer correction needed no ledger changes.
+- **ASTRA-002-ZIP:** the inherited empty zipped-input defect is fixed separately.
+  Multiple array inputs use LEFT JOIN UNNEST ON TRUE with null-ordinal padding.
+  Null cardinalities become zero; when every input is empty, an empty position
+  array avoids Presto/Trino's descending `SEQUENCE(1, 0)`. The focused regression
+  compares DuckDB source results with the actual Trino output for empty, null,
+  unequal-length, duplicate, and per-row inputs. Three nonempty corpus cases
+  change SQL spelling under this general correction: two DuckDB and one Spark
+  `write|presto` cases. Those exact transpile-ledger entries are intentional and
+  protected, while the upstream fixtures and gates remain unchanged.
 - **Upstream sync:** retain these result tests when adopting changes to
   `explode_projection_to_unnest`. The array branch follows the pinned upstream;
   map/position/name corrections are local. Upstream reporting/adoption is pending.
