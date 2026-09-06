@@ -5518,8 +5518,10 @@ open class Generator(
         return pipequerySql(pipeQuery, forceFromFirstHead = true)
     }
 
-    open fun pipeselectSql(expression: PipeSelect): String =
-        "|> SELECT ${expressions(expression, flat = true)}"
+    open fun pipeselectSql(expression: PipeSelect): String {
+        val distinct = sql(expression, "distinct").let { if (it.isEmpty()) "" else "$it " }
+        return "|> SELECT $distinct${expressions(expression, flat = true)}"
+    }
 
     open fun pipeextendSql(expression: PipeExtend): String =
         "|> EXTEND ${expressions(expression, flat = true)}"

@@ -10522,7 +10522,10 @@ open class Parser(
     protected fun parsePipeSyntaxSelect(): Expression? {
         val select = parseSelect(consumePipe = false) ?: return null
         return expression(
-            PipeSelect(args("expressions" to (select.args["expressions"] ?: mutableListOf<Expression>())))
+            PipeSelect(args(
+                "distinct" to select.args["distinct"],
+                "expressions" to (select.args["expressions"] ?: mutableListOf<Expression>()),
+            ))
         )
     }
 

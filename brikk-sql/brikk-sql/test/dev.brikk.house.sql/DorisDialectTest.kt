@@ -42,6 +42,55 @@ class DorisDialectTest {
 
     private fun roundTrip(sqlText: String): String = parseOne(sqlText, "doris").sql("doris")
 
+    // brikk extension #23: Doris supports FULL JOIN; MySQL's emulation changes results.
+    @Test
+    fun fullJoinsStayNativeForDoris() {
+        for (sql in listOf(
+            "SELECT * FROM a FULL JOIN b ON a.id = b.id",
+            "SELECT * FROM a FULL OUTER JOIN b USING (id)",
+            "SELECT * FROM a FULL OUTER JOIN b USING (id, category)",
+            "SELECT COUNT(*) AS n FROM a FULL OUTER JOIN b ON a.id = b.id",
+            "SELECT COALESCE(a.category, b.category) AS bucket, COUNT(*) AS n " +
+                "FROM a FULL OUTER JOIN b ON a.id = b.id GROUP BY bucket HAVING COUNT(*) > 1",
+            "SELECT DISTINCT COALESCE(a.category, b.category) AS category FROM a FULL OUTER JOIN b ON a.id = b.id",
+            "SELECT * FROM a FULL OUTER JOIN b ON a.id = b.id WHERE a.id = 1 OR b.id = 3 ORDER BY 1 DESC, 3 LIMIT 2",
+            "WITH joined AS (SELECT * FROM a FULL OUTER JOIN b ON a.id = b.id) SELECT COUNT(*) FROM joined",
+            "SELECT COUNT(*) FROM (SELECT * FROM a FULL OUTER JOIN b ON a.id = b.id) AS joined",
+        )) {
+            assertEquals(sql, roundTrip(sql))
+            assertEquals(sql, transpile(sql, read = "postgres", write = "doris"))
+        }
+    }
+
+    @Test
+    fun fullJoinOverrideKeepsOtherSelectPreprocessing() {
+        assertEquals(
+            "SELECT a FROM (SELECT a AS a, ROW_NUMBER() OVER (PARTITION BY a ORDER BY a) AS _row_number " +
+                "FROM t) AS _t WHERE _row_number = 1",
+            roundTrip("SELECT DISTINCT ON (a) a FROM t"),
+        )
+        assertEquals(
+            "SELECT a, rn FROM (SELECT a, ROW_NUMBER() OVER (ORDER BY a) AS rn FROM t) AS _t WHERE rn = 1",
+            roundTrip("SELECT a, ROW_NUMBER() OVER (ORDER BY a) AS rn FROM t QUALIFY rn = 1"),
+        )
+        for ((kind, predicate) in listOf("SEMI" to "EXISTS", "ANTI" to "NOT EXISTS")) {
+            assertEquals(
+                "SELECT * FROM a WHERE $predicate(SELECT 1 FROM b WHERE a.id = b.id)",
+                roundTrip("SELECT * FROM a $kind JOIN b ON a.id = b.id"),
+            )
+        }
+    }
+
+    @Test
+    fun mysqlStillEmulatesFullJoins() {
+        assertEquals(
+            "SELECT * FROM a LEFT OUTER JOIN b ON a.id = b.id UNION ALL " +
+                "SELECT * FROM a RIGHT OUTER JOIN b ON a.id = b.id " +
+                "WHERE NOT EXISTS(SELECT 1 FROM a WHERE a.id = b.id)",
+            transpile("SELECT * FROM a FULL OUTER JOIN b ON a.id = b.id", read = "doris", write = "mysql"),
+        )
+    }
+
     @Test
     fun dorisReservedKeywordIsBacktickQuoted() {
         // "string" is Doris-reserved (not MySQL-reserved), so it stays quoted unforced

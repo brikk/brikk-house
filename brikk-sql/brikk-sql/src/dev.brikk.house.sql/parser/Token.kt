@@ -24,10 +24,11 @@ fun <E : Expression> E.updatePositions(token: Token): E {
 /**
  * A single lexical token.
  *
- * sqlglot: tokenizer_core.Token — same fields, same semantics:
- * [start]/[end] are absolute char offsets into the source ([end] inclusive),
- * [line]/[col] are 1-based and refer to the token's end position,
+ * sqlglot: tokenizer_core.Token. [start]/[end] are absolute UTF-16 code-unit offsets
+ * into the Kotlin source string ([end] inclusive), [line]/[col] are 1-based UTF-16
+ * coordinates referring to the token's end position, and
  * [comments] holds comment texts attached to this token.
+ * Python sqlglot uses code-point coordinates, so values differ after supplementary characters.
  *
  * brikk-native additions (no sqlglot counterpart): [lineStart]/[colStart] are the
  * 1-based line/column of the token's START (the sqlglot [line]/[col] are its END).

@@ -50,7 +50,7 @@ class DorisVerifier private constructor(
         val cause = e.targetException
         if (cause is Error) throw cause // don't swallow OOM/linkage errors
         val message = cause.message?.trim()
-        val position = positionOf(message)
+        val position = positionOf(message, sql)
         VerifyResult(
             accepted = false,
             error = if (isParseException(cause)) message
@@ -71,12 +71,21 @@ class DorisVerifier private constructor(
     }
 
     /**
-     * Doris appends `(line N, pos P)` to parse errors; `pos` is ANTLR's 0-based
-     * charPositionInLine, normalized here to a 1-based column.
+     * Doris appends `(line N, pos P)` to parse errors. Its code-point stream reports
+     * `pos` in 0-based code points; brikk positions index Kotlin strings in UTF-16.
      */
-    private fun positionOf(message: String?): Pair<Int, Int>? {
+    private fun positionOf(message: String?, sql: String): Pair<Int, Int>? {
         val m = POSITION.find(message ?: return null) ?: return null
-        return m.groupValues[1].toInt() to m.groupValues[2].toInt() + 1
+        val line = m.groupValues[1].toInt()
+        val codePointCol = m.groupValues[2].toInt()
+        val lineText = sql.lineSequence().elementAtOrNull(line - 1)
+        val utf16Col = if (lineText == null) {
+            codePointCol
+        } else {
+            val codePoints = lineText.codePointCount(0, lineText.length)
+            lineText.offsetByCodePoints(0, codePointCol.coerceAtMost(codePoints))
+        }
+        return line to utf16Col + 1
     }
 
     companion object {

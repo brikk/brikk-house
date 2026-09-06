@@ -38,6 +38,10 @@ exceptions today:
   `NestedPipeEntryPointsTest` covers those APIs and source-map consistency;
   `SqlVerifierTest.nestedPipesLowerBeforeNativeVerification` adds native parser
   acceptance and executed DuckDB results for self-contained nested queries.
+- `PipeSelect` preserves the SELECT's optional `Distinct` node, including `ON` keys,
+  through parsing, copying, serialization, pipe rendering, and desugaring. Earlier
+  versions silently dropped `|> SELECT DISTINCT`. The modifier belongs on the
+  projection-bearing SELECT before its CTE boundary, not on a new outer stage.
 - **Conflict risk on upstream sync:** HIGH for the desugar semantics (sqlglot's pipe
   handler table grows most releases — e.g. DISTINCT was added in 30.x; new upstream
   operators must be mirrored in both our parser and `desugarPipes`, with their tests
@@ -687,6 +691,29 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
 - **Upstream sync:** the parser/normalization representation follows the pin; row
   preservation, offset conversion, and scope-aware cleanup are local corrections.
   Retain these regressions rather than reverting toward silent upstream mistakes.
+
+## 23. Doris: preserve native FULL OUTER JOIN
+
+Doris supports `FULL OUTER JOIN`, so its SELECT preprocessing must not inherit
+MySQL's `eliminateFullOuterJoin`. That rewrite aggregates and deduplicates each
+branch separately before combining them with `UNION ALL`. It also changes an OR
+filter's grouping when adding the right-only predicate. The generated SQL passes
+the Doris grammar with no unsupported diagnostics but returns incorrect rows.
+
+`dialects/DorisGenerator.kt` overrides the SELECT dispatch entry, retaining
+`eliminateDistinctOn`, `eliminateSemiAndAntiJoins`, and `eliminateQualify` while
+leaving the native full join intact. MySQL's rewrite is unchanged and needs a
+separate semantic correction.
+
+Regression coverage is in `DorisDialectTest`, `PipeDorisDesugarTest`, and
+`brikk-sql-verify`'s `DorisFullOuterJoinTest`. The latter checks Doris grammar
+acceptance and executes the generated portable SQL unchanged in embedded DuckDB.
+It covers counts, grouped counts, DISTINCT, OR/filter/LIMIT, matching and unmatched
+rows, duplicates, NULL keys, and empty inputs. It does not claim live Doris or
+plugin JDBC coverage. No dependency was added.
+
+Upstream syncs must retain this override unless upstream also preserves Doris's
+native full join. Existing corpus ledgers are unchanged.
 
 ## Upstream sync protocol
 
