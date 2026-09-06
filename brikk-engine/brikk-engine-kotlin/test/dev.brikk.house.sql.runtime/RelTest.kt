@@ -7,6 +7,39 @@ import kotlin.test.assertTrue
 class RelTest {
 
     @Test
+    fun singleStageRenderingPreservesSourceDialectContext() {
+        assertEquals("SELECT lowerUTF8(x) AS x FROM t",
+            Rel<Partial>("SELECT LOWER(x) AS x FROM t", "duckdb").render("clickhouse"))
+        assertEquals("SELECT lower(x) AS x FROM t",
+            Rel<Partial>("SELECT LOWER(x) AS x FROM t", "clickhouse").render())
+    }
+
+    @Test
+    fun mixedChainsUseEachNodesDialectRatherThanTheRootDialect() {
+        for ((sourceDialect, rootDialect, first, second) in listOf(
+            listOf("duckdb", "clickhouse", "lowerUTF8", "lower"),
+            listOf("clickhouse", "duckdb", "lower", "lowerUTF8"),
+        )) {
+            val source = Rel<Partial>("SELECT LOWER(x) AS x FROM t", sourceDialect)
+            val root = Rel<Partial>("SELECT LOWER(x) AS x FROM src()", rootDialect).input("src", source)
+            assertEquals("WITH s0 AS (SELECT $first(x) AS x FROM t), " +
+                "s1 AS (SELECT $second(x) AS x FROM s0) SELECT * FROM s1", root.render("clickhouse"))
+        }
+    }
+
+    @Test
+    fun runtimeAlsoAppliesSourceSpecificWeekAndRoundingRules() {
+        assertEquals("SELECT toISOWeek(d) AS w FROM t",
+            Rel<Partial>("SELECT WEEK(d) AS w FROM t", "duckdb").render("clickhouse"))
+        assertEquals("SELECT week(d) AS w FROM t",
+            Rel<Partial>("SELECT WEEK(d) AS w FROM t", "clickhouse").render())
+        assertEquals("SELECT sign(x) * floor(abs(x) * pow(10, 0) + 0.5) / pow(10, 0) AS n FROM t",
+            Rel<Partial>("SELECT ROUND(x) AS n FROM t", "duckdb").render("clickhouse"))
+        assertEquals("SELECT ROUND(x) AS n FROM t",
+            Rel<Partial>("SELECT ROUND(x) AS n FROM t", "clickhouse").render())
+    }
+
+    @Test
     fun singleStageRendersDirectly() {
         val src = Rel<Partial>("FROM public.events |> WHERE event_at >= :start", "postgres").bind("start", 1)
         val sql = src.render()

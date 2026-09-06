@@ -60,11 +60,11 @@ class Rel<out T : Partial>(
         order.forEachIndexed { i, node -> names[node] = "s$i" }
 
         val gen = Dialects.forName(target)
-        if (order.size == 1) return gen.generate(order[0].standardTree(emptyMap()))
+        if (order.size == 1) return gen.generate(order[0].standardTree(emptyMap()), sourceDialect = order[0].dialect)
 
         val ctes = order.map { node ->
             val slotToCte = node.inputSlots.mapValues { (_, rel) -> names.getValue(rel) }
-            "${names.getValue(node)} AS (${gen.generate(node.standardTree(slotToCte))})"
+            "${names.getValue(node)} AS (${gen.generate(node.standardTree(slotToCte), sourceDialect = node.dialect)})"
         }
         return "WITH ${ctes.joinToString(", ")} SELECT * FROM ${names.getValue(order.last())}"
     }
