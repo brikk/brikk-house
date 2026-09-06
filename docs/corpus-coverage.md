@@ -82,8 +82,49 @@ without direct consumers. All their `identity` entries are explicitly deferred
 under `named_identity_deferral` until an identity gate and failure review exist.
 Their transpile gates and the separate parser/generator AST corpora must not be
 described as executing these exact `sql`/`expected`/`pretty` assertions. The policy
-pins this count too. Transpile reports distinguish failing executions from unique
-ledger keys; stable case-identity improvements remain a separate task.
+pins this count too. Transpile reports distinguish executed assertions from
+exclusions and extractor failures. ASTRA-015 now gives every executed assertion
+its own ledger identity, including otherwise identical duplicate occurrences.
+
+## Assertion identity and failures
+
+ASTRA-015 applies to the core `brikk-sql` ledger gates: named and base AST parser/
+generator corpora, named transpile corpora, annotation, qualification, scope,
+lineage, and both native DataFusion fixture gates. Strict non-ledger tests remain
+strict. The separate `brikk-sql-oracle` native-verifier ledger is not converted.
+
+IDs use `assertion:v1:sha256:<digest>:<occurrence>`. The digest covers a corpus
+namespace and canonical assertion inputs: exact SQL, expected output/error,
+dialect, options, and relevant schema/AST payloads. Object keys are sorted;
+arrays, SQL whitespace, and identifier case are not normalized. Display labels,
+source-line numbers, and generated source-call IDs are not assertion identity.
+The occurrence is counted only among identical descriptors, before execution,
+so passing duplicates cannot overwrite failing ones. These are assertion-multiset
+identities, not persistent upstream source-call provenance.
+
+Populated ledger rows contain `id`, `signature`, a human-readable `case`/`sql`/`key`,
+and `reason`. Failure signatures hash full compared values for SQL/AST mismatches,
+or the phase, fully qualified exception class, and full nullable exception message.
+Diagnostics may be truncated; signatures are not. Human explanations do not
+authorize failures and can retain reviewed extension rationale.
+
+The contract rejects unledgered assertions, stale IDs, changed signatures, duplicate
+ledger IDs, and unsigned legacy rows. Legacy rows can load only to produce a fresh
+actual artifact before failing `MIGRATION_REQUIRED`; they never authorize a failure.
+An expected UnsupportedError passes only when generation throws that error or
+succeeds with unsupported diagnostics. Warnings cannot hide a subsequent unrelated
+exception, and parsing errors cannot satisfy a generation-error expectation.
+
+The reviewed migration after ASTRA-009 converted 206 exemptions into 208 failing
+assertions, retaining all existing explanations. The only count increase comes
+from two identical duplicate BigQuery byte-literal write assertions for DuckDB and
+Postgres. There were no new display-key failures or mismatch-to-exception changes.
+No coverage deferral, dialect policy, pass-rate threshold, or fixture SQL changed.
+Generator option execution is unchanged; this task does not claim to close the
+existing read-direction pretty/identify behavior gaps.
+
+After a fix, remove only the stale IDs reported by the gate. A changed signature
+requires review of the full actual output, not a wholesale actual-ledger copy.
 
 ## Public entry points
 

@@ -2,16 +2,22 @@
     "sqlglot_version": "v30.17.0-93-gdcc36544a",
     "cases": [
         {
+            "id": "assertion:v1:sha256:58bb8d32daa12e185066d46c462c0838120fcaf4d20cb1491d65127ce0955671:1",
             "sql": "ALTER TABLE people SET PROPERTIES x = 'y'",
-            "reason": "ast-mismatch at #0: expected Command"
+            "reason": "ast-mismatch at #0: expected Command",
+            "signature": "ast-mismatch:v1:sha256:54d55dfc9338db45b5985224ab2b02c231ad117aa83965a61cfc5677d4a5eb17"
         },
         {
+            "id": "assertion:v1:sha256:f1e2c8d0c2f5240cab33ceabe4fc8edee25ae16ab3da7521390d53c7532225c3:1",
             "sql": "ALTER TABLE people SET PROPERTIES foo = 123, 'foo bar' = 456",
-            "reason": "ast-mismatch at #0: expected Command"
+            "reason": "ast-mismatch at #0: expected Command",
+            "signature": "ast-mismatch:v1:sha256:d52e7573520963762c0ed1db2b1bff8b72d5de2856be0715cc6e0ded4096e45d"
         },
         {
+            "id": "assertion:v1:sha256:002d90da64d65a4a3203f5bdd1cd26ec8371431e150d1ddade286000e712614d:1",
             "sql": "ALTER TABLE people SET PROPERTIES x = DEFAULT",
-            "reason": "ast-mismatch at #0: expected Command"
+            "reason": "ast-mismatch at #0: expected Command",
+            "signature": "ast-mismatch:v1:sha256:174e33088ede8a383fb2983491d188323e41d46a2bbb52263a1f626293eb70f3"
         }
     ]
 }

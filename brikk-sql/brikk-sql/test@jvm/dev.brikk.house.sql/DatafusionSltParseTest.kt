@@ -2,10 +2,7 @@ package dev.brikk.house.sql
 
 import dev.brikk.house.sql.dialects.Dialects
 import kotlin.test.Test
-import kotlin.test.fail
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -30,32 +27,19 @@ import kotlinx.serialization.json.put
  * recorded in datafusion-slt-parse-known-failures.json with a reason — they are honest
  * parser gaps, not silent passes. The full actual failure set is written to build/.
  */
-class DatafusionSltParseTest {
-
-    private val json = Json { ignoreUnknownKeys = true }
-
-    private fun loadLedger(): Map<String, String> {
-        val text = runCatching {
-            testResource("dialect-corpus/datafusion-slt-parse-known-failures.json")
-        }.getOrNull() ?: return emptyMap()
-        val root = json.parseToJsonElement(text).jsonObject
-        return root.getValue("cases").jsonArray.associate { entry ->
-            val obj = entry.jsonObject
-            obj.getValue("case").jsonPrimitive.content to
-                obj.getValue("reason").jsonPrimitive.content
-        }
-    }
+class DatafusionSltParseTest : LedgerGate() {
 
     @Test
     fun sltParseAcceptanceModuloLedger() {
         val root = json.parseToJsonElement(testResource("dialect-corpus/datafusion-slt-parse.json")).jsonObject
         val cases = root.getValue("cases").jsonArray
         check(cases.isNotEmpty()) { "empty SLT corpus" }
-        val ledger = loadLedger()
+        val ledger = loadLedger("dialect-corpus/datafusion-slt-parse-known-failures.json", "case")
+        val assertionIds = CorpusAssertionIds("datafusion-slt-parse")
 
         var ran = 0
         var passed = 0
-        val failures = LinkedHashMap<String, String>() // "source" -> reason
+        val failures = LinkedHashMap<String, CorpusFailure>()
 
         val df = Dialects.forName("datafusion")
 
@@ -63,59 +47,35 @@ class DatafusionSltParseTest {
             val case = elem.jsonObject
             val sql = case.getValue("sql").jsonPrimitive.content
             val source = case.getValue("source").jsonPrimitive.content
+            val assertionId = assertionIds.next(buildJsonObject {
+                put("operation", "parseOne")
+                put("dialect", "datafusion")
+                put("case", JsonObject(case.filterKeys { it != "source" }))
+                put("expected", "non-null parse without exception")
+            })
             ran += 1
-            val result = runCatching { df.parseOne(sql) }
-            if (result.isSuccess && result.getOrNull() != null) {
+            val failure = try {
+                df.parseOne(sql)
+                null
+            } catch (e: Exception) {
+                CorpusFailure.exception(source, "parseOne", e)
+            }
+            if (failure == null) {
                 passed += 1
             } else {
-                val e = result.exceptionOrNull()
-                failures[source] = "${e?.let { it::class.simpleName } ?: "null-parse"}: " +
-                    (e?.message?.take(140) ?: "parseOne returned null") +
-                    "  |sql=${sql.replace("\n", " ").take(90)}"
+                failures[assertionId] = failure
             }
         }
 
-        val actualLedger = buildJsonObject {
-            put("cases", buildJsonArray {
-                for ((key, reason) in failures) {
-                    add(buildJsonObject {
-                        put("case", key)
-                        put("reason", reason)
-                    })
-                }
-            })
-        }
-        val outDir = java.io.File("build").takeIf { it.isDirectory } ?: java.io.File(".")
-        java.io.File(outDir, "datafusion-slt-parse-ledger-actual.json")
-            .writeText(Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), actualLedger))
-
-        val unledgered = failures.keys - ledger.keys
-        val stale = ledger.keys - failures.keys
         val pct = if (ran == 0) 0.0 else passed * 100.0 / ran
 
-        println(
-            "DatafusionSltParseTest: $passed/$ran parsed (%.1f%%)".format(pct) +
-                ", ${failures.size} ledgered"
+        enforceLedger(
+            ledger = ledger,
+            failures = failures,
+            summary = "DatafusionSltParseTest: $passed/$ran parsed (%.1f%%)".format(pct) +
+                ", ${failures.size} ledgered",
+            actualLedgerName = "datafusion-slt-parse-ledger-actual.json",
+            caseKey = "case",
         )
-
-        val problems = mutableListOf<String>()
-        if (unledgered.isNotEmpty()) {
-            problems.add(
-                "${unledgered.size} UNLEDGERED parse failures (showing up to 30):\n" +
-                    unledgered.take(30).joinToString("\n") { "  $it\n    ${failures[it]}" }
-            )
-        }
-        if (stale.isNotEmpty()) {
-            problems.add(
-                "${stale.size} STALE ledger entries now parse (showing up to 30):\n" +
-                    stale.take(30).joinToString("\n") { "  $it" }
-            )
-        }
-        if (problems.isNotEmpty()) {
-            fail(
-                problems.joinToString("\n\n") +
-                    "\n\nActual ledger written to ${java.io.File(outDir, "datafusion-slt-parse-ledger-actual.json").absolutePath}"
-            )
-        }
     }
 }

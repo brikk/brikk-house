@@ -5,12 +5,11 @@ import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.optimizer.annotateTypes
 import kotlin.test.Test
 import kotlin.test.fail
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -31,9 +30,7 @@ import kotlinx.serialization.json.put
  * .json); the actual failure set is always written to
  * build/<name>-annotate-ledger-actual.json for regeneration.
  */
-class AnnotateTypesCorpusTest {
-
-    private val json = Json { ignoreUnknownKeys = true }
+class AnnotateTypesCorpusTest : LedgerGate() {
 
     private fun loadCorpus(name: String): List<Pair<String, JsonArray>> {
         val text = testResourceOrNull("ast-corpus/$name.json")
@@ -42,16 +39,6 @@ class AnnotateTypesCorpusTest {
         return root.getValue("cases").jsonArray.map { case ->
             val obj = case.jsonObject
             obj.getValue("sql").jsonPrimitive.content to obj.getValue("dump").jsonArray
-        }
-    }
-
-    private fun loadLedger(name: String): Map<String, String> {
-        val text = testResourceOrNull("annotate-corpus/known-failures-$name.json") ?: return emptyMap()
-        val root = json.parseToJsonElement(text).jsonObject
-        return root.getValue("cases").jsonArray.associate { entry ->
-            val obj = entry.jsonObject
-            obj.getValue("sql").jsonPrimitive.content to
-                obj.getValue("reason").jsonPrimitive.content
         }
     }
 
@@ -97,23 +84,39 @@ class AnnotateTypesCorpusTest {
     private fun runCorpus(corpusName: String, dialect: String) {
         val cases = loadCorpus(corpusName)
         check(cases.isNotEmpty()) { "empty corpus $corpusName" }
-        val ledger = loadLedger(corpusName)
+        val ledger = loadLedger("annotate-corpus/known-failures-$corpusName.json", "sql")
+        val ids = CorpusAssertionIds("AnnotateTypesCorpusTest:$corpusName")
 
-        val failures = LinkedHashMap<String, String>()
+        val failures = LinkedHashMap<String, CorpusFailure>()
         val details = mutableListOf<String>()
 
         for ((sql, expectedDump) in cases) {
+            val id = ids.next(buildJsonObject {
+                put("sql", sql)
+                put("expected", expectedDump)
+                put("dialect", dialect)
+                put("schema", JsonNull)
+                put("expressionMetadata", JsonNull)
+                put("coercesTo", JsonNull)
+                put("overwriteTypes", true)
+                put("comparison", "strip-comments-and-positions")
+            })
             val expected = stripCommentsAndPositions(expectedDump)
+            var phase = "parse"
             val actual = try {
                 val expression = Dialects.forName(dialect).parseOne(sql)
+                phase = "annotate"
                 annotateTypes(expression, dialect = Dialects.forName(dialect))
+                phase = "dump"
                 stripCommentsAndPositions(Serde.dump(expression))
             } catch (e: Exception) {
-                failures[sql] = "${e::class.simpleName}: ${e.message?.take(140)}"
+                failures[id] = CorpusFailure.exception(sql, phase, e)
                 continue
             }
             if (expected != actual) {
-                failures[sql] = mismatchReason(expected, actual)
+                failures[id] = CorpusFailure.mismatch(
+                    sql, expected, actual, kind = "type-mismatch", reason = mismatchReason(expected, actual),
+                )
                 val firstDiff = (0 until minOf(expected.size, actual.size))
                     .firstOrNull { expected[it] != actual[it] }
                     ?: minOf(expected.size, actual.size)
@@ -125,53 +128,15 @@ class AnnotateTypesCorpusTest {
             }
         }
 
-        val actualLedger = buildJsonObject {
-            put("cases", buildJsonArray {
-                for ((sql, reason) in failures) {
-                    add(buildJsonObject {
-                        put("sql", sql)
-                        put("reason", reason)
-                    })
-                }
-            })
-        }
-        val outDir = java.io.File("build").takeIf { it.isDirectory } ?: java.io.File(".")
-        val actualFile = java.io.File(outDir, "$corpusName-annotate-ledger-actual.json")
-        actualFile.writeText(
-            Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), actualLedger)
+        enforceLedger(
+            ledger = ledger,
+            failures = failures,
+            summary = "AnnotateTypesCorpusTest[$corpusName]: ${cases.size - failures.size} pass / " +
+                "${failures.size} ledgered (of ${cases.size})",
+            actualLedgerName = "$corpusName-annotate-ledger-actual.json",
+            caseKey = "sql",
+            mismatchDetails = details,
         )
-
-        val unledgered = failures.keys - ledger.keys
-        val stale = ledger.keys - failures.keys
-
-        println(
-            "AnnotateTypesCorpusTest[$corpusName]: ${cases.size - failures.size} pass / " +
-                "${failures.size} ledgered (of ${cases.size})"
-        )
-
-        val problems = mutableListOf<String>()
-        if (unledgered.isNotEmpty()) {
-            problems.add(
-                "${unledgered.size} UNLEDGERED failures (showing up to 20):\n" +
-                    unledgered.take(20).joinToString("\n") { "  $it\n    reason: ${failures[it]}" }
-            )
-            val shown = details.filter { d -> unledgered.any { d.startsWith("SQL: $it\n") } }
-            if (shown.isNotEmpty()) {
-                problems.add("mismatch details (up to 8):\n" + shown.take(8).joinToString("\n\n"))
-            }
-        }
-        if (stale.isNotEmpty()) {
-            problems.add(
-                "${stale.size} STALE ledger entries now pass (showing up to 20):\n" +
-                    stale.take(20).joinToString("\n") { "  $it" }
-            )
-        }
-        if (problems.isNotEmpty()) {
-            fail(
-                problems.joinToString("\n\n") +
-                    "\n\nActual ledger written to ${actualFile.absolutePath}"
-            )
-        }
     }
 
     @Test fun identityAnnotatedCorpus() = runCorpus("identity-annotated-serde", "")

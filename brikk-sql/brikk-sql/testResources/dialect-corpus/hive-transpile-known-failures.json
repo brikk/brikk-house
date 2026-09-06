@@ -1,16 +1,22 @@
 {
     "cases": [
         {
+            "id": "assertion:v1:sha256:612886093228b76cb78337259d51afcc8648283104a94bbf1b00045f46e92fd5:1",
             "case": "write|bigquery|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
-            "reason": "expected `FORMAT_DATE('%Y-%m-%d %H:%M:%S', CAST('2020-01-01' AS DATETIME))` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', TIME_STR_TO_TIME('2020-01-01'))`"
+            "reason": "expected `FORMAT_DATE('%Y-%m-%d %H:%M:%S', CAST('2020-01-01' AS DATETIME))` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', TIME_STR_TO_TIME('2020-01-01'))`",
+            "signature": "sql-mismatch:v1:sha256:44ec594dcb9cb65a8e570595755cb5f7feb346ab7bc2b79dd49c131c53a30753"
         },
         {
+            "id": "assertion:v1:sha256:41cb5aea7508a26a06b506c89b648607e1156c56785fc7c70d16b6e0569d638d:1",
             "case": "write|bigquery|DATE_ADD('2020-01-01', 1)",
-            "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1, DAY)`"
+            "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1, DAY)`",
+            "signature": "sql-mismatch:v1:sha256:98d2d305db4ed2326b1d76ec9416426e5ee61063636a3fccaf5cb35551b2ae0d"
         },
         {
+            "id": "assertion:v1:sha256:22255903b35986916c032ed9d0305f88c1b072d61f3d33a3025b87fa7a142857:1",
             "case": "write|bigquery|DATE_SUB('2020-01-01', 1)",
-            "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL (1 * -1) DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1 * -1, DAY)`"
+            "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL (1 * -1) DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1 * -1, DAY)`",
+            "signature": "sql-mismatch:v1:sha256:66162edc24eec8e214091ee8d5f2e66211f3d756c18a2df631e7b0ae64f22030"
         }
     ]
 }

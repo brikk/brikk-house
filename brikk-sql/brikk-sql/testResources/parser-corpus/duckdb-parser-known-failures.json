@@ -2,8 +2,10 @@
     "sqlglot_version": "v30.17.0-93-gdcc36544a",
     "cases": [
         {
+            "id": "assertion:v1:sha256:22edfdd1dcc2e9e3e58e39959e4fdef5941ae19f91154a13fcdddc198df75738:1",
             "sql": "SELECT $🦆$foo$🦆$",
-            "reason": "Python positions use code points; brikk positions index Kotlin strings in UTF-16"
+            "reason": "Python positions use code points; brikk positions index Kotlin strings in UTF-16",
+            "signature": "ast-mismatch:v1:sha256:e5c1fa98e2c1967fc13c6b9057ed56eb929750d961450cddc989bf98d286f88b"
         }
     ]
 }

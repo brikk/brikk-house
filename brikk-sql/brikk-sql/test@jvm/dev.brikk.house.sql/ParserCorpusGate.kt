@@ -1,14 +1,15 @@
 package dev.brikk.house.sql
 
 import dev.brikk.house.sql.ast.Serde
-import dev.brikk.house.sql.parser.ParseError
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 
 /**
  * Shared harness for the per-dialect parser gates.
@@ -57,35 +58,45 @@ abstract class ParserCorpusGate(private val dialect: String) : LedgerGate() {
         check(cases.isNotEmpty()) { "empty corpus" }
         val ledger = loadLedger("parser-corpus/$dialect-parser-known-failures.json", caseKey = "sql")
 
-        val failures = LinkedHashMap<String, String>() // sql -> reason
+        val failures = LinkedHashMap<String, CorpusFailure>()
+        val ids = CorpusAssertionIds("parser:$dialect")
         val details = mutableListOf<String>()
+        var passed = 0
 
         for ((sql, expected) in cases) {
+            val id = ids.next(buildJsonObject {
+                put("dialect", dialect)
+                put("sql", sql)
+                put("expected", expected)
+            })
             // Unstripped: positions (meta) and comments must match Python's dumps.
+            var phase = "parse"
             val actual = try {
-                Serde.dump(parseOne(sql, dialect))
-            } catch (e: ParseError) {
-                failures[sql] = e.message?.lineSequence()?.first()?.take(160) ?: "ParseError"
-                continue
+                val expression = parseOne(sql, dialect)
+                phase = "dump"
+                Serde.dump(expression)
             } catch (e: Exception) {
-                failures[sql] = "${e::class.simpleName}: ${e.message?.take(140)}"
+                failures[id] = CorpusFailure.exception(sql, phase, e)
                 continue
             }
             if (expected != actual) {
                 val (firstDiff, reason) = firstMismatch(expected, actual)
-                failures[sql] = reason
+                failures[id] = CorpusFailure.mismatch(sql, expected, actual, reason = reason)
                 details.add(
                     "SQL: $sql\n  first diff #$firstDiff\n" +
                         "  expected: ${expected.getOrNull(firstDiff)}\n" +
                         "  actual:   ${actual.getOrNull(firstDiff)}"
                 )
+            } else {
+                passed += 1
             }
         }
+        check(cases.size == passed + failures.size) { "Unaccounted parser assertions" }
 
         enforceLedger(
             ledger = ledger,
             failures = failures,
-            summary = "${javaClass.simpleName}: ${cases.size - failures.size} pass / " +
+            summary = "${javaClass.simpleName}: $passed pass / " +
                 "${failures.size} ledgered (of ${cases.size})",
             actualLedgerName = "$dialect-parser-ledger-actual.json",
             caseKey = "sql",

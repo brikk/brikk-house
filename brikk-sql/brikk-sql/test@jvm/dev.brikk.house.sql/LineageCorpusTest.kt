@@ -2,11 +2,13 @@ package dev.brikk.house.sql
 
 import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.optimizer.Node
+import dev.brikk.house.sql.optimizer.SqlglotError
 import dev.brikk.house.sql.optimizer.lineage
 import dev.brikk.house.sql.optimizer.lineageAll
 import kotlin.test.Test
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.fail
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -33,23 +35,7 @@ import kotlinx.serialization.json.put
  * Failures must exactly match lineage-corpus/known-failures.json — no unledgered
  * failure, no stale entry. Actual failures are written to build/lineage-ledger-actual.json.
  */
-class LineageCorpusTest {
-
-    private val json = Json { ignoreUnknownKeys = true }
-
-    private fun loadLedger(): Map<String, String> {
-        val text = try {
-            testResource("lineage-corpus/known-failures.json")
-        } catch (e: AssertionError) {
-            return emptyMap()
-        }
-        val root = json.parseToJsonElement(text).jsonObject
-        return root.getValue("cases").jsonArray.associate { entry ->
-            val obj = entry.jsonObject
-            obj.getValue("key").jsonPrimitive.content to
-                obj.getValue("reason").jsonPrimitive.content
-        }
-    }
+class LineageCorpusTest : LedgerGate() {
 
     /** Nested JsonObject -> plain Map (schema dicts hold string leaf values). */
     private fun toPlainMap(obj: JsonObject): MutableMap<String, Any?> {
@@ -145,12 +131,30 @@ class LineageCorpusTest {
         }
     }
 
+    private fun expectedErrorFailure(case: String, expected: String, error: Exception?): CorpusFailure? =
+        when {
+            error == null -> CorpusFailure.missingError(case, expected)
+            error is SqlglotError && error::class.simpleName == expected -> null
+            else -> CorpusFailure.exception(case, "lineage (expected $expected)", error)
+        }
+
+    @Test
+    fun expectedErrorRequiresExactSqlglotError() {
+        val case = "expected-error-regression"
+        assertNull(expectedErrorFailure(case, "SqlglotError", SqlglotError("missing column")))
+        assertNotNull(expectedErrorFailure(case, "SqlglotError", IllegalArgumentException("missing column")))
+        assertNotNull(expectedErrorFailure(case, "SqlglotError", NullPointerException("missing column")))
+        assertNotNull(expectedErrorFailure(case, "OptimizeError", SqlglotError("missing column")))
+        assertNotNull(expectedErrorFailure(case, "SqlglotError", null))
+    }
+
     @Test
     fun lineageCorpusMatchesPythonModuloLedger() {
         val root = json.parseToJsonElement(testResource("lineage-corpus/base.json")).jsonObject
         val cases = root.getValue("cases").jsonArray.map { it.jsonObject }
         check(cases.isNotEmpty()) { "empty lineage corpus" }
-        val ledger = loadLedger()
+        val ledger = loadLedger("lineage-corpus/known-failures.json", "key")
+        val assertionIds = CorpusAssertionIds("lineage-corpus")
 
         var excluded = 0
         var unextractable = 0
@@ -174,7 +178,7 @@ class LineageCorpusTest {
             }
         }
 
-        val failures = LinkedHashMap<String, String>()
+        val failures = LinkedHashMap<String, CorpusFailure>()
         var compared = 0
 
         for (case in cases) {
@@ -187,11 +191,20 @@ class LineageCorpusTest {
             val sources = (case["sources"] as? JsonObject)
                 ?.mapValues { (_, v) -> v.jsonPrimitive.content as Any }
             val dialect = checkNotNull(CorpusDialects.resolveOrSkip(dialectName)) { "Runnable lineage case uses excluded dialect '$dialectName'" }
+            val assertionId = assertionIds.next(buildJsonObject {
+                put("case", JsonObject(case.filterKeys { it != "id" }))
+                put("options", buildJsonObject {
+                    put("operation", if (columnElem is JsonNull) "lineageAll" else "lineage")
+                    put("dialect", dialectName)
+                    put("trim_selects", trimSelects)
+                })
+            })
 
             compared++
 
             if (case["error"] != null) {
-                // Python raised (SqlglotError etc.); we must raise too.
+                val expectedError = case.getValue("error").jsonPrimitive.content
+                var error: Exception? = null
                 try {
                     if (columnElem is JsonNull) {
                         lineageAll(sql, schema = schema, sources = sources, dialect = dialect,
@@ -200,48 +213,51 @@ class LineageCorpusTest {
                         lineage(columnElem.jsonPrimitive.content, sql, schema = schema,
                             sources = sources, dialect = dialect, trimSelects = trimSelects)
                     }
-                    failures[id] = "expected error ${case["error"]!!.jsonPrimitive.content}, none raised"
                 } catch (e: Exception) {
-                    // expected
+                    error = e
                 }
+                expectedErrorFailure(id, expectedError, error)?.let { failures[assertionId] = it }
                 continue
             }
 
+            var phase = if (columnElem is JsonNull) "lineageAll" else "lineage"
             try {
                 if (columnElem is JsonNull) {
                     val result = lineageAll(
                         sql, schema = schema, sources = sources, dialect = dialect,
                         trimSelects = trimSelects,
                     )
+                    phase = "serialize"
                     val expected = case.getValue("expected_columns").jsonObject
-                    if (result.keys != expected.keys) {
-                        failures[id] = "column set mismatch: expected ${expected.keys}, " +
-                            "actual ${result.keys}"
-                        continue
-                    }
-                    for ((name, node) in result) {
-                        val exp = canonicalize(expected.getValue(name).jsonObject)
-                        val act = serialize(node, dialectName)
-                        if (pyDumps(exp) != pyDumps(act)) {
-                            failures[id] = "graph mismatch for column '$name':\n" +
-                                "      expected: ${pyDumps(exp)}\n      actual:   ${pyDumps(act)}"
-                            break
-                        }
+                    val exp = JsonObject(expected.mapValues { (_, node) -> canonicalize(node.jsonObject) })
+                    val act = JsonObject(result.mapValues { (_, node) -> serialize(node, dialectName) })
+                    if (pyDumps(exp) != pyDumps(act)) {
+                        failures[assertionId] = CorpusFailure.mismatch(
+                            id, exp, act,
+                            reason = if (result.keys != expected.keys) {
+                                "column set mismatch: expected ${expected.keys}, actual ${result.keys}"
+                            } else {
+                                "graph mismatch:\n      expected: ${pyDumps(exp)}\n      actual:   ${pyDumps(act)}"
+                            },
+                        )
                     }
                 } else {
                     val node = lineage(
                         columnElem.jsonPrimitive.content, sql, schema = schema,
                         sources = sources, dialect = dialect, trimSelects = trimSelects,
                     )
+                    phase = "serialize"
                     val exp = canonicalize(case.getValue("expected").jsonObject)
                     val act = serialize(node, dialectName)
                     if (pyDumps(exp) != pyDumps(act)) {
-                        failures[id] = "graph mismatch:\n      expected: ${pyDumps(exp)}\n" +
-                            "      actual:   ${pyDumps(act)}"
+                        failures[assertionId] = CorpusFailure.mismatch(
+                            id, exp, act,
+                            reason = "graph mismatch:\n      expected: ${pyDumps(exp)}\n      actual:   ${pyDumps(act)}",
+                        )
                     }
                 }
             } catch (e: Exception) {
-                failures[id] = "${e::class.simpleName}: ${e.message}"
+                failures[assertionId] = CorpusFailure.exception(id, phase, e)
             }
         }
 
@@ -250,46 +266,15 @@ class LineageCorpusTest {
         }
         val passed = compared - failures.size
         val rate = if (compared > 0) 100.0 * passed / compared else 100.0
-        println(
-            "LineageCorpusTest: $passed/$compared pass (${"%.1f".format(rate)}%), " +
+        enforceLedger(
+            ledger = ledger,
+            failures = failures,
+            summary = "LineageCorpusTest: $passed/$compared pass (${"%.1f".format(rate)}%), " +
                 "${failures.size} failing, excluded=$excluded, unextractable=$unextractable, duplicate=$duplicates, " +
-                "oracle-raised=${cases.count { it["error"] != null }} (executed as error assertions)"
+                "oracle-raised=${cases.count { it["error"] != null }} (executed as error assertions)",
+            actualLedgerName = "lineage-ledger-actual.json",
+            caseKey = "key",
         )
-
-        // Always write the actual failure set in ledger format for easy regeneration.
-        val actualLedger = buildJsonObject {
-            put("cases", buildJsonArray {
-                for ((key, reason) in failures) {
-                    add(buildJsonObject { put("key", key); put("reason", reason) })
-                }
-            })
-        }
-        val outDir = java.io.File("build").takeIf { it.isDirectory } ?: java.io.File(".")
-        java.io.File(outDir, "lineage-ledger-actual.json")
-            .writeText(Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), actualLedger))
-
-        val problems = mutableListOf<String>()
-        if (rate < 90.0) problems.add("below 90% gate: $passed/$compared")
-
-        val unledgered = failures.keys - ledger.keys
-        val stale = ledger.keys - failures.keys
-        if (unledgered.isNotEmpty()) {
-            problems.add(
-                "${unledgered.size} UNLEDGERED failures (showing up to 20):\n" +
-                    unledgered.take(20).joinToString("\n") { "  $it\n    reason: ${failures[it]}" }
-            )
-        }
-        if (stale.isNotEmpty()) {
-            problems.add(
-                "${stale.size} STALE ledger entries now pass:\n" +
-                    stale.take(20).joinToString("\n") { "  $it" }
-            )
-        }
-        if (problems.isNotEmpty()) {
-            fail(
-                problems.joinToString("\n\n") +
-                    "\n\nActual ledger written to ${java.io.File(outDir, "lineage-ledger-actual.json").absolutePath}"
-            )
-        }
+        if (rate < 90.0) fail("below 90% gate: $passed/$compared")
     }
 }

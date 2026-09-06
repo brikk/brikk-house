@@ -1,16 +1,22 @@
 {
     "cases": [
         {
+            "id": "assertion:v1:sha256:7bc2afdb7af1bc134d11701578b7109847a46d86936fb3bc4b60af1eb533af37:1",
             "sql": "ALTER TABLE people SET PROPERTIES x = 'y'",
-            "reason": "type-mismatch at #0 (Command): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+            "reason": "type-mismatch at #0 (Command): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType.",
+            "signature": "type-mismatch:v1:sha256:2433aebce84e976a5b73617fae0ac494a2851fc5ce992efbaaaff77e3f4d7770"
         },
         {
+            "id": "assertion:v1:sha256:c9ee55bb0caed80b1a6757f6ac7ef1a6e6b05a908815e6f6bbba6b2b350e0635:1",
             "sql": "ALTER TABLE people SET PROPERTIES foo = 123, 'foo bar' = 456",
-            "reason": "type-mismatch at #0 (Command): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+            "reason": "type-mismatch at #0 (Command): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType.",
+            "signature": "type-mismatch:v1:sha256:c92af533bcbae49b45ed29b27cce44d6b9883f62e4c98860aac60e520d997f82"
         },
         {
+            "id": "assertion:v1:sha256:aa75f2d1d6146d3bf7b97f45602d871d90cd82ccc0578fc33e226f0023b425af:1",
             "sql": "ALTER TABLE people SET PROPERTIES x = DEFAULT",
-            "reason": "type-mismatch at #0 (Command): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType."
+            "reason": "type-mismatch at #0 (Command): expected t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType. actual t=[{\"c\":\"sqlglot.expressions.datatypes.DataType\"},{\"i\":0,\"k\":\"this\",\"c\":\"DataType.",
+            "signature": "type-mismatch:v1:sha256:5147c4fcf8486817c7c4745955ba5afb7d06e06ecf48135105005c78013c23b2"
         }
     ]
 }

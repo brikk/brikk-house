@@ -1,12 +1,16 @@
 {
     "cases": [
         {
+            "id": "assertion:v1:sha256:06c130f68e85ad5d0d80a1d0bf43d69a52641295a43fb50bcd63d3a7f1cf0bd2:1",
             "case": "write|clickhouse, version=23.8|toMonday(x)",
-            "reason": "expected `dateTrunc('week', x)` actual `dateTrunc('WEEK', x)`"
+            "reason": "expected `dateTrunc('week', x)` actual `dateTrunc('WEEK', x)`",
+            "signature": "sql-mismatch:v1:sha256:dae57fabed43c2f2f2900f7012579b7d992fc2b3d5d9dbccade84af909de1cfc"
         },
         {
+            "id": "assertion:v1:sha256:1e491e292ee8d520702e993cedd4aa4ffc6355f6efa2c191c6a829afa827ff3d:1",
             "case": "write|clickhouse, version=23.8|date_trunc('WEEK', today())",
-            "reason": "expected `dateTrunc('week', today())` actual `dateTrunc('WEEK', today())`"
+            "reason": "expected `dateTrunc('week', today())` actual `dateTrunc('WEEK', today())`",
+            "signature": "sql-mismatch:v1:sha256:c43548a725b80b32b4fdb185fb0f644123d6c3a1b9e8eac5abac2bb2a6a4cba2"
         }
     ]
 }

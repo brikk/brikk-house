@@ -2,8 +2,10 @@
     "sqlglot_version": "v30.17.0-93-gdcc36544a",
     "cases": [
         {
+            "id": "assertion:v1:sha256:88ebf3556f398d19d07ef1ae6a7bd2cc232cf9629d49823eddf0079e4505caff:1",
             "sql": "SELECT DISTINCT ON (a) a, b FROM x ORDER BY c DESC",
-            "reason": "brikk extension ASTRA-001: preserve final ORDER BY after DISTINCT ON filtering, using a hidden sort projection. Intentional correctness divergence; docs/brikk-extensions.md #6 and QualifyLoweringResultTest.distinctOnBeforeOffsetAndLimitKeepsFinalOrdering."
+            "reason": "brikk extension ASTRA-001: preserve final ORDER BY after DISTINCT ON filtering, using a hidden sort projection. Intentional correctness divergence; docs/brikk-extensions.md #6 and QualifyLoweringResultTest.distinctOnBeforeOffsetAndLimitKeepsFinalOrdering.",
+            "signature": "sql-mismatch:v1:sha256:a94b86bc4cf32489efdb708e5aa7c9de172a758f55ba709927c741e6b9683008"
         }
     ]
 }
