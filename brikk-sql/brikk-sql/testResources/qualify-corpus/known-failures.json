@@ -39,14 +39,6 @@
         {
             "key": "qualify_tables::SELECT results FROM db.coordinates, Coordinates.position AS results",
             "reason": "ASTRA-014/G2: Missing BigQuery implicit UNNEST normalization treats Coordinates.position as a physical table; part of ASTRA-008."
-        },
-        {
-            "key": "qualify_tables::SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10))",
-            "reason": "ASTRA-014/G4: QualifyTables omits StarRocks TableFromRows default output columns, missing _0(generate_series); docs/corpus-coverage.md."
-        },
-        {
-            "key": "qualify_tables::SELECT generate_series FROM TABLE(GENERATE_SERIES(0, 10)) AS t",
-            "reason": "ASTRA-014/G4: QualifyTables omits StarRocks TableFromRows default output columns, missing t(generate_series); docs/corpus-coverage.md."
         }
     ]
 }

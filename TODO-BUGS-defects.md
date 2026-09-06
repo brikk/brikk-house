@@ -10,7 +10,7 @@
 
 ---
 
-**12 remaining qualification cases in three defect groups.**
+**10 remaining qualification cases in two defect groups.**
 
 ASTRA-014 enabled previously skipped supported cases. Their exact keys and reviewed
 causes are in `brikk-sql/brikk-sql/testResources/qualify-corpus/known-failures.json`;
@@ -20,7 +20,7 @@ see `docs/corpus-coverage.md` for the execution inventory. These remain open:
   under ASTRA-008's coordinated parser/resolver/generator work.
 - [ ] G2: two BigQuery implicit UNNEST conversions, also ASTRA-008.
 - [x] G3: unwrap parenthesized SELECT operands during set-operation column discovery.
-- [ ] G4: preserve StarRocks TableFromRows default output-column aliases, two cases.
+- [x] G4: preserve StarRocks TableFromRows default output-column aliases, two cases.
 
 The previous 162-item inventory remains resolved:
 

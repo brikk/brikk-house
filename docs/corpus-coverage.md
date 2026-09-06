@@ -43,7 +43,9 @@ They continue to execute; no comparison or pass-rate gate was weakened.
 The coverage task did not fix these groups. G3 has since been fixed: wrapped SELECT
 operands resolve correctly, including repeated parentheses, while wrapped non-query
 operands still raise OptimizeError. Its exact ledger entry was removed after the
-public shape and resolver regressions passed. G1, G2, and G4 remain open.
+public shape and resolver regressions passed. G4 has also been fixed by applying
+the existing dialect default-column mapping without replacing explicit aliases;
+both ledger entries were removed. G1 and G2 remain open.
 
 ## Base deferral
 

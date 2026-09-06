@@ -11,6 +11,7 @@ import dev.brikk.house.sql.ast.Query
 import dev.brikk.house.sql.ast.Subquery
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.TableAlias
+import dev.brikk.house.sql.ast.TableFromRows
 import dev.brikk.house.sql.ast.Values
 import dev.brikk.house.sql.ast.With
 import dev.brikk.house.sql.ast.nameSequence
@@ -250,6 +251,14 @@ fun <E : Expression> qualifyTables(
                     val columnAliases = resolvedDialect.generateValuesAliases(udtf)
                         .map { normalizeIdentifiers(it, dialect = resolvedDialect) }
                     tableAlias.set("columns", columnAliases)
+                } else if (udtf is TableFromRows && tableAlias.columns.isEmpty()) {
+                    val function = udtf.thisArg as? Expression
+                    val defaults = function?.let { resolvedDialect.defaultFunctionsColumnNames[it::class] }
+                    if (!defaults.isNullOrEmpty()) {
+                        tableAlias.set("columns", defaults.map {
+                            normalizeIdentifiers(toIdentifier(it)!!, dialect = resolvedDialect)
+                        })
+                    }
                 }
             }
         }
