@@ -101,52 +101,8 @@
             "reason": "expected `SELECT MAKE_TIME(15, 30, 00)` actual `SELECT TIME_FROM_PARTS(15, 30, 00)`"
         },
         {
-            "case": "write|bigquery|SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0), minute)",
-            "reason": "expected `SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0), MINUTE)` actual `SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0))`"
-        },
-        {
-            "case": "write|presto|SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0), minute)",
-            "reason": "expected `SELECT DATE_DIFF('MINUTE', FROM_UNIXTIME(0), FROM_UNIXTIME(60))` actual `SELECT TIMESTAMPDIFF(FROM_UNIXTIME(60), FROM_UNIXTIME(0), MINUTE)`"
-        },
-        {
-            "case": "write|trino|SELECT TIMESTAMP_DIFF(TIMESTAMP_SECONDS(60), TIMESTAMP_SECONDS(0), minute)",
-            "reason": "expected `SELECT DATE_DIFF('MINUTE', FROM_UNIXTIME(0), FROM_UNIXTIME(60))` actual `SELECT TIMESTAMPDIFF(FROM_UNIXTIME(60), FROM_UNIXTIME(0), MINUTE)`"
-        },
-        {
-            "case": "read|bigquery|TIMESTAMP_DIFF(a, b, MONTH)",
-            "reason": "expected `TIMESTAMP_DIFF(a, b, MONTH)` actual `TIMESTAMP_DIFF(a, b)`"
-        },
-        {
-            "case": "read|mysql|TIMESTAMP_DIFF(a, b, MONTH)",
-            "reason": "expected `TIMESTAMP_DIFF(a, b, MONTH)` actual `TIMESTAMP_DIFF(a, b)`"
-        },
-        {
-            "case": "write|presto|TIMESTAMP_DIFF(a, b, MONTH)",
-            "reason": "expected `DATE_DIFF('MONTH', b, a)` actual `TIMESTAMPDIFF(a, b, MONTH)`"
-        },
-        {
-            "case": "write|trino|TIMESTAMP_DIFF(a, b, MONTH)",
-            "reason": "expected `DATE_DIFF('MONTH', b, a)` actual `TIMESTAMPDIFF(a, b, MONTH)`"
-        },
-        {
             "case": "write|duckdb|SELECT * FROM t WHERE EXISTS(SELECT * FROM unnest(nums) AS x WHERE x > 1)",
             "reason": "expected `SELECT * FROM t WHERE EXISTS(SELECT * FROM UNNEST(nums) AS _t0(x) WHERE x > 1)` actual `SELECT * FROM t WHERE EXISTS(SELECT * FROM UNNEST(nums) AS x WHERE x > 1)`"
-        },
-        {
-            "case": "write|presto|SELECT DATETIME_DIFF(DATETIME '2021-02-01 00:00:00', DATETIME '2021-01-31 00:00:00', MONTH)",
-            "reason": "expected `SELECT DATE_DIFF('MONTH', DATE_TRUNC('MONTH', CAST('2021-01-31 00:00:00' AS TIMESTAMP)), DATE_TRUNC('MONTH', CAST('2021-02-01 00:00:00' AS TIMESTAMP)))` actual `SELECT DATETIME_DIFF(CAST('2021-02-01 00:00:00' AS TIMESTAMP), CAST('2021-01-31 00:00:00' AS TIMESTAMP), MONTH)`"
-        },
-        {
-            "case": "write|trino|SELECT DATETIME_DIFF(DATETIME '2021-02-01 00:00:00', DATETIME '2021-01-31 00:00:00', MONTH)",
-            "reason": "expected `SELECT DATE_DIFF('MONTH', DATE_TRUNC('MONTH', CAST('2021-01-31 00:00:00' AS TIMESTAMP)), DATE_TRUNC('MONTH', CAST('2021-02-01 00:00:00' AS TIMESTAMP)))` actual `SELECT DATETIME_DIFF(CAST('2021-02-01 00:00:00' AS TIMESTAMP), CAST('2021-01-31 00:00:00' AS TIMESTAMP), MONTH)`"
-        },
-        {
-            "case": "write|presto|SELECT DATETIME_DIFF(DATETIME '2017-10-15 00:00:00', DATETIME '2017-10-14 00:00:00', WEEK)",
-            "reason": "expected `SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2017-10-14 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY), DATE_TRUNC('WEEK', CAST('2017-10-15 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY))` actual `SELECT DATETIME_DIFF(CAST('2017-10-15 00:00:00' AS TIMESTAMP), CAST('2017-10-14 00:00:00' AS TIMESTAMP), WEEK_START(SUNDAY))`"
-        },
-        {
-            "case": "write|trino|SELECT DATETIME_DIFF(DATETIME '2017-10-15 00:00:00', DATETIME '2017-10-14 00:00:00', WEEK)",
-            "reason": "expected `SELECT DATE_DIFF('WEEK', DATE_TRUNC('WEEK', CAST('2017-10-14 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY), DATE_TRUNC('WEEK', CAST('2017-10-15 00:00:00' AS TIMESTAMP) + INTERVAL '1' DAY))` actual `SELECT DATETIME_DIFF(CAST('2017-10-15 00:00:00' AS TIMESTAMP), CAST('2017-10-14 00:00:00' AS TIMESTAMP), WEEK_START(SUNDAY))`"
         },
         {
             "case": "write|spark|SELECT TIMESTAMP_SUB(TIMESTAMP \"2008-12-25 15:30:00+00\", INTERVAL 10 MINUTE)",

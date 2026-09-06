@@ -645,6 +645,25 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
   `explode_projection_to_unnest`. The array branch follows the pinned upstream;
   map/position/name corrections are local. Upstream reporting/adoption is pending.
 
+## 21. Temporal difference precision and elapsed days
+
+- **ASTRA-010:** the missing BigQuery TIMESTAMP_DIFF unit and Presto/Trino
+  TimestampDiff/DatetimeDiff mappings are restored, including the upstream
+  week-start alignment. Eleven exact BigQuery transpile failures now pass.
+- **Local corrections:** timestamp DAY differences use complete elapsed hours
+  divided by 24, avoiding calendar-day differences across DST. Newly coerced
+  timestamp literals retain six-digit precision; fractional typed literals also
+  avoid millisecond rounding across a boundary. BigQuery's unzoned timestamp
+  strings get UTC explicitly, independently of the target session timezone.
+  Unsupported units and unknown week starts report generator diagnostics.
+- **Where:** `PrestoGenerator.dateDiffSql`. `TemporalDiffResultTest` runs actual
+  Presto/Trino output on Trino 483 when `BRIKK_TRINO_CONTAINER` is set, including
+  UTC and America/New_York sessions. No live BigQuery or Presto execution is claimed.
+  The native BigQuery and cross-dialect corpus gates retain their upstream fixtures.
+- **Upstream sync:** keep elapsed-day and precision regressions when adopting
+  `_date_diff_sql` changes. Local correctness corrections have no new corpus
+  mismatches at the current pin; reporting/adoption status is pending.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

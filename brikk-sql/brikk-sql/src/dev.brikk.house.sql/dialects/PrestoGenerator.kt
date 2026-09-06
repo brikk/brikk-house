@@ -436,8 +436,56 @@ open class PrestoGenerator(
     open fun dateDiffSql(expression: Expression): String {
         var thisExpression = expression.thisArg as Expression
         var startExpression = expression.expressionArg as Expression
-        val unit = unitToStr(expression)
+        val rawUnit = expression.args["unit"] as? Expression
+        var unit = if (rawUnit is WeekStart) Literal.string("WEEK") else unitToStr(expression)
+        if (unit is Literal && unit.name.uppercase() !in setOf("MILLISECOND", "SECOND", "MINUTE", "HOUR", "DAY", "WEEK", "ISOWEEK", "MONTH", "QUARTER", "YEAR")) {
+            unsupported("Presto DATE_DIFF does not support unit '${unit.name}'")
+        }
+        fun castLiteral(value: Expression): Expression {
+            val timestamp = expression is DatetimeDiff || expression is TimestampDiff
+            if (value is Literal && value.isString) {
+                val zoned = expression is TimestampDiff && value.name.contains(':') &&
+                    Regex("(?:Z|UTC|GMT|[+-]\\d{2}(?::?\\d{2})?|[A-Za-z_]+/[A-Za-z_/]+)$").containsMatchIn(value.name)
+                val type = DataType(args("this" to if (zoned) DType.TIMESTAMPTZ else if (timestamp) DType.TIMESTAMP else DType.DATE))
+                if (timestamp) type.set("expressions", listOf(DataTypeParam(args("this" to Literal.number("6")))))
+                val cast = Cast(args("this" to value, "to" to type))
+                return if (expression is TimestampDiff && !zoned && isCrossDialectFrom("bigquery")) {
+                    AtTimeZone(args("this" to cast, "zone" to Literal.string("UTC")))
+                } else cast
+            }
+            // brikk extension (ASTRA-010): BigQuery literals carry microseconds; an unparameterized Trino
+            // TIMESTAMP cast would round across a boundary at millisecond precision.
+            val literal = (value as? Cast)?.thisArg as? Literal
+            val type = value.args["to"] as? DataType
+            if (timestamp && literal?.isString == true && Regex("\\.\\d{4,6}").containsMatchIn(literal.name) &&
+                type?.expressionsArg?.isEmpty() == true && type.thisArg in setOf(DType.TIMESTAMP, DType.TIMESTAMPTZ, DType.DATETIME)) {
+                type.set("expressions", listOf(DataTypeParam(args("this" to Literal.number("6")))))
+            }
+            return value
+        }
+        if (expression is TimestampDiff || expression.args["date_part_boundary"] == true) {
+            thisExpression = castLiteral(thisExpression)
+            startExpression = castLiteral(startExpression)
+        }
+        if (expression is TimestampDiff && expression.args["date_part_boundary"] != true && unit?.name?.uppercase() == "DAY") {
+            // brikk extension (ASTRA-010): elapsed days are 24 hours, not calendar days across DST.
+            return "(${func("DATE_DIFF", Literal.string("HOUR"), startExpression, thisExpression)} / 24)"
+        }
         if (unit != null && expression.args["date_part_boundary"] == true) {
+            val day = if (rawUnit is WeekStart) {
+                listOf("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
+                    .indexOf(rawUnit.name.uppercase()).takeIf { it >= 0 }?.plus(1)
+            } else if (rawUnit?.name?.uppercase() in listOf("WEEK", "ISOWEEK")) 1 else null
+            if (rawUnit is WeekStart && day == null) unsupported("Cannot translate week start '${rawUnit.name}' to Presto")
+            if (day != null) {
+                unit = Literal.string("WEEK")
+                val shift = if (day == 7) 1 else 1 - day
+                if (shift != 0) {
+                    val delta = Interval(args("this" to Literal.string(shift.toString()), "unit" to Var(args("this" to "DAY"))))
+                    thisExpression = Add(args("this" to thisExpression, "expression" to delta))
+                    startExpression = Add(args("this" to startExpression, "expression" to delta.copy()))
+                }
+            }
             thisExpression = DateTrunc(args("unit" to unit.copy(), "this" to thisExpression))
             startExpression = DateTrunc(args("unit" to unit.copy(), "this" to startExpression))
         }
@@ -1166,6 +1214,8 @@ open class PrestoGenerator(
             reg(CurrentUser::class) { _ -> "CURRENT_USER" }
             reg(DateAdd::class) { e -> pg().dateDeltaSql("DATE_ADD", e) }
             reg(DateDiff::class) { e -> pg().dateDiffSql(e) }
+            reg(DatetimeDiff::class) { e -> pg().dateDiffSql(e) }
+            reg(TimestampDiff::class) { e -> pg().dateDiffSql(e) }
             reg(DateStrToDate::class) { e -> pg().datestrtodateSql(e as DateStrToDate) }
             reg(DateToDi::class) { e ->
                 "CAST(DATE_FORMAT(${sql(e, "this")}, ${pg().dialectDateintFormat}) AS INT)"

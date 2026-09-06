@@ -622,7 +622,7 @@ open class BigqueryGenerator(
             reg(TimeAdd::class) { e -> bg().dateAddIntervalSql("TIME", "ADD", e) }
             reg(TimeSub::class) { e -> bg().dateAddIntervalSql("TIME", "SUB", e) }
             reg(TimestampAdd::class) { e -> bg().dateAddIntervalSql("TIMESTAMP", "ADD", e) }
-            reg(TimestampDiff::class) { e -> bg().renameFuncSql("TIMESTAMP_DIFF", e) }
+            reg(TimestampDiff::class) { e -> func("TIMESTAMP_DIFF", e.thisArg, e.expressionArg, unitToVar(e)) }
             reg(TimestampSub::class) { e -> bg().dateAddIntervalSql("TIMESTAMP", "SUB", e) }
             reg(Transaction::class) { _ -> "BEGIN TRANSACTION" }
             reg(TsOrDsToTime::class) { e -> bg().renameFuncSql("TIME", e) }
