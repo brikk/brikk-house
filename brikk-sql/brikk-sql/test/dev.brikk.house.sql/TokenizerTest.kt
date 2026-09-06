@@ -178,4 +178,16 @@ class TokenizerTest {
         assertEquals(13, pipe.start)
         assertEquals(14, pipe.end)
     }
+
+    @Test
+    fun positionsIndexKotlinStringsInUtf16() {
+        val sql = "SELECT '\uD83D\uDE00' AS face, target FROM tbl"
+        val target = Tokenizer().tokenize(sql).first { it.text == "target" }
+
+        assertEquals(21, target.start)
+        assertEquals(26, target.end)
+        assertEquals(22, target.colStart)
+        assertEquals(27, target.col)
+        assertEquals("target", sql.substring(target.start, target.end + 1))
+    }
 }

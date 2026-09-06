@@ -157,4 +157,30 @@ class PipeStageSplitterTest {
             assertEquals(stage.rawSql, example.substring(stage.start, stage.endInclusive + 1))
         }
     }
+
+    @Test
+    fun supplementaryCharactersDoNotShiftStageSlices() {
+        for (payload in listOf("ascii", "\uD83D\uDE00", "\uD83D\uDE00\uD83D\uDE80")) {
+            for (separator in listOf(" ", "\n", "\r\n")) {
+                val stages = listOf("FROM t", "EXTEND '$payload' AS label", "WHERE missing_column > 100", "LIMIT 5")
+                val sql = stages.joinToString("$separator|> ")
+                val result = PipeStageSplitter.split(sql, dialect = "doris")
+                assertEquals(stages, result.stages.map { it.rawSql })
+                for ((index, stage) in result.stages.withIndex()) {
+                    assertEquals(stage.rawSql, sql.substring(stage.start, stage.endInclusive + 1))
+                    assertEquals(stages.take(index + 1).joinToString("$separator|> "), sql.substring(0, stage.endInclusive + 1))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun stagePrefixIgnoresPipeMarkersInFunctionArguments() {
+        val prefix = "FROM t\n|> WHERE tenant_id = 7\n|> EXTEND CONCAT(label, '; |> SELECT fake') AS display_label"
+        val sql = "$prefix\n|> SELECT display_label\n|> LIMIT 9"
+        val result = PipeStageSplitter.split(sql, "doris")
+        assertEquals(listOf("FROM", "WHERE", "EXTEND", "SELECT", "LIMIT"), result.stages.map { it.operator })
+        assertEquals(prefix, sql.substring(0, result.stages[2].endInclusive + 1))
+        assertEquals(sql, sql.substring(0, result.stages.last().endInclusive + 1))
+    }
 }

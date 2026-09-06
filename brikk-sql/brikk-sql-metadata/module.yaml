@@ -12,6 +12,9 @@ apply:
   - ../../publish.module-template.yaml
 
 settings:
+  jvm:
+    # Public metadata remains compatible with the Java 21 minimum supported by IDE consumers.
+    release: 21
   publishing:
     # Explicit artifactId is required by Maven Central publishing (toolchain 0.11); equals the
     # default (module name). Published JVM coordinate: dev.brikk.house:brikk-sql-metadata-jvm.

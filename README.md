@@ -160,7 +160,7 @@ dependencies {
 ### Releases
 
 Release versions (non-`-SNAPSHOT`) are published to **Maven Central** and resolve from
-`mavenCentral()` with no extra repository configuration. Latest release: **`0.9.0`**.
+`mavenCentral()` with no extra repository configuration. Latest release: **`0.10.2`**.
 
 ## Building
 
@@ -220,7 +220,7 @@ A release is cut from a branch named **`release/<version>`** (non-`-SNAPSHOT`):
    then sets the version from the branch suffix and publishes all modules to Maven Central via
    [`publish-release.sh`](publish-release.sh). (The committed template stays on `-SNAPSHOT`; the
    script sets the release version temporarily and restores the file afterward.)
-2. Central runs in **manual** mode: finish (or drop) each deployment at
+2. Central validates and publishes each deployment automatically. Track progress at
    <https://central.sonatype.com/publishing/deployments>.
 3. Bump `main` to the next snapshot version (see above).
 

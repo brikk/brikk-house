@@ -44,6 +44,20 @@ class SourceMapTest {
     }
 
     @Test
+    fun sourcePositionsIndexKotlinStringsInUtf16() {
+        val source = "SELECT '\uD83D\uDE00' AS face, target FROM tbl"
+        val ast = parseOne(source)
+        val target = ast.findAll(Identifier::class).first { it.name == "target" }
+        val pos = assertNotNull(SourceMap.sourcePosOf(target))
+
+        assertEquals(21, pos.start)
+        assertEquals(26, pos.end)
+        assertEquals(22, pos.colStart)
+        assertEquals(27, pos.colEnd)
+        assertEquals("target", source.substring(pos.start, pos.end + 1))
+    }
+
+    @Test
     fun positionsCarryStartAndEndAnchors() {
         // brikk-native: SourcePos exposes both anchors, all 1-based. `col`/`colEnd`
         // are the token END; `colStart` is where it BEGINS (no line-counting needed).
@@ -190,6 +204,40 @@ class SourceMapTest {
         assertEquals(7, onAlpha.start)
     }
 
+    @Test
+    fun invalidCoordinatesCannotResolveToAnotherOutputLine() {
+        val result = SqlFragment("SELECT alpha FROM tbl", "doris").toExecutable("doris", pretty = true)
+        val map = assertNotNull(result.sourceMap)
+        val alphaOffset = result.sql.indexOf("alpha")
+        assertTrue(alphaOffset > result.sql.indexOf('\n'), result.sql)
+        assertNotNull(map.sourcePosition(alphaOffset, exact = true))
+        for ((line, col) in listOf(
+            0 to 1, -1 to 1, (result.sql.lines().size + 1) to 1, Int.MAX_VALUE to 1,
+            1 to 0, 1 to -1, 1 to (alphaOffset + 1), 2 to Int.MAX_VALUE, 1 to Int.MIN_VALUE,
+        )) {
+            assertNull(map.offsetOf(line, col), "Invalid coordinate $line:$col")
+            assertNull(map.nodeAt(line, col))
+            assertNull(result.mapErrorToSource(line, col))
+            assertNull(result.mapErrorToSource(line, col, exact = false))
+        }
+    }
+
+    @Test
+    fun lineBoundariesAllowEndPositionsButNotCrossLineSpill() {
+        for (newline in listOf("\n", "\r\n")) {
+            val output = "abc$newline${newline}x"
+            val map = SourceMap(output, emptyList())
+            assertEquals(3, map.offsetOf(1, 4), "Position immediately after line content")
+            assertNull(map.offsetOf(1, 5))
+            assertEquals(3 + newline.length, map.offsetOf(2, 1), "Empty line")
+            assertNull(map.offsetOf(2, 2))
+            assertEquals(output.length, map.offsetOf(3, 2), "End of file")
+            assertNull(map.offsetOf(3, 3))
+        }
+        assertEquals(0, SourceMap("", emptyList()).offsetOf(1, 1))
+        assertEquals(4, SourceMap("abc\n", emptyList()).offsetOf(2, 1))
+    }
+
     // -- shape API ------------------------------------------------------------------------
 
     @Test
@@ -234,6 +282,120 @@ class SourceMapTest {
         val pos = assertNotNull(map.sourcePosition(axtOut, exact = true))
         assertEquals(2, pos.lineStart)
         assertEquals(source.indexOf("event_axt"), pos.start)
+    }
+
+    @Test
+    fun pipeSelectDistinctKeepsExactProjectionPositions() {
+        val source = "FROM t |> SELECT DISTINCT category AS bucket"
+        for (pretty in listOf(false, true)) {
+            val result = SqlFragment(source, "doris").toExecutable("doris", pretty = pretty)
+            assertTrue(result.sql.contains("DISTINCT"), result.sql)
+            val map = assertNotNull(result.sourceMap)
+            assertTrue(result.sql === map.output)
+            for (token in listOf("category", "bucket")) {
+                val position = assertNotNull(map.sourcePosition(result.sql.indexOf(token), exact = true))
+                assertEquals(source.indexOf(token), position.start)
+            }
+        }
+    }
+
+    @Test
+    fun distinctInputBoundariesKeepExactQualifiedAndAliasReferences() {
+        for ((source, token) in listOf(
+            "FROM t AS x\n|> WHERE x.id > 0\n|> ORDER BY x.id\n|> LIMIT 3\n|> SELECT DISTINCT x.category" to "category",
+            "SELECT category AS bucket FROM t ORDER BY id LIMIT 3\n|> SELECT DISTINCT bucket" to "bucket",
+            "FROM t\n|> SELECT DISTINCT ON (category) *" to "category",
+        )) {
+            for (pretty in listOf(false, true)) {
+                val result = SqlFragment(source, "doris").toExecutable("doris", pretty = pretty)
+                val outputOffset = if (token == "bucket") {
+                    result.sql.indexOf(token, result.sql.indexOf("DISTINCT"))
+                } else result.sql.indexOf(token)
+                assertTrue(outputOffset >= 0, result.sql)
+                val map = assertNotNull(result.sourceMap)
+                assertTrue(result.sql === map.output)
+                val position = assertNotNull(map.sourcePosition(outputOffset, exact = true), result.sql)
+                assertEquals(source.lastIndexOf(token), position.start)
+                assertEquals(token, source.substring(position.start, position.end + 1))
+                assertEquals(source.take(position.start).count { it == '\n' } + 1, position.lineStart)
+            }
+        }
+    }
+
+    @Test
+    fun executableSourceMapStaysExactAfterSupplementaryCharacters() {
+        val source =
+            "FROM t |> EXTEND '\uD83D\uDE00' AS label |> WHERE missing_column > 0 |> LIMIT 5"
+        val result = SqlFragment(source, "doris").toExecutable("doris", pretty = true)
+        val outputOffset = result.sql.indexOf("missing_column")
+        val pos = assertNotNull(result.sourceMap?.sourcePosition(outputOffset, exact = true))
+
+        assertEquals(source.indexOf("missing_column"), pos.start)
+        assertEquals("missing_column", source.substring(pos.start, pos.end + 1))
+    }
+
+    @Test
+    fun repeatedColumnsMapToTheirOwnSourceOccurrences() {
+        val source = "FROM t\n|> EXTEND 'O''Reilly' AS label\n" +
+            "|> WHERE missing_column > 0\n|> SELECT missing_column, label"
+        for (pretty in listOf(false, true)) {
+            val result = SqlFragment(source, "doris").toExecutable("doris", pretty = pretty)
+            val map = assertNotNull(result.sourceMap)
+            assertEquals(2, Regex("\\bmissing_column\\b").findAll(result.sql).count())
+            for ((outputOffset, sourceOffset) in listOf(
+                result.sql.indexOf("missing_column > 0") to source.indexOf("missing_column"),
+                result.sql.indexOf("missing_column,") to source.lastIndexOf("missing_column"),
+            )) {
+                assertTrue(outputOffset >= 0, result.sql)
+                val outputLine = result.sql.take(outputOffset).count { it == '\n' } + 1
+                val outputCol = outputOffset - result.sql.lastIndexOf('\n', outputOffset - 1)
+                val position = assertNotNull(result.mapErrorToSource(outputLine, outputCol))
+                assertEquals(position, map.sourcePosition(outputOffset, exact = true))
+                assertEquals(sourceOffset, position.start)
+                assertEquals(sourceOffset + "missing_column".length - 1, position.end)
+                assertEquals(source.take(sourceOffset).count { it == '\n' } + 1, position.lineStart)
+                assertEquals(sourceOffset - source.lastIndexOf('\n', sourceOffset - 1), position.colStart)
+            }
+        }
+    }
+
+    @Test
+    fun exactErrorCoordinatesUseUtf16AfterSupplementaryCharactersOnTheSameLine() {
+        for (payload in listOf("ascii", "\uD83D\uDE00", "\uD83D\uDE00\uD83D\uDE80")) {
+            for (separator in listOf(" ", "\n", "\r\n")) {
+                val source = "FROM t$separator|> WHERE CONCAT('$payload', missing_column) = 'x'$separator|> LIMIT 5"
+                for (pretty in listOf(false, true)) {
+                    val result = SqlFragment(source, "doris").toExecutable("doris", pretty = pretty)
+                    val offset = result.sql.indexOf("missing_column")
+                    assertTrue(offset >= 0, result.sql)
+                    val line = result.sql.take(offset).count { it == '\n' } + 1
+                    val col = offset - result.sql.lastIndexOf('\n', offset - 1)
+                    val position = assertNotNull(result.mapErrorToSource(line, col), result.sql)
+                    assertEquals(source.indexOf("missing_column"), position.start)
+                    assertEquals("missing_column", source.substring(position.start, position.end + 1))
+                    assertEquals(source.take(position.start).count { it == '\n' } + 1, position.lineStart)
+                    assertEquals(position.start - source.lastIndexOf('\n', position.start - 1), position.colStart)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun dorisStageShapesExposeExtendedAliasesAndRemoveUnselectedColumns() {
+        val source = "FROM t\n|> WHERE tenant_id = 7\n" +
+            "|> EXTEND CONCAT(label, '; |> SELECT fake') AS display_label\n|> SELECT display_label\n|> LIMIT 9"
+        val fragment = SqlFragment(source, "doris")
+        val catalog = ShapeCatalog(tables = mapOf("t" to Shape.of("tenant_id" to "INT", "label" to "STRING")))
+        val shapes = fragment.stageShapes(catalog)
+        assertEquals(PipeStageSplitter.split(source, "doris").stages.size, shapes.size)
+        assertEquals(
+            listOf(
+                listOf("tenant_id", "label"), listOf("tenant_id", "label"),
+                listOf("tenant_id", "label", "display_label"), listOf("display_label"), listOf("display_label"),
+            ),
+            shapes.map { it.names() },
+        )
+        assertEquals(fragment.outputShape(catalog).names(), shapes.last().names())
     }
 
     @Test

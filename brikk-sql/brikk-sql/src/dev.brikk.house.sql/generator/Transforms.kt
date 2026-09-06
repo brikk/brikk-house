@@ -434,7 +434,7 @@ fun eliminateDistinctOn(expression: Expression): Expression {
     val takenNames = mutableSetOf(rowNumberWindowAlias)
     val selectsBeforeWindow = expression.selects.filterIsInstance<Expression>().dropLast(1)
     for (select in selectsBeforeWindow) {
-        if (select.isStar) {
+        if ((select is Star || select is Column || select is dev.brikk.house.sql.ast.Dot) && select.isStar) {
             newSelects = mutableListOf(Star())
             break
         }

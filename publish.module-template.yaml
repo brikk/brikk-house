@@ -29,7 +29,8 @@ settings:
     version: 1.0.0-SNAPSHOT
     publishSources: true
     # --- Central RELEASE toggle (leave disabled for normal dev/snapshot work) ---
-    # `mavenCentral: enabled` registers the Central Portal release tasks. The launcher
+    # `mavenCentral: { enabled: true, publishingMode: auto }` registers the Central Portal
+    # release tasks and publishes validated deployments without a manual Portal step. The launcher
     # bypasses Toolchain 0.12's broken `publish mavenCentral` repository validation.
     # It is validated eagerly: enabling it forces `signArtifacts: true`
     # (which is GLOBAL — then EVERY publish, incl. centralSnapshots/mavenLocal,
@@ -37,7 +38,7 @@ settings:
     # To cut a release, uncomment the two lines below, set `version` to a release (e.g.
     # 0.1.0), and run from CI (creds/signing from KOTLIN_TOOLCHAIN_* env vars). Toolchain
     # 0.11 also flags a required `publishing.artifact` property here — set it at that time.
-    #mavenCentral: enabled
+    #mavenCentral: { enabled: true, publishingMode: auto }
     #signArtifacts: true
     pom:
       url: https://github.com/brikk/brikk-house

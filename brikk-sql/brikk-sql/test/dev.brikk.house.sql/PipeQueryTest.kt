@@ -1,5 +1,6 @@
 package dev.brikk.house.sql
 
+import dev.brikk.house.sql.ast.Distinct
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.Limit
 import dev.brikk.house.sql.ast.Literal
@@ -8,15 +9,21 @@ import dev.brikk.house.sql.ast.Order
 import dev.brikk.house.sql.ast.PipeAggregate
 import dev.brikk.house.sql.ast.PipeOrderBy
 import dev.brikk.house.sql.ast.PipeQuery
+import dev.brikk.house.sql.ast.PipeSelect
 import dev.brikk.house.sql.ast.PipeWhere
 import dev.brikk.house.sql.ast.Select
+import dev.brikk.house.sql.ast.Serde
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.desugarPipes
+import dev.brikk.house.sql.dialects.sql
+import dev.brikk.house.sql.generator.UnsupportedError
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotSame
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -58,6 +65,88 @@ class PipeQueryTest {
         val where = assertIs<Where>(assertIs<Select>(desugared).args["where"])
         // Two WHERE stages AND-merge into a single condition (sqlglot: query.where(...))
         assertEquals("And", (where.thisArg as Expression)::class.simpleName)
+    }
+
+    @Test
+    fun selectDistinctSurvivesParseCopySerdeRenderAndDesugar() {
+        for (modifier in listOf("", "DISTINCT ", "DISTINCT ON (a) ")) {
+            val source = "FROM t |> SELECT ${modifier}a"
+            val ast = assertIs<PipeQuery>(parseOne(source))
+            val stage = assertIs<PipeSelect>(ast.expressionsArg.single())
+            if (modifier.isNotEmpty()) assertIs<Distinct>(stage.args["distinct"])
+            val copy = ast.copy()
+            val loaded = Serde.loadExpression(Serde.dump(ast))
+            assertEquals(ast, loaded)
+            assertEquals(source, loaded.sql())
+            assertEquals(ast, parseOne(loaded.sql()))
+            assertEquals(
+                "WITH __tmp1 AS (SELECT ${modifier}a FROM t) SELECT * FROM __tmp1",
+                desugarPipes(ast).sql(),
+            )
+            assertEquals(copy, ast, "desugaring must not mutate the pipe AST")
+        }
+    }
+
+    @Test
+    fun selectDistinctKeepsExistingStageBoundaries() {
+        for (modifier in listOf("", "ALL ")) {
+            assertEquals(
+                "WITH __tmp1 AS (SELECT DISTINCT * FROM t), __tmp2 AS (SELECT a FROM __tmp1 AS t) SELECT * FROM __tmp2",
+                desugarPipes(parseOne("FROM t |> DISTINCT |> SELECT ${modifier}a")).sql(),
+            )
+        }
+        assertEquals(
+            "WITH __tmp1 AS (SELECT DISTINCT a, b FROM t), __tmp2 AS (SELECT a FROM __tmp1) SELECT * FROM __tmp2",
+            desugarPipes(parseOne("FROM t |> SELECT DISTINCT a, b |> SELECT a")).sql(),
+        )
+        assertEquals(
+            "WITH __tmp1 AS (SELECT DISTINCT a FROM t) SELECT * FROM __tmp1",
+            desugarPipes(parseOne("SELECT ALL * FROM t |> SELECT DISTINCT a", "datafusion")).sql("datafusion"),
+        )
+    }
+
+    @Test
+    fun selectAndDistinctKeepPriorRestrictionsOnTheirInput() {
+        for (restriction in listOf("LIMIT 3", "LIMIT 3 OFFSET 1", "OFFSET 1", "LIMIT 0", "OFFSET 0")) {
+            for (stage in listOf("SELECT category", "SELECT ALL category", "SELECT DISTINCT category", "DISTINCT")) {
+                val query = desugarPipes(parseOne("FROM t |> ORDER BY id |> $restriction |> $stage"))
+                val restricted = query.findAll<Select>().single { it.args["limit"] != null || it.args["offset"] != null }
+                assertNull(restricted.args["distinct"], query.sql())
+                assertEquals("*", (restricted.expressionsArg.single() as Expression).sql())
+                assertIs<Order>(restricted.args["order"])
+                assertEquals(if ("DISTINCT" in stage) 1 else 0, query.findAll<Distinct>().count())
+            }
+        }
+    }
+
+    @Test
+    fun ambiguousBoundaryBindingsFailRatherThanDroppingQualifiers() {
+        for (source in listOf(
+            "FROM t JOIN u ON t.id = u.id |> LIMIT 3 |> SELECT DISTINCT t.category",
+            "SELECT id, id FROM t LIMIT 3 |> SELECT DISTINCT id",
+            "FROM db.t |> LIMIT 3 |> SELECT DISTINCT db.t.category",
+            "SELECT x.*, x.id AS extra FROM t AS x LIMIT 3 |> SELECT DISTINCT x.*",
+            "SELECT t.id AS left_id, u.id AS right_id FROM t JOIN u ON t.id = u.id LIMIT 3 |> SELECT DISTINCT t.id",
+            "FROM db.t |> LIMIT 3 |> SELECT DISTINCT (SELECT MAX(u.id) FROM db.u AS u WHERE u.id = db.t.id) AS matched_id",
+            "SELECT t.id AS left_id, u.id AS right_id FROM t JOIN u ON t.id = u.id LIMIT 3 " +
+                "|> SELECT DISTINCT (SELECT MAX(v.id) FROM v WHERE v.id = t.id) AS matched_id",
+            "FROM db1.t |> LIMIT 3 |> SELECT DISTINCT " +
+                "(SELECT MAX(db2.t.id) FROM db2.t WHERE db2.t.id = db1.t.id) AS matched_id",
+            "FROM t |> ORDER BY RAND() |> LIMIT 3 |> SELECT DISTINCT ON (category) *",
+        )) {
+            assertFailsWith<UnsupportedError>(source) { desugarPipes(parseOne(source)) }
+        }
+    }
+
+    @Test
+    fun distinctOnKeepsRankingOrderAsWellAsTheRestrictedInputOrder() {
+        val query = desugarPipes(parseOne(
+            "FROM t |> ORDER BY category, id DESC |> LIMIT 3 |> SELECT DISTINCT ON (category) *",
+        ))
+        val restricted = query.findAll<Select>().single { it.args["limit"] != null }
+        val distinct = query.findAll<Select>().single { it.args["distinct"] != null }
+        assertEquals(restricted.args["order"], distinct.args["order"])
+        assertNotSame(restricted.args["order"], distinct.args["order"])
     }
 
     @Test

@@ -1,12 +1,16 @@
 package dev.brikk.house.sql
 
+import dev.brikk.house.sql.ast.Distinct
+import dev.brikk.house.sql.ast.Join
 import dev.brikk.house.sql.ast.PipeQuery
+import dev.brikk.house.sql.ast.Union
 import dev.brikk.house.sql.ast.desugarPipes
 import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.parser.parseOne
 import dev.brikk.house.sql.shape.SqlFragment
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -53,5 +57,39 @@ class PipeDorisDesugarTest {
         // Doris-isms survived untranslated:
         assertTrue("DATE_SUB(NOW(), INTERVAL '7' DAY)" in dorisSql || "DATE_SUB(NOW(), INTERVAL 7 DAY)" in dorisSql)
         assertTrue("|>" !in dorisSql)
+    }
+
+    private fun assertNativeFullJoin(stages: String, distinct: Boolean = false) {
+        val fragment = SqlFragment("FROM a |> FULL OUTER JOIN b ON a.id = b.id $stages", "doris")
+        assertTrue(fragment.isPipe)
+        for (pretty in listOf(false, true)) {
+            val result = fragment.toExecutable("doris", pretty = pretty, trackSourceMap = true)
+            assertEquals(emptyList(), result.unsupportedMessages)
+            assertEquals(result.sql, result.sourceMap?.output)
+            val generated = parseOne(result.sql, "doris")
+            assertEquals(listOf("FULL"), generated.findAll(Join::class).map { (it as Join).side }.toList(), result.sql)
+            assertNull(generated.find(Union::class), result.sql)
+            assertEquals(distinct, generated.find(Distinct::class) != null, result.sql)
+        }
+    }
+
+    @Test
+    fun fullOuterJoinAggregatesOnce() {
+        assertNativeFullJoin("|> AGGREGATE COUNT(*) AS n")
+    }
+
+    @Test
+    fun fullOuterJoinGroupsTheWholeRelation() {
+        assertNativeFullJoin("|> AGGREGATE COUNT(*) AS n GROUP BY COALESCE(a.category, b.category) AS bucket")
+    }
+
+    @Test
+    fun fullOuterJoinKeepsGlobalDistinct() {
+        assertNativeFullJoin("|> SELECT DISTINCT COALESCE(a.category, b.category) AS category", distinct = true)
+    }
+
+    @Test
+    fun fullOuterJoinKeepsOrFilterBeforeLimit() {
+        assertNativeFullJoin("|> WHERE a.id = 1 OR b.id = 3 |> ORDER BY 1 DESC, 3 |> LIMIT 2")
     }
 }
