@@ -34,9 +34,9 @@ private val PRETTY_JSON = Json { prettyPrint = true }
  * One pipe stage: the raw SQL slice between `|>` operators (or before the first one),
  * with its tokens and best-effort leading-operator classification.
  *
- * [start]/[endInclusive] are char offsets into the original SQL covering the first
- * through last token of the stage (surrounding whitespace excluded, internal
- * whitespace preserved).
+ * [start]/[endInclusive] are UTF-16 code-unit offsets into the original Kotlin SQL
+ * string covering the first through last token of the stage (surrounding whitespace
+ * excluded, internal whitespace preserved).
  */
 class PipeStage(
     val rawSql: String,

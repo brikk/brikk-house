@@ -10,9 +10,10 @@ import dev.brikk.house.sql.ast.Expression
 /**
  * A position in the original source text, as recorded by the parser into node meta.
  *
- * Coordinate systems (all 1-based columns/lines are 1-based; char offsets are 0-based):
- *  - [line]/[col] (sqlglot token semantics): 1-based, refer to the token's END.
- *  - [start]/[end]: absolute char offsets into the source, [end] inclusive.
+ * Coordinates index Kotlin strings in UTF-16 code units (lines/columns are 1-based;
+ * absolute offsets are 0-based):
+ *  - [line]/[col]: refer to the token's END.
+ *  - [start]/[end]: absolute UTF-16 offsets into the source, [end] inclusive.
  *  - [lineStart]/[colStart] (brikk-native): 1-based line/col of the token's START,
  *    so a caller can underline from where the token begins without counting newlines.
  *
@@ -60,7 +61,7 @@ class SourceMap(
         IntArray(starts.size) { starts[it] }
     }
 
-    /** Converts a 1-based (line, col) position in [output] to a char offset, or null. */
+    /** Converts a 1-based UTF-16 (line, col) position in [output] to an offset, or null. */
     fun offsetOf(line: Int, col: Int): Int? {
         if (line < 1 || line > lineStarts.size || col < 1) return null
         val offset = lineStarts[line - 1] + (col - 1)

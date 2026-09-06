@@ -157,4 +157,18 @@ class PipeStageSplitterTest {
             assertEquals(stage.rawSql, example.substring(stage.start, stage.endInclusive + 1))
         }
     }
+
+    @Test
+    fun supplementaryCharactersDoNotShiftStageSlices() {
+        val sql = "FROM t |> EXTEND '\uD83D\uDE00' AS label |> WHERE missing_column > 100 |> LIMIT 5"
+        val result = PipeStageSplitter.split(sql, dialect = "doris")
+
+        assertEquals(
+            listOf("FROM t", "EXTEND '\uD83D\uDE00' AS label", "WHERE missing_column > 100", "LIMIT 5"),
+            result.stages.map { it.rawSql },
+        )
+        for (stage in result.stages) {
+            assertEquals(stage.rawSql, sql.substring(stage.start, stage.endInclusive + 1))
+        }
+    }
 }

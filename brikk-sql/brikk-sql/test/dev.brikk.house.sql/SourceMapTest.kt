@@ -44,6 +44,20 @@ class SourceMapTest {
     }
 
     @Test
+    fun sourcePositionsIndexKotlinStringsInUtf16() {
+        val source = "SELECT '\uD83D\uDE00' AS face, target FROM tbl"
+        val ast = parseOne(source)
+        val target = ast.findAll(Identifier::class).first { it.name == "target" }
+        val pos = assertNotNull(SourceMap.sourcePosOf(target))
+
+        assertEquals(21, pos.start)
+        assertEquals(26, pos.end)
+        assertEquals(22, pos.colStart)
+        assertEquals(27, pos.colEnd)
+        assertEquals("target", source.substring(pos.start, pos.end + 1))
+    }
+
+    @Test
     fun positionsCarryStartAndEndAnchors() {
         // brikk-native: SourcePos exposes both anchors, all 1-based. `col`/`colEnd`
         // are the token END; `colStart` is where it BEGINS (no line-counting needed).
@@ -234,6 +248,18 @@ class SourceMapTest {
         val pos = assertNotNull(map.sourcePosition(axtOut, exact = true))
         assertEquals(2, pos.lineStart)
         assertEquals(source.indexOf("event_axt"), pos.start)
+    }
+
+    @Test
+    fun executableSourceMapStaysExactAfterSupplementaryCharacters() {
+        val source =
+            "FROM t |> EXTEND '\uD83D\uDE00' AS label |> WHERE missing_column > 0 |> LIMIT 5"
+        val result = SqlFragment(source, "doris").toExecutable("doris", pretty = true)
+        val outputOffset = result.sql.indexOf("missing_column")
+        val pos = assertNotNull(result.sourceMap?.sourcePosition(outputOffset, exact = true))
+
+        assertEquals(source.indexOf("missing_column"), pos.start)
+        assertEquals("missing_column", source.substring(pos.start, pos.end + 1))
     }
 
     @Test

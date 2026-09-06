@@ -203,6 +203,16 @@ class SqlVerifierTest {
     }
 
     @Test
+    fun dorisErrorColumnsAreNormalizedToUtf16() {
+        val sql = "SELECT '\uD83D\uDE00' FROM WHERE"
+        val result = SqlVerifiers.forEngine("doris")!!.verify(sql)
+
+        assertFalse(result.accepted)
+        assertEquals(1, result.line)
+        assertEquals(sql.indexOf("WHERE") + 1, result.col)
+    }
+
+    @Test
     fun dorisVerifiesExpressionFragments() {
         val verifier = SqlVerifiers.forEngine("doris")!!
         assertTrue(verifier.verifyExpression("DATE_TRUNC(c2, 'MONTH')").accepted)

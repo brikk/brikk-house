@@ -1,4 +1,9 @@
 {
     "sqlglot_version": "v30.17.0-93-gdcc36544a",
-    "cases": []
+    "cases": [
+        {
+            "sql": "SELECT $🦆$foo$🦆$",
+            "reason": "Python positions use code points; brikk positions index Kotlin strings in UTF-16"
+        }
+    ]
 }
