@@ -12,6 +12,13 @@ relation name/kind and column name/native SQL type/nullability are retained.
 Column order follows the server's schema order. Raw DDL, defaults, property bags,
 connection URLs, usernames, and passwords are not written into the snapshot.
 
+The native SQL type is distinct from the JDBC transport type. Doris can send
+`LARGEINT` values as `CHAR` through the MySQL protocol. The compiler maps the
+normalized SQL type `INT128` to Kotlin `BigInteger`, not `Long` or `String`.
+Unsigned `BIGINT` also requires `BigInteger`; unsigned `INT` requires `Long`.
+A future result decoder must use the SQL contract rather than infer numeric
+width from `ResultSetMetaData.getColumnClassName()` alone.
+
 ## Connection settings
 
 Keep settings in an ignored `.env.doris` file. Do not put credentials in SQL,

@@ -68,6 +68,33 @@ class BrikkSqlSchemaDirectoryTest {
         )
 
     @Test
+    fun `captured large integers generate BigInteger properties and satisfy wide traits`() {
+        val root = createTempDirectory("brikk-schema-wide-integer")
+        try {
+            snapshot(root, listOf(records("LARGEINT")))
+            val result = compile(root.toString(), source = """
+                package demo
+                import dev.brikk.house.sql.runtime.*
+                import java.math.BigInteger
+
+                @BrikkTrait interface WideRecord : Partial { val record_id: BigInteger }
+                @BrikkSql fun records() = Sql.doris("SELECT record_id FROM sample.analytics.records")
+                @BrikkSql fun minimum() = Sql.doris("SELECT MIN(record_id) AS smallest FROM sample.analytics.records")
+                @BrikkSql fun identity(src: Rel<WideRecord>) = Sql.doris("SELECT record_id FROM src()")
+                fun id(row: RecordsOut): BigInteger = row.record_id
+                fun smallest(row: MinimumOut): BigInteger? = row.smallest
+                fun chained() = identity(records())
+            """.trimIndent())
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+            assertEquals("java.math.BigInteger", result.classLoader.loadClass("demo.RecordsOut").getMethod("getRecord_id").returnType.name)
+            assertEquals("java.math.BigInteger", result.classLoader.loadClass("demo.MinimumOut").getMethod("getSmallest").returnType.name)
+            assertEquals("java.math.BigInteger", result.classLoader.loadClass("demo.IdentityOut").getMethod("getRecord_id").returnType.name)
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun `a Doris snapshot also permits PostgreSQL query declarations`() {
         val root = createTempDirectory("brikk-schema-mixed-dialect")
         try {

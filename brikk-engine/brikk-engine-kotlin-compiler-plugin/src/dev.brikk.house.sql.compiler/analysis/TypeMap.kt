@@ -23,13 +23,15 @@ object TypeMap {
     val INSTANT = ClassId(JAVA_TIME, Name.identifier("Instant"))
     val LOCAL_DATE = ClassId(JAVA_TIME, Name.identifier("LocalDate"))
     val BIG_DECIMAL = ClassId(JAVA_MATH, Name.identifier("BigDecimal"))
+    val BIG_INTEGER = ClassId(JAVA_MATH, Name.identifier("BigInteger"))
 
     /** Base-dialect SQL type string (possibly with parameters) -> Kotlin type. */
     fun sqlToKotlin(sqlType: String, nullable: Boolean?): KType {
         val head = sqlType.substringBefore('(').trim().uppercase()
         val classId = when (head) {
-            "BIGINT", "INT64", "INT128", "UBIGINT" -> StandardClassIds.Long
-            "INT", "INTEGER", "SMALLINT", "TINYINT", "MEDIUMINT", "INT32", "UINT", "USMALLINT", "UTINYINT" -> StandardClassIds.Int
+            "INT128", "UBIGINT" -> BIG_INTEGER
+            "BIGINT", "INT64", "UINT" -> StandardClassIds.Long
+            "INT", "INTEGER", "SMALLINT", "TINYINT", "MEDIUMINT", "INT32", "USMALLINT", "UTINYINT" -> StandardClassIds.Int
             "BOOLEAN", "BOOL", "BIT" -> StandardClassIds.Boolean
             "DOUBLE", "FLOAT", "REAL", "FLOAT64" -> StandardClassIds.Double
             "DECIMAL", "NUMERIC", "BIGDECIMAL", "MONEY", "SMALLMONEY" -> BIG_DECIMAL
@@ -55,6 +57,7 @@ object TypeMap {
         "Double" -> "DOUBLE"
         "Float" -> "FLOAT"
         "BigDecimal" -> "DECIMAL"
+        "BigInteger" -> "INT128"
         "Instant" -> "TIMESTAMPTZ"
         "LocalDate" -> "DATE"
         "Any" -> "UNKNOWN"
@@ -70,6 +73,7 @@ object TypeMap {
         "Double" -> StandardClassIds.Double
         "Float" -> StandardClassIds.Float
         "BigDecimal" -> BIG_DECIMAL
+        "BigInteger" -> BIG_INTEGER
         "Instant" -> INSTANT
         "LocalDate" -> LOCAL_DATE
         "Any" -> StandardClassIds.Any
