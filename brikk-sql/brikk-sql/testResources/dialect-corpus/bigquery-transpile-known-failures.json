@@ -33,26 +33,6 @@
             "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`"
         },
         {
-            "case": "write|duckdb|SELECT t.c1, h.c2, s.c3 FROM t1 AS t, UNNEST(t.t2) AS h, UNNEST(h.t3) AS s",
-            "reason": "expected `SELECT t.c1, h.c2, s.c3 FROM t1 AS t CROSS JOIN UNNEST(t.t2) AS _t0(h) CROSS JOIN UNNEST(h.t3) AS _t1(s)` actual `SELECT t.c1, h.c2, s.c3 FROM t1 AS t CROSS JOIN UNNEST(t.t2) AS h CROSS JOIN UNNEST(h.t3) AS s`"
-        },
-        {
-            "case": "write|bigquery|SELECT results FROM Coordinates, Coordinates.position AS results",
-            "reason": "expected `SELECT results FROM Coordinates CROSS JOIN UNNEST(Coordinates.position) AS results` actual `SELECT results FROM Coordinates CROSS JOIN Coordinates.position AS results`"
-        },
-        {
-            "case": "write|presto|SELECT results FROM Coordinates, Coordinates.position AS results",
-            "reason": "expected `SELECT results FROM Coordinates CROSS JOIN UNNEST(Coordinates.position) AS _t0(results)` actual `SELECT results FROM Coordinates CROSS JOIN Coordinates.position AS results`"
-        },
-        {
-            "case": "read|presto|SELECT results FROM Coordinates AS c, UNNEST(c.position) AS results",
-            "reason": "expected `SELECT results FROM Coordinates AS c, UNNEST(c.position) AS results` actual `SELECT results FROM Coordinates AS c, UNNEST(c.position) AS _t`"
-        },
-        {
-            "case": "write|presto|SELECT results FROM Coordinates AS c, UNNEST(c.position) AS results",
-            "reason": "expected `SELECT results FROM Coordinates AS c CROSS JOIN UNNEST(c.position) AS _t0(results)` actual `SELECT results FROM Coordinates AS c CROSS JOIN UNNEST(c.position) AS results`"
-        },
-        {
             "case": "write|duckdb|TIMESTAMP(x)",
             "reason": "expected `CAST(x AS TIMESTAMPTZ)` actual `TIMESTAMP(x)`"
         },
@@ -99,10 +79,6 @@
         {
             "case": "write|duckdb|SELECT TIME(15, 30, 00)",
             "reason": "expected `SELECT MAKE_TIME(15, 30, 00)` actual `SELECT TIME_FROM_PARTS(15, 30, 00)`"
-        },
-        {
-            "case": "write|duckdb|SELECT * FROM t WHERE EXISTS(SELECT * FROM unnest(nums) AS x WHERE x > 1)",
-            "reason": "expected `SELECT * FROM t WHERE EXISTS(SELECT * FROM UNNEST(nums) AS _t0(x) WHERE x > 1)` actual `SELECT * FROM t WHERE EXISTS(SELECT * FROM UNNEST(nums) AS x WHERE x > 1)`"
         },
         {
             "case": "write|spark|SELECT TIMESTAMP_SUB(TIMESTAMP \"2008-12-25 15:30:00+00\", INTERVAL 10 MINUTE)",
@@ -215,18 +191,6 @@
         {
             "case": "write|duckdb|SELECT AS STRUCT ARRAY(SELECT AS STRUCT 1 AS b FROM x) AS y FROM z",
             "reason": "expected `SELECT {'y': ARRAY(SELECT {'b': 1} FROM x)} FROM z` actual `SELECT AS STRUCT ARRAY(SELECT AS STRUCT 1 AS b FROM x) AS y FROM z`"
-        },
-        {
-            "case": "read|spark|SELECT * FROM UNNEST(['7', '14']) AS x",
-            "reason": "expected `SELECT * FROM UNNEST(['7', '14']) AS x` actual `SELECT * FROM UNNEST(['7', '14']) AS _t0`"
-        },
-        {
-            "case": "write|presto|SELECT * FROM UNNEST(['7', '14']) AS x",
-            "reason": "expected `SELECT * FROM UNNEST(ARRAY['7', '14']) AS _t0(x)` actual `SELECT * FROM UNNEST(ARRAY['7', '14']) AS x`"
-        },
-        {
-            "case": "write|spark|SELECT * FROM UNNEST(['7', '14']) AS x",
-            "reason": "expected `SELECT * FROM EXPLODE(ARRAY('7', '14')) AS _t0(x)` actual `SELECT * FROM EXPLODE(ARRAY('7', '14')) AS x`"
         },
         {
             "case": "write|duckdb|SELECT * FROM a WHERE b IN UNNEST([1, 2, 3])",
@@ -349,18 +313,6 @@
             "reason": "expected `SELECT CAST(JSON('{\"key\": 2000}') -> '$.key' AS BIGINT)` actual `SELECT INT64(JSON('{\"key\": 2000}') -> '$.key')`"
         },
         {
-            "case": "read|duckdb|SELECT * FROM t1, UNNEST(`t1`) AS `col`",
-            "reason": "expected `SELECT * FROM t1, UNNEST(`t1`) AS `col`` actual `SELECT * FROM t1, UNNEST(`t1`) AS `t1``"
-        },
-        {
-            "case": "read|duckdb|SELECT * FROM t, UNNEST(`t2`.`t3`) AS `col`",
-            "reason": "expected `SELECT * FROM t, UNNEST(`t2`.`t3`) AS `col`` actual `SELECT * FROM t, UNNEST(`t1`.`t2`.`t3`) AS `t1``"
-        },
-        {
-            "case": "read|duckdb|SELECT * FROM t1, UNNEST(`t1`.`t2`.`t3`.`t4`) AS `col`",
-            "reason": "expected `SELECT * FROM t1, UNNEST(`t1`.`t2`.`t3`.`t4`) AS `col`` actual `SELECT * FROM t1, UNNEST(`t1`.`t2`.`t3`.`t4`) AS `t3``"
-        },
-        {
             "case": "write|duckdb|SELECT PARSE_DATETIME('%F %T', '2023-01-15 14:30:00')",
             "reason": "expected `SELECT STRPTIME('1970 ' || '2023-01-15 14:30:00', '%Y ' || '%Y-%m-%d %H:%M:%S')` actual `SELECT PARSE_DATETIME('2023-01-15 14:30:00', '%Y-%m-%d %H:%M:%S', 1970)`"
         },
@@ -415,22 +367,6 @@
         {
             "case": "write|trino|SELECT GENERATE_UUID()",
             "reason": "expected `SELECT CAST(UUID() AS VARCHAR)` actual `SELECT UUID()`"
-        },
-        {
-            "case": "write|duckdb|WITH sample AS (SELECT * FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:03']) AS ts) SELECT ts, TIMESTAMP_TRUNC(ts, DAY, 'America/New_York') AS truncated_ts FROM sample",
-            "reason": "expected `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) SELECT ts, DATE_TRUNC('DAY', ts AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York' AS truncated_ts FROM sample` actual `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS ts) SELECT ts, DATE_TRUNC('DAY', ts AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York' AS truncated_ts FROM sample`"
-        },
-        {
-            "case": "write|duckdb|WITH sample AS (SELECT ts FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:03']) AS ts) SELECT ts, TIMESTAMP_TRUNC(ts, DAY) AS truncated_ts FROM sample",
-            "reason": "expected `WITH sample AS (SELECT ts FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) SELECT ts, DATE_TRUNC('DAY', ts) AS truncated_ts FROM sample` actual `WITH sample AS (SELECT ts FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS ts) SELECT ts, DATE_TRUNC('DAY', ts) AS truncated_ts FROM sample`"
-        },
-        {
-            "case": "write|duckdb|WITH sample AS (SELECT * FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:03']) AS ts) SELECT ts, TIMESTAMP_TRUNC(ts, MINUTE, 'America/New_York') AS truncated_ts FROM sample",
-            "reason": "expected `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) SELECT ts, DATE_TRUNC('MINUTE', ts) AS truncated_ts FROM sample` actual `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS ts) SELECT ts, DATE_TRUNC('MINUTE', ts) AS truncated_ts FROM sample`"
-        },
-        {
-            "case": "write|duckdb|WITH sample AS (SELECT * FROM UNNEST([TIMESTAMP '2024-03-15 14:35:46', TIMESTAMP '2024-03-16 01:12:03']) AS ts) SELECT ts, TIMESTAMP_TRUNC(ts, MINUTE) AS truncated_ts FROM sample",
-            "reason": "expected `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS _t0(ts)) SELECT ts, DATE_TRUNC('MINUTE', ts) AS truncated_ts FROM sample` actual `WITH sample AS (SELECT * FROM UNNEST([CAST('2024-03-15 14:35:46' AS TIMESTAMPTZ), CAST('2024-03-16 01:12:03' AS TIMESTAMPTZ)]) AS ts) SELECT ts, DATE_TRUNC('MINUTE', ts) AS truncated_ts FROM sample`"
         },
         {
             "case": "write|duckdb|SELECT GREATEST(1, NULL, 3)",

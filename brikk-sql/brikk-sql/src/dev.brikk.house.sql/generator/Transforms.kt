@@ -79,6 +79,7 @@ import dev.brikk.house.sql.ast.toIdentifier
 import dev.brikk.house.sql.optimizer.findAllInScope
 import dev.brikk.house.sql.optimizer.findNewName
 import dev.brikk.house.sql.optimizer.Scope
+import dev.brikk.house.sql.optimizer.traverseScope
 
 /**
  * sqlglot: transforms.eliminate_qualify — converts SELECT statements that contain the
@@ -385,16 +386,21 @@ fun unqualifyColumns(expression: Expression): Expression {
  */
 fun unqualifyUnnest(expression: Expression): Expression {
     if (expression is Select) {
-        val unnestAliases = findAllInScope(expression, Unnest::class)
-            .filter { it.parent is From || it.parent is Join }
-            .map { it.alias }
-            .filter { it.isNotEmpty() }
-            .toSet()
-        if (unnestAliases.isNotEmpty()) {
-            for (column in expression.findAll(Column::class).toList()) {
-                val leftmost = (column as Column).parts.first()
-                if (leftmost.argKey != "this" && leftmost.name in unnestAliases) {
-                    leftmost.pop()
+        // Resolve each prefix in its own scope: a nested relation may shadow an
+        // outer UNNEST alias, while correlated references still need stripping.
+        for (scope in traverseScope(expression)) {
+            for (column in scope.walk().filterIsInstance<Column>()) {
+                val leftmost = column.parts.first()
+                if (leftmost.argKey == "this") continue
+                var owner: Scope? = scope
+                while (owner != null) {
+                    val source = owner.sources[leftmost.name]
+                    if (source != null) {
+                        val unnest = (source as? Scope)?.expression as? Unnest
+                        if (unnest != null && unnest.alias == leftmost.name) leftmost.pop()
+                        break
+                    }
+                    owner = owner.parent
                 }
             }
         }

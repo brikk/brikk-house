@@ -664,6 +664,30 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
   `_date_diff_sql` changes. Local correctness corrections have no new corpus
   mismatches at the current pin; reporting/adoption status is pending.
 
+## 22. BigQuery UNNEST alias and offset contracts
+
+- **ASTRA-008:** explicit and implicit BigQuery UNNEST aliases use the upstream
+  column-only AST representation. Implicit paths resolve against preceding sources
+  using BigQuery's identifier rules, including quoted physical-table names.
+  Generator cleanup removes internal relation qualifiers by scope, without stripping
+  struct-value prefixes or nested aliases that shadow an outer UNNEST.
+- **Cross-dialect corrections:** Presto/Trino keep named struct elements intact with
+  a single-field ROW wrapper. Named BigQuery offsets use a lateral projection that
+  exposes zero-based positions. In the reverse source-aware route, named relation
+  columns become fields of an ARRAY subquery's STRUCT, preserving qualifications
+  and renamed fields; explicit ordinality becomes offset plus one.
+- **Limits:** unknown element types, unresolved bare/star/nested struct references,
+  offsets without the required aliases, and filtered correlated outer offset joins
+  report unsupported diagnostics. Supplied schema annotations are retained. This
+  does not implement all array operations or every relational UNNEST form.
+- **Verification:** `BigqueryUnnestResultTest` executes forward output on Trino 483
+  when `BRIKK_TRINO_CONTAINER` is set. Native BigQuery and reverse output have
+  parser/SQL-shape checks, not live BigQuery execution. All ten remaining exposed
+  qualification cases and eighteen existing transpile-ledger cases now pass.
+- **Upstream sync:** the parser/normalization representation follows the pin; row
+  preservation, offset conversion, and scope-aware cleanup are local corrections.
+  Retain these regressions rather than reverting toward silent upstream mistakes.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

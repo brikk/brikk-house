@@ -187,7 +187,7 @@ open class Dialect {
      * resembles how it'd be resolved by this dialect. Mutates in place (copy=False
      * semantics), like the Python original.
      */
-    fun <E : Expression> normalizeIdentifier(expression: E): E {
+    open fun <E : Expression> normalizeIdentifier(expression: E): E {
         if (
             expression is Identifier &&
             normalizationStrategy != NormalizationStrategy.CASE_SENSITIVE &&

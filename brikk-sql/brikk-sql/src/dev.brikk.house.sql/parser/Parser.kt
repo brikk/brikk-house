@@ -1,5 +1,7 @@
 package dev.brikk.house.sql.parser
 
+import dev.brikk.house.sql.ast.column
+
 import dev.brikk.house.sql.ast.Add
 import dev.brikk.house.sql.ast.AddConstraint
 import dev.brikk.house.sql.ast.AddPartition
@@ -2281,7 +2283,29 @@ open class Parser(
             }
         }
 
-        // sqlglot: SUPPORTS_IMPLICIT_UNNEST — base: False.
+        val implicitFrom = this_?.args?.get("from_") as? From
+        if (supportsImplicitUnnest && implicitFrom != null && this_ != null) {
+            val source = implicitFrom.thisArg as Expression
+            val refs = mutableSetOf(dev.brikk.house.sql.optimizer.normalizeIdentifiers(source.copy(), dialect).aliasOrName)
+            for (join in (this_.args["joins"] as? List<*>).orEmpty().filterIsInstance<Join>()) {
+                val table = join.thisArg as Expression
+                val normalized = table.copy()
+                normalized.meta["maybe_column"] = true
+                dev.brikk.house.sql.optimizer.normalizeIdentifiers(normalized, dialect)
+                if (table is Table && join.args["on"] == null && normalized is Table &&
+                    normalized.parts.size > 1 && normalized.parts.first().name in refs) {
+                    val parts = table.parts
+                    val qualified = parts.take(4).asReversed()
+                    val value = column(qualified[0], qualified.getOrNull(1), qualified.getOrNull(2),
+                        qualified.getOrNull(3), fields = parts.drop(4))
+                    val alias = table.args["alias"] as? TableAlias
+                    val unnest = Unnest(args("expressions" to listOf(value)))
+                    if (alias != null) unnest.set("alias", TableAlias(args("columns" to listOf((alias.thisArg as Expression).copy()))))
+                    table.replace(unnest)
+                }
+                refs.add(normalized.aliasOrName)
+            }
+        }
 
         return this_
     }
@@ -2888,6 +2912,11 @@ open class Parser(
         val alias = if (withAlias) parseTableAlias() else null
 
         if (alias != null) {
+            if (dialect.unnestColumnOnly) {
+                if (alias.columns.isNotEmpty()) raiseError("Unexpected extra column alias in unnest.")
+                alias.set("columns", listOf(alias.thisArg))
+                alias.set("this", null)
+            }
             @Suppress("UNCHECKED_CAST")
             val columns = alias.args["columns"] as? MutableList<Expression> ?: mutableListOf()
             if (offset == true && expressions.size < columns.size) {

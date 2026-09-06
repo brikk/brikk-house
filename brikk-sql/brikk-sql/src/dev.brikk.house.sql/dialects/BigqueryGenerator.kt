@@ -7,7 +7,11 @@ import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.generator.eliminateDistinctOn
+import dev.brikk.house.sql.generator.unqualifyUnnest
 import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
+import dev.brikk.house.sql.optimizer.annotateTypes
+import dev.brikk.house.sql.optimizer.findAllInScope
+import dev.brikk.house.sql.optimizer.findNewName
 import dev.brikk.house.sql.parser.BigqueryTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -57,6 +61,7 @@ open class BigqueryGenerator(
     overrides = if (overrides.isEmpty()) TRANSFORMS else TRANSFORMS + overrides,
     sourceDialect = sourceDialect,
 ) {
+    override val dialectUnnestColumnOnly: Boolean get() = true
 
     override val dialect: Dialect get() = Dialects.BIGQUERY
 
@@ -249,12 +254,71 @@ open class BigqueryGenerator(
         return "RETURNS $rendered"
     }
 
+    // brikk extension (ASTRA-008): preserve relation-column aliases as fields of a BigQuery value.
+    private fun preserveUnnestRelationAliases(expression: Expression): Expression {
+        if (sourceDialect?.lowercase() !in setOf("presto", "trino")) return expression
+        val used = expression.findAll<Identifier>().map { it.name }.toMutableSet()
+        for (unnest in findAllInScope(expression, Unnest::class).filterIsInstance<Unnest>()) {
+            val alias = unnest.args["alias"] as? TableAlias ?: continue
+            val columns = alias.columns.filterIsInstance<Expression>()
+            if (alias.thisArg == null || columns.isEmpty()) continue
+            val original = unnest.expressionsArg.singleOrNull() as? Expression
+            if (original == null) {
+                unsupported("BigQuery UNNEST cannot preserve multiple input arrays in one call")
+                continue
+            }
+            var input = annotateTypes(original.copy(), dialect = Dialects.forName(sourceDialect!!), overwriteTypes = false)
+            val arrayType = input.type as? DataType
+            val element = arrayType?.takeIf { it.thisArg == DType.ARRAY }?.expressionsArg?.singleOrNull() as? DataType
+            if (element == null || element.findAll<DataType>().any { it.thisArg == DType.UNKNOWN } ||
+                (element.thisArg != DType.STRUCT && columns.size != 1) ||
+                (element.thisArg == DType.STRUCT && element.expressionsArg.size != columns.size)) {
+                unsupported("BigQuery UNNEST relation aliases require known matching array fields")
+                continue
+            }
+            val item = findNewName(used, "_unnest_value").also { used.add(it) }
+            val offset = unnest.args["offset"] as? Expression
+            val ordinal = findNewName(used, "_unnest_offset").also { used.add(it) }
+            if (element.thisArg == DType.STRUCT) {
+                val fields = element.expressionsArg.filterIsInstance<Expression>().zip(columns).map { (field, name) ->
+                    ColumnDef(args("this" to name.copy(), "kind" to (if (field is ColumnDef) field.args["kind"] as Expression else field).copy()))
+                }
+                val row = DataType(args("this" to DType.STRUCT, "expressions" to fields, "nested" to true))
+                input = Cast(args("this" to input, "to" to DataType(args("this" to DType.ARRAY, "expressions" to listOf(row), "nested" to true))))
+            }
+            val projections = columns.map { name ->
+                aliasExpression(if (element.thisArg == DType.STRUCT) column(name, table = item) else column(item), name)
+            }.toMutableList()
+            if (offset != null) projections.add(aliasExpression(Add(args("this" to column(ordinal), "expression" to Literal.number("1"))), offset))
+            val inner = Unnest(args("expressions" to listOf(input),
+                "alias" to TableAlias(args("columns" to listOf(toIdentifier(item)))),
+                "offset" to if (offset != null) toIdentifier(ordinal) else null))
+            val select = Select(args("kind" to "STRUCT", "expressions" to projections, "from_" to From(args("this" to inner))))
+            unnest.set("expressions", listOf(ArrayNode(args("expressions" to listOf(select)))))
+            unnest.set("offset", null)
+            alias.set("columns", listOf((alias.thisArg as Expression).copy()))
+            alias.set("this", null)
+        }
+        return expression
+    }
+
+    override fun unnestSql(expression: Unnest): String {
+        val aliases = (expression.args["alias"] as? TableAlias)?.columns.orEmpty()
+        if (sourceDialect?.lowercase() in setOf("presto", "trino") && expression.args["offset"] == true) {
+            unsupported("BigQuery UNNEST ordinality conversion requires explicit value and ordinal column aliases")
+        }
+        if (expression.expressionsArg.size > 1 || aliases.size > 1) {
+            unsupported("BigQuery UNNEST requires one input and one value alias; relational field aliases need type-aware lowering")
+        }
+        return super.unnestSql(expression)
+    }
+
     // sqlglot bac1a897b: _array_contains_sql lowers to EXISTS over UNNEST.
     fun arrayContainsSql(expression: ArrayContains): String {
         val unnest = Unnest(
             args(
                 "expressions" to listOf((expression.args["this"] as Expression).copy()),
-                "alias" to TableAlias(args("this" to toIdentifier("_col"))),
+                "alias" to TableAlias(args("this" to toIdentifier("_unnest"), "columns" to listOf(toIdentifier("_col")))),
             )
         )
         val select = Select(
@@ -582,17 +646,10 @@ open class BigqueryGenerator(
             reg(Rollback::class) { _ -> "ROLLBACK TRANSACTION" }
             reg(ParseTime::class) { e -> func("PARSE_TIME", bg().formatTime(e), e.args["this"]) }
             reg(ParseDatetime::class) { e -> func("PARSE_DATETIME", bg().formatTime(e), e.args["this"]) }
-            // sqlglot bigquery order: [explode_projection_to_unnest(), unqualify_unnest,
-            // eliminate_distinct_on, _alias_ordered_group, eliminate_semi_and_anti_joins].
-            // explode_projection_to_unnest remains NOT PORTED. unqualify_unnest is also
-            // not wired here: our parser stores an
-            // explicit UNNEST alias in TableAlias.this (sqlglot's bigquery parser moves it
-            // to TableAlias.columns via _implicit_unnests_to_explicit), so sqlglot's
-            // .alias-based unnest-alias collection is a no-op there while ours would
-            // over-strip `h.c2` -> `c2`. Porting it cleanly needs the parser-side implicit
-            // unnest rewrite, so it remains unported.
+            // Parser aliases are column-only; only qualifier-added relation aliases
+            // are removed. Legitimate value/struct qualifications stay intact.
             reg(Select::class) { e ->
-                var s = eliminateDistinctOn(e)
+                var s = eliminateDistinctOn(unqualifyUnnest(bg().preserveUnnestRelationAliases(e)))
                 // sqlglot bac1a897b: _alias_ordered_group works around BigQuery's grouped
                 // expression + ordered alias bug by grouping on the projection alias.
                 val select = s as Select

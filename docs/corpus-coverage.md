@@ -10,6 +10,9 @@ an unknown dialect/setting, or an unclassified fixture fails the gate.
 
 ## Semantic gates
 
+This table preserves the ASTRA-014 coverage baseline, including the 13 qualification
+failures first exposed by that work. Current resolution is recorded below.
+
 | Corpus | Executed before | Executed now | Excluded | Oracle-failed skips | Known failures |
 |---|---:|---:|---:|---:|---:|
 | Qualification | 324 | 388 | 39 | 0 | 13 |
@@ -26,26 +29,34 @@ and one duplicate remain individually identified in `lineage-corpus/base.json`.
 One oracle-raised lineage case executes as a negative assertion. Qualification's
 20 expected-error assertions execute too. Expected errors are not skipped failures.
 
-The additional qualification executions expose 13 existing defects/parity gaps.
-Their exact SQL keys and reviewed reasons are in `qualify-corpus/known-failures.json`.
-They continue to execute; no comparison or pass-rate gate was weakened.
+The additional qualification executions exposed 13 existing defects/parity gaps.
+All 13 are now resolved. They continue to execute; no comparison or pass-rate gate
+was weakened.
 
-- G1: eight BigQuery UNNEST alias, star-expansion, struct-field, and correlation
-  cases. Some are output-spelling differences; missing values and wrong correlation
-  bindings are semantic defects. Coordinate parser/resolver/generator work under
-  ASTRA-008 rather than stripping qualifiers indiscriminately.
-- G2: two missing BigQuery implicit UNNEST conversions, also ASTRA-008.
-- G3: one parenthesized SELECT operand rejected by `Resolver` during set-operation
-  column discovery. Unwrap subqueries before dispatch without accepting invalid operands.
-- G4: two StarRocks `TableFromRows` default-column-list omissions in `QualifyTables`.
-  Apply the existing default-column mapping while preserving explicit aliases.
+- G1, resolved under ASTRA-008: eight BigQuery UNNEST alias, star-expansion,
+  struct-field, and correlation cases. These included output-spelling differences,
+  missing values, and wrong correlation bindings.
+- G2, resolved under ASTRA-008: two missing BigQuery implicit UNNEST conversions.
+- G3, resolved: one parenthesized SELECT operand rejected by `Resolver` during
+  set-operation column discovery.
+- G4, resolved: two StarRocks `TableFromRows` default-column-list omissions in
+  `QualifyTables`.
 
 The coverage task did not fix these groups. G3 has since been fixed: wrapped SELECT
 operands resolve correctly, including repeated parentheses, while wrapped non-query
 operands still raise OptimizeError. Its exact ledger entry was removed after the
 public shape and resolver regressions passed. G4 has also been fixed by applying
 the existing dialect default-column mapping without replacing explicit aliases;
-both ledger entries were removed. G1 and G2 remain open.
+both ledger entries were removed.
+
+ASTRA-008 has now resolved G1 and G2. `build/astra-008-core.log` reports 388/388
+qualification assertions passing, with the same 39 exclusions and zero oracle-failed
+skips. Its qualification gate failed only because the final 10 ledger entries were
+stale; those exact keys have been removed, leaving `qualify-corpus/known-failures.json`
+empty. The historical table above still records the original 13 failures. This
+qualification result does not establish complete struct-array or offset conversion
+support across dialects; remaining BigQuery transpile parity is tracked in
+`TODO-bigquery.md`.
 
 ## Base deferral
 

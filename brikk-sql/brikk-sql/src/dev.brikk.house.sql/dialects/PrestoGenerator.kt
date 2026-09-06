@@ -988,6 +988,90 @@ open class PrestoGenerator(
         return super.bracketSql(expression)
     }
 
+    // brikk extension (ASTRA-008): value aliases name entire elements, not their flattened fields.
+    override fun unnestSql(expression: Unnest): String {
+        val alias = expression.args["alias"] as? TableAlias
+        val columnOnly = alias != null && alias.thisArg == null && alias.columns.size == 1
+        val bigquery = sourceDialect.equals("bigquery", ignoreCase = true) ||
+            (sourceDialect == null && columnOnly && expression.args["explode_array"] == true)
+        if (!bigquery) {
+            if (sourceDialect == null && columnOnly && expression.args["offset"] is Expression) {
+                unsupported("BigQuery UNNEST offset conversion requires sourceDialect to distinguish OFFSET from ORDINALITY")
+            }
+            if (sourceDialect == null && columnOnly) {
+                val type = (expression.expressionsArg.singleOrNull() as? Expression)?.type as? DataType
+                val element = type?.expressionsArg?.singleOrNull() as? DataType
+                if (type?.thisArg != DType.ARRAY || element == null || element.thisArg == DType.UNKNOWN) {
+                    unsupported("UNNEST with a value alias requires sourceDialect and a known array element type for Presto/Trino")
+                }
+            }
+            return super.unnestSql(expression)
+        }
+
+        val array = expression.expressionsArg.singleOrNull() as? Expression
+        val arrayType = array?.type as? DataType
+        val elementType = if (arrayType?.thisArg == DType.ARRAY) {
+            arrayType.expressionsArg.singleOrNull() as? DataType
+        } else null
+        val struct = expression.args["explode_array"] == true || elementType?.thisArg == DType.STRUCT
+        if (array == null || (!struct && (elementType == null || elementType.thisArg == DType.UNKNOWN))) {
+            unsupported("BigQuery UNNEST requires a known array element type for Presto/Trino; annotate or cast unknown columns/UDF results")
+            return super.unnestSql(expression)
+        }
+        val offset = expression.args["offset"] as? Expression
+        val value = alias?.columns?.singleOrNull() as? Expression
+        if (value == null) {
+            if (offset != null || alias != null) {
+                unsupported("BigQuery UNNEST with OFFSET requires one explicit value alias for Presto/Trino")
+            }
+            // Without a value alias both engines expose the struct's top-level fields.
+            return super.unnestSql(expression)
+        }
+
+        if (struct) {
+            val scope = expression.findAncestor<Select>()
+            val allowed = setOfNotNull(value.name.lowercase(), offset?.name?.lowercase())
+            val unsafe = scope?.walk(prune = { it === expression || (it is Select && it !== scope) })?.any {
+                (it is Star && it.parent !is Count) ||
+                    (it is Column && it.args["table"] == null && it.name.lowercase() !in allowed)
+            } == true
+            if (unsafe) {
+                unsupported("BigQuery struct UNNEST bare fields/stars require explicit value-qualified fields or whole-value projections for Presto/Trino")
+            }
+            // Correlated bare fields inside nested queries need name resolution, not a textual rewrite.
+            if (scope?.findAll<Select>()?.any { it !== scope } == true) {
+                unsupported("BigQuery struct UNNEST with nested queries requires resolved references for Presto/Trino")
+            }
+        }
+
+        val used = expression.root().findAll<Identifier>().map { it.name.lowercase() }.toMutableSet()
+        val index = expression.root().findAll<Unnest>().indexOfFirst { it === expression }
+        fun fresh(base: String): String {
+            var name = "${base}_$index"
+            while (!used.add(name.lowercase())) name += "_"
+            return sql(Identifier(args("this" to name)))
+        }
+        val table = (alias?.thisArg as? Expression)?.let { sql(it) } ?: fresh("_bq_unnest")
+        val valueSql = sql(value)
+        val arraySql = sql(array)
+        // The extra ROW is flattened once, leaving the original nullable struct as one column.
+        val input = if (struct) "TRANSFORM($arraySql, _bq_value -> ROW(_bq_value))" else arraySql
+        if (offset == null) return "UNNEST($input) AS $table($valueSql)"
+
+        val join = expression.parent as? Join
+        val on = join?.args?.get("on") as? Expression
+        if (join?.side == "LEFT" && on != null && !(on is BooleanNode && on.thisArg == true) &&
+            array.findAll<Column>().any()) {
+            unsupported("BigQuery OFFSET on a filtered correlated LEFT JOIN requires a separate lowering for Presto/Trino")
+        }
+
+        val inner = fresh("_bq_inner")
+        val ordinal = fresh("_bq_ordinal")
+        // Keep the zero-based offset under its public name in every clause and nested scope.
+        return "LATERAL (SELECT $inner.$valueSql AS $valueSql, $inner.$ordinal - 1 AS ${sql(offset)} " +
+            "FROM UNNEST($input) WITH ORDINALITY AS $inner($valueSql, $ordinal)) AS $table"
+    }
+
     // sqlglot: PrestoGenerator.struct_sql
     override fun structSql(expression: Struct): String {
         if (expression.type == null) {

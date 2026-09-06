@@ -10,16 +10,16 @@
 
 ---
 
-**205 transpile items across 19 source-to-target routes.**
+**187 transpile items across 19 source-to-target routes.**
 
-## BigQuery as source (152)
+## BigQuery as source (141)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 93 |
-| bigquery -> spark | 13 |
-| bigquery -> presto | 8 |
-| bigquery -> bigquery | 10 |
+| bigquery -> duckdb | 87 |
+| bigquery -> spark | 12 |
+| bigquery -> presto | 5 |
+| bigquery -> bigquery | 9 |
 | bigquery -> trino | 3 |
 | bigquery -> hive | 6 |
 | bigquery -> postgres | 5 |
@@ -28,22 +28,29 @@
 | bigquery -> spark2 | 3 |
 | bigquery -> base | 2 |
 
-## BigQuery as target (53)
+## BigQuery as target (46)
 
 The `bigquery -> bigquery` cases are counted only in the source table above.
 
 | Route | Items |
 |---|---:|
-| spark -> bigquery | 14 |
+| spark -> bigquery | 13 |
 | postgres -> bigquery | 11 |
-| duckdb -> bigquery | 10 |
-| presto -> bigquery | 9 |
+| duckdb -> bigquery | 7 |
+| presto -> bigquery | 6 |
 | hive -> bigquery | 4 |
 | trino -> bigquery | 2 |
 | clickhouse -> bigquery | 2 |
 | base -> bigquery | 1 |
 
 ## Main clusters
+
+ASTRA-008 closed the 18 exact stale transpile keys reported in
+`build/astra-008-core.log`: 16 from the BigQuery ledger and two from the Presto
+ledger. By read/write ownership, these remove 11 BigQuery-source items and seven
+BigQuery-target items, reducing the total from 205 to 187. The ledgers now contain
+150 and four keys respectively. This does not close all struct-array or offset
+conversions; remaining entries and the clusters below stay open.
 
 ASTRA-010 closed 11 temporal cases: native TIMESTAMP_DIFF unit preservation,
 Presto/Trino TimestampDiff and DatetimeDiff dispatch, and week-start alignment.
