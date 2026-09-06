@@ -62,7 +62,11 @@ that validates source resolution, not just the presence of generated CTE names.
 
 ### R3. Scope the schema memo to the current project
 
-- [ ] **P1** Prevent schema-path memoization leaking across projects.
+- [x] **P1** Prevent schema-path memoization leaking across projects.
+
+Resolved: removed the process-wide relative-path memo. Current/session-known
+source ancestors precede cwd fallback. Directory-cache compiler queries verify
+different schemas at the same relative path in multiple projects within one JVM.
 
 Location: [BrikkSqlSession.kt:101-105](brikk-engine/brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/fir/BrikkSqlSession.kt#L101-L105).
 
@@ -281,7 +285,12 @@ give IDE users a different shape from compilation.
 
 ### R15. Propagate cancellation through inner fallback handlers
 
-- [ ] **P2** Apply the cancellation policy before converting exceptions into fallback values.
+- [x] **P2** Apply the cancellation policy before converting exceptions into fallback values.
+
+Resolved for the reported lookup handlers: session file/package/function fallbacks
+now rethrow cancellation before returning a fallback. The touched SQL analysis
+and refinement catches do the same. The offline cache separately preserves
+cancellation and file-lock interruption instead of converting them to schema data.
 
 Location: [BrikkSqlSession.kt:140-144](brikk-engine/brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/fir/BrikkSqlSession.kt#L140-L144).
 

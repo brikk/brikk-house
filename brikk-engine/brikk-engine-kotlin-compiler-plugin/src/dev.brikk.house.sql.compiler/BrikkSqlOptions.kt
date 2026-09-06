@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.config.CompilerConfigurationKey
 data class BrikkSqlOptions(
     val debug: Boolean = false,
     /**
-     * Path to the schema cache: a file of `CREATE TABLE` statements (the DDL-as-cache format,
-     * see docs/virtual-pipelines-wiring.md). Parsed with [schemaDialect].
+     * Path to a legacy DDL file of `CREATE TABLE` statements or a captured JSON snapshot
+     * directory (cache root, catalog, or schema scope). Directories describe their own dialect;
+     * only DDL files use [schemaDialect] and [defaultSchema].
      */
     val schemaPath: String? = null,
+    /** Dialect of a legacy DDL file; ignored for snapshot directories. */
     val schemaDialect: String = "postgres",
-    /** Qualifies single-part table names in the schema file (`t` -> `public.t`). */
+    /** Qualifies single-part table names in a legacy DDL file (`t` -> `public.t`). */
     val defaultSchema: String? = null,
 ) {
     companion object {
@@ -73,19 +75,19 @@ class BrikkSqlCommandLineProcessor : CommandLineProcessor {
         val SCHEMA = CliOption(
             optionName = "schema",
             valueDescription = "<path>",
-            description = "Path to the schema cache file (CREATE TABLE statements)",
+            description = "Path to a DDL schema file (CREATE TABLE statements) or captured JSON snapshot directory",
             required = false,
         )
         val SCHEMA_DIALECT = CliOption(
             optionName = "schemaDialect",
             valueDescription = "<dialect>",
-            description = "brikk-sql dialect the schema file is written in (default: postgres)",
+            description = "Dialect of a legacy DDL schema file (default: postgres); ignored for snapshot directories",
             required = false,
         )
         val DEFAULT_SCHEMA = CliOption(
             optionName = "defaultSchema",
             valueDescription = "<name>",
-            description = "Schema used to qualify unqualified table names in the schema file",
+            description = "Schema used to qualify unqualified table names in a legacy DDL file; ignored for snapshot directories",
             required = false,
         )
     }

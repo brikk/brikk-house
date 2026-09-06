@@ -13,6 +13,11 @@ apply:
 pluginInfo:
   settingsClass: dev.brikk.house.sql.tooling.Settings
 
+dependencies:
+  - ../../brikk-sql/brikk-sql
+  # Capture tooling only: never bundled into the Kotlin compiler plugin or runtime.
+  - com.mysql:mysql-connector-j:9.4.0: runtime-only
+
 settings:
   kotlin:
     version: 2.4.10

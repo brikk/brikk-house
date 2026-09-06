@@ -24,6 +24,7 @@ import dev.brikk.house.sql.ast.sqlName
 import dev.brikk.house.sql.dialects.Dialect
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.shape.ShapeCatalog
+import dev.brikk.house.sql.shape.catalogTableParts
 import dev.brikk.house.sql.metadata.FunctionKind
 import dev.brikk.house.sql.metadata.NullPropagation
 
@@ -289,7 +290,7 @@ private class NullabilityAnnotator(
     /**
      * Declared nullability of [columnName] from the input source named [sourceName] (a
      * table or slot name — qualify reduces a dotted table like `db.t` to its final part
-     * `t`). Tables match on their final dotted segment; slots match by name. Matching
+     * `t`). Tables match on their final identifier; slots match by name. Matching
      * uses the dialect's identifier normalization; the verdict is present only when the
      * caller declared [dev.brikk.house.sql.shape.ColumnShape.nullable].
      */
@@ -297,8 +298,8 @@ private class NullabilityAnnotator(
         val d = Dialects.forName(dialect.name)
         val wanted = normalizeName(sourceName, dialect = d).name
         for ((tableName, shape) in inputs.tables) {
-            val lastPart = tableName.substringAfterLast(".")
-            if (normalizeName(lastPart, dialect = d).name == wanted) {
+            val lastPart = catalogTableParts(tableName).last()
+            if (normalizeName(if (lastPart.quoted) lastPart else lastPart.name, dialect = d).name == wanted) {
                 return shape.byName(columnName, dialect = dialect.name)?.nullable
             }
         }

@@ -90,3 +90,10 @@ and remove the include before staging `project.yaml`.
 See the [wiring notes](../docs/virtual-pipelines-wiring.md) and the
 [review findings](../TODO-review-findings.md) for current behavior and known
 compiler/runtime defects.
+
+## Schema capture
+
+The forced `./kotlin do captureDorisSchema` command captures one Doris
+catalog/database into the private dogfood cache. The compiler accepts the
+resulting directory through its existing `schema` option and loads it offline.
+See [connection settings, refresh behavior, and limits](../docs/schema-cache.md).

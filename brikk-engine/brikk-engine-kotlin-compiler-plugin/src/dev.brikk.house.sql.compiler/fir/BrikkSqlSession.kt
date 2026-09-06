@@ -10,7 +10,9 @@ import dev.brikk.house.sql.compiler.analysis.ShapeColumn
 import dev.brikk.house.sql.compiler.analysis.SqlAnalyzer
 import dev.brikk.house.sql.compiler.analysis.TraitInfo
 import dev.brikk.house.sql.compiler.analysis.TypeMap
+import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
 import dev.brikk.house.sql.shape.DdlCatalog
+import dev.brikk.house.sql.shape.SchemaCache
 import dev.brikk.house.sql.shape.ShapeCatalog
 import org.jetbrains.kotlin.GeneratedDeclarationKey
 import org.jetbrains.kotlin.KtSourceElement
@@ -51,7 +53,7 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
 
     // ---------------------------------------------------------------- schema catalog
     //
-    // Loading must never throw: the IDE re-runs FIR resolution on every keystroke from several
+    // Loading must not throw except for cancellation: the IDE re-runs FIR resolution from several
     // highlighting passes at once, and an exception here surfaces as a resolve failure of the
     // declaration under analysis (not as a plugin diagnostic). A load failure is therefore held
     // as [LoadedCatalog.error] and attached to every @BrikkSql function's analysis, which the
@@ -62,10 +64,9 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
     private var loadedCatalog: LoadedCatalog? = null
 
     /**
-     * Resolves and loads the schema file. `anchorFilePath` is the source file of whichever
-     * declaration first needs the catalog; a relative `schema=` path that does not exist relative
-     * to the working directory (the IDE's cwd is not the project root, the CLI's is) is retried
-     * against that file's ancestors, which finds `<project>/<relative path>` in both.
+     * Resolves and loads a DDL file or snapshot directory. Relative paths are searched against
+     * the current and session-known source ancestors before cwd, which may be another project
+     * in an IDE or compiler daemon. Resolution is never shared across sessions.
      */
     private fun loadCatalog(anchorFilePath: String?): LoadedCatalog {
         loadedCatalog?.let { return it }
@@ -73,19 +74,27 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         val result = if (path == null) {
             LoadedCatalog(ShapeCatalog.EMPTY, null)
         } else {
-            val file = resolveSchemaFile(path, anchorFilePath)
+            val file = resolveSchemaPath(path, anchorFilePath)
             if (file == null) {
                 LoadedCatalog(
                     ShapeCatalog.EMPTY,
-                    "schema file not found: '$path' (looked relative to the working directory " +
+                    "schema file not found: '$path' (looked for a file or directory relative to the working directory " +
                         "'${File("").absolutePath}'" +
                         (anchorFilePath?.let { " and the ancestors of '$it'" } ?: "") + ")",
                 )
             } else {
+                val isDirectory = file.isDirectory
                 try {
-                    LoadedCatalog(DdlCatalog.fromDdl(file.readText(), options.schemaDialect, options.defaultSchema), null)
+                    val catalog = if (isDirectory) {
+                        SchemaCache.load(file.toPath())
+                    } else {
+                        DdlCatalog.fromDdl(file.readText(), options.schemaDialect, options.defaultSchema)
+                    }
+                    LoadedCatalog(catalog, null)
                 } catch (e: Exception) {
-                    LoadedCatalog(ShapeCatalog.EMPTY, "schema file '${file.path}' could not be loaded: ${e.message ?: e}")
+                    rethrowIfCancellation(e)
+                    val kind = if (isDirectory) "directory" else "file"
+                    LoadedCatalog(ShapeCatalog.EMPTY, "schema $kind '${file.path}' could not be loaded: ${e.message ?: e}")
                 }
             }
         }
@@ -94,13 +103,9 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         return result
     }
 
-    private fun resolveSchemaFile(path: String, anchorFilePath: String?): File? {
+    private fun resolveSchemaPath(path: String, anchorFilePath: String?): File? {
         val direct = File(path)
-        if (direct.isAbsolute) return direct.takeIf { it.isFile }
-        if (direct.isFile) return direct
-        // The IDE creates many short-lived sessions for one project (dangling/in-memory file
-        // sessions have no source path at all); once any session has located the file, reuse it.
-        RESOLVED_SCHEMAS[path]?.takeIf { it.isFile }?.let { return it }
+        if (direct.isAbsolute) return direct.takeIf { it.isFile || it.isDirectory }
         val anchors = buildList {
             anchorFilePath?.let { add(it) }
             addAll(knownSourcePaths())
@@ -109,14 +114,11 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
             var dir: File? = File(anchor).absoluteFile.parentFile
             while (dir != null) {
                 val candidate = File(dir, path)
-                if (candidate.isFile) {
-                    RESOLVED_SCHEMAS[path] = candidate
-                    return candidate
-                }
+                if (candidate.isFile || candidate.isDirectory) return candidate
                 dir = dir.parentFile
             }
         }
-        return null
+        return direct.takeIf { it.isFile || it.isDirectory }
     }
 
     /** Package of the declaration currently being analyzed; a second anchor source for the schema search. */
@@ -133,6 +135,7 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         functionsByOutClassId.values.mapTo(packages) { it.callableId.packageName }
         packages.flatMap { pkg -> session.firProvider.getFirFilesByPackage(pkg) }.mapNotNull { it.sourceFile?.path }
     } catch (e: Exception) {
+        rethrowIfCancellation(e)
         emptyList()
     }
 
@@ -140,12 +143,13 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
     private fun containerFileOf(symbol: FirNamedFunctionSymbol): FirFile? = try {
         session.firProvider.getFirCallableContainerFile(symbol)
     } catch (e: Exception) {
+        rethrowIfCancellation(e)
         PluginGuard.note("container file lookup failed for '${symbol.name}'") { e.toString() }
         null
     }
 
     private fun noteNoAnchor(symbol: FirNamedFunctionSymbol) =
-        PluginGuard.note("no source file for '${symbol.name}'") { "schema path resolves against cwd only" }
+        PluginGuard.note("no source file for '${symbol.name}'") { "schema path resolves against session-known sources, then cwd" }
 
     /** The schema catalog (empty if none configured or it failed to load; see [analyzer]). */
     val catalog: ShapeCatalog get() = loadCatalog(null).catalog
@@ -250,6 +254,7 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
                 .filterIsInstance<FirNamedFunctionSymbol>()
                 .firstOrNull { it.hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, session) }
         } catch (e: Exception) {
+            rethrowIfCancellation(e)
             null
         }
     }
@@ -280,9 +285,6 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
     fun nextLocalIndex(): Int = ++localCounter
 
     companion object {
-        /** Relative `schema=` option -> file located by some session of this process; see [resolveSchemaFile]. */
-        private val RESOLVED_SCHEMAS = java.util.concurrent.ConcurrentHashMap<String, File>()
-
         val SQL_PREDICATE: LookupPredicate = LookupPredicate.create { annotated(BrikkSqlNames.BRIKK_SQL_ANNOTATION) }
         val TRAIT_PREDICATE: LookupPredicate = LookupPredicate.create { annotated(BrikkSqlNames.BRIKK_TRAIT_ANNOTATION) }
     }

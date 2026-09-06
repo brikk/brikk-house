@@ -23,6 +23,7 @@
 __pycache__/
 *-ledger-actual.json
 .env
+.env.doris
 
 # reference symlink/dir (worktrees symlink to the main tree clone)
 /reference

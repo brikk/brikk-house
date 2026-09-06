@@ -5,6 +5,27 @@ import kotlin.test.assertEquals
 
 class DdlCatalogTest {
 
+    @Test
+    fun quotedAndLegacyRawTableNamesRemainUsable() {
+        val ddl = "CREATE TABLE \"order-items\" (id BIGINT NOT NULL)"
+        val captured = DdlCatalog.fromDdl(ddl, "postgres")
+        assertEquals(setOf("\"order-items\""), captured.tables.keys)
+        for (catalog in listOf(captured, ShapeCatalog(mapOf("order-items" to Shape.of("id" to "BIGINT"))))) {
+            assertEquals("BIGINT", SqlFragment("SELECT id FROM \"order-items\"", "postgres").outputShape(catalog).columns.single().type)
+        }
+        val raw = ShapeCatalog(mapOf("ORDER" to Shape.of("id" to "BIGINT")))
+        assertEquals("BIGINT", SqlFragment("SELECT id FROM \"order\"", "postgres").outputShape(raw).columns.single().type)
+    }
+
+    @Test
+    fun catalogIdentifierQuotingDoesNotDependOnTheQueryDialect() {
+        val doris = ShapeCatalog(mapOf("`catalog`.`schema`.`records`" to Shape.of("id" to "BIGINT")))
+        assertEquals("INT", SqlFragment("SELECT 1 AS id", "postgres").outputShape(doris).columns.single().type)
+        assertEquals("BIGINT", SqlFragment("SELECT id FROM catalog.schema.records", "postgres").outputShape(doris).columns.single().type)
+        val postgres = ShapeCatalog(mapOf("\"catalog\".\"schema\".\"records\"" to Shape.of("id" to "BIGINT")))
+        assertEquals("BIGINT", SqlFragment("SELECT id FROM catalog.schema.records", "doris").outputShape(postgres).columns.single().type)
+    }
+
     private val ddl = """
         CREATE TABLE public.events (
           event_id BIGINT PRIMARY KEY,

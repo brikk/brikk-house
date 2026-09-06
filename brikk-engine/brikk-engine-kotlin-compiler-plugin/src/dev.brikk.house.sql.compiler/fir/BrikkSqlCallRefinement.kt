@@ -6,6 +6,7 @@ import dev.brikk.house.sql.compiler.analysis.KType
 import dev.brikk.house.sql.compiler.analysis.ShapeColumn
 import dev.brikk.house.sql.compiler.analysis.PluginGuard
 import dev.brikk.house.sql.compiler.analysis.TypeMap
+import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.KtSourceElementOffsetStrategy
 import org.jetbrains.kotlin.fakeElement
@@ -155,6 +156,7 @@ class BrikkSqlCallRefinement(session: FirSession) : FirFunctionCallRefinementExt
         val output = try {
             brikk.analyzer.applyTo(analysis, inputs)
         } catch (e: Exception) {
+            rethrowIfCancellation(e)
             return giveUp("applying to call-site inputs failed: ${e.message}")
         }
         val local = buildLocalShapeClass(output, analysis, callInfo.callSite.source)

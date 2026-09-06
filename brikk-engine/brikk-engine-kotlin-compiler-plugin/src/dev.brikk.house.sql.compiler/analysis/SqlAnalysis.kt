@@ -145,6 +145,7 @@ class SqlAnalyzer(
         val fragment = try {
             SqlFragment(sqlText, dialect).also { it.tableSlots }
         } catch (e: Exception) {
+            rethrowIfCancellation(e)
             return failed(e.message ?: e.toString())
         }
         val slotsInSql = fragment.tableSlots
@@ -168,6 +169,7 @@ class SqlAnalyzer(
         val output = try {
             computeOutput(sqlText, dialect, inputs)
         } catch (e: Exception) {
+            rethrowIfCancellation(e)
             return failed(e.message ?: e.toString())
         }
 
@@ -249,7 +251,8 @@ class SqlAnalyzer(
  */
 fun rethrowIfCancellation(e: Throwable) {
     if (e is InterruptedException || e is java.util.concurrent.CancellationException ||
-        e.javaClass.name.endsWith("ProcessCanceledException")
+        e is java.nio.channels.ClosedByInterruptException || e is java.nio.channels.FileLockInterruptionException ||
+        generateSequence<Class<*>>(e.javaClass) { it.superclass }.any { it.simpleName == "ProcessCanceledException" }
     ) throw e
 }
 

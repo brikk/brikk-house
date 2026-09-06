@@ -4,6 +4,7 @@ import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.BrikkSqlOptions
 import dev.brikk.house.sql.compiler.analysis.PluginGuard
 import dev.brikk.house.sql.compiler.analysis.FunctionAnalysis
+import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
 import dev.brikk.house.sql.compiler.analysis.toShape
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.shape.ShapeCatalog
@@ -192,6 +193,7 @@ object BrikkSqlFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common)
         val unknown = try {
             strictQualify(analysis, brikk)
         } catch (e: Exception) {
+            rethrowIfCancellation(e)
             e.message ?: e.toString()
         }
         if (unknown != null) reporter.reportOn(anchor, BrikkSqlDiagnostics.SQL_ANALYSIS_FAILED, unknown)

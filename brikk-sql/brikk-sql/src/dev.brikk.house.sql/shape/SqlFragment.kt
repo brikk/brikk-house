@@ -529,7 +529,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      */
     private fun bindSlots(tree: Expression, inputs: ShapeCatalog): Expression {
         if (inputs.slots.isEmpty()) return tree
-        val depth = inputs.tables.keys.maxOfOrNull { it.split(".").size } ?: 1
+        val depth = inputs.tables.keys.maxOfOrNull { catalogTableParts(it).size } ?: 1
 
         val available = tableSlots.associateBy { it.uppercase() }
         for (slotName in inputs.slots.keys) {
@@ -563,12 +563,18 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * nesting depth (MappingSchema constraint). Slot shapes join under the slot name.
      */
     private fun buildSchema(inputs: ShapeCatalog): MappingSchema {
+        val simpleName = Regex("[_a-zA-Z][a-zA-Z0-9_]*")
+        fun columns(shape: Shape): Map<String, String> = shape.toSchemaMapping().mapKeys { (name, _) ->
+            // ColumnShape names are raw metadata, not SQL identifier expressions.
+            if (simpleName.matches(name)) name
+            else dialectObj.generate(Identifier(args("this" to name, "quoted" to true)))
+        }
         val mapping = LinkedHashMap<String, Any?>()
         var depth = 1
         for ((tableName, shape) in inputs.tables) {
-            val parts = tableName.split(".")
+            val parts = catalogTableParts(tableName).map { if (it.quoted) dialectObj.generate(it) else it.name }
             depth = maxOf(depth, parts.size)
-            nestedSet(mapping, parts, shape.toSchemaMapping())
+            nestedSet(mapping, parts, columns(shape))
         }
         // Slots are referenced unqualified; nest them under synthetic qualifiers so every
         // entry shares the catalog's depth (MappingSchema constraint). Unqualified lookups
@@ -579,7 +585,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
             // not be computed) is legitimate: it contributes nothing to `*` and resolves no
             // columns. MappingSchema rejects empty tables, so leave it out of the mapping.
             if (shape.columns.isEmpty()) continue
-            nestedSet(mapping, slotPrefix + slotName, shape.toSchemaMapping())
+            nestedSet(mapping, slotPrefix + slotName, columns(shape))
         }
         return MappingSchema(schema = mapping, dialect = dialectObj)
     }

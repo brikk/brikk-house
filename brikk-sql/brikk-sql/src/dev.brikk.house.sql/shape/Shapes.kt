@@ -3,9 +3,16 @@ package dev.brikk.house.sql.shape
 // Explicit kotlin imports: this package sits next to `dev.brikk.house.sql.ast` whose
 // node classes shadow builtins when star-imported; we import only what we use.
 import dev.brikk.house.sql.ast.DataType
+import dev.brikk.house.sql.ast.Identifier
+import dev.brikk.house.sql.ast.Table
+import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.optimizer.dataTypeFromStr
 import dev.brikk.house.sql.optimizer.normalizeName
+import dev.brikk.house.sql.parser.ErrorLevel
+import dev.brikk.house.sql.parser.ParseError
+import dev.brikk.house.sql.parser.TokenError
+import dev.brikk.house.sql.parser.TokenType
 import kotlinx.serialization.Serializable
 
 /**
@@ -194,8 +201,8 @@ data class ShapeComparison(
  * The shapes a fragment resolves against:
  *
  *  - [tables]: physical table name -> shape. Dotted names ("db.t", "cat.db.t") nest
- *    into the schema mapping; all entries must share one nesting depth
- *    (MappingSchema constraint).
+ *    into the schema mapping. Components may use ANSI quotes or backticks independently
+ *    of the consuming query's dialect. All entries must share one nesting depth.
  *  - [slots]: table-valued slot name -> shape, binding the fragment's `FROM slot(...)`
  *    TVF-style inputs (see [SqlFragment.tableSlots]).
  */
@@ -207,4 +214,32 @@ data class ShapeCatalog(
     companion object {
         val EMPTY = ShapeCatalog(emptyMap())
     }
+}
+
+/** Keep quoted dots and escaped quotes inside their identifier component. */
+internal fun catalogTableParts(name: String): List<Identifier> {
+    if ('"' !in name && '`' !in name) {
+        // Existing catalogs use raw dotted names, including names such as order-items.
+        val parts = name.split('.')
+        if (';' !in name && parts.size in 1..3 && parts.all { it.isNotEmpty() }) {
+            return parts.map { Identifier(args("this" to it, "quoted" to false)) }
+        }
+    } else {
+        // Catalog identity is data: a Doris capture must also be readable by a PostgreSQL query.
+        for (dialect in listOf(Dialects.BASE, Dialects.forName("mysql"))) {
+            val parts = try {
+                val tokens = dialect.tokenize(name)
+                if (tokens.any { it.tokenType == TokenType.SEMICOLON || it.comments.isNotEmpty() }) continue
+                (dialect.parser(errorLevel = ErrorLevel.RAISE).parseIntoTable(tokens, name) as? Table)?.parts
+            } catch (_: ParseError) {
+                null
+            } catch (_: TokenError) {
+                null
+            }
+            if (!parts.isNullOrEmpty() && parts.size <= 3 && parts.all { it is Identifier }) {
+                return parts.filterIsInstance<Identifier>()
+            }
+        }
+    }
+    throw ShapeError("Shape catalog table names must contain one to three identifiers")
 }

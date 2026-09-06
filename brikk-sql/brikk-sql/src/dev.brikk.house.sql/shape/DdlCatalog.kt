@@ -32,7 +32,7 @@ object DdlCatalog {
             if (!create.text("kind").equals("TABLE", ignoreCase = true)) continue
             val schemaNode = create.thisArg as? Expression ?: continue
             val table = schemaNode.find(Table::class) ?: schemaNode as? Table ?: continue
-            val parts = (table as Table).parts.map { it.name }
+            val parts = (table as Table).parts.map { d.generate(it) }
             val name = if (parts.size == 1 && defaultSchema != null) "$defaultSchema.${parts[0]}" else parts.joinToString(".")
             val columns = schemaNode.findAll(ColumnDef::class).map { def ->
                 val kind = def.args["kind"] as? DataType

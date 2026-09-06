@@ -1,4 +1,8 @@
 tasks:
+  captureDorisSchema:
+    action: !dev.brikk.house.sql.tooling.captureDorisSchema
+      projectFile: ${project.rootDir}/project.yaml
+
   assemblePluginJar:
     action: !dev.brikk.house.sql.tooling.assemblePluginJar
       pluginJar: ${module.jar}
@@ -20,5 +24,6 @@ tasks:
       repoDir: ${project.rootDir}/${pluginSettings.repoDir}
 
 commands:
+  - captureDorisSchema
   - assemblePluginJar
   - publishKefsRepo
