@@ -449,8 +449,8 @@ open class PrestoGenerator(
                 val type = DataType(args("this" to if (zoned) DType.TIMESTAMPTZ else if (timestamp) DType.TIMESTAMP else DType.DATE))
                 if (timestamp) type.set("expressions", listOf(DataTypeParam(args("this" to Literal.number("6")))))
                 val cast = Cast(args("this" to value, "to" to type))
-                return if (expression is TimestampDiff && !zoned && isCrossDialectFrom("bigquery")) {
-                    AtTimeZone(args("this" to cast, "zone" to Literal.string("UTC")))
+                return if (expression is TimestampDiff && !zoned && sourceDialect.equals("bigquery", ignoreCase = true)) {
+                    FromTimeZone(args("this" to cast, "zone" to Literal.string("UTC")))
                 } else cast
             }
             // brikk extension (ASTRA-010): BigQuery literals carry microseconds; an unparameterized Trino

@@ -40,6 +40,7 @@ class TemporalDiffResultTest {
         }
         check("TIMESTAMP_DIFF('2021-02-01 00:01:00', '2021-02-01 00:00:59', MINUTE)", 0)
         for (timezone in listOf("UTC", "America/New_York")) {
+            check("TIMESTAMP_DIFF(TIMESTAMP_SECONDS(0), '1970-01-01 00:00:00', HOUR)", 0, timezone)
             check("TIMESTAMP_DIFF(TIMESTAMP_SECONDS(1710129600), TIMESTAMP_SECONDS(1710046800), DAY)", 0, timezone)
             check("TIMESTAMP_DIFF(TIMESTAMP_SECONDS(1710046800), TIMESTAMP_SECONDS(1710129600), DAY)", 0, timezone)
             check("TIMESTAMP_DIFF('2024-03-10 00:00:00 UTC', '2024-03-09 00:00:00 UTC', DAY)", 1, timezone)
