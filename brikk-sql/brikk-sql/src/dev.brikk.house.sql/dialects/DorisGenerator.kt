@@ -800,6 +800,21 @@ open class DorisGenerator(
         return sql(holderCopy)
     }
 
+    // brikk extension: Doris requires LIMIT before OFFSET. Its row counts and
+    // limit values are signed 64-bit. Doris's two-phase planner adds limit+offset,
+    // so the unbounded sentinel must leave room for the requested offset.
+    override fun selectSql(expression: Select): String {
+        if (expression.args["offset"] != null && expression.args["limit"] == null) {
+            val amount = ((expression.args["offset"] as? Offset)?.expressionArg as? Literal)
+                ?.takeUnless { it.isString }?.name?.toLongOrNull()
+            if (amount == null || amount < 0) {
+                throw UnsupportedError("Doris OFFSET without LIMIT requires a non-negative signed 64-bit integer literal")
+            }
+            expression.set("limit", Limit(args("expression" to Literal.number(kotlin.Long.MAX_VALUE - amount))))
+        }
+        return super.selectSql(expression)
+    }
+
     // brikk extension #21: native QUALIFY hides ranking columns and applies final
     // LIMIT/OFFSET after DISTINCT ON rather than before the rank filter.
     private fun qualifyDistinctOn(expression: Select): Boolean {

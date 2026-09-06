@@ -16,6 +16,7 @@ import dev.brikk.house.sql.ast.Serde
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.desugarPipes
 import dev.brikk.house.sql.dialects.sql
+import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.generator.UnsupportedError
 import dev.brikk.house.sql.parser.parseOne
 import kotlin.test.Test
@@ -133,9 +134,31 @@ class PipeQueryTest {
             "FROM db1.t |> LIMIT 3 |> SELECT DISTINCT " +
                 "(SELECT MAX(db2.t.id) FROM db2.t WHERE db2.t.id = db1.t.id) AS matched_id",
             "FROM t |> ORDER BY RAND() |> LIMIT 3 |> SELECT DISTINCT ON (category) *",
+            "SELECT t.id FROM t LIMIT 2 |> SELECT (WITH c AS (SELECT t.id AS x) SELECT c.x FROM c) AS v",
         )) {
             assertFailsWith<UnsupportedError>(source) { desugarPipes(parseOne(source)) }
         }
+    }
+
+    @Test
+    fun bigqueryImplicitTableNamespacesUseAliasRatherThanPhysicalNameRules() {
+        val source = "FROM dataset.T |> LIMIT 1 |> SELECT T.id"
+        val ast = parseOne(source, "bigquery")
+        val output = desugarPipes(ast, Dialects.BIGQUERY).sql("bigquery")
+        assertTrue("dataset.T" in output, output)
+        assertTrue("AS T" in output, output)
+        assertTrue("T.id" in output, output)
+    }
+
+    @Test
+    fun bigqueryLocalCteTableReferencesDoNotBecomeOuterDependencies() {
+        val ast = parseOne(
+            "FROM u |> LIMIT 1 |> SELECT (WITH c AS (SELECT T.id FROM dataset.T LIMIT 1) SELECT c.id FROM c) AS id",
+            "bigquery",
+        )
+        val output = desugarPipes(ast, Dialects.BIGQUERY).sql("bigquery")
+        assertTrue("dataset.T" in output, output)
+        assertTrue("T.id" in output, output)
     }
 
     @Test

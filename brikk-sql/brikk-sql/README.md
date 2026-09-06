@@ -231,7 +231,9 @@ exists). Machine mode
 ("warn me, I'll hand-edit"): read `report.findings`, ship `report.result.sql` anyway.
 Pipe-syntax fragments targeting a real engine should pass `desugarPipes = true`
 (engines don't speak `|>`; available on `transpileTo`/`certify`/`transpileStrict`).
-For full belt-and-braces, follow with a brikk-sql-verify grammar check of the output.
+Native grammar checking verifies syntax, not bindings, output columns or row
+semantics. Schema-backed tests should also strictly qualify the generated SQL and
+assert its exact output columns; executable fixtures should compare rows.
 
 Verdicts stay faithful to the research, but a consumer can accept a refusal its own data
 makes irrelevant via `report.okAccepting { predicate }` — `ok` where every refusal is
@@ -243,7 +245,16 @@ ASCII-only corpus can waive the unicode case-folding hazard with
 
 - `ParseError` — structured (message, line, col, context highlight)
 - `TokenError` — tokenizer-level failures
-- `UnsupportedError` — the generator met a node it cannot render in the target dialect
+- `UnsupportedError` — lowering or generation cannot safely preserve the requested query
+
+`toExecutable()`, `transpileTo()` and certification can throw `UnsupportedError`
+before returning a result. `unsupportedMessages` is a separate channel for
+best-effort SQL that was returned; it is not an exception container. Callers must
+handle expected refusals as translation failures. Do not execute the original pipe
+or delegate to a previous execution handler after a refusal, and do not catch
+cancellation or arbitrary failures as though they were supported translations.
+The [candidate consumer gate](../../docs/consumer-verification.md) tests this
+contract against the Doris plugin's actual adapter and dispatch helper.
 
 Anything the parser does not yet support fails loudly with a `ParseError` raise-gate —
 there is no silent misparsing.

@@ -1,7 +1,12 @@
 package dev.brikk.house.sql.ast
 
 import dev.brikk.house.sql.generator.UnsupportedError
+import dev.brikk.house.sql.dialects.Dialect
+import dev.brikk.house.sql.dialects.Dialects
+import dev.brikk.house.sql.optimizer.OptimizeError
+import dev.brikk.house.sql.optimizer.Scope
 import dev.brikk.house.sql.optimizer.buildScope
+import dev.brikk.house.sql.optimizer.normalizeIdentifiers
 import dev.brikk.house.sql.optimizer.walkInScope
 
 // Explicit imports shield the kotlin builtins from same-package expression classes.
@@ -43,15 +48,19 @@ import kotlin.collections.MutableList
  * numbering: a stage's nested subpipelines are desugared before the stage itself builds
  * its CTEs, and the pipeline head before any stage.
  */
-fun desugarPipes(expression: Expression, copy: kotlin.Boolean = true): Expression {
+fun desugarPipes(expression: Expression, copy: kotlin.Boolean = true): Expression =
+    desugarPipes(expression, Dialects.BASE, copy)
+
+/** Uses the input dialect's identifier rules for namespace proofs; preserves SQL spelling. */
+fun desugarPipes(expression: Expression, dialect: Dialect, copy: kotlin.Boolean = true): Expression {
     val root = if (copy) expression.copy() else expression
     // sqlglot: Parser._pipe_cte_counter (per-statement)
     val counter = PipeCteCounter(root.findAll(Table::class, TableAlias::class)
-        .flatMap { listOf(it.name.lowercase(), it.alias.lowercase()) }.toSet())
+        .flatMap { listOf(it.name.lowercase(), it.alias.lowercase()) }.toSet(), dialect)
     return desugarNode(root, counter)
 }
 
-private class PipeCteCounter(val takenNames: kotlin.collections.Set<String>) {
+private class PipeCteCounter(val takenNames: kotlin.collections.Set<String>, val dialect: Dialect) {
     var n: Int = 0
 }
 
@@ -367,11 +376,23 @@ private fun applyPipeStage(input: Expression, stage: Expression, counter: PipeCt
 }
 
 private fun pipeInputCte(query: Expression, stage: Expression, counter: PipeCteCounter): Select {
+    fun bindingName(identifier: kotlin.Any?): String? = (identifier as? Identifier)?.let {
+        normalizeIdentifiers(it.copy(), dialect = counter.dialect).name
+    }
     val projections = query.expressionsArg.filterIsInstance<Expression>()
     val hasStar = projections.any { (it is Star || it is Column || it is Dot) && it.isStar }
-    val hasJoins = walkInScope(query).any { it is Join }
-    if (hasJoins && hasStar) {
-        throw UnsupportedError("Cannot preserve a pipe SELECT/DISTINCT input boundary over joined stars without explicit, uniquely named input columns")
+    val inputScope = pipeScope(query, counter.dialect)
+    val rowsetName = try {
+        val references = inputScope.references
+        // A reference absent from selectedSources means ownership is incomplete,
+        // not that the unregistered source (e.g. an attached lateral) is harmless.
+        references.singleOrNull()?.first?.takeIf { inputScope.selectedSources.keys == setOf(it) }
+    } catch (error: OptimizeError) {
+        throw UnsupportedError("Cannot preserve pipe input namespaces: ${error.message}")
+    }
+    val singleRowset = rowsetName != null
+    if (!singleRowset && hasStar) {
+        throw UnsupportedError("Cannot preserve a pipe SELECT/DISTINCT input boundary over multiple or unresolved source namespaces and stars; project uniquely named input columns first")
     }
     if (!hasStar && (projections.any { it.outputName.isEmpty() } ||
             projections.map { it.outputName.lowercase() }.toSet().size != projections.size)) {
@@ -381,18 +402,56 @@ private fun pipeInputCte(query: Expression, stage: Expression, counter: PipeCteC
     val source = (query.args["from_"] as? From)?.thisArg as? Expression
     val sourceAlias = (source?.args?.get("alias") as? TableAlias)?.thisArg as? Identifier
         ?: if (source is Table || source is TableAlias) source.thisArg as? Identifier else null
-    // Scope.columns includes child-query correlations but excludes their local bindings.
-    val stageScope = buildScope(Select(args("expressions" to listOf(stage.copy()))))!!
-    val stageColumns = stageScope.columns + stageScope.stars.filterIsInstance<Column>()
+    val projection = projections.singleOrNull()
+    val fullStar = when {
+        projection is Star -> projection
+        projection is Column && bindingName(projection.args["table"]) == bindingName(sourceAlias) &&
+            projection.db.isEmpty() && projection.catalog.isEmpty() -> projection.thisArg as? Star
+        else -> null
+    }
+    val wholeRowset = fullStar != null && fullStar.args.values.all {
+        it == null || it == false || (it is List<*> && it.isEmpty())
+    }
+    // Compare declarations in their original scope context: BigQuery preserves
+    // qualified physical table case but folds alias/column identifiers separately.
+    val scopedSource = (inputScope.expression.args["from_"] as? From)?.thisArg as? Expression
+    val namespace = sourceAlias.takeIf { singleRowset && wholeRowset && scopedSource?.aliasOrName == rowsetName }
+    val stageScope = pipeScope(Select(args("expressions" to listOf(stage.copy()))), counter.dialect)
+    val stageAnalysis = stageScope.expression.expressionsArg.single() as Expression
+    val stageColumns = mutableListOf<Column>()
+    // Scope.columns omits child-CTE correlations and stars. Inspect direct
+    // references in every child scope, excluding bindings local to those scopes.
+    for (scope in stageScope.traverse()) {
+        for (reference in scope.columnIndex + scope.stars) {
+            val owner = (reference as? Column)?.table ?: reference.find<Column>()?.table
+            var current: Scope? = scope
+            var local = false
+            while (current != null && current !== stageScope) {
+                if (current.references.any { (name, node) ->
+                        name == owner || (node is Table && !owner.isNullOrEmpty() && bindingName(
+                            (node.args["alias"] as? TableAlias)?.thisArg ?: node.thisArg
+                        ) == owner)
+                    }) {
+                    local = true
+                    break
+                }
+                current = current.parent
+            }
+            if (!local) {
+                if (reference !is Column) throw UnsupportedError("Cannot preserve an unresolved compound star across a pipe input boundary; use explicit columns")
+                stageColumns.add(reference)
+            }
+        }
+    }
     if (stageColumns.any { it.db.isNotEmpty() || it.catalog.isNotEmpty() }) {
         throw UnsupportedError("Pipe SELECT/DISTINCT input boundaries require table aliases rather than database-qualified column references")
     }
     // Scope's table-name lookup cannot distinguish db1.t from db2.t. Check full
     // names in child queries before considering a multipart reference locally bound.
-    for (col in stage.findAll<Column>().filter { it.db.isNotEmpty() || it.catalog.isNotEmpty() }) {
+    for (col in stageAnalysis.findAll<Column>().filter { it.db.isNotEmpty() || it.catalog.isNotEmpty() }) {
         var ancestor = col.parent
         var local = false
-        while (ancestor != null && ancestor !== stage) {
+        while (ancestor != null && ancestor !== stageAnalysis) {
             if (ancestor is Select && walkInScope(ancestor).filterIsInstance<Table>().any {
                     it.alias.isEmpty() && it.name == col.table && it.db == col.db && it.catalog == col.catalog
                 }) {
@@ -403,12 +462,8 @@ private fun pipeInputCte(query: Expression, stage: Expression, counter: PipeCteC
         }
         if (!local) throw UnsupportedError("Cannot preserve a correlated database-qualified reference across a pipe input boundary; use distinct table aliases")
     }
-    if (hasJoins && stageColumns.any { it.table.isNotEmpty() }) {
-        throw UnsupportedError("Pipe SELECT/DISTINCT input boundaries over joins require references to the input's explicit output names")
-    }
-    if (stageColumns.any { it.isStar && it.table.isNotEmpty() } &&
-        !(projections.size == 1 && projections.single().isStar)) {
-        throw UnsupportedError("Cannot preserve a qualified star across a pipe input boundary with additional or renamed projections; use explicit columns")
+    if (stageColumns.any { it.table.isNotEmpty() && it.table != bindingName(namespace) }) {
+        throw UnsupportedError("Cannot preserve source-qualified references across this pipe input boundary; use explicit output names or give the whole rowset a pipe AS alias")
     }
 
     val rankingOrder = if ((stage.args["distinct"] as? Distinct)?.args?.get("on") is Tuple) {
@@ -424,9 +479,9 @@ private fun pipeInputCte(query: Expression, stage: Expression, counter: PipeCteC
                 } else projections.firstOrNull { it.unalias() == value }
                 val identifier = if (!hasStar && projected != null) {
                     (projected.args["alias"] as? Identifier ?: projected.thisArg as? Identifier)?.copy()
-                } else if (projections.size == 1 && hasStar && value is Column &&
+                } else if (singleRowset && wholeRowset && value is Column &&
                     value.db.isEmpty() && value.catalog.isEmpty() &&
-                    (value.table.isEmpty() || value.table == sourceAlias?.name)) {
+                    (value.table.isEmpty() || bindingName(value.args["table"]) == bindingName(namespace))) {
                     (value.thisArg as? Identifier)?.copy()
                 } else null
                 if (identifier == null) {
@@ -442,12 +497,29 @@ private fun pipeInputCte(query: Expression, stage: Expression, counter: PipeCteC
     val outer = buildPipeCte(query, listOf(Star()), counter)
     // Retain the single input namespace, including references inside correlated
     // stage expressions, without stripping qualifiers or changing source positions.
-    if (!hasJoins && sourceAlias != null) {
-        ((outer.args["from_"] as From).thisArg as Table).set("alias", TableAlias(args("this" to sourceAlias.copy())))
+    if (namespace != null) {
+        ((outer.args["from_"] as From).thisArg as Table).set("alias", TableAlias(args("this" to namespace.copy())))
     }
     // Ranking still needs the input order; the original stays with its restriction.
     if (rankingOrder != null) outer.set("order", rankingOrder)
     return outer
+}
+
+private fun pipeScope(expression: Expression, dialect: Dialect): Scope {
+    val analysis = normalizeIdentifiers(expression.copy(), dialect = dialect)
+    // Pipe AS uses From(TableAlias) as a CTE reference, including inside scalar
+    // stages. Adapt both input and consumer analysis without changing the public AST.
+    for (from in analysis.findAll<From>()) {
+        val alias = from.thisArg as? TableAlias ?: continue
+        if ((alias.args["columns"] as? List<*>).isNullOrEmpty()) {
+            from.set("this", Table(args("this" to (alias.thisArg as Expression).copy())))
+        }
+    }
+    return try {
+        buildScope(analysis) ?: throw UnsupportedError("Cannot determine pipe input namespaces")
+    } catch (error: OptimizeError) {
+        throw UnsupportedError("Cannot determine pipe input namespaces: ${error.message}")
+    }
 }
 
 // sqlglot: Parser._parse_pipe_syntax_limit (offset part)

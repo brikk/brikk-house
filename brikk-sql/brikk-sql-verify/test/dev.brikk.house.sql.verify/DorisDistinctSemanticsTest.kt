@@ -61,6 +61,18 @@ class DorisDistinctSemanticsTest {
     }
 
     @Test
+    fun standaloneOffsetPreservesRowsWithoutOverflowingTheDorisLimit() {
+        assertResult(
+            "FROM t |> ORDER BY id |> OFFSET 1 |> SELECT id",
+            listOf("id"), listOf(listOf("2"), listOf("3"), listOf("4"), listOf("5")),
+        )
+        assertResult(
+            "FROM t |> OFFSET 9223372036854775807 |> SELECT id",
+            listOf("id"), emptyList(),
+        )
+    }
+
+    @Test
     fun laterDistinctPreservesTheHeadsDistinctOnSelection() {
         for (stage in listOf("SELECT DISTINCT id, category", "SELECT id, category", "DISTINCT")) {
             assertResult(

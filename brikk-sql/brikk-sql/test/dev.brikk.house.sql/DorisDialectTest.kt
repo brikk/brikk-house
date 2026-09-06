@@ -42,6 +42,20 @@ class DorisDialectTest {
 
     private fun roundTrip(sqlText: String): String = parseOne(sqlText, "doris").sql("doris")
 
+    @Test
+    fun standaloneOffsetLeavesRoomForTheTwoPhaseLimit() {
+        for (offset in listOf(0L, 1L, 2L, Long.MAX_VALUE)) {
+            assertEquals(
+                "SELECT * FROM t LIMIT ${Long.MAX_VALUE - offset} OFFSET $offset",
+                roundTrip("SELECT * FROM t OFFSET $offset"),
+            )
+        }
+        assertEquals("SELECT * FROM t LIMIT 3 OFFSET 2", roundTrip("SELECT * FROM t LIMIT 3 OFFSET 2"))
+        for (offset in listOf(":skip", "-1", "9223372036854775808")) {
+            assertFailsWith<UnsupportedError> { roundTrip("SELECT * FROM t OFFSET $offset") }
+        }
+    }
+
     // brikk extension #23: Doris supports FULL JOIN; MySQL's emulation changes results.
     @Test
     fun fullJoinsStayNativeForDoris() {

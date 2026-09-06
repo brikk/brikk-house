@@ -1,6 +1,9 @@
 package dev.brikk.house.sql
 
 import dev.brikk.house.sql.ast.Column
+import dev.brikk.house.sql.ast.From
+import dev.brikk.house.sql.ast.Lateral
+import dev.brikk.house.sql.ast.PipeQuery
 import dev.brikk.house.sql.ast.Select
 import dev.brikk.house.sql.ast.Subquery
 import dev.brikk.house.sql.ast.Literal
@@ -8,6 +11,8 @@ import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.Union
 import dev.brikk.house.sql.ast.args
+import dev.brikk.house.sql.ast.desugarPipes
+import dev.brikk.house.sql.generator.UnsupportedError
 import dev.brikk.house.sql.optimizer.OptimizeError
 import dev.brikk.house.sql.optimizer.MappingSchema
 import dev.brikk.house.sql.optimizer.Resolver
@@ -145,6 +150,30 @@ class ScopeTest {
         assertEquals(setOf("x", "y"), semi.sources.keys)
         assertEquals(listOf("x"), semi.selectedSources.keys.toList())
         assertEquals(setOf("y"), semi.semiOrAntiJoinTables)
+    }
+
+    @Test
+    fun lateralSourcesHaveSeparateOwnershipButDerivedTablesHideTheirInputs() {
+        val source = "SELECT t.id, e.item FROM t LATERAL VIEW EXPLODE(t.arr) e AS item"
+        val root = assertNotNull(buildScope(parseOne(source, "doris")))
+        assertEquals(setOf("t", "e"), root.selectedSources.keys)
+        val lateral = root.udtfScopes.single()
+        assertTrue(lateral.expression is Lateral)
+        assertEquals(setOf("t"), lateral.lateralSources.keys)
+        val wrapped = assertNotNull(buildScope(parseOne("SELECT s.* FROM ($source) AS s", "doris")))
+        assertEquals(setOf("s"), wrapped.selectedSources.keys)
+    }
+
+    @Test
+    fun incompleteAttachedLateralOwnershipCannotAuthorizeAnInputAlias() {
+        val pipe = parseOne("FROM t LATERAL VIEW EXPLODE(t.arr) e AS item |> LIMIT 2 |> SELECT t.*", "doris") as PipeQuery
+        val head = pipe.thisArg as Select
+        val table = (head.args["from_"] as From).thisArg as Table
+        val laterals = head.args["laterals"]
+        assertNotNull(laterals)
+        head.set("laterals", null)
+        table.set("laterals", laterals)
+        assertFailsWith<UnsupportedError> { desugarPipes(pipe) }
     }
 
     @Test

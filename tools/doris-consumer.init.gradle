@@ -1,0 +1,217 @@
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.tasks.testing.Test
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.jvm.toolchain.JavaToolchainService
+import java.security.MessageDigest
+import java.util.zip.ZipFile
+import javax.xml.parsers.DocumentBuilderFactory
+
+// Invoked only on the private snapshot by verify_doris_consumer.sh.
+def properties = gradle.startParameter.projectProperties
+def scratch = new File(properties['consumer.scratch'] ?: '').canonicalFile
+if (!properties['consumer.scratch'] || !scratch.isDirectory()) {
+    throw new GradleException('Use verify_doris_consumer.sh with a fresh scratch directory')
+}
+def pinned = [new File(scratch, 'jars/brikk-sql-jvm.jar'), new File(scratch, 'jars/brikk-sql-metadata-jvm.jar')]
+def hashes = [properties['consumer.coreSha256'], properties['consumer.metadataSha256']]
+def modules = ['brikk-sql', 'brikk-sql-jvm', 'brikk-sql-metadata', 'brikk-sql-metadata-jvm']
+def sha256 = { File file ->
+    def digest = MessageDigest.getInstance('SHA-256')
+    file.withInputStream { stream ->
+        byte[] buffer = new byte[65536]
+        int length
+        while ((length = stream.read(buffer)) != -1) { digest.update(buffer, 0, length) }
+    }
+    digest.digest().encodeHex().toString()
+}
+pinned.eachWithIndex { file, index ->
+    if (!file.isFile() || sha256(file) != hashes[index]) {
+        throw new GradleException('Pinned candidate JAR is missing or changed')
+    }
+    def marker = index == 0 ? 'dev/brikk/house/sql/shape/SqlFragment.class' : 'dev/brikk/house/sql/metadata/FunctionCatalog.class'
+    new ZipFile(file).withCloseable { zip ->
+        if (zip.getEntry(marker) == null) { throw new GradleException("Wrong candidate JAR: ${file.name}") }
+    }
+}
+
+def required = [
+    'dev.sort.doris.pipes.DorisPipesUpgradeTest': [
+        'Doris lateral view remains a table function rather than a scalar explode',
+        'intentional engine refusals become handled errors rather than escaped failures',
+        'refused stage prefixes retain the error and annotate only their own statement',
+        'lateral column qualifiers survive an input boundary or are refused',
+        'base table star excludes lateral columns across an input boundary or is refused',
+    ],
+    'dev.sort.doris.pipes.DorisPipesActionTest': [
+        'testHandledRejectionAndThrownFailureDoNotInvokeThePreviousAction',
+        'testEngineSafetyRefusalReportsWithoutSubmittingOrDelegating',
+    ],
+]
+def expected = [:]
+def reports = new File(scratch, 'reports')
+
+gradle.settingsEvaluated { settings ->
+    if (settings.settingsDir.canonicalFile != new File(scratch, 'client').canonicalFile) {
+        throw new GradleException('Refusing to configure anything but the scratch client')
+    }
+}
+gradle.beforeProject { project ->
+    project.layout.buildDirectory.set(new File(scratch, "build/${project.path.replace(':', '_')}"))
+    project.configurations.configureEach { configuration ->
+        modules.each { module -> configuration.exclude(group: 'dev.brikk.house', module: module) }
+    }
+    project.pluginManager.withPlugin('java') {
+        project.dependencies.add('implementation', project.files(pinned))
+    }
+    project.pluginManager.withPlugin('org.jetbrains.intellij.platform') {
+        project.extensions.getByName('intellijPlatform').sandboxContainer.set(new File(scratch, 'intellij-sandbox'))
+    }
+}
+
+gradle.projectsEvaluated {
+    def project = gradle.rootProject
+    if (project.allprojects.size() != 1 || !gradle.includedBuilds.empty || properties['test.sqlTranspiler'] != 'absent') {
+        throw new GradleException('This gate requires the single-project client and companion-absent mode')
+    }
+    required.each { suite, methods ->
+        def source = project.file("src/test/kotlin/${suite.replace('.', '/')}.kt")
+        if (!source.isFile()) { throw new GradleException("Missing suite source: $suite") }
+        // Current suites use JUnit 4 backtick methods and JUnit 3 test-prefixed methods.
+        def names = [] as Set
+        (source.getText('UTF-8') =~ /(?m)^\s*(?:@Test\s+)?fun\s+(?:`([^`]+)`|(test\w+))\s*\(\s*\)/).each { match ->
+            names.add(match[1] ?: match[2])
+        }
+        if (!names.containsAll(methods)) { throw new GradleException("Missing required lateral/refusal cases in $suite") }
+        expected[suite] = names
+    }
+
+    def test = project.tasks.named('test', Test).get()
+    test.useJUnit()
+    test.setIncludes(required.keySet().collect { it.replace('.', '/') + '.class' })
+    test.setExcludes([])
+    test.filter.setIncludePatterns(*required.keySet().toList())
+    test.filter.setExcludePatterns()
+    test.filter.failOnNoMatchingTests = true
+    test.ignoreFailures = false
+    test.failFast = false
+    test.maxParallelForks = 1
+    test.outputs.upToDateWhen { false }
+    test.outputs.doNotCacheIf('Candidate consumer verification must execute') { true }
+    test.reports.junitXml.required.set(true)
+    test.reports.junitXml.outputLocation.set(reports)
+    test.reports.html.outputLocation.set(new File(scratch, 'html-report'))
+    test.testLogging.showStandardStreams = false
+    test.javaLauncher.set(project.extensions.getByType(JavaToolchainService).launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    })
+    test.systemProperty('user.home', new File(scratch, 'home').absolutePath)
+    test.systemProperty('java.io.tmpdir', new File(scratch, 'tmp').absolutePath)
+    test.systemProperty('java.awt.headless', 'true')
+    test.systemProperty('test.sqlTranspiler', 'absent')
+    // Normalize lazily, before Gradle freezes the worker's stableClasspath.
+    // Keep the original collection's task dependencies and validate its bytes below.
+    def originalClasspath = test.classpath
+    test.classpath = originalClasspath.filter { !it.name.startsWith('brikk-sql') } + project.files(pinned)
+    // The platform plugin's argument provider uses the scratch sandbox above.
+    test.doFirst {
+        if (test.javaLauncher.get().metadata.installationPath.asFile.canonicalFile != new File(System.getenv('JAVA_HOME')).canonicalFile) {
+            throw new GradleException('Test worker must use the caller-selected JDK 21')
+        }
+        ['compileClasspath', 'testCompileClasspath', 'runtimeClasspath', 'testRuntimeClasspath'].each { name ->
+            project.configurations.getByName(name).incoming.resolutionResult.allComponents.each { component ->
+                def id = component.id
+                if (id instanceof ModuleComponentIdentifier && id.group == 'dev.brikk.house' && modules.contains(id.module)) {
+                    throw new GradleException("Published Brikk dependency survived exclusion in $name")
+                }
+            }
+        }
+        pinned.eachWithIndex { file, index ->
+            if (sha256(file) != hashes[index]) { throw new GradleException('Pinned JAR changed before execution') }
+        }
+        def original = originalClasspath.files.collect { it.canonicalFile }
+        def brikk = original.findAll { file ->
+            if (file.path.contains('sql-transpiler-intellij-plugin')) {
+                throw new GradleException('Companion plugin appeared on the test classpath')
+            }
+            if (file.isDirectory()) {
+                if (new File(file, 'dev/brikk/house/sql').exists()) {
+                    throw new GradleException('Loose Brikk classes appeared on the test classpath')
+                }
+                return false
+            }
+            if (!file.name.endsWith('.jar')) { return false }
+            boolean ownsBrikk = file.name.startsWith('brikk-sql')
+            new ZipFile(file).withCloseable { zip ->
+                ownsBrikk |= zip.entries().any { it.name.startsWith('dev/brikk/house/sql/') && it.name.endsWith('.class') }
+            }
+            ownsBrikk
+        }
+        def seenHashes = brikk.collect { sha256(it) }
+        if (seenHashes.toSet() != hashes.toSet()) {
+            throw new GradleException('Test classpath must contain exactly the candidate core and metadata bytes, with no other Brikk JAR')
+        }
+        // IntelliJ adds sandbox copies. Only byte-identical copies may be replaced.
+        def finalFiles = test.classpath.files.collect { it.canonicalFile }
+        if (finalFiles.intersect(brikk + pinned).toSet() != pinned.toSet()) {
+            throw new GradleException('Test classpath did not normalize to the two pinned JAR paths')
+        }
+        new File(scratch, 'test-classpath.txt').text = finalFiles.collect { it.absolutePath }.join('\n') + '\n'
+        new File(scratch, 'test-brikk-classpath.sha256').text = pinned.withIndex().collect { file, index ->
+            "${hashes[index]}  ${file.absolutePath}"
+        }.join('\n') + '\n'
+    }
+
+    def verify = project.tasks.register('verifyDorisConsumerReports') {
+        doLast {
+            def xmlFiles = project.fileTree(reports) { include 'TEST-*.xml' }.files.sort { it.name }
+            new File(scratch, 'testreports.sha256').text = xmlFiles.collect { "${sha256(it)}  reports/${it.name}" }.join('\n') + '\n'
+            if (!test.state.executed || test.state.skipped || test.state.failure != null || xmlFiles.size() != required.size()) {
+                throw new GradleException('Both suites must execute successfully and emit fresh reports')
+            }
+            def factory = DocumentBuilderFactory.newInstance()
+            factory.setFeature('http://apache.org/xml/features/disallow-doctype-decl', true)
+            factory.setExpandEntityReferences(false)
+            def seen = [] as Set
+            def summary = []
+            xmlFiles.each { file ->
+                def root = factory.newDocumentBuilder().parse(file).documentElement
+                def suite = root.getAttribute('name')
+                if (root.tagName != 'testsuite' || !required.containsKey(suite) || !seen.add(suite)) {
+                    throw new GradleException('Unexpected or duplicate test suite report')
+                }
+                ['failures', 'errors', 'skipped'].each { attribute ->
+                    if (root.getAttribute(attribute) != '0') { throw new GradleException("$suite has $attribute or a missing counter") }
+                }
+                def cases = root.getElementsByTagName('testcase')
+                def names = []
+                for (int index = 0; index < cases.length; index++) {
+                    def entry = cases.item(index)
+                    if (entry.getAttribute('classname') != suite || ['failure', 'error', 'skipped'].any { entry.getElementsByTagName(it).length != 0 }) {
+                        throw new GradleException("Non-passing or unexpected test case in $suite")
+                    }
+                    names.add(entry.getAttribute('name'))
+                }
+                if (cases.length == 0 || root.getAttribute('tests') != cases.length.toString() ||
+                    names.size() != names.toSet().size() || names.toSet() != expected[suite]) {
+                    throw new GradleException("Missing, duplicate, or unexpected test methods in $suite")
+                }
+                summary.add("$suite: ${cases.length} tests; zero failures/errors/skips")
+            }
+            pinned.eachWithIndex { file, index ->
+                if (sha256(file) != hashes[index]) { throw new GradleException('Pinned JAR changed during execution') }
+            }
+            new File(scratch, 'PASS').text = summary.join('\n') + '\n'
+            summary.each { project.logger.lifecycle(it) }
+        }
+    }
+    test.finalizedBy(verify)
+}
+
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.each { task ->
+        def forbidden = task.name ==~ /(?i)(publish.*|verifyPlugin|verifyPluginSignature|runIde.*|buildPlugin|buildSearchableOptions)/
+        if (forbidden || (task instanceof Test && task.path != ':test')) {
+            throw new GradleException("Task outside the consumer gate: ${task.path}")
+        }
+    }
+}

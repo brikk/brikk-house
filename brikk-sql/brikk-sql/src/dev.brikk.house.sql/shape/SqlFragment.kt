@@ -128,7 +128,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         generator.trackSpans = trackSourceMap
         // Qualified call: the boolean param shadows the imported desugarPipes function.
         val tree =
-            if (desugarPipes) dev.brikk.house.sql.ast.desugarPipes(ast, copy = true)
+            if (desugarPipes) dev.brikk.house.sql.ast.desugarPipes(ast, dialectObj, copy = true)
             else ast
         val out = generator.generate(tree, copy = true)
         return TranspileResult(
@@ -152,6 +152,10 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      *
      * This is the contract editor/plugin callers want; it is a thin, intent-revealing
      * wrapper over [transpileTo] with `desugarPipes = true`.
+     *
+     * Lowering and generation may throw [dev.brikk.house.sql.generator.UnsupportedError]
+     * when a safe translation cannot be established. Callers must handle that refusal;
+     * [TranspileResult.unsupportedMessages] only describes a result that was returned.
      */
     fun toExecutable(
         target: String,
@@ -311,7 +315,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * use dialect normalization, including its quoted-name rules, as lineage does.
      */
     val sourceTables: List<String> by lazy {
-        val tree = normalizeIdentifiers(desugarPipes(ast, copy = true), dialect = dialectObj)
+        val tree = normalizeIdentifiers(desugarPipes(ast, dialectObj, copy = true), dialect = dialectObj)
         val resolved = java.util.IdentityHashMap<Table, Boolean>()
         for (scope in traverseScope(tree)) {
             // references includes SEMI/ANTI inputs that selectedSources omits.
@@ -502,7 +506,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         inputs: ShapeCatalog? = null,
         expandStars: Boolean = false,
     ): String {
-        var tree = desugarPipes(ast, copy = true)
+        var tree = desugarPipes(ast, dialectObj, copy = true)
         if (expandStars && inputs != null) {
             tree = bindSlots(tree, inputs)
             tree = expandStarModifiers(tree, buildSchema(inputs), dialectObj)
@@ -548,7 +552,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
 
     /** Copy + desugar pipes + rewrite bound slots into plain table references. */
     private fun prepareTree(tree: Expression, inputs: ShapeCatalog): Expression {
-        return bindSlots(desugarPipes(tree, copy = true), inputs)
+        return bindSlots(desugarPipes(tree, dialectObj, copy = true), inputs)
     }
 
     /**

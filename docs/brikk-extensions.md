@@ -51,13 +51,28 @@ exceptions today:
   Whole-row DISTINCT followed by plain projection can return duplicate projected
   values. The older test expecting these to collapse was incorrect and is replaced
   by row-result assertions.
-- Input boundaries preserve a single source alias, source positions and explicit
-  output names. Generated CTE names avoid both user relation names and aliases.
-  Unresolved joined stars, duplicate/unnamed input columns, database-qualified or
-  joined-source references requiring rebinding, and ambiguous qualified stars raise
+- Input boundaries preserve an alias only for a complete, unmodified projection of
+  that rowset. Scope references and selected sources must agree; a missing source
+  registration is not evidence of single-source ownership. Lateral views, joins,
+  TVFs and derived rowsets are distinguished, and pipe-AS references are adapted on
+  analysis copies. `LIMIT |> SELECT e.item` and `LIMIT |> SELECT t.*` over a base
+  table plus lateral view refuse rather than lose `e` or widen `t.*`. Explicit
+  unique output names and a user-assigned rowset alias (`|> AS s`) remain supported.
+  Generated CTE names avoid both user relation names and aliases.
+  Unresolved multi-source stars, duplicate/unnamed input columns, database-qualified or
+  source references requiring rebinding, and ambiguous qualified stars raise
   `UnsupportedError` rather than guessing. Correlated stage references are checked
-  without rewriting local subquery bindings. Use explicit, uniquely named input
-  columns and table aliases for these cases.
+  across child queries, including CTEs and qualified stars, without rewriting local
+  bindings. `SqlFragment` supplies the input dialect's identifier rules for these
+  proofs. The existing two-argument `desugarPipes` binary entry point remains;
+  the dialect-aware overload is available for direct AST callers.
+- `PipeBoundaryContractTest` exercises fixed success/refusal outcomes across source
+  topology, stage ordering and projection forms. Successful outputs must pass native
+  grammar, strict qualification with a complete fixture schema, and independently
+  specified column names/order. It checks exact source positions and parent/metadata
+  preservation, with unchanged DuckDB SQL executions for portable cases. See
+  [consumer verification](consumer-verification.md) for testing candidate JARs against
+  the real downstream adapter and result-dispatch code before publication.
 - **Conflict risk on upstream sync:** HIGH for the desugar semantics (sqlglot's pipe
   handler table grows most releases — e.g. DISTINCT was added in 30.x; new upstream
   operators must be mirrored in both our parser and `desugarPipes`, with their tests
@@ -72,6 +87,10 @@ exceptions today:
 - **Where:** `ast/PipeNodes.kt` (5 nodes), parser handlers (spec citations to
   `googlesql/docs/pipe-syntax.md`), `ast/PipeDesugar.kt`, `shape/SqlFragment.kt`
   (`expandStarModifiers`).
+- Doris requires a LIMIT for standalone OFFSET. Generation uses
+  `Long.MAX_VALUE - offset` for non-negative signed-64-bit literal offsets so the
+  planner's two-phase `limit + offset` does not overflow. Nonliteral, negative or
+  out-of-range standalone offsets refuse explicitly. Existing LIMITs are unchanged.
 - **Conflict risk:** HIGH if sqlglot re-adds SET/DROP (their earlier implementation used
   the same star-modifier desugar — semantics should converge, but CTE naming/shape may
   differ; our pipe gates will catch it).
