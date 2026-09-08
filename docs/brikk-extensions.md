@@ -1,7 +1,7 @@
 # brikk-sql extensions registry — deliberate divergences from sqlglot
 
-brikk-sql is a faithful port of sqlglot (pinned: `v30.17.0-93-gdcc36544a`), verified by
-differential gates. This file registers every place where brikk **deliberately diverges**
+brikk-sql is a SQLGlot-derived Kotlin engine (pinned: `v30.17.0-93-gdcc36544a`), checked by
+differential and semantic gates. This file registers where brikk **deliberately diverges**
 from or **extends beyond** sqlglot, so that upstream syncs know exactly where conflicts
 can arise: when a future sqlglot version adds its own handling for one of these, the
 sync MUST reconcile here (adopt upstream, keep ours, or merge) and update this registry.
@@ -40,10 +40,12 @@ exceptions today:
   acceptance and executed DuckDB results for self-contained nested queries.
 - `PipeSelect` preserves the SELECT's optional `Distinct` node, including `ON` keys,
   through parsing, copying, serialization, pipe rendering, and desugaring. Earlier
-  versions silently dropped `|> SELECT DISTINCT`. Projection and deduplication must
+  versions silently dropped `|> SELECT DISTINCT`. Projection, filtering and deduplication must
   consume the preceding stage's result. Prior LIMIT/OFFSET, DISTINCT (including ON),
   grouping/QUALIFY, and computed or renamed projections stay inside an input CTE
-  before the next SELECT/DISTINCT. Simple direct projections still fuse when safe.
+  before the next SELECT/DISTINCT/WHERE. Simple direct projections and chained WHERE
+  stages still fuse when safe. A WHERE after DISTINCT ON must not choose a different
+  representative row; a WHERE after a limited input must not restore excluded rows.
   ORDER BY remains with the restriction; DISTINCT ON also retains a copy for ranking.
   Copied ranking keys bind to existing input output columns, including renamed or
   computed sort keys. Unexported expressions are refused rather than re-evaluated
@@ -51,6 +53,11 @@ exceptions today:
   Whole-row DISTINCT followed by plain projection can return duplicate projected
   values. The older test expecting these to collapse was incorrect and is replaced
   by row-result assertions.
+- The pipe corpus has two explicit, checked native expectations: sequential slices
+  that exhaust the earlier limit, and WHERE's boundary after DISTINCT. The extracted
+  SQLGlot fixtures are unchanged; overrides must match current inputs and become stale
+  if upstream adopts their output. `DorisPipeStageOrderTest` and
+  `PipePaginationSemanticsTest` use independent staged references and actual row results.
 - Input boundaries preserve an alias only for a complete, unmodified projection of
   that rowset. Scope references and selected sources must agree; a missing source
   registration is not evidence of single-source ownership. Lateral views, joins,
@@ -91,6 +98,24 @@ exceptions today:
   `Long.MAX_VALUE - offset` for non-negative signed-64-bit literal offsets so the
   planner's two-phase `limit + offset` does not overflow. Nonliteral, negative or
   out-of-range standalone offsets refuse explicitly. Existing LIMITs are unchanged.
+- Pipe LIMIT/OFFSET accepts only non-negative integer numeric literals through
+  `Long.MAX_VALUE`. Strings, fractional/scientific notation, expressions, placeholders
+  and unsupported row-count modifiers raise `UnsupportedError`; no evaluation,
+  coercion, parameter dropping or generic number-format failure occurs. Offsets
+  consume the remaining limited slice before a new limit applies. Accumulated offsets
+  and limit-plus-offset arithmetic are checked before addition, even for empty slices.
+- PIPE RENAME has an output CTE boundary so later filters, projections and joins see
+  the renamed columns. Schema-aware star expansion validates each star's own inputs
+  and the complete simultaneous mapping, preserving column order and target quoting.
+  Unknown/repeated sources and duplicate/colliding targets raise `ShapeError`.
+  Doris column collisions are case-insensitive, including backtick-quoted names;
+  table-name policy is unchanged. Qualified rename arguments are refused rather than
+  losing their qualifier. Known qualified input tables remain supported.
+- Doris refuses a surviving star RENAME with `UnsupportedError`. Use the existing
+  `toStandardSql(target, inputs, expandStars = true)` path for complete catalogs,
+  or the tracked AST-based expansion/generation APIs when source maps are needed.
+  Cross-dialect inputs with case-distinct intermediate columns that Doris cannot
+  distinguish are refused. DDL RENAME remains a separate, unaffected operation.
 - **Conflict risk:** HIGH if sqlglot re-adds SET/DROP (their earlier implementation used
   the same star-modifier desugar — semantics should converge, but CTE naming/shape may
   differ; our pipe gates will catch it).
@@ -169,10 +194,23 @@ exceptions today:
   On each upstream sync, check `eliminate_qualify` and `eliminate_distinct_on`
   against these result regressions before adopting them, then reconcile this entry
   and the exact StarRocks ledger entry. String parity alone is insufficient.
-- **Deliberately kept upstream behavior:** the Case-B star leak (`SELECT * FROM t QUALIFY
-  row_number() OVER (...) = 1` exports the synthetic `_w` helper through the outer star)
-  is unchanged — dropping it requires schema-based star expansion; revisit if customers
-  hit it.
+- **Doris native path:** ordinary window-dependent QUALIFY stays native, including
+  bare/qualified stars and caller-selected window columns. No `_w` helper is projected.
+  The pinned FE's `FillUpQualifyMissingSlot.checkWindow` requires a window expression
+  in the predicate or a genuinely referenced window-output slot. A selected window
+  elsewhere is not enough. Scalar-only predicates use the explicit-projection
+  fallback when their aggregate/column bindings can be proved; stars, nested queries,
+  unresolved alias collisions and unprojected aggregates refuse safely.
+- Cross-dialect QUALIFY window-alias references require known input columns or an
+  inline window predicate: an input column may shadow the same-named output alias.
+  Same-dialect native clauses retain their binding semantics. `DorisQualifyTest` and
+  `DorisQualifySemanticsTest` check row sets, exact schemas, caller `_w`/`_row_number`
+  columns, alias/input precedence, and source maps. Generic non-Doris star lowering
+  still has the documented helper-leak limitation; this is not a universal fix.
+- Pretty source-map matching permits indentation changes between a CTE/subquery and
+  its recorded child fragment. It retains the parent window instead of assigning a
+  repeated ORDER BY column to the wrong clause. Literal newlines remain protected by
+  generator sentinels; other within-line whitespace is not relaxed.
 - **Conflict risk:** MEDIUM. Adopt an upstream fix only when both output shape and
   clause-order result regressions pass; retire the matching local branches then.
 
@@ -784,8 +822,8 @@ The pinned Doris source `7027772afcb` supports direct window expressions in QUAL
 bypasses `eliminateQualify`, which would reintroduce the helper-column leak. This
 path refuses existing QUALIFY, window/subquery ranking keys, positional keys, and
 unresolved projection-alias references with `UnsupportedError` rather than emit a
-silently different query. The ordinary QUALIFY behavior described in entry 6 is
-unchanged.
+silently different query. Ordinary QUALIFY uses the separate native/fallback
+binding rules described in entry 6.
 
 The shared `eliminateDistinctOn` also distinguishes a projection star from a star
 inside a scalar subquery. The latter needs an explicit outer scalar projection,

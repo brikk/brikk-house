@@ -21,10 +21,11 @@ import kotlin.collections.MutableList
  * This is a direct port of the desugar semantics in reference/sqlglot/sqlglot/parser.py
  * (`_build_pipe_cte` and the `_parse_pipe_syntax_*` methods, ~9869-10061), operating on
  * brikk's first-class stage nodes post-parse instead of on the token stream, with
- * SELECT/DISTINCT input boundaries where merging would change rows or bindings:
+ * SELECT/DISTINCT/WHERE input boundaries where merging would change rows or bindings:
  *
  *  - stages that mutate the current Select in place: WHERE (AND-merge), ORDER BY
- *    (replace, not append), LIMIT (keep-min) / OFFSET (sum), DISTINCT, TABLESAMPLE, JOIN;
+ *    (replace, not append), LIMIT/OFFSET (checked row-slice composition), DISTINCT,
+ *    TABLESAMPLE, JOIN;
  *  - stages that wrap into CTEs: SELECT, AGGREGATE, EXTEND, AS (user alias), set
  *    operations, PIVOT/UNPIVOT;
  *  - head normalization: Subquery / FROM-less heads become `SELECT * FROM (...)`.
@@ -153,18 +154,26 @@ private fun buildPipeCte(
 
 private fun applyPipeStage(input: Expression, stage: Expression, counter: PipeCteCounter): Expression {
     var query = input
-    val directProjection = query.expressionsArg.singleOrNull() is Star || (
+    val star = query.expressionsArg.singleOrNull() as? Star
+    val stageColumns = when (stage) {
+        is PipeWhere -> walkInScope(stage.thisArg as Where).filterIsInstance<Column>().toList()
+        else -> stage.expressionsArg.filterIsInstance<Expression>()
+    }
+    val directProjection = (star != null && star.args.values.all {
+        it == null || it == false || (it is List<*> && it.isEmpty())
+    }) || (
         query.expressionsArg.all { it is Column && !it.isStar } &&
-            stage.expressionsArg.all { it is Column && it in query.expressionsArg }
+            stageColumns.all { it is Column && it in query.expressionsArg }
         )
     val positionalOrder = (query.args["order"] as? Order)?.expressionsArg.orEmpty().any {
         ((it as? Ordered)?.thisArg as? Expression)?.unnest()?.isInt == true
     }
-    // brikk extension: projection/deduplication consumes the previous stage's rows,
+    // brikk extension: projection, deduplication and filtering consume the previous stage's rows,
     // not its FROM clause. Keep prior row selection and projected aliases intact.
-    if ((stage is PipeSelect || stage is PipeDistinct) && (
+    if ((stage is PipeSelect || stage is PipeDistinct || stage is PipeWhere) && (
             listOf("limit", "offset", "distinct", "group", "having", "qualify").any { query.args[it] != null } ||
-                (stage is PipeSelect && (!directProjection || positionalOrder))
+                (stage is PipeSelect && (!directProjection || positionalOrder)) ||
+                (stage is PipeWhere && !directProjection)
             )) {
         query = pipeInputCte(query, stage, counter)
     }
@@ -215,16 +224,11 @@ private fun applyPipeStage(input: Expression, stage: Expression, counter: PipeCt
             query
         }
 
-        // sqlglot: Parser._parse_pipe_syntax_limit — keep-min limit, summed offset
+        // A combined LIMIT/OFFSET skips rows of the input before taking its limit.
         is PipeLimit -> {
             val limit = stage.thisArg as? Limit
-            if (limit != null) {
-                val currLimit = query.args["limit"] as? Limit ?: limit
-                if (literalLong(currLimit.expressionArg) >= literalLong(limit.expressionArg)) {
-                    query.set("limit", limit)
-                }
-            }
-            applyPipeOffset(query, stage.args["offset"] as? Offset)
+                ?: throw UnsupportedError("Pipe LIMIT requires a non-negative signed 64-bit integer literal")
+            applyPipeOffset(query, stage.args["offset"] as? Offset, limit)
             query
         }
 
@@ -312,11 +316,20 @@ private fun applyPipeStage(input: Expression, stage: Expression, counter: PipeCt
         // googlesql: pipe RENAME (docs/pipe-syntax.md ~763) — NO sqlglot counterpart.
         // `|> RENAME old AS new, ...` ≡ `SELECT * RENAME (old AS new, ...)` from the
         // CTE'd input (the stage's Alias elements are exactly Star.rename's shape).
-        is PipeRename -> buildPipeCte(
-            query,
-            listOf(Star(args("rename" to stage.expressionsArg.toMutableList()))),
-            counter,
-        )
+        is PipeRename -> {
+            for (rename in stage.expressionsArg) {
+                val alias = rename as? Alias
+                val column = alias?.thisArg as? Column
+                if (alias == null || column == null || column.thisArg !is Identifier || alias.args["alias"] !is Identifier ||
+                    column.table.isNotEmpty() || column.db.isNotEmpty() || column.catalog.isNotEmpty()) {
+                    throw UnsupportedError("Pipe RENAME requires unqualified source and target column identifiers")
+                }
+            }
+            val renamed = buildPipeCte(query, listOf(Star(args("rename" to stage.expressionsArg.toMutableList()))), counter)
+            // Later filters, projections and joins refer to the renamed output,
+            // not to the FROM clause beneath the modified star.
+            buildPipeCte(renamed, listOf(Star()), counter)
+        }
 
         // googlesql: pipe CALL (docs/pipe-syntax.md ~1323) — NO sqlglot counterpart.
         // The pipe input becomes the TVF's FIRST TABLE ARGUMENT (spec: "The first table
@@ -376,6 +389,7 @@ private fun applyPipeStage(input: Expression, stage: Expression, counter: PipeCt
 }
 
 private fun pipeInputCte(query: Expression, stage: Expression, counter: PipeCteCounter): Select {
+    val operation = if (stage is PipeWhere) "WHERE" else "SELECT/DISTINCT"
     fun bindingName(identifier: kotlin.Any?): String? = (identifier as? Identifier)?.let {
         normalizeIdentifiers(it.copy(), dialect = counter.dialect).name
     }
@@ -392,11 +406,11 @@ private fun pipeInputCte(query: Expression, stage: Expression, counter: PipeCteC
     }
     val singleRowset = rowsetName != null
     if (!singleRowset && hasStar) {
-        throw UnsupportedError("Cannot preserve a pipe SELECT/DISTINCT input boundary over multiple or unresolved source namespaces and stars; project uniquely named input columns first")
+        throw UnsupportedError("Cannot preserve a pipe $operation input boundary over multiple or unresolved source namespaces and stars; project uniquely named input columns first")
     }
     if (!hasStar && (projections.any { it.outputName.isEmpty() } ||
             projections.map { it.outputName.lowercase() }.toSet().size != projections.size)) {
-        throw UnsupportedError("Pipe SELECT/DISTINCT input boundaries require uniquely named input columns; add explicit aliases")
+        throw UnsupportedError("Pipe $operation input boundaries require uniquely named input columns; add explicit aliases")
     }
 
     val source = (query.args["from_"] as? From)?.thisArg as? Expression
@@ -444,7 +458,7 @@ private fun pipeInputCte(query: Expression, stage: Expression, counter: PipeCteC
         }
     }
     if (stageColumns.any { it.db.isNotEmpty() || it.catalog.isNotEmpty() }) {
-        throw UnsupportedError("Pipe SELECT/DISTINCT input boundaries require table aliases rather than database-qualified column references")
+        throw UnsupportedError("Pipe $operation input boundaries require table aliases rather than database-qualified column references")
     }
     // Scope's table-name lookup cannot distinguish db1.t from db2.t. Check full
     // names in child queries before considering a multipart reference locally bound.
@@ -522,14 +536,66 @@ private fun pipeScope(expression: Expression, dialect: Dialect): Scope {
     }
 }
 
-// sqlglot: Parser._parse_pipe_syntax_limit (offset part)
-private fun applyPipeOffset(query: Expression, offset: Offset?) {
-    if (offset == null) return
-    val currOffset = (query.args["offset"] as? Offset)?.let { literalLong(it.expressionArg) } ?: 0L
-    query.set(
-        "offset",
-        Offset(args("expression" to Literal.number(currOffset + literalLong(offset.expressionArg)))),
-    )
+/** Compose row slices, applying the stage's offset before its optional limit. */
+private fun applyPipeOffset(query: Expression, offset: Offset?, limit: Limit? = null) {
+    val currentLimit = query.args["limit"] as? Expression
+    val currentOffset = query.args["offset"] as? Expression
+    val currLimit = pipePaginationValue(currentLimit)
+    val currOffset = pipePaginationValue(currentOffset) ?: 0L
+    val nextLimit = pipePaginationValue(limit)
+    val commaOffset = limit?.args?.get("offset") as? Expression
+    if (commaOffset != null && offset != null) {
+        throw UnsupportedError("Pipe LIMIT cannot combine comma and OFFSET forms")
+    }
+    if (currentLimit?.args?.get("offset") != null) {
+        throw UnsupportedError("Pipe pagination requires a normalized input LIMIT/OFFSET")
+    }
+    val nextOffset = offset ?: commaOffset?.let {
+        Offset(args("expression" to it.copy())).also { clause -> clause.updatePositions(it) }
+    }
+    val skip = pipePaginationValue(nextOffset) ?: 0L
+
+    // Validate even empty slices and limits that would lose the minimum comparison.
+    checkedPipePaginationSum(currOffset, currLimit ?: 0L)
+    checkedPipePaginationSum(skip, nextLimit ?: 0L)
+    val totalOffset = checkedPipePaginationSum(currOffset, skip)
+    val remaining = currLimit?.let { (it - skip).coerceAtLeast(0L) }
+    val limitSource = if (nextLimit != null && (remaining == null || nextLimit <= remaining)) limit else currentLimit
+    val totalLimit = nextLimit?.let { minOf(it, remaining ?: it) } ?: remaining
+    checkedPipePaginationSum(totalOffset, totalLimit ?: 0L)
+
+    // Copy the contributing nodes so arithmetic retains their comments and positions.
+    if (limitSource != null && totalLimit != null) {
+        val merged = limitSource.copy()
+        merged.set("offset", null)
+        merged.set("expression", (limitSource.expressionArg as Literal).copy().also {
+            it.set("this", totalLimit.toString())
+        })
+        query.set("limit", merged)
+    }
+    if (nextOffset != null) {
+        val merged = nextOffset.copy()
+        merged.set("expression", (nextOffset.expressionArg as Literal).copy().also {
+            it.set("this", totalOffset.toString())
+        })
+        query.set("offset", merged)
+    }
+}
+
+private fun pipePaginationValue(clause: Expression?): Long? {
+    if (clause == null) return null
+    if ((clause !is Limit && clause !is Offset) || clause.args["limit_options"] != null ||
+        clause.expressionsArg.isNotEmpty()) {
+        throw UnsupportedError("Pipe LIMIT/OFFSET only supports plain literal row counts without modifiers")
+    }
+    return literalLong(clause.expressionArg)
+}
+
+private fun checkedPipePaginationSum(left: Long, right: Long): Long {
+    if (right > Long.MAX_VALUE - left) {
+        throw UnsupportedError("Pipe LIMIT/OFFSET arithmetic exceeds the signed 64-bit integer range")
+    }
+    return left + right
 }
 
 // sqlglot: Parser._parse_pipe_syntax_aggregate_group_order_by
@@ -602,9 +668,10 @@ private fun and_(left: Expression, right: Expression): And =
 private fun wrapConnector(expression: Expression): Expression =
     if (expression is Connector) Paren(args("this" to expression)) else expression
 
-/** sqlglot: Literal.to_py() for integer limit/offset literals. */
+/** No evaluation or coercion: only non-negative integer numeric literals can lower. */
 private fun literalLong(value: kotlin.Any?): Long {
     val literal = value as? Literal
-        ?: error("Expected a number literal in pipe LIMIT/OFFSET, got: $value")
-    return (literal.thisArg as String).toLong()
+    val text = literal?.takeUnless { it.isString }?.thisArg as? String
+    return text?.takeIf { it.isNotEmpty() && it.all { digit -> digit in '0'..'9' } }?.toLongOrNull()
+        ?: throw UnsupportedError("Pipe LIMIT/OFFSET requires a non-negative signed 64-bit integer literal")
 }

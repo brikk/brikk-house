@@ -84,7 +84,7 @@ class DorisDialectTest {
             roundTrip("SELECT DISTINCT ON (a) a FROM t"),
         )
         assertEquals(
-            "SELECT a, rn FROM (SELECT a, ROW_NUMBER() OVER (ORDER BY a) AS rn FROM t) AS _t WHERE rn = 1",
+            "SELECT a, ROW_NUMBER() OVER (ORDER BY a) AS rn FROM t QUALIFY rn = 1",
             roundTrip("SELECT a, ROW_NUMBER() OVER (ORDER BY a) AS rn FROM t QUALIFY rn = 1"),
         )
         for ((kind, predicate) in listOf("SEMI" to "EXISTS", "ANTI" to "NOT EXISTS")) {

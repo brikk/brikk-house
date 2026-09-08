@@ -12,6 +12,10 @@ import dev.brikk.house.sql.generator.UnsupportedError
 import dev.brikk.house.sql.generator.eliminateDistinctOn
 import dev.brikk.house.sql.generator.eliminateQualify
 import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
+import dev.brikk.house.sql.optimizer.walkInScope
+import dev.brikk.house.sql.optimizer.buildScope
+import dev.brikk.house.sql.optimizer.MappingSchema
+import dev.brikk.house.sql.optimizer.Resolver
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
 import kotlin.String
@@ -800,6 +804,13 @@ open class DorisGenerator(
         return sql(holderCopy)
     }
 
+    override fun starSql(expression: Star): String {
+        if (!(expression.args["rename"] as? List<*>).isNullOrEmpty()) {
+            throw UnsupportedError("Doris star RENAME requires expansion to an explicit projection before generation")
+        }
+        return super.starSql(expression)
+    }
+
     // brikk extension: Doris requires LIMIT before OFFSET. Its row counts and
     // limit values are signed 64-bit. Doris's two-phase planner adds limit+offset,
     // so the unbounded sentinel must leave room for the requested offset.
@@ -813,6 +824,42 @@ open class DorisGenerator(
             expression.set("limit", Limit(args("expression" to Literal.number(kotlin.Long.MAX_VALUE - amount))))
         }
         return super.selectSql(expression)
+    }
+
+    private fun qualifyReferencesWindow(expression: Select): Boolean {
+        val qualify = expression.args["qualify"] as? Qualify ?: return false
+        val nodes = walkInScope(qualify).toList()
+        if (nodes.any { it is Window }) return true
+        val windows = expression.selects.filterIsInstance<Alias>()
+            .filter { alias -> walkInScope(alias.thisArg as Expression).any { it is Window } }
+            .map { it.alias.lowercase() }.toSet()
+        val references = nodes.filterIsInstance<Column>()
+            .filter { it.table.isEmpty() && it.name.lowercase() in windows }
+        if (references.isEmpty()) return false
+        val inputNames = qualifyInputNames(expression)
+        val owners = buildScope(expression)?.selectedSources?.keys.orEmpty()
+        val provenInputs = expression.selects.filterIsInstance<Expression>()
+            .flatMap { walkInScope(it).filterIsInstance<Column>().filter { it.table in owners }.map { it.name.lowercase() }.toList() }
+        if (references.none { it.name.lowercase() !in inputNames.orEmpty() && it.name.lowercase() !in provenInputs }) return false
+        if (inputNames == null && isCrossDialectFrom("doris")) {
+            throw UnsupportedError("Cannot prove a Doris QUALIFY window-alias binding without known input columns; use an inline window predicate")
+        }
+        return true
+    }
+
+    private fun qualifyInputNames(expression: Select): Set<String>? {
+        val scope = buildScope(expression) ?: return null
+        val sources = scope.selectedSources
+        if (scope.references.size != sources.size || (sources.isEmpty() && expression.args["from_"] != null)) return null
+        val resolver = Resolver(scope, MappingSchema(), inferSchema = false)
+        val names = mutableSetOf<String>()
+        for ((name, source) in sources) {
+            if (source.second is Table) return null // No catalog is available during generation.
+            val columns = resolver.getSourceColumns(name)
+            if (columns.isEmpty() || "*" in columns) return null
+            names.addAll(columns.map { it.lowercase() })
+        }
+        return names
     }
 
     // brikk extension #21: native QUALIFY hides ranking columns and applies final
@@ -1002,10 +1049,84 @@ open class DorisGenerator(
             // elimination splits aggregates and DISTINCT across UNION ALL branches.
             reg(Select::class) { e ->
                 val nativeQualify = dg().qualifyDistinctOn(e as Select)
+                // The non-star DISTINCT ON fallback lowers an existing QUALIFY first,
+                // in a separate relation. Do not combine its two ranking/filter stages.
                 var s = if (nativeQualify) e else eliminateDistinctOn(e)
                 s = eliminateSemiAndAntiJoins(s)
-                // Eliminating the synthesized QUALIFY would project and leak the rank again.
-                if (!nativeQualify) s = eliminateQualify(s)
+                // Doris checkWindow requires a window in the predicate or a referenced
+                // window-output alias, not merely a window elsewhere in the SELECT.
+                if (s is Select && s.args["qualify"] != null && !dg().qualifyReferencesWindow(s)) {
+                    val hasStar = s.selects.any { (it is Star || it is Column || it is Dot) && it.isStar }
+                    val nested = (s.args["qualify"] as Expression).walk().any { it is Query }
+                    if (hasStar || nested) {
+                        throw UnsupportedError("Doris QUALIFY must reference a window expression; lowering this predicate requires explicit projections and no nested query")
+                    }
+                    val input = s
+                    val condition = input.args["qualify"] as Qualify
+                    val originalProjections = input.selects.filterIsInstance<Expression>()
+                    val owners = buildScope(input)?.selectedSources?.keys.orEmpty()
+                    val bound = mutableListOf<Expression>()
+                    // Aggregates belong to the input grouping, not a new outer WHERE.
+                    for (aggregate in walkInScope(condition).filter { it is AggFunc }.toList()) {
+                        val projection = originalProjections.firstOrNull { it.unalias() == aggregate }
+                        val identifier = projection?.args?.get("alias") as? Identifier
+                            ?: throw UnsupportedError("Doris scalar QUALIFY aggregates must be projected with an explicit alias")
+                        if (input.namedSelects.count { it.equals(identifier.name, ignoreCase = true) } != 1) {
+                            throw UnsupportedError("Doris scalar QUALIFY aggregate references require unique output names")
+                        }
+                        val reference = Column(args("this" to identifier.copy().also { it.updatePositions(aggregate) }))
+                        aggregate.replace(reference)
+                        bound.add(reference)
+                    }
+                    val inputNames = dg().qualifyInputNames(input)
+                    val provenInputs = originalProjections.flatMap {
+                        walkInScope(it).filterIsInstance<Column>().filter { it.table in owners }.map { it.name.lowercase() }.toList()
+                    }
+                    for (col in walkInScope(condition).filterIsInstance<Column>().filter { it.table.isEmpty() && bound.none { b -> b === it } }) {
+                        if (originalProjections.none { it is Alias && it.alias.equals(col.name, ignoreCase = true) }) continue
+                        if (col.name.lowercase() in inputNames.orEmpty() || col.name.lowercase() in provenInputs) {
+                            if (owners.size != 1) throw UnsupportedError("Cannot resolve scalar QUALIFY input/output name collisions across multiple sources")
+                            val raw = originalProjections.firstOrNull {
+                                val value = it.unalias() as? Column
+                                value?.name?.equals(col.name, ignoreCase = true) == true &&
+                                    (value.table.isEmpty() || value.table in owners)
+                            }
+                            val identifier = raw?.let { it.args["alias"] ?: it.thisArg } as? Identifier
+                                ?: throw UnsupportedError("Doris QUALIFY alias shadows an unprojected input column; select the input under a unique name")
+                            if (input.namedSelects.count { it.equals(identifier.name, ignoreCase = true) } != 1) {
+                                throw UnsupportedError("Doris scalar QUALIFY input references require unique output names")
+                            }
+                            col.set("this", identifier.copy().also { it.updatePositions(col.thisArg as Expression) })
+                        } else if (inputNames == null) {
+                            throw UnsupportedError("Cannot resolve a scalar QUALIFY alias without known input columns")
+                        }
+                    }
+                    val scope = buildScope(input)
+                    val owner = scope?.references?.singleOrNull()?.first
+                        ?.takeIf { scope.selectedSources.keys == setOf(it) }
+                    s = eliminateQualify(input)
+                    // The fallback's WHERE now consumes the subquery's output slots.
+                    // Bind qualified predicates to a proven projected/hidden column,
+                    // never merely to an equally named but different expression.
+                    val predicate = (s as Select).args["where"] as Where
+                    val projections = input.selects.filterIsInstance<Expression>()
+                    for (col in walkInScope(predicate).filterIsInstance<Column>().filter { it.table.isNotEmpty() }) {
+                        val projection = projections.firstOrNull { it.unalias() == col }
+                            ?: projections.firstOrNull {
+                                val value = it.unalias() as? Column
+                                value?.table.isNullOrEmpty() && value?.name == col.name && col.table == owner &&
+                                    col.db.isEmpty() && col.catalog.isEmpty()
+                            }
+                            ?: throw UnsupportedError("Cannot bind a qualified Doris QUALIFY predicate to its input projection")
+                        if (input.namedSelects.count { it.equals(projection.aliasOrName, ignoreCase = true) } != 1) {
+                            throw UnsupportedError("Doris QUALIFY fallback requires unique input column names")
+                        }
+                        val identifier = (projection.args["alias"] ?: projection.thisArg) as? Identifier
+                            ?: throw UnsupportedError("Cannot name a Doris QUALIFY input column")
+                        col.set("this", identifier.copy().also { it.updatePositions(col.thisArg as Expression) })
+                        for (key in listOf("table", "db", "catalog")) col.set(key, null)
+                    }
+                }
                 if (s is Select) selectSql(s) else sql(s)
             }
             reg(Split::class) { e -> dg().renameFuncSql("SPLIT_BY_STRING", e) }

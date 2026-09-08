@@ -41,6 +41,7 @@ def required = [
         'refused stage prefixes retain the error and annotate only their own statement',
         'lateral column qualifiers survive an input boundary or are refused',
         'base table star excludes lateral columns across an input boundary or is refused',
+        'B14 remains open because warning free pipe RENAME fails the native grammar',
     ],
     'dev.sort.doris.pipes.DorisPipesActionTest': [
         'testHandledRejectionAndThrownFailureDoNotInvokeThePreviousAction',

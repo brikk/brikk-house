@@ -400,6 +400,21 @@ open class Generator(
             if (e > s) entries.add(SourceMap.Entry(s, e, node))
         }
 
+        fun locate(fragment: String, window: String, from: Int): IntRange? {
+            val exact = window.indexOf(fragment, from)
+            val exactRange = exact.takeIf { it >= 0 }?.let { it until it + fragment.length }
+            if (!pretty || '\n' !in fragment) return exactRange
+            // Wrapping a CTE/subquery adds indentation. Keep its parent span rather
+            // than resolving repeated child text against the entire enclosing query.
+            // Literal line breaks use sentinels, so only formatting indentation varies.
+            val pattern = fragment.split('\n').mapIndexed { index, line ->
+                if (index == 0) Regex.escape(line)
+                else "[ \\t]*" + Regex.escape(line.trimStart(' ', '\t'))
+            }.joinToString("\\n")
+            val indentedRange = Regex(pattern).find(window, from)?.range
+            return listOfNotNull(exactRange, indentedRange).minByOrNull { it.first }
+        }
+
         // Locates each child fragment inside its parent's window (cursor scan with a
         // from-the-start retry for arg-reordering handlers); unresolved children are
         // skipped but their descendants are re-resolved against the same window.
@@ -411,15 +426,15 @@ open class Generator(
                     resolve(child.children, windowStart, window)
                     continue
                 }
-                var idx = window.indexOf(frag, cursor)
-                if (idx < 0) idx = window.indexOf(frag)
-                if (idx < 0) {
+                val range = locate(frag, window, cursor) ?: locate(frag, window, 0)
+                if (range == null) {
                     resolve(child.children, windowStart, window)
                     continue
                 }
-                addEntry(child.node, windowStart + idx, windowStart + idx + frag.length)
-                resolve(child.children, windowStart + idx, frag)
-                cursor = idx + frag.length
+                val end = range.last + 1
+                addEntry(child.node, windowStart + range.first, windowStart + end)
+                resolve(child.children, windowStart + range.first, window.substring(range.first, end))
+                cursor = end
             }
         }
 

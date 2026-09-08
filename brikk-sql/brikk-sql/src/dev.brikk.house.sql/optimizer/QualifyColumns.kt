@@ -63,6 +63,8 @@ import dev.brikk.house.sql.ast.selects
 import dev.brikk.house.sql.ast.toIdentifier
 import dev.brikk.house.sql.dialects.Dialect
 import dev.brikk.house.sql.dialects.Dialects
+import dev.brikk.house.sql.generator.UnsupportedError
+import dev.brikk.house.sql.shape.ShapeError
 
 /**
  * Port of sqlglot/optimizer/qualify_columns.py — rewrite the AST to have fully
@@ -160,12 +162,13 @@ fun <E : Expression> validateQualifyColumns(expression: E, sql: String? = null):
     val allUnqualifiedColumns = mutableListOf<Column>()
     for (scope in traverseScope(expression)) {
         if (scope.expression is Select) {
-            val unqualifiedColumns = scope.unqualifiedColumns
+            val unqualifiedColumns = scope.unqualifiedColumns.filterNot { it.isStarRenameSource() }
+            val externalColumns = scope.externalColumns.filterNot { it.isStarRenameSource() }
 
-            if (scope.externalColumns.isNotEmpty() && !scope.isCorrelatedSubquery &&
+            if (externalColumns.isNotEmpty() && !scope.isCorrelatedSubquery &&
                 scope.pivots.isEmpty()
             ) {
-                val column = scope.externalColumns[0]
+                val column = externalColumns[0]
                 val forTable =
                     if (column.table.isNotEmpty()) " for table: '${column.table}'" else ""
 
@@ -186,6 +189,13 @@ fun <E : Expression> validateQualifyColumns(expression: E, sql: String? = null):
     }
 
     return expression
+}
+
+// RENAME sources name fields in a star, not ordinary references. Expansion validates
+// them when the input is known; native-dialect modifiers can retain unresolved stars.
+private fun Expression.isStarRenameSource(): Boolean {
+    val rename = parent as? Alias
+    return rename?.parent is Star && rename.argKey == "rename"
 }
 
 // sqlglot: qualify_columns._separate_pseudocolumns
@@ -738,6 +748,7 @@ private fun selectByPos(expression: Expression, node: Literal): Alias {
 private fun convertColumnsToDots(scope: Scope, resolver: Resolver) {
     var converted = false
     for (column in scope.columns + scope.stars) {
+        if (column.isStarRenameSource()) continue
         if (column is Dot) {
             continue
         }
@@ -797,6 +808,7 @@ private fun qualifyColumnsInScope(
     allowPartialQualification: Boolean,
 ) {
     for (column in scope.columns) {
+        if (column.isStarRenameSource()) continue
         val columnTable = column.table
         val columnName = column.name
 
@@ -1046,7 +1058,6 @@ private fun expandStarsInScope(
     val newSelections = mutableListOf<Expression>()
     val exceptColumns = HashMap<Any, Set<String>>()
     val replaceColumns = HashMap<Any, Map<String, Alias>>()
-    val renameColumns = HashMap<Any, Map<String, String>>()
     var ilikePattern: String? = null
 
     val coalescedColumns = mutableSetOf<String>()
@@ -1065,6 +1076,35 @@ private fun expandStarsInScope(
     }
 
     for (expression in scopeExpression.selects) {
+        // Doris Scope.findSlotIgnoreCase folds column names even when table names
+        // retain case. Keep spelling/quotedness, but do not admit colliding outputs.
+        fun renameKey(name: String): String = if (dialect.name == "doris") name.lowercase() else name
+        val star = if (expression is Star) expression else expression.thisArg as? Star
+        val renames = (star?.args?.get("rename") as? List<*>) ?: emptyList<Any?>()
+        val renamedColumns = LinkedHashMap<String, Pair<Identifier, Identifier>>()
+        val renameTargets = mutableSetOf<String>()
+        for (rename in renames) {
+            val alias = rename as? Alias
+            val source = alias?.thisArg
+            if (source is Column && source.parts.size != 1) {
+                throw UnsupportedError("Cannot expand RENAME with a qualified source reference; use an unqualified input column")
+            }
+            val sourceIdentifier = (source as? Identifier) ?: (source as? Column)?.thisArg as? Identifier
+            val targetIdentifier = alias?.args?.get("alias") as? Identifier
+            if (sourceIdentifier == null || targetIdentifier == null) {
+                throw UnsupportedError("Cannot expand RENAME without source and target column identifiers")
+            }
+            val name = renameKey(dialect.normalizeIdentifier(sourceIdentifier.copy()).name)
+            if (name in renamedColumns) {
+                throw ShapeError("Cannot RENAME column '$name' more than once in the same star")
+            }
+            val targetName = renameKey(dialect.normalizeIdentifier(targetIdentifier.copy()).name)
+            if (!renameTargets.add(targetName)) {
+                throw ShapeError("Cannot RENAME columns to duplicate output name '$targetName'")
+            }
+            renamedColumns[name] = sourceIdentifier to targetIdentifier
+        }
+        val selectionStart = newSelections.size
         // Pairs of (table name, identity key mirroring Python's id(table) semantics):
         // bare `*` shares the selected_sources key across selections; a qualified
         // `t.*` gets a per-occurrence key (its identifier's string object in Python).
@@ -1076,7 +1116,6 @@ private fun expandStarsInScope(
             val tableKeys = tables.map { it.second }
             addExceptColumns(expression, tables, exceptColumns)
             addReplaceColumns(expression, tableKeys, replaceColumns)
-            addRenameColumns(expression, tableKeys, renameColumns)
             ilikePattern = addIlikeColumns(expression)
         } else if (expression.isStar) {
             if (expression is Column) {
@@ -1085,7 +1124,6 @@ private fun expandStarsInScope(
                 val star = expression.thisArg as Expression
                 addExceptColumns(star, tables, exceptColumns)
                 addReplaceColumns(star, tableKeys, replaceColumns)
-                addRenameColumns(star, tableKeys, renameColumns)
                 ilikePattern = addIlikeColumns(star)
             } else if (expression is Dot) {
                 val structFields = if (dialect.requiresParenthesizedStructAccess) {
@@ -1154,11 +1192,13 @@ private fun expandStarsInScope(
             // colliding star-expanded columns), expanding this star would produce ambiguous
             // projections, so we leave it unexpanded.
             if (columns.isEmpty() || "*" in columns || columns.size != columns.toSet().size) {
+                if (renames.isNotEmpty() && columns.isNotEmpty() && "*" !in columns) {
+                    throw ShapeError("Cannot RENAME columns from '$table': the input has duplicate column names")
+                }
                 return
             }
 
             val columnsToExclude = exceptColumns[tableId] ?: emptySet()
-            val renamedColumns = renameColumns[tableId] ?: emptyMap()
             val replacedColumns = replaceColumns[tableId] ?: emptyMap()
 
             // Preserve case-sensitivity of quoted source columns when expanding stars,
@@ -1234,21 +1274,47 @@ private fun expandStarsInScope(
                         aliasExpression(coalesce(coalesceArgs), alias = name, copy = false)
                     )
                 } else {
-                    val alias_ = renamedColumns[name] ?: name
                     val quoted = name in quotedColumns ||
                         // if it has characters that the dialect would have changed,
                         // infer that it was quoted.
                         (source is Table && dialect.caseSensitive(name))
                     val selectionExpr: Expression = replacedColumns[name]
-                        ?: column(name, table = table, quoted = quoted)
-                    newSelections.add(
-                        if (alias_ != name) {
-                            aliasExpression(selectionExpr, alias_, copy = false)
-                        } else {
-                            selectionExpr
-                        }
-                    )
+                        ?: column(name, table = table, quoted = true.takeIf { quoted })
+                    newSelections.add(selectionExpr)
                 }
+            }
+        }
+
+        if (renamedColumns.isNotEmpty()) {
+            val selections = newSelections.subList(selectionStart, newSelections.size)
+            val inputNames = selections.map { it.outputName }
+            val inputKeys = inputNames.map { renameKey(it) }
+            for (name in renamedColumns.keys) {
+                when (inputKeys.count { it == name }) {
+                    0 -> throw ShapeError("Cannot RENAME unknown column '$name': it does not exist in the resolved input columns.")
+                    1 -> Unit
+                    else -> throw ShapeError("Cannot RENAME ambiguous column '$name': it occurs more than once in the resolved input columns.")
+                }
+            }
+            // Validate the complete simultaneous mapping, not intermediate names: a swap
+            // is valid, but colliding with an untouched column is not.
+            val outputNames = mutableSetOf<String>()
+            for (name in inputKeys) {
+                val target = renamedColumns[name]?.second
+                val outputName = target?.let { renameKey(dialect.normalizeIdentifier(it.copy()).name) } ?: name
+                if (!outputNames.add(outputName)) {
+                    throw ShapeError("Cannot RENAME columns to duplicate output name '$outputName'")
+                }
+            }
+            for (i in selections.indices) {
+                val (source, target) = renamedColumns[inputKeys[i]] ?: continue
+                val selection = selections[i]
+                if (selection is Column) {
+                    // Bind using the catalog's spelling while retaining the source
+                    // RENAME token's position, e.g. Doris RENAME `ID` for column id.
+                    selection.set("this", source.copy().also { it.set("this", inputNames[i]) })
+                }
+                selections[i] = aliasExpression(selection, target)
             }
         }
 
@@ -1324,25 +1390,6 @@ private fun addExceptColumns(
         if (tableColumns.isNotEmpty()) {
             exceptColumns[tableKey] = tableColumns
         }
-    }
-}
-
-// sqlglot: qualify_columns._add_rename_columns
-private fun addRenameColumns(
-    expression: Expression,
-    tables: List<Any>,
-    renameColumns: MutableMap<Any, Map<String, String>>,
-) {
-    val rename = (expression.args["rename"] as? List<*>)?.filterIsInstance<Expression>()
-
-    if (rename.isNullOrEmpty()) {
-        return
-    }
-
-    val columns = rename.associate { (it.thisArg as Expression).name to it.alias }
-
-    for (table in tables) {
-        renameColumns[table] = columns
     }
 }
 

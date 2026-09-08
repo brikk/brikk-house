@@ -150,7 +150,7 @@ class PipeExtendedOperatorsTest {
     fun renameDesugarsToStarRename() {
         // googlesql RENAME (~763): renames the top-level column, keeping its position.
         assertEquals(
-            "WITH __tmp1 AS (SELECT * FROM t) SELECT * RENAME (a AS b) FROM __tmp1",
+            "WITH __tmp1 AS (SELECT * FROM t), __tmp2 AS (SELECT * RENAME (a AS b) FROM __tmp1) SELECT * FROM __tmp2",
             desugared("FROM t |> RENAME a AS b"),
         )
     }
@@ -187,12 +187,12 @@ class PipeExtendedOperatorsTest {
     }
 
     @Test
-    fun standaloneOffsetDesugarsWithOffsetSumSemantics() {
+    fun standaloneOffsetComposesWithTheRemainingInputSlice() {
         assertEquals("SELECT * FROM t OFFSET 2", desugared("FROM t |> OFFSET 2"))
         // offsets sum (same merge rule as the LIMIT stage's OFFSET part)
         assertEquals("SELECT * FROM t OFFSET 5", desugared("FROM t |> OFFSET 2 |> OFFSET 3"))
         assertEquals(
-            "SELECT * FROM t LIMIT 4 OFFSET 5",
+            "SELECT * FROM t LIMIT 1 OFFSET 5",
             desugared("FROM t |> LIMIT 4 OFFSET 2 |> OFFSET 3"),
         )
     }
@@ -202,8 +202,8 @@ class PipeExtendedOperatorsTest {
         assertEquals(
             "WITH __tmp1 AS (SELECT * FROM t), " +
                 "__tmp2 AS (SELECT * REPLACE (a + 1 AS a) FROM __tmp1), " +
-                "__tmp3 AS (SELECT * EXCEPT (b) FROM __tmp2) " +
-                "SELECT * RENAME (c AS k) FROM __tmp3",
+                "__tmp3 AS (SELECT * EXCEPT (b) FROM __tmp2), " +
+                "__tmp4 AS (SELECT * RENAME (c AS k) FROM __tmp3) SELECT * FROM __tmp4",
             desugared("FROM t |> SET a = a + 1 |> DROP b |> RENAME c AS k"),
         )
     }
@@ -254,8 +254,9 @@ class PipeExtendedOperatorsTest {
         val expected =
             "WITH __tmp1 AS (SELECT t.a AS a, t.b AS b, t.c AS c FROM t AS t), " +
                 "__tmp2 AS (SELECT __tmp1.a + 1 AS a, __tmp1.b AS b, __tmp1.c AS c FROM __tmp1 AS __tmp1), " +
-                "__tmp3 AS (SELECT __tmp2.a AS a, __tmp2.c AS c FROM __tmp2 AS __tmp2) " +
-                "SELECT __tmp3.a AS a, __tmp3.c AS k FROM __tmp3 AS __tmp3"
+                "__tmp3 AS (SELECT __tmp2.a AS a, __tmp2.c AS c FROM __tmp2 AS __tmp2), " +
+                "__tmp4 AS (SELECT __tmp3.a AS a, __tmp3.c AS k FROM __tmp3 AS __tmp3) " +
+                "SELECT __tmp4.a AS a, __tmp4.k AS k FROM __tmp4 AS __tmp4"
         for (target in listOf("mysql", "postgres", "duckdb")) {
             val sql = fragment.toStandardSql(target = target, inputs = catalog, expandStars = true)
             assertEquals(expected, sql, "expanded rendering for $target")

@@ -1,16 +1,18 @@
 # brikk-sql
 
-SQL tokenizer, parser, AST, and generator for Kotlin Multiplatform — a faithful port of
-[sqlglot](https://github.com/tobymao/sqlglot) (Python, MIT, © Toby Mao) with one deliberate
-extension: **BigQuery/GoogleSQL pipe syntax (`|>`) is kept first-class in the AST** instead
-of being desugared away at parse time.
+SQL tokenizer, parser, AST, and generator for Kotlin Multiplatform, derived from
+[sqlglot](https://github.com/tobymao/sqlglot) (Python, MIT, © Toby Mao).
+BigQuery/GoogleSQL pipe syntax (`|>`) stays first-class in the AST instead of being
+desugared away at parse time.
+Target-specific fixes and other deliberate differences are listed in the
+[extensions registry](../../docs/brikk-extensions.md).
 
-Parity with sqlglot is enforced by differential test gates against the pinned upstream
-(`v30.17.0-93-gdcc36544a`): token streams, AST structure (serde-compared), and generated SQL
-are verified byte-for-byte against the Python implementation across thousands of corpus
-cases. See [parsing research and plan](../../docs/parsing-research-and-plan.md) for
-architecture and status. This compares generated output with the Python oracle,
-not with the author's original SQL text.
+Differential gates compare token streams, serialized AST structure, and generated SQL
+against pinned sqlglot (`v30.17.0-93-gdcc36544a`) across thousands of corpus cases,
+with explicit expectations for deliberate divergences. Separate semantic tests check
+row results and output schemas. See [parsing research and plan](../../docs/parsing-research-and-plan.md)
+for architecture and status. Oracle parity alone does not prove correct row results
+or preservation of the author's original SQL text.
 
 This module now lives at `brikk-sql/brikk-sql/`, alongside
 [metadata](../brikk-sql-metadata/), [verification](../brikk-sql-verify/), and
@@ -134,7 +136,7 @@ sqlglot):
 | `PipeWhere` | condition (`Where`) |
 | `PipeAggregate` | aggregate projections + `group` / `group_and_order` (incl. `GROUP BY x AS y`) |
 | `PipeOrderBy` | `Order` (last one wins on desugar) |
-| `PipeLimit` / `PipeOffset` | `Limit` / `Offset` (desugar keeps min limit, sums offsets) |
+| `PipeLimit` / `PipeOffset` | `Limit` / `Offset` (desugar composes ordered row slices) |
 | `PipeAs` | stage alias (`TableAlias`) |
 | `PipeDistinct` | — |
 | `PipeJoin` | `Join` |
@@ -255,6 +257,17 @@ or delegate to a previous execution handler after a refusal, and do not catch
 cancellation or arbitrary failures as though they were supported translations.
 The [candidate consumer gate](../../docs/consumer-verification.md) tests this
 contract against the Doris plugin's actual adapter and dispatch helper.
+
+Pipe LIMIT/OFFSET lowering accepts only non-negative signed-64-bit integer
+numeric literals. Unsupported values, expressions, placeholders, row-count
+modifiers and overflowing slice arithmetic raise `UnsupportedError`; they are
+not coerced or silently dropped. Syntax errors still come from the parser.
+
+Doris PIPE RENAME requires a complete input shape. The no-schema executable path
+refuses with `UnsupportedError`; use `toStandardSql("doris", inputs, expandStars = true)`
+for schema-aware projection expansion. Invalid known mappings or duplicate schema
+columns raise `ShapeError`. Qualified rename arguments and unrepresentable target
+bindings remain typed refusals. This does not change DDL RENAME support.
 
 Anything the parser does not yet support fails loudly with a `ParseError` raise-gate —
 there is no silent misparsing.

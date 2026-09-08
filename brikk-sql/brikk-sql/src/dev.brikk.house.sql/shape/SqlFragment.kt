@@ -20,9 +20,11 @@ import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.With
 import dev.brikk.house.sql.ast.args
 import dev.brikk.house.sql.ast.desugarPipes
+import dev.brikk.house.sql.ast.namedSelects
 import dev.brikk.house.sql.ast.intoExpr
 import dev.brikk.house.sql.dialects.Dialect
 import dev.brikk.house.sql.dialects.Dialects
+import dev.brikk.house.sql.generator.UnsupportedError
 import dev.brikk.house.sql.optimizer.MappingSchema
 import dev.brikk.house.sql.optimizer.Node
 import dev.brikk.house.sql.optimizer.TypeAnnotator
@@ -424,7 +426,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
 
     private fun outputShapeOf(tree: Expression, inputs: ShapeCatalog): Shape {
         val prepared = prepareTree(tree, inputs)
-        val schema = buildSchema(inputs)
+        val schema = buildSchema(inputs, rejectNormalizedDuplicates = prepared.hasStarRename())
         val qualified = qualify(
             prepared,
             dialect = dialectObj,
@@ -480,7 +482,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         inputs: ShapeCatalog = ShapeCatalog.EMPTY,
     ): Map<String, Set<String>> {
         val prepared = prepareTree(ast, inputs)
-        val schema = buildSchema(inputs)
+        val schema = buildSchema(inputs, rejectNormalizedDuplicates = prepared.hasStarRename())
         val nodes: Map<String, Node> = if (column == null) {
             lineageAll(prepared, schema = schema, dialect = dialectObj)
         } else {
@@ -507,14 +509,26 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         expandStars: Boolean = false,
     ): String {
         var tree = desugarPipes(ast, dialectObj, copy = true)
+        val hasRename = tree.findAll<Star>().any { !(it.args["rename"] as? List<*>).isNullOrEmpty() }
         if (expandStars && inputs != null) {
             tree = bindSlots(tree, inputs)
-            tree = expandStarModifiers(tree, buildSchema(inputs), dialectObj)
+            tree = expandStarModifiers(tree, buildSchema(inputs, rejectNormalizedDuplicates = hasRename), dialectObj)
+        }
+        val targetDialect = Dialects.forName(target)
+        if (hasRename && targetDialect.name == "doris") {
+            // A case-sensitive source can distinguish slots that Doris cannot, even
+            // if the final renamed outputs are unique. Check intermediate CTEs too.
+            for (select in tree.findAll<Select>()) {
+                val names = select.namedSelects.filter { it != "*" }
+                if (names.toSet().size != names.map { it.lowercase() }.toSet().size) {
+                    throw UnsupportedError("Doris RENAME cannot preserve case-distinct intermediate column names")
+                }
+            }
         }
         // Source-aware: pass this fragment's dialect so same-dialect desugaring (the common
         // toStandardSql case, target defaults to `dialect`) stays faithful and never rewrites
         // native functions (e.g. ClickHouse lower stays LOWER, not lowerUTF8).
-        return Dialects.forName(target).generate(tree, sourceDialect = dialect.ifBlank { null })
+        return targetDialect.generate(tree, sourceDialect = dialect.ifBlank { null })
     }
 
     /**
@@ -602,12 +616,23 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      * (db.table / catalog.db.table); all entries — slots included — must share one
      * nesting depth (MappingSchema constraint). Slot shapes join under the slot name.
      */
-    private fun buildSchema(inputs: ShapeCatalog): MappingSchema {
+    private fun buildSchema(inputs: ShapeCatalog, rejectNormalizedDuplicates: Boolean = false): MappingSchema {
         val simpleName = Regex("[_a-zA-Z][a-zA-Z0-9_]*")
-        fun columns(shape: Shape): Map<String, String> = shape.toSchemaMapping().mapKeys { (name, _) ->
-            // ColumnShape names are raw metadata, not SQL identifier expressions.
-            if (simpleName.matches(name)) name
-            else dialectObj.generate(Identifier(args("this" to name, "quoted" to true)))
+        fun columns(shape: Shape): Map<String, String> {
+            val names = mutableSetOf<String>()
+            for (column in shape.columns) {
+                val identifier = Identifier(args("this" to column.name, "quoted" to !simpleName.matches(column.name)))
+                val normalized = dialectObj.normalizeIdentifier(identifier).name
+                val name = if (dialectObj.name == "doris") normalized.lowercase() else normalized
+                if (!names.add(name) && rejectNormalizedDuplicates) {
+                    throw ShapeError("Duplicate schema column name '${column.name}' under ${dialect.ifBlank { "base" }} identifier normalization")
+                }
+            }
+            return shape.toSchemaMapping().mapKeys { (name, _) ->
+                // ColumnShape names are raw metadata, not SQL identifier expressions.
+                if (simpleName.matches(name)) name
+                else dialectObj.generate(Identifier(args("this" to name, "quoted" to true)))
+            }
         }
         val mapping = LinkedHashMap<String, Any?>()
         var depth = 1
@@ -629,6 +654,9 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         }
         return MappingSchema(schema = mapping, dialect = dialectObj)
     }
+
+    private fun Expression.hasStarRename(): Boolean =
+        findAll<Star>().any { !(it.args["rename"] as? List<*>).isNullOrEmpty() }
 
     private companion object {
         /** Synthetic db/catalog name under which slots are nested when tables are qualified. */
@@ -776,26 +804,21 @@ data class FragmentContract(
  *
  * Validation (googlesql spec: "Each referenced column must exist exactly once in the
  * input table", docs/pipe-syntax.md ~664 SET / ~763 RENAME): once a star with
- * REPLACE/RENAME modifiers has been expanded, the target column must have resolved —
- * a RENAME of an unknown column (no `old AS new` projection materialized) or a
- * SET/REPLACE of an unknown column throws [ShapeError]. Modifiers on stars whose
- * source has no schema entry survive unexpanded and are not validated (same lenient
- * posture as `validateQualifyColumns = false`).
+ * RENAME modifiers is expanded, each source must resolve exactly once and the complete
+ * simultaneous mapping must have unique output names. Invalid mappings throw [ShapeError]
+ * in the optimizer's per-star expansion. Qualified RENAME sources are refused with
+ * [dev.brikk.house.sql.generator.UnsupportedError] rather than losing their qualifier.
+ * SET/REPLACE of an unknown column also throws [ShapeError]. Modifiers on stars whose
+ * source has no schema entry survive unexpanded; source existence and final-output
+ * collisions cannot be checked until the input is known. Repeated RENAME sources/targets and
+ * unsupported source syntax are rejected even without schema. Dialects without native
+ * RENAME support must refuse surviving modifiers during generation.
  */
 fun expandStarModifiers(
     tree: Expression,
     schema: Any?,
     dialect: Dialect = Dialects.BASE,
 ): Expression {
-    fun renamePairs(root: Expression): Set<Pair<String, String>> =
-        root.findAll(Star::class)
-            .flatMap { star ->
-                ((star.args["rename"] as? List<*>) ?: emptyList<Any?>())
-                    .filterIsInstance<Alias>()
-                    .map { (it.thisArg as Expression).name.lowercase() to it.alias.lowercase() }
-            }
-            .toSet()
-
     fun replaceTargets(root: Expression): Set<String> =
         root.findAll(Star::class)
             .flatMap { star ->
@@ -805,7 +828,6 @@ fun expandStarModifiers(
             }
             .toSet()
 
-    val requestedRenames = renamePairs(tree)
     val requestedReplaces = replaceTargets(tree)
 
     val qualified = qualify(
@@ -818,20 +840,11 @@ fun expandStarModifiers(
 
     // Modifiers still attached to surviving stars could not be resolved (no schema for
     // their source) — exempt from validation.
-    val unresolvedRenames = renamePairs(qualified)
     val unresolvedReplaces = replaceTargets(qualified)
 
     val outputAliases =
         qualified.findAll(Alias::class).map { it.alias.lowercase() }.toSet()
 
-    for ((old, new) in requestedRenames - unresolvedRenames) {
-        if (new !in outputAliases) {
-            throw ShapeError(
-                "Cannot RENAME unknown column '$old': it does not exist in the " +
-                    "resolved input columns."
-            )
-        }
-    }
     for (target in requestedReplaces - unresolvedReplaces) {
         if (target !in outputAliases) {
             throw ShapeError(

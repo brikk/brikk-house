@@ -323,6 +323,22 @@ class SourceMapTest {
     }
 
     @Test
+    fun whereAfterLimitMapsItsOwnRepeatedColumnOccurrence() {
+        val source = "FROM t\n|> ORDER BY id\n|> LIMIT 2\n|> WHERE id > 1\n|> SELECT id"
+        val original = SqlFragment(source, "doris")
+        val expected = source.indexOf("id > 1")
+        for (pretty in listOf(false, true)) {
+            val result = original.toExecutable("doris", pretty = pretty)
+            val map = assertNotNull(result.sourceMap)
+            assertTrue(result.sql === map.output)
+            val position = assertNotNull(map.sourcePosition(result.sql.indexOf("id > 1"), exact = true), result.sql)
+            assertEquals(expected, position.start)
+            assertEquals(expected + 1, position.end)
+            assertEquals(4, position.lineStart)
+        }
+    }
+
+    @Test
     fun executableSourceMapStaysExactAfterSupplementaryCharacters() {
         val source =
             "FROM t |> EXTEND '\uD83D\uDE00' AS label |> WHERE missing_column > 0 |> LIMIT 5"

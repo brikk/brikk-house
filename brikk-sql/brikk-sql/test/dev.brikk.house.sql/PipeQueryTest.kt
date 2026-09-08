@@ -19,6 +19,7 @@ import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.generator.UnsupportedError
 import dev.brikk.house.sql.parser.parseOne
+import dev.brikk.house.sql.shape.SqlFragment
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -180,13 +181,13 @@ class PipeQueryTest {
     }
 
     @Test
-    fun desugarKeepsMinimumLimitAndSumsOffsets() {
+    fun desugarComposesLimitedSlicesWithoutRestoringSkippedRows() {
         val desugared = desugarPipes(
             parseOne("FROM x |> LIMIT 2 OFFSET 2 |> LIMIT 4 OFFSET 3")
         )
         val select = assertIs<Select>(desugared)
         val limit = assertIs<Limit>(select.args["limit"])
-        assertEquals("2", (limit.expressionArg as Literal).thisArg, "LIMIT keeps the minimum")
+        assertEquals("0", (limit.expressionArg as Literal).thisArg, "The second offset exhausts the two-row input")
         val offset = assertIs<Offset>(select.args["offset"])
         assertEquals("5", (offset.expressionArg as Literal).thisArg, "OFFSET sums")
     }
@@ -215,5 +216,13 @@ class PipeQueryTest {
         // and desugaring a copy never mutates the original
         desugarPipes(ast)
         assertEquals(ast, copy)
+    }
+
+    @Test
+    fun whereCannotReadAColumnRemovedByThePreviousProjection() {
+        val sql = SqlFragment("SELECT id FROM t |> WHERE category = 'A'", "doris")
+            .toExecutable("doris").sql
+        assertTrue("WITH __tmp1 AS (SELECT id FROM t)" in sql, sql)
+        assertTrue("FROM __tmp1 WHERE category = 'A'" in sql, sql)
     }
 }

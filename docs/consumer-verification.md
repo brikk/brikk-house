@@ -104,13 +104,16 @@ IDE compatibility across versions, or published POM/transitive-dependency
 correctness. Known-defect characterization tests can also pass. Keep upstream
 semantic/execution gates and release verification separate.
 
-The local gate has been exercised against candidate JARs and the current client
-working sources, including all 34 upgrade and 9 action tests. Each run still must
-establish its own success via the retained `PASS` marker and reports.
+The 2026-09-08 candidate run against client commit
+`49caa9a8f187367393852e71cde4fb0de4696beb` ran all 36 upgrade and 9 action tests.
+It failed only B14's old expectation of warning-free invalid RENAME SQL; the adapter
+now returns the intended handled refusal. This is not a passing consumer gate.
+See the [PIPE handoff results](doris-pipe-handoff.md) for candidate hashes, reports,
+and the required downstream assertion change. Every subsequent run must establish
+its own success via the retained `PASS` marker and reports.
 
-Mandatory downstream CI is pending a reviewed, pinned client commit containing the currently dirty
-adapter/dispatch changes and untracked upgrade tests. There is no safe default
-client ref yet. Commit and pin those inputs, and define candidate-build provenance
-before enabling the cross-repository job. The upstream boundary matrix already
-runs in the existing test workflow required by releases; this change does not
-silently substitute that matrix for the downstream adapter check.
+The adapter/dispatch changes and upgrade tests now have a committed client baseline.
+Mandatory downstream CI is still not enabled. Pin a reviewed client revision with
+the updated B14 contract and define candidate-build provenance before enabling the
+cross-repository job. The upstream boundary matrix already runs in the existing
+test workflow required by releases; it does not replace the downstream adapter check.

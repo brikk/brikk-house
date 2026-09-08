@@ -1,14 +1,15 @@
 package dev.brikk.house.sql
 
 import dev.brikk.house.sql.dialects.transpile
+import dev.brikk.house.sql.generator.UnsupportedError
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 /**
  * Customer demo: DuckDB-authored test SQL converted to Doris and Trino.
- * Expected strings are Python sqlglot's output (v30.12.0-44-g93d16591) — this test
- * certifies brikk-sql matches the oracle for exactly these cases, and prints the
- * conversions for human inspection.
+ * Unchanged conversions retain Python-oracle expectations; Doris corrections and
+ * binding refusals are explicit rather than treating parity as a semantic proof.
  */
 class DuckdbMigrationExamplesTest {
 
@@ -36,13 +37,6 @@ class DuckdbMigrationExamplesTest {
             "SELECT DATE_TRUNC(o_orderdate, 'MONTH') FROM orders",
             "SELECT DATE_TRUNC('MONTH', o_orderdate) FROM orders",
         ),
-        Triple(
-            "SELECT *, row_number() OVER (PARTITION BY a ORDER BY b) rn FROM t QUALIFY rn = 1",
-            // brikk extension: outer projection collapses to bare star (sqlglot emits
-            // "SELECT *, rn FROM (...)" which duplicates the rn output column).
-            "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY a ORDER BY CASE WHEN b IS NULL THEN 1 ELSE 0 END, b) AS rn FROM t) AS _t WHERE rn = 1",
-            "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY a ORDER BY b) AS rn FROM t) AS _t WHERE rn = 1",
-        ),
     )
 
     @Test
@@ -57,5 +51,17 @@ class DuckdbMigrationExamplesTest {
             assertEquals(doris, ourDoris, "doris mismatch for: $duckdb")
             assertEquals(trino, ourTrino, "trino mismatch for: $duckdb")
         }
+    }
+
+    @Test
+    fun anUnknownInputColumnMustNotBeAssumedToNameTheWindowAlias() {
+        val source = "SELECT *, row_number() OVER (PARTITION BY a ORDER BY b) rn FROM t QUALIFY rn = 1"
+        // If t already has rn, DuckDB filters that input column. Doris requires
+        // a window-dependent predicate, so this cross-dialect binding needs schema.
+        assertFailsWith<UnsupportedError> { transpile(source, read = "duckdb", write = "doris") }
+        assertEquals(
+            "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY a ORDER BY b) AS rn FROM t) AS _t WHERE rn = 1",
+            transpile(source, read = "duckdb", write = "trino"),
+        )
     }
 }
