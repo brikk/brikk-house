@@ -1,6 +1,10 @@
 package dev.brikk.house.sql.compiler.analysis
 
 import dev.brikk.house.sql.compiler.BrikkSqlNames
+import dev.brikk.house.sql.ast.Expression
+import dev.brikk.house.sql.ast.PipeAggregate
+import dev.brikk.house.sql.ast.PipeSelect
+import dev.brikk.house.sql.ast.isStar
 import dev.brikk.house.sql.shape.ColumnShape
 import dev.brikk.house.sql.shape.Shape
 import dev.brikk.house.sql.shape.ShapeCatalog
@@ -160,10 +164,12 @@ class SqlAnalyzer(
 
         // Declared inputs from the signature.
         val inputs = LinkedHashMap<String, List<ShapeColumn>>()
+        var inputsClosed = true
         for (rp in relParams) {
-            val cols = resolveDeclaredInput(rp.typeArgName, raw.typeParamBounds)
+            val input = resolveDeclaredInput(rp.typeArgName, raw.typeParamBounds)
                 ?: return failed("cannot resolve input shape of parameter '${rp.name}': Rel<${rp.typeArgName}>")
-            inputs[rp.slot] = cols
+            inputs[rp.slot] = input.columns
+            inputsClosed = inputsClosed && input.closed
         }
 
         val output = try {
@@ -174,9 +180,9 @@ class SqlAnalyzer(
         }
 
         val isGeneric = raw.typeParamBounds.isNotEmpty()
-        // Closed (a full Shape) iff every source is a catalog table, or a SELECT/AGGREGATE stage
-        // replaces the column set; otherwise the slot inputs' unknown extra columns flow through.
-        val closed = relParams.isEmpty() || closesColumnSet(fragment)
+        // SELECT * preserves unknown input columns. Explicit projection and aggregation replace
+        // the column set, while a star over a closed generated input remains closed.
+        val closed = closesColumnSet(fragment, relParams.isEmpty() || inputsClosed)
         val isShape = !isGeneric && closed
         return FunctionAnalysis(
             raw.packageFqName, raw.name, outClassId, dialect, sqlText, relParams, scalarParams, raw.binds,
@@ -218,28 +224,35 @@ class SqlAnalyzer(
             TypeMap.satisfies(actual.type, req.type)
         }
 
-    /** Whether the pipe contains a stage that replaces the column set (SELECT / AGGREGATE). */
-    private fun closesColumnSet(fragment: SqlFragment): Boolean {
-        val ops = fragment.describe().stageOperators
-        return ops.any { it == "SELECT" || it == "AGGREGATE" }
+    private fun closesColumnSet(fragment: SqlFragment, initiallyClosed: Boolean): Boolean {
+        var closed = initiallyClosed
+        for (stage in fragment.stages) {
+            when (stage) {
+                is PipeAggregate -> closed = true
+                is PipeSelect -> if (stage.expressionsArg.filterIsInstance<Expression>().none { it.isStar }) closed = true
+            }
+        }
+        return closed
     }
+
+    private class DeclaredInput(val columns: List<ShapeColumn>, val closed: Boolean)
 
     /**
      * `Rel<X>` where X is: a type parameter (-> union of its trait bounds' columns), a trait
      * short name, or another function's generated output class short name.
      */
-    private fun resolveDeclaredInput(typeArgName: String, bounds: Map<String, List<String>>): List<ShapeColumn>? {
+    private fun resolveDeclaredInput(typeArgName: String, bounds: Map<String, List<String>>): DeclaredInput? {
         bounds[typeArgName]?.let { boundNames ->
             val cols = LinkedHashMap<String, ShapeColumn>()
             for (b in boundNames) {
                 val t = traitsByShortName[b] ?: return null
                 for (c in t.columns) cols.putIfAbsent(c.name.lowercase(), c)
             }
-            return cols.values.toList()
+            return DeclaredInput(cols.values.toList(), closed = false)
         }
-        traitsByShortName[typeArgName]?.let { return it.columns }
-        functionsByOutName(typeArgName)?.let { return it.output }
-        if (typeArgName == "Partial" || typeArgName == "Shape") return emptyList()
+        traitsByShortName[typeArgName]?.let { return DeclaredInput(it.columns, closed = false) }
+        functionsByOutName(typeArgName)?.let { return DeclaredInput(it.output, it.isShape) }
+        if (typeArgName == "Partial" || typeArgName == "Shape") return DeclaredInput(emptyList(), closed = false)
         return null
     }
 }

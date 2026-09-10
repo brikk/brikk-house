@@ -109,6 +109,42 @@ class BrikkSqlPluginTest {
     }
 
     @Test
+    fun `select star preserves partial inputs while explicit projections close them`() {
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            @BrikkTrait
+            interface HasEventId : Partial { val event_id: Long }
+
+            @BrikkSql
+            fun star(src: Rel<HasEventId>) = Sql.postgres("FROM src() |> SELECT *")
+
+            @BrikkSql
+            fun projected(src: Rel<HasEventId>) = Sql.postgres("FROM src() |> SELECT event_id")
+
+            @BrikkSql
+            fun aggregated(src: Rel<HasEventId>) = Sql.postgres("FROM src() |> AGGREGATE COUNT(*) AS n")
+
+            @BrikkSql
+            fun source() = Sql.postgres("FROM public.events")
+
+            @BrikkSql
+            fun closedStar(src: Rel<SourceOut>) = Sql.postgres("FROM src() |> SELECT *")
+            """.trimIndent(),
+        )
+
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        fun supers(name: String) = result.classLoader.loadClass("demo.$name").interfaces.map { it.simpleName }.toSet()
+        assertContains(supers("StarOut"), "Partial")
+        assertTrue("Shape" !in supers("StarOut"))
+        assertContains(supers("ProjectedOut"), "Shape")
+        assertContains(supers("AggregatedOut"), "Shape")
+        assertContains(supers("ClosedStarOut"), "Shape")
+    }
+
+    @Test
     fun `functions that map to the same generated output type are rejected`() {
         val sources = listOf(
             """

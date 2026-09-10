@@ -14,7 +14,20 @@ object SqlLiteralText {
 
     /** `(dialect, template)` or `null` when the text has no such call or the literal is not readable. */
     fun parse(text: CharSequence, classify: (String) -> SqlPiece?): Pair<String, SqlTemplate>? {
-        val match = SQL_CALL.find(text) ?: return null
+        var parsed: Pair<String, SqlTemplate>? = null
+        for (match in sqlCalls(text)) {
+            val candidate = parseCall(text, match, classify) ?: continue
+            if (parsed != null) return null
+            parsed = candidate
+        }
+        return parsed
+    }
+
+    private fun parseCall(
+        text: CharSequence,
+        match: MatchResult,
+        classify: (String) -> SqlPiece?,
+    ): Pair<String, SqlTemplate>? {
         val dialect = match.groupValues[1]
         var i = skipWs(text, match.range.last + 1)
         val (pieces, afterLiteral) = when {
@@ -35,6 +48,61 @@ object SqlLiteralText {
         }
         if (i >= text.length || text[i] != ')') return null
         return dialect to template
+    }
+
+    /** Finds calls in Kotlin code, not call-like text in comments or literals. */
+    private fun sqlCalls(text: CharSequence): List<MatchResult> {
+        val calls = ArrayList<MatchResult>()
+        var i = 0
+        while (i < text.length) {
+            when {
+                text.startsWith("//", i) -> {
+                    i += 2
+                    while (i < text.length && text[i] != '\n' && text[i] != '\r') i++
+                }
+                text.startsWith("/*", i) -> {
+                    var depth = 1
+                    i += 2
+                    while (i < text.length && depth > 0) {
+                        when {
+                            text.startsWith("/*", i) -> { depth++; i += 2 }
+                            text.startsWith("*/", i) -> { depth--; i += 2 }
+                            else -> i++
+                        }
+                    }
+                }
+                text.startsWith("\"\"\"", i) -> {
+                    i += 3
+                    val close = text.indexOf("\"\"\"", i)
+                    i = if (close < 0) text.length else close + 3
+                }
+                text[i] == '"' || text[i] == '\'' -> {
+                    val quote = text[i++]
+                    while (i < text.length) {
+                        when (text[i]) {
+                            '\\' -> i = minOf(i + 2, text.length)
+                            quote -> { i++; break }
+                            else -> i++
+                        }
+                    }
+                }
+                text[i] == '`' -> {
+                    i++
+                    while (i < text.length && text[i] != '`') i++
+                    if (i < text.length) i++
+                }
+                else -> {
+                    val match = SQL_CALL.matchAt(text, i)
+                    if (match == null) {
+                        i++
+                    } else {
+                        calls += match
+                        i = match.range.last + 1
+                    }
+                }
+            }
+        }
+        return calls
     }
 
     private fun skipWs(text: CharSequence, from: Int): Int {
