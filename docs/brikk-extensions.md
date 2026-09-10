@@ -839,6 +839,19 @@ INT64 result types, and TIME_DIFF directions in DuckDB under UTC/New York.
 CURRENT_DATE across UTC/New York/Auckland sessions. These are DuckDB execution
 checks, not live BigQuery verification. Upstream issue/PR status: not reported.
 
+## 29. Array-to-string replacement bindings (BQ-14)
+
+DuckDB's three-argument ARRAY_TO_STRING lowering uses LIST_TRANSFORM/COALESCE,
+as in the pin, but allocates a lambda name that cannot shadow identifiers in the
+source expression. A runtime replacement column named `x` must not become a
+reference to the lambda's element. The body uses a Column node so forced identifier
+quoting remains consistent. `BigqueryArrayToStringResultTest` executes runtime
+replacement columns, mixed-case/qualified collisions, escaping, and NULL inputs.
+An explicitly NULL BigQuery delimiter yields NULL, not DuckDB's default comma.
+The two-argument SQL remains unchanged. Column-dependent delimiters are diagnosed:
+DuckDB's underlying STRING_AGG requires a constant separator. Their separate
+lowering is tracked as BQ-36. No existing ledger divergence is needed.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

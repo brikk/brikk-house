@@ -20,13 +20,6 @@
             "issue": "BQ-35"
         },
         {
-            "id": "assertion:v1:sha256:7a882ddf968aa7a1778721533c7174956bcf6c01a64df6c12825c0c91c714a76:1",
-            "case": "read|bigquery|SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))",
-            "reason": "expected `SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))` actual `SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR p.quarter IN ('Q1' AS Q1, 'Q2' AS Q1))`",
-            "signature": "sql-mismatch:v1:sha256:b5c44d4203c42c1723a50eb29318225484e206934dc0ae6a3688e7ecfd70f7a3",
-            "issue": "BQ-34"
-        },
-        {
             "id": "assertion:v1:sha256:01a37d844d410c1e09c75287dfb561dfa897fc785d00520de55356e822d3c1c9:1",
             "case": "write|bigquery|SELECT DATE_ADD(my_date_column, 1)",
             "reason": "expected `SELECT DATE_ADD(CAST(CAST(my_date_column AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `SELECT TS_OR_DS_ADD(my_date_column, 1, DAY)`",

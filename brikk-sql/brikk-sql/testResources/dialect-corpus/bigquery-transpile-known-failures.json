@@ -407,13 +407,6 @@
             "issue": "BQ-32"
         },
         {
-            "id": "assertion:v1:sha256:9d32377935cf98d8f58c688de9c49553c8a9dd4ef1556d7a3e0dfc5892c8f4c6:1",
-            "case": "write|duckdb|SELECT ARRAY_TO_STRING(['cake', 'pie', NULL], '--', 'MISSING') AS text",
-            "reason": "expected `SELECT ARRAY_TO_STRING(LIST_TRANSFORM(['cake', 'pie', NULL], x -> COALESCE(x, 'MISSING')), '--') AS text` actual `SELECT ARRAY_TO_STRING(['cake', 'pie', NULL], '--', 'MISSING') AS text`",
-            "signature": "sql-mismatch:v1:sha256:4751b91822911758e4014736ef5ae1596e4fbea24a1a81217dbd543c5cbe6bb9",
-            "issue": "BQ-14"
-        },
-        {
             "id": "assertion:v1:sha256:d65a017f7ba5dd3d7be3759ceba8efe813fe431d4134f33b5c75bad3937b813e:1",
             "case": "write|duckdb|STRING(a)",
             "reason": "expected `CAST(a AS TEXT)` actual `STRING(a)`",

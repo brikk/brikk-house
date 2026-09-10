@@ -11,6 +11,7 @@ import dev.brikk.house.sql.generator.eliminateDistinctOn
 import dev.brikk.house.sql.generator.unnestToExplode
 import dev.brikk.house.sql.generator.anyToExists
 import dev.brikk.house.sql.generator.removeWithinGroupForPercentiles
+import dev.brikk.house.sql.generator.unqualifyColumns
 import dev.brikk.house.sql.parser.Spark2TokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -41,8 +42,7 @@ private const val HIVE_DATE_FORMAT = "'yyyy-MM-dd'"
  *
  * NOT PORTED (no Kotlin equivalents of sqlglot's transforms/preprocess pipelines yet):
  * exp.Select preprocess (unnest_to_explode / any_to_exists / eliminate_distinct_on — only
- * eliminate_qualify is applied), exp.From (_unalias_pivot), exp.Pivot
- * (_unqualify_pivot_columns), exp.WithinGroup (remove_within_group_for_percentiles),
+ * eliminate_qualify is applied), exp.From (_unalias_pivot),
  * exp.Create (remove_unique_constraints / ctas_with_tmp_tables_to_create_tmp_view /
  * move_schema_columns_to_partitioned_by). These render via the inherited generator; any
  * mismatches are ledgered.
@@ -99,6 +99,15 @@ open class Spark2Generator(
 
     // sqlglot: Spark2Generator.struct_sql — delegates to the base Generator (named structs OK)
     override fun structSql(expression: Struct): String = baseStructSql(expression)
+
+    // sqlglot: transforms.unqualify_pivot_fields; aggregate qualifiers remain intact.
+    override fun pivotSql(expression: Pivot): String {
+        val copy = expression.copy() as Pivot
+        for (field in (copy.args["fields"] as? List<*>).orEmpty().filterIsInstance<Expression>()) {
+            unqualifyColumns(field)
+        }
+        return super.pivotSql(copy)
+    }
 
     // sqlglot: Spark2Generator.cast_sql
     override fun castSql(expression: Cast, safePrefix: String?): String {

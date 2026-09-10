@@ -1164,6 +1164,33 @@ open class DuckdbGenerator(
         return func("JSON", arg)
     }
 
+    // sqlglot: DuckDBGenerator.arraytostring_sql (explicit null replacement)
+    open fun arrayToStringSql(expression: ArrayToString): String {
+        // brikk extension (BQ-14): DuckDB treats NULL as its default comma separator.
+        if (sourceDialect.equals("bigquery", ignoreCase = true) && expression.expressionArg is Null) {
+            return sql(Cast(args("this" to Null(), "to" to DataType.build(DType.VARCHAR))))
+        }
+        if ((expression.expressionArg as? Expression)?.findAll<Column>()?.any() == true) {
+            unsupported("DuckDB ARRAY_TO_STRING requires a constant delimiter; row-dependent delimiters need a separate lowering")
+        }
+        val replacement = expression.args["null"] as? Expression
+            ?: return func("ARRAY_TO_STRING", expression.thisArg, expression.expressionArg)
+        // brikk extension (BQ-14): lambda parameters must not shadow replacement columns.
+        val names = expression.root().findAll(Identifier::class).map { it.name.lowercase() }.toSet()
+        var name = "x"
+        var suffix = 0
+        while (name in names) name = "x_${++suffix}"
+        val parameter = toIdentifier(name)!!
+        val transformed = Transform(args(
+            "this" to (expression.thisArg as? Expression)?.copy(),
+            "expression" to Lambda(args(
+                "this" to Coalesce(args("this" to Column(args("this" to parameter.copy())), "expressions" to listOf(replacement.copy()))),
+                "expressions" to listOf(parameter),
+            )),
+        ))
+        return func("ARRAY_TO_STRING", transformed, (expression.expressionArg as? Expression)?.copy())
+    }
+
     // sqlglot: DuckDBGenerator.arraydistinct_sql
     open fun arraydistinctSql(expression: ArrayDistinct): String {
         val arr = expression.thisArg
@@ -2320,6 +2347,7 @@ open class DuckdbGenerator(
             reg(StrToDate::class) { e -> dg().strtodateSql(e as StrToDate) }
             reg(ParseJSON::class) { e -> dg().parsejsonSql(e as ParseJSON) }
             reg(ArrayDistinct::class) { e -> dg().arraydistinctSql(e as ArrayDistinct) }
+            reg(ArrayToString::class) { e -> dg().arrayToStringSql(e as ArrayToString) }
             reg(RegexpLike::class) { e -> dg().regexplikeSql(e as RegexpLike) }
             reg(RegexpReplace::class) { e -> dg().regexpreplaceSql(e as RegexpReplace) }
             reg(Round::class) { e -> dg().roundSql(e as Round) }

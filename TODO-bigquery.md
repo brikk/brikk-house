@@ -14,16 +14,17 @@
 
 ---
 
-**154 actionable failing transpile assertions across 19 source-to-target routes.**
+**152 actionable failing transpile assertions across 19 source-to-target routes.**
 Five additional signed assertions are protected correctness divergences, documented
-in `docs/brikk-extensions.md` section 28. They are not open BQ issues.
+in `docs/brikk-extensions.md` section 28. They are not open BQ issues. BQ-36 is an
+additional execution limitation with no current parity-ledger entry.
 
-## BigQuery as source (114)
+## BigQuery as source (112)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 69 |
-| bigquery -> spark | 11 |
+| bigquery -> duckdb | 68 |
+| bigquery -> spark | 10 |
 | bigquery -> presto | 3 |
 | bigquery -> bigquery | 9 |
 | bigquery -> trino | 1 |
@@ -53,7 +54,7 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-5, BQ-26, and BQ-30. Completed ASTRA history
+BQ-5, plus BQ-14, BQ-26, BQ-30, and BQ-34. Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
 | ID | Issue | Assertions |
@@ -66,7 +67,6 @@ belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TO
 | BQ-11 | DuckDB temporal truncation and timezone handling | 10 |
 | BQ-12 | Diagnose unsupported week specifications | 6 |
 | BQ-13 | DuckDB array aggregation NULL handling and modifiers | 6 |
-| BQ-14 | ARRAY_TO_STRING null replacement | 1 |
 | BQ-15 | DuckDB IN/NOT IN UNNEST NULL and empty-array semantics | 3 |
 | BQ-16 | DuckDB struct-array UNNEST field expansion | 7 |
 | BQ-17 | Inherit struct field names across array elements | 3 |
@@ -84,8 +84,8 @@ belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TO
 | BQ-31 | SPACE, STRPOS occurrence, ARG_MAX/MIN and binary/text LENGTH helpers | 7 |
 | BQ-32 | Typed date/timestamp arrays and UNNEST aliases | 6 |
 | BQ-33 | Presto named-window expansion | 1 |
-| BQ-34 | Spark PIVOT key qualification | 1 |
 | BQ-35 | Into-BigQuery timezone operator lowering | 2 |
+| BQ-36 | DuckDB ARRAY_TO_STRING row-dependent delimiters; currently diagnosed | execution |
 
 Keep the existing diagnostics for unexpanded CTE stars, shadowed alias references,
 and unsafe VALUES widths/modifiers. Unsupported shapes and registered intentional
