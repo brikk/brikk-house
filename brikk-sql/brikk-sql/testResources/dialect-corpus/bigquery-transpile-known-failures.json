@@ -4,877 +4,960 @@
             "id": "assertion:v1:sha256:4c11bf5cf298569353e18be9602d5f51488eff55c404d71b71089f3d47ea2556:1",
             "case": "read|hive|SELECT REPEAT(' ', 2)",
             "reason": "expected `SELECT REPEAT(' ', 2)` actual `SELECT SPACE(2)`",
-            "signature": "sql-mismatch:v1:sha256:4a2ede3057de019c74c82582d9024fa0e9d9734bc917d29834b16f97202412d2"
+            "signature": "sql-mismatch:v1:sha256:4a2ede3057de019c74c82582d9024fa0e9d9734bc917d29834b16f97202412d2",
+            "issue": "BQ-31"
         },
         {
             "id": "assertion:v1:sha256:a51642dab7c54200d962cd06def639a25c49cfd10eca54172a4164d4d21d8f69:1",
             "case": "read|spark|SELECT REPEAT(' ', 2)",
             "reason": "expected `SELECT REPEAT(' ', 2)` actual `SELECT SPACE(2)`",
-            "signature": "sql-mismatch:v1:sha256:4a2ede3057de019c74c82582d9024fa0e9d9734bc917d29834b16f97202412d2"
+            "signature": "sql-mismatch:v1:sha256:4a2ede3057de019c74c82582d9024fa0e9d9734bc917d29834b16f97202412d2",
+            "issue": "BQ-31"
         },
         {
             "id": "assertion:v1:sha256:7c567c1222b9f9f65f90dcd4361e7b5a97cbe553ca26de8862d92a3277d11b18:1",
             "case": "write|presto|SELECT purchases, LAST_VALUE(item) OVER item_window AS most_popular FROM Produce WINDOW item_window AS (PARTITION BY purchases ORDER BY purchases ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)",
             "reason": "expected `SELECT purchases, LAST_VALUE(item) OVER (PARTITION BY purchases ORDER BY purchases NULLS FIRST ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS most_popular FROM Produce` actual `SELECT purchases, LAST_VALUE(item) OVER item_window AS most_popular FROM Produce WINDOW item_window AS (PARTITION BY purchases ORDER BY purchases NULLS FIRST ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)`",
-            "signature": "sql-mismatch:v1:sha256:c8a93b49710acf280b1f1d3e16333b74d44c780f730957801418adfe097f14cb"
+            "signature": "sql-mismatch:v1:sha256:c8a93b49710acf280b1f1d3e16333b74d44c780f730957801418adfe097f14cb",
+            "issue": "BQ-33"
         },
         {
             "id": "assertion:v1:sha256:5fdb816ff186bcdb4c0a1097b209456fef53b548c7460407bd8699aead95278e:1",
             "case": "write|bigquery|EDIT_DISTANCE(col1, col2, max_distance => 3)",
             "reason": "expected `EDIT_DISTANCE(col1, col2, max_distance => 3)` actual `EDIT_DISTANCE(col1, col2, 3)`",
-            "signature": "sql-mismatch:v1:sha256:573ce37812c2985db52e9df5320f90f2e6ad1bc576133d2af3c717d5fe6136c8"
+            "signature": "sql-mismatch:v1:sha256:573ce37812c2985db52e9df5320f90f2e6ad1bc576133d2af3c717d5fe6136c8",
+            "issue": "BQ-22"
         },
         {
             "id": "assertion:v1:sha256:5bdfb5097cd57d1671ec315e77bb052c49afcb0685e379c32c13906cb14e940a:1",
             "case": "write|duckdb|EDIT_DISTANCE(col1, col2, max_distance => 3)",
             "reason": "expected `CASE WHEN LEVENSHTEIN(col1, col2) IS NULL OR 3 IS NULL THEN NULL ELSE LEAST(LEVENSHTEIN(col1, col2), 3) END` actual `LEVENSHTEIN(col1, col2, 3)`",
-            "signature": "sql-mismatch:v1:sha256:e160288fc8f924c4855c8ffc2ea2622d1612d0733d9a0c0dd0830ecefb4a950a"
+            "signature": "sql-mismatch:v1:sha256:e160288fc8f924c4855c8ffc2ea2622d1612d0733d9a0c0dd0830ecefb4a950a",
+            "issue": "BQ-22"
         },
         {
             "id": "assertion:v1:sha256:e937cb3322a226deb7e0939c6d60a8f18eacff410a406d8f58956b68f87c5210:1",
             "case": "write|hive|EDIT_DISTANCE(col1, col2, max_distance => 3)",
             "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`",
-            "signature": "missing-error:v1:sha256:beb038d0b0ebd492df05e199290725fc3488b18479c120c144567f8fe8494729"
+            "signature": "missing-error:v1:sha256:beb038d0b0ebd492df05e199290725fc3488b18479c120c144567f8fe8494729",
+            "issue": "BQ-22"
         },
         {
             "id": "assertion:v1:sha256:c598a57d5d0ebb3ab41ab1ddf93a02d0ccce267d8d785a918fcf7a924e637e24:1",
             "case": "write|spark|EDIT_DISTANCE(col1, col2, max_distance => 3)",
             "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`",
-            "signature": "missing-error:v1:sha256:beb038d0b0ebd492df05e199290725fc3488b18479c120c144567f8fe8494729"
+            "signature": "missing-error:v1:sha256:beb038d0b0ebd492df05e199290725fc3488b18479c120c144567f8fe8494729",
+            "issue": "BQ-22"
         },
         {
             "id": "assertion:v1:sha256:3fe9d339df3f30e9f5b791d7d594720452a37911ef9f2546d292c7aba6ba80e7:1",
             "case": "write|spark2|EDIT_DISTANCE(col1, col2, max_distance => 3)",
             "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`",
-            "signature": "missing-error:v1:sha256:beb038d0b0ebd492df05e199290725fc3488b18479c120c144567f8fe8494729"
+            "signature": "missing-error:v1:sha256:beb038d0b0ebd492df05e199290725fc3488b18479c120c144567f8fe8494729",
+            "issue": "BQ-22"
         },
         {
             "id": "assertion:v1:sha256:2a9e87ccd718130cf2464cdf6958a95531c1aae427e69357ea5f8529e4b912fa:1",
             "case": "write|duckdb|TIMESTAMP(x)",
             "reason": "expected `CAST(x AS TIMESTAMPTZ)` actual `TIMESTAMP(x)`",
-            "signature": "sql-mismatch:v1:sha256:c396ea8240424ffc5859f5a4b6b88a5126eebbc7004cf33feb18199513875f5a"
+            "signature": "sql-mismatch:v1:sha256:c396ea8240424ffc5859f5a4b6b88a5126eebbc7004cf33feb18199513875f5a",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:40151e015fc69f7dd6a7764a9b4848e2c3536e1a848a664572b126203d63d1e6:1",
             "case": "write|presto|TIMESTAMP(x)",
             "reason": "expected `CAST(x AS TIMESTAMP WITH TIME ZONE)` actual `CAST(x AS TIMESTAMP)`",
-            "signature": "sql-mismatch:v1:sha256:65f9252d5847fc7c93b038f03b92067d1cc18fff23c2e16470023d87c78bf9f1"
+            "signature": "sql-mismatch:v1:sha256:65f9252d5847fc7c93b038f03b92067d1cc18fff23c2e16470023d87c78bf9f1",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:4ade7cfc7c6954cb898d4168edc98f5b186ece3eac994f07db35237287a3ea8a:1",
             "case": "write|duckdb|SELECT TIMESTAMP('2008-12-25 15:30:00', 'America/Los_Angeles')",
             "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIMESTAMP) AT TIME ZONE 'America/Los_Angeles'` actual `SELECT TIMESTAMP('2008-12-25 15:30:00', 'America/Los_Angeles')`",
-            "signature": "sql-mismatch:v1:sha256:794eff0ee978355b49e881c3e6fcc51a6ee977192b28f17af0053ec7486a231a"
+            "signature": "sql-mismatch:v1:sha256:794eff0ee978355b49e881c3e6fcc51a6ee977192b28f17af0053ec7486a231a",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:d4dcc57a8a40157b77824b1c5eb58a5e6428b22ce139195f293dfb7f15f21a62:1",
             "case": "write|duckdb|SELECT ARRAY_AGG(x IGNORE NULLS) AS x",
             "reason": "expected `SELECT ARRAY_AGG(x) FILTER(WHERE x IS NOT NULL) AS x` actual `SELECT ARRAY_AGG(x) AS x`",
-            "signature": "sql-mismatch:v1:sha256:544a67823f4ef60bd322e6ee497408bd4074a671a13a5204cdd39b5506b34b18"
+            "signature": "sql-mismatch:v1:sha256:544a67823f4ef60bd322e6ee497408bd4074a671a13a5204cdd39b5506b34b18",
+            "issue": "BQ-13"
         },
         {
             "id": "assertion:v1:sha256:a8d6781acc3ced94416be791c64241d2044d7afda5998f533bc2cf96a24bc9cf:1",
             "case": "write|duckdb|SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY x) AS x",
             "reason": "expected `SELECT ARRAY_AGG(DISTINCT x ORDER BY x NULLS FIRST) FILTER(WHERE x IS NOT NULL) AS x` actual `SELECT ARRAY_AGG(DISTINCT x ORDER BY x NULLS FIRST) AS x`",
-            "signature": "sql-mismatch:v1:sha256:9ea2f56a950e052b97fab6d340556e56fada29552793777c6157f69c99d4be36"
+            "signature": "sql-mismatch:v1:sha256:9ea2f56a950e052b97fab6d340556e56fada29552793777c6157f69c99d4be36",
+            "issue": "BQ-13"
         },
         {
             "id": "assertion:v1:sha256:04362e96e774780697429c013829a733813066afde6337fb1a55f43770d039d1:1",
             "case": "write|duckdb|SELECT UNIX_DATE(DATE '2008-12-25')",
             "reason": "expected `SELECT DATE_DIFF('DAY', CAST('1970-01-01' AS DATE), CAST('2008-12-25' AS DATE))` actual `SELECT UNIX_DATE(CAST('2008-12-25' AS DATE))`",
-            "signature": "sql-mismatch:v1:sha256:849a48cdf64d5cf7fb43a3ff11d5b7edfd04b469975503928b38d4d8d96e49ef"
+            "signature": "sql-mismatch:v1:sha256:849a48cdf64d5cf7fb43a3ff11d5b7edfd04b469975503928b38d4d8d96e49ef",
+            "issue": "BQ-4"
         },
         {
             "id": "assertion:v1:sha256:61eac23347fda458123d13ccbc647a2a8d2325b2dcc4a9d9a83d965173788bed:1",
             "case": "write|duckdb|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
             "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`",
-            "signature": "sql-mismatch:v1:sha256:842f2926bd8dd827d16a761162b527f8fe6249e73fc1350da06b987716e5420f"
+            "signature": "sql-mismatch:v1:sha256:842f2926bd8dd827d16a761162b527f8fe6249e73fc1350da06b987716e5420f",
+            "issue": "BQ-9"
         },
         {
             "id": "assertion:v1:sha256:7aeff1c4e96f29613d089de9eefd5ef48b23eb9fcf59e75f7db266abab12c395:1",
             "case": "write|clickhouse|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
             "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS Nullable(DATE)))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS Nullable(DATE)), MONTH)`",
-            "signature": "sql-mismatch:v1:sha256:accb68d91a689ac224ee0e5de94989d7c0a2a7847c34badb4cd31ab8beb93929"
+            "signature": "sql-mismatch:v1:sha256:accb68d91a689ac224ee0e5de94989d7c0a2a7847c34badb4cd31ab8beb93929",
+            "issue": "BQ-9"
         },
         {
             "id": "assertion:v1:sha256:1db2bd5c089e286aa3bd1536983a93abe12f76f575c6da93e40fa028acf8967f:1",
             "case": "write|mysql|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
             "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`",
-            "signature": "sql-mismatch:v1:sha256:842f2926bd8dd827d16a761162b527f8fe6249e73fc1350da06b987716e5420f"
+            "signature": "sql-mismatch:v1:sha256:842f2926bd8dd827d16a761162b527f8fe6249e73fc1350da06b987716e5420f",
+            "issue": "BQ-9"
         },
         {
             "id": "assertion:v1:sha256:9511345ab0a1b38370ac7c54f50f5843f2e4516cd9fd168220d369545668e2b6:1",
             "case": "write|postgres|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
             "reason": "expected `SELECT CAST(DATE_TRUNC('MONTH', CAST('2008-11-25' AS DATE)) + INTERVAL '1 MONTH' - INTERVAL '1 DAY' AS DATE)` actual `SELECT CAST(DATE_SUB(DATE_ADD(DATE_TRUNC('month', CAST('2008-11-25' AS DATE)), 1, 'month'), 1, 'day') AS DATE)`",
-            "signature": "sql-mismatch:v1:sha256:089db36b13b062a02a2ed702d2bd7ab70c192f164bc9fbb26a04f0a2b6c18912"
+            "signature": "sql-mismatch:v1:sha256:089db36b13b062a02a2ed702d2bd7ab70c192f164bc9fbb26a04f0a2b6c18912",
+            "issue": "BQ-9"
         },
         {
             "id": "assertion:v1:sha256:cb1e81b4d4d442fa193a334db54ab860c19136a44eb808f88d89a8c7240c899f:1",
             "case": "write|spark|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
             "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`",
-            "signature": "sql-mismatch:v1:sha256:842f2926bd8dd827d16a761162b527f8fe6249e73fc1350da06b987716e5420f"
+            "signature": "sql-mismatch:v1:sha256:842f2926bd8dd827d16a761162b527f8fe6249e73fc1350da06b987716e5420f",
+            "issue": "BQ-9"
         },
         {
             "id": "assertion:v1:sha256:83cfb2a84fe0b248f2115e9cbf29427a821dc1adb2d77b18d5fc08816b0d97ce:1",
             "case": "write|duckdb|SELECT TIME(15, 30, 00)",
             "reason": "expected `SELECT MAKE_TIME(15, 30, 00)` actual `SELECT TIME_FROM_PARTS(15, 30, 00)`",
-            "signature": "sql-mismatch:v1:sha256:565eb7a818e0d71b5838233169ec73b3a27b629674b29552763f67aab0aa5825"
+            "signature": "sql-mismatch:v1:sha256:565eb7a818e0d71b5838233169ec73b3a27b629674b29552763f67aab0aa5825",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:2f31caa5095a327d78feec4dac9ecb8c9cc7b748d1b87c4ec78107ef042720a4:1",
             "case": "write|spark|SELECT TIMESTAMP_SUB(TIMESTAMP \"2008-12-25 15:30:00+00\", INTERVAL 10 MINUTE)",
             "reason": "expected `SELECT CAST('2008-12-25 15:30:00+00' AS TIMESTAMP) - INTERVAL '10' MINUTE` actual `SELECT TIMESTAMP_SUB(CAST('2008-12-25 15:30:00+00' AS TIMESTAMP), '10', 'MINUTE')`",
-            "signature": "sql-mismatch:v1:sha256:3ba617dfc7e2a6f63d2e69b4bb750ccfdf2703fefa054ff97b6aa4c31d9b0d89"
+            "signature": "sql-mismatch:v1:sha256:3ba617dfc7e2a6f63d2e69b4bb750ccfdf2703fefa054ff97b6aa4c31d9b0d89",
+            "issue": "BQ-8"
         },
         {
             "id": "assertion:v1:sha256:653faaaee72c1a889a4c47f080f11ea25864abd1148c32de5a69457f672ad129:1",
             "case": "write||LOWER(TO_HEX(x))",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344"
+            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:c83628f2372892e8d9641d32c0a504367e855fb1f4df7e520a68f14fda1fc8e9:1",
             "case": "write|clickhouse|LOWER(TO_HEX(x))",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER(x)`",
-            "signature": "sql-mismatch:v1:sha256:052026d5f1aef4ca6f756d9478c519367d2a054ebbc7ec9515fe9626b2f4d845"
+            "signature": "sql-mismatch:v1:sha256:052026d5f1aef4ca6f756d9478c519367d2a054ebbc7ec9515fe9626b2f4d845",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:c11c76532638505c2ed8113cc23767911c5cd6c97f47dcee91787d304fb1816e:1",
             "case": "write|duckdb|LOWER(TO_HEX(x))",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344"
+            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:252a2f831f458ac2141a2f646d2fbfdbc85c2622938e30444fc18d88d63d52dc:1",
             "case": "write|hive|LOWER(TO_HEX(x))",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344"
+            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:aab5b692374db4e87957bc6498a78ee0143483938d7d2764f531a540b301f027:1",
             "case": "write|mysql|LOWER(TO_HEX(x))",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344"
+            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:25510d8b07c54425abc40e5abe474ddbc7a4897970ed1a80d9170774cd4e8096:1",
             "case": "write|spark|LOWER(TO_HEX(x))",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344"
+            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:e0a9c6f81709761fd15e44d8602acd57dbe8499809d7db830d305fa4e3c619df:1",
             "case": "write||TO_HEX(x)",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344"
+            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:c285fa0e21120ec9bd3c21d6687628e5ccec3d4980de6d92725ce4bfa63de2f9:1",
             "case": "write|clickhouse|TO_HEX(x)",
             "reason": "expected `LOWER(HEX(x))` actual `TO_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:6cfe32510bfe382eb71511cff3559ceca751cb5c99ed30e4115504d415214bda"
+            "signature": "sql-mismatch:v1:sha256:6cfe32510bfe382eb71511cff3559ceca751cb5c99ed30e4115504d415214bda",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:caa15cc46b23fcbcce438a5d17fee9d8735c77224871101ce66046c4f3633a1f:1",
             "case": "write|duckdb|TO_HEX(x)",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344"
+            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:37ea5f22a4917741022cb5396684a81e4a872c873ce5863bef911ec0e1f76804:1",
             "case": "write|hive|TO_HEX(x)",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344"
+            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:7336189f27cb991b051aab0cc01c65bbd8468d89f0c45b99ddc5cfd24dbb51ec:1",
             "case": "write|mysql|TO_HEX(x)",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344"
+            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:c36be61c3abcbc07d479b642f08e1cbd3f2a3b777b9df0fc65c7d629a22bd978:1",
             "case": "write|spark|TO_HEX(x)",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
-            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344"
+            "signature": "sql-mismatch:v1:sha256:c7c8142d49c6ed77ae73e5062b7c57410f36870e3c267c9752c0ccdedf34a344",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:e05e7c85ca58113e315f2101c466d765bfdd553807fbee34fa5c66878b80f203:1",
             "case": "write|clickhouse|UPPER(TO_HEX(x))",
             "reason": "expected `HEX(x)` actual `UPPER(x)`",
-            "signature": "sql-mismatch:v1:sha256:53120bdaf36ab6910718657752b679caaaab1f3b16a7647bbe6024d696e6fc5f"
+            "signature": "sql-mismatch:v1:sha256:53120bdaf36ab6910718657752b679caaaab1f3b16a7647bbe6024d696e6fc5f",
+            "issue": "BQ-23"
         },
         {
             "id": "assertion:v1:sha256:31d7c2355578524751adf2318ade0ab86ed37627b4d916c7576fdffd6b48a7c6:1",
             "case": "read|clickhouse|SHA256(x)",
             "reason": "expected `SHA256(x)` actual `SHA256(x, 256)`",
-            "signature": "sql-mismatch:v1:sha256:7ac5e855d43ad2fdb286470bc84b5435e0dfd2bb215ca02cbbff01151ac4b077"
+            "signature": "sql-mismatch:v1:sha256:7ac5e855d43ad2fdb286470bc84b5435e0dfd2bb215ca02cbbff01151ac4b077",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:4cdb8d31b3a1bb170f2dccab411962b6c7310223a9780895c8746afa87485b25:1",
             "case": "read|presto|SHA256(x)",
             "reason": "expected `SHA256(x)` actual `S_H_A2_DIGEST(x, 256)`",
-            "signature": "sql-mismatch:v1:sha256:cf401803d166dcf633f994780b73030f92fc0cf462ba6cf37b1090476f7298c5"
+            "signature": "sql-mismatch:v1:sha256:cf401803d166dcf633f994780b73030f92fc0cf462ba6cf37b1090476f7298c5",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:ffc239ad26fd3c55737cd3f6740fda2a06f60ec07eee1853a60216a595f2c43d:1",
             "case": "read|trino|SHA256(x)",
             "reason": "expected `SHA256(x)` actual `S_H_A2_DIGEST(x, 256)`",
-            "signature": "sql-mismatch:v1:sha256:cf401803d166dcf633f994780b73030f92fc0cf462ba6cf37b1090476f7298c5"
+            "signature": "sql-mismatch:v1:sha256:cf401803d166dcf633f994780b73030f92fc0cf462ba6cf37b1090476f7298c5",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:422a13a108d92dbd52113dafd5f1200f9113e82fed5603658c2d567d7d5e335d:1",
             "case": "read|postgres|SHA256(x)",
             "reason": "expected `SHA256(x)` actual `SHA2(x, 256)`",
-            "signature": "sql-mismatch:v1:sha256:2592757ed6230e38e1ef3b63fc2acb0c079e17276abe1a27078717c215d8129a"
+            "signature": "sql-mismatch:v1:sha256:2592757ed6230e38e1ef3b63fc2acb0c079e17276abe1a27078717c215d8129a",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:0d048f8746fbc75a9be9fe5ae58498a101cdbdedc6d899ab8380d850d9cb6ed0:1",
             "case": "read|duckdb|SHA256(x)",
             "reason": "expected `SHA256(x)` actual `SHA2(x, 256)`",
-            "signature": "sql-mismatch:v1:sha256:2592757ed6230e38e1ef3b63fc2acb0c079e17276abe1a27078717c215d8129a"
+            "signature": "sql-mismatch:v1:sha256:2592757ed6230e38e1ef3b63fc2acb0c079e17276abe1a27078717c215d8129a",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:c9619efda14a79fe03d9f2da9d19ad426cb09cb243f3a8de66ac2913079e8909:1",
             "case": "write|bigquery|SHA256(x)",
             "reason": "expected `SHA256(x)` actual `SHA256(x, 256)`",
-            "signature": "sql-mismatch:v1:sha256:7ac5e855d43ad2fdb286470bc84b5435e0dfd2bb215ca02cbbff01151ac4b077"
+            "signature": "sql-mismatch:v1:sha256:7ac5e855d43ad2fdb286470bc84b5435e0dfd2bb215ca02cbbff01151ac4b077",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:499c8430701eea2125a3a5d132e4c323f537ae49db9e16c7de620d15e41143bc:1",
             "case": "read|clickhouse|SHA512(x)",
             "reason": "expected `SHA512(x)` actual `SHA512(x, 512)`",
-            "signature": "sql-mismatch:v1:sha256:0e8e0b19b6fa95b6fc4c561df551d06dc5acb1a15accdfd5365de5999846dd79"
+            "signature": "sql-mismatch:v1:sha256:0e8e0b19b6fa95b6fc4c561df551d06dc5acb1a15accdfd5365de5999846dd79",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:df6603f2c8788dca6704e6684064c146e06ef4fb612f3e0f10450fd046651a5d:1",
             "case": "read|presto|SHA512(x)",
             "reason": "expected `SHA512(x)` actual `S_H_A2_DIGEST(x, 512)`",
-            "signature": "sql-mismatch:v1:sha256:98cd26ee6c982b7dba29432883b814301e41719bef24f2ccb3a88baf8c50494b"
+            "signature": "sql-mismatch:v1:sha256:98cd26ee6c982b7dba29432883b814301e41719bef24f2ccb3a88baf8c50494b",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:dd8c4211733ec2a228d55f7b894cc31bdbe1320689ed2fd186d0ad669c7c77c4:1",
             "case": "read|trino|SHA512(x)",
             "reason": "expected `SHA512(x)` actual `S_H_A2_DIGEST(x, 512)`",
-            "signature": "sql-mismatch:v1:sha256:98cd26ee6c982b7dba29432883b814301e41719bef24f2ccb3a88baf8c50494b"
+            "signature": "sql-mismatch:v1:sha256:98cd26ee6c982b7dba29432883b814301e41719bef24f2ccb3a88baf8c50494b",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:9c52063472a475308e16f74cd3d5277854a73e3769c8aec35a11e1638d6d39a5:1",
             "case": "write|bigquery|SHA512(x)",
             "reason": "expected `SHA512(x)` actual `SHA512(x, 512)`",
-            "signature": "sql-mismatch:v1:sha256:0e8e0b19b6fa95b6fc4c561df551d06dc5acb1a15accdfd5365de5999846dd79"
+            "signature": "sql-mismatch:v1:sha256:0e8e0b19b6fa95b6fc4c561df551d06dc5acb1a15accdfd5365de5999846dd79",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:75d2cd25a843f8f6b9514c8bffb07c0d6d621ccf8562e4b7d6237da54c6e7427:1",
             "case": "read|spark|WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(arr)) - 1)) AS pos CROSS JOIN UNNEST(arr) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(arr) - 1) AND pos_2 = (ARRAY_LENGTH(arr) - 1))",
             "reason": "expected `WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(arr)) - 1)) AS pos CROSS JOIN UNNEST(arr) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(arr) - 1) AND pos_2 = (ARRAY_LENGTH(arr) - 1))` actual `WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT EXPLODE(arr) FROM cte`",
-            "signature": "sql-mismatch:v1:sha256:cf7d0faa140036de168b1babaf14016b0f30a12bc492524e0a1fdae242da07a0"
+            "signature": "sql-mismatch:v1:sha256:cf7d0faa140036de168b1babaf14016b0f30a12bc492524e0a1fdae242da07a0",
+            "issue": "BQ-20"
         },
         {
             "id": "assertion:v1:sha256:c69797c7bbcb36ce08170c53cf0b85ae5027aadc5eff13a4fa02dceae2181f34:1",
             "case": "read|spark|SELECT IF(pos = pos_2, col, NULL) AS col FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))",
             "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))` actual `SELECT EXPLODE_OUTER([])`",
-            "signature": "sql-mismatch:v1:sha256:44e321b5f670c8f7b2bb29754100ca4d6e3cbd217150ba71c1b0d4e588e4bc76"
+            "signature": "sql-mismatch:v1:sha256:44e321b5f670c8f7b2bb29754100ca4d6e3cbd217150ba71c1b0d4e588e4bc76",
+            "issue": "BQ-20"
         },
         {
             "id": "assertion:v1:sha256:18a7a4e39317c69a055c1e682330c53562ee040b0ade22313f610dce2e8cd1b9:1",
             "case": "read|spark|SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))",
             "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))` actual `SELECT POSEXPLODE_OUTER([])`",
-            "signature": "sql-mismatch:v1:sha256:4c3e229650efefc5b8e654a16078e020b617e6ce7bc4ceff984ca62e7b190bc1"
+            "signature": "sql-mismatch:v1:sha256:4c3e229650efefc5b8e654a16078e020b617e6ce7bc4ceff984ca62e7b190bc1",
+            "issue": "BQ-20"
         },
         {
             "id": "assertion:v1:sha256:14b4fd5a3ff71c6f666ac42735ce64e1fdcb70de128f5d0b3aadf88e9bdc9ee3:1",
             "case": "write|duckdb|SELECT AS STRUCT ARRAY(SELECT AS STRUCT 1 AS b FROM x) AS y FROM z",
             "reason": "expected `SELECT {'y': ARRAY(SELECT {'b': 1} FROM x)} FROM z` actual `SELECT AS STRUCT ARRAY(SELECT AS STRUCT 1 AS b FROM x) AS y FROM z`",
-            "signature": "sql-mismatch:v1:sha256:37331431771d0210ae1e9152b3dd7cb5d7126afadf142ba6100c4cb5b546ad6a"
+            "signature": "sql-mismatch:v1:sha256:37331431771d0210ae1e9152b3dd7cb5d7126afadf142ba6100c4cb5b546ad6a",
+            "issue": "BQ-18"
         },
         {
             "id": "assertion:v1:sha256:d8e87fd7c99e62012402582bd5cac251865479cc9f54e30347aa78e74e70a3bb:1",
             "case": "write|duckdb|SELECT * FROM a WHERE b IN UNNEST([1, 2, 3])",
             "reason": "expected `SELECT * FROM a WHERE CASE WHEN [1, 2, 3] IS NULL OR ARRAY_LENGTH([1, 2, 3]) = 0 THEN FALSE WHEN ARRAY_CONTAINS([1, 2, 3], b) THEN TRUE WHEN b IS NULL OR ARRAY_LENGTH([1, 2, 3]) <> LIST_COUNT([1, 2, 3]) THEN NULL ELSE FALSE END` actual `SELECT * FROM a WHERE b IN (SELECT UNNEST([1, 2, 3]))`",
-            "signature": "sql-mismatch:v1:sha256:f8acdad441f15875dfea1fbc41052df9e0f36a56e529a64459f828fa156e38e6"
+            "signature": "sql-mismatch:v1:sha256:f8acdad441f15875dfea1fbc41052df9e0f36a56e529a64459f828fa156e38e6",
+            "issue": "BQ-15"
         },
         {
             "id": "assertion:v1:sha256:0835dfde8e9d0d52519448a1c4a4630140e9a62eeba911d4dc25ef792345bc15:1",
             "case": "write|duckdb|SELECT * FROM a WHERE b NOT IN UNNEST([1, 2, 3])",
             "reason": "expected `SELECT * FROM a WHERE NOT CASE WHEN [1, 2, 3] IS NULL OR ARRAY_LENGTH([1, 2, 3]) = 0 THEN FALSE WHEN ARRAY_CONTAINS([1, 2, 3], b) THEN TRUE WHEN b IS NULL OR ARRAY_LENGTH([1, 2, 3]) <> LIST_COUNT([1, 2, 3]) THEN NULL ELSE FALSE END` actual `SELECT * FROM a WHERE NOT b IN (SELECT UNNEST([1, 2, 3]))`",
-            "signature": "sql-mismatch:v1:sha256:8224c9f55aa02481b98b3c4d07eeeca0fdcdb3151130792845e5a770375bb38b"
+            "signature": "sql-mismatch:v1:sha256:8224c9f55aa02481b98b3c4d07eeeca0fdcdb3151130792845e5a770375bb38b",
+            "issue": "BQ-15"
         },
         {
             "id": "assertion:v1:sha256:5c06d16fd80528bff98484e98c4c534ae30ce8dbdda2b00cb75139d59ea7d362:1",
             "case": "write|postgres|DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)",
             "reason": "expected `CURRENT_DATE - INTERVAL '1 DAY'` actual `CURRENT_DATE - INTERVAL '1 'DAY''`",
-            "signature": "sql-mismatch:v1:sha256:0cbd6efebec531b4775d0a6dfecefd3a8fa64a5321b1ce7f80dd616c1949a226"
+            "signature": "sql-mismatch:v1:sha256:0cbd6efebec531b4775d0a6dfecefd3a8fa64a5321b1ce7f80dd616c1949a226",
+            "issue": "BQ-8"
         },
         {
             "id": "assertion:v1:sha256:fed3bf4e916e64ae32bcf83d132df2abb9f50f849f7a290a00a0fceda41e579f:1",
             "case": "write|postgres|DATE_ADD(CURRENT_DATE(), INTERVAL -1 DAY)",
             "reason": "expected `CURRENT_DATE + INTERVAL '-1 DAY'` actual `CURRENT_DATE + INTERVAL '-1 'DAY''`",
-            "signature": "sql-mismatch:v1:sha256:f8cde8fa155a5712a0e8dcf599153eb1c591a3447a3931d9f39f81947b08692a"
+            "signature": "sql-mismatch:v1:sha256:f8cde8fa155a5712a0e8dcf599153eb1c591a3447a3931d9f39f81947b08692a",
+            "issue": "BQ-8"
         },
         {
             "id": "assertion:v1:sha256:e0b9ac9d6eb1f02ad24e39b4dc770ca90c9aea57ed07d117fcfde96e2d7d6ed2:1",
             "case": "write|duckdb|CURRENT_DATE('UTC')",
             "reason": "expected `CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)` actual `CURRENT_DATE('UTC')`",
-            "signature": "sql-mismatch:v1:sha256:4b8262741cd5df501f4691567374d5bc39ad472c5d58684da1cfbebd9f3e6399"
+            "signature": "sql-mismatch:v1:sha256:4b8262741cd5df501f4691567374d5bc39ad472c5d58684da1cfbebd9f3e6399",
+            "issue": "BQ-5"
         },
         {
             "id": "assertion:v1:sha256:0aa580c8b32815d8f0dca988768ce93ce60ce9364e381270cb3307c386fbbf4e:1",
             "case": "read||SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL",
             "reason": "expected `SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL` actual `SELECT `u`.`user_email` AS `user_email`, `_q_0`.`d`.`user_id` AS `user_id`, `_q_1`.`account_id` AS `account_id` FROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `_q_0`, UNNEST(`_q_0`.`d`.`account_ids`) AS `_q_1` WHERE NOT `_q_1`.`account_id` IS NULL`",
-            "signature": "sql-mismatch:v1:sha256:633128bb55388da7df60f64d22c7522ae48c233d440fbf834a7e4d7603427ccd"
+            "signature": "sql-mismatch:v1:sha256:633128bb55388da7df60f64d22c7522ae48c233d440fbf834a7e4d7603427ccd",
+            "issue": "BQ-19"
         },
         {
             "id": "assertion:v1:sha256:88fb0afa324dbba943a3b4caf243e23b67502d167e0dacb494fd53ff8a80b234:1",
             "case": "write|duckdb|SELECT DATETIME('2020-01-01', TIME '23:59:59')",
             "reason": "expected `SELECT CAST(CAST('2020-01-01' AS DATE) + CAST('23:59:59' AS TIME) AS TIMESTAMP)` actual `SELECT DATETIME('2020-01-01')`",
-            "signature": "sql-mismatch:v1:sha256:9ce480f1e73ddf2c84e8fac573ce6086c2654bd2ce42160c7245bf7ec2ed1323"
+            "signature": "sql-mismatch:v1:sha256:9ce480f1e73ddf2c84e8fac573ce6086c2654bd2ce42160c7245bf7ec2ed1323",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:c955a84d1a7c03cb592ba7efb4f25a8d6a38e8556b8084fee510585c7973855b:1",
             "case": "write|bigquery|SELECT DATETIME('2020-01-01', TIME '23:59:59')",
             "reason": "expected `SELECT DATETIME('2020-01-01', CAST('23:59:59' AS TIME))` actual `SELECT DATETIME('2020-01-01')`",
-            "signature": "sql-mismatch:v1:sha256:9f9ed17b3acb210c135cf0c3ecdade46623c6ad51c5c88e3b54e415020d52ecc"
+            "signature": "sql-mismatch:v1:sha256:9f9ed17b3acb210c135cf0c3ecdade46623c6ad51c5c88e3b54e415020d52ecc",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:2147b84d237d3bc20e2173dda6ad11ca9ac56488652e469ca817f33b80c2960a:1",
             "case": "write|duckdb|SELECT DATETIME('2020-01-01', 'America/Los_Angeles')",
             "reason": "expected `SELECT CAST(CAST('2020-01-01' AS TIMESTAMPTZ) AT TIME ZONE 'America/Los_Angeles' AS TIMESTAMP)` actual `SELECT DATETIME('2020-01-01')`",
-            "signature": "sql-mismatch:v1:sha256:32a87bea854ee0574c9e335dfd9428f9c8e5b72ce3efb03214299e41754f50c1"
+            "signature": "sql-mismatch:v1:sha256:32a87bea854ee0574c9e335dfd9428f9c8e5b72ce3efb03214299e41754f50c1",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:21af06055927f08604f84686ac3b3c53d05af051a63c4728fccbba8d9912af57:1",
             "case": "write|bigquery|SELECT DATETIME('2020-01-01', 'America/Los_Angeles')",
             "reason": "expected `SELECT DATETIME('2020-01-01', 'America/Los_Angeles')` actual `SELECT DATETIME('2020-01-01')`",
-            "signature": "sql-mismatch:v1:sha256:7af434e2fa7f06fc01cb4b074c49090e8b8c11961beab5a976309d8d17418f35"
+            "signature": "sql-mismatch:v1:sha256:7af434e2fa7f06fc01cb4b074c49090e8b8c11961beab5a976309d8d17418f35",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:f2f1c06683a7895bb3079db4d2edc0e966c11e87083af9cceffe49cd275d45b3:1",
             "case": "write|duckdb|SELECT LENGTH(foo)",
             "reason": "expected `SELECT CASE TYPEOF(foo) WHEN 'BLOB' THEN OCTET_LENGTH(CAST(foo AS BLOB)) ELSE LENGTH(CAST(foo AS TEXT)) END` actual `SELECT LENGTH(foo)`",
-            "signature": "sql-mismatch:v1:sha256:b0e86e886d30a70bbbf550e31f476e65a21773e19c51834fe18cb7444f8e56b4"
+            "signature": "sql-mismatch:v1:sha256:b0e86e886d30a70bbbf550e31f476e65a21773e19c51834fe18cb7444f8e56b4",
+            "issue": "BQ-31"
         },
         {
             "id": "assertion:v1:sha256:e5dac46c85458359315ba3157cf5fafc08347e5e9411ce2ca00d96384ff88f3b:1",
             "case": "write|duckdb|SELECT TIME_DIFF('12:00:00', '12:30:00', MINUTE)",
             "reason": "expected `SELECT DATE_DIFF('MINUTE', CAST('12:30:00' AS TIME), CAST('12:00:00' AS TIME))` actual `SELECT TIME_DIFF('12:00:00', '12:30:00', MINUTE)`",
-            "signature": "sql-mismatch:v1:sha256:89a383a350244b177a3dee1cb902c7b94295dfc74b55b466556144124375605f"
+            "signature": "sql-mismatch:v1:sha256:89a383a350244b177a3dee1cb902c7b94295dfc74b55b466556144124375605f",
+            "issue": "BQ-4"
         },
         {
             "id": "assertion:v1:sha256:283a3b2b849f7212fafcc305a8a377abca464f465095a695a6ae6dbd1a14ce32:1",
             "case": "write|duckdb|SELECT GENERATE_TIMESTAMP_ARRAY('2016-10-05 00:00:00', '2016-10-07 00:00:00', INTERVAL '1' DAY)",
             "reason": "expected `SELECT GENERATE_SERIES(CAST('2016-10-05 00:00:00' AS TIMESTAMP), CAST('2016-10-07 00:00:00' AS TIMESTAMP), INTERVAL '1' DAY)` actual `SELECT GENERATE_TIMESTAMP_ARRAY('2016-10-05 00:00:00', '2016-10-07 00:00:00', INTERVAL '1' DAY)`",
-            "signature": "sql-mismatch:v1:sha256:7309789cb5685e28a51c8035f367bb1ee1db0d40babc5634b3658c859cad3093"
+            "signature": "sql-mismatch:v1:sha256:7309789cb5685e28a51c8035f367bb1ee1db0d40babc5634b3658c859cad3093",
+            "issue": "BQ-32"
         },
         {
             "id": "assertion:v1:sha256:9d32377935cf98d8f58c688de9c49553c8a9dd4ef1556d7a3e0dfc5892c8f4c6:1",
             "case": "write|duckdb|SELECT ARRAY_TO_STRING(['cake', 'pie', NULL], '--', 'MISSING') AS text",
             "reason": "expected `SELECT ARRAY_TO_STRING(LIST_TRANSFORM(['cake', 'pie', NULL], x -> COALESCE(x, 'MISSING')), '--') AS text` actual `SELECT ARRAY_TO_STRING(['cake', 'pie', NULL], '--', 'MISSING') AS text`",
-            "signature": "sql-mismatch:v1:sha256:4751b91822911758e4014736ef5ae1596e4fbea24a1a81217dbd543c5cbe6bb9"
+            "signature": "sql-mismatch:v1:sha256:4751b91822911758e4014736ef5ae1596e4fbea24a1a81217dbd543c5cbe6bb9",
+            "issue": "BQ-14"
         },
         {
             "id": "assertion:v1:sha256:d65a017f7ba5dd3d7be3759ceba8efe813fe431d4134f33b5c75bad3937b813e:1",
             "case": "write|duckdb|STRING(a)",
             "reason": "expected `CAST(a AS TEXT)` actual `STRING(a)`",
-            "signature": "sql-mismatch:v1:sha256:11a436cd2b68553f26d4d6ce4437f6a6f3940c5fb82eeaac51ab94262b0b8d6b"
+            "signature": "sql-mismatch:v1:sha256:11a436cd2b68553f26d4d6ce4437f6a6f3940c5fb82eeaac51ab94262b0b8d6b",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:985f13ed7a32ab74b0830ba05b7aa92d7254e12749a765a60ccd695b07c27993:1",
             "case": "write|bigquery|STRING('2008-12-25 15:30:00', 'America/New_York')",
             "reason": "expected `STRING('2008-12-25 15:30:00', 'America/New_York')` actual `STRING('2008-12-25 15:30:00')`",
-            "signature": "sql-mismatch:v1:sha256:3ce567a1e61db9249825046edb079c20907706413fd6125948fae9c818de960f"
+            "signature": "sql-mismatch:v1:sha256:3ce567a1e61db9249825046edb079c20907706413fd6125948fae9c818de960f",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:214ebc397fb13403b902c9b74fd0c5efc91bbf4ba74c27359e227e6df929bfa4:1",
             "case": "write|duckdb|STRING('2008-12-25 15:30:00', 'America/New_York')",
             "reason": "expected `CAST(CAST('2008-12-25 15:30:00' AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS TEXT)` actual `STRING('2008-12-25 15:30:00', 'America/New_York')`",
-            "signature": "sql-mismatch:v1:sha256:4a7b498a2ff3ab3993c0c088e2ba426e06e96107e47752f6e7edcd50254bee51"
-        },
-        {
-            "id": "assertion:v1:sha256:3c0209905ba306c19452030173f9c7fd1459b344e99f4371fef25c76b1b94b18:1",
-            "case": "write|hive|SAFE_DIVIDE(x, y)",
-            "reason": "expected `IF(y <> 0, x / y, NULL)` actual `CASE WHEN y <> 0 THEN x / y ELSE NULL END`",
-            "signature": "sql-mismatch:v1:sha256:eb9cca4440c5e889ac365625680f26ec56a9c712af3fbf49a54c120415d93404"
-        },
-        {
-            "id": "assertion:v1:sha256:cc8524d3551c2a1f5bc7ec96c377184169a191a46bf1be5a32f789f5407f69fd:1",
-            "case": "write|duckdb|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `CASE WHEN (2 * y) <> 0 THEN (x + 1) / (2 * y) ELSE NULL END` actual `CASE WHEN 2 * y <> 0 THEN x + 1 / 2 * y ELSE NULL END`",
-            "signature": "sql-mismatch:v1:sha256:096f7a930dafcff59d3adaaab296f73ad5dc9a5b72f565c62b8ef2f76e630c9a"
-        },
-        {
-            "id": "assertion:v1:sha256:b6a2cea9fd43b5511ce9d1df560f5bdc8f4d7937385bed9ad4422ddd9b0a0b39:1",
-            "case": "write|presto|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `IF((2 * y) <> 0, CAST((x + 1) AS DOUBLE) / (2 * y), NULL)` actual `IF(2 * y <> 0, CAST(x + 1 AS DOUBLE) / 2 * y, NULL)`",
-            "signature": "sql-mismatch:v1:sha256:a10af45c8b40d4a67a31282891300a953e83c2efbe8b83457f59551e13304fc8"
-        },
-        {
-            "id": "assertion:v1:sha256:88b9dc059e25b16ec1e852ded209ac0827bd89959e6852da08078038d266a20f:1",
-            "case": "write|trino|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `IF((2 * y) <> 0, CAST((x + 1) AS DOUBLE) / (2 * y), NULL)` actual `IF(2 * y <> 0, CAST(x + 1 AS DOUBLE) / 2 * y, NULL)`",
-            "signature": "sql-mismatch:v1:sha256:a10af45c8b40d4a67a31282891300a953e83c2efbe8b83457f59551e13304fc8"
-        },
-        {
-            "id": "assertion:v1:sha256:21c5b00927ab190ecec3d4fc64f520ca4aeff12ae0ed1dff1b65e2a7897893b0:1",
-            "case": "write|hive|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `IF((2 * y) <> 0, (x + 1) / (2 * y), NULL)` actual `CASE WHEN 2 * y <> 0 THEN x + 1 / 2 * y ELSE NULL END`",
-            "signature": "sql-mismatch:v1:sha256:43c307f5f648bdc280d31e98523f704431256b91c6785085fb0c1a1001fbed44"
-        },
-        {
-            "id": "assertion:v1:sha256:68f82149043eb13753f25f7c1fcf69e611d3dc5aa7479c131a4841e0075272e9:1",
-            "case": "write|spark2|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `IF((2 * y) <> 0, (x + 1) / (2 * y), NULL)` actual `IF(2 * y <> 0, x + 1 / 2 * y, NULL)`",
-            "signature": "sql-mismatch:v1:sha256:62e07feaec8e3b876ecd4e539305634a9a3c0ac8641500003fa7cee6c8629f6e"
-        },
-        {
-            "id": "assertion:v1:sha256:87dc33c06a7fed65909ef38a9f3668b026989649523752be0c16d0f787ad9654:1",
-            "case": "write|postgres|SAFE_DIVIDE(x + 1, 2 * y)",
-            "reason": "expected `CASE WHEN (2 * y) <> 0 THEN CAST((x + 1) AS DOUBLE PRECISION) / (2 * y) ELSE NULL END` actual `CASE WHEN 2 * y <> 0 THEN CAST(x + 1 AS DOUBLE PRECISION) / 2 * y ELSE NULL END`",
-            "signature": "sql-mismatch:v1:sha256:574a15cea78363ac818347e422dacfe7f3cf731316ff6b56d5102b3043b27934"
+            "signature": "sql-mismatch:v1:sha256:4a7b498a2ff3ab3993c0c088e2ba426e06e96107e47752f6e7edcd50254bee51",
+            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:49b228a2f4911890568a53dc89f6a670f8560ec0540664aeed96cdaab837528c:1",
             "case": "write|duckdb|SELECT JSON_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')",
             "reason": "expected `SELECT CAST('{\"arr\": [1, \"a\"]}' -> '$.arr' AS TEXT[])` actual `SELECT J_S_O_N_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')`",
-            "signature": "sql-mismatch:v1:sha256:ed9b52d19e01a5e79e286045c29d6f567cb8ef2abaa1c9a873ec5615305c8641"
+            "signature": "sql-mismatch:v1:sha256:ed9b52d19e01a5e79e286045c29d6f567cb8ef2abaa1c9a873ec5615305c8641",
+            "issue": "BQ-27"
         },
         {
             "id": "assertion:v1:sha256:e328f904f5a6b81eab49d25538c4d4a378b0d1016ff96918db65f7819606f3d1:1",
             "case": "write|duckdb|SELECT ts + MAKE_INTERVAL(1, 2, minute => 5, day => 3)",
             "reason": "expected `SELECT ts + INTERVAL '1 year 2 month 5 minute 3 day'` actual `SELECT ts + MAKE_INTERVAL(1, 2, day => 3, minute => 5)`",
-            "signature": "sql-mismatch:v1:sha256:24cc8b25cedb2af0845120b200f59bdf072f12b17942fcbdaf905784b54a99e7"
+            "signature": "sql-mismatch:v1:sha256:24cc8b25cedb2af0845120b200f59bdf072f12b17942fcbdaf905784b54a99e7",
+            "issue": "BQ-10"
         },
         {
             "id": "assertion:v1:sha256:14c128bb4182e431792194dfa716e9a7beb95b61c1c00f821b715662b0bb60ad:1",
             "case": "write|duckdb|SELECT INT64(JSON_QUERY(JSON '{\"key\": 2000}', '$.key'))",
             "reason": "expected `SELECT CAST(JSON('{\"key\": 2000}') -> '$.key' AS BIGINT)` actual `SELECT INT64(JSON('{\"key\": 2000}') -> '$.key')`",
-            "signature": "sql-mismatch:v1:sha256:f11cfda91bb262f7be79a5c0182d2d7d07fff303683f611a86a343da3e7c79b1"
+            "signature": "sql-mismatch:v1:sha256:f11cfda91bb262f7be79a5c0182d2d7d07fff303683f611a86a343da3e7c79b1",
+            "issue": "BQ-27"
         },
         {
             "id": "assertion:v1:sha256:49f76516f2c11927f342e0c0a60ee1e625049c11c1046fbf593190ea7ac71803:1",
             "case": "write|duckdb|SELECT PARSE_DATETIME('%F %T', '2023-01-15 14:30:00')",
             "reason": "expected `SELECT STRPTIME('1970 ' || '2023-01-15 14:30:00', '%Y ' || '%Y-%m-%d %H:%M:%S')` actual `SELECT PARSE_DATETIME('2023-01-15 14:30:00', '%Y-%m-%d %H:%M:%S', 1970)`",
-            "signature": "sql-mismatch:v1:sha256:49623e77c50aab7cde3d2352ae361ffaeff63d52326ad7a21356ae9d6ec2a909"
+            "signature": "sql-mismatch:v1:sha256:49623e77c50aab7cde3d2352ae361ffaeff63d52326ad7a21356ae9d6ec2a909",
+            "issue": "BQ-7"
         },
         {
             "id": "assertion:v1:sha256:f624430f6f46b4f255c51b1cb4e50a92a052ed3c0a775f127ebb082b6e2f186f:1",
             "case": "write|bigquery|SELECT 0xA",
             "reason": "expected `SELECT 0xA` actual `SELECT 10`",
-            "signature": "sql-mismatch:v1:sha256:de7dbf8a885ff9514ca718ea8d9f76d29a7f21f168aef089be3ee03b85cc8b4e"
+            "signature": "sql-mismatch:v1:sha256:de7dbf8a885ff9514ca718ea8d9f76d29a7f21f168aef089be3ee03b85cc8b4e",
+            "issue": "BQ-25"
         },
         {
             "id": "assertion:v1:sha256:9db4a2a8472b62a6fcdae367b73aae8e0b68b7a09efae791e0648780127da042:1",
             "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr) FROM (SELECT [1, 2] AS arr) AS t",
             "reason": "expected `SELECT FLATTEN(ARRAY_AGG(arr) FILTER(WHERE NOT arr IS NULL)) FROM (SELECT [1, 2] AS arr) AS t` actual `SELECT ARRAY_CONCAT_AGG(arr) FROM (SELECT [1, 2] AS arr) AS t`",
-            "signature": "sql-mismatch:v1:sha256:7df86032680841e2f41a20b8c59accaa2e0a327d1b55d7f3155bc049b17b14d4"
+            "signature": "sql-mismatch:v1:sha256:7df86032680841e2f41a20b8c59accaa2e0a327d1b55d7f3155bc049b17b14d4",
+            "issue": "BQ-13"
         },
         {
             "id": "assertion:v1:sha256:6c154c57c2201835e61bfc3a2792267d689e0469bb965636f1c62f4398257e3f:1",
             "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr ORDER BY y) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t",
             "reason": "expected `SELECT FLATTEN(ARRAY_AGG(arr ORDER BY y NULLS FIRST) FILTER(WHERE NOT arr IS NULL)) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t` actual `SELECT ARRAY_CONCAT_AGG(arr ORDER BY y NULLS FIRST) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t`",
-            "signature": "sql-mismatch:v1:sha256:16790510362696c7c761451ef29fc9d032250bf22d0a00e409c771f8f18c6a7d"
+            "signature": "sql-mismatch:v1:sha256:16790510362696c7c761451ef29fc9d032250bf22d0a00e409c771f8f18c6a7d",
+            "issue": "BQ-13"
         },
         {
             "id": "assertion:v1:sha256:2e6f50be17177e846455112b186bce6e6d671db9d9820eed501f6cef3cec5f4a:1",
             "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr LIMIT 2) FROM (SELECT [1, 2] AS arr) AS t",
             "reason": "expected UnsupportedError, got `SELECT ARRAY_CONCAT_AGG(arr LIMIT 2) FROM (SELECT [1, 2] AS arr) AS t`",
-            "signature": "missing-error:v1:sha256:116fcc39469d5681bd8bf46744e2b15e1fdd534804fff56af2810fbd7f37355f"
+            "signature": "missing-error:v1:sha256:116fcc39469d5681bd8bf46744e2b15e1fdd534804fff56af2810fbd7f37355f",
+            "issue": "BQ-13"
         },
         {
             "id": "assertion:v1:sha256:261e1d76c082f0e7ba62e2690eb59a50bb370c5009d48466435059426dcde9d4:1",
             "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr ORDER BY y DESC LIMIT 2) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t",
             "reason": "expected UnsupportedError, got `SELECT ARRAY_CONCAT_AGG(arr ORDER BY y DESC LIMIT 2) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t`",
-            "signature": "missing-error:v1:sha256:1b15897e60d5fc08629bf2833ee830bf928296cda1fd25b6ab09f8732892148c"
+            "signature": "missing-error:v1:sha256:1b15897e60d5fc08629bf2833ee830bf928296cda1fd25b6ab09f8732892148c",
+            "issue": "BQ-13"
         },
         {
             "id": "assertion:v1:sha256:de73f65779b02405653e9116bf351dc8b7be4b3b23c70bcf4c82415ea92ac9aa:1",
             "case": "write|duckdb|SELECT * FROM a LEFT JOIN b ON a.key = b.key AND a.val IN UNNEST(b.arr)",
             "reason": "expected `SELECT * FROM a LEFT JOIN b ON a.key = b.key AND CASE WHEN b.arr IS NULL OR ARRAY_LENGTH(b.arr) = 0 THEN FALSE WHEN ARRAY_CONTAINS(b.arr, a.val) THEN TRUE WHEN a.val IS NULL OR ARRAY_LENGTH(b.arr) <> LIST_COUNT(b.arr) THEN NULL ELSE FALSE END` actual `SELECT * FROM a LEFT JOIN b ON a.key = b.key AND a.val IN (SELECT UNNEST(b.arr))`",
-            "signature": "sql-mismatch:v1:sha256:ff66a5bd5ecd65bb0958892d56f768577c89279db27f3b1640da00407b942306"
+            "signature": "sql-mismatch:v1:sha256:ff66a5bd5ecd65bb0958892d56f768577c89279db27f3b1640da00407b942306",
+            "issue": "BQ-15"
         },
         {
             "id": "assertion:v1:sha256:fd5c17186befd9899a1e5a705f4d023c14ee189db35fb037f3c84efc5bbccb9b:1",
             "case": "write|duckdb|SELECT b'a'",
             "reason": "expected `SELECT CAST(e'a' AS BLOB)` actual `SELECT CAST('e''a''' AS BLOB)`",
-            "signature": "sql-mismatch:v1:sha256:1c241eeee5f262c9912f95185d7a7289c7d64bad419aa7863d4e015d549dba82"
+            "signature": "sql-mismatch:v1:sha256:1c241eeee5f262c9912f95185d7a7289c7d64bad419aa7863d4e015d549dba82",
+            "issue": "BQ-25"
         },
         {
             "id": "assertion:v1:sha256:59f223ccd08bec2eb391bfe60b68bf87967820ecab4e9b24fe7639ef9467f42f:1",
             "case": "write|postgres|SELECT b'a'",
             "reason": "expected `SELECT CAST(e'a' AS BYTEA)` actual `SELECT CAST('e''a''' AS BYTEA)`",
-            "signature": "sql-mismatch:v1:sha256:8f2991da2a0dd243c998c23bb5bd578f481599265adeb84bc15e355e30993edf"
+            "signature": "sql-mismatch:v1:sha256:8f2991da2a0dd243c998c23bb5bd578f481599265adeb84bc15e355e30993edf",
+            "issue": "BQ-25"
         },
         {
             "id": "assertion:v1:sha256:fd5c17186befd9899a1e5a705f4d023c14ee189db35fb037f3c84efc5bbccb9b:2",
             "case": "write|duckdb|SELECT b'a'",
             "reason": "expected `SELECT CAST(e'a' AS BLOB)` actual `SELECT CAST('e''a''' AS BLOB)`",
-            "signature": "sql-mismatch:v1:sha256:1c241eeee5f262c9912f95185d7a7289c7d64bad419aa7863d4e015d549dba82"
+            "signature": "sql-mismatch:v1:sha256:1c241eeee5f262c9912f95185d7a7289c7d64bad419aa7863d4e015d549dba82",
+            "issue": "BQ-25"
         },
         {
             "id": "assertion:v1:sha256:59f223ccd08bec2eb391bfe60b68bf87967820ecab4e9b24fe7639ef9467f42f:2",
             "case": "write|postgres|SELECT b'a'",
             "reason": "expected `SELECT CAST(e'a' AS BYTEA)` actual `SELECT CAST('e''a''' AS BYTEA)`",
-            "signature": "sql-mismatch:v1:sha256:8f2991da2a0dd243c998c23bb5bd578f481599265adeb84bc15e355e30993edf"
+            "signature": "sql-mismatch:v1:sha256:8f2991da2a0dd243c998c23bb5bd578f481599265adeb84bc15e355e30993edf",
+            "issue": "BQ-25"
         },
         {
             "id": "assertion:v1:sha256:7f76c4309c799f87a8671276e9378c0e590881d27f0f964568d9084e5237f874:1",
             "case": "write|duckdb|SELECT GENERATE_UUID()",
             "reason": "expected `SELECT CAST(UUID() AS TEXT)` actual `SELECT UUID()`",
-            "signature": "sql-mismatch:v1:sha256:fe9f182466eb518c8ec0da65ceb71da1fde90b6c9b868584709c1a08b602c7e2"
+            "signature": "sql-mismatch:v1:sha256:fe9f182466eb518c8ec0da65ceb71da1fde90b6c9b868584709c1a08b602c7e2",
+            "issue": "BQ-26"
         },
         {
             "id": "assertion:v1:sha256:0802c1387445da9159ef4bfcbf35d6b848fb751153395b9d80be7def77688be5:1",
             "case": "write|spark2|SELECT GENERATE_UUID()",
             "reason": "expected `SELECT CAST(UUID() AS STRING)` actual `SELECT UUID()`",
-            "signature": "sql-mismatch:v1:sha256:44756763d4cf6eb586b86c1694c27a7e88e9ae6ff38ffac5db4c3778e4d13ba3"
+            "signature": "sql-mismatch:v1:sha256:44756763d4cf6eb586b86c1694c27a7e88e9ae6ff38ffac5db4c3778e4d13ba3",
+            "issue": "BQ-26"
         },
         {
             "id": "assertion:v1:sha256:3f42cce60c68c6b601986554e2fe8828a13dbbf39731120afeae69adfd799097:1",
             "case": "write|spark|SELECT GENERATE_UUID()",
             "reason": "expected `SELECT CAST(UUID() AS STRING)` actual `SELECT UUID()`",
-            "signature": "sql-mismatch:v1:sha256:44756763d4cf6eb586b86c1694c27a7e88e9ae6ff38ffac5db4c3778e4d13ba3"
+            "signature": "sql-mismatch:v1:sha256:44756763d4cf6eb586b86c1694c27a7e88e9ae6ff38ffac5db4c3778e4d13ba3",
+            "issue": "BQ-26"
         },
         {
             "id": "assertion:v1:sha256:69b27c72eeacf62cee006b04bbb1e4509acda7e2b96b7c539f8b2ede1ca71a86:1",
             "case": "write|presto|SELECT GENERATE_UUID()",
             "reason": "expected `SELECT CAST(UUID() AS VARCHAR)` actual `SELECT UUID()`",
-            "signature": "sql-mismatch:v1:sha256:d5ad24ecf37ca9eba741e12cb64bfb64ce47376e828cb701673a0243ace45109"
+            "signature": "sql-mismatch:v1:sha256:d5ad24ecf37ca9eba741e12cb64bfb64ce47376e828cb701673a0243ace45109",
+            "issue": "BQ-26"
         },
         {
             "id": "assertion:v1:sha256:e8c4ed8a9e97715f6f73b6b7c734907e6436d29dce4f8fac9bcce6b0c8434562:1",
             "case": "write|trino|SELECT GENERATE_UUID()",
             "reason": "expected `SELECT CAST(UUID() AS VARCHAR)` actual `SELECT UUID()`",
-            "signature": "sql-mismatch:v1:sha256:d5ad24ecf37ca9eba741e12cb64bfb64ce47376e828cb701673a0243ace45109"
-        },
-        {
-            "id": "assertion:v1:sha256:c2421e4d2157a3b7bc6e926f5ccb5f90c93614618bb416e37f1e5778283eb966:1",
-            "case": "write|duckdb|SELECT GREATEST(1, NULL, 3)",
-            "reason": "expected `SELECT CASE WHEN 1 IS NULL OR NULL IS NULL OR 3 IS NULL THEN NULL ELSE GREATEST(1, NULL, 3) END` actual `SELECT GREATEST(1, NULL, 3)`",
-            "signature": "sql-mismatch:v1:sha256:5b0023cbea28bb176e4770d59287b5bec0188f6f67be5de424785cc4b6fb00ca"
-        },
-        {
-            "id": "assertion:v1:sha256:f1b25e1e6c15a15aea97aec1069be96800bbc35e6b98c235a140a4a8ffa015c2:1",
-            "case": "write|duckdb|SELECT LEAST(1, NULL, 3)",
-            "reason": "expected `SELECT CASE WHEN 1 IS NULL OR NULL IS NULL OR 3 IS NULL THEN NULL ELSE LEAST(1, NULL, 3) END` actual `SELECT LEAST(1, NULL, 3)`",
-            "signature": "sql-mismatch:v1:sha256:e15c12f07730685f95a8ec5ae87c7476a2eb21f5dc1854f2fc1701cccffaed64"
+            "signature": "sql-mismatch:v1:sha256:d5ad24ecf37ca9eba741e12cb64bfb64ce47376e828cb701673a0243ace45109",
+            "issue": "BQ-26"
         },
         {
             "id": "assertion:v1:sha256:52b8ea43236772b4bc44951a3dd0fe143f5e0b6126d4bbef1c6f25d8b85d4f49:1",
             "case": "write|duckdb|SELECT * FROM UNNEST(ARRAY<STRUCT<x INT64>>[])",
             "reason": "expected `SELECT * FROM (SELECT UNNEST(CAST([] AS STRUCT(x BIGINT)[]), max_depth => 2))` actual `SELECT * FROM UNNEST(CAST([] AS STRUCT(x BIGINT)[]))`",
-            "signature": "sql-mismatch:v1:sha256:567c0e40c994a169123cf3fe29fa0d1db14a893f978d3d0ad8b4e16b7cffc3ff"
+            "signature": "sql-mismatch:v1:sha256:567c0e40c994a169123cf3fe29fa0d1db14a893f978d3d0ad8b4e16b7cffc3ff",
+            "issue": "BQ-16"
         },
         {
             "id": "assertion:v1:sha256:c17c0a842c5a2088d0d3039a3dc9db166058acf6db5b8a9b5243d6d71991fc28:1",
             "case": "write|duckdb|SELECT * FROM UNNEST(ARRAY<STRUCT<device_id INT64, time DATETIME, signal INT64, state STRING>>[STRUCT(1, DATETIME '2023-11-01 09:34:01', 74, 'INACTIVE'),STRUCT(4, DATETIME '2023-11-01 09:38:01', 80, 'ACTIVE')])",
             "reason": "expected `SELECT * FROM (SELECT UNNEST(CAST([ROW(1, CAST('2023-11-01 09:34:01' AS TIMESTAMP), 74, 'INACTIVE'), ROW(4, CAST('2023-11-01 09:38:01' AS TIMESTAMP), 80, 'ACTIVE')] AS STRUCT(device_id BIGINT, time TIMESTAMP, signal BIGINT, state TEXT)[]), max_depth => 2))` actual `SELECT * FROM UNNEST(CAST([ROW(1, CAST('2023-11-01 09:34:01' AS TIMESTAMP), 74, 'INACTIVE'), ROW(4, CAST('2023-11-01 09:38:01' AS TIMESTAMP), 80, 'ACTIVE')] AS STRUCT(device_id BIGINT, time TIMESTAMP, signal BIGINT, state TEXT)[]))`",
-            "signature": "sql-mismatch:v1:sha256:308b3c524dc949b794dfa572504127b32a485e8089bb1d00f9c3c36989c1fd44"
+            "signature": "sql-mismatch:v1:sha256:308b3c524dc949b794dfa572504127b32a485e8089bb1d00f9c3c36989c1fd44",
+            "issue": "BQ-16"
         },
         {
             "id": "assertion:v1:sha256:a9ee42cc5680bb7b8223f0facfbde65ca7c59a08fc3f21441224f223ddeedc90:1",
             "case": "write|bigquery|SELECT MAX_BY(name, score) FROM table1",
             "reason": "expected `SELECT MAX_BY(name, score) FROM table1` actual `SELECT ARG_MAX(name, score) FROM table1`",
-            "signature": "sql-mismatch:v1:sha256:fa0310d0f8eb8506dc2d37075fdce1dca7d0a48c92083f20578fa04e0aa94189"
+            "signature": "sql-mismatch:v1:sha256:fa0310d0f8eb8506dc2d37075fdce1dca7d0a48c92083f20578fa04e0aa94189",
+            "issue": "BQ-31"
         },
         {
             "id": "assertion:v1:sha256:cf29c0ca2bfd54db4ca82c79c185acd35d78ff25b24a01802a4640e5e771af24:1",
             "case": "write|bigquery|SELECT MIN_BY(product, price) FROM table1",
             "reason": "expected `SELECT MIN_BY(product, price) FROM table1` actual `SELECT ARG_MIN(product, price) FROM table1`",
-            "signature": "sql-mismatch:v1:sha256:bfada6a6c17402bdb957c0566ed2f422b92b0d32ca51268eb1bf2868cd8b1f18"
+            "signature": "sql-mismatch:v1:sha256:bfada6a6c17402bdb957c0566ed2f422b92b0d32ca51268eb1bf2868cd8b1f18",
+            "issue": "BQ-31"
         },
         {
             "id": "assertion:v1:sha256:a38aa06ce2eca281137bb13cb78c341e026759eae7c8d71348feac5d7b235931:1",
             "case": "write|duckdb|SELECT name, laps FROM UNNEST([STRUCT('Rudisha' AS name, [23.4, 26.3, 26.4, 26.1] AS laps), STRUCT('Makhloufi' AS name, [24.5, 25.4, 26.6, 26.1] AS laps)])",
             "reason": "expected `SELECT name, laps FROM (SELECT UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}, {'name': 'Makhloufi', 'laps': [24.5, 25.4, 26.6, 26.1]}], max_depth => 2))` actual `SELECT name, laps FROM UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}, {'name': 'Makhloufi', 'laps': [24.5, 25.4, 26.6, 26.1]}])`",
-            "signature": "sql-mismatch:v1:sha256:5dde6fbc2603d8227130af3c1833d14ea04ae909cf2ac366ac673f32194c1c81"
+            "signature": "sql-mismatch:v1:sha256:5dde6fbc2603d8227130af3c1833d14ea04ae909cf2ac366ac673f32194c1c81",
+            "issue": "BQ-16"
         },
         {
             "id": "assertion:v1:sha256:1ed44a031ca89148056b5d4fdee10f0f6eb57a832480c5d3a405d6c3e4bdf72d:1",
             "case": "write|duckdb|WITH Races AS (SELECT '800M' AS race) SELECT race, name, laps FROM Races AS r CROSS JOIN UNNEST([STRUCT('Rudisha' AS name, [23.4, 26.3, 26.4, 26.1] AS laps)])",
             "reason": "expected `WITH Races AS (SELECT '800M' AS race) SELECT race, name, laps FROM Races AS r CROSS JOIN (SELECT UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}], max_depth => 2))` actual `WITH Races AS (SELECT '800M' AS race) SELECT race, name, laps FROM Races AS r CROSS JOIN UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}])`",
-            "signature": "sql-mismatch:v1:sha256:fada0f9a3351d8068ca8456bd025fcd8a04ab9362099bb6e80672d1b185aea49"
+            "signature": "sql-mismatch:v1:sha256:fada0f9a3351d8068ca8456bd025fcd8a04ab9362099bb6e80672d1b185aea49",
+            "issue": "BQ-16"
         },
         {
             "id": "assertion:v1:sha256:82bc7599c82c9c044ef9d26ebdd52cdd02f2762e98c8ce54c01e81e464b0dcfa:1",
             "case": "write|duckdb|SELECT participant FROM UNNEST([STRUCT('Rudisha' AS name, [23.4, 26.3, 26.4, 26.1] AS laps)]) AS participant",
             "reason": "expected `SELECT participant FROM (SELECT UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}], max_depth => 2)) AS participant` actual `SELECT participant FROM UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}]) AS participant`",
-            "signature": "sql-mismatch:v1:sha256:a5050c8226b2344c545da0e8dc442e5a7f04de86f47655498edb37c816a449a3"
+            "signature": "sql-mismatch:v1:sha256:a5050c8226b2344c545da0e8dc442e5a7f04de86f47655498edb37c816a449a3",
+            "issue": "BQ-16"
         },
         {
             "id": "assertion:v1:sha256:7b736f0c7551032c6de6d33a7243cbe317cd28f9ac80ef17ec0984ab9ba86ef9:1",
             "case": "write|duckdb|WITH Races AS (SELECT '800M' AS race) SELECT race, participant FROM Races AS r CROSS JOIN UNNEST([STRUCT('Rudisha' AS name, [23.4, 26.3, 26.4, 26.1] AS laps)]) AS participant",
             "reason": "expected `WITH Races AS (SELECT '800M' AS race) SELECT race, participant FROM Races AS r CROSS JOIN (SELECT UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}], max_depth => 2)) AS participant` actual `WITH Races AS (SELECT '800M' AS race) SELECT race, participant FROM Races AS r CROSS JOIN UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}]) AS participant`",
-            "signature": "sql-mismatch:v1:sha256:2c0c8740360a904f8f4d87ea4aa78e07f55b2a99787b49d5af9606e96fd3cd80"
+            "signature": "sql-mismatch:v1:sha256:2c0c8740360a904f8f4d87ea4aa78e07f55b2a99787b49d5af9606e96fd3cd80",
+            "issue": "BQ-16"
         },
         {
             "id": "assertion:v1:sha256:10a6606e11d147cfc013d887ff499c71bbbecf5c95f50922f570c1130654e20c:1",
             "case": "write|duckdb|SELECT * FROM UNNEST([STRUCT('Alice' AS name, STRUCT(85 AS math, 90 AS english) AS scores), STRUCT('Bob' AS name, STRUCT(92 AS math, 88 AS english) AS scores)])",
             "reason": "expected `SELECT * FROM (SELECT UNNEST([{'name': 'Alice', 'scores': {'math': 85, 'english': 90}}, {'name': 'Bob', 'scores': {'math': 92, 'english': 88}}], max_depth => 2))` actual `SELECT * FROM UNNEST([{'name': 'Alice', 'scores': {'math': 85, 'english': 90}}, {'name': 'Bob', 'scores': {'math': 92, 'english': 88}}])`",
-            "signature": "sql-mismatch:v1:sha256:0a3a91359cee7f86ba5fd98d99c8e2b5b2ab967858f129d3862eb9ae916a2245"
+            "signature": "sql-mismatch:v1:sha256:0a3a91359cee7f86ba5fd98d99c8e2b5b2ab967858f129d3862eb9ae916a2245",
+            "issue": "BQ-16"
         },
         {
             "id": "assertion:v1:sha256:240c4b5f7683c8a6c5d4da58e02e174a8ab5efd729ad6dda155a68f99a871ce5:1",
             "case": "write|duckdb|SELECT * FROM UNNEST([STRUCT('Alice' AS name, 85 AS score), STRUCT('Bob', 92), STRUCT('Diana', 95)])",
             "reason": "expected `SELECT * FROM (SELECT UNNEST([{'name': 'Alice', 'score': 85}, {'name': 'Bob', 'score': 92}, {'name': 'Diana', 'score': 95}], max_depth => 2))` actual `SELECT * FROM UNNEST([{'name': 'Alice', 'score': 85}, {'_0': 'Bob', '_1': 92}, {'_0': 'Diana', '_1': 95}])`",
-            "signature": "sql-mismatch:v1:sha256:210b134bced66b22f6f31bf3a1c4f3e61b6ca207d203e3f6dadd4097566c1fc0"
+            "signature": "sql-mismatch:v1:sha256:210b134bced66b22f6f31bf3a1c4f3e61b6ca207d203e3f6dadd4097566c1fc0",
+            "issue": "BQ-17"
         },
         {
             "id": "assertion:v1:sha256:129252a9b21850753797cedceac9081b87c010f00b360edbd134ab804603f803:1",
             "case": "write|presto|SELECT * FROM UNNEST([STRUCT('Alice' AS name, 85 AS score), STRUCT('Bob', 92), STRUCT('Diana', 95)])",
             "reason": "expected `SELECT * FROM UNNEST(ARRAY[CAST(ROW('Alice', 85) AS ROW(name VARCHAR, score INTEGER)), CAST(ROW('Bob', 92) AS ROW(name VARCHAR, score INTEGER)), CAST(ROW('Diana', 95) AS ROW(name VARCHAR, score INTEGER))])` actual `SELECT * FROM UNNEST(ARRAY[CAST(ROW('Alice', 85) AS ROW(name VARCHAR, score INTEGER)), ROW('Bob', 92), ROW('Diana', 95)])`",
-            "signature": "sql-mismatch:v1:sha256:379d19037a71643dbfa0644879ae29e72588bac101161c6810262b1a3757728f"
+            "signature": "sql-mismatch:v1:sha256:379d19037a71643dbfa0644879ae29e72588bac101161c6810262b1a3757728f",
+            "issue": "BQ-17"
         },
         {
             "id": "assertion:v1:sha256:af551c3d4548347a673fb91859a111c20cd710fd314122eff374500a398fa514:1",
             "case": "write|trino|SELECT * FROM UNNEST([STRUCT('Alice' AS name, 85 AS score), STRUCT('Bob', 92), STRUCT('Diana', 95)])",
             "reason": "expected `SELECT * FROM UNNEST(ARRAY[CAST(ROW('Alice', 85) AS ROW(name VARCHAR, score INTEGER)), CAST(ROW('Bob', 92) AS ROW(name VARCHAR, score INTEGER)), CAST(ROW('Diana', 95) AS ROW(name VARCHAR, score INTEGER))])` actual `SELECT * FROM UNNEST(ARRAY[CAST(ROW('Alice', 85) AS ROW(name VARCHAR, score INTEGER)), ROW('Bob', 92), ROW('Diana', 95)])`",
-            "signature": "sql-mismatch:v1:sha256:379d19037a71643dbfa0644879ae29e72588bac101161c6810262b1a3757728f"
+            "signature": "sql-mismatch:v1:sha256:379d19037a71643dbfa0644879ae29e72588bac101161c6810262b1a3757728f",
+            "issue": "BQ-17"
         },
         {
             "id": "assertion:v1:sha256:140fef6e514f6d3485c0c6a0959b658747a086df58eb4e21d8a2b5415b07e7f9:1",
             "case": "write|duckdb|SELECT UNIX_SECONDS('2008-12-25 15:30:00+00')",
             "reason": "expected `SELECT CAST(EPOCH(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ)) AS BIGINT)` actual `SELECT UNIX_SECONDS('2008-12-25 15:30:00+00')`",
-            "signature": "sql-mismatch:v1:sha256:20de4960da9418c1a463ea4fac6fe23ce114ef383d1ed64cfb957e2fbce06f79"
+            "signature": "sql-mismatch:v1:sha256:20de4960da9418c1a463ea4fac6fe23ce114ef383d1ed64cfb957e2fbce06f79",
+            "issue": "BQ-4"
         },
         {
             "id": "assertion:v1:sha256:14a33df16850e96ac7348c68b19bcb5ae86a34f85e4218d34f327e16fda78180:1",
             "case": "write|duckdb|SELECT UNIX_MICROS('2008-12-25 15:30:00+00')",
             "reason": "expected `SELECT EPOCH_US(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MICROS('2008-12-25 15:30:00+00')`",
-            "signature": "sql-mismatch:v1:sha256:0d65977b92b7fcae31974b430d445fbd835ce10eac516ecd64422b68ab3df7e5"
+            "signature": "sql-mismatch:v1:sha256:0d65977b92b7fcae31974b430d445fbd835ce10eac516ecd64422b68ab3df7e5",
+            "issue": "BQ-4"
         },
         {
             "id": "assertion:v1:sha256:73a0d1d497f373da3ddc1b0ca3229615e4993d83b57486b1cc4b9400cf2af6cd:1",
             "case": "write|duckdb|SELECT UNIX_MICROS(TIMESTAMP '2008-12-25 15:30:00+00')",
             "reason": "expected `SELECT EPOCH_US(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MICROS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:328201818667d4995206767d2801fa175113ec55b3446c55439b93e1f34d5bef"
+            "signature": "sql-mismatch:v1:sha256:328201818667d4995206767d2801fa175113ec55b3446c55439b93e1f34d5bef",
+            "issue": "BQ-4"
         },
         {
             "id": "assertion:v1:sha256:58c5ca6dd3683fabbd222025a1bcd224ae16f207976495c74bb45ba8cd6cc542:1",
             "case": "write|duckdb|SELECT UNIX_MILLIS('2008-12-25 15:30:00+00')",
             "reason": "expected `SELECT EPOCH_MS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MILLIS('2008-12-25 15:30:00+00')`",
-            "signature": "sql-mismatch:v1:sha256:fa61873db960b471899bd79d953501cfc75086bb53c19c3fbbc07895d248e0ae"
+            "signature": "sql-mismatch:v1:sha256:fa61873db960b471899bd79d953501cfc75086bb53c19c3fbbc07895d248e0ae",
+            "issue": "BQ-4"
         },
         {
             "id": "assertion:v1:sha256:2008562f6fb51f1b2c89fdee15f86cab5a8bf0fe74584f146d8274f16835b78d:1",
             "case": "write|duckdb|SELECT UNIX_MILLIS(TIMESTAMP '2008-12-25 15:30:00+00')",
             "reason": "expected `SELECT EPOCH_MS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MILLIS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:861d2fc54898de9dfda17ead7a791c4859dad9146c60b393b31bd3117feef8f4"
+            "signature": "sql-mismatch:v1:sha256:861d2fc54898de9dfda17ead7a791c4859dad9146c60b393b31bd3117feef8f4",
+            "issue": "BQ-4"
         },
         {
             "id": "assertion:v1:sha256:eeef7c09b1953a15ce5b35dee124f6e617c333e4534e7fe4b14c31ba63dbc35a:1",
             "case": "write|duckdb|SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 2) FROM table",
             "reason": "expected `SELECT REGEXP_EXTRACT(NULLIF(SUBSTRING(abc, 2), ''), 'pattern(group)', 1) FROM \"table\"` actual `SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 1) FROM \"table\"`",
-            "signature": "sql-mismatch:v1:sha256:d1907161d47a03ca829d95bde79173ee0acd05b68daab17e76cdd4706cc6c7a3"
+            "signature": "sql-mismatch:v1:sha256:d1907161d47a03ca829d95bde79173ee0acd05b68daab17e76cdd4706cc6c7a3",
+            "issue": "BQ-28"
         },
         {
             "id": "assertion:v1:sha256:5e40feb22defd1016017fec1568ac37c10741a953932098012637733e29d47cf:1",
             "case": "write|duckdb|SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 2, 3) FROM table",
             "reason": "expected `SELECT ARRAY_EXTRACT(REGEXP_EXTRACT_ALL(NULLIF(SUBSTRING(abc, 2), ''), 'pattern(group)', 1), 3) FROM \"table\"` actual `SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 1) FROM \"table\"`",
-            "signature": "sql-mismatch:v1:sha256:1f1f4dcd97384435a2126f5c4f2d7b0a9323ae15e5186f91bbb0cdf23c7755de"
+            "signature": "sql-mismatch:v1:sha256:1f1f4dcd97384435a2126f5c4f2d7b0a9323ae15e5186f91bbb0cdf23c7755de",
+            "issue": "BQ-28"
         },
         {
             "id": "assertion:v1:sha256:e0242903d050896f944c59de894ced783aaa8020ce2344057c5547930e91e5c4:1",
             "case": "write|duckdb|SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08')",
             "reason": "expected `SELECT CAST(GENERATE_SERIES(CAST('2016-10-05' AS DATE), CAST('2016-10-08' AS DATE), INTERVAL '1' DAY) AS DATE[])` actual `SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' DAY)`",
-            "signature": "sql-mismatch:v1:sha256:f315178cdefc53f416a45b21e86382af7222cb10fb6ea7f389ea950bf5d2356d"
+            "signature": "sql-mismatch:v1:sha256:f315178cdefc53f416a45b21e86382af7222cb10fb6ea7f389ea950bf5d2356d",
+            "issue": "BQ-32"
         },
         {
             "id": "assertion:v1:sha256:0e8c6348cfb6923e21077e8c410db9b5cc6415db9e1666b3bd7fc2956b8d1612:1",
             "case": "write|duckdb|SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' MONTH)",
             "reason": "expected `SELECT CAST(GENERATE_SERIES(CAST('2016-10-05' AS DATE), CAST('2016-10-08' AS DATE), INTERVAL '1' MONTH) AS DATE[])` actual `SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' MONTH)`",
-            "signature": "sql-mismatch:v1:sha256:4e3c60ed0df3434b9be5fff376656827c845623d661606c1c7627c096012fda3"
+            "signature": "sql-mismatch:v1:sha256:4e3c60ed0df3434b9be5fff376656827c845623d661606c1c7627c096012fda3",
+            "issue": "BQ-32"
         },
         {
             "id": "assertion:v1:sha256:c23154ade99d98cfaa86d1a56d6ee460074ac9a8e1d1e77c92e1531982793995:1",
             "case": "write|duckdb|SELECT id, mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC(CURRENT_DATE, MONTH), INTERVAL '1' MONTH)) AS mnth",
             "reason": "expected `SELECT id, mnth FROM t CROSS JOIN UNNEST(CAST(GENERATE_SERIES(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH) AS DATE[])) AS _t0(mnth)` actual `SELECT id, mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH)) AS mnth`",
-            "signature": "sql-mismatch:v1:sha256:a190e9ba21643b72f09aff2c94b45686c76ddfe9201b5303467289a8fe84e8cb"
+            "signature": "sql-mismatch:v1:sha256:a190e9ba21643b72f09aff2c94b45686c76ddfe9201b5303467289a8fe84e8cb",
+            "issue": "BQ-32"
         },
         {
             "id": "assertion:v1:sha256:5c5a706d3e8d0c84e1dd25651af511db7f6e0cd42a1571560a506eb251642b65:1",
             "case": "write|duckdb|SELECT id, mnth AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC(CURRENT_DATE, MONTH), INTERVAL '1' MONTH)) AS mnth",
             "reason": "expected `SELECT id, mnth AS a_mnth FROM t CROSS JOIN UNNEST(CAST(GENERATE_SERIES(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH) AS DATE[])) AS _t0(mnth)` actual `SELECT id, mnth AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH)) AS mnth`",
-            "signature": "sql-mismatch:v1:sha256:0cb5321105b53c8c56fba7d4f3e3f6653627343b04a75e2f323f2d99f41506e2"
+            "signature": "sql-mismatch:v1:sha256:0cb5321105b53c8c56fba7d4f3e3f6653627343b04a75e2f323f2d99f41506e2",
+            "issue": "BQ-32"
         },
         {
             "id": "assertion:v1:sha256:a65f22225247f328c942be9668eb51ddec26de099818b48ddd16123ab0262a20:1",
             "case": "write|duckdb|SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC(CURRENT_DATE, MONTH), INTERVAL '1' MONTH)) AS mnth",
             "reason": "expected `SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(CAST(GENERATE_SERIES(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH) AS DATE[])) AS _t0(mnth)` actual `SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH)) AS mnth`",
-            "signature": "sql-mismatch:v1:sha256:9ca4e07ce1a12dbd5213b029715b89f8c0cf2bd36f9eb25d77ba64c2b4a626d4"
+            "signature": "sql-mismatch:v1:sha256:9ca4e07ce1a12dbd5213b029715b89f8c0cf2bd36f9eb25d77ba64c2b4a626d4",
+            "issue": "BQ-32"
         },
         {
             "id": "assertion:v1:sha256:8636d52aa54b85573d7547da339d8bb4e1d522c83cc527649314add3ce2639d2:1",
             "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', WEEK(SUNDAY))",
             "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((13 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK_START(SUNDAY))`",
-            "signature": "sql-mismatch:v1:sha256:c94892e4cb7c4a1940433e93e6aadb0ac821cc4a815cc4c8f18375a9b5cbcf9a"
+            "signature": "sql-mismatch:v1:sha256:c94892e4cb7c4a1940433e93e6aadb0ac821cc4a815cc4c8f18375a9b5cbcf9a",
+            "issue": "BQ-9"
         },
         {
             "id": "assertion:v1:sha256:0dd7d75549c44b440ba1a70a605d3c8f04f33f9872a9f0ed76df23af379791a4:1",
             "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', WEEK)",
             "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((13 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK_START(SUNDAY))`",
-            "signature": "sql-mismatch:v1:sha256:c94892e4cb7c4a1940433e93e6aadb0ac821cc4a815cc4c8f18375a9b5cbcf9a"
+            "signature": "sql-mismatch:v1:sha256:c94892e4cb7c4a1940433e93e6aadb0ac821cc4a815cc4c8f18375a9b5cbcf9a",
+            "issue": "BQ-9"
         },
         {
             "id": "assertion:v1:sha256:c800680e24e0e8871dc54be4e43104689f1cb5c40c66ff8127fd698c99e8b8be:1",
             "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', WEEK(MONDAY))",
             "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((7 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK_START(MONDAY))`",
-            "signature": "sql-mismatch:v1:sha256:96f211d094211a6afbe7fecd0325d23c7d7e8919164ed90a063cae660d9c8c37"
+            "signature": "sql-mismatch:v1:sha256:96f211d094211a6afbe7fecd0325d23c7d7e8919164ed90a063cae660d9c8c37",
+            "issue": "BQ-9"
         },
         {
             "id": "assertion:v1:sha256:1c8ae843677abe7aa6db13ec4ad6afe820e0b9c1032e01740bce995cae73035a:1",
             "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', ISOWEEK)",
             "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((7 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), ISOWEEK)`",
-            "signature": "sql-mismatch:v1:sha256:fc9a4aafe951d49ae2545907b904d92260cfed090159763e839557eff9294c9f"
+            "signature": "sql-mismatch:v1:sha256:fc9a4aafe951d49ae2545907b904d92260cfed090159763e839557eff9294c9f",
+            "issue": "BQ-9"
         },
         {
             "id": "assertion:v1:sha256:7edc49b87114d768bf04f9152bd1bdb8e3d2b8ecf32a85766a3deb05bb67af8c:1",
             "case": "write|spark|SELECT DATE_TRUNC(d, WEEK(SUNDAY))",
             "reason": "expected UnsupportedError, got `SELECT TRUNC(d, WEEK_START(SUNDAY))`",
-            "signature": "missing-error:v1:sha256:6268e7c6452495110bc59c95a251844784d07283449eb47a1ff9da544b268c39"
+            "signature": "missing-error:v1:sha256:6268e7c6452495110bc59c95a251844784d07283449eb47a1ff9da544b268c39",
+            "issue": "BQ-12"
         },
         {
             "id": "assertion:v1:sha256:d53a255a7830aa27ee4393160171ca4d9a76426fa31cc4a87d0a56fb660df864:1",
             "case": "write|clickhouse|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
             "reason": "expected UnsupportedError, got `SELECT dateTrunc(WEEK(SUNDAY), ts)`",
-            "signature": "missing-error:v1:sha256:1c7dd031bda2a107934ed3ae7fff119250e3efef0338db3c7cd13b808ad7a8ba"
+            "signature": "missing-error:v1:sha256:1c7dd031bda2a107934ed3ae7fff119250e3efef0338db3c7cd13b808ad7a8ba",
+            "issue": "BQ-12"
         },
         {
             "id": "assertion:v1:sha256:d470c18c99ffece92a7996294f424b41b5bd691cdfe12d56cb20a7c2af32117c:1",
             "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
             "reason": "expected `SELECT DATE_TRUNC('WEEK', ts + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), ts)`",
-            "signature": "sql-mismatch:v1:sha256:ecf76926e0f96f2de2bbc660a7aad762d6f279cac2c93938fb18097d0756a7c3"
+            "signature": "sql-mismatch:v1:sha256:ecf76926e0f96f2de2bbc660a7aad762d6f279cac2c93938fb18097d0756a7c3",
+            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:2623c546a2800f8cb2bc8d1ac65aafd9f79b10bd72cd3800b22030c333eeaa3d:1",
             "case": "write|mysql|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
             "reason": "expected UnsupportedError, got `SELECT DATE_ADD('0000-01-01 00:00:00', INTERVAL (TIMESTAMPDIFF(WEEK_START(SUNDAY), '0000-01-01 00:00:00', ts)) WEEK_START(SUNDAY))`",
-            "signature": "missing-error:v1:sha256:5da7c45bf6bbdba24da16da1d3a71475b00f1da3a625baf914391dbaf5d70e40"
+            "signature": "missing-error:v1:sha256:5da7c45bf6bbdba24da16da1d3a71475b00f1da3a625baf914391dbaf5d70e40",
+            "issue": "BQ-12"
         },
         {
             "id": "assertion:v1:sha256:8427756a401b5f88740414dcd90d62986ae96e49a60ea9d5eb60caa9b73e5cc5:1",
             "case": "write|spark|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
             "reason": "expected UnsupportedError, got `SELECT DATE_TRUNC(WEEK_START(SUNDAY), ts)`",
-            "signature": "missing-error:v1:sha256:c80ced7fd40c17a2ede2f9cc09fdd1d5323a2fc0c3cfaefe489b3692c8ebf8ba"
+            "signature": "missing-error:v1:sha256:c80ced7fd40c17a2ede2f9cc09fdd1d5323a2fc0c3cfaefe489b3692c8ebf8ba",
+            "issue": "BQ-12"
         },
         {
             "id": "assertion:v1:sha256:5763bffdf19a216dc66e2b61268d77a50347d85cf691a37ea1b6e74962b72fe1:1",
             "case": "write|duckdb|SELECT DATETIME_TRUNC(dt, WEEK(SUNDAY))",
             "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(dt AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(dt, WEEK_START(SUNDAY))`",
-            "signature": "sql-mismatch:v1:sha256:5a7d0375ca43fca06cfaa50be08eccf3ed676b1f325b3ec9e3f8141d9199fe08"
+            "signature": "sql-mismatch:v1:sha256:5a7d0375ca43fca06cfaa50be08eccf3ed676b1f325b3ec9e3f8141d9199fe08",
+            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:ad975b63c6c9bff3b2b59f16b8e16de0541706255affe56d60b94b80ad023736:1",
             "case": "write|hive|SELECT EXTRACT(WEEK(THURSDAY) FROM d)",
             "reason": "expected UnsupportedError, got `SELECT EXTRACT(THURSDAY FROM d)`",
-            "signature": "missing-error:v1:sha256:0551f48c63519766f04326208827831471d4ccc82212c0fc5f201d8dbe1cf2ca"
+            "signature": "missing-error:v1:sha256:0551f48c63519766f04326208827831471d4ccc82212c0fc5f201d8dbe1cf2ca",
+            "issue": "BQ-12"
         },
         {
             "id": "assertion:v1:sha256:3a739b5eaa1a7adf5fab8bd0d5e231c5bdfad61651a899ccdf81b9e6d0c77b5a:1",
             "case": "write|spark|SELECT EXTRACT(WEEK(THURSDAY) FROM d)",
             "reason": "expected UnsupportedError, got `SELECT EXTRACT(THURSDAY FROM d)`",
-            "signature": "missing-error:v1:sha256:0551f48c63519766f04326208827831471d4ccc82212c0fc5f201d8dbe1cf2ca"
+            "signature": "missing-error:v1:sha256:0551f48c63519766f04326208827831471d4ccc82212c0fc5f201d8dbe1cf2ca",
+            "issue": "BQ-12"
         },
         {
             "id": "assertion:v1:sha256:a87056ab498135a1d80aefffd88c1ddc5ead810e6e36b6ffa1388260a4782906:1",
             "case": "write|duckdb|SELECT DATE_TRUNC(DATE '2008-11-10', ISOWEEK)",
             "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10' AS DATE))` actual `SELECT DATE_TRUNC('ISOWEEK', CAST('2008-11-10' AS DATE))`",
-            "signature": "sql-mismatch:v1:sha256:e4b30f0af6daa526263c5464f112ef270e9d19413ec2597c73521dd6b002d535"
+            "signature": "sql-mismatch:v1:sha256:e4b30f0af6daa526263c5464f112ef270e9d19413ec2597c73521dd6b002d535",
+            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:08384c5777214dfa82379405a2276005317abe9e8a4099b0972fafa251a619ba:1",
             "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00', WEEK)",
             "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:a69ea52cfdf33401b06b6ec1080d786d270a5fea0d6a895f9cf7e2dbde4f6e3f"
+            "signature": "sql-mismatch:v1:sha256:a69ea52cfdf33401b06b6ec1080d786d270a5fea0d6a895f9cf7e2dbde4f6e3f",
+            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:dd5acb79a280300d17701b82db5236c6171fe8e37a932d268fa1bfba5f2c7e5f:1",
             "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00', WEEK(SUNDAY))",
             "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:a69ea52cfdf33401b06b6ec1080d786d270a5fea0d6a895f9cf7e2dbde4f6e3f"
+            "signature": "sql-mismatch:v1:sha256:a69ea52cfdf33401b06b6ec1080d786d270a5fea0d6a895f9cf7e2dbde4f6e3f",
+            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:f7656c7805361f7fb0ae780af74c1207a65179e1bdd11cb7dc522d0a90da2d48:1",
             "case": "write|duckdb|SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK)",
             "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(CAST('2008-11-10 14:30:00' AS TIMESTAMP) AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK_START(SUNDAY))`",
-            "signature": "sql-mismatch:v1:sha256:cbe818aa0db4c0265b75f7552a2c91f745572a27181e96171613d5e5c408e023"
+            "signature": "sql-mismatch:v1:sha256:cbe818aa0db4c0265b75f7552a2c91f745572a27181e96171613d5e5c408e023",
+            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:fae0fa06316537988d8bf5ecf6f2530da19e624b76b58bc033164ae5c6c2d1b7:1",
             "case": "write|duckdb|SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK(SUNDAY))",
             "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(CAST('2008-11-10 14:30:00' AS TIMESTAMP) AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK_START(SUNDAY))`",
-            "signature": "sql-mismatch:v1:sha256:cbe818aa0db4c0265b75f7552a2c91f745572a27181e96171613d5e5c408e023"
+            "signature": "sql-mismatch:v1:sha256:cbe818aa0db4c0265b75f7552a2c91f745572a27181e96171613d5e5c408e023",
+            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:ac3b23849ac1a40ba43e02e82009a6a95437e35949818aea5c12280b2e4476e9:1",
             "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00+00', WEEK, 'America/New_York')",
             "reason": "expected `SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:f7f3f162b2ca22a2ff0dfa71818a1d22cb66800808f63b33f43217b2f9f0af9b"
+            "signature": "sql-mismatch:v1:sha256:f7f3f162b2ca22a2ff0dfa71818a1d22cb66800808f63b33f43217b2f9f0af9b",
+            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:2d08d95ce2b3995753cb214d1904e755b2e97f1327e44b8985614a852b307dfa:1",
             "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00+00', WEEK(SUNDAY), 'America/New_York')",
             "reason": "expected `SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:f7f3f162b2ca22a2ff0dfa71818a1d22cb66800808f63b33f43217b2f9f0af9b"
+            "signature": "sql-mismatch:v1:sha256:f7f3f162b2ca22a2ff0dfa71818a1d22cb66800808f63b33f43217b2f9f0af9b",
+            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:100634c78e75ccf9ea122a5b66066f219c62e95ab52d55e87bdfc7e1569c592b:1",
             "case": "write|duckdb|SELECT ROUND(NUMERIC '2.25', 1, 'ROUND_HALF_AWAY_FROM_ZERO') AS value",
             "reason": "expected `SELECT ROUND(CAST('2.25' AS DECIMAL), 1) AS value` actual `SELECT ROUND(CAST('2.25' AS DECIMAL), 1, 'ROUND_HALF_AWAY_FROM_ZERO') AS value`",
-            "signature": "sql-mismatch:v1:sha256:3765d3023e152373113e4e42d2c31ae6ecf0dfcc1d3d08dd98c8f8f4d33c4120"
+            "signature": "sql-mismatch:v1:sha256:3765d3023e152373113e4e42d2c31ae6ecf0dfcc1d3d08dd98c8f8f4d33c4120",
+            "issue": "BQ-30"
         },
         {
             "id": "assertion:v1:sha256:9ba8e57496a32475580fc2fb1abd8e6e2e8c456435fc81103f1984a211e0822f:1",
             "case": "write|duckdb|SELECT ROUND(NUMERIC '2.25', 1, 'ROUND_HALF_EVEN') AS value",
             "reason": "expected `SELECT ROUND_EVEN(CAST('2.25' AS DECIMAL), 1) AS value` actual `SELECT ROUND(CAST('2.25' AS DECIMAL), 1, 'ROUND_HALF_EVEN') AS value`",
-            "signature": "sql-mismatch:v1:sha256:53a5c71aa41bf7c2e16861984ac0ae33def99b2c41221f1ebd8105552ece06de"
+            "signature": "sql-mismatch:v1:sha256:53a5c71aa41bf7c2e16861984ac0ae33def99b2c41221f1ebd8105552ece06de",
+            "issue": "BQ-30"
         },
         {
             "id": "assertion:v1:sha256:4c50d16c6cd26faf58f87998f85ac5dd2007f9ae68ed06b85e361f35eb4dd53a:1",
             "case": "write|duckdb|APPROX_QUANTILES(x, 1)",
             "reason": "expected `APPROX_QUANTILE(x, [0, 1])` actual `APPROX_QUANTILES(x, 1)`",
-            "signature": "sql-mismatch:v1:sha256:e00f4612db189493f263b368b253d85e6e56992ff937c4f39d5cbfd83e31c1f9"
+            "signature": "sql-mismatch:v1:sha256:e00f4612db189493f263b368b253d85e6e56992ff937c4f39d5cbfd83e31c1f9",
+            "issue": "BQ-29"
         },
         {
             "id": "assertion:v1:sha256:21c565aa19b6d9087428f0843df52de61b2d79dc4ec526b014ef447d6b63a54d:1",
             "case": "write|duckdb|APPROX_QUANTILES(x, 2)",
             "reason": "expected `APPROX_QUANTILE(x, [0, 0.5, 1])` actual `APPROX_QUANTILES(x, 2)`",
-            "signature": "sql-mismatch:v1:sha256:346d996dd729965e626d0342b074067d31c33bd99613ce548010bfd138f04bc6"
+            "signature": "sql-mismatch:v1:sha256:346d996dd729965e626d0342b074067d31c33bd99613ce548010bfd138f04bc6",
+            "issue": "BQ-29"
         },
         {
             "id": "assertion:v1:sha256:2d0a7503c6b37da138bad1c4e86fd8d9059760b9f75240f52597c8d339b50dae:1",
             "case": "write|duckdb|APPROX_QUANTILES(x, 4)",
             "reason": "expected `APPROX_QUANTILE(x, [0, 0.25, 0.5, 0.75, 1])` actual `APPROX_QUANTILES(x, 4)`",
-            "signature": "sql-mismatch:v1:sha256:69cd6c83405e0d4ed3e9cbec7689a27bc2b694a1284195a38086f95a3cc45d04"
+            "signature": "sql-mismatch:v1:sha256:69cd6c83405e0d4ed3e9cbec7689a27bc2b694a1284195a38086f95a3cc45d04",
+            "issue": "BQ-29"
         },
         {
             "id": "assertion:v1:sha256:fc0a16491ac00ccedd2dc0f9bb9cbfaaa9bb091e16919a2be5a2364926263a79:1",
             "case": "write|duckdb|APPROX_QUANTILES(DISTINCT x, 2)",
             "reason": "expected `APPROX_QUANTILE(DISTINCT x, [0, 0.5, 1])` actual `APPROX_QUANTILES(DISTINCT CASE WHEN x IS NULL THEN NULL WHEN 2 IS NULL THEN NULL ELSE (x, 2) END)`",
-            "signature": "sql-mismatch:v1:sha256:602ee7b071485014d69648f6962e7207a19bbeaf9a5292f5275a3f416b1d618b"
+            "signature": "sql-mismatch:v1:sha256:602ee7b071485014d69648f6962e7207a19bbeaf9a5292f5275a3f416b1d618b",
+            "issue": "BQ-29"
         },
         {
             "id": "assertion:v1:sha256:e25bc80883fa068aa94e078084882a88ad7ef434779c23c5cef63305ee169c4c:1",
             "case": "write|spark|SELECT DATETIME_ADD('2023-01-01T00:00:00', INTERVAL 1 MILLISECOND)",
             "reason": "expected `SELECT '2023-01-01T00:00:00' + INTERVAL '1' MILLISECOND` actual `SELECT DATETIME_ADD('2023-01-01T00:00:00', '1', 'MILLISECOND')`",
-            "signature": "sql-mismatch:v1:sha256:d7d6f9ad2713701176517bfe9bec145841c2a0d5cb88a3be742b056265b60d42"
+            "signature": "sql-mismatch:v1:sha256:d7d6f9ad2713701176517bfe9bec145841c2a0d5cb88a3be742b056265b60d42",
+            "issue": "BQ-8"
         },
         {
             "id": "assertion:v1:sha256:aedeae4447b7268585a8f95e4a4819d49ce29a05a90420938faa98f0f7a357b4:1",
             "case": "write|spark|SELECT DATETIME_SUB('2023-01-01T00:00:00', INTERVAL 1 MILLISECOND)",
             "reason": "expected `SELECT '2023-01-01T00:00:00' - INTERVAL '1' MILLISECOND` actual `SELECT DATETIME_SUB('2023-01-01T00:00:00', '1', 'MILLISECOND')`",
-            "signature": "sql-mismatch:v1:sha256:1b6973b74c440f7ac1516461433c955953bfe07910626ab6b7322992f3a5207b"
+            "signature": "sql-mismatch:v1:sha256:1b6973b74c440f7ac1516461433c955953bfe07910626ab6b7322992f3a5207b",
+            "issue": "BQ-8"
         },
         {
             "id": "assertion:v1:sha256:883ccf86dee6c1ca93870c39c59ae71b06a7e62de5632078dad86636436eed67:1",
             "case": "write|duckdb|SELECT DATETIME_TRUNC('2023-01-01T01:01:01', HOUR)",
             "reason": "expected `SELECT DATE_TRUNC('HOUR', CAST('2023-01-01T01:01:01' AS TIMESTAMP))` actual `SELECT DATETIME_TRUNC('2023-01-01T01:01:01', HOUR)`",
-            "signature": "sql-mismatch:v1:sha256:9ea7b616e536a263837f1b22e1f1f709289e8296a39e8e50edd3e552cb144140"
+            "signature": "sql-mismatch:v1:sha256:9ea7b616e536a263837f1b22e1f1f709289e8296a39e8e50edd3e552cb144140",
+            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:16dea63ad667e7c6bba2261f24cf07532a8ccd8e76b9c812bbf101c9b7ea320c:1",
             "case": "write|duckdb|APPROX_QUANTILES(x, 2 IGNORE NULLS)",
             "reason": "expected `APPROX_QUANTILE(x, [0, 0.5, 1])` actual `APPROX_QUANTILES(x, 2)`",
-            "signature": "sql-mismatch:v1:sha256:346d996dd729965e626d0342b074067d31c33bd99613ce548010bfd138f04bc6"
+            "signature": "sql-mismatch:v1:sha256:346d996dd729965e626d0342b074067d31c33bd99613ce548010bfd138f04bc6",
+            "issue": "BQ-29"
         }
     ]
 }

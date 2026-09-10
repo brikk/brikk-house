@@ -781,6 +781,22 @@ NULL groups, empty inputs, mixed stars, and real helper-like column names. No li
 Doris execution is claimed; other dialects' unresolved star rewrites are not fixed
 by this Doris-specific path. Existing corpus expectations and ledgers are unchanged.
 
+## 26. Presto/Trino struct-array NULL fields (BQ-1)
+
+Literal NULL fields in an array of structs must inherit a type from non-NULL
+sibling fields before rendering named ROW casts. BigQuery's standalone BIGINT
+default otherwise creates incompatible row types beside strings or nested values.
+`PrestoGenerator` reconciles those literal fields positionally, including nested
+structs and arrays. Explicit casts remain authoritative; all-NULL fields keep
+their default. This changes generator-local annotations, not the caller's AST or
+the shared SQLGlot annotation corpus.
+
+`BigqueryStructArrayTypesTest` covers NULL-first/last, duplicates, nested values,
+typed NULLs, all-NULL defaults, and source-AST preservation. The optional Trino
+execution checks in `BigqueryUnnestResultTest` no longer need a string cast around
+the NULL in lowered VALUES. This is a local correction to the pin's per-row typing;
+retain it until upstream reconciles these fields too.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

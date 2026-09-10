@@ -22,7 +22,7 @@ class BigqueryUnnestResultTest {
     @Test
     fun loweredValuesAndCteColumnsKeepResults() {
         val cases = listOf(
-            Triple("SELECT t.a, t.b FROM (VALUES (1, 'x'), (2, CAST(NULL AS TEXT)), (1, 'x')) AS t(a, b)",
+            Triple("SELECT t.a, t.b FROM (VALUES (1, 'x'), (2, NULL), (1, 'x')) AS t(a, b)",
                 listOf("a", "b"), listOf("{\"a\":1,\"b\":\"x\"}", "{\"a\":2,\"b\":null}", "{\"a\":1,\"b\":\"x\"}")),
             Triple("SELECT t.a, u.b FROM (VALUES (1), (2)) AS t(a) CROSS JOIN (VALUES (3), (4)) AS u(b)",
                 listOf("a", "b"), listOf("{\"a\":1,\"b\":3}", "{\"a\":1,\"b\":4}", "{\"a\":2,\"b\":3}", "{\"a\":2,\"b\":4}")),
@@ -35,6 +35,26 @@ class BigqueryUnnestResultTest {
             assertEquals(emptyList(), generator.unsupportedMessages, source)
             check(sql, columns, expected, struct = source.contains("VALUES"))
         }
+    }
+
+    @Test
+    fun untypedNullFieldsReconcileAcrossRows() {
+        for (array in listOf(
+            "[STRUCT('x' AS b), STRUCT(NULL AS b)]",
+            "[STRUCT(NULL AS b), STRUCT('x' AS b)]",
+        )) check("SELECT t.b FROM UNNEST($array) AS t", listOf("b"),
+            listOf("{\"b\":\"x\"}", "{\"b\":null}"), struct = true)
+        check("SELECT t.s.b AS b FROM UNNEST([STRUCT(STRUCT(NULL AS b) AS s), STRUCT(STRUCT('x' AS b) AS s)]) AS t",
+            listOf("b"), listOf("{\"b\":null}", "{\"b\":\"x\"}"), struct = true)
+        // Trino CLI JSON output cannot serialize collection columns; inspect their contents as scalars.
+        check("SELECT ARRAY_LENGTH(t.a) AS n, t.a[SAFE_OFFSET(0)] AS a " +
+            "FROM UNNEST([STRUCT(NULL AS a), STRUCT(['x'] AS a)]) AS t",
+            listOf("n", "a"), listOf("{\"n\":null,\"a\":null}", "{\"n\":1,\"a\":\"x\"}"), struct = true)
+        check("SELECT ARRAY_LENGTH(t.a) AS n, t.a[SAFE_OFFSET(0)] AS a " +
+            "FROM UNNEST([STRUCT([NULL] AS a), STRUCT(['x'] AS a)]) AS t",
+            listOf("n", "a"), listOf("{\"n\":1,\"a\":null}", "{\"n\":1,\"a\":\"x\"}"), struct = true)
+        check("SELECT t.b FROM UNNEST([STRUCT(NULL AS b), STRUCT(NULL AS b)]) AS t",
+            listOf("b"), listOf("{\"b\":null}", "{\"b\":null}"), struct = true)
     }
 
     @Test

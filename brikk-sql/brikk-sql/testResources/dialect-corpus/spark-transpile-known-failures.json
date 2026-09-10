@@ -16,19 +16,22 @@
             "id": "assertion:v1:sha256:dac946ecc4751001025c0c4201ec43a90be44a55d459342709727852946d83f4:1",
             "case": "write|bigquery|SELECT TO_UTC_TIMESTAMP('2016-08-31', 'Asia/Seoul')",
             "reason": "expected `SELECT DATETIME(TIMESTAMP(CAST('2016-08-31' AS DATETIME), 'Asia/Seoul'), 'UTC')` actual `SELECT CAST('2016-08-31' AS DATETIME) AT TIME ZONE 'Asia/Seoul' AT TIME ZONE 'UTC'`",
-            "signature": "sql-mismatch:v1:sha256:9190eabb1a57bff9604f55a474151b08b8a3ad63bf44277b07814fa0bd65bdba"
+            "signature": "sql-mismatch:v1:sha256:9190eabb1a57bff9604f55a474151b08b8a3ad63bf44277b07814fa0bd65bdba",
+            "issue": "BQ-35"
         },
         {
             "id": "assertion:v1:sha256:7a882ddf968aa7a1778721533c7174956bcf6c01a64df6c12825c0c91c714a76:1",
             "case": "read|bigquery|SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))",
             "reason": "expected `SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR quarter IN ('Q1' AS Q1, 'Q2' AS Q1))` actual `SELECT * FROM produce AS p PIVOT(SUM(p.sales) AS sales FOR p.quarter IN ('Q1' AS Q1, 'Q2' AS Q1))`",
-            "signature": "sql-mismatch:v1:sha256:b5c44d4203c42c1723a50eb29318225484e206934dc0ae6a3688e7ecfd70f7a3"
+            "signature": "sql-mismatch:v1:sha256:b5c44d4203c42c1723a50eb29318225484e206934dc0ae6a3688e7ecfd70f7a3",
+            "issue": "BQ-34"
         },
         {
             "id": "assertion:v1:sha256:01a37d844d410c1e09c75287dfb561dfa897fc785d00520de55356e822d3c1c9:1",
             "case": "write|bigquery|SELECT DATE_ADD(my_date_column, 1)",
             "reason": "expected `SELECT DATE_ADD(CAST(CAST(my_date_column AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `SELECT TS_OR_DS_ADD(my_date_column, 1, DAY)`",
-            "signature": "sql-mismatch:v1:sha256:c97381726ae1270a2b848d07eb9f7dcdd9be359bbe4c1df21e43195e669ce2ca"
+            "signature": "sql-mismatch:v1:sha256:c97381726ae1270a2b848d07eb9f7dcdd9be359bbe4c1df21e43195e669ce2ca",
+            "issue": "BQ-8"
         },
         {
             "id": "assertion:v1:sha256:e064957e90f80e48faaa725cedf76c92fb5f5245473cd3c9313e0c01215e9640:1",
@@ -46,31 +49,36 @@
             "id": "assertion:v1:sha256:b437f0399f27c97d9e345f291ad51c12fff6da7875e3ba970dc7430abfbb5745:1",
             "case": "write|bigquery|SELECT EXPLODE(x) FROM tbl",
             "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col FROM tbl CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(x)) - 1)) AS pos CROSS JOIN UNNEST(x) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(x) - 1) AND pos_2 = (ARRAY_LENGTH(x) - 1))` actual `SELECT EXPLODE(x) FROM tbl`",
-            "signature": "sql-mismatch:v1:sha256:f574ff76b4d335ca52b8abb44efb1617f081b2f7d0f29312c9310e289b55dc36"
+            "signature": "sql-mismatch:v1:sha256:f574ff76b4d335ca52b8abb44efb1617f081b2f7d0f29312c9310e289b55dc36",
+            "issue": "BQ-20"
         },
         {
             "id": "assertion:v1:sha256:c48a2156d8e3ffb8bed5567c7cde2f1b80f6154a52553b96e38d9b0b228a59d0:1",
             "case": "write|bigquery|SELECT EXPLODE(col) FROM _u",
             "reason": "expected `SELECT IF(pos = pos_2, col_2, NULL) AS col_2 FROM _u CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(col)) - 1)) AS pos CROSS JOIN UNNEST(col) AS col_2 WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(col) - 1) AND pos_2 = (ARRAY_LENGTH(col) - 1))` actual `SELECT EXPLODE(col) FROM _u`",
-            "signature": "sql-mismatch:v1:sha256:8b47430009c7b19e2a915af0c2703527bc7206a2f0d34a1469663a741dcc45d1"
+            "signature": "sql-mismatch:v1:sha256:8b47430009c7b19e2a915af0c2703527bc7206a2f0d34a1469663a741dcc45d1",
+            "issue": "BQ-20"
         },
         {
             "id": "assertion:v1:sha256:a08f12364022fbdcaac4fba0306a2a0b23632545eb658b4bc6c3b4d40354908a:1",
             "case": "write|bigquery|SELECT EXPLODE(ARRAY(1, 2))",
             "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([1, 2])) - 1)) AS pos CROSS JOIN UNNEST([1, 2]) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH([1, 2]) - 1) AND pos_2 = (ARRAY_LENGTH([1, 2]) - 1))` actual `SELECT EXPLODE([1, 2])`",
-            "signature": "sql-mismatch:v1:sha256:dce7ef646a74b2ada7dd9834d74f1778c9e5b1b5e1f076ba05261ea0d6826d5a"
+            "signature": "sql-mismatch:v1:sha256:dce7ef646a74b2ada7dd9834d74f1778c9e5b1b5e1f076ba05261ea0d6826d5a",
+            "issue": "BQ-20"
         },
         {
             "id": "assertion:v1:sha256:5e34eb47840a4f2cf1cd25eeee3866d2bd53cc5510da31ce1376b94d6ba44139:1",
             "case": "write|bigquery|SELECT POSEXPLODE(ARRAY(2, 3)) AS x",
             "reason": "expected `SELECT IF(pos = pos_2, x, NULL) AS x, IF(pos = pos_2, pos_2, NULL) AS pos_2 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([2, 3])) - 1)) AS pos CROSS JOIN UNNEST([2, 3]) AS x WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH([2, 3]) - 1) AND pos_2 = (ARRAY_LENGTH([2, 3]) - 1))` actual `SELECT POSEXPLODE([2, 3]) AS x`",
-            "signature": "sql-mismatch:v1:sha256:b4f30449068f72fa3ede813f158bf8003e849e452ace8d0d78cf897423df8082"
+            "signature": "sql-mismatch:v1:sha256:b4f30449068f72fa3ede813f158bf8003e849e452ace8d0d78cf897423df8082",
+            "issue": "BQ-20"
         },
         {
             "id": "assertion:v1:sha256:e9cb4ae2c2eb8e30552282654fe80cb15fecc5aeeff1a64383ff917ac655516c:1",
             "case": "write|bigquery|SELECT POSEXPLODE(ARRAY(2, 3)), EXPLODE(ARRAY(4, 5, 6)) FROM tbl",
             "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2, IF(pos = pos_3, col_2, NULL) AS col_2 FROM tbl CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH([2, 3]), ARRAY_LENGTH([4, 5, 6])) - 1)) AS pos CROSS JOIN UNNEST([2, 3]) AS col WITH OFFSET AS pos_2 CROSS JOIN UNNEST([4, 5, 6]) AS col_2 WITH OFFSET AS pos_3 WHERE (pos = pos_2 OR (pos > (ARRAY_LENGTH([2, 3]) - 1) AND pos_2 = (ARRAY_LENGTH([2, 3]) - 1))) AND (pos = pos_3 OR (pos > (ARRAY_LENGTH([4, 5, 6]) - 1) AND pos_3 = (ARRAY_LENGTH([4, 5, 6]) - 1)))` actual `SELECT POSEXPLODE([2, 3]), EXPLODE([4, 5, 6]) FROM tbl`",
-            "signature": "sql-mismatch:v1:sha256:5910bd8d3de0d06b6229e9e1a487e1d34445bdc73e02b77ab2799819be510931"
+            "signature": "sql-mismatch:v1:sha256:5910bd8d3de0d06b6229e9e1a487e1d34445bdc73e02b77ab2799819be510931",
+            "issue": "BQ-20"
         },
         {
             "id": "assertion:v1:sha256:f669df9678201134e803f0e421754ff511d78edeb867c1d1da7797f6914cd3ce:1",

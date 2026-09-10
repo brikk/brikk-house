@@ -879,7 +879,7 @@ open class HiveGenerator(
             reg(StorageHandlerProperty::class) { e -> "STORED BY ${sql(e, "this")}" }
             reg(FromBase64::class) { e -> hg().renameFuncSql("UNBASE64", e) }
             reg(GenerateSeries::class) { e -> hg().sequenceSql(e as GenerateSeries) }
-            reg(If::class) { e -> ifSql(e as If) }
+            reg(If::class) { e -> func("IF", e.thisArg, e.args["true"], e.args["false"]) }
             reg(ILike::class) { e -> hg().noIlikeSql(e as ILike) }
             reg(IntDiv::class) { e -> binary(e as Binary, "DIV") }
             reg(IsNan::class) { e -> hg().renameFuncSql("ISNAN", e) }

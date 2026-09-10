@@ -1058,6 +1058,10 @@ object BigqueryParserTables {
         put("FORMAT_DATE", buildFormattedTime({ TimeToStr(it) }, thisIdx = 1, fmtIdx = 0).wrapTsOrDs("TsOrDsToDate"))
         put("GENERATE") { a -> AIGenerate(args("expressions" to a)) }
         put("GENERATE_ARRAY") { a -> GenerateSeries(genSeriesArgs(a)) }
+        // sqlglot: parser FUNCTIONS[LEAST/GREATEST] with BigQuery.LEAST_GREATEST_IGNORES_NULLS=False
+        put("GREATEST") { a ->
+            Greatest(args("this" to seqGet(a, 0), "expressions" to a.drop(1), "ignore_nulls" to false))
+        }
         put("JSON_EXTRACT", buildExtractJsonWithPath({ JSONExtract(it) }, isJsonExtract = true))
         put("JSON_EXTRACT_PATH_TEXT", buildExtractJsonWithPath({ JSONExtractScalar(it) }, scalar = true))
         put("JSON_EXTRACT_SCALAR", buildExtractJsonWithDefaultPath({ JSONExtractScalar(it) }, scalar = true))
@@ -1075,6 +1079,9 @@ object BigqueryParserTables {
         put("JSON_VALUE", buildExtractJsonWithDefaultPath({ JSONExtractScalar(it) }, scalar = true))
         put("JSON_VALUE_ARRAY", buildExtractJsonWithDefaultPath({ JSONValueArray(it) }))
         put("LAST_DAY", normalizedBareWeek(BaseParserTables.FUNCTIONS.getValue("LAST_DAY")))
+        put("LEAST") { a ->
+            Least(args("this" to seqGet(a, 0), "expressions" to a.drop(1), "ignore_nulls" to false))
+        }
         put("LENGTH") { a -> Length(args("this" to seqGet(a, 0), "binary" to true)) }
         // sqlglot: parser.build_logarithm (BigQuery: LOG_BASE_FIRST=False, LOG_DEFAULTS_TO_LN=True)
         put("LOG") { a ->

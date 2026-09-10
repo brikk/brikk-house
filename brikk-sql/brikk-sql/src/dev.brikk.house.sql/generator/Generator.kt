@@ -4822,12 +4822,17 @@ open class Generator(
 
     // sqlglot: Generator.safedivide_sql
     open fun safedivideSql(expression: SafeDivide): String {
-        val denominator = expression.expressionArg as Expression
+        val numerator = (expression.thisArg as Expression).copy().let {
+            if (it is Binary) Paren(args("this" to it)) else it
+        }
+        val denominator = (expression.expressionArg as Expression).copy().let {
+            if (it is Binary) Paren(args("this" to it)) else it
+        }
         return sql(
             If(
                 args(
                     "this" to NEQ(args("this" to denominator.copy(), "expression" to Literal.number("0"))),
-                    "true" to Div(args("this" to expression.thisArg, "expression" to denominator)),
+                    "true" to Div(args("this" to numerator, "expression" to denominator)),
                     "false" to Null(),
                 )
             )
