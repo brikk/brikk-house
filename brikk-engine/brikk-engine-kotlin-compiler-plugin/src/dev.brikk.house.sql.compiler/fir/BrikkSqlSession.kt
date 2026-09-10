@@ -183,15 +183,35 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         return resolved
     }
 
+    private class FunctionsIndex(
+        val byOutClassId: Map<ClassId, FirNamedFunctionSymbol>,
+        val collidingOutClassIds: Set<ClassId>,
+    )
+
     /** `@BrikkSql` functions by their generated output ClassId. */
     // Not `lazy`: the predicate index only exists from ANNOTATIONS_FOR_PLUGINS on, and an
     // early caller (IMPORTS-phase `hasPackage`) must not pin an empty result.
-    private var functionsCache: Map<ClassId, FirNamedFunctionSymbol>? = null
-    val functionsByOutClassId: Map<ClassId, FirNamedFunctionSymbol>
-        get() = functionsCache ?: session.predicateBasedProvider.getSymbolsByPredicate(SQL_PREDICATE)
+    private var functionsCache: FunctionsIndex? = null
+    private fun functionsIndex(): FunctionsIndex {
+        functionsCache?.let { return it }
+        val groups = session.predicateBasedProvider.getSymbolsByPredicate(SQL_PREDICATE)
             .filterIsInstance<FirNamedFunctionSymbol>()
-            .associateBy { ClassId(it.callableId.packageName, BrikkSqlNames.outputClassName(it.name)) }
-            .also { if (it.isNotEmpty()) functionsCache = it }
+            .groupBy { ClassId(it.callableId.packageName, BrikkSqlNames.outputClassName(it.name)) }
+        val index = FunctionsIndex(
+            groups.mapValues { (_, functions) -> functions.first() },
+            groups.filterValues { it.size > 1 }.keys,
+        )
+        if (groups.isNotEmpty()) functionsCache = index
+        return index
+    }
+
+    val functionsByOutClassId: Map<ClassId, FirNamedFunctionSymbol>
+        get() = functionsIndex().byOutClassId
+
+    fun collidingOutputClassId(symbol: FirNamedFunctionSymbol): ClassId? {
+        val classId = ClassId(symbol.callableId.packageName, BrikkSqlNames.outputClassName(symbol.name))
+        return classId.takeIf { it in functionsIndex().collidingOutClassIds }
+    }
 
     private val functionsByOutShortName: Map<String, FirNamedFunctionSymbol>
         get() = functionsByOutClassId.entries.associate { it.key.shortClassName.asString() to it.value }
@@ -246,13 +266,17 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
      * in-memory files) have an empty predicate-based provider although the declarations resolve.
      */
     private fun functionByOutClassIdFallback(outClassId: ClassId): FirNamedFunctionSymbol? {
+        if (outClassId.isNestedClass) return null
         val short = outClassId.shortClassName.asString()
         if (!short.endsWith("Out") || short.length <= 3) return null
         val fnName = Name.identifier(short.removeSuffix("Out").replaceFirstChar { it.lowercase() })
         return try {
             session.symbolProvider.getTopLevelCallableSymbols(outClassId.packageFqName, fnName)
                 .filterIsInstance<FirNamedFunctionSymbol>()
-                .firstOrNull { it.hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, session) }
+                .firstOrNull {
+                    ClassId(it.callableId.packageName, BrikkSqlNames.outputClassName(it.name)) == outClassId &&
+                        it.hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, session)
+                }
         } catch (e: Exception) {
             rethrowIfCancellation(e)
             null

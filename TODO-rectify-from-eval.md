@@ -17,8 +17,8 @@
 > Intentional divergences registered in `docs/brikk-extensions.md` are **not** in
 > scope here and must not be "fixed" toward SQLGlot.
 >
-> **Progress:** EVAL-01, -02, -03, -04, -05, -07 done (2026-09-02); full suite green
-> (664 tests). Open: EVAL-06, -08, -09, -10, -11, -12, -13, -14, -15.
+> **Progress:** EVAL-01, -02, -03, -04, -05, -06, -07 done; full suite green at the
+> 2026-09-02 checkpoint (664 tests). Open: EVAL-08, -09, -10, -11, -12, -13, -14, -15.
 
 ---
 
@@ -211,7 +211,9 @@ oracle, sqlite, redshift, databricks, ...) and `fail()` on any skipped name not 
 
 ### EVAL-06 — Stale coverage figure in TODO docs — LOW
 
-- [ ] Status: open
+- [x] Status: **done** (2026-09-10)
+  - Removed the stale duplicated percentage from `TODO-BUGS-generation.md` and
+    `TODO-BUGS-newcoverage.md`; both now direct readers to the corpus gate output.
 
 **Problem.** `TODO-BUGS-generation.md:16` and `TODO-BUGS-newcoverage.md:16` say
 "~94% of ~16.4k corpus cases match". Checked-in data gives 12,707 sqlglot-oracle cases
