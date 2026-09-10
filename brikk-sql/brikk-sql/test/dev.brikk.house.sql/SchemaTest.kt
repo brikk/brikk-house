@@ -93,6 +93,20 @@ class SchemaTest {
     }
 
     @Test
+    fun emptyTablesRequireExplicitShapeLayerOptIn() {
+        assertFailsWith<SchemaError> { MappingSchema(mapOf("empty" to emptyMap<String, String>())) }
+
+        val schema = MappingSchema(
+            mapOf("empty" to emptyMap<String, String>()),
+            allowEmptyTables = true,
+        )
+        assertFalse(schema.empty)
+        assertEquals(emptyList(), schema.columnNames("empty"))
+        assertTrue(schema.copy().allowEmptyTables)
+        assertTrue(MappingSchema.fromMappingSchema(schema).allowEmptyTables)
+    }
+
+    @Test
     fun addTableDepthMismatchAndEnsureSchema() {
         val schema = MappingSchema(mapOf("db" to mapOf("t" to mapOf("a" to "int"))))
         // Python: "Table x must match the schema's nesting level: 2."

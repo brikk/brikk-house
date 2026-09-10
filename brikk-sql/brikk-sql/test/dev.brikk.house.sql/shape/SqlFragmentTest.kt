@@ -178,6 +178,42 @@ class SqlFragmentTest {
     }
 
     @Test
+    fun emptySlotDoesNotResolveToSameNamedCatalogTable() {
+        val catalog = ShapeCatalog(
+            tables = mapOf("events" to Shape.of("event_id" to "BIGINT")),
+            slots = mapOf("events" to Shape.EMPTY),
+        )
+        assertEquals(
+            Shape.of("*" to "UNKNOWN"),
+            SqlFragment("SELECT * FROM events()", "postgres").outputShape(catalog),
+        )
+    }
+
+    @Test
+    fun duckdbJsonExtractStringPreservesListOverload() {
+        val scalar = SqlFragment("SELECT json_extract_string('{\"a\":\"x\"}', '$.a') AS value", "duckdb")
+        assertEquals(
+            "TEXT",
+            scalar.outputShape().columns.single().type,
+        )
+        assertEquals(
+            "ARRAY<TEXT>",
+            SqlFragment(
+                "SELECT json_extract_string('{\"a\":\"x\",\"b\":\"y\"}', ['$.a', '$.b']) AS values",
+                "duckdb",
+            ).outputShape().columns.single().type,
+        )
+        val catalog = ShapeCatalog(
+            tables = mapOf("docs" to Shape.of("payload" to "JSON", "paths" to "ARRAY<TEXT>")),
+        )
+        assertEquals(
+            "ARRAY<TEXT>",
+            SqlFragment("SELECT json_extract_string(payload, paths) AS values FROM docs", "duckdb")
+                .outputShape(catalog).columns.single().type,
+        )
+    }
+
+    @Test
     fun pipeQueryShapeWithAggregateStage() {
         // The README pipe example: AGGREGATE ... GROUP BY item desugars to
         // SELECT item, SUM(sold) AS total_sold ... GROUP BY item (group keys lead).

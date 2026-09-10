@@ -26,6 +26,34 @@ class DdlCatalogTest {
         assertEquals("BIGINT", SqlFragment("SELECT id FROM catalog.schema.records", "doris").outputShape(postgres).columns.single().type)
     }
 
+    @Test
+    fun nestedStructFieldsAreNotTopLevelColumns() {
+        val cat = DdlCatalog.fromDdl(
+            "CREATE TABLE t (payload STRUCT(city VARCHAR), items ARRAY<STRUCT<sku VARCHAR>>)",
+            "duckdb",
+        )
+        assertEquals(listOf("payload", "items"), cat.tables.getValue("t").names())
+        assertEquals(listOf("payload", "items"), SqlFragment("SELECT * FROM t", "duckdb").outputShape(cat).names())
+        assertEquals("UNKNOWN", SqlFragment("SELECT city FROM t", "duckdb").outputShape(cat).columns.single().type)
+    }
+
+    @Test
+    fun quotedTableAndColumnCaseRemainDistinct() {
+        val cat = DdlCatalog.fromDdl(
+            """
+            CREATE TABLE users (id INT, "Id" BIGINT);
+            CREATE TABLE "Users" (id TEXT);
+            """.trimIndent(),
+            "postgres",
+        )
+
+        assertEquals("INT", SqlFragment("SELECT id FROM users", "postgres").outputShape(cat).columns.single().type)
+        val quotedColumn = SqlFragment("SELECT \"Id\" FROM users", "postgres").outputShape(cat).columns.single()
+        assertEquals("BIGINT", quotedColumn.type)
+        assertEquals("TEXT", SqlFragment("SELECT id FROM \"Users\"", "postgres").outputShape(cat).columns.single().type)
+        assertEquals(listOf(false, true), cat.tables.getValue("users").columns.map { it.quoted })
+    }
+
     private val ddl = """
         CREATE TABLE public.events (
           event_id BIGINT PRIMARY KEY,

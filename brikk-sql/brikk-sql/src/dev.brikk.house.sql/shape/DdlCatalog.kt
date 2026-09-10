@@ -6,6 +6,8 @@ import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.NotNullColumnConstraint
 import dev.brikk.house.sql.ast.PrimaryKeyColumnConstraint
+import dev.brikk.house.sql.ast.Identifier
+import dev.brikk.house.sql.ast.Schema as AstSchema
 import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.dialects.Dialects
 
@@ -31,20 +33,26 @@ object DdlCatalog {
             val create = stmt as? Create ?: continue
             if (!create.text("kind").equals("TABLE", ignoreCase = true)) continue
             val schemaNode = create.thisArg as? Expression ?: continue
-            val table = schemaNode.find(Table::class) ?: schemaNode as? Table ?: continue
-            val parts = (table as Table).parts.map { d.generate(it) }
+            val table = when (schemaNode) {
+                is AstSchema -> schemaNode.thisArg as? Table
+                is Table -> schemaNode
+                else -> null
+            } ?: continue
+            val parts = table.parts.map { d.generate(it) }
             val name = if (parts.size == 1 && defaultSchema != null) "$defaultSchema.${parts[0]}" else parts.joinToString(".")
-            val columns = schemaNode.findAll(ColumnDef::class).map { def ->
+            val columns = (schemaNode as? AstSchema)?.expressionsArg.orEmpty().filterIsInstance<ColumnDef>().map { def ->
                 val kind = def.args["kind"] as? DataType
                 val constraints = (def.args["constraints"] as? List<*>).orEmpty().filterIsInstance<Expression>()
                 val notNull = constraints.any { c ->
                     val k = c.args["kind"]
                     (k is NotNullColumnConstraint && k.args["allow_null"] != true) || k is PrimaryKeyColumnConstraint
                 }
+                val identifier = def.thisArg as? Identifier
                 ColumnShape(
-                    name = (def.thisArg as Expression).let { (it as? dev.brikk.house.sql.ast.Identifier)?.name ?: it.sqlName() },
+                    name = identifier?.name ?: (def.thisArg as Expression).sqlName(),
                     type = if (kind == null) "UNKNOWN" else Dialects.BASE.generate(kind),
                     nullable = !notNull,
+                    quoted = identifier?.quoted == true,
                 )
             }.toList()
             tables[name] = Shape(columns)

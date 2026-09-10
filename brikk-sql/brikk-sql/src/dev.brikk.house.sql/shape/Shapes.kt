@@ -43,6 +43,8 @@ data class ColumnShape(
     val name: String,
     val type: String,
     val nullable: Boolean? = null,
+    /** Whether [name] is a quoted SQL identifier and therefore case-sensitive. */
+    val quoted: Boolean = false,
 )
 
 /** Ordered column signature. */
@@ -59,7 +61,7 @@ data class Shape(val columns: List<ColumnShape>) {
     fun byName(name: String, dialect: String = ""): ColumnShape? {
         val d = Dialects.forName(dialect)
         val wanted = normalizeName(name, dialect = d).name
-        return columns.firstOrNull { normalizeName(it.name, dialect = d).name == wanted }
+        return columns.firstOrNull { normalizeName(it.identifier(), dialect = d).name == wanted }
     }
 
     /**
@@ -68,7 +70,10 @@ data class Shape(val columns: List<ColumnShape>) {
      */
     fun toSchemaMapping(): Map<String, String> {
         val out = LinkedHashMap<String, String>()
-        for (c in columns) out[c.name] = c.type
+        for (c in columns) {
+            val name = if (c.quoted) Dialects.BASE.generate(c.identifier()) else c.name
+            out[name] = c.type
+        }
         return out
     }
 
@@ -94,7 +99,7 @@ data class Shape(val columns: List<ColumnShape>) {
     fun compare(actual: Shape, dialect: String = ""): ShapeComparison {
         val d = Dialects.forName(dialect)
         val actualByName = LinkedHashMap<String, ColumnShape>()
-        for (c in actual.columns) actualByName[normalizeName(c.name, dialect = d).name] = c
+        for (c in actual.columns) actualByName[normalizeName(c.identifier(), dialect = d).name] = c
 
         val missing = mutableListOf<ColumnShape>()
         val typeMismatches = mutableListOf<Pair<ColumnShape, ColumnShape>>()
@@ -102,7 +107,7 @@ data class Shape(val columns: List<ColumnShape>) {
         val matchedKeys = HashSet<String>()
 
         for (expected in columns) {
-            val key = normalizeName(expected.name, dialect = d).name
+            val key = normalizeName(expected.identifier(), dialect = d).name
             val found = actualByName[key]
             if (found == null) {
                 missing.add(expected)
@@ -120,7 +125,7 @@ data class Shape(val columns: List<ColumnShape>) {
         }
 
         val additional = actual.columns.filter {
-            normalizeName(it.name, dialect = d).name !in matchedKeys
+            normalizeName(it.identifier(), dialect = d).name !in matchedKeys
         }
 
         return ShapeComparison(
@@ -155,6 +160,9 @@ data class Shape(val columns: List<ColumnShape>) {
             Shape(columns.map { (n, t) -> ColumnShape(n, t) })
     }
 }
+
+private fun ColumnShape.identifier(): Identifier =
+    Identifier(args("this" to name, "quoted" to quoted))
 
 /** Three-way verdict for [Shape.compare] (see the North-star plan doc). */
 enum class ShapeVerdict {
