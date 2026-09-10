@@ -554,41 +554,6 @@
             "issue": "BQ-25"
         },
         {
-            "id": "assertion:v1:sha256:7f76c4309c799f87a8671276e9378c0e590881d27f0f964568d9084e5237f874:1",
-            "case": "write|duckdb|SELECT GENERATE_UUID()",
-            "reason": "expected `SELECT CAST(UUID() AS TEXT)` actual `SELECT UUID()`",
-            "signature": "sql-mismatch:v1:sha256:fe9f182466eb518c8ec0da65ceb71da1fde90b6c9b868584709c1a08b602c7e2",
-            "issue": "BQ-26"
-        },
-        {
-            "id": "assertion:v1:sha256:0802c1387445da9159ef4bfcbf35d6b848fb751153395b9d80be7def77688be5:1",
-            "case": "write|spark2|SELECT GENERATE_UUID()",
-            "reason": "expected `SELECT CAST(UUID() AS STRING)` actual `SELECT UUID()`",
-            "signature": "sql-mismatch:v1:sha256:44756763d4cf6eb586b86c1694c27a7e88e9ae6ff38ffac5db4c3778e4d13ba3",
-            "issue": "BQ-26"
-        },
-        {
-            "id": "assertion:v1:sha256:3f42cce60c68c6b601986554e2fe8828a13dbbf39731120afeae69adfd799097:1",
-            "case": "write|spark|SELECT GENERATE_UUID()",
-            "reason": "expected `SELECT CAST(UUID() AS STRING)` actual `SELECT UUID()`",
-            "signature": "sql-mismatch:v1:sha256:44756763d4cf6eb586b86c1694c27a7e88e9ae6ff38ffac5db4c3778e4d13ba3",
-            "issue": "BQ-26"
-        },
-        {
-            "id": "assertion:v1:sha256:69b27c72eeacf62cee006b04bbb1e4509acda7e2b96b7c539f8b2ede1ca71a86:1",
-            "case": "write|presto|SELECT GENERATE_UUID()",
-            "reason": "expected `SELECT CAST(UUID() AS VARCHAR)` actual `SELECT UUID()`",
-            "signature": "sql-mismatch:v1:sha256:d5ad24ecf37ca9eba741e12cb64bfb64ce47376e828cb701673a0243ace45109",
-            "issue": "BQ-26"
-        },
-        {
-            "id": "assertion:v1:sha256:e8c4ed8a9e97715f6f73b6b7c734907e6436d29dce4f8fac9bcce6b0c8434562:1",
-            "case": "write|trino|SELECT GENERATE_UUID()",
-            "reason": "expected `SELECT CAST(UUID() AS VARCHAR)` actual `SELECT UUID()`",
-            "signature": "sql-mismatch:v1:sha256:d5ad24ecf37ca9eba741e12cb64bfb64ce47376e828cb701673a0243ace45109",
-            "issue": "BQ-26"
-        },
-        {
             "id": "assertion:v1:sha256:52b8ea43236772b4bc44951a3dd0fe143f5e0b6126d4bbef1c6f25d8b85d4f49:1",
             "case": "write|duckdb|SELECT * FROM UNNEST(ARRAY<STRUCT<x INT64>>[])",
             "reason": "expected `SELECT * FROM (SELECT UNNEST(CAST([] AS STRUCT(x BIGINT)[]), max_depth => 2))` actual `SELECT * FROM UNNEST(CAST([] AS STRUCT(x BIGINT)[]))`",
@@ -888,20 +853,6 @@
             "reason": "expected `SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ))`",
             "signature": "sql-mismatch:v1:sha256:f7f3f162b2ca22a2ff0dfa71818a1d22cb66800808f63b33f43217b2f9f0af9b",
             "issue": "BQ-11"
-        },
-        {
-            "id": "assertion:v1:sha256:100634c78e75ccf9ea122a5b66066f219c62e95ab52d55e87bdfc7e1569c592b:1",
-            "case": "write|duckdb|SELECT ROUND(NUMERIC '2.25', 1, 'ROUND_HALF_AWAY_FROM_ZERO') AS value",
-            "reason": "expected `SELECT ROUND(CAST('2.25' AS DECIMAL), 1) AS value` actual `SELECT ROUND(CAST('2.25' AS DECIMAL), 1, 'ROUND_HALF_AWAY_FROM_ZERO') AS value`",
-            "signature": "sql-mismatch:v1:sha256:3765d3023e152373113e4e42d2c31ae6ecf0dfcc1d3d08dd98c8f8f4d33c4120",
-            "issue": "BQ-30"
-        },
-        {
-            "id": "assertion:v1:sha256:9ba8e57496a32475580fc2fb1abd8e6e2e8c456435fc81103f1984a211e0822f:1",
-            "case": "write|duckdb|SELECT ROUND(NUMERIC '2.25', 1, 'ROUND_HALF_EVEN') AS value",
-            "reason": "expected `SELECT ROUND_EVEN(CAST('2.25' AS DECIMAL), 1) AS value` actual `SELECT ROUND(CAST('2.25' AS DECIMAL), 1, 'ROUND_HALF_EVEN') AS value`",
-            "signature": "sql-mismatch:v1:sha256:53a5c71aa41bf7c2e16861984ac0ae33def99b2c41221f1ebd8105552ece06de",
-            "issue": "BQ-30"
         },
         {
             "id": "assertion:v1:sha256:4c50d16c6cd26faf58f87998f85ac5dd2007f9ae68ed06b85e361f35eb4dd53a:1",

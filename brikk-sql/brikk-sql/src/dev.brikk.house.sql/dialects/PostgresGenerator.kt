@@ -1352,7 +1352,8 @@ open class PostgresGenerator(
             reg(TryCast::class) { e -> pg().noTrycastSql(e as TryCast) }
             reg(TsOrDsAdd::class) { e -> pg().dateAddSql(e, "+") }
             reg(TsOrDsDiff::class) { e -> pg().dateDiffSql(e) }
-            reg(Uuid::class) { _ -> "GEN_RANDOM_UUID()" }
+            // brikk extension (BQ-26): preserve the source STRING contract, including on PostgreSQL.
+            reg(Uuid::class) { e -> if (e.args["is_string"] == true) uuidSql(e as Uuid) else "GEN_RANDOM_UUID()" }
             reg(TimeToUnix::class) { e ->
                 func("DATE_PART", Literal.string("epoch"), e.thisArg)
             }

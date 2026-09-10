@@ -14,22 +14,22 @@
 
 ---
 
-**174 failing transpile assertions across 19 source-to-target routes.**
+**167 failing transpile assertions across 19 source-to-target routes.**
 
-## BigQuery as source (134)
+## BigQuery as source (127)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 85 |
-| bigquery -> spark | 12 |
-| bigquery -> presto | 4 |
+| bigquery -> duckdb | 82 |
+| bigquery -> spark | 11 |
+| bigquery -> presto | 3 |
 | bigquery -> bigquery | 9 |
-| bigquery -> trino | 2 |
+| bigquery -> trino | 1 |
 | bigquery -> hive | 4 |
 | bigquery -> postgres | 5 |
 | bigquery -> clickhouse | 5 |
 | bigquery -> mysql | 4 |
-| bigquery -> spark2 | 2 |
+| bigquery -> spark2 | 1 |
 | bigquery -> base | 2 |
 
 ## BigQuery as target (40)
@@ -51,7 +51,7 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-3. Completed ASTRA history
+BQ-3, BQ-26, and BQ-30. Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
 | ID | Issue | Assertions |
@@ -78,11 +78,9 @@ belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TO
 | BQ-23 | TO_HEX/LOWER_HEX operation and letter-case preservation | 13 |
 | BQ-24 | SHA256/SHA512 digest generation | 12 |
 | BQ-25 | Byte/escaped-string and numeric-hex literal fidelity | 6 |
-| BQ-26 | GENERATE_UUID string result contract | 5 |
 | BQ-27 | DuckDB JSON scalar/array conversions | 2 |
 | BQ-28 | REGEXP_EXTRACT position/occurrence | 2 |
 | BQ-29 | APPROX_QUANTILES boundaries and modifiers | 5 |
-| BQ-30 | Explicit ROUND modes | 2 |
 | BQ-31 | SPACE, STRPOS occurrence, ARG_MAX/MIN and binary/text LENGTH helpers | 7 |
 | BQ-32 | Typed date/timestamp arrays and UNNEST aliases | 6 |
 | BQ-33 | Presto named-window expansion | 1 |

@@ -1058,6 +1058,9 @@ object BigqueryParserTables {
         put("FORMAT_DATE", buildFormattedTime({ TimeToStr(it) }, thisIdx = 1, fmtIdx = 0).wrapTsOrDs("TsOrDsToDate"))
         put("GENERATE") { a -> AIGenerate(args("expressions" to a)) }
         put("GENERATE_ARRAY") { a -> GenerateSeries(genSeriesArgs(a)) }
+        // sqlglot: BigQuery.UUID_IS_STRING_TYPE=True
+        put("GENERATE_UUID") { _ -> Uuid(args("is_string" to true)) }
+        put("UUID") { _ -> Uuid(args("is_string" to true)) }
         // sqlglot: parser FUNCTIONS[LEAST/GREATEST] with BigQuery.LEAST_GREATEST_IGNORES_NULLS=False
         put("GREATEST") { a ->
             Greatest(args("this" to seqGet(a, 0), "expressions" to a.drop(1), "ignore_nulls" to false))

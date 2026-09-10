@@ -797,6 +797,20 @@ execution checks in `BigqueryUnnestResultTest` no longer need a string cast arou
 the NULL in lowered VALUES. This is a local correction to the pin's per-row typing;
 retain it until upstream reconciles these fields too.
 
+## 27. BigQuery scalar result and mode guards (BQ-26, BQ-30)
+
+BigQuery UUID parsing records its STRING result contract. The base UUID generator
+honors that flag with a target string cast. PostgreSQL's GEN_RANDOM_UUID override
+also honors it, unlike the pin, which otherwise returns PostgreSQL's UUID type.
+Native UUID calls without the flag keep their original return type. Tests cover
+the five pinned BigQuery routes plus PostgreSQL, AST preservation, and DuckDB's
+actual text type and string operations.
+
+DuckDB ROUND lowering supports the two BigQuery literal modes. An unknown or
+dynamic mode is retained, as in the pin, but additionally produces an unsupported
+diagnostic. It must not silently become ordinary rounding. Executed DuckDB tests
+cover signed ties/non-ties, negative and positive scales, NULLs, and native defaults.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

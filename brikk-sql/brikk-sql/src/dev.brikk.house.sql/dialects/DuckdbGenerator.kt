@@ -176,6 +176,23 @@ open class DuckdbGenerator(
         return "${force}INSTALL $this_$from"
     }
 
+    // sqlglot: DuckDBGenerator.round_sql (BigQuery literal modes)
+    open fun roundSql(expression: Round): String {
+        val mode = expression.args["truncate"]
+        val functionName = when ((mode as? Literal)?.takeIf { it.isString }?.name) {
+            "ROUND_HALF_AWAY_FROM_ZERO" -> "ROUND"
+            "ROUND_HALF_EVEN" -> "ROUND_EVEN"
+            else -> {
+                if (mode != null) {
+                    // brikk extension (BQ-30): retain the unresolved argument but diagnose unsupported modes.
+                    unsupported("DuckDB ROUND only supports literal ROUND_HALF_AWAY_FROM_ZERO or ROUND_HALF_EVEN modes")
+                }
+                return functionFallbackSql(expression)
+            }
+        }
+        return func(functionName, expression.thisArg, expression.args["decimals"])
+    }
+
     // sqlglot: DuckDBGenerator.sortarray_sql
     open fun sortarraySql(expression: SortArray): String {
         val arr = expression.thisArg
@@ -2217,6 +2234,7 @@ open class DuckdbGenerator(
             reg(ArrayDistinct::class) { e -> dg().arraydistinctSql(e as ArrayDistinct) }
             reg(RegexpLike::class) { e -> dg().regexplikeSql(e as RegexpLike) }
             reg(RegexpReplace::class) { e -> dg().regexpreplaceSql(e as RegexpReplace) }
+            reg(Round::class) { e -> dg().roundSql(e as Round) }
             // sqlglot: DuckDBGenerator.{getignorecase,compress,encrypt,decrypt,decryptraw,
             // encryptraw,parseurl,parseip,decompressstring,decompressbinary,soundex}_sql —
             // explicit "not supported in DuckDB" flags over the fallback rendering.

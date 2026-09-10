@@ -215,6 +215,7 @@ object GeneratorTables {
         reg(Apply::class) { e -> applySql(e as Apply) }
         reg(Columns::class) { e -> columnsSql(e as Columns) }
         reg(UuidProperty::class) { e -> uuidpropertySql(e as UuidProperty) }
+        reg(Uuid::class) { e -> uuidSql(e as Uuid) }
         reg(DateAdd::class) { e -> dateaddSql(e as DateAdd) }
         reg(MergeTreeTTL::class) { e -> mergetreettlSql(e as MergeTreeTTL) }
         reg(MergeTreeTTLAction::class) { e -> mergetreettlactionSql(e as MergeTreeTTLAction) }

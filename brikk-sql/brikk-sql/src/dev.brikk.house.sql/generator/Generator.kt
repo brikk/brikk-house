@@ -4820,6 +4820,14 @@ open class Generator(
         return binary(expression, "/")
     }
 
+    // sqlglot: Generator.uuid_sql (BigQuery's native dispatch already returns STRING)
+    open fun uuidSql(expression: Uuid): String {
+        if (expression.args["is_string"] != true) return functionFallbackSql(expression)
+        val native = expression.copy() as Uuid
+        native.set("is_string", null)
+        return sql(Cast(args("this" to native, "to" to DataType(args("this" to DType.VARCHAR)))))
+    }
+
     // sqlglot: Generator.safedivide_sql
     open fun safedivideSql(expression: SafeDivide): String {
         val numerator = (expression.thisArg as Expression).copy().let {
