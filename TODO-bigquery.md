@@ -14,13 +14,15 @@
 
 ---
 
-**167 failing transpile assertions across 19 source-to-target routes.**
+**154 actionable failing transpile assertions across 19 source-to-target routes.**
+Five additional signed assertions are protected correctness divergences, documented
+in `docs/brikk-extensions.md` section 28. They are not open BQ issues.
 
-## BigQuery as source (127)
+## BigQuery as source (114)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 82 |
+| bigquery -> duckdb | 69 |
 | bigquery -> spark | 11 |
 | bigquery -> presto | 3 |
 | bigquery -> bigquery | 9 |
@@ -51,13 +53,11 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-3, BQ-26, and BQ-30. Completed ASTRA history
+BQ-5, BQ-26, and BQ-30. Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
 | ID | Issue | Assertions |
 |---|---|---:|
-| BQ-4 | DuckDB UNIX_DATE, UNIX_SECONDS/MILLIS/MICROS and TIME_DIFF units | 7 |
-| BQ-5 | DuckDB DATE/current-date extraction, including zones | 6 |
 | BQ-6 | TIMESTAMP/TIME/DATETIME constructors and STRING timezone arguments | 11 |
 | BQ-7 | Temporal parsing/formatting adapters | 7 |
 | BQ-8 | Temporal addition/subtraction and interval syntax | 8 |
@@ -101,6 +101,8 @@ concrete transpile gate.
 
 The `id` and `signature` fields determine approval; `case` is only a display label.
 The `issue` field is ownership metadata, not an exemption or part of the signature.
+Exclude rows marked `status: intentional-divergence` from the actionable inventory;
+their exact failure signatures and extension rationale remain protected.
 Remove only the exact stale assertion IDs. Review signature changes against the
 full actual output, and retain curated explanations when updating a ledger.
 

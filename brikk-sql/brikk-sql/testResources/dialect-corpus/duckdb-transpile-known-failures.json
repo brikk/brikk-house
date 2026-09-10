@@ -54,39 +54,20 @@
             "issue": "BQ-25"
         },
         {
-            "id": "assertion:v1:sha256:0dbecc1ff53066964b3eb69df9b4b69592b5eb060ef1e4d6a0e86cc35813daf2:1",
-            "case": "read|bigquery|SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)",
-            "reason": "expected `SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)` actual `SELECT CURRENT_DATE('UTC')`",
-            "signature": "sql-mismatch:v1:sha256:93cf66968afff495369e157e31dd5cbefd1bc598f88bddd77ff330d2f1b44e1f",
-            "issue": "BQ-5"
-        },
-        {
-            "id": "assertion:v1:sha256:986826c30fbcad52ec9cf59f4bf2ac437d5c625806ef766d55eeb46d9615187e:1",
-            "case": "read|bigquery|SELECT CAST(CAST('2016-12-25 23:59:59' AS TIMESTAMP) AS DATE)",
-            "reason": "expected `SELECT CAST(CAST('2016-12-25 23:59:59' AS TIMESTAMP) AS DATE)` actual `SELECT DATE(CAST('2016-12-25 23:59:59' AS TIMESTAMP))`",
-            "signature": "sql-mismatch:v1:sha256:8fdf897f532cefd1e54ef6e1c58bbad7fbfaddbf24ba106679b1f62453034093",
-            "issue": "BQ-5"
-        },
-        {
             "id": "assertion:v1:sha256:0c070cb8dd1812ac8942d0a1953d833cb7e1927a62c15dd9ff4a38bd4518b1b6:1",
             "case": "read|bigquery|SELECT CAST(CAST(CAST('2016-12-25' AS TIMESTAMPTZ) AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' AS DATE)",
-            "reason": "expected `SELECT CAST(CAST(CAST('2016-12-25' AS TIMESTAMPTZ) AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' AS DATE)` actual `SELECT DATE(CAST('2016-12-25' AS TIMESTAMPTZ), 'America/Los_Angeles')`",
-            "signature": "sql-mismatch:v1:sha256:2746628d8145c5bfbc8d0cfcb39bc5879c691599d0d842cf8a963b00af709e41",
-            "issue": "BQ-5"
+            "reason": "brikk extension BQ-5, registry section 28: normalize the timestamp literal to UTC and convert the instant directly to the requested zone. Avoid the pin's session-local TIMESTAMP reinterpretation. Date-only literals use explicit midnight. Executed under UTC, New York and Auckland sessions.",
+            "signature": "sql-mismatch:v1:sha256:3de9c690e8590349426a1587d404dfa818edded008815c8f11756606b4c910f6",
+            "issue": "BQ-5",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:99fe4bec2cb3acbd8bcfa79e1ef6f27733c527bc3f331de6aa89a2cbe2370c10:1",
             "case": "read|bigquery|SELECT CAST(CAST('2024-01-15 23:30:00' AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Berlin' AS DATE)",
-            "reason": "expected `SELECT CAST(CAST('2024-01-15 23:30:00' AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Berlin' AS DATE)` actual `SELECT DATE('2024-01-15 23:30:00', 'Europe/Berlin')`",
-            "signature": "sql-mismatch:v1:sha256:bfc45f23d3820c284a629dd1a2af6161ea9cd8230a6c315b43ff2d0749582822",
-            "issue": "BQ-5"
-        },
-        {
-            "id": "assertion:v1:sha256:fcaf39cb169a746092c61c7cc8d90b8752920f4097c8e14e6a8c28d07bb0f522:1",
-            "case": "read|bigquery|SELECT CAST(CAST(STRPTIME('1970 ' || '05/06/2020', '%Y ' || '%m/%d/%Y') AS DATE) AS DATE)",
-            "reason": "expected `SELECT CAST(CAST(STRPTIME('1970 ' || '05/06/2020', '%Y ' || '%m/%d/%Y') AS DATE) AS DATE)` actual `SELECT DATE(CAST(STRPTIME('1970 ' || '05/06/2020', '%Y ' || '%m/%d/%Y') AS DATE))`",
-            "signature": "sql-mismatch:v1:sha256:f9ac062cce3865702563257bc0147d54806f0be47dfdf95104c2618a6294c108",
-            "issue": "BQ-5"
+            "reason": "brikk extension BQ-5, registry section 28: use the same UTC-normalized instant conversion for unzoned strings and timestamp literals. This fixture is equivalent to the pin; the shared lowering also preserves explicitly zoned inputs and is verified under multiple session zones.",
+            "signature": "sql-mismatch:v1:sha256:ed0386ce8811098e983a9021804cc94538ed85292f4ab1dd690e3390fd553562",
+            "issue": "BQ-5",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:ecd037a710cb65c1ac0dfec99851e92bb545e6ac579cddefb4435155fa424734:1",

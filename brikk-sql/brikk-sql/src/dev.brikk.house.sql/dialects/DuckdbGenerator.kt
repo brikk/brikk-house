@@ -765,6 +765,94 @@ open class DuckdbGenerator(
     open fun unixToStrSql(expression: UnixToStr): String =
         func("STRFTIME", func("TO_TIMESTAMP", expression.thisArg), formatTime(expression))
 
+    // sqlglot: Generator.unixdate_sql, lowered through DuckDB DATE_DIFF.
+    open fun unixDateSql(expression: UnixDate): String = func(
+        "DATE_DIFF", Literal.string("DAY"),
+        Cast(args("this" to Literal.string("1970-01-01"), "to" to DataType.build(DType.DATE))),
+        implicitDatetimeCast((expression.thisArg as? Expression)?.copy()),
+    )
+
+    private fun bigqueryTimestampLiteral(expression: Expression): Expression? {
+        val value = expression.copy()
+        val literal = (value as? Literal)?.takeIf { it.isString }
+            ?: (value as? Cast)?.takeIf { (it.args["to"] as? DataType)?.thisArg == DType.TIMESTAMPTZ }
+                ?.thisArg?.let { it as? Literal }?.takeIf { it.isString }
+            ?: return null
+        val hasZone = Regex("(?:[zZ]|[+-]\\d{2}(?::?\\d{2})?|[A-Za-z][A-Za-z0-9_+./-]*)$")
+            .containsMatchIn(literal.name.trim().drop(10))
+        if (!hasZone) {
+            val text = literal.name.trim()
+            literal.set("this", text + (if (text.length == 10) " 00:00:00 UTC" else " UTC"))
+        }
+        return if (value is Literal) Cast(args("this" to value, "to" to DataType.build(DType.TIMESTAMPTZ))) else value
+    }
+
+    // sqlglot: DuckDBGenerator.currentdate_sql
+    override fun currentdateSql(expression: CurrentDate): String {
+        val zone = expression.thisArg as? Expression
+            ?: if (sourceDialect.equals("bigquery", ignoreCase = true)) Literal.string("UTC") else return "CURRENT_DATE"
+        return sql(Cast(args("this" to AtTimeZone(args("this" to CurrentTimestamp(), "zone" to zone.copy())),
+            "to" to DataType.build(DType.DATE))))
+    }
+
+    // sqlglot: generators.duckdb._date_sql
+    open fun dateSql(expression: Date): String {
+        var value = (expression.thisArg as Expression).copy()
+        dev.brikk.house.sql.optimizer.annotateTypes(value, dialect = Dialects.BIGQUERY, overwriteTypes = false)
+        val zone = expression.args["zone"] as? Expression
+        val type = (value.type as? DataType)?.thisArg ?: ((value as? Cast)?.args?.get("to") as? DataType)?.thisArg
+        val instant = type == DType.TIMESTAMPTZ || value is CurrentTimestamp
+        if (instant) {
+            // brikk extension (BQ-5): do not discard a real instant's zone and reinterpret local time as UTC.
+            value = bigqueryTimestampLiteral(value) ?: value
+            value = AtTimeZone(args("this" to value, "zone" to (zone?.copy() ?: Literal.string("UTC"))))
+        } else if (zone != null) {
+            if (value is Literal && value.isString) {
+                value = bigqueryTimestampLiteral(value)!!
+            } else if (type == DType.TIMESTAMP) {
+                value = AtTimeZone(args("this" to value, "zone" to Literal.string("UTC")))
+            } else if (value is Null) {
+                value = Cast(args("this" to value, "to" to DataType.build(DType.TIMESTAMPTZ)))
+            } else {
+                unsupported("BigQuery DATE with a time zone requires a typed timestamp or literal; annotate unknown inputs first")
+                value = Cast(args("this" to value, "to" to DataType.build(DType.TIMESTAMPTZ)))
+            }
+            value = AtTimeZone(args("this" to value, "zone" to zone.copy()))
+        } else if ((type == null || type == DType.UNKNOWN) && value !is Literal && value !is Null) {
+            unsupported("BigQuery DATE requires a known input type to distinguish UTC instants from local dates; annotate unknown inputs first")
+        }
+        return sql(Cast(args("this" to value, "to" to DataType.build(DType.DATE))))
+    }
+
+    // sqlglot: DuckDBGenerator TRANSFORMS[UnixSeconds / UnixMillis / UnixMicros].
+    open fun unixEpochSql(expression: Expression): String {
+        var value = (expression.thisArg as? Expression)?.copy()
+        if (sourceDialect.equals("bigquery", ignoreCase = true)) {
+            // brikk extension (BQ-4, ASTRA-010): BigQuery defaults to UTC, not the session zone.
+            value = value?.let { bigqueryTimestampLiteral(it) ?: it }
+        } else {
+            value = implicitDatetimeCast(value)
+        }
+        if (expression is UnixMicros) return func("EPOCH_US", value)
+        // brikk extension (BQ-4): truncate the timestamp, not a floating epoch. The pin's
+        // BIGINT cast rounds seconds; EPOCH_MS truncates negative fractions toward zero.
+        val unit = if (expression is UnixMillis) "MILLISECOND" else "SECOND"
+        val truncated = func("DATE_TRUNC", Literal.string(unit), value)
+        return if (expression is UnixMillis) func("EPOCH_MS", truncated)
+        else "CAST(${func("EPOCH", truncated)} AS BIGINT)"
+    }
+
+    // sqlglot: generators.duckdb._timediff_sql. BigQuery supplies end, start, unit.
+    open fun timeDiffSql(expression: TimeDiff): String {
+        fun time(value: Expression?): Expression =
+            if (value is Cast && (value.args["to"] as? DataType)?.thisArg == DType.TIME) value.copy()
+            else Cast(args("this" to value?.copy(), "to" to DataType.build(DType.TIME)))
+        return func(
+            "DATE_DIFF", unitToStr(expression),
+            time(expression.args["expression"] as? Expression), time(expression.thisArg as? Expression),
+        )
+    }
+
     // sqlglot: dialect.date_delta_to_binary_interval_op wrapped by
     // generators.duckdb._date_delta_to_binary_interval_op (nanosecond and
     // float-interval branches; the float branch is annotate_types-driven and
@@ -2345,6 +2433,8 @@ open class DuckdbGenerator(
             reg(StrPosition::class) { e -> dg().strpositionSql(e as StrPosition) }
             reg(Struct::class) { e -> dg().duckdbStructSql(e as Struct) }
             reg(Transform::class) { e -> dg().renameFuncSql("LIST_TRANSFORM", e) }
+            reg(TimeDiff::class) { e -> dg().timeDiffSql(e as TimeDiff) }
+            reg(Date::class) { e -> dg().dateSql(e as Date) }
             reg(TimeToStr::class) { e -> dg().timeToStrSql(e as TimeToStr) }
             reg(TimeToUnix::class) { e -> dg().renameFuncSql("EPOCH", e) }
             reg(TimestampDiff::class) { e ->
@@ -2355,6 +2445,10 @@ open class DuckdbGenerator(
                     e.thisArg,
                 )
             }
+            reg(UnixDate::class) { e -> dg().unixDateSql(e as UnixDate) }
+            reg(UnixSeconds::class) { e -> dg().unixEpochSql(e) }
+            reg(UnixMillis::class) { e -> dg().unixEpochSql(e) }
+            reg(UnixMicros::class) { e -> dg().unixEpochSql(e) }
             reg(UnixToTime::class) { e -> dg().unixToTimeSql(e as UnixToTime) }
             reg(UnixToStr::class) { e -> dg().unixToStrSql(e as UnixToStr) }
             reg(UnixToTimeStr::class) { e -> "CAST(TO_TIMESTAMP(${sql(e, "this")}) AS TEXT)" }

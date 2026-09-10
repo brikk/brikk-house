@@ -811,6 +811,34 @@ dynamic mode is retained, as in the pin, but additionally produces an unsupporte
 diagnostic. It must not silently become ordinary rounding. Executed DuckDB tests
 cover signed ties/non-ties, negative and positive scales, NULLs, and native defaults.
 
+## 28. BigQuery epoch floors and UTC date extraction (BQ-4, BQ-5)
+
+DuckDB epoch generation truncates the timestamp to seconds/milliseconds before
+conversion. The pin's BIGINT cast rounds fractional seconds; EPOCH_MS alone
+truncates negative fractions toward zero. Both violate BigQuery whole-unit floor
+semantics. EPOCH_US remains integer-valued and preserves microseconds. UNIX_DATE
+and TIME_DIFF use DATE_DIFF with the correct unit and argument order.
+
+DATE extraction converts a TIMESTAMPTZ instant directly to the requested zone,
+defaulting to UTC, rather than casting it to a session-local TIMESTAMP and then
+reinterpreting that clock time as UTC. Unzoned timestamp literals get explicit
+UTC, with midnight added to date-only literals. Explicit zones survive. With an
+explicit BigQuery source, CURRENT_DATE without a zone also uses UTC; native DuckDB
+CURRENT_DATE remains session-local. Unknown DATE argument types are diagnosed.
+
+Five existing assertion IDs remain protected with reviewed new signatures:
+three BigQuery-ledger UNIX_SECONDS/UNIX_MILLIS writes to DuckDB, and two DuckDB-ledger
+BigQuery DATE reads using Los Angeles/Berlin. The Berlin fixture is equivalent to
+the pin but uses the same UTC-normalized lowering as explicitly zoned inputs.
+They carry `status: intentional-divergence` and are excluded from actionable BQ
+counts. Do not remove them or restore the previous SQL to improve parity.
+
+`BigqueryEpochResultTest` executes negative/fractional boundaries, years 0001/9999,
+INT64 result types, and TIME_DIFF directions in DuckDB under UTC/New York.
+`BigqueryDateResultTest` checks offsets, dates near midnight, typed NULLs, and
+CURRENT_DATE across UTC/New York/Auckland sessions. These are DuckDB execution
+checks, not live BigQuery verification. Upstream issue/PR status: not reported.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

@@ -92,13 +92,6 @@
             "issue": "BQ-13"
         },
         {
-            "id": "assertion:v1:sha256:04362e96e774780697429c013829a733813066afde6337fb1a55f43770d039d1:1",
-            "case": "write|duckdb|SELECT UNIX_DATE(DATE '2008-12-25')",
-            "reason": "expected `SELECT DATE_DIFF('DAY', CAST('1970-01-01' AS DATE), CAST('2008-12-25' AS DATE))` actual `SELECT UNIX_DATE(CAST('2008-12-25' AS DATE))`",
-            "signature": "sql-mismatch:v1:sha256:849a48cdf64d5cf7fb43a3ff11d5b7edfd04b469975503928b38d4d8d96e49ef",
-            "issue": "BQ-4"
-        },
-        {
             "id": "assertion:v1:sha256:61eac23347fda458123d13ccbc647a2a8d2325b2dcc4a9d9a83d965173788bed:1",
             "case": "write|duckdb|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
             "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`",
@@ -365,13 +358,6 @@
             "issue": "BQ-8"
         },
         {
-            "id": "assertion:v1:sha256:e0b9ac9d6eb1f02ad24e39b4dc770ca90c9aea57ed07d117fcfde96e2d7d6ed2:1",
-            "case": "write|duckdb|CURRENT_DATE('UTC')",
-            "reason": "expected `CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS DATE)` actual `CURRENT_DATE('UTC')`",
-            "signature": "sql-mismatch:v1:sha256:4b8262741cd5df501f4691567374d5bc39ad472c5d58684da1cfbebd9f3e6399",
-            "issue": "BQ-5"
-        },
-        {
             "id": "assertion:v1:sha256:0aa580c8b32815d8f0dca988768ce93ce60ce9364e381270cb3307c386fbbf4e:1",
             "case": "read||SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL",
             "reason": "expected `SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL` actual `SELECT `u`.`user_email` AS `user_email`, `_q_0`.`d`.`user_id` AS `user_id`, `_q_1`.`account_id` AS `account_id` FROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `_q_0`, UNNEST(`_q_0`.`d`.`account_ids`) AS `_q_1` WHERE NOT `_q_1`.`account_id` IS NULL`",
@@ -412,13 +398,6 @@
             "reason": "expected `SELECT CASE TYPEOF(foo) WHEN 'BLOB' THEN OCTET_LENGTH(CAST(foo AS BLOB)) ELSE LENGTH(CAST(foo AS TEXT)) END` actual `SELECT LENGTH(foo)`",
             "signature": "sql-mismatch:v1:sha256:b0e86e886d30a70bbbf550e31f476e65a21773e19c51834fe18cb7444f8e56b4",
             "issue": "BQ-31"
-        },
-        {
-            "id": "assertion:v1:sha256:e5dac46c85458359315ba3157cf5fafc08347e5e9411ce2ca00d96384ff88f3b:1",
-            "case": "write|duckdb|SELECT TIME_DIFF('12:00:00', '12:30:00', MINUTE)",
-            "reason": "expected `SELECT DATE_DIFF('MINUTE', CAST('12:30:00' AS TIME), CAST('12:00:00' AS TIME))` actual `SELECT TIME_DIFF('12:00:00', '12:30:00', MINUTE)`",
-            "signature": "sql-mismatch:v1:sha256:89a383a350244b177a3dee1cb902c7b94295dfc74b55b466556144124375605f",
-            "issue": "BQ-4"
         },
         {
             "id": "assertion:v1:sha256:283a3b2b849f7212fafcc305a8a377abca464f465095a695a6ae6dbd1a14ce32:1",
@@ -640,37 +619,26 @@
         {
             "id": "assertion:v1:sha256:140fef6e514f6d3485c0c6a0959b658747a086df58eb4e21d8a2b5415b07e7f9:1",
             "case": "write|duckdb|SELECT UNIX_SECONDS('2008-12-25 15:30:00+00')",
-            "reason": "expected `SELECT CAST(EPOCH(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ)) AS BIGINT)` actual `SELECT UNIX_SECONDS('2008-12-25 15:30:00+00')`",
-            "signature": "sql-mismatch:v1:sha256:20de4960da9418c1a463ea4fac6fe23ce114ef383d1ed64cfb957e2fbce06f79",
-            "issue": "BQ-4"
-        },
-        {
-            "id": "assertion:v1:sha256:14a33df16850e96ac7348c68b19bcb5ae86a34f85e4218d34f327e16fda78180:1",
-            "case": "write|duckdb|SELECT UNIX_MICROS('2008-12-25 15:30:00+00')",
-            "reason": "expected `SELECT EPOCH_US(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MICROS('2008-12-25 15:30:00+00')`",
-            "signature": "sql-mismatch:v1:sha256:0d65977b92b7fcae31974b430d445fbd835ce10eac516ecd64422b68ab3df7e5",
-            "issue": "BQ-4"
-        },
-        {
-            "id": "assertion:v1:sha256:73a0d1d497f373da3ddc1b0ca3229615e4993d83b57486b1cc4b9400cf2af6cd:1",
-            "case": "write|duckdb|SELECT UNIX_MICROS(TIMESTAMP '2008-12-25 15:30:00+00')",
-            "reason": "expected `SELECT EPOCH_US(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MICROS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:328201818667d4995206767d2801fa175113ec55b3446c55439b93e1f34d5bef",
-            "issue": "BQ-4"
+            "reason": "brikk extension BQ-4, registry section 28: DATE_TRUNC before EPOCH preserves whole-second floor semantics; the pin's BIGINT cast rounds fractional epochs. Executed in DuckDB with negative fractions and UTC/New York sessions.",
+            "signature": "sql-mismatch:v1:sha256:03329eb375c5e111e69579968326f87eb2cb41ef4519e47fec90353de597fada",
+            "issue": "BQ-4",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:58c5ca6dd3683fabbd222025a1bcd224ae16f207976495c74bb45ba8cd6cc542:1",
             "case": "write|duckdb|SELECT UNIX_MILLIS('2008-12-25 15:30:00+00')",
-            "reason": "expected `SELECT EPOCH_MS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MILLIS('2008-12-25 15:30:00+00')`",
-            "signature": "sql-mismatch:v1:sha256:fa61873db960b471899bd79d953501cfc75086bb53c19c3fbbc07895d248e0ae",
-            "issue": "BQ-4"
+            "reason": "brikk extension BQ-4, registry section 28: DATE_TRUNC before EPOCH_MS preserves negative fractional millisecond floor semantics instead of truncation toward zero. Executed in DuckDB with boundary and INT64 precision checks.",
+            "signature": "sql-mismatch:v1:sha256:6a7498f8ed531adbe679f65894b9788fa96e2c5f44076a6f9be11b47cfce12f1",
+            "issue": "BQ-4",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:2008562f6fb51f1b2c89fdee15f86cab5a8bf0fe74584f146d8274f16835b78d:1",
             "case": "write|duckdb|SELECT UNIX_MILLIS(TIMESTAMP '2008-12-25 15:30:00+00')",
-            "reason": "expected `SELECT EPOCH_MS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))` actual `SELECT UNIX_MILLIS(CAST('2008-12-25 15:30:00+00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:861d2fc54898de9dfda17ead7a791c4859dad9146c60b393b31bd3117feef8f4",
-            "issue": "BQ-4"
+            "reason": "brikk extension BQ-4, registry section 28: DATE_TRUNC before EPOCH_MS preserves negative fractional millisecond floor semantics instead of truncation toward zero. Executed in DuckDB with boundary and INT64 precision checks.",
+            "signature": "sql-mismatch:v1:sha256:6a7498f8ed531adbe679f65894b9788fa96e2c5f44076a6f9be11b47cfce12f1",
+            "issue": "BQ-4",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:eeef7c09b1953a15ce5b35dee124f6e617c333e4534e7fe4b14c31ba63dbc35a:1",
