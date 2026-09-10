@@ -586,19 +586,29 @@ open class PrestoGenerator(
         return ""
     }
 
-    // sqlglot: dialect.no_timestamp_sql (the zero-arg branch runs annotate_types in
-    // Python to pick TIMESTAMP vs TIMESTAMPTZ; we default to TIMESTAMP)
+    // sqlglot: dialect.no_timestamp_sql
     open fun noTimestampSql(expression: Timestamp): String {
         val zone = expression.args["zone"] as? Expression
         if (zone == null) {
+            val type = if (expression.args["with_tz"] == true) DType.TIMESTAMPTZ else DType.TIMESTAMP
+            val inputType = (expression.thisArg as? Expression)?.type?.thisArg
+            if (expression.args["with_tz"] == true && (inputType == null || inputType == DType.UNKNOWN)) {
+                unsupported("BigQuery TIMESTAMP without a zone requires a known input type to distinguish instants from UTC civil values")
+            }
             return sql(
                 Cast(
                     args(
                         "this" to expression.thisArg,
-                        "to" to DataType(args("this" to DType.TIMESTAMP)),
+                        "to" to DataType(args("this" to type)),
                     )
                 )
             )
+        }
+        if (expression.args["with_tz"] == true) {
+            return sql(AtTimeZone(args(
+                "this" to Cast(args("this" to expression.thisArg, "to" to DataType(args("this" to DType.TIMESTAMP)))),
+                "zone" to zone,
+            )))
         }
         if (zone.name.lowercase() in dev.brikk.house.sql.parser.TIMEZONES) {
             return sql(

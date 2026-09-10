@@ -70,41 +70,6 @@
             "status": "intentional-divergence"
         },
         {
-            "id": "assertion:v1:sha256:ecd037a710cb65c1ac0dfec99851e92bb545e6ac579cddefb4435155fa424734:1",
-            "case": "read|bigquery|SELECT CAST(STRPTIME('14:30', '%H:%M') AS TIME)",
-            "reason": "expected `SELECT CAST(STRPTIME('14:30', '%H:%M') AS TIME)` actual `SELECT PARSE_TIME('14:30', '%H:%M')`",
-            "signature": "sql-mismatch:v1:sha256:a54ee990c911c07aa17df99b9ed13cb1c6544dd3c56f5a8dddf3258d779550e3",
-            "issue": "BQ-7"
-        },
-        {
-            "id": "assertion:v1:sha256:1bb3a5216ffde5abc98cdc9651f1a99d02a66eb544fb512793eadc87c1691c85:1",
-            "case": "read|bigquery|SELECT CAST(STRPTIME('15:30:00.123456', '%H:%M:%S.%f') AS TIME)",
-            "reason": "expected `SELECT CAST(STRPTIME('15:30:00.123456', '%H:%M:%S.%f') AS TIME)` actual `SELECT PARSE_TIME('15:30:00.123456', '%H:%M:%S.%f')`",
-            "signature": "sql-mismatch:v1:sha256:2d00190dcb3808bd56e6e82cbed9013b9fc41214c2320ab8d6cbd23f7850966c",
-            "issue": "BQ-7"
-        },
-        {
-            "id": "assertion:v1:sha256:ddaf14bfd9df13f9b6b58f979cc8b13cee0909ac921b4c243fc1d02dbdc39174:1",
-            "case": "read|bigquery|SELECT STRPTIME('1970 ' || '2023-01-15 14:30:00', '%Y ' || '%Y-%m-%d %H:%M:%S')",
-            "reason": "expected `SELECT STRPTIME('1970 ' || '2023-01-15 14:30:00', '%Y ' || '%Y-%m-%d %H:%M:%S')` actual `SELECT PARSE_DATETIME('2023-01-15 14:30:00', '%Y-%m-%d %H:%M:%S', 1970)`",
-            "signature": "sql-mismatch:v1:sha256:49623e77c50aab7cde3d2352ae361ffaeff63d52326ad7a21356ae9d6ec2a909",
-            "issue": "BQ-7"
-        },
-        {
-            "id": "assertion:v1:sha256:0dd252af1a55a9dc8e4ff64de5b758c5605388f4f0ec803059021124759d3c0c:1",
-            "case": "read|bigquery|SELECT STRPTIME('1970 ' || 'Thu Dec 25 07:30:00 2008', '%Y ' || '%a %b %-d %I:%M:%S %Y')",
-            "reason": "expected `SELECT STRPTIME('1970 ' || 'Thu Dec 25 07:30:00 2008', '%Y ' || '%a %b %-d %I:%M:%S %Y')` actual `SELECT PARSE_DATETIME('Thu Dec 25 07:30:00 2008', '%a %b %-d %I:%M:%S %Y', 1970)`",
-            "signature": "sql-mismatch:v1:sha256:831d6d48456204bf547f35fdbe56fd52a77efe80d783da2f93e359475505c66f",
-            "issue": "BQ-7"
-        },
-        {
-            "id": "assertion:v1:sha256:3fc84d6c22affc1ecefa7fb95805c1d3c102be9efa3b7f6e70a8959bcadb7862:1",
-            "case": "read|bigquery|SELECT STRPTIME('1970 ' || '15:30:00.123456', '%Y ' || '%H:%M:%S.%f')",
-            "reason": "expected `SELECT STRPTIME('1970 ' || '15:30:00.123456', '%Y ' || '%H:%M:%S.%f')` actual `SELECT PARSE_DATETIME('15:30:00.123456', '%H:%M:%S.%f', 1970)`",
-            "signature": "sql-mismatch:v1:sha256:7c3984d941041ca42327961df95ab0cfcd546ec64305b52c09ac719c041d24b4",
-            "issue": "BQ-7"
-        },
-        {
             "id": "assertion:v1:sha256:13f943fab1b26bd51916a82f16e83e2944bb5337954cc3487cf82c01573f5c00:1",
             "case": "write|bigquery|CAST(start AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York'",
             "reason": "expected `TIMESTAMP(DATETIME(CAST(start AS TIMESTAMP), 'America/New_York'))` actual `CAST(start AS TIMESTAMP) AT TIME ZONE 'America/New_York'`",

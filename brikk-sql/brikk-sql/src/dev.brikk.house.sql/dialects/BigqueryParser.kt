@@ -220,7 +220,7 @@ private fun buildDate(a: List<Expression?>): Expression =
 // sqlglot: parsers.bigquery._build_datetime
 private fun buildDatetime(a: List<Expression?>): Expression = when (a.size) {
     1 -> TsOrDsToDatetime(args("this" to seqGet(a, 0)))
-    2 -> Datetime(args("this" to seqGet(a, 0), "zone" to seqGet(a, 1)))
+    2 -> Datetime(args("this" to seqGet(a, 0), "expression" to seqGet(a, 1)))
     else -> TimestampFromParts(
         args(
             "year" to seqGet(a, 0), "month" to seqGet(a, 1), "day" to seqGet(a, 2),

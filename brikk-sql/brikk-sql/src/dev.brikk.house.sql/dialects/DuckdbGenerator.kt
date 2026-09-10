@@ -824,6 +824,67 @@ open class DuckdbGenerator(
         return sql(Cast(args("this" to value, "to" to DataType.build(DType.DATE))))
     }
 
+    // sqlglot: dialect.no_timestamp_sql
+    open fun noTimestampSql(expression: Timestamp): String {
+        if (expression.args["with_tz"] != true) return functionFallbackSql(expression)
+        val value = (expression.thisArg as Expression).copy()
+        val zone = expression.args["zone"] as? Expression
+        if (zone != null) {
+            return sql(AtTimeZone(args(
+                "this" to Cast(args("this" to value, "to" to DataType.build(DType.TIMESTAMP))),
+                "zone" to zone.copy(),
+            )))
+        }
+        val type = (value.type as? DataType)?.thisArg
+        if (type == null || type == DType.UNKNOWN) {
+            unsupported("BigQuery TIMESTAMP without a zone requires a known input type to distinguish instants from UTC civil values")
+        }
+        return sql(Cast(args("this" to value, "to" to DataType.build(
+            if (expression.args["with_tz"] == true) DType.TIMESTAMPTZ else DType.TIMESTAMP,
+        ))))
+    }
+
+    // sqlglot: dialect.no_datetime_sql
+    open fun noDatetimeSql(expression: Datetime): String {
+        val value = expression.thisArg as Expression
+        val second = expression.expressionArg as? Expression
+            ?: return sql(Cast(args("this" to value.copy(), "to" to DataType.build(DType.TIMESTAMP))))
+        val secondCopy = second.copy()
+        dev.brikk.house.sql.optimizer.annotateTypes(secondCopy, dialect = Dialects.BIGQUERY, overwriteTypes = false)
+        val secondType = (secondCopy.type as? DataType)?.thisArg
+        val isTime = second is Time || secondType == DType.TIME
+        if (isTime) {
+            val sum = Add(args(
+                "this" to Cast(args("this" to value.copy(), "to" to DataType.build(DType.DATE))),
+                "expression" to second.copy(),
+            ))
+            return sql(Cast(args("this" to sum, "to" to DataType.build(DType.TIMESTAMP))))
+        }
+        if (secondType == null || secondType == DType.UNKNOWN) {
+            unsupported("BigQuery DATETIME's second argument requires a known TIME or time-zone type")
+            return functionFallbackSql(expression)
+        }
+        // brikk extension (BQ-6): BigQuery coerces an unzoned string to a UTC instant.
+        val instant = bigqueryTimestampLiteral(value)
+            ?: Cast(args("this" to value.copy(), "to" to DataType.build(DType.TIMESTAMPTZ)))
+        return sql(Cast(args(
+            "this" to AtTimeZone(args("this" to instant, "zone" to second.copy())),
+            "to" to DataType.build(DType.TIMESTAMP),
+        )))
+    }
+
+    open fun stringSql(expression: dev.brikk.house.sql.ast.String): String {
+        val value = expression.thisArg as Expression
+        val zone = expression.args["zone"] as? Expression
+            ?: return sql(Cast(args("this" to value.copy(), "to" to DataType.build(DType.TEXT))))
+        // The pin drops the offset after converting to local TIMESTAMP. Refuse that silent loss.
+        unsupported("BigQuery STRING(timestamp, zone) requires offset-preserving formatting in DuckDB")
+        val instant = bigqueryTimestampLiteral(value)
+            ?: Cast(args("this" to value.copy(), "to" to DataType.build(DType.TIMESTAMPTZ)))
+        val local = AtTimeZone(args("this" to instant, "zone" to zone.copy()))
+        return sql(Cast(args("this" to local, "to" to DataType.build(DType.TEXT))))
+    }
+
     // sqlglot: DuckDBGenerator TRANSFORMS[UnixSeconds / UnixMillis / UnixMicros].
     open fun unixEpochSql(expression: Expression): String {
         var value = (expression.thisArg as? Expression)?.copy()
@@ -1130,6 +1191,22 @@ open class DuckdbGenerator(
             )
         )
     }
+
+    // sqlglot: DuckDBGenerator.parsedatetime_sql
+    open fun parsedatetimeSql(expression: ParseDatetime): String {
+        val (value, formattedTime) = strptimeDefaultYear(expression)
+        return func("STRPTIME", value, formattedTime)
+    }
+
+    // sqlglot: DuckDBGenerator.parsetime_sql
+    open fun parsetimeSql(expression: ParseTime): String = sql(
+        Cast(
+            args(
+                "this" to func("STRPTIME", expression.thisArg, formatTime(expression)),
+                "to" to DataType.build(DType.TIME),
+            )
+        )
+    )
 
     // sqlglot: DuckDBGenerator.parsejson_sql
     override fun parsejsonSql(expression: ParseJSON): String {
@@ -2328,6 +2405,7 @@ open class DuckdbGenerator(
             reg(SHA2Digest::class) { e -> dg().shaSql(e, "SHA256", isBinary = true) }
             reg(MD5Digest::class) { e -> func("UNHEX", func("MD5", e.thisArg)) }
             reg(DateFromParts::class) { e -> dg().datefrompartsSql(e as DateFromParts) }
+            reg(Datetime::class) { e -> dg().noDatetimeSql(e as Datetime) }
             reg(TimestampFromParts::class) { e ->
                 dg().timestampfrompartsSql(e as TimestampFromParts)
             }
@@ -2345,6 +2423,8 @@ open class DuckdbGenerator(
             reg(ApproxTopK::class) { e -> dg().approxtopkSql(e as ApproxTopK) }
             reg(StrToTime::class) { e -> dg().strtotimeSql(e as StrToTime) }
             reg(StrToDate::class) { e -> dg().strtodateSql(e as StrToDate) }
+            reg(ParseDatetime::class) { e -> dg().parsedatetimeSql(e as ParseDatetime) }
+            reg(ParseTime::class) { e -> dg().parsetimeSql(e as ParseTime) }
             reg(ParseJSON::class) { e -> dg().parsejsonSql(e as ParseJSON) }
             reg(ArrayDistinct::class) { e -> dg().arraydistinctSql(e as ArrayDistinct) }
             reg(ArrayToString::class) { e -> dg().arrayToStringSql(e as ArrayToString) }
@@ -2412,6 +2492,9 @@ open class DuckdbGenerator(
             reg(Greatest::class) { e -> dg().greatestLeastSql(e) }
             reg(Least::class) { e -> dg().greatestLeastSql(e) }
             reg(Time::class) { e -> dg().noTimeSql(e as Time) }
+            reg(TimeFromParts::class) { e -> func("MAKE_TIME", e.args["hour"], e.args["min"], e.args["sec"]) }
+            reg(Timestamp::class) { e -> dg().noTimestampSql(e as Timestamp) }
+            reg(dev.brikk.house.sql.ast.String::class) { e -> dg().stringSql(e as dev.brikk.house.sql.ast.String) }
             reg(Split::class) { e -> dg().splitSql(e as Split) }
             reg(BitwiseXor::class) { e -> dg().bitwisexorSql(e as BitwiseXor) }
             reg(BitwiseOrAgg::class) { e -> dg().bitwiseAggSql(e) }

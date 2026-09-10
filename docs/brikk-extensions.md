@@ -852,6 +852,35 @@ The two-argument SQL remains unchanged. Column-dependent delimiters are diagnose
 DuckDB's underlying STRING_AGG requires a constant separator. Their separate
 lowering is tracked as BQ-36. No existing ledger divergence is needed.
 
+## 30. BigQuery temporal constructors and parsers (BQ-6, BQ-7)
+
+BigQuery DATETIME parsing stores its second argument in the AST's `expression`
+slot, preserving date/time and timestamp/zone overloads through native generation.
+DuckDB lowering keeps absolute TIMESTAMP values separate from civil DATETIME/TIME:
+TIMESTAMP uses TIMESTAMPTZ, date plus time produces TIMESTAMP, and timestamp plus
+zone converts a UTC instant to local civil time. Presto retains WITH TIME ZONE.
+
+Unzoned strings in DATETIME(timestamp, zone) are normalized to UTC before zone
+conversion. This intentionally differs from the pin's session-dependent direct
+TIMESTAMPTZ cast. STRING(timestamp, zone) uses the same instant conversion but
+currently emits a diagnostic because DuckDB TEXT omits BigQuery's UTC offset;
+offset-preserving formatting is BQ-37. Zone-less TIMESTAMP with an unknown input
+type and DATETIME with an unknown second-argument type are also diagnosed instead
+of guessed; schema-driven overload resolution is BQ-38. Native BigQuery keeps both
+arguments.
+
+DuckDB PARSE_DATETIME applies BigQuery's 1970 default year and PARSE_TIME casts
+STRPTIME to TIME. Hive DATE_FORMAT targeting BigQuery uses FORMAT_DATETIME rather
+than the pin's invalid FORMAT_DATE-with-DATETIME call. Three signed rows carry
+reviewed protected signatures: DATETIME zone conversion, diagnosed STRING offset
+loss, and Hive FORMAT_DATETIME. TIMESTAMP(x) matches the pin, while direct tests
+require its ambiguity diagnostic. They are excluded from actionable BQ counts.
+
+`BigqueryTemporalConstructorsResultTest` and `BigqueryParseTemporalResultTest`
+execute NULLs, missing/full years, microseconds, named zones and civil/instant
+boundaries in DuckDB under UTC, New York and Auckland. These are not live BigQuery
+checks. Upstream issue/PR status: not reported.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

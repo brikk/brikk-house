@@ -57,27 +57,6 @@
             "issue": "BQ-22"
         },
         {
-            "id": "assertion:v1:sha256:2a9e87ccd718130cf2464cdf6958a95531c1aae427e69357ea5f8529e4b912fa:1",
-            "case": "write|duckdb|TIMESTAMP(x)",
-            "reason": "expected `CAST(x AS TIMESTAMPTZ)` actual `TIMESTAMP(x)`",
-            "signature": "sql-mismatch:v1:sha256:c396ea8240424ffc5859f5a4b6b88a5126eebbc7004cf33feb18199513875f5a",
-            "issue": "BQ-6"
-        },
-        {
-            "id": "assertion:v1:sha256:40151e015fc69f7dd6a7764a9b4848e2c3536e1a848a664572b126203d63d1e6:1",
-            "case": "write|presto|TIMESTAMP(x)",
-            "reason": "expected `CAST(x AS TIMESTAMP WITH TIME ZONE)` actual `CAST(x AS TIMESTAMP)`",
-            "signature": "sql-mismatch:v1:sha256:65f9252d5847fc7c93b038f03b92067d1cc18fff23c2e16470023d87c78bf9f1",
-            "issue": "BQ-6"
-        },
-        {
-            "id": "assertion:v1:sha256:4ade7cfc7c6954cb898d4168edc98f5b186ece3eac994f07db35237287a3ea8a:1",
-            "case": "write|duckdb|SELECT TIMESTAMP('2008-12-25 15:30:00', 'America/Los_Angeles')",
-            "reason": "expected `SELECT CAST('2008-12-25 15:30:00' AS TIMESTAMP) AT TIME ZONE 'America/Los_Angeles'` actual `SELECT TIMESTAMP('2008-12-25 15:30:00', 'America/Los_Angeles')`",
-            "signature": "sql-mismatch:v1:sha256:794eff0ee978355b49e881c3e6fcc51a6ee977192b28f17af0053ec7486a231a",
-            "issue": "BQ-6"
-        },
-        {
             "id": "assertion:v1:sha256:d4dcc57a8a40157b77824b1c5eb58a5e6428b22ce139195f293dfb7f15f21a62:1",
             "case": "write|duckdb|SELECT ARRAY_AGG(x IGNORE NULLS) AS x",
             "reason": "expected `SELECT ARRAY_AGG(x) FILTER(WHERE x IS NOT NULL) AS x` actual `SELECT ARRAY_AGG(x) AS x`",
@@ -125,13 +104,6 @@
             "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`",
             "signature": "sql-mismatch:v1:sha256:842f2926bd8dd827d16a761162b527f8fe6249e73fc1350da06b987716e5420f",
             "issue": "BQ-9"
-        },
-        {
-            "id": "assertion:v1:sha256:83cfb2a84fe0b248f2115e9cbf29427a821dc1adb2d77b18d5fc08816b0d97ce:1",
-            "case": "write|duckdb|SELECT TIME(15, 30, 00)",
-            "reason": "expected `SELECT MAKE_TIME(15, 30, 00)` actual `SELECT TIME_FROM_PARTS(15, 30, 00)`",
-            "signature": "sql-mismatch:v1:sha256:565eb7a818e0d71b5838233169ec73b3a27b629674b29552763f67aab0aa5825",
-            "issue": "BQ-6"
         },
         {
             "id": "assertion:v1:sha256:2f31caa5095a327d78feec4dac9ecb8c9cc7b748d1b87c4ec78107ef042720a4:1",
@@ -365,32 +337,12 @@
             "issue": "BQ-19"
         },
         {
-            "id": "assertion:v1:sha256:88fb0afa324dbba943a3b4caf243e23b67502d167e0dacb494fd53ff8a80b234:1",
-            "case": "write|duckdb|SELECT DATETIME('2020-01-01', TIME '23:59:59')",
-            "reason": "expected `SELECT CAST(CAST('2020-01-01' AS DATE) + CAST('23:59:59' AS TIME) AS TIMESTAMP)` actual `SELECT DATETIME('2020-01-01')`",
-            "signature": "sql-mismatch:v1:sha256:9ce480f1e73ddf2c84e8fac573ce6086c2654bd2ce42160c7245bf7ec2ed1323",
-            "issue": "BQ-6"
-        },
-        {
-            "id": "assertion:v1:sha256:c955a84d1a7c03cb592ba7efb4f25a8d6a38e8556b8084fee510585c7973855b:1",
-            "case": "write|bigquery|SELECT DATETIME('2020-01-01', TIME '23:59:59')",
-            "reason": "expected `SELECT DATETIME('2020-01-01', CAST('23:59:59' AS TIME))` actual `SELECT DATETIME('2020-01-01')`",
-            "signature": "sql-mismatch:v1:sha256:9f9ed17b3acb210c135cf0c3ecdade46623c6ad51c5c88e3b54e415020d52ecc",
-            "issue": "BQ-6"
-        },
-        {
             "id": "assertion:v1:sha256:2147b84d237d3bc20e2173dda6ad11ca9ac56488652e469ca817f33b80c2960a:1",
             "case": "write|duckdb|SELECT DATETIME('2020-01-01', 'America/Los_Angeles')",
-            "reason": "expected `SELECT CAST(CAST('2020-01-01' AS TIMESTAMPTZ) AT TIME ZONE 'America/Los_Angeles' AS TIMESTAMP)` actual `SELECT DATETIME('2020-01-01')`",
-            "signature": "sql-mismatch:v1:sha256:32a87bea854ee0574c9e335dfd9428f9c8e5b72ce3efb03214299e41754f50c1",
-            "issue": "BQ-6"
-        },
-        {
-            "id": "assertion:v1:sha256:21af06055927f08604f84686ac3b3c53d05af051a63c4728fccbba8d9912af57:1",
-            "case": "write|bigquery|SELECT DATETIME('2020-01-01', 'America/Los_Angeles')",
-            "reason": "expected `SELECT DATETIME('2020-01-01', 'America/Los_Angeles')` actual `SELECT DATETIME('2020-01-01')`",
-            "signature": "sql-mismatch:v1:sha256:7af434e2fa7f06fc01cb4b074c49090e8b8c11961beab5a976309d8d17418f35",
-            "issue": "BQ-6"
+            "reason": "brikk extension BQ-6, registry section 30: normalize an unzoned string to a UTC instant before deriving Los Angeles civil time. The pin's direct TIMESTAMPTZ cast depends on DuckDB's session zone. Executed under UTC, New York and Auckland.",
+            "signature": "sql-mismatch:v1:sha256:358646c44b0746b586d17381739f71c8b1609d59ee553f543d87787b3edc77f4",
+            "issue": "BQ-6",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:f2f1c06683a7895bb3079db4d2edc0e966c11e87083af9cceffe49cd275d45b3:1",
@@ -407,25 +359,12 @@
             "issue": "BQ-32"
         },
         {
-            "id": "assertion:v1:sha256:d65a017f7ba5dd3d7be3759ceba8efe813fe431d4134f33b5c75bad3937b813e:1",
-            "case": "write|duckdb|STRING(a)",
-            "reason": "expected `CAST(a AS TEXT)` actual `STRING(a)`",
-            "signature": "sql-mismatch:v1:sha256:11a436cd2b68553f26d4d6ce4437f6a6f3940c5fb82eeaac51ab94262b0b8d6b",
-            "issue": "BQ-6"
-        },
-        {
-            "id": "assertion:v1:sha256:985f13ed7a32ab74b0830ba05b7aa92d7254e12749a765a60ccd695b07c27993:1",
-            "case": "write|bigquery|STRING('2008-12-25 15:30:00', 'America/New_York')",
-            "reason": "expected `STRING('2008-12-25 15:30:00', 'America/New_York')` actual `STRING('2008-12-25 15:30:00')`",
-            "signature": "sql-mismatch:v1:sha256:3ce567a1e61db9249825046edb079c20907706413fd6125948fae9c818de960f",
-            "issue": "BQ-6"
-        },
-        {
             "id": "assertion:v1:sha256:214ebc397fb13403b902c9b74fd0c5efc91bbf4ba74c27359e227e6df929bfa4:1",
             "case": "write|duckdb|STRING('2008-12-25 15:30:00', 'America/New_York')",
-            "reason": "expected `CAST(CAST('2008-12-25 15:30:00' AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York' AS TEXT)` actual `STRING('2008-12-25 15:30:00', 'America/New_York')`",
-            "signature": "sql-mismatch:v1:sha256:4a7b498a2ff3ab3993c0c088e2ba426e06e96107e47752f6e7edcd50254bee51",
-            "issue": "BQ-6"
+            "reason": "brikk extension BQ-6, registry section 30: normalize the instant to UTC before converting to New York civil time, and diagnose that DuckDB TEXT still omits BigQuery's offset. Offset-preserving formatting remains BQ-37.",
+            "signature": "sql-mismatch:v1:sha256:69da7981882e550c0d2576968066d1bac666b14c5581d52aa983c6b5e13810cd",
+            "issue": "BQ-6",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:49b228a2f4911890568a53dc89f6a670f8560ec0540664aeed96cdaab837528c:1",
@@ -447,13 +386,6 @@
             "reason": "expected `SELECT CAST(JSON('{\"key\": 2000}') -> '$.key' AS BIGINT)` actual `SELECT INT64(JSON('{\"key\": 2000}') -> '$.key')`",
             "signature": "sql-mismatch:v1:sha256:f11cfda91bb262f7be79a5c0182d2d7d07fff303683f611a86a343da3e7c79b1",
             "issue": "BQ-27"
-        },
-        {
-            "id": "assertion:v1:sha256:49f76516f2c11927f342e0c0a60ee1e625049c11c1046fbf593190ea7ac71803:1",
-            "case": "write|duckdb|SELECT PARSE_DATETIME('%F %T', '2023-01-15 14:30:00')",
-            "reason": "expected `SELECT STRPTIME('1970 ' || '2023-01-15 14:30:00', '%Y ' || '%Y-%m-%d %H:%M:%S')` actual `SELECT PARSE_DATETIME('2023-01-15 14:30:00', '%Y-%m-%d %H:%M:%S', 1970)`",
-            "signature": "sql-mismatch:v1:sha256:49623e77c50aab7cde3d2352ae361ffaeff63d52326ad7a21356ae9d6ec2a909",
-            "issue": "BQ-7"
         },
         {
             "id": "assertion:v1:sha256:f624430f6f46b4f255c51b1cb4e50a92a052ed3c0a775f127ebb082b6e2f186f:1",

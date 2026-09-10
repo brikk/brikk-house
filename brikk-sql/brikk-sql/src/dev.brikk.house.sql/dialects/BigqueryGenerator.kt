@@ -521,6 +521,7 @@ open class BigqueryGenerator(
             is TsOrDsToDatetime -> "FORMAT_DATETIME"
             is TsOrDsToTimestamp -> "FORMAT_TIMESTAMP"
             is TsOrDsToTime -> "FORMAT_TIME"
+            is TimeStrToTime -> "FORMAT_DATETIME"
             else -> "FORMAT_DATE"
         }
         val timeExpr: Expression? = when (this0) {
@@ -735,13 +736,16 @@ open class BigqueryGenerator(
             reg(StabilityProperty::class) { e ->
                 if (e.name == "IMMUTABLE") "DETERMINISTIC" else "NOT DETERMINISTIC"
             }
-            reg(dev.brikk.house.sql.ast.String::class) { e -> bg().renameFuncSql("STRING", e) }
+            reg(dev.brikk.house.sql.ast.String::class) { e -> func("STRING", e.thisArg, e.args["zone"]) }
             reg(SessionUser::class) { _ -> "SESSION_USER()" }
             reg(TimeAdd::class) { e -> bg().dateAddIntervalSql("TIME", "ADD", e) }
             reg(TimeSub::class) { e -> bg().dateAddIntervalSql("TIME", "SUB", e) }
             reg(TimestampAdd::class) { e -> bg().dateAddIntervalSql("TIMESTAMP", "ADD", e) }
             reg(TimestampDiff::class) { e -> func("TIMESTAMP_DIFF", e.thisArg, e.expressionArg, unitToVar(e)) }
             reg(TimestampSub::class) { e -> bg().dateAddIntervalSql("TIMESTAMP", "SUB", e) }
+            reg(TimeStrToTime::class) { e ->
+                sql(Cast(args("this" to e.thisArg, "to" to DataType.build(DType.DATETIME))))
+            }
             reg(Transaction::class) { _ -> "BEGIN TRANSACTION" }
             reg(TsOrDsToTime::class) { e -> bg().renameFuncSql("TIME", e) }
             reg(TsOrDsToDatetime::class) { e -> bg().renameFuncSql("DATETIME", e) }

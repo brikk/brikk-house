@@ -14,19 +14,19 @@
 
 ---
 
-**152 actionable failing transpile assertions across 19 source-to-target routes.**
-Five additional signed assertions are protected correctness divergences, documented
-in `docs/brikk-extensions.md` section 28. They are not open BQ issues. BQ-36 is an
-additional execution limitation with no current parity-ledger entry.
+**134 actionable failing transpile assertions across 19 source-to-target routes.**
+Eight additional signed assertions are protected correctness divergences, documented
+in `docs/brikk-extensions.md` sections 28 and 30. They are not open BQ issues. BQ-36
+and BQ-37 are execution limitations with no current parity-ledger entries.
 
-## BigQuery as source (112)
+## BigQuery as source (95)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 68 |
+| bigquery -> duckdb | 55 |
 | bigquery -> spark | 10 |
-| bigquery -> presto | 3 |
-| bigquery -> bigquery | 9 |
+| bigquery -> presto | 2 |
+| bigquery -> bigquery | 6 |
 | bigquery -> trino | 1 |
 | bigquery -> hive | 4 |
 | bigquery -> postgres | 5 |
@@ -35,7 +35,7 @@ additional execution limitation with no current parity-ledger entry.
 | bigquery -> spark2 | 1 |
 | bigquery -> base | 2 |
 
-## BigQuery as target (40)
+## BigQuery as target (39)
 
 The `bigquery -> bigquery` cases are counted only in the source table above.
 
@@ -45,7 +45,7 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 | postgres -> bigquery | 7 |
 | duckdb -> bigquery | 7 |
 | presto -> bigquery | 6 |
-| hive -> bigquery | 4 |
+| hive -> bigquery | 3 |
 | trino -> bigquery | 2 |
 | clickhouse -> bigquery | 2 |
 | base -> bigquery | 1 |
@@ -54,13 +54,11 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-5, plus BQ-14, BQ-26, BQ-30, and BQ-34. Completed ASTRA history
+BQ-7, plus BQ-14, BQ-26, BQ-30, and BQ-34. Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
 | ID | Issue | Assertions |
 |---|---|---:|
-| BQ-6 | TIMESTAMP/TIME/DATETIME constructors and STRING timezone arguments | 11 |
-| BQ-7 | Temporal parsing/formatting adapters | 7 |
 | BQ-8 | Temporal addition/subtraction and interval syntax | 8 |
 | BQ-9 | LAST_DAY month/week lowering | 9 |
 | BQ-10 | MAKE_INTERVAL lowering | 1 |
@@ -86,6 +84,8 @@ belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TO
 | BQ-33 | Presto named-window expansion | 1 |
 | BQ-35 | Into-BigQuery timezone operator lowering | 2 |
 | BQ-36 | DuckDB ARRAY_TO_STRING row-dependent delimiters; currently diagnosed | execution |
+| BQ-37 | DuckDB offset-preserving STRING(timestamp, zone) formatting; currently diagnosed | execution |
+| BQ-38 | Schema-driven TIMESTAMP/DATETIME overload resolution for unknown inputs; currently diagnosed | execution |
 
 Keep the existing diagnostics for unexpanded CTE stars, shadowed alias references,
 and unsafe VALUES widths/modifiers. Unsupported shapes and registered intentional

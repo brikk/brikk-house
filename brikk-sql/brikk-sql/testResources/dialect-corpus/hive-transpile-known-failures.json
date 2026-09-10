@@ -3,9 +3,10 @@
         {
             "id": "assertion:v1:sha256:612886093228b76cb78337259d51afcc8648283104a94bbf1b00045f46e92fd5:1",
             "case": "write|bigquery|DATE_FORMAT('2020-01-01', 'yyyy-MM-dd HH:mm:ss')",
-            "reason": "expected `FORMAT_DATE('%Y-%m-%d %H:%M:%S', CAST('2020-01-01' AS DATETIME))` actual `FORMAT_DATE('%Y-%m-%d %H:%M:%S', TIME_STR_TO_TIME('2020-01-01'))`",
-            "signature": "sql-mismatch:v1:sha256:44ec594dcb9cb65a8e570595755cb5f7feb346ab7bc2b79dd49c131c53a30753",
-            "issue": "BQ-7"
+            "reason": "brikk extension BQ-7, registry section 30: FORMAT_DATETIME accepts the DATETIME value and preserves the requested time fields. The pin emits FORMAT_DATE with DATETIME, which BigQuery rejects.",
+            "signature": "sql-mismatch:v1:sha256:8b364ff6689a027bdf137008831e7c03e78eae75eefcc924f6dd0d9a53bfef17",
+            "issue": "BQ-7",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:41cb5aea7508a26a06b506c89b648607e1156c56785fc7c70d16b6e0569d638d:1",
