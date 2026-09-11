@@ -67,15 +67,13 @@ jobs:
       - name: Verify Maven publications locally
         run: ./kotlin publish mavenLocal
 
-      # On a red gate, the refreshed *-ledger-actual.json files are exactly what a developer
-      # needs to update the committed *-known-failures.json ledgers (see TODO-BUGS-*.md).
+      # On a red gate, build/ledger-actual contains the review artifacts needed to update
+      # committed *-known-failures.json ledgers (see TODO-BUGS-*.md).
       - name: Upload actual ledgers
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ledger-actual
-          path: |
-            **/*-ledger-actual.json
-            build/**/*-ledger-actual.json
+          path: build/ledger-actual/*-ledger-actual.json
           if-no-files-found: ignore
           retention-days: 14

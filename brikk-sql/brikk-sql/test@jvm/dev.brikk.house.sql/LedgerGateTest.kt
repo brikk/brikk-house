@@ -24,6 +24,21 @@ class LedgerGateTest {
     }
 
     @Test
+    fun ledgerOutputIsRootRelativeCreatedAndConfined() {
+        val root = kotlin.io.path.createTempDirectory("ledger-root").toFile()
+        val defaultDir = resolveLedgerOutputDirectory(null, root)
+        assertEquals(File(root, "build/ledger-actual").canonicalFile, defaultDir)
+        assertEquals(File(root, "custom/out").canonicalFile, resolveLedgerOutputDirectory("custom/out", root))
+
+        val file = ledgerActualFile("test-ledger-actual.json", configured = "nested/out", root = root)
+        assertTrue(file.parentFile.isDirectory)
+        assertEquals(File(root, "nested/out/test-ledger-actual.json").canonicalFile, file.canonicalFile)
+        assertFailsWith<IllegalArgumentException> { resolveLedgerOutputDirectory(" ", root) }
+        assertFailsWith<IllegalArgumentException> { ledgerActualFile("../escape-ledger-actual.json", root = root) }
+        root.deleteRecursively()
+    }
+
+    @Test
     fun unledgeredStaleAndSignatureChangedAreIndependentFailures() {
         val changed = CorpusFailure.sqlMismatch(failure.case, "expected", "changed")
         val problems = validateCorpusLedger(
@@ -89,8 +104,8 @@ class LedgerGateTest {
     @Test
     fun migrationFailureStillWritesActualArtifactWithoutApprovingIt() {
         val ledger = parseCorpusLedger(Json.parseToJsonElement("""{"cases":[{"case":"old","reason":"curated"}]}""").jsonObject, "case")
-        val name = "ledger-gate-test-${UUID.randomUUID()}.json"
-        val file = File(File("build").takeIf { it.isDirectory } ?: File("."), name)
+        val name = "ledger-gate-test-${UUID.randomUUID()}-ledger-actual.json"
+        val file = ledgerActualFile(name)
         try {
             val error = assertFailsWith<AssertionError> { Harness().enforce(ledger, mapOf("new-id" to failure), name) }
             assertTrue(error.message.orEmpty().contains("MIGRATION_REQUIRED"))

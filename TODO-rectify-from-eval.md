@@ -9,24 +9,6 @@ and exact known-failure ledgers under `brikk-sql/brikk-sql/testResources/` are
 the behavioral oracle. Intentional divergences in `docs/brikk-extensions.md`
 are out of scope.
 
-## Robustness
-
-### EVAL-09 - adversarial parser tests
-
-- [ ] The concurrency half is covered by `ConcurrencyTest.kt`. Add deep nesting,
-  unterminated input, unbalanced parentheses, empty input, and large-input tests.
-- [ ] Prefer a parser depth guard that throws `ParseError("nesting too deep")`
-  over allowing `StackOverflowError` to escape.
-
-## Test infrastructure
-
-### EVAL-10 - CWD-dependent ledger output
-
-- [ ] Route every corpus gate through one ledger-output directory owned by
-  `LedgerGate`, create it explicitly, and stop writing `*-ledger-actual.json`
-  files into the module root.
-- [ ] Update `.gitignore` and documentation that mention the old path.
-
 ## Native integration
 
 ### EVAL-14 - chDB default tests do not load native code

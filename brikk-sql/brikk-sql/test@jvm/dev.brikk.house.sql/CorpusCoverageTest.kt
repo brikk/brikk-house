@@ -35,8 +35,7 @@ class CorpusCoverageTest {
 
     @Test
     fun everyDialectFixtureHasExplicitCoverage() {
-        val directory = listOf("brikk-sql/brikk-sql/testResources/dialect-corpus", "testResources/dialect-corpus")
-            .map(::File).firstOrNull { it.isDirectory } ?: fail("cannot locate dialect-corpus/")
+        val directory = File(testResourcesRoot(), "dialect-corpus")
         val fixtures = directory.listFiles()!!.filter {
             it.isFile && it.extension == "json" && "known-failures" !in it.name && !it.name.startsWith("datafusion")
         }.sorted().associate { it.nameWithoutExtension to Json.parseToJsonElement(it.readText()).jsonObject }

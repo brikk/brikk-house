@@ -1,6 +1,5 @@
 package dev.brikk.house.sql
 
-import java.io.File
 import kotlin.test.fail
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -169,8 +168,7 @@ abstract class LedgerGate {
         mismatchDetails: List<String> = emptyList(),
     ) {
         val actualLedger = serializeCorpusLedger(failures, caseKey, sqlglotVersion, ledger)
-        val outDir = File("build").takeIf { it.isDirectory } ?: File(".")
-        val actualFile = File(outDir, actualLedgerName)
+        val actualFile = ledgerActualFile(actualLedgerName)
         actualFile.writeText(Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), actualLedger))
         println(summary)
         val problems = validateCorpusLedger(ledger, failures, mismatchDetails)

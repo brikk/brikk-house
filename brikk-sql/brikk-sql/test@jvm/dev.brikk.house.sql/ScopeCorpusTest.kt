@@ -25,7 +25,7 @@ import kotlinx.serialization.json.put
  * same error class. Failures must exactly match the ledger in
  * scope-corpus/known-failures.json — no unledgered failure, no stale entry.
  *
- * The actual failure set is always written to build/scope-ledger-actual.json.
+ * The actual failure set is always written to build/ledger-actual/scope-ledger-actual.json.
  */
 class ScopeCorpusTest : LedgerGate() {
 

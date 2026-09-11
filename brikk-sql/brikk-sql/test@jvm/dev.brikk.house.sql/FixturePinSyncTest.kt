@@ -32,10 +32,6 @@ class FixturePinSyncTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun testResourcesRoot(): File =
-        listOf("brikk-sql/brikk-sql/testResources", "testResources").map(::File).firstOrNull { it.isDirectory }
-            ?: fail("cannot locate testResources/ from ${File(".").absolutePath}")
-
     private fun isOracleDerived(rel: String): Boolean =
         !rel.contains("known-failures") &&
             rel != "corpus-policy.json" && // Brikk-owned execution policy, not an upstream oracle fixture

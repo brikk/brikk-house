@@ -19,7 +19,7 @@
 > **How verification works.** Behaviour is pinned by "corpus gates": generated fixtures under
 > `brikk-sql/testResources/**` capture the reference's output, and each gate enforces an *exact*
 > known-failures ledger (`*-known-failures.json`). Build/test from the repo root with
-> `./kotlin build` and `./kotlin test`. Each run also writes `brikk-sql/*-ledger-actual.json`
+> `./kotlin build` and `./kotlin test`. Each run also writes `build/ledger-actual/*-ledger-actual.json`
 > (gitignored) with the current failing set. **When you fix an item, delete its line from the
 > matching committed `*-known-failures.json`** (or copy the refreshed actual over it); the gate
 > then proves it passes. Reproduce a single item by parsing/generating with the noted dialect(s)

@@ -38,8 +38,7 @@ class FunctionRelationshipCoverageTest {
         ).jsonObject
 
     private fun functionGapsDir(): File =
-        File("testResources/semantics/function-gaps").takeIf { it.isDirectory }
-            ?: File("brikk-sql/brikk-sql/testResources/semantics/function-gaps")
+        File(testResourcesRoot(), "semantics/function-gaps")
 
     @Test
     fun everyStarrocksDirectionHasAnIntentionalRecord() {

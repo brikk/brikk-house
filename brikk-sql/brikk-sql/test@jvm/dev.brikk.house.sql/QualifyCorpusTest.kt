@@ -34,7 +34,7 @@ import kotlinx.serialization.json.put
  *
  * Failures must exactly match the ledger in qualify-corpus/known-failures.json — no
  * unledgered failure, no stale entry. The actual failure set is always written to
- * build/qualify-ledger-actual.json.
+ * build/ledger-actual/qualify-ledger-actual.json.
  */
 class QualifyCorpusTest : LedgerGate() {
 

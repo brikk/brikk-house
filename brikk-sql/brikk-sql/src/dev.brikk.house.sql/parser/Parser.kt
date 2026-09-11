@@ -367,6 +367,9 @@ open class Parser(
         // sqlglot: expressions.INTERVAL_STRING_RE
         private val INTERVAL_STRING_RE = Regex("\\s*(-?[0-9]+(?:\\.[0-9]+)?)\\s*([a-zA-Z]+)\\s*")
 
+        /** Stops delimiter-driven recursive descent before it can exhaust the JVM stack. */
+        private const val MAX_NESTING_DEPTH = 128
+
         // sqlglot: parser.TIME_ZONE_RE
         private val TIME_ZONE_RE = Regex(":.*?[a-zA-Z\\+\\-]")
     }
@@ -1083,6 +1086,15 @@ open class Parser(
             prevToken.exists -> prevToken
             else -> Token.string("")
         }
+        val error = parseError(message, errorToken)
+
+        if (errorLevel == ErrorLevel.IMMEDIATE) throw error
+
+        errors.add(error)
+        return null
+    }
+
+    private fun parseError(message: String, errorToken: Token): ParseError {
         val highlighted = highlightSql(
             sql = sql,
             positions = listOf(errorToken.start to errorToken.end),
@@ -1091,7 +1103,7 @@ open class Parser(
         val formattedMessage =
             "$message. Line ${errorToken.line}, Col: ${errorToken.col}.\n  ${highlighted.formattedSql}"
 
-        val error = ParseError.new(
+        return ParseError.new(
             formattedMessage,
             description = message,
             line = errorToken.line,
@@ -1100,11 +1112,21 @@ open class Parser(
             highlight = highlighted.highlight,
             endContext = highlighted.endContext,
         )
+    }
 
-        if (errorLevel == ErrorLevel.IMMEDIATE) throw error
-
-        errors.add(error)
-        return null
+    private fun validateNesting(rawTokens: List<Token>) {
+        var depth = 0
+        for (token in rawTokens) {
+            when (token.tokenType) {
+                TokenType.L_PAREN, TokenType.L_BRACKET, TokenType.L_BRACE -> {
+                    depth += 1
+                    if (depth > MAX_NESTING_DEPTH) throw parseError("Nesting too deep", token)
+                }
+                TokenType.R_PAREN, TokenType.R_BRACKET, TokenType.R_BRACE ->
+                    if (depth > 0) depth -= 1
+                else -> Unit
+            }
+        }
     }
 
     /**
@@ -1215,6 +1237,7 @@ open class Parser(
     ): List<Expression?> {
         reset()
         this.sql = sql ?: ""
+        validateNesting(rawTokens)
 
         val total = rawTokens.size
         val newChunks = mutableListOf(mutableListOf<Token>())
