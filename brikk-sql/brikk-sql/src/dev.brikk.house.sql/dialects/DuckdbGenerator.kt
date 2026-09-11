@@ -1077,7 +1077,7 @@ open class DuckdbGenerator(
     override fun lastdaySql(expression: LastDay): String {
         val date = expression.thisArg as? Expression ?: return functionFallbackSql(expression)
         val unit = expression.args["unit"] as? Expression
-        val weekStart = weekUnitToDow(unit)
+        val weekStart = if (unit is Var && unit.name.uppercase() == "WEEK") 1 else weekUnitToDow(unit)
 
         if (weekStart != null) {
             val dayOfWeek = Extract(
@@ -1740,7 +1740,7 @@ open class DuckdbGenerator(
 
     // sqlglot: generators.duckdb._week_unit_to_dow
     protected open fun weekUnitToDow(unit: Expression?): Int? {
-        if (unit is Var && unit.name.uppercase() in "ISOWEEK") return 1
+        if ((unit is Var || unit is Literal) && unit.name.uppercase() == "ISOWEEK") return 1
         if (unit is WeekStart) return WEEK_START_DAY_TO_DOW[unit.name.uppercase()]
         return null
     }
@@ -1750,6 +1750,7 @@ open class DuckdbGenerator(
         dateExpr: Expression,
         startDow: Int,
         preserveStartDay: Boolean = false,
+        castToDate: Boolean = true,
     ): Expression {
         val shiftDays = if (startDow == 7) 1 else 1 - startDow
         val truncated: Expression = Anonymous(
@@ -1759,7 +1760,11 @@ open class DuckdbGenerator(
             )
         )
 
-        if (shiftDays == 0) return truncated
+        if (shiftDays == 0) {
+            return if (preserveStartDay && castToDate) {
+                Cast(args("this" to truncated, "to" to DataType(args("this" to DType.DATE))))
+            } else truncated
+        }
 
         val shift = Interval(
             args("this" to Literal.string(shiftDays.toString()), "unit" to Var(args("this" to "DAY")))
@@ -1774,12 +1779,9 @@ open class DuckdbGenerator(
                     "unit" to Var(args("this" to "DAY")),
                 )
             )
-            return Cast(
-                args(
-                    "this" to DateAdd(args("this" to truncated, "expression" to interval)),
-                    "to" to DataType(args("this" to DType.DATE)),
-                )
-            )
+            val restored = DateAdd(args("this" to truncated, "expression" to interval))
+            return if (castToDate) Cast(args("this" to restored, "to" to DataType(args("this" to DType.DATE))))
+            else restored
         }
 
         return truncated
@@ -1923,12 +1925,47 @@ open class DuckdbGenerator(
         return result
     }
 
+    open fun duckdbDatetimetruncSql(expression: DatetimeTrunc): String {
+        val value = Cast(args(
+            "this" to (expression.thisArg as? Expression)?.copy(),
+            "to" to DataType.build(DType.TIMESTAMP),
+        ))
+        val unit = expression.args["unit"] as? Expression
+        val weekStart = weekUnitToDow(unit)
+        return if (weekStart != null) {
+            sql(buildWeekTruncExpression(value, weekStart, preserveStartDay = true, castToDate = false))
+        } else {
+            func("DATE_TRUNC", unitToStr(expression), value)
+        }
+    }
+
     // sqlglot: DuckDBGenerator.timestamptrunc_sql
     open fun duckdbTimestamptruncSql(expression: TimestampTrunc): String {
+        val unitExpr = expression.args["unit"] as? Expression
+        val weekStart = weekUnitToDow(unitExpr)
+        if (weekStart != null) {
+            val zone = (expression.args["zone"] as? Expression)?.copy() ?: Literal.string("UTC")
+            var instant = (expression.thisArg as? Expression)?.copy() ?: return functionFallbackSql(expression)
+            instant = bigqueryTimestampLiteral(instant) ?: instant
+            val civil = AtTimeZone(args("this" to instant, "zone" to zone.copy()))
+            val truncated = buildWeekTruncExpression(
+                civil, weekStart, preserveStartDay = true, castToDate = false,
+            )
+            return sql(AtTimeZone(args("this" to Paren(args("this" to truncated)), "zone" to zone)))
+        }
         val unit = unitToStr(expression)
         val zone = expression.args["zone"] as? Expression
         var timestamp = expression.thisArg as? Expression
         val dateUnit = (unit as? Literal)?.name?.uppercase() in DATE_UNITS
+
+        if (dateUnit && zone == null && sourceDialect.equals("bigquery", ignoreCase = true)) {
+            val utc = Literal.string("UTC")
+            var instant = timestamp?.copy() ?: return functionFallbackSql(expression)
+            instant = bigqueryTimestampLiteral(instant) ?: instant
+            val civil = AtTimeZone(args("this" to instant, "zone" to utc.copy()))
+            val truncated = func("DATE_TRUNC", unit, civil)
+            return sql(AtTimeZone(args("this" to truncated, "zone" to utc)))
+        }
 
         if (dateUnit && zone != null) {
             // Double AT TIME ZONE needed for BigQuery compatibility
@@ -2594,6 +2631,7 @@ open class DuckdbGenerator(
             reg(AnyValue::class) { e -> dg().anyvalueSql(e as AnyValue) }
             reg(ArrayInsert::class) { e -> dg().arrayinsertSql(e as ArrayInsert) }
             reg(DateTrunc::class) { e -> dg().duckdbDatetruncSql(e as DateTrunc) }
+            reg(DatetimeTrunc::class) { e -> dg().duckdbDatetimetruncSql(e as DatetimeTrunc) }
             reg(TimestampTrunc::class) { e -> dg().duckdbTimestamptruncSql(e as TimestampTrunc) }
             reg(Encode::class) { e -> dg().encodeDecodeSql(e, "ENCODE") }
             reg(Decode::class) { e -> dg().encodeDecodeSql(e, "DECODE") }

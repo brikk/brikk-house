@@ -20,14 +20,6 @@ import kotlin.collections.List
 import kotlin.collections.Map
 import kotlin.reflect.KClass
 
-// sqlglot: dialect.unit_to_str (default "DAY")
-private fun spark2UnitToStr(expression: Expression, default: String = "DAY"): Expression? {
-    val unit = expression.args["unit"] as? Expression
-        ?: return if (default.isNotEmpty()) Literal.string(default) else null
-    if (unit is Placeholder || (unit !is Var && unit !is Literal)) return unit
-    return Literal.string(unit.name)
-}
-
 // sqlglot: dialect.is_parse_json
 private fun isParseJson(expression: Expression?): Boolean =
     expression is ParseJSON ||
@@ -263,7 +255,7 @@ open class Spark2Generator(
             reg(BitwiseLeftShift::class) { e -> sg().renameFuncSql("SHIFTLEFT", e) }
             reg(BitwiseRightShift::class) { e -> sg().renameFuncSql("SHIFTRIGHT", e) }
             reg(DateFromParts::class) { e -> sg().renameFuncSql("MAKE_DATE", e) }
-            reg(DateTrunc::class) { e -> func("TRUNC", e.thisArg, spark2UnitToStr(e)) }
+            reg(DateTrunc::class) { e -> func("TRUNC", e.thisArg, weekstartUnitToStr(e)) }
             reg(DayOfMonth::class) { e -> sg().renameFuncSql("DAYOFMONTH", e) }
             reg(DayOfWeek::class) { e -> sg().renameFuncSql("DAYOFWEEK", e) }
             reg(DayOfWeekIso::class) { e -> "((${func("DAYOFWEEK", e.thisArg)} % 7) + 1)" }
@@ -296,7 +288,7 @@ open class Spark2Generator(
             }
             reg(StrToDate::class) { e -> sg().strToDateSpark(e as StrToDate) }
             reg(StrToTime::class) { e -> func("TO_TIMESTAMP", e.thisArg, sg().formatTime(e)) }
-            reg(TimestampTrunc::class) { e -> func("DATE_TRUNC", spark2UnitToStr(e), e.thisArg) }
+            reg(TimestampTrunc::class) { e -> func("DATE_TRUNC", weekstartUnitToStr(e), e.thisArg) }
             reg(Trim::class) { e -> sg().sparkTrimSql(e as Trim) }
             reg(UnixToTime::class) { e -> sg().unixToTimeSpark(e as UnixToTime) }
             reg(VariancePop::class) { e -> sg().renameFuncSql("VAR_POP", e) }

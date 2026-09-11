@@ -14,24 +14,24 @@
 
 ---
 
-**116 actionable failing transpile assertions across 19 source-to-target routes.**
-Eight additional signed assertions are protected correctness divergences, documented
-in `docs/brikk-extensions.md` sections 28 and 30. They are not open BQ issues. BQ-36
+**100 actionable failing transpile assertions across 19 source-to-target routes.**
+Twelve additional signed assertions are protected correctness divergences, documented
+in `docs/brikk-extensions.md` sections 28, 30, and 32. They are not open BQ issues. BQ-36
 and BQ-37 are execution limitations with no current parity-ledger entries.
 
-## BigQuery as source (80)
+## BigQuery as source (64)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 49 |
-| bigquery -> spark | 6 |
+| bigquery -> duckdb | 39 |
+| bigquery -> spark | 3 |
 | bigquery -> presto | 2 |
 | bigquery -> bigquery | 6 |
 | bigquery -> trino | 1 |
-| bigquery -> hive | 4 |
+| bigquery -> hive | 3 |
 | bigquery -> postgres | 2 |
-| bigquery -> clickhouse | 4 |
-| bigquery -> mysql | 3 |
+| bigquery -> clickhouse | 3 |
+| bigquery -> mysql | 2 |
 | bigquery -> spark2 | 1 |
 | bigquery -> base | 2 |
 
@@ -54,13 +54,11 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-10, plus BQ-14, BQ-26, BQ-30, and BQ-34. Completed ASTRA history
+BQ-12, plus BQ-14, BQ-26, BQ-30, and BQ-34. Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
 | ID | Issue | Assertions |
 |---|---|---:|
-| BQ-11 | DuckDB temporal truncation and timezone handling | 10 |
-| BQ-12 | Diagnose unsupported week specifications | 6 |
 | BQ-13 | DuckDB array aggregation NULL handling and modifiers | 6 |
 | BQ-15 | DuckDB IN/NOT IN UNNEST NULL and empty-array semantics | 3 |
 | BQ-16 | DuckDB struct-array UNNEST field expansion | 7 |

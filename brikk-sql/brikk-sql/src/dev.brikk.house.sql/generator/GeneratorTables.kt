@@ -406,6 +406,7 @@ object GeneratorTables {
 
         // --- functions with special rendering ---
         reg(Extract::class) { e -> extractSql(e as Extract) }
+        reg(WeekStart::class) { e -> weekstartSql(e as WeekStart) }
         reg(LastDay::class) { e -> lastdaySql(e as LastDay) }
         reg(Trim::class) { e -> trimSql(e as Trim) }
         reg(Concat::class) { e -> concatSql(e as Concat) }

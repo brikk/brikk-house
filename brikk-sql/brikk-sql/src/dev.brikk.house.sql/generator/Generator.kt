@@ -3329,7 +3329,11 @@ open class Generator(
     // sqlglot: Generator.extract_sql (base: NORMALIZE_EXTRACT_DATE_PARTS=false)
     open fun extractSql(expression: Extract): String {
         val thisNode = expression.args["this"] as? Expression
-        val thisSql = if (extractAllowsQuotes) sql(thisNode) else thisNode?.name ?: ""
+        val thisSql = when {
+            extractAllowsQuotes -> sql(thisNode)
+            thisNode is WeekStart -> weekstartName(thisNode)
+            else -> thisNode?.name ?: ""
+        }
         val expressionSql = sql(expression, "expression")
         return "EXTRACT($thisSql FROM $expressionSql)"
     }
@@ -5247,6 +5251,31 @@ open class Generator(
     // sqlglot: Generator.partitionrange_sql
     open fun partitionrangeSql(expression: PartitionRange): String =
         "${sql(expression, "this")} TO ${sql(expression, "expression")}"
+
+    // sqlglot: Generator.weekstart_name
+    open fun weekstartName(expression: WeekStart): String {
+        val day = (expression.thisArg as? Expression)?.name?.uppercase().orEmpty()
+        // The base dialect week offset is Monday. BigQuery overrides WeekStart rendering.
+        if (day != "MONDAY") {
+            unsupported("WEEK($day) is not supported; falling back to the default week start day")
+        }
+        return "WEEK"
+    }
+
+    // sqlglot: Generator.weekstart_sql
+    open fun weekstartSql(expression: WeekStart): String {
+        val name = weekstartName(expression)
+        return if (expression.parent is DateTrunc) sql(Literal.string(name)) else name
+    }
+
+    // sqlglot: dialect.weekstart_unit_to_str
+    open fun weekstartUnitToStr(expression: Expression, default: String = "DAY"): Expression? {
+        val unit = expression.args["unit"] as? Expression
+            ?: return if (default.isNotEmpty()) Literal.string(default) else null
+        if (unit is WeekStart) return Literal.string(weekstartName(unit))
+        if (unit is Placeholder || (unit !is Var && unit !is Literal)) return unit
+        return Literal.string(unit.name)
+    }
 
     // sqlglot: Generator.chr_sql
     open fun chrSql(expression: Chr, name: String = "CHR"): String {

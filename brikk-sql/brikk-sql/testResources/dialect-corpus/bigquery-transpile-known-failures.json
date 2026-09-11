@@ -552,109 +552,36 @@
             "issue": "BQ-32"
         },
         {
-            "id": "assertion:v1:sha256:7edc49b87114d768bf04f9152bd1bdb8e3d2b8ecf32a85766a3deb05bb67af8c:1",
-            "case": "write|spark|SELECT DATE_TRUNC(d, WEEK(SUNDAY))",
-            "reason": "expected UnsupportedError, got `SELECT TRUNC(d, WEEK_START(SUNDAY))`",
-            "signature": "missing-error:v1:sha256:6268e7c6452495110bc59c95a251844784d07283449eb47a1ff9da544b268c39",
-            "issue": "BQ-12"
-        },
-        {
-            "id": "assertion:v1:sha256:d53a255a7830aa27ee4393160171ca4d9a76426fa31cc4a87d0a56fb660df864:1",
-            "case": "write|clickhouse|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
-            "reason": "expected UnsupportedError, got `SELECT dateTrunc(WEEK(SUNDAY), ts)`",
-            "signature": "missing-error:v1:sha256:1c7dd031bda2a107934ed3ae7fff119250e3efef0338db3c7cd13b808ad7a8ba",
-            "issue": "BQ-12"
-        },
-        {
             "id": "assertion:v1:sha256:d470c18c99ffece92a7996294f424b41b5bd691cdfe12d56cb20a7c2af32117c:1",
             "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATE_TRUNC('WEEK', ts + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), ts)`",
-            "signature": "sql-mismatch:v1:sha256:ecf76926e0f96f2de2bbc660a7aad762d6f279cac2c93938fb18097d0756a7c3",
-            "issue": "BQ-11"
-        },
-        {
-            "id": "assertion:v1:sha256:2623c546a2800f8cb2bc8d1ac65aafd9f79b10bd72cd3800b22030c333eeaa3d:1",
-            "case": "write|mysql|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
-            "reason": "expected UnsupportedError, got `SELECT DATE_ADD('0000-01-01 00:00:00', INTERVAL (TIMESTAMPDIFF(WEEK_START(SUNDAY), '0000-01-01 00:00:00', ts)) WEEK_START(SUNDAY))`",
-            "signature": "missing-error:v1:sha256:5da7c45bf6bbdba24da16da1d3a71475b00f1da3a625baf914391dbaf5d70e40",
-            "issue": "BQ-12"
-        },
-        {
-            "id": "assertion:v1:sha256:8427756a401b5f88740414dcd90d62986ae96e49a60ea9d5eb60caa9b73e5cc5:1",
-            "case": "write|spark|SELECT TIMESTAMP_TRUNC(ts, WEEK(SUNDAY))",
-            "reason": "expected UnsupportedError, got `SELECT DATE_TRUNC(WEEK_START(SUNDAY), ts)`",
-            "signature": "missing-error:v1:sha256:c80ced7fd40c17a2ede2f9cc09fdd1d5323a2fc0c3cfaefe489b3692c8ebf8ba",
-            "issue": "BQ-12"
-        },
-        {
-            "id": "assertion:v1:sha256:5763bffdf19a216dc66e2b61268d77a50347d85cf691a37ea1b6e74962b72fe1:1",
-            "case": "write|duckdb|SELECT DATETIME_TRUNC(dt, WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(dt AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(dt, WEEK_START(SUNDAY))`",
-            "signature": "sql-mismatch:v1:sha256:5a7d0375ca43fca06cfaa50be08eccf3ed676b1f325b3ec9e3f8141d9199fe08",
-            "issue": "BQ-11"
-        },
-        {
-            "id": "assertion:v1:sha256:ad975b63c6c9bff3b2b59f16b8e16de0541706255affe56d60b94b80ad023736:1",
-            "case": "write|hive|SELECT EXTRACT(WEEK(THURSDAY) FROM d)",
-            "reason": "expected UnsupportedError, got `SELECT EXTRACT(THURSDAY FROM d)`",
-            "signature": "missing-error:v1:sha256:0551f48c63519766f04326208827831471d4ccc82212c0fc5f201d8dbe1cf2ca",
-            "issue": "BQ-12"
-        },
-        {
-            "id": "assertion:v1:sha256:3a739b5eaa1a7adf5fab8bd0d5e231c5bdfad61651a899ccdf81b9e6d0c77b5a:1",
-            "case": "write|spark|SELECT EXTRACT(WEEK(THURSDAY) FROM d)",
-            "reason": "expected UnsupportedError, got `SELECT EXTRACT(THURSDAY FROM d)`",
-            "signature": "missing-error:v1:sha256:0551f48c63519766f04326208827831471d4ccc82212c0fc5f201d8dbe1cf2ca",
-            "issue": "BQ-12"
+            "reason": "brikk extension BQ-11, registry section 32: BigQuery TIMESTAMP_TRUNC defaults to UTC. Convert the instant to UTC civil time, truncate on the Sunday boundary, then convert back; the pin inherits DuckDB's session zone.",
+            "signature": "sql-mismatch:v1:sha256:6c1a5066dc15b47ed2c680cc7f5ec1383962466c6a686753d0509338d5cb06f1",
+            "issue": "BQ-11",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:a87056ab498135a1d80aefffd88c1ddc5ead810e6e36b6ffa1388260a4782906:1",
             "case": "write|duckdb|SELECT DATE_TRUNC(DATE '2008-11-10', ISOWEEK)",
-            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10' AS DATE))` actual `SELECT DATE_TRUNC('ISOWEEK', CAST('2008-11-10' AS DATE))`",
-            "signature": "sql-mismatch:v1:sha256:e4b30f0af6daa526263c5464f112ef270e9d19413ec2597c73521dd6b002d535",
-            "issue": "BQ-11"
+            "reason": "brikk extension BQ-11, registry section 32: cast DuckDB DATE_TRUNC back to DATE so BigQuery DATE_TRUNC keeps its result type. The pin returns a DuckDB TIMESTAMP for this ISOWEEK row.",
+            "signature": "sql-mismatch:v1:sha256:49ce4a6415950c6f6e5bbc6c8888bee846dae8ebf498b8f17d4c7679c14f332d",
+            "issue": "BQ-11",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:08384c5777214dfa82379405a2276005317abe9e8a4099b0972fafa251a619ba:1",
             "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00', WEEK)",
-            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:a69ea52cfdf33401b06b6ec1080d786d270a5fea0d6a895f9cf7e2dbde4f6e3f",
-            "issue": "BQ-11"
+            "reason": "brikk extension BQ-11, registry section 32: normalize the unzoned BigQuery literal to UTC and truncate through UTC civil time. The pin parses and bins it in DuckDB's session zone.",
+            "signature": "sql-mismatch:v1:sha256:8323d583c55875d0222882e5b01409cf0e8390eda037864358c96409996f20a9",
+            "issue": "BQ-11",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:dd5acb79a280300d17701b82db5236c6171fe8e37a932d268fa1bfba5f2c7e5f:1",
             "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00', WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:a69ea52cfdf33401b06b6ec1080d786d270a5fea0d6a895f9cf7e2dbde4f6e3f",
-            "issue": "BQ-11"
-        },
-        {
-            "id": "assertion:v1:sha256:f7656c7805361f7fb0ae780af74c1207a65179e1bdd11cb7dc522d0a90da2d48:1",
-            "case": "write|duckdb|SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK)",
-            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(CAST('2008-11-10 14:30:00' AS TIMESTAMP) AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK_START(SUNDAY))`",
-            "signature": "sql-mismatch:v1:sha256:cbe818aa0db4c0265b75f7552a2c91f745572a27181e96171613d5e5c408e023",
-            "issue": "BQ-11"
-        },
-        {
-            "id": "assertion:v1:sha256:fae0fa06316537988d8bf5ecf6f2530da19e624b76b58bc033164ae5c6c2d1b7:1",
-            "case": "write|duckdb|SELECT DATETIME_TRUNC(DATETIME '2008-11-10 14:30:00', WEEK(SUNDAY))",
-            "reason": "expected `SELECT DATE_TRUNC('WEEK', CAST(CAST('2008-11-10 14:30:00' AS TIMESTAMP) AS TIMESTAMP) + INTERVAL '1' DAY) + INTERVAL '-1' DAY` actual `SELECT DATETIME_TRUNC(CAST('2008-11-10 14:30:00' AS TIMESTAMP), WEEK_START(SUNDAY))`",
-            "signature": "sql-mismatch:v1:sha256:cbe818aa0db4c0265b75f7552a2c91f745572a27181e96171613d5e5c408e023",
-            "issue": "BQ-11"
-        },
-        {
-            "id": "assertion:v1:sha256:ac3b23849ac1a40ba43e02e82009a6a95437e35949818aea5c12280b2e4476e9:1",
-            "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00+00', WEEK, 'America/New_York')",
-            "reason": "expected `SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:f7f3f162b2ca22a2ff0dfa71818a1d22cb66800808f63b33f43217b2f9f0af9b",
-            "issue": "BQ-11"
-        },
-        {
-            "id": "assertion:v1:sha256:2d08d95ce2b3995753cb214d1904e755b2e97f1327e44b8985614a852b307dfa:1",
-            "case": "write|duckdb|SELECT TIMESTAMP_TRUNC(TIMESTAMP '2008-11-10 14:30:00+00', WEEK(SUNDAY), 'America/New_York')",
-            "reason": "expected `SELECT (DATE_TRUNC('WEEK', CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York' + INTERVAL '1' DAY) + INTERVAL '-1' DAY) AT TIME ZONE 'America/New_York'` actual `SELECT DATE_TRUNC(WEEK_START(SUNDAY), CAST('2008-11-10 14:30:00+00' AS TIMESTAMPTZ))`",
-            "signature": "sql-mismatch:v1:sha256:f7f3f162b2ca22a2ff0dfa71818a1d22cb66800808f63b33f43217b2f9f0af9b",
-            "issue": "BQ-11"
+            "reason": "brikk extension BQ-11, registry section 32: normalize the unzoned BigQuery literal to UTC and truncate through UTC civil time. The pin parses and bins it in DuckDB's session zone.",
+            "signature": "sql-mismatch:v1:sha256:8323d583c55875d0222882e5b01409cf0e8390eda037864358c96409996f20a9",
+            "issue": "BQ-11",
+            "status": "intentional-divergence"
         },
         {
             "id": "assertion:v1:sha256:4c50d16c6cd26faf58f87998f85ac5dd2007f9ae68ed06b85e361f35eb4dd53a:1",
@@ -683,13 +610,6 @@
             "reason": "expected `APPROX_QUANTILE(DISTINCT x, [0, 0.5, 1])` actual `APPROX_QUANTILES(DISTINCT CASE WHEN x IS NULL THEN NULL WHEN 2 IS NULL THEN NULL ELSE (x, 2) END)`",
             "signature": "sql-mismatch:v1:sha256:602ee7b071485014d69648f6962e7207a19bbeaf9a5292f5275a3f416b1d618b",
             "issue": "BQ-29"
-        },
-        {
-            "id": "assertion:v1:sha256:883ccf86dee6c1ca93870c39c59ae71b06a7e62de5632078dad86636436eed67:1",
-            "case": "write|duckdb|SELECT DATETIME_TRUNC('2023-01-01T01:01:01', HOUR)",
-            "reason": "expected `SELECT DATE_TRUNC('HOUR', CAST('2023-01-01T01:01:01' AS TIMESTAMP))` actual `SELECT DATETIME_TRUNC('2023-01-01T01:01:01', HOUR)`",
-            "signature": "sql-mismatch:v1:sha256:9ea7b616e536a263837f1b22e1f1f709289e8296a39e8e50edd3e552cb144140",
-            "issue": "BQ-11"
         },
         {
             "id": "assertion:v1:sha256:16dea63ad667e7c6bba2261f24cf07532a8ccd8e76b9c812bbf101c9b7ea320c:1",

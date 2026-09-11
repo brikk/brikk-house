@@ -167,26 +167,6 @@ open class StarrocksGenerator(
     open fun inlineArraySql(expression: Expression): String =
         "[${expressions(expression, dynamic = true, newLine = true, skipFirst = true, skipLast = true)}]"
 
-    // sqlglot: dialect.weekstart_unit_to_str — WeekStart nodes render to their week-start
-    // name; otherwise falls back to plain unit_to_str.
-    open fun weekstartUnitToStr(expression: Expression, default: String = "DAY"): Expression? {
-        val unit = expression.args["unit"]
-        if (unit is WeekStart) return Literal.string(weekstartName(unit))
-        return unitToStr(expression, default)
-    }
-
-    // sqlglot: Generator.weekstart_name (WEEK(<day>) is BigQuery-only; degrades to WEEK)
-    open fun weekstartName(expression: WeekStart): String {
-        val this_ = (expression.thisArg as? Expression)?.name?.uppercase() ?: "SUNDAY"
-        val dowFromWeekStartDay = WEEK_START_DAY_TO_DOW[this_]
-        // StarRocks does not override WEEK_OFFSET (base default 0 => Sunday, dow=7).
-        val dowFromWeekOffset = weekOffsetToDow(0)
-        if (dowFromWeekStartDay != dowFromWeekOffset) {
-            unsupported("WEEK($this_) is not supported; falling back to the default week start day")
-        }
-        return "WEEK"
-    }
-
     // sqlglot: generators.starrocks.st_distance_sphere
     open fun stDistanceSphereSql(expression: StDistance): String {
         val point1 = expression.thisArg

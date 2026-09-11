@@ -901,6 +901,29 @@ arguments. Source ASTs remain unchanged.
 literal/dynamic/empty MAKE_INTERVAL, and result types in DuckDB. All eighteen signed
 parity assertions now pass; no protected divergence was added.
 
+## 32. BigQuery temporal truncation types and zones (BQ-11, BQ-12)
+
+DuckDB truncation distinguishes DATE, civil DATETIME, and instant TIMESTAMP.
+DATE week truncation casts back to DATE. DATETIME uses unzoned TIMESTAMP. TIMESTAMP
+converts an instant to civil time in the requested zone, defaults that zone to UTC,
+applies the week-start shift, and converts the boundary back to an instant. Unzoned
+BigQuery timestamp literals are normalized to UTC before truncation.
+
+Four BQ-11 rows retain reviewed signatures: the unknown TIMESTAMP Sunday row, two
+equivalent unzoned timestamp-literal rows, and an ISOWEEK DATE row whose pin output
+has the wrong DuckDB result type. They are executed under UTC, New York, and Auckland
+sessions and excluded from actionable counts. Six other BQ-11 rows match the pin.
+
+WeekStart rendering now reports the pin's unsupported diagnostic for Spark,
+ClickHouse, MySQL, and Hive targets that cannot represent BigQuery custom week starts.
+Fallback SQL uses plain WEEK rather than malformed WEEK_START/WEEK(day)/weekday
+extract units. All six BQ-12 negative assertions pass. Native BigQuery week syntax
+and the all-weekday LAST_DAY behavior from section 31 remain unchanged.
+
+`BigqueryTemporalTruncationResultTest` executes every week start, ISOWEEK, NULLs,
+year boundaries, explicit zones, and result types. These are DuckDB checks, not live
+BigQuery verification. Upstream issue/PR status: not reported.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

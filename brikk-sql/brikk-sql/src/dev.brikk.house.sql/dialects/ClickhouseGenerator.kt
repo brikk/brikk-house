@@ -723,7 +723,7 @@ open class ClickhouseGenerator(
     // sqlglot: ClickHouseGenerator.timestamptrunc_sql — dialect.version defaults to
     // the latest, so the pre-23.12 lowercase rewrite is never taken
     open fun timestamptruncSql(expression: Expression): String {
-        val unit = unitToStr(expression)
+        val unit = weekstartUnitToStr(expression)
         return func("dateTrunc", unit, expression.thisArg, expression.args["zone"])
     }
 
