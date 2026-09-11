@@ -13,7 +13,7 @@ import kotlinx.serialization.json.put
 /**
  * Gate: every SQL in brikk-sql/brikk-sql/testResources/ast-corpus/<dialect>-serde.json is re-parsed
  * and re-generated through brikk's own dialect pipeline, and the *actual* output is fed to
- * the target engine's own parser via [SqlVerifiers]. A reject means the engine's native
+ * the target engine's own parser via [SqlOracles]. A reject means the engine's native
  * grammar does not accept SQL we emit for it — a real dialect bug.
  *
  * (The corpora's `generated` strings are the Python oracle's outputs; ours equal them
@@ -138,6 +138,15 @@ class VerifyCorpusGateTest {
     ) {
         check(ledger.engine == engine) { "ledger engine mismatch: ${ledger.engine} != $engine" }
 
+        val preflight = verifier.verify("SELECT 1")
+        if (!preflight.verified) {
+            println(
+                "VerifyCorpusGateTest[$label]: skipped ${sqls.size} cases; " +
+                    (preflight.warning ?: "verifier unavailable"),
+            )
+            return
+        }
+
         val dialect = Dialects.forName(engine)
         val ledgered = ledger.cases.associateBy { it.sql }
         // sql -> (generated, engine error)
@@ -155,15 +164,17 @@ class VerifyCorpusGateTest {
             // The corpora mix full statements with bare-expression fixtures (e.g.
             // `DAYNAME(x)`), so try the engine's statement grammar first and fall back to its
             // expression grammar. A reject means neither native entry point accepts the SQL.
-            val asStatement = runCatching { verifier.verify(generated) }.getOrElse { e ->
-                VerifyResult(false, "${e::class.simpleName}: ${e.message}")
+            val asStatement = verifier.verify(generated)
+            if (!asStatement.verified) {
+                fail("$engine verifier became unavailable during $label: ${summarize(asStatement)}")
             }
             val result = if (asStatement.accepted) {
                 asStatement
             } else {
-                runCatching { verifier.verifyExpression(generated) }.getOrElse { e ->
-                    VerifyResult(false, "${e::class.simpleName}: ${e.message}")
-                }
+                verifier.verifyExpression(generated)
+            }
+            if (!result.verified) {
+                fail("$engine expression verifier became unavailable during $label: ${summarize(result)}")
             }
             if (result.accepted) {
                 accepted += 1
@@ -220,7 +231,7 @@ class VerifyCorpusGateTest {
 
     /** Engine error message trimmed for the ledger (Doris "expecting {...}" lists run to kilobytes). */
     private fun summarize(result: VerifyResult): String {
-        val message = (result.error ?: "rejected without message").replace("\n", " ")
+        val message = (result.error ?: result.warning ?: "rejected without message").replace("\n", " ")
         val cut = message.take(160).let { if (message.length > 160) "$it…" else it }
         val position = result.line?.let { " (line ${result.line}, col ${result.col})" } ?: ""
         return cut + position

@@ -23,14 +23,16 @@ dependencies:
   # SQLSTATE discrimination. Zonky ships PG as a NATIVE binary (PostgreSQL 14.22) launched
   # as a subprocess plus the standard org.postgresql JDBC driver 42.7.x — nothing in the
   # hot path is JVM-version-sensitive, so JDK 25 is fine (the library itself is Java-8
-  # bytecode). The platform PG binary is downloaded to ~/.embedded-postgres-binaries on
-  # first boot and cached across runs; CI/offline consumers should warm that cache.
+  # bytecode). Platform archives are resolved from classpath jars and extracted under the
+  # embedded-PG temporary working directory.
   - io.zonky.test:embedded-postgres:2.2.2
   # The platform binary provider. embedded-postgres declares all four platforms with
   # runtime scope; Amper's compile classpath doesn't need them, but the runtime resolver
   # must include the one for this host (linux-amd64). Declared explicitly so it is present
   # regardless of transitive runtime-scope handling.
   - io.zonky.test.postgres:embedded-postgres-binaries-linux-amd64:14.22.0
+  - io.zonky.test.postgres:embedded-postgres-binaries-linux-arm64v8:14.22.0
+  - io.zonky.test.postgres:embedded-postgres-binaries-darwin-arm64v8:14.22.0
 
 test-dependencies:
   # The verify gate re-generates every corpus SQL through brikk's own parser+generator:
@@ -41,7 +43,7 @@ test-dependencies:
 
 settings:
   publishing:
-    # Explicit artifactId is required by Maven Central publishing (toolchain 0.11); equals the
+    # Explicit artifactId is required by Maven Central publishing; equals the
     # default (module name). Published coordinate: dev.brikk.house:brikk-sql-oracle.
     artifactId: brikk-sql-oracle
   jvm:
@@ -56,7 +58,7 @@ settings:
     version: 2.4.10
     serialization: json
   internal:
-    # excludeDependencies is per-module in Amper/Toolchain 0.11 (it does not propagate
+    # excludeDependencies is per-module in Kotlin Toolchain (it does not propagate
     # through the exported brikk-sql-verify dep), so re-declare the ShardingSphere Groovy
     # exclusion here too — otherwise this module (and the packaged artifact) re-pulls the
     # ~7.2 MB org.apache.groovy:groovy that only the unused inline-expression engine needs.

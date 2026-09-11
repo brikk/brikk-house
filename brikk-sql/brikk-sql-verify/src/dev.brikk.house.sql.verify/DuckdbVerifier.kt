@@ -31,7 +31,11 @@ import kotlinx.serialization.json.jsonPrimitive
  * contention matters. Call [close] to release the embedded database (optional; the JVM
  * exit reclaims it otherwise).
  */
-class DuckdbVerifier : SqlVerifier, AutoCloseable {
+class DuckdbVerifier internal constructor(
+    private val connect: () -> Connection,
+) : SqlVerifier, AutoCloseable {
+    constructor() : this({ DriverManager.getConnection("jdbc:duckdb:") })
+
     override val engine: String = "duckdb"
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -39,7 +43,7 @@ class DuckdbVerifier : SqlVerifier, AutoCloseable {
     private var lazyConnection: Connection? = null
 
     private val connection: Connection
-        get() = lazyConnection ?: DriverManager.getConnection("jdbc:duckdb:").also { lazyConnection = it }
+        get() = lazyConnection ?: connect().also { lazyConnection = it }
 
     /**
      * DuckDB has no standalone expression entry point, so the fragment is wrapped as
@@ -65,12 +69,16 @@ class DuckdbVerifier : SqlVerifier, AutoCloseable {
                     rs.getString(1)
                 }
             }
-        } catch (e: SQLException) {
-            // json_serialize_sql itself failed (it normally reports errors in-band).
-            return VerifyResult(accepted = false, error = e.message?.trim())
+        } catch (e: Exception) {
+            // The parse channel itself failed, so no grammar verdict was obtained.
+            return unavailable(e)
         }
 
-        val obj = json.parseToJsonElement(doc).jsonObject
+        val obj = try {
+            json.parseToJsonElement(doc).jsonObject
+        } catch (e: Exception) {
+            return unavailable(e)
+        }
         val isError = obj["error"]?.jsonPrimitive?.booleanOrNull == true
         if (!isError) return VerifyResult(accepted = true)
 
@@ -93,27 +101,24 @@ class DuckdbVerifier : SqlVerifier, AutoCloseable {
 
     /**
      * Parse + bind without executing. Grammar rejection surfaces as a `Parser Error:` prefix;
-     * any other failure (Binder/Catalog/Not implemented at bind time) means the parser
-     * accepted the SQL, which is what this oracle reports.
+     * known binder/catalog failures mean the parser accepted the SQL. Unexpected JDBC failures
+     * leave the result unverified.
      */
     private fun verifyByPrepare(sql: String): VerifyResult = try {
         connection.prepareStatement(sql).close()
         VerifyResult(accepted = true)
     } catch (e: SQLException) {
-        val message = e.message?.trim().orEmpty()
-        if (message.startsWith("Parser Error")) {
-            val m = LINE_MARKER.find(message)
-            VerifyResult(
-                accepted = false,
-                error = message,
-                line = m?.groupValues?.get(1)?.toIntOrNull(),
-                col = m?.groupValues?.get(2)?.toIntOrNull(),
-            )
-        } else {
-            // Bound-stage failure: the grammar accepted the statement.
-            VerifyResult(accepted = true)
-        }
+        classifyDuckdbPrepareFailure(e.message?.trim().orEmpty())
+    } catch (e: Exception) {
+        unavailable(e)
     }
+
+    private fun unavailable(error: Throwable): VerifyResult = VerifyResult(
+        accepted = false,
+        verified = false,
+        warning = "DuckDB verification was not performed: ${error::class.simpleName}: " +
+            (error.message?.trim() ?: "no detail"),
+    )
 
     /** Converts a 0-based character offset (json_serialize_sql "position") to 1-based line/col. */
     private fun lineColOf(sql: String, offset: Int): Pair<Int?, Int?> {
@@ -136,10 +141,30 @@ class DuckdbVerifier : SqlVerifier, AutoCloseable {
     }
 
     private companion object {
-        /** DuckDB JDBC error messages carry a `LINE n: ...` marker; column is best-effort. */
-        val LINE_MARKER = Regex("""LINE (\d+):\s*(?:(\d+))?""")
-
         /** Length of the `SELECT ` prefix used by [verifyExpression]. */
         const val WRAPPER_PREFIX = "SELECT ".length
     }
+}
+
+private val DUCKDB_LINE_MARKER = Regex("""(?m)^LINE (\d+):""")
+
+internal fun classifyDuckdbPrepareFailure(message: String): VerifyResult = when {
+    message.startsWith("Parser Error", ignoreCase = true) -> VerifyResult(
+        accepted = false,
+        error = message,
+        line = DUCKDB_LINE_MARKER.find(message)?.groupValues?.get(1)?.toIntOrNull(),
+    )
+    listOf(
+        "Binder Error",
+        "Catalog Error",
+        "Not implemented Error",
+        "IO Error: No files found that match the pattern",
+    )
+        .any { message.startsWith(it, ignoreCase = true) } -> VerifyResult(accepted = true)
+    else -> VerifyResult(
+        accepted = false,
+        verified = false,
+        warning = "DuckDB verification was not performed: unexpected prepare failure" +
+            if (message.isBlank()) "." else ": $message",
+    )
 }

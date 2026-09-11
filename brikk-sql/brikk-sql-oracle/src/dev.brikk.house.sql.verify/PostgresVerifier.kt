@@ -3,6 +3,7 @@ package dev.brikk.house.sql.verify
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import java.sql.Connection
 import java.sql.SQLException
+import org.postgresql.core.Parser
 import org.postgresql.util.PSQLException
 
 /**
@@ -39,7 +40,7 @@ import org.postgresql.util.PSQLException
  * ### SQLSTATE partition (PostgreSQL "Appendix A. PostgreSQL Error Codes")
  * Accepted=true means "the grammar parsed this". The curated [SEMANTIC_ACCEPT] set below is
  * the class of errors that can ONLY arise after a successful parse (name/type resolution,
- * catalog lookups, privilege checks, unsupported-but-parsable features). Everything in the
+ * catalog lookups and privilege checks). Everything in the
  * syntax family (`42601` and the parse-time subset of class 42) is a real grammar reject.
  *
  * Unknown/unlisted codes are treated **conservatively as accepted=false** ONLY for the
@@ -51,48 +52,69 @@ import org.postgresql.util.PSQLException
  * against the corpus rather than guessed permissive.
  *
  * ### Lifecycle & cost
- * Boot is expensive: the first [verify] launches a native PG process (`initdb` + `postgres`),
- * ~1–3s warm, plus a one-time ~tens-of-MB binary download to
- * `~/.embedded-postgres-binaries` on the very first run ever (cached across runs). Hold ONE
+ * Boot is expensive: the first [verify] extracts the classpath-provided native PG archive and
+ * launches `initdb` + `postgres` (~1-3s warm). Hold ONE
  * instance for the process/session; per-[verify] cost after boot is sub-millisecond. [verify]
  * is `@Synchronized` (single shared JDBC connection, like [DuckdbVerifier]). Call [close] to
  * stop the embedded server; the JVM shutdown reclaims it otherwise. If embedded Postgres cannot
  * be extracted, loaded, started, or connected on this host, [verify] does not throw: it returns
  * `verified=false` with a warning. That is deliberately distinct from parser rejection.
  */
-class PostgresVerifier : SqlVerifier, AutoCloseable {
+class PostgresVerifier internal constructor(
+    private val startEmbedded: () -> EmbeddedPostgres,
+) : SqlVerifier, AutoCloseable {
+    constructor() : this({ EmbeddedPostgres.builder().start() })
+
     override val engine: String = "postgres"
 
     private var embedded: EmbeddedPostgres? = null
     private var lazyConnection: Connection? = null
     private var unavailableReason: String? = null
+    private var closed = false
     private var counter = 0
 
     /** Starts embedded Postgres once; startup failure is host availability, not an SQL result. */
     private fun connectionOrNull(): Connection? {
         lazyConnection?.let { return it }
+        if (closed) return null
         unavailableReason?.let { return null }
         return try {
-            val pg = EmbeddedPostgres.builder().start()
+            val pg = startEmbedded()
             embedded = pg
             pg.postgresDatabase.connection.also { lazyConnection = it }
         } catch (error: Exception) {
-            markUnavailable(error)
+            markUnavailable("embedded Postgres could not start", error)
             null
         } catch (error: LinkageError) {
-            markUnavailable(error)
+            markUnavailable("embedded Postgres could not start", error)
             null
         }
     }
 
-    private fun markUnavailable(error: Throwable) {
-        runCatching { lazyConnection?.close() }
+    private fun markUnavailable(action: String, error: Throwable) {
+        try {
+            lazyConnection?.close()
+        } catch (_: Exception) {
+        }
         lazyConnection = null
-        runCatching { embedded?.close() }
+        try {
+            embedded?.close()
+        } catch (_: Exception) {
+        }
         embedded = null
-        unavailableReason = "PostgreSQL verification was not performed: embedded Postgres could not start " +
+        unavailableReason = "PostgreSQL verification was not performed: $action " +
             "(${error::class.simpleName}: ${error.message ?: "no detail"})."
     }
+
+    private fun unavailableResult(): VerifyResult = VerifyResult(
+        accepted = false,
+        verified = false,
+        warning = unavailableReason ?: if (closed) {
+            "PostgreSQL verification was not performed: verifier is closed."
+        } else {
+            "PostgreSQL verification was not performed: embedded Postgres is unavailable."
+        },
+    )
 
     /**
      * PG has no standalone expression parser over the wire, so the fragment is wrapped as
@@ -108,11 +130,18 @@ class PostgresVerifier : SqlVerifier, AutoCloseable {
 
     @Synchronized
     override fun verify(sql: String): VerifyResult {
-        val conn = connectionOrNull() ?: return VerifyResult(
-            accepted = false,
-            verified = false,
-            warning = unavailableReason ?: "PostgreSQL verification was not performed: embedded Postgres is unavailable.",
-        )
+        val statements = try {
+            Parser.parseJdbcSql(sql, true, false, true, false, false)
+        } catch (e: SQLException) {
+            return VerifyResult(accepted = false, error = e.message?.trim())
+        }
+        if (statements.size != 1) {
+            return VerifyResult(
+                accepted = false,
+                error = "PostgreSQL verification requires exactly one SQL statement; found ${statements.size}.",
+            )
+        }
+        val conn = connectionOrNull() ?: return unavailableResult()
         val name = "brikk_v_${counter++}"
         try {
             conn.createStatement().use { it.execute("PREPARE $name AS $sql") }
@@ -159,7 +188,13 @@ class PostgresVerifier : SqlVerifier, AutoCloseable {
      */
     private fun classify(sql: String, e: PSQLException): VerifyResult {
         val state = e.sqlState
-        if (state != null && state in SEMANTIC_ACCEPT) return VerifyResult(accepted = true)
+        if (state?.startsWith("08") == true) {
+            markUnavailable("connection failed", e)
+            return unavailableResult()
+        }
+        if (state?.startsWith("54") == true || state != null && state in SEMANTIC_ACCEPT) {
+            return VerifyResult(accepted = true)
+        }
 
         val server = e.serverErrorMessage
         // ServerErrorMessage.position is a 1-based char offset into the submitted SQL text.
@@ -190,11 +225,18 @@ class PostgresVerifier : SqlVerifier, AutoCloseable {
 
     @Synchronized
     override fun close() {
-        runCatching { lazyConnection?.close() }
+        try {
+            lazyConnection?.close()
+        } catch (_: Exception) {
+        }
         lazyConnection = null
-        runCatching { embedded?.close() }
+        try {
+            embedded?.close()
+        } catch (_: Exception) {
+        }
         embedded = null
-        unavailableReason = null
+        closed = true
+        unavailableReason = "PostgreSQL verification was not performed: verifier is closed."
     }
 
     private companion object {
@@ -209,7 +251,7 @@ class PostgresVerifier : SqlVerifier, AutoCloseable {
          *
          * Class 42 (Syntax Error or Access Rule Violation) — the *access-rule/resolution*
          * half only; `42601 syntax_error` is deliberately excluded (that is the parse reject).
-         * Class 22 (Data Exception), 0A (Feature Not Supported), 3D/3F (invalid catalog/schema
+         * Class 22 (Data Exception), 3D/3F (invalid catalog/schema
          * name), 55 (object-not-in-prerequisite-state), 53 (insufficient resources), 25
          * (invalid transaction state) are all post-parse conditions.
          */
@@ -256,9 +298,6 @@ class PostgresVerifier : SqlVerifier, AutoCloseable {
             "42883", // undefined_function
             "42P01", // undefined_table
             "42P02", // undefined_parameter
-            "42P22", // (also listed above; set dedups)
-            // --- Class 0A: parsable-but-unimplemented feature ---
-            "0A000", // feature_not_supported
             // --- Class 3D / 3F: catalog / schema name resolution ---
             "3D000", // invalid_catalog_name
             "3F000", // invalid_schema_name

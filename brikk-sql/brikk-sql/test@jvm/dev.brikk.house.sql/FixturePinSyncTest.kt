@@ -15,15 +15,13 @@ import kotlinx.serialization.json.jsonObject
  * TODO-sqlglot-catchup.md); the generators in `tools/` stamp `sqlglot_version` from
  * `git describe --tags` of `reference/sqlglot`.
  */
-const val SQLGLOT_PIN = "v30.17.0-93-gdcc36544a"
-
 /**
  * EVAL-05 (TODO-rectify-from-eval.md): fail loudly when any fixture is out of sync with the
  * pin. Before this test, a stale `v30.12.0` stamp sat unnoticed in two files and one generator
  * hardcoded its VERSION string, so "all gates green" could not be read as "matches the pin".
  *
  * Rules:
- *  - every top-level `sqlglot_version` (or legacy `version`) stamp must equal [SQLGLOT_PIN];
+ *  - every top-level `sqlglot_version` (or legacy `version`) stamp must equal [BrikkSql.SQLGLOT_PIN];
  *  - the oracle corpora (`ast-corpus`, dialect fixtures, lineage/qualify/scope corpora)
  *    must carry a stamp at all — a missing stamp is itself a failure;
  *  - brikk-side files (`*known-failures*.json` ledgers, brikk-native DataFusion fixtures,
@@ -64,16 +62,17 @@ class FixturePinSyncTest {
             val stamp = stampOf(obj)
             when {
                 stamp == null && isOracleDerived(rel) -> problems.add("$rel: oracle-derived fixture has no sqlglot_version stamp")
-                stamp != null && stamp != SQLGLOT_PIN -> problems.add("$rel: stamped '$stamp', pin is '$SQLGLOT_PIN'")
+                stamp != null && stamp != BrikkSql.SQLGLOT_PIN ->
+                    problems.add("$rel: stamped '$stamp', pin is '${BrikkSql.SQLGLOT_PIN}'")
                 stamp != null -> stamped += 1
             }
         }
 
-        println("FixturePinSync: $stamped fixtures stamped $SQLGLOT_PIN (of $checked JSON objects checked)")
+        println("FixturePinSync: $stamped fixtures stamped ${BrikkSql.SQLGLOT_PIN} (of $checked JSON objects checked)")
         assertTrue(stamped > 50, "suspiciously few stamped fixtures ($stamped) — did testResources move?")
         if (problems.isNotEmpty()) {
             fail(
-                "${problems.size} fixture(s) out of sync with SQLGLOT_PIN=$SQLGLOT_PIN " +
+                "${problems.size} fixture(s) out of sync with SQLGLOT_PIN=${BrikkSql.SQLGLOT_PIN} " +
                     "(regenerate with tools/*.py against reference/sqlglot @ pin, or bump the pin):\n" +
                     problems.joinToString("\n"),
             )

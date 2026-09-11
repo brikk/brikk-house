@@ -22,7 +22,7 @@ import org.apache.shardingsphere.sql.parser.api.SQLParserEngine
  *   on the classpath to load its DB-type SPI (declared in module.yaml).
  * - **ClickHouse:** imperfect — accepts invalid `SELECT FROM WHERE`, rejects valid `numbers(3)`,
  *   `PREWHERE`/`SETTINGS`, `{param:UInt32}`, and `CAST(x AS Nullable(String))`. For engine-exact
- *   ClickHouse verification use the chDB-backed `ClickhouseVerifier` in `brikk-sql-verify-chdb`.
+ *   ClickHouse verification use the chDB-backed `ClickhouseVerifier` in `brikk-sql-oracle`.
  *
  * ShardingSphere logs cosmetic `ANTLR Tool version 4.10.1 ... does not match runtime 4.13.2`
  * warnings on first parse; they are benign — the 5.5.2 grammars parse correctly under the

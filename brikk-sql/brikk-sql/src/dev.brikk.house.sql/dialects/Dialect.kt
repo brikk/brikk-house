@@ -343,17 +343,29 @@ object Dialects {
 }
 
 /**
- * sqlglot: sqlglot.transpile — parse under [read], generate under [write].
- * Single-statement convenience (Python returns a list over all statements).
+ * sqlglot: sqlglot.transpile. Parses and generates every non-empty statement in [sql].
  */
-fun transpile(sql: String, read: String = "", write: String = "", pretty: Boolean = false): String =
-    Dialects.forName(write).generate(
-        Dialects.forName(read).parseOne(sql),
-        pretty = pretty,
-        // source-aware generation: tell the target generator which dialect we parsed from so
-        // semantic-changing cross-dialect rewrites fire (and same-dialect stays faithful).
-        sourceDialect = read.ifBlank { null },
-    )
+fun transpileAll(sql: String, read: String = "", write: String = "", pretty: Boolean = false): List<String> {
+    val source = Dialects.forName(read)
+    val target = Dialects.forName(write)
+    return source.parse(sql).filterNotNull().filterNot { it is dev.brikk.house.sql.ast.Semicolon }.map { expression ->
+        target.generate(
+            expression,
+            pretty = pretty,
+            // Tell the target which dialect produced the AST so cross-dialect rewrites fire.
+            sourceDialect = read.ifBlank { null },
+        )
+    }
+}
+
+/** Single-statement convenience. Use [transpileAll] for SQL scripts. */
+fun transpile(sql: String, read: String = "", write: String = "", pretty: Boolean = false): String {
+    val statements = transpileAll(sql, read, write, pretty)
+    require(statements.size == 1) {
+        "transpile accepts exactly one SQL statement, found ${statements.size}; use transpileAll for scripts"
+    }
+    return statements.single()
+}
 
 /** sqlglot: Expression.sql(dialect=...) convenience. */
 fun Expression.sql(dialect: String = "", pretty: Boolean = false): String =

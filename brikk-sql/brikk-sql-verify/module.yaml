@@ -28,12 +28,12 @@ dependencies:
   # DuckDB function catalog).
   - org.duckdb:duckdb_jdbc:1.5.5.0
   # ANTLR runtime for the vendored Doris FE SQL parser. The parser jar itself
-  # (vendor/lib/doris-fe-sql-parser-*.jar) CANNOT be declared here: Amper 0.11 has no
+  # (vendor/lib/doris-fe-sql-parser-*.jar) CANNOT be declared here: Kotlin Toolchain has no
   # local-jar dependency kind (schema only knows Maven/catalog/BOM/module deps) and
   # rejects non-https repositories ("Non-https repositories are not supported"), so a
   # committed file:// Maven layout is out too. DorisVerifier loads the jar reflectively
   # via a URLClassLoader instead (see its KDoc). Swap to the org.apache.doris:fe-sql-parser
-  # coordinate once Doris publishes it (vendor/README.md says weeks from 2026-07).
+  # coordinate once Doris publishes it.
   # NOTE: trino-parser pulls antlr4-runtime 4.13.2, which overrides this declaration;
   # ANTLR 4.13.x runtimes are compatible with the 4.13.1-generated Doris parser.
   - org.antlr:antlr4-runtime:4.13.1
@@ -47,7 +47,7 @@ test-dependencies:
 
 settings:
   publishing:
-    # Explicit artifactId is required by Maven Central publishing (toolchain 0.11); equals the
+    # Explicit artifactId is required by Maven Central publishing; equals the
     # default (module name). Published coordinate: dev.brikk.house:brikk-sql-verify.
     artifactId: brikk-sql-verify
   jvm:
@@ -61,6 +61,6 @@ settings:
     # sharding-expression engine (InlineExpressionParser), which the SQL grammar/parse path
     # used by ShardingSphereVerifier never touches. Exclude it — the advisory verifier's
     # accept/reject suite stays green without it. (settings.internal.excludeDependencies:
-    # temporary Amper/Toolchain 0.11 mechanism for transitive exclusions, "<group>:<artifact>".)
+    # temporary Toolchain mechanism for transitive exclusions, "<group>:<artifact>".)
     excludeDependencies:
       - org.apache.groovy:groovy

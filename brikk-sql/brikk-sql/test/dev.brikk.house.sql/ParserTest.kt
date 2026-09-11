@@ -22,6 +22,7 @@ import dev.brikk.house.sql.dialects.Dialects
 import dev.brikk.house.sql.dialects.UnknownDialectException
 import dev.brikk.house.sql.dialects.sql
 import dev.brikk.house.sql.dialects.transpile
+import dev.brikk.house.sql.dialects.transpileAll
 import dev.brikk.house.sql.parser.ParseError
 import dev.brikk.house.sql.parser.TokenizerConfigs
 import dev.brikk.house.sql.parser.parseOne
@@ -80,6 +81,8 @@ class ParserTest {
             assertEquals(bad, e1.dialectName)
             assertFailsWith<UnknownDialectException>("transpile(read=$bad)") { transpile("SELECT 1", read = bad) }
             assertFailsWith<UnknownDialectException>("transpile(write=$bad)") { transpile("SELECT 1", write = bad) }
+            assertFailsWith<UnknownDialectException>("transpileAll(read=$bad)") { transpileAll("SELECT 1", read = bad) }
+            assertFailsWith<UnknownDialectException>("transpileAll(write=$bad)") { transpileAll("SELECT 1", write = bad) }
             assertFailsWith<UnknownDialectException>("sql($bad)") { parseOne("SELECT 1").sql(bad) }
             assertFailsWith<UnknownDialectException>("TokenizerConfigs($bad)") { TokenizerConfigs.forName(bad) }
             assertEquals(null, Dialects.forNameOrNull(bad))

@@ -1,11 +1,7 @@
 package dev.brikk.house.sql
 
-/**
- * Entry point for the brikk-sql library.
- *
- * Placeholder to anchor the module while the AST, parser, and dialect
- * packages take shape.
- */
+/** Published module metadata. */
 object BrikkSql {
     const val NAME: String = "brikk-sql"
+    const val SQLGLOT_PIN: String = "v30.17.0-93-gdcc36544a"
 }

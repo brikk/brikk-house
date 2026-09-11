@@ -6,8 +6,8 @@ name: Test
 # release.yml call this workflow first and refuse to publish unless it is green (EVAL-03,
 # TODO-rectify-from-eval.md). Those branches are excluded here so their gate runs once.
 #
-# Requirements satisfied by ubuntu-latest: linux-amd64 for the embedded PostgreSQL oracle
-# (zonky ships no arm64 binary), JDK 25 provisioned by the ./kotlin wrapper. chDB tests are
+# Requirements satisfied by ubuntu-latest: an embedded PostgreSQL platform archive and JDK 25
+# provisioned by the ./kotlin wrapper. chDB tests are
 # no-ops unless -Dbrikk.chdb.integrationLibrary is set. Packaging still builds the
 # pinned native-resource artifacts for local publication verification.
 

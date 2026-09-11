@@ -79,8 +79,8 @@ data class VerifyResult(
  */
 object SqlVerifiers {
     /**
-     * Returns a verifier for [name] (case-insensitive), or null when the engine is unsupported
-     * or its optional parser resource is unavailable.
+     * Returns a verifier for [name] (case-insensitive), or null when the engine is unsupported.
+     * A supported engine with an unavailable optional parser returns `verified=false` results.
      *
      * Supported engines: `"trino"`, `"duckdb"`, `"doris"`, `"postgres"`, `"mysql"`, `"hive"`,
      * `"clickhouse"`.
@@ -100,8 +100,7 @@ object SqlVerifiers {
      *   `EXPLAIN AST`) for offline ClickHouse fidelity checks.
      */
     fun forEngine(name: String): SqlVerifier? = when (name.lowercase()) {
-        // Null when the vendored parser jar can't be located (see DorisVerifier KDoc).
-        "doris" -> DorisVerifier.createOrNull()
+        "doris" -> DorisVerifier.createOrUnavailable()
         "trino" -> TrinoVerifier()
         "duckdb" -> DuckdbVerifier()
         // Advisory ShardingSphere grammar oracles (see ShardingSphereVerifier KDoc). The

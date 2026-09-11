@@ -12,8 +12,8 @@ import kotlin.test.assertTrue
  * (with the [PostgresVerifier] and its embedded-PG dependency) rather than brikk-sql-verify,
  * whose `SqlVerifiers.forEngine("postgres")` returns the advisory ShardingSphere oracle.
  *
- * All postgres cases share ONE embedded PG instance (booting a native server + one-time
- * binary download is expensive; ~1-3s per boot). See [pg].
+ * All postgres cases share ONE embedded PG instance because booting a native server costs
+ * roughly 1-3 seconds. See [pg].
  */
 class PostgresVerifierTest {
 
@@ -124,5 +124,64 @@ class PostgresVerifierTest {
         assertTrue(pg.verifyExpression("some_col + 1").accepted)
         val bad = pg.verifyExpression("1 +")
         assertFalse(bad.accepted)
+    }
+
+    @Test
+    fun postgresRejectsParseTimeFeatureNotSupportedErrors() {
+        val result = pg.verify("CREATE ASSERTION brikk_assertion CHECK (true)")
+        assertTrue(result.verified)
+        assertFalse(result.accepted)
+        assertTrue(result.error.orEmpty().startsWith("0A000"), result.error)
+    }
+
+    @Test
+    fun postgresAcceptsProgramLimitErrorsAfterParsing() {
+        val columns = (1..1700).joinToString(", ") { "$it AS c$it" }
+        val result = pg.verify("SELECT $columns")
+        assertTrue(result.accepted, result.error)
+    }
+
+    @Test
+    fun postgresRejectsMultipleStatementsBeforeStartup() {
+        var starts = 0
+        val verifier = PostgresVerifier {
+            starts += 1
+            error("must not start")
+        }
+        val result = verifier.verify("SELECT 1; SELECT 2")
+        assertTrue(result.verified)
+        assertFalse(result.accepted)
+        assertTrue(result.error.orEmpty().contains("exactly one SQL statement"))
+        assertEquals(0, starts)
+        assertTrue(pg.verify("SELECT ';' AS value").accepted)
+        assertTrue(pg.verify("SELECT ${'$'}tag${'$'};${'$'}tag${'$'} AS value").accepted)
+        assertTrue(pg.verify("SELECT 1 /* ; is not a statement boundary */").accepted)
+    }
+
+    @Test
+    fun postgresStartupFailureIsMemoizedAndCloseIsTerminal() {
+        var starts = 0
+        val unavailable = PostgresVerifier {
+            starts += 1
+            error("no postgres")
+        }
+        repeat(2) {
+            val result = unavailable.verify("SELECT 1")
+            assertFalse(result.verified)
+            assertFalse(result.accepted)
+            assertNotNull(result.warning)
+        }
+        assertEquals(1, starts)
+
+        var closedStarts = 0
+        val closed = PostgresVerifier {
+            closedStarts += 1
+            error("must not start")
+        }
+        closed.close()
+        val result = closed.verify("SELECT 1")
+        assertFalse(result.verified)
+        assertTrue(result.warning.orEmpty().contains("closed"))
+        assertEquals(0, closedStarts)
     }
 }

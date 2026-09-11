@@ -27,6 +27,7 @@ no platform-specific code.
 ```kotlin
 import dev.brikk.house.sql.parser.parseOne
 import dev.brikk.house.sql.dialects.transpile
+import dev.brikk.house.sql.dialects.transpileAll
 import dev.brikk.house.sql.dialects.sql
 
 // Parse (dialect-aware) → AST
@@ -38,6 +39,9 @@ ast.sql(dialect = "postgres", pretty = true)
 
 // One-shot transpile between dialects
 transpile("SELECT `col` FROM t LIMIT 5, 10", read = "mysql", write = "postgres")
+
+// Scripts are explicit; transpile() rejects multiple statements instead of dropping them
+transpileAll("SELECT 1; SELECT 2", read = "mysql", write = "postgres")
 ```
 
 See the [dialect list](../../README.md#dialects) for supported names and aliases.
