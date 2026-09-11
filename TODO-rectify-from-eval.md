@@ -9,15 +9,6 @@ and exact known-failure ledgers under `brikk-sql/brikk-sql/testResources/` are
 the behavioral oracle. Intentional divergences in `docs/brikk-extensions.md`
 are out of scope.
 
-## Native integration
-
-### EVAL-14 - chDB default tests do not load native code
-
-- [ ] Add a host-platform integration test or check that exercises the packaged
-  `libchdb.so` resource path in CI.
-- [ ] Fix the stale macOS library comment and use a private per-user extraction
-  directory with restrictive permissions.
-
 ## Hygiene
 
 ### EVAL-15 - small cleanup

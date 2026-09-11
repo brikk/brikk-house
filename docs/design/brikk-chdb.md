@@ -106,8 +106,9 @@ The narrow initial
 surface intentionally excludes the `*_rows_written` / `*_bytes_written` accessors
 that exist on current `main` but are not exported by that release.
 
-- Phase 0 loads exactly one `libchdb` through an explicit path. Classpath native
-  resource extraction is deferred until a platform artifact is present.
+- Load exactly one `libchdb` through an explicit path or the matching
+  `brikk-chdb-native-*` classpath artifact. Packaged resources are checksum-verified
+  and atomically extracted into a private per-user cache before loading.
 - Keep the native connection behind `ChdbSession`; serialize calls per session
   until upstream documents a stronger thread-safety contract.
 - Convert ABI/null/error values at this boundary and always destroy query results

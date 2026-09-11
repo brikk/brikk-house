@@ -7,11 +7,16 @@ apply:
 plugins:
   brikk-chdb-native-packaging: enabled
 
+test-dependencies:
+  - ../brikk-chdb
+
 settings:
   publishing:
     artifactId: brikk-chdb-native-linux-x64
   jvm:
     jdk:
       version: 25
+    test:
+      freeJvmArgs: ["--enable-native-access=ALL-UNNAMED"]
   kotlin:
     version: 2.4.10
