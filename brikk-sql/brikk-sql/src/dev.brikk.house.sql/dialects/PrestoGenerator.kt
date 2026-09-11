@@ -1423,7 +1423,13 @@ open class PrestoGenerator(
                 func("SPLIT", e.thisArg, e.args["expression"])
             }
             reg(Last::class) { e -> pg().firstLastSql(e) }
-            reg(LastDay::class) { e -> func("LAST_DAY_OF_MONTH", e.thisArg) }
+            reg(LastDay::class) { e ->
+                val unit = e.args["unit"] as? Expression
+                if (unit != null && unit.name.uppercase() != "MONTH") {
+                    unsupported("Date parts are not supported in LAST_DAY.")
+                }
+                func("LAST_DAY_OF_MONTH", e.thisArg)
+            }
             reg(Lateral::class) { e -> pg().explodeToUnnestSql(e as Lateral) }
             reg(Left::class) { e -> pg().leftToSubstringSql(e as Left) }
             // sqlglot: unsupported_args("ins_cost", "del_cost", "sub_cost", "max_dist")

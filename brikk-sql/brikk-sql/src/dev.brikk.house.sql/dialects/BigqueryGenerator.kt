@@ -541,6 +541,13 @@ open class BigqueryGenerator(
         return "${dataType}_$kind($this0, ${sql(interval)})"
     }
 
+    internal fun tsOrDsAddSql(expression: TsOrDsAdd): String {
+        val copy = expression.copy() as TsOrDsAdd
+        val timestamp = Cast(args("this" to (copy.thisArg as Expression).copy(), "to" to DataType.build(DType.DATETIME)))
+        copy.set("this", Cast(args("this" to timestamp, "to" to DataType.build(DType.DATE))))
+        return dateAddIntervalSql("DATE", "ADD", copy)
+    }
+
     companion object {
         // sqlglot: BigQuery.INVERSE_FORMAT_MAPPING = {v: k for k, v in FORMAT_MAPPING.items()}
         // (the strict-time inverse fixup is applied inside Generator.formatTime).
@@ -750,6 +757,7 @@ open class BigqueryGenerator(
             reg(TsOrDsToTime::class) { e -> bg().renameFuncSql("TIME", e) }
             reg(TsOrDsToDatetime::class) { e -> bg().renameFuncSql("DATETIME", e) }
             reg(TsOrDsToTimestamp::class) { e -> bg().renameFuncSql("TIMESTAMP", e) }
+            reg(TsOrDsAdd::class) { e -> bg().tsOrDsAddSql(e as TsOrDsAdd) }
             reg(Unhex::class) { e -> bg().renameFuncSql("FROM_HEX", e) }
             reg(UnixDate::class) { e -> bg().renameFuncSql("UNIX_DATE", e) }
             reg(Uuid::class) { _ -> "GENERATE_UUID()" }

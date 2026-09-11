@@ -20,13 +20,6 @@
             "issue": "BQ-35"
         },
         {
-            "id": "assertion:v1:sha256:01a37d844d410c1e09c75287dfb561dfa897fc785d00520de55356e822d3c1c9:1",
-            "case": "write|bigquery|SELECT DATE_ADD(my_date_column, 1)",
-            "reason": "expected `SELECT DATE_ADD(CAST(CAST(my_date_column AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `SELECT TS_OR_DS_ADD(my_date_column, 1, DAY)`",
-            "signature": "sql-mismatch:v1:sha256:c97381726ae1270a2b848d07eb9f7dcdd9be359bbe4c1df21e43195e669ce2ca",
-            "issue": "BQ-8"
-        },
-        {
             "id": "assertion:v1:sha256:e064957e90f80e48faaa725cedf76c92fb5f5245473cd3c9313e0c01215e9640:1",
             "case": "write|spark, version=3.0.0|STRING_AGG(x, ', ')",
             "reason": "expected `ARRAY_JOIN(COLLECT_LIST(x), ', ')` actual `LISTAGG(x, ', ')`",

@@ -14,38 +14,38 @@
 
 ---
 
-**134 actionable failing transpile assertions across 19 source-to-target routes.**
+**116 actionable failing transpile assertions across 19 source-to-target routes.**
 Eight additional signed assertions are protected correctness divergences, documented
 in `docs/brikk-extensions.md` sections 28 and 30. They are not open BQ issues. BQ-36
 and BQ-37 are execution limitations with no current parity-ledger entries.
 
-## BigQuery as source (95)
+## BigQuery as source (80)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 55 |
-| bigquery -> spark | 10 |
+| bigquery -> duckdb | 49 |
+| bigquery -> spark | 6 |
 | bigquery -> presto | 2 |
 | bigquery -> bigquery | 6 |
 | bigquery -> trino | 1 |
 | bigquery -> hive | 4 |
-| bigquery -> postgres | 5 |
-| bigquery -> clickhouse | 5 |
-| bigquery -> mysql | 4 |
+| bigquery -> postgres | 2 |
+| bigquery -> clickhouse | 4 |
+| bigquery -> mysql | 3 |
 | bigquery -> spark2 | 1 |
 | bigquery -> base | 2 |
 
-## BigQuery as target (39)
+## BigQuery as target (36)
 
 The `bigquery -> bigquery` cases are counted only in the source table above.
 
 | Route | Items |
 |---|---:|
-| spark -> bigquery | 11 |
+| spark -> bigquery | 10 |
 | postgres -> bigquery | 7 |
 | duckdb -> bigquery | 7 |
 | presto -> bigquery | 6 |
-| hive -> bigquery | 3 |
+| hive -> bigquery | 1 |
 | trino -> bigquery | 2 |
 | clickhouse -> bigquery | 2 |
 | base -> bigquery | 1 |
@@ -54,14 +54,11 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-7, plus BQ-14, BQ-26, BQ-30, and BQ-34. Completed ASTRA history
+BQ-10, plus BQ-14, BQ-26, BQ-30, and BQ-34. Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
 | ID | Issue | Assertions |
 |---|---|---:|
-| BQ-8 | Temporal addition/subtraction and interval syntax | 8 |
-| BQ-9 | LAST_DAY month/week lowering | 9 |
-| BQ-10 | MAKE_INTERVAL lowering | 1 |
 | BQ-11 | DuckDB temporal truncation and timezone handling | 10 |
 | BQ-12 | Diagnose unsupported week specifications | 6 |
 | BQ-13 | DuckDB array aggregation NULL handling and modifiers | 6 |

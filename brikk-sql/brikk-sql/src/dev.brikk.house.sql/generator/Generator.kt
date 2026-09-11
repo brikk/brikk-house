@@ -159,6 +159,7 @@ open class Generator(
     open val createFunctionReturnAs: Boolean get() = true
     open val singleStringInterval: Boolean get() = false
     open val intervalAllowsPluralForm: Boolean get() = true
+    open val lastDaySupportsDatePart: Boolean get() = true
 
     // sqlglot: Generator.AUTO_REFRESH_BARE_INTERVALS — intervals in a REFRESH schedule
     // (AutoRefreshProperty) render without the INTERVAL keyword (ClickHouse).
@@ -5347,6 +5348,17 @@ open class Generator(
             expression.sqlName()
         }
         return func(name, *args.toTypedArray())
+    }
+
+    // sqlglot: Generator.lastday_sql
+    open fun lastdaySql(expression: LastDay): String {
+        if (lastDaySupportsDatePart) return functionFallbackSql(expression)
+
+        val unit = expression.args["unit"] as? Expression
+        if (unit != null && unit.name.uppercase() != "MONTH") {
+            unsupported("Date parts are not supported in LAST_DAY.")
+        }
+        return func("LAST_DAY", expression.thisArg)
     }
 
     // sqlglot bac1a897b: Generator._ml_sql and specialized BigQuery ML/AI TVFs.

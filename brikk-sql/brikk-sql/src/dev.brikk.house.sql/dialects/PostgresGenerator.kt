@@ -504,7 +504,9 @@ open class PostgresGenerator(
         }
 
         val this_ = sql(expr, "this")
-        val unit = expr.args["unit"]
+        val unit = (expr.args["unit"] as? Expression)?.let {
+            if (it is Literal || it is Var) Var(args("this" to it.name)) else it.copy()
+        }
 
         var e = expr.args["expression"] as? Expression
         if (e is Interval) {
@@ -865,22 +867,28 @@ open class PostgresGenerator(
 
     // sqlglot: dialect.no_last_day_sql
     open fun noLastDaySql(expression: LastDay): String {
-        val truncCurrDate = Anonymous(
+        val unit = expression.args["unit"] as? Expression
+        if (unit != null && unit.name.uppercase() != "MONTH") {
+            unsupported("Date parts are not supported in LAST_DAY.")
+        }
+
+        val truncCurrDate = DateTrunc(
+            args("unit" to Literal.string("MONTH"), "this" to (expression.thisArg as? Expression)?.copy())
+        )
+        val plusOneMonth = Add(
             args(
-                "this" to "date_trunc",
-                "expressions" to listOf(Literal.string("month"), expression.thisArg),
+                "this" to truncCurrDate,
+                "expression" to Interval(
+                    args("this" to Literal.string("1"), "unit" to Var(args("this" to "MONTH")))
+                ),
             )
         )
-        val plusOneMonth = Anonymous(
+        val minusOneDay = Sub(
             args(
-                "this" to "date_add",
-                "expressions" to listOf(truncCurrDate, Literal.number("1"), Literal.string("month")),
-            )
-        )
-        val minusOneDay = Anonymous(
-            args(
-                "this" to "date_sub",
-                "expressions" to listOf(plusOneMonth, Literal.number("1"), Literal.string("day")),
+                "this" to plusOneMonth,
+                "expression" to Interval(
+                    args("this" to Literal.string("1"), "unit" to Var(args("this" to "DAY")))
+                ),
             )
         )
 

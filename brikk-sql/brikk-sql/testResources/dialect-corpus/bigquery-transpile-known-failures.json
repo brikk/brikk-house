@@ -71,48 +71,6 @@
             "issue": "BQ-13"
         },
         {
-            "id": "assertion:v1:sha256:61eac23347fda458123d13ccbc647a2a8d2325b2dcc4a9d9a83d965173788bed:1",
-            "case": "write|duckdb|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
-            "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`",
-            "signature": "sql-mismatch:v1:sha256:842f2926bd8dd827d16a761162b527f8fe6249e73fc1350da06b987716e5420f",
-            "issue": "BQ-9"
-        },
-        {
-            "id": "assertion:v1:sha256:7aeff1c4e96f29613d089de9eefd5ef48b23eb9fcf59e75f7db266abab12c395:1",
-            "case": "write|clickhouse|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
-            "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS Nullable(DATE)))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS Nullable(DATE)), MONTH)`",
-            "signature": "sql-mismatch:v1:sha256:accb68d91a689ac224ee0e5de94989d7c0a2a7847c34badb4cd31ab8beb93929",
-            "issue": "BQ-9"
-        },
-        {
-            "id": "assertion:v1:sha256:1db2bd5c089e286aa3bd1536983a93abe12f76f575c6da93e40fa028acf8967f:1",
-            "case": "write|mysql|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
-            "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`",
-            "signature": "sql-mismatch:v1:sha256:842f2926bd8dd827d16a761162b527f8fe6249e73fc1350da06b987716e5420f",
-            "issue": "BQ-9"
-        },
-        {
-            "id": "assertion:v1:sha256:9511345ab0a1b38370ac7c54f50f5843f2e4516cd9fd168220d369545668e2b6:1",
-            "case": "write|postgres|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
-            "reason": "expected `SELECT CAST(DATE_TRUNC('MONTH', CAST('2008-11-25' AS DATE)) + INTERVAL '1 MONTH' - INTERVAL '1 DAY' AS DATE)` actual `SELECT CAST(DATE_SUB(DATE_ADD(DATE_TRUNC('month', CAST('2008-11-25' AS DATE)), 1, 'month'), 1, 'day') AS DATE)`",
-            "signature": "sql-mismatch:v1:sha256:089db36b13b062a02a2ed702d2bd7ab70c192f164bc9fbb26a04f0a2b6c18912",
-            "issue": "BQ-9"
-        },
-        {
-            "id": "assertion:v1:sha256:cb1e81b4d4d442fa193a334db54ab860c19136a44eb808f88d89a8c7240c899f:1",
-            "case": "write|spark|SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)",
-            "reason": "expected `SELECT LAST_DAY(CAST('2008-11-25' AS DATE))` actual `SELECT LAST_DAY(CAST('2008-11-25' AS DATE), MONTH)`",
-            "signature": "sql-mismatch:v1:sha256:842f2926bd8dd827d16a761162b527f8fe6249e73fc1350da06b987716e5420f",
-            "issue": "BQ-9"
-        },
-        {
-            "id": "assertion:v1:sha256:2f31caa5095a327d78feec4dac9ecb8c9cc7b748d1b87c4ec78107ef042720a4:1",
-            "case": "write|spark|SELECT TIMESTAMP_SUB(TIMESTAMP \"2008-12-25 15:30:00+00\", INTERVAL 10 MINUTE)",
-            "reason": "expected `SELECT CAST('2008-12-25 15:30:00+00' AS TIMESTAMP) - INTERVAL '10' MINUTE` actual `SELECT TIMESTAMP_SUB(CAST('2008-12-25 15:30:00+00' AS TIMESTAMP), '10', 'MINUTE')`",
-            "signature": "sql-mismatch:v1:sha256:3ba617dfc7e2a6f63d2e69b4bb750ccfdf2703fefa054ff97b6aa4c31d9b0d89",
-            "issue": "BQ-8"
-        },
-        {
             "id": "assertion:v1:sha256:653faaaee72c1a889a4c47f080f11ea25864abd1148c32de5a69457f672ad129:1",
             "case": "write||LOWER(TO_HEX(x))",
             "reason": "expected `LOWER(HEX(x))` actual `LOWER_HEX(x)`",
@@ -316,20 +274,6 @@
             "issue": "BQ-15"
         },
         {
-            "id": "assertion:v1:sha256:5c06d16fd80528bff98484e98c4c534ae30ce8dbdda2b00cb75139d59ea7d362:1",
-            "case": "write|postgres|DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)",
-            "reason": "expected `CURRENT_DATE - INTERVAL '1 DAY'` actual `CURRENT_DATE - INTERVAL '1 'DAY''`",
-            "signature": "sql-mismatch:v1:sha256:0cbd6efebec531b4775d0a6dfecefd3a8fa64a5321b1ce7f80dd616c1949a226",
-            "issue": "BQ-8"
-        },
-        {
-            "id": "assertion:v1:sha256:fed3bf4e916e64ae32bcf83d132df2abb9f50f849f7a290a00a0fceda41e579f:1",
-            "case": "write|postgres|DATE_ADD(CURRENT_DATE(), INTERVAL -1 DAY)",
-            "reason": "expected `CURRENT_DATE + INTERVAL '-1 DAY'` actual `CURRENT_DATE + INTERVAL '-1 'DAY''`",
-            "signature": "sql-mismatch:v1:sha256:f8cde8fa155a5712a0e8dcf599153eb1c591a3447a3931d9f39f81947b08692a",
-            "issue": "BQ-8"
-        },
-        {
             "id": "assertion:v1:sha256:0aa580c8b32815d8f0dca988768ce93ce60ce9364e381270cb3307c386fbbf4e:1",
             "case": "read||SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL",
             "reason": "expected `SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL` actual `SELECT `u`.`user_email` AS `user_email`, `_q_0`.`d`.`user_id` AS `user_id`, `_q_1`.`account_id` AS `account_id` FROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `_q_0`, UNNEST(`_q_0`.`d`.`account_ids`) AS `_q_1` WHERE NOT `_q_1`.`account_id` IS NULL`",
@@ -372,13 +316,6 @@
             "reason": "expected `SELECT CAST('{\"arr\": [1, \"a\"]}' -> '$.arr' AS TEXT[])` actual `SELECT J_S_O_N_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')`",
             "signature": "sql-mismatch:v1:sha256:ed9b52d19e01a5e79e286045c29d6f567cb8ef2abaa1c9a873ec5615305c8641",
             "issue": "BQ-27"
-        },
-        {
-            "id": "assertion:v1:sha256:e328f904f5a6b81eab49d25538c4d4a378b0d1016ff96918db65f7819606f3d1:1",
-            "case": "write|duckdb|SELECT ts + MAKE_INTERVAL(1, 2, minute => 5, day => 3)",
-            "reason": "expected `SELECT ts + INTERVAL '1 year 2 month 5 minute 3 day'` actual `SELECT ts + MAKE_INTERVAL(1, 2, day => 3, minute => 5)`",
-            "signature": "sql-mismatch:v1:sha256:24cc8b25cedb2af0845120b200f59bdf072f12b17942fcbdaf905784b54a99e7",
-            "issue": "BQ-10"
         },
         {
             "id": "assertion:v1:sha256:14c128bb4182e431792194dfa716e9a7beb95b61c1c00f821b715662b0bb60ad:1",
@@ -615,34 +552,6 @@
             "issue": "BQ-32"
         },
         {
-            "id": "assertion:v1:sha256:8636d52aa54b85573d7547da339d8bb4e1d522c83cc527649314add3ce2639d2:1",
-            "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', WEEK(SUNDAY))",
-            "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((13 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK_START(SUNDAY))`",
-            "signature": "sql-mismatch:v1:sha256:c94892e4cb7c4a1940433e93e6aadb0ac821cc4a815cc4c8f18375a9b5cbcf9a",
-            "issue": "BQ-9"
-        },
-        {
-            "id": "assertion:v1:sha256:0dd7d75549c44b440ba1a70a605d3c8f04f33f9872a9f0ed76df23af379791a4:1",
-            "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', WEEK)",
-            "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((13 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK_START(SUNDAY))`",
-            "signature": "sql-mismatch:v1:sha256:c94892e4cb7c4a1940433e93e6aadb0ac821cc4a815cc4c8f18375a9b5cbcf9a",
-            "issue": "BQ-9"
-        },
-        {
-            "id": "assertion:v1:sha256:c800680e24e0e8871dc54be4e43104689f1cb5c40c66ff8127fd698c99e8b8be:1",
-            "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', WEEK(MONDAY))",
-            "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((7 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), WEEK_START(MONDAY))`",
-            "signature": "sql-mismatch:v1:sha256:96f211d094211a6afbe7fecd0325d23c7d7e8919164ed90a063cae660d9c8c37",
-            "issue": "BQ-9"
-        },
-        {
-            "id": "assertion:v1:sha256:1c8ae843677abe7aa6db13ec4ad6afe820e0b9c1032e01740bce995cae73035a:1",
-            "case": "write|duckdb|SELECT LAST_DAY(DATE '2008-11-10', ISOWEEK)",
-            "reason": "expected `SELECT CAST(CAST('2008-11-10' AS DATE) + INTERVAL ((7 - EXTRACT(DAYOFWEEK FROM CAST('2008-11-10' AS DATE))) % 7) DAY AS DATE)` actual `SELECT LAST_DAY(CAST('2008-11-10' AS DATE), ISOWEEK)`",
-            "signature": "sql-mismatch:v1:sha256:fc9a4aafe951d49ae2545907b904d92260cfed090159763e839557eff9294c9f",
-            "issue": "BQ-9"
-        },
-        {
             "id": "assertion:v1:sha256:7edc49b87114d768bf04f9152bd1bdb8e3d2b8ecf32a85766a3deb05bb67af8c:1",
             "case": "write|spark|SELECT DATE_TRUNC(d, WEEK(SUNDAY))",
             "reason": "expected UnsupportedError, got `SELECT TRUNC(d, WEEK_START(SUNDAY))`",
@@ -774,20 +683,6 @@
             "reason": "expected `APPROX_QUANTILE(DISTINCT x, [0, 0.5, 1])` actual `APPROX_QUANTILES(DISTINCT CASE WHEN x IS NULL THEN NULL WHEN 2 IS NULL THEN NULL ELSE (x, 2) END)`",
             "signature": "sql-mismatch:v1:sha256:602ee7b071485014d69648f6962e7207a19bbeaf9a5292f5275a3f416b1d618b",
             "issue": "BQ-29"
-        },
-        {
-            "id": "assertion:v1:sha256:e25bc80883fa068aa94e078084882a88ad7ef434779c23c5cef63305ee169c4c:1",
-            "case": "write|spark|SELECT DATETIME_ADD('2023-01-01T00:00:00', INTERVAL 1 MILLISECOND)",
-            "reason": "expected `SELECT '2023-01-01T00:00:00' + INTERVAL '1' MILLISECOND` actual `SELECT DATETIME_ADD('2023-01-01T00:00:00', '1', 'MILLISECOND')`",
-            "signature": "sql-mismatch:v1:sha256:d7d6f9ad2713701176517bfe9bec145841c2a0d5cb88a3be742b056265b60d42",
-            "issue": "BQ-8"
-        },
-        {
-            "id": "assertion:v1:sha256:aedeae4447b7268585a8f95e4a4819d49ce29a05a90420938faa98f0f7a357b4:1",
-            "case": "write|spark|SELECT DATETIME_SUB('2023-01-01T00:00:00', INTERVAL 1 MILLISECOND)",
-            "reason": "expected `SELECT '2023-01-01T00:00:00' - INTERVAL '1' MILLISECOND` actual `SELECT DATETIME_SUB('2023-01-01T00:00:00', '1', 'MILLISECOND')`",
-            "signature": "sql-mismatch:v1:sha256:1b6973b74c440f7ac1516461433c955953bfe07910626ab6b7322992f3a5207b",
-            "issue": "BQ-8"
         },
         {
             "id": "assertion:v1:sha256:883ccf86dee6c1ca93870c39c59ae71b06a7e62de5632078dad86636436eed67:1",

@@ -7,20 +7,6 @@
             "signature": "sql-mismatch:v1:sha256:8b364ff6689a027bdf137008831e7c03e78eae75eefcc924f6dd0d9a53bfef17",
             "issue": "BQ-7",
             "status": "intentional-divergence"
-        },
-        {
-            "id": "assertion:v1:sha256:41cb5aea7508a26a06b506c89b648607e1156c56785fc7c70d16b6e0569d638d:1",
-            "case": "write|bigquery|DATE_ADD('2020-01-01', 1)",
-            "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL 1 DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1, DAY)`",
-            "signature": "sql-mismatch:v1:sha256:98d2d305db4ed2326b1d76ec9416426e5ee61063636a3fccaf5cb35551b2ae0d",
-            "issue": "BQ-8"
-        },
-        {
-            "id": "assertion:v1:sha256:22255903b35986916c032ed9d0305f88c1b072d61f3d33a3025b87fa7a142857:1",
-            "case": "write|bigquery|DATE_SUB('2020-01-01', 1)",
-            "reason": "expected `DATE_ADD(CAST(CAST('2020-01-01' AS DATETIME) AS DATE), INTERVAL (1 * -1) DAY)` actual `TS_OR_DS_ADD('2020-01-01', 1 * -1, DAY)`",
-            "signature": "sql-mismatch:v1:sha256:66162edc24eec8e214091ee8d5f2e66211f3d756c18a2df631e7b0ae64f22030",
-            "issue": "BQ-8"
         }
     ]
 }

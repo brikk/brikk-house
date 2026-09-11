@@ -96,6 +96,7 @@ open class MysqlGenerator(
     override val supportsChangeColumn: Boolean get() = true
     override val intervalAllowsPluralForm: Boolean get() = false
     override val lockingReadsSupported: Boolean get() = true
+    override val lastDaySupportsDatePart: Boolean get() = false
     override val nullOrderingSupported: Boolean? get() = null
     override val joinHints: Boolean get() = false
     override val tableHints: Boolean get() = true

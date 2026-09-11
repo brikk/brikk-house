@@ -107,6 +107,7 @@ open class ClickhouseGenerator(
 
     override val selectKinds: Set<String> get() = emptySet()
     override val trySupported: Boolean get() = false
+    override val lastDaySupportsDatePart: Boolean get() = false
     override val supportsUescape: Boolean get() = false
     override val supportsAlterColumnIfExists: Boolean get() = true
     override val queryHints: Boolean get() = false

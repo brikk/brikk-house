@@ -881,6 +881,26 @@ execute NULLs, missing/full years, microseconds, named zones and civil/instant
 boundaries in DuckDB under UTC, New York and Auckland. These are not live BigQuery
 checks. Upstream issue/PR status: not reported.
 
+## 31. BigQuery interval and LAST_DAY guards (BQ-8 to BQ-10)
+
+Temporal ADD/SUB nodes render target-native interval operators without quoting the
+unit twice. BigQuery generation casts Hive/Spark date strings through DATETIME and
+back to DATE before DATE_ADD. Spark renders DATETIME and TIMESTAMP subtraction as
+binary interval arithmetic. PostgreSQL uses real interval units rather than string
+units, so negative amounts remain one valid interval literal.
+
+LAST_DAY drops the redundant MONTH argument for targets that do not support a date
+part. DuckDB lowers WEEK/WEEK(day)/ISOWEEK to a DATE plus weekday offset; PostgreSQL
+uses DATE_TRUNC plus month/day intervals. Presto/Trino diagnose unsupported non-month
+forms instead of silently returning month-end. MAKE_INTERVAL uses the compact literal
+form for integral constants and runtime interval components for dynamic or NULL
+arguments. Source ASTs remain unchanged.
+
+`BigqueryTemporalArithmeticResultTest` executes signed millisecond/second arithmetic.
+`BigqueryLastDayIntervalResultTest` executes month edges, every week start, NULLs,
+literal/dynamic/empty MAKE_INTERVAL, and result types in DuckDB. All eighteen signed
+parity assertions now pass; no protected divergence was added.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

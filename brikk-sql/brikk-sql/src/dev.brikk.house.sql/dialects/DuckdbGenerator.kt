@@ -72,6 +72,7 @@ open class DuckdbGenerator(
     override val joinHints: Boolean get() = false
     override val tableHints: Boolean get() = false
     override val queryHints: Boolean get() = false
+    override val lastDaySupportsDatePart: Boolean get() = false
     override val limitFetch: String get() = "LIMIT"
     override val structDelimiter: Pair<String, String> get() = "(" to ")"
     override val renameTableWithDb: Boolean get() = false
@@ -1070,6 +1071,94 @@ open class DuckdbGenerator(
         }
 
         return func("MAKE_DATE", yearExpr, monthExpr, dayExpr)
+    }
+
+    // sqlglot: generators.duckdb._last_day_sql
+    override fun lastdaySql(expression: LastDay): String {
+        val date = expression.thisArg as? Expression ?: return functionFallbackSql(expression)
+        val unit = expression.args["unit"] as? Expression
+        val weekStart = weekUnitToDow(unit)
+
+        if (weekStart != null) {
+            val dayOfWeek = Extract(
+                args("this" to Var(args("this" to "DAYOFWEEK")), "expression" to date.copy())
+            )
+            val daysToLast = Mod(
+                args(
+                    "this" to Paren(
+                        args(
+                            "this" to Sub(
+                                args(
+                                    "this" to Literal.number((weekStart + 6).toString()),
+                                    "expression" to dayOfWeek,
+                                )
+                            )
+                        )
+                    ),
+                    "expression" to Literal.number("7"),
+                )
+            )
+            val interval = Interval(
+                args("this" to daysToLast, "unit" to Var(args("this" to "DAY")))
+            )
+            return sql(
+                Cast(
+                    args(
+                        "this" to Add(args("this" to date.copy(), "expression" to interval)),
+                        "to" to DataType(args("this" to DType.DATE)),
+                    )
+                )
+            )
+        }
+
+        if (unit == null || unit.name.uppercase() == "MONTH") return func("LAST_DAY", date)
+
+        unsupported("Unsupported date part '${unit.name}' in LAST_DAY function")
+        return functionFallbackSql(expression)
+    }
+
+    // BigQuery MAKE_INTERVAL has no DuckDB function equivalent.
+    open fun makeintervalSql(expression: MakeInterval): String {
+        val parts = mutableListOf<Pair<String, Expression>>()
+        val supportedUnits = setOf("year", "month", "week", "day", "hour", "minute", "second")
+
+        for ((argKey, valueRaw) in expression.args) {
+            if (valueRaw == null) continue
+            val value = if (valueRaw is Kwarg) valueRaw.args["expression"] else valueRaw
+            val unit = if (valueRaw is Kwarg) {
+                (valueRaw.thisArg as? Expression)?.name?.lowercase() ?: argKey.lowercase()
+            } else {
+                argKey.lowercase()
+            }
+            val valueExpression = value as? Expression
+            if (unit !in supportedUnits || valueExpression == null) {
+                unsupported("DuckDB cannot preserve MAKE_INTERVAL unit '$unit'")
+                return functionFallbackSql(expression)
+            }
+            parts.add(unit to valueExpression)
+        }
+
+        if (parts.isEmpty()) {
+            return sql(Interval(args("this" to Literal.string("0 second"))))
+        }
+
+        if (parts.all { (_, value) -> value is Literal && !value.isString }) {
+            val literal = parts.joinToString(" ") { (unit, value) -> "${value.name} $unit" }
+            return sql(Interval(args("this" to Literal.string(literal))))
+        }
+
+        val intervals: List<Expression> = parts.map { (unit, value) ->
+            Interval(
+                args(
+                    "this" to value.copy(),
+                    "unit" to Var(args("this" to unit.uppercase())),
+                )
+            )
+        }
+        val combined = intervals.reduce { left, right ->
+            Add(args("this" to left, "expression" to right))
+        }
+        return sql(if (intervals.size == 1) combined else Paren(args("this" to combined)))
     }
 
     // sqlglot: DuckDBGenerator.timestampfromparts_sql
@@ -2405,6 +2494,8 @@ open class DuckdbGenerator(
             reg(SHA2Digest::class) { e -> dg().shaSql(e, "SHA256", isBinary = true) }
             reg(MD5Digest::class) { e -> func("UNHEX", func("MD5", e.thisArg)) }
             reg(DateFromParts::class) { e -> dg().datefrompartsSql(e as DateFromParts) }
+            reg(LastDay::class) { e -> dg().lastdaySql(e as LastDay) }
+            reg(MakeInterval::class) { e -> dg().makeintervalSql(e as MakeInterval) }
             reg(Datetime::class) { e -> dg().noDatetimeSql(e as Datetime) }
             reg(TimestampFromParts::class) { e ->
                 dg().timestampfrompartsSql(e as TimestampFromParts)
