@@ -443,6 +443,8 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         // node meta — the annotated-serde gates compare our Serde dumps exact-equal, so
         // an extra meta key would fail them. See AnnotateNullability.kt.
         val nullability = annotateNullability(annotated, inputs = inputs, dialect = dialectObj)
+        // Qualification quotes every output. Keep the case-sensitive names quoted
+        // in shapes too, so reusing them as inputs cannot fold distinct columns.
         val query = annotated.unnest()
         if (query is SetOperation) {
             val columns = typeAnnotator.getSetopColumns(query)
@@ -453,7 +455,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
                     is DType -> type.intoExpr()
                     is Expression -> type
                     else -> null
-                }), nullable = nullability.nullableOfOutput(query, index))
+                }), nullable = nullability.nullableOfOutput(query, index), quoted = dialectObj.caseSensitive(name))
             })
         }
         val selects = outermostSelect(annotated).selects.filterIsInstance<Expression>()
@@ -463,6 +465,7 @@ class SqlFragment(val sql: String, val dialect: String = "") {
                     name = sel.aliasOrName,
                     type = renderType(sel.type),
                     nullable = nullability.nullableOf(sel),
+                    quoted = dialectObj.caseSensitive(sel.aliasOrName),
                 )
             }
         )

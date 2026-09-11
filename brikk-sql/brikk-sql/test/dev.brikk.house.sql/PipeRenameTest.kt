@@ -205,6 +205,26 @@ class PipeRenameTest {
     }
 
     @Test
+    fun quotedOutputNamesSurviveReuseAsRenameInputs() {
+        val mixed = Shape(listOf(ColumnShape("id", "INT"), ColumnShape("ID", "TEXT", quoted = true)))
+        val inputs = ShapeCatalog(tables = mapOf("t" to mixed))
+        for (source in listOf(
+            "FROM t |> RENAME id AS renamed_id",
+            "SELECT id AS renamed_id, \"ID\" FROM t",
+            "SELECT id AS renamed_id, \"ID\" FROM t UNION ALL SELECT id, \"ID\" FROM t",
+        )) {
+            val output = SqlFragment(source, "postgres").outputShape(inputs)
+            assertEquals(listOf(false, true), output.columns.map { it.quoted }, source)
+            val slots = ShapeCatalog(tables = emptyMap(), slots = mapOf("source" to output))
+            val next = SqlFragment("FROM source() |> RENAME \"ID\" AS final_id", "postgres")
+            val final = next.outputShape(slots)
+            assertEquals(listOf("renamed_id", "final_id"), final.names(), source)
+            assertEquals(listOf("INT", "TEXT"), final.columns.map { it.type }, source)
+            assertFalse("RENAME" in next.toStandardSql("postgres", slots, expandStars = true), source)
+        }
+    }
+
+    @Test
     fun sourceNamesWithSpacesAndBackticksStayQuotedThroughExpansion() {
         val quoted = ShapeCatalog(tables = mapOf("t" to Shape.of("old name" to "INT", "odd`field" to "VARCHAR")))
         val fragment = SqlFragment("FROM t |> RENAME `old name` AS `new``name`", "doris")
