@@ -6,10 +6,9 @@ name: Test
 # release.yml call this workflow first and refuse to publish unless it is green (EVAL-03,
 # TODO-rectify-from-eval.md). Those branches are excluded here so their gate runs once.
 #
-# Requirements satisfied by ubuntu-latest: linux-amd64 for the embedded PostgreSQL oracle
-# (zonky ships no arm64 binary), JDK 25 provisioned by the ./kotlin wrapper. chDB tests are
-# no-ops unless -Dbrikk.chdb.integrationLibrary is set. Packaging still builds the
-# pinned native-resource artifacts for local publication verification.
+# Requirements satisfied by ubuntu-latest: an embedded PostgreSQL platform archive and JDK 25
+# provisioned by the ./kotlin wrapper. The Linux x64 chDB resource module executes its packaged
+# library during the normal test step; packaging also builds the other pinned native artifacts.
 
 on:
   push:
@@ -67,15 +66,13 @@ jobs:
       - name: Verify Maven publications locally
         run: ./kotlin publish mavenLocal
 
-      # On a red gate, the refreshed *-ledger-actual.json files are exactly what a developer
-      # needs to update the committed *-known-failures.json ledgers (see TODO-BUGS-*.md).
+      # On a red gate, build/ledger-actual contains the review artifacts needed to update
+      # committed *-known-failures.json ledgers (see TODO-BUGS-*.md).
       - name: Upload actual ledgers
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ledger-actual
-          path: |
-            **/*-ledger-actual.json
-            build/**/*-ledger-actual.json
+          path: build/ledger-actual/*-ledger-actual.json
           if-no-files-found: ignore
           retention-days: 14

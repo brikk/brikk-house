@@ -1,5 +1,5 @@
-# In-process chDB binding. The native library is deliberately supplied out-of-band in phase 0;
-# see docs/design/brikk-chdb.md for the packaging plan and ABI policy.
+# In-process chDB binding. Consumers add one matching brikk-chdb-native-* runtime artifact or
+# configure an explicit library path; see docs/design/brikk-chdb.md for the ABI policy.
 product: jvm/lib
 
 description: In-process Kotlin/JVM binding for the embedded chDB ClickHouse engine.

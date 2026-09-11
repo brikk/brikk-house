@@ -3,11 +3,13 @@ package dev.brikk.house.sql.verify
 import dev.brikk.house.sql.shape.SqlFragment
 import dev.brikk.house.sql.shape.certify
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import java.sql.SQLException
 
 class SqlVerifierTest {
 
@@ -209,12 +211,50 @@ class SqlVerifierTest {
         assertFalse(verifier.verifyExpression("1 +").accepted)
     }
 
+    @Test
+    fun duckdbInfrastructureFailuresAreUnavailableNotAccepted() {
+        val result = DuckdbVerifier { throw SQLException("Connection was closed") }.verify("SELECT 1")
+        assertFalse(result.accepted)
+        assertFalse(result.verified)
+        assertNotNull(result.warning)
+        assertNull(result.error)
+
+        for (prefix in listOf("Binder Error", "Catalog Error", "Not implemented Error")) {
+            assertTrue(classifyDuckdbPrepareFailure("$prefix: detail").accepted)
+        }
+        val parser = classifyDuckdbPrepareFailure("Parser Error: bad\nLINE 2: 123 invalid")
+        assertTrue(parser.verified)
+        assertFalse(parser.accepted)
+        assertEquals(2, parser.line)
+        assertNull(parser.col)
+        val unexpected = classifyDuckdbPrepareFailure("IO Error: disk unavailable")
+        assertFalse(unexpected.verified)
+        assertFalse(unexpected.accepted)
+    }
+
     // -- doris ----------------------------------------------------------------------------
 
     @Test
     fun dorisAcceptsValidSql() {
         val result = SqlVerifiers.forEngine("doris")!!.verify("SELECT a FROM t WHERE b = 1")
         assertTrue(result.accepted)
+    }
+
+    @Test
+    fun dorisRegistryReportsConfiguredJarFailuresAsUnavailable() {
+        val previous = System.getProperty("brikk.doris.parser.jar")
+        try {
+            System.setProperty("brikk.doris.parser.jar", "/definitely/missing/doris-parser.jar")
+            val verifier = DorisVerifier.createOrUnavailable()
+            val result = verifier.verify("SELECT 1")
+            assertEquals("doris", verifier.engine)
+            assertFalse(result.accepted)
+            assertFalse(result.verified)
+            assertContains(result.warning.orEmpty(), "brikk.doris.parser.jar")
+        } finally {
+            if (previous == null) System.clearProperty("brikk.doris.parser.jar")
+            else System.setProperty("brikk.doris.parser.jar", previous)
+        }
     }
 
     @Test

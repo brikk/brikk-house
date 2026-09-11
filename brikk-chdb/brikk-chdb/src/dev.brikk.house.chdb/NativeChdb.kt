@@ -7,10 +7,14 @@ import java.lang.foreign.MemorySegment
 import java.lang.foreign.SymbolLookup
 import java.lang.foreign.ValueLayout
 import java.lang.invoke.MethodHandle
-import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.channels.FileChannel
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
+import java.nio.file.LinkOption.NOFOLLOW_LINKS
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.PosixFilePermissions
 import java.security.MessageDigest
 import java.util.Properties
 
@@ -40,15 +44,16 @@ internal object NativeChdb {
         val requested = config.libraryPath ?: System.getProperty(Chdb.libraryPathProperty)
             ?.takeIf(String::isNotBlank)
             ?.let(Path::of)
-        val path = requested?.toAbsolutePath()?.normalize() ?: PackagedChdbNative.extractForCurrentHost()
+        val candidate = requested?.toAbsolutePath()?.normalize() ?: PackagedChdbNative.extractForCurrentHost()
             ?: throw unavailable(
                 "No compatible packaged chDB native resource was found for this host. Add the " +
                     "matching brikk-chdb-native-* runtime artifact, or set ${Chdb.libraryPathProperty} " +
                     "or ChdbConfig.libraryPath to libchdb.",
             )
-        if (!Files.isRegularFile(path)) {
-            throw unavailable("chDB native library does not exist or is not a regular file: $path")
+        if (!Files.isRegularFile(candidate)) {
+            throw unavailable("chDB native library does not exist or is not a regular file: $candidate")
         }
+        val path = candidate.toRealPath()
 
         loadedPath?.let { loaded ->
             if (loaded != path) {
@@ -95,10 +100,12 @@ internal object NativeChdb {
         )
 }
 
-/** Extracts a verified platform resource into a content-addressed temp directory for System.load. */
+/** Extracts a verified platform resource into a private content-addressed cache for System.load. */
 private object PackagedChdbNative {
     private const val resourceRoot = "META-INF/brikk/chdb/native"
     private val extractionLock = Any()
+    private val directoryPermissions = PosixFilePermissions.fromString("rwx------")
+    private val filePermissions = PosixFilePermissions.fromString("rw-------")
 
     fun extractForCurrentHost(): Path? = platformForCurrentHost()?.let(::extract)
 
@@ -112,25 +119,87 @@ private object PackagedChdbNative {
             ?: throw ChdbUnavailableException("Packaged chDB resource $base has no valid librarySha256")
         val library = properties.getProperty("library") ?: "libchdb.so"
         require(library == "libchdb.so") { "Unsupported packaged chDB library name: $library" }
-        val resource = Chdb::class.java.classLoader.getResourceAsStream("$base/$library")
-            ?: throw ChdbUnavailableException("Packaged chDB manifest exists but $base/$library is missing")
+        val destinationDirectory = secureCacheDirectory(expectedSha256)
+        val destination = destinationDirectory.resolve(library)
+        val lockFile = destinationDirectory.resolve(".extract.lock")
+        createPrivateFile(lockFile)
+        FileChannel.open(lockFile, StandardOpenOption.WRITE).use { channel ->
+            channel.lock().use {
+                if (Files.exists(destination, NOFOLLOW_LINKS)) {
+                    requirePrivateRegularFile(destination)
+                    check(sha256(destination) == expectedSha256) {
+                        "Cached chDB library checksum mismatch at $destination"
+                    }
+                    return@synchronized destination
+                }
 
-        val destination = Path.of(System.getProperty("java.io.tmpdir"), "brikk-chdb", expectedSha256, library)
-        if (Files.isRegularFile(destination) && sha256(destination) == expectedSha256) return@synchronized destination
-        Files.createDirectories(destination.parent)
-        val temporary = Files.createTempFile(destination.parent, "$library-", ".tmp")
-        try {
-            resource.use { input -> Files.newOutputStream(temporary).use(input::copyTo) }
-            check(sha256(temporary) == expectedSha256) { "Packaged chDB resource checksum mismatch for $platform" }
-            try {
-                Files.move(temporary, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-            } catch (_: AtomicMoveNotSupportedException) {
-                Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING)
+                val resource = Chdb::class.java.classLoader.getResourceAsStream("$base/$library")
+                    ?: throw ChdbUnavailableException("Packaged chDB manifest exists but $base/$library is missing")
+                val temporary = Files.createTempFile(
+                    destinationDirectory,
+                    "$library-",
+                    ".tmp",
+                    PosixFilePermissions.asFileAttribute(filePermissions),
+                )
+                try {
+                    resource.use { input -> Files.newOutputStream(temporary).use(input::copyTo) }
+                    check(sha256(temporary) == expectedSha256) {
+                        "Packaged chDB resource checksum mismatch for $platform"
+                    }
+                    Files.setPosixFilePermissions(temporary, filePermissions)
+                    Files.move(temporary, destination, StandardCopyOption.ATOMIC_MOVE)
+                    Files.setPosixFilePermissions(destination, filePermissions)
+                    destination
+                } finally {
+                    Files.deleteIfExists(temporary)
+                }
             }
-            destination
-        } finally {
-            Files.deleteIfExists(temporary)
         }
+    }
+
+    private fun secureCacheDirectory(digest: String): Path {
+        val configured = System.getenv("XDG_CACHE_HOME")?.takeIf { it.isNotBlank() }?.let(Path::of)
+        val cacheRoot = configured ?: Path.of(System.getProperty("user.home"), ".cache")
+        Files.createDirectories(cacheRoot)
+        check(Files.isDirectory(cacheRoot)) { "chDB cache root is not a directory: $cacheRoot" }
+        var directory = cacheRoot
+        for (part in listOf("brikk", "chdb", digest)) {
+            directory = directory.resolve(part)
+            createPrivateDirectory(directory)
+        }
+        return directory
+    }
+
+    private fun createPrivateDirectory(path: Path) {
+        if (!Files.exists(path, NOFOLLOW_LINKS)) {
+            try {
+                Files.createDirectory(path, PosixFilePermissions.asFileAttribute(directoryPermissions))
+            } catch (_: FileAlreadyExistsException) {
+                // A concurrent process created it; validate below.
+            }
+        }
+        check(Files.isDirectory(path, NOFOLLOW_LINKS) && !Files.isSymbolicLink(path)) {
+            "chDB cache path is not a private directory: $path"
+        }
+        Files.setPosixFilePermissions(path, directoryPermissions)
+    }
+
+    private fun createPrivateFile(path: Path) {
+        if (!Files.exists(path, NOFOLLOW_LINKS)) {
+            try {
+                Files.createFile(path, PosixFilePermissions.asFileAttribute(filePermissions))
+            } catch (_: FileAlreadyExistsException) {
+                // A concurrent process created it; validate below.
+            }
+        }
+        requirePrivateRegularFile(path)
+    }
+
+    private fun requirePrivateRegularFile(path: Path) {
+        check(Files.isRegularFile(path, NOFOLLOW_LINKS) && !Files.isSymbolicLink(path)) {
+            "chDB cache path is not a regular file: $path"
+        }
+        Files.setPosixFilePermissions(path, filePermissions)
     }
 
     private fun platformForCurrentHost(): String? {

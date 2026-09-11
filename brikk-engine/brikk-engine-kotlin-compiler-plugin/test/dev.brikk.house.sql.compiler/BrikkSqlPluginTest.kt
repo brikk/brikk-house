@@ -108,6 +108,150 @@ class BrikkSqlPluginTest {
         assertEquals("java.lang.Integer", result.classLoader.loadClass("demo.NullableUnionOut").getMethod("getX").returnType.name)
     }
 
+    @Test
+    fun `select star preserves partial inputs while explicit projections close them`() {
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            @BrikkTrait
+            interface HasEventId : Partial { val event_id: Long }
+
+            @BrikkSql
+            fun star(src: Rel<HasEventId>) = Sql.postgres("FROM src() |> SELECT *")
+
+            @BrikkSql
+            fun projected(src: Rel<HasEventId>) = Sql.postgres("FROM src() |> SELECT event_id")
+
+            @BrikkSql
+            fun aggregated(src: Rel<HasEventId>) = Sql.postgres("FROM src() |> AGGREGATE COUNT(*) AS n")
+
+            @BrikkSql
+            fun source() = Sql.postgres("FROM public.events")
+
+            @BrikkSql
+            fun closedStar(src: Rel<SourceOut>) = Sql.postgres("FROM src() |> SELECT *")
+            """.trimIndent(),
+        )
+
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        fun supers(name: String) = result.classLoader.loadClass("demo.$name").interfaces.map { it.simpleName }.toSet()
+        assertContains(supers("StarOut"), "Partial")
+        assertTrue("Shape" !in supers("StarOut"))
+        assertContains(supers("ProjectedOut"), "Shape")
+        assertContains(supers("AggregatedOut"), "Shape")
+        assertContains(supers("ClosedStarOut"), "Shape")
+    }
+
+    @Test
+    fun `functions that map to the same generated output type are rejected`() {
+        val sources = listOf(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql
+            fun rows(n: Long) = Sql.postgres("SELECT CAST(:n AS BIGINT) AS n")
+            @BrikkSql
+            fun rows(s: String) = Sql.postgres("SELECT CAST(:s AS TEXT) AS s")
+            """.trimIndent() to "demo.RowsOut",
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql
+            fun report() = Sql.postgres("SELECT 1 AS n")
+            @BrikkSql
+            fun Report() = Sql.postgres("SELECT 'x' AS s")
+            """.trimIndent() to "demo.ReportOut",
+        )
+
+        for ((source, outputType) in sources) {
+            val result = compile(source)
+            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+            assertContains(result.messages, "multiple @BrikkSql functions generate output type '$outputType'")
+            assertContains(result.messages, "rename them so each output type is unique")
+        }
+    }
+
+    @Test
+    fun `nested output shape is not substituted by a top-level generated output`() {
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            @BrikkTrait
+            interface HasId : Partial { val id: Int }
+
+            object Domain {
+                interface EventsOut : Shape, HasId
+            }
+
+            @BrikkTrait
+            interface HasSecret : Partial { val secret: String }
+
+            @BrikkSql
+            fun events() = Sql.postgres("SELECT 1 AS id, 'hidden' AS secret")
+
+            @BrikkSql
+            fun <T : HasId> identity(src: Rel<T>) = Sql.postgres("FROM ${'$'}src()")
+
+            @BrikkSql
+            fun reveal(src: Rel<HasSecret>) = Sql.postgres("FROM ${'$'}src() |> SELECT secret")
+
+            fun nested(): Rel<Domain.EventsOut> = Rel("SELECT 1 AS id", "postgres")
+            fun leak() = reveal(identity(nested()))
+            """.trimIndent(),
+        )
+
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "Argument type mismatch")
+        assertContains(result.messages, "Rel<HasSecret>")
+    }
+
+    @Test
+    fun `computed const sql interpolation is rejected before IR folding`() {
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            const val COLS = "CAST(1 AS BIGINT)" + " AS id"
+
+            @BrikkSql
+            fun q() = Sql.postgres("SELECT ${'$'}COLS")
+            """.trimIndent(),
+        )
+
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "computed const val 'COLS' cannot be interpolated as SQL; use a literal initializer")
+    }
+
+    @Test
+    fun `literal const sql interpolation stays consistent between FIR and IR`() {
+        val result = compile(
+            """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+
+            const val COLS = "CAST(1 AS BIGINT) AS id"
+
+            @BrikkSql
+            fun q() = Sql.postgres("SELECT ${'$'}COLS")
+
+            fun column(row: QOut): Long = row.id
+            fun storedSql(): String = q().sql
+            fun bindingNames(): Set<String> = q().bindings().keys
+            """.trimIndent(),
+        )
+
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        assertEquals("long", result.classLoader.loadClass("demo.QOut").getMethod("getId").returnType.name)
+        val main = result.classLoader.loadClass("demo.MainKt")
+        assertEquals("SELECT CAST(1 AS BIGINT) AS id", main.getMethod("storedSql").invoke(null))
+        assertEquals(emptySet<String>(), main.getMethod("bindingNames").invoke(null))
+    }
+
     // ------------------------------------------------------------------ schema file resolution
     //
     // The IDE runs the plugin with a working directory that is not the project root, and re-runs

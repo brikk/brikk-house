@@ -181,6 +181,30 @@ class PipeRenameTest {
     }
 
     @Test
+    fun renameRespectsCatalogQuotednessWithoutBypassingDialectCollisionChecks() {
+        val mixed = Shape(listOf(ColumnShape("id", "INT"), ColumnShape("ID", "TEXT", quoted = true)))
+        for ((source, inputs) in listOf(
+            "t" to ShapeCatalog(tables = mapOf("t" to mixed)),
+            "source()" to ShapeCatalog(tables = emptyMap(), slots = mapOf("source" to mixed)),
+        )) {
+            val fragment = SqlFragment("FROM $source |> RENAME \"ID\" AS renamed_id", "postgres")
+            val sql = fragment.toStandardSql("postgres", inputs, expandStars = true)
+            assertFalse("RENAME" in sql, sql)
+            val output = fragment.outputShape(inputs)
+            assertEquals(listOf("id", "renamed_id"), output.names())
+            assertEquals(listOf("INT", "TEXT"), output.columns.map { it.type })
+            val resolvedInputs = ShapeCatalog(tables = inputs.tables + inputs.slots)
+            assertEquals(output, SqlFragment(sql, "postgres").outputShape(resolvedInputs))
+            for (dialect in listOf("doris", "duckdb")) {
+                assertFailsWith<ShapeError>(dialect) {
+                    SqlFragment("FROM $source |> RENAME ID AS renamed_id", dialect)
+                        .toStandardSql(dialect, inputs, expandStars = true)
+                }
+            }
+        }
+    }
+
+    @Test
     fun sourceNamesWithSpacesAndBackticksStayQuotedThroughExpansion() {
         val quoted = ShapeCatalog(tables = mapOf("t" to Shape.of("old name" to "INT", "odd`field" to "VARCHAR")))
         val fragment = SqlFragment("FROM t |> RENAME `old name` AS `new``name`", "doris")

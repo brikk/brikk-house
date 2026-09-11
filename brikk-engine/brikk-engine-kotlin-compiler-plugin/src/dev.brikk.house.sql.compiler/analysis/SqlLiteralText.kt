@@ -13,8 +13,21 @@ object SqlLiteralText {
     private val IDENT = Regex("""[A-Za-z_][A-Za-z0-9_]*""")
 
     /** `(dialect, template)` or `null` when the text has no such call or the literal is not readable. */
-    fun parse(text: CharSequence, classify: (String) -> SqlPiece): Pair<String, SqlTemplate>? {
-        val match = SQL_CALL.find(text) ?: return null
+    fun parse(text: CharSequence, classify: (String) -> SqlPiece?): Pair<String, SqlTemplate>? {
+        var parsed: Pair<String, SqlTemplate>? = null
+        for (match in sqlCalls(text)) {
+            val candidate = parseCall(text, match, classify) ?: continue
+            if (parsed != null) return null
+            parsed = candidate
+        }
+        return parsed
+    }
+
+    private fun parseCall(
+        text: CharSequence,
+        match: MatchResult,
+        classify: (String) -> SqlPiece?,
+    ): Pair<String, SqlTemplate>? {
         val dialect = match.groupValues[1]
         var i = skipWs(text, match.range.last + 1)
         val (pieces, afterLiteral) = when {
@@ -37,6 +50,61 @@ object SqlLiteralText {
         return dialect to template
     }
 
+    /** Finds calls in Kotlin code, not call-like text in comments or literals. */
+    private fun sqlCalls(text: CharSequence): List<MatchResult> {
+        val calls = ArrayList<MatchResult>()
+        var i = 0
+        while (i < text.length) {
+            when {
+                text.startsWith("//", i) -> {
+                    i += 2
+                    while (i < text.length && text[i] != '\n' && text[i] != '\r') i++
+                }
+                text.startsWith("/*", i) -> {
+                    var depth = 1
+                    i += 2
+                    while (i < text.length && depth > 0) {
+                        when {
+                            text.startsWith("/*", i) -> { depth++; i += 2 }
+                            text.startsWith("*/", i) -> { depth--; i += 2 }
+                            else -> i++
+                        }
+                    }
+                }
+                text.startsWith("\"\"\"", i) -> {
+                    i += 3
+                    val close = text.indexOf("\"\"\"", i)
+                    i = if (close < 0) text.length else close + 3
+                }
+                text[i] == '"' || text[i] == '\'' -> {
+                    val quote = text[i++]
+                    while (i < text.length) {
+                        when (text[i]) {
+                            '\\' -> i = minOf(i + 2, text.length)
+                            quote -> { i++; break }
+                            else -> i++
+                        }
+                    }
+                }
+                text[i] == '`' -> {
+                    i++
+                    while (i < text.length && text[i] != '`') i++
+                    if (i < text.length) i++
+                }
+                else -> {
+                    val match = SQL_CALL.matchAt(text, i)
+                    if (match == null) {
+                        i++
+                    } else {
+                        calls += match
+                        i = match.range.last + 1
+                    }
+                }
+            }
+        }
+        return calls
+    }
+
     private fun skipWs(text: CharSequence, from: Int): Int {
         var i = from
         while (i < text.length && text[i].isWhitespace()) i++
@@ -44,12 +112,17 @@ object SqlLiteralText {
     }
 
     /** Accumulates literal text and `$` entries into pieces. */
-    private class Pieces(private val classify: (String) -> SqlPiece) {
+    private class Pieces(private val classify: (String) -> SqlPiece?) {
         val out = ArrayList<SqlPiece>()
         private val buf = StringBuilder()
         fun text(c: Char) { buf.append(c) }
         fun text(s: CharSequence) { buf.append(s) }
-        fun entry(name: String) { flush(); out += classify(name) }
+        fun entry(name: String): Boolean {
+            val piece = classify(name) ?: return false
+            flush()
+            out += piece
+            return true
+        }
         fun finish(): List<SqlPiece> { flush(); return out }
         private fun flush() { if (buf.isNotEmpty()) { out += SqlPiece.Text(buf.toString()); buf.setLength(0) } }
     }
@@ -66,12 +139,12 @@ object SqlLiteralText {
             if (close < 0) return null
             val inner = text.subSequence(i + 2, close).toString().trim()
             if (!IDENT.matches(inner)) return null
-            p.entry(inner)
+            if (!p.entry(inner)) return null
             return close + 1
         }
         if (next != null && (next == '_' || next.isLetter())) {
             val m = IDENT.find(text, i + 1)!!
-            p.entry(m.value)
+            if (!p.entry(m.value)) return null
             return m.range.last + 1
         }
         p.text('$')
@@ -79,7 +152,7 @@ object SqlLiteralText {
     }
 
     /** Kotlin raw string: opened by `"""`, closed by `"""`; extra quotes right after belong to the content. */
-    private fun rawString(text: CharSequence, start: Int, classify: (String) -> SqlPiece): Pair<List<SqlPiece>, Int>? {
+    private fun rawString(text: CharSequence, start: Int, classify: (String) -> SqlPiece?): Pair<List<SqlPiece>, Int>? {
         val contentStart = start + 3
         var close = text.indexOf("\"\"\"", contentStart)
         if (close < 0) return null
@@ -93,7 +166,7 @@ object SqlLiteralText {
     }
 
     /** Kotlin escaped string with the standard escapes. */
-    private fun escapedString(text: CharSequence, start: Int, classify: (String) -> SqlPiece): Pair<List<SqlPiece>, Int>? {
+    private fun escapedString(text: CharSequence, start: Int, classify: (String) -> SqlPiece?): Pair<List<SqlPiece>, Int>? {
         val p = Pieces(classify)
         var i = start + 1
         while (i < text.length) {

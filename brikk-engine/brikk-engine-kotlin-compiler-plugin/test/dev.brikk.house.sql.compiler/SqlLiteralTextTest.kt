@@ -85,4 +85,37 @@ class SqlLiteralTextTest {
         assertNull(parse("fun f() = other.pg(\"a\")"))
         assertNull(parse("fun f() = 42"))
     }
+
+    @Test
+    fun commentedOutCallsAreIgnored() {
+        val text = """
+            @BrikkSql
+            fun q() =
+                /* Previous version: Sql.mysql("SELECT 1 AS stale") */
+                Sql.postgres("SELECT 1 AS fresh")
+        """.trimIndent()
+        assertEquals("postgres" to "SELECT 1 AS fresh", parse(text))
+    }
+
+    @Test
+    fun callsInsideCommentsAndKotlinLiteralsAreIgnored() {
+        val text = """
+            @BrikkSql
+            fun q(): Any {
+                /* outer /* Sql.mysql("nested") */ comment */
+                val escaped = "Sql.mysql(\"string\") /* not a comment */"
+                val raw = $q Sql.mysql("raw") $q
+                val char = 'S'
+                val `Sql.mysql("identifier")` = escaped
+                // Sql.mysql("line")
+                return Sql.postgres("SELECT 1 AS fresh")
+            }
+        """.trimIndent().replace("// Sql.mysql(\"line\")\n", "// Sql.mysql(\"line\")\r\n")
+        assertEquals("postgres" to "SELECT 1 AS fresh", parse(text))
+    }
+
+    @Test
+    fun multipleExecutableCallsAreAmbiguous() {
+        assertNull(parse("fun q() { Sql.mysql(\"SELECT 1\"); return Sql.postgres(\"SELECT 2\") }"))
+    }
 }

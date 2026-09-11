@@ -6,6 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 
 class ClickhouseVerifierTest {
     @Test
@@ -24,10 +25,10 @@ class ClickhouseVerifierTest {
 
     @Test
     fun nativeGrammarSmokeTestWhenLibraryIsConfigured() {
-        // The same property used by brikk-chdb's integration test. Run with a v26.5.0 libchdb
-        // and --enable-native-access=ALL-UNNAMED; otherwise this lightweight test is a no-op.
-        val library = System.getProperty("brikk.chdb.integrationLibrary") ?: return
-        ClickhouseVerifier.create(ChdbConfig(libraryPath = Path.of(library))).use { verifier ->
+        // The same explicit-path property used by brikk-chdb's optional local integration test.
+        val library = System.getProperty("brikk.chdb.integrationLibrary")
+        assumeTrue(library != null, "brikk.chdb.integrationLibrary is not configured")
+        ClickhouseVerifier.create(ChdbConfig(libraryPath = Path.of(library!!))).use { verifier ->
             assertTrue(verifier.verify("SELECT number FROM numbers(3)").verified)
             assertTrue(verifier.verify("SELECT number FROM numbers(3)").accepted)
             assertFalse(verifier.verify("SELECT FROM WHERE").accepted)

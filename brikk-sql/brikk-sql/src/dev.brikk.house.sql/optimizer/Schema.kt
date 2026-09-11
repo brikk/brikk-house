@@ -209,6 +209,7 @@ class MappingSchema(
     dialect: Dialect? = null,
     val normalize: Boolean = true,
     udfMapping: Map<String, Any?>? = null,
+    val allowEmptyTables: Boolean = false,
 ) : AbstractMappingSchema(), Schema {
 
     val visible: MutableMap<String, Any?> = visible ?: LinkedHashMap()
@@ -256,6 +257,7 @@ class MappingSchema(
                 dialect = mappingSchema.dialect,
                 normalize = mappingSchema.normalize,
                 udfMapping = mappingSchema.udfMapping,
+                allowEmptyTables = mappingSchema.allowEmptyTables,
             )
     }
 
@@ -279,6 +281,7 @@ class MappingSchema(
         dialect: Dialect? = null,
         normalize: Boolean? = null,
         udfMapping: Map<String, Any?>? = null,
+        allowEmptyTables: Boolean? = null,
     ): MappingSchema =
         MappingSchema(
             schema = schema ?: deepMutable(mapping),
@@ -286,6 +289,7 @@ class MappingSchema(
             dialect = dialect ?: this.dialect,
             normalize = normalize ?: this.normalize,
             udfMapping = udfMapping ?: deepMutable(this.udfMapping),
+            allowEmptyTables = allowEmptyTables ?: this.allowEmptyTables,
         )
 
     // sqlglot: MappingSchema.add_table
@@ -416,6 +420,11 @@ class MappingSchema(
                 )
             }
             if (columns.isEmpty()) {
+                if (allowEmptyTables) {
+                    val normalizedKeys = keys.map { normalizeNamePart(it, isTable = true) }
+                    nestedSet(normalizedMapping, normalizedKeys, LinkedHashMap<String, Any?>())
+                    continue
+                }
                 throw SchemaError(
                     "Table ${keys.dropLast(1).joinToString(".")} must have at least one column"
                 )
@@ -482,7 +491,7 @@ class MappingSchema(
         val n = normalize ?: this.normalize
         val d = dialect ?: this.dialect
         val nameStr = if (name is String) name else (name as Expression).name
-        val cacheKey = listOf<Any?>(nameStr, d, isTable, n)
+        val cacheKey = listOf<Any?>(nameStr, (name as? Identifier)?.quoted, d, isTable, n)
         normalizedNameCache[cacheKey]?.let { return it }
 
         val result = normalizeName(name, dialect = d, isTable = isTable, normalize = n).name

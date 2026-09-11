@@ -123,6 +123,14 @@ object BrikkSqlFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common)
     context(context: CheckerContext, reporter: DiagnosticReporter)
     private fun checkOrThrow(declaration: FirNamedFunction) {
         val brikk = context.session.brikkSql
+        brikk.collidingOutputClassId(declaration.symbol)?.let { classId ->
+            reporter.reportOn(
+                declaration.source,
+                BrikkSqlDiagnostics.SQL_OUTPUT_NAME_COLLISION,
+                classId.asSingleFqName().asString(),
+            )
+            return
+        }
         val analysis = brikk.analysisOfFunction(declaration.symbol) ?: return
         val call = RawFir.sqlCall(declaration)
         val anchor = call?.arguments?.firstOrNull()?.source ?: call?.source ?: declaration.source

@@ -33,7 +33,7 @@ import kotlinx.serialization.json.put
  * set() of Column expressions whose order is hash-dependent and not portable.
  *
  * Failures must exactly match lineage-corpus/known-failures.json — no unledgered
- * failure, no stale entry. Actual failures are written to build/lineage-ledger-actual.json.
+ * failure, no stale entry. Actual failures are written to build/ledger-actual/lineage-ledger-actual.json.
  */
 class LineageCorpusTest : LedgerGate() {
 

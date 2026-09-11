@@ -730,6 +730,21 @@ class TypeAnnotator(
                 val quantile = e.args["quantile"] as? Expression
                 annotateByArgs(e, listOf("this"), array = quantile?.isType(DType.ARRAY) == true)
             }
+            is AnnotatorRef.JsonExtractScalar -> {
+                val pathType = (e.args["expression"] as? Expression)?.type as? DataType
+                if (pathType != null && DataType.ARRAY_TYPES.any { pathType.isType(it) }) {
+                    setType(
+                        e,
+                        DataType(args(
+                            "this" to DType.ARRAY,
+                            "expressions" to listOf(DataType(args("this" to DType.TEXT, "nested" to false))),
+                            "nested" to true,
+                        )),
+                    )
+                } else {
+                    setType(e, DType.TEXT)
+                }
+            }
             // sqlglot: spark2 _annotate_by_similar_args (CONCAT/LPAD/RPAD family).
             is AnnotatorRef.BySimilarArgs -> annotateBySimilarArgs(e, ref.keys)
             // sqlglot: exp.DataType.build("FixedString(16)", dialect="clickhouse")

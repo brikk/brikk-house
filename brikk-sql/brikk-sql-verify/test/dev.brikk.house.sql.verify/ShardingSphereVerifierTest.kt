@@ -69,7 +69,7 @@ class ShardingSphereVerifierTest {
 
         // Advisory limitation: the ClickHouse grammar false-ACCEPTS invalid `SELECT FROM WHERE`,
         // which is exactly why ClickHouse is advisory-only here (use the chDB ClickhouseVerifier
-        // in brikk-sql-verify-chdb for engine-exact fidelity). Not asserted as a rejection.
+        // in brikk-sql-oracle for engine-exact fidelity). Not asserted as a rejection.
     }
 
     // -- registry -------------------------------------------------------------------------

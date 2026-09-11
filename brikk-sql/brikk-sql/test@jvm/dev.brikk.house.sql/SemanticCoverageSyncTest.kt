@@ -23,8 +23,7 @@ import kotlin.test.assertTrue
 class SemanticCoverageSyncTest {
 
     private fun hazardPairFiles(): List<Pair<String, String>> {
-        val dir = File("testResources/semantics").takeIf { it.isDirectory }
-            ?: File("brikk-sql/brikk-sql/testResources/semantics")
+        val dir = File(testResourcesRoot(), "semantics")
         return dir.listFiles { f -> f.name.endsWith("-hazards.json") }!!
             .map { it.name.removeSuffix("-hazards.json") }
             .map { stem ->

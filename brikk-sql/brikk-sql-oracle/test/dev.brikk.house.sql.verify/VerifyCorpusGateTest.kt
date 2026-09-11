@@ -13,7 +13,7 @@ import kotlinx.serialization.json.put
 /**
  * Gate: every SQL in brikk-sql/brikk-sql/testResources/ast-corpus/<dialect>-serde.json is re-parsed
  * and re-generated through brikk's own dialect pipeline, and the *actual* output is fed to
- * the target engine's own parser via [SqlVerifiers]. A reject means the engine's native
+ * the target engine's own parser via [SqlOracles]. A reject means the engine's native
  * grammar does not accept SQL we emit for it — a real dialect bug.
  *
  * (The corpora's `generated` strings are the Python oracle's outputs; ours equal them
@@ -24,7 +24,7 @@ import kotlinx.serialization.json.put
  * Rejects must exactly match testResources/<dialect>-verify-known-failures.json, in both
  * directions: unledgered rejects fail the gate, and ledger entries that now pass are stale
  * and also fail the gate. The actual reject set is always written to
- * build/<dialect>-verify-ledger-actual.json for easy ledger regeneration.
+ * build/ledger-actual/<dialect>-verify-ledger-actual.json for review.
  */
 class VerifyCorpusGateTest {
 
@@ -138,6 +138,15 @@ class VerifyCorpusGateTest {
     ) {
         check(ledger.engine == engine) { "ledger engine mismatch: ${ledger.engine} != $engine" }
 
+        val preflight = verifier.verify("SELECT 1")
+        if (!preflight.verified) {
+            println(
+                "VerifyCorpusGateTest[$label]: skipped ${sqls.size} cases; " +
+                    (preflight.warning ?: "verifier unavailable"),
+            )
+            return
+        }
+
         val dialect = Dialects.forName(engine)
         val ledgered = ledger.cases.associateBy { it.sql }
         // sql -> (generated, engine error)
@@ -155,15 +164,17 @@ class VerifyCorpusGateTest {
             // The corpora mix full statements with bare-expression fixtures (e.g.
             // `DAYNAME(x)`), so try the engine's statement grammar first and fall back to its
             // expression grammar. A reject means neither native entry point accepts the SQL.
-            val asStatement = runCatching { verifier.verify(generated) }.getOrElse { e ->
-                VerifyResult(false, "${e::class.simpleName}: ${e.message}")
+            val asStatement = verifier.verify(generated)
+            if (!asStatement.verified) {
+                fail("$engine verifier became unavailable during $label: ${summarize(asStatement)}")
             }
             val result = if (asStatement.accepted) {
                 asStatement
             } else {
-                runCatching { verifier.verifyExpression(generated) }.getOrElse { e ->
-                    VerifyResult(false, "${e::class.simpleName}: ${e.message}")
-                }
+                verifier.verifyExpression(generated)
+            }
+            if (!result.verified) {
+                fail("$engine expression verifier became unavailable during $label: ${summarize(result)}")
             }
             if (result.accepted) {
                 accepted += 1
@@ -186,8 +197,7 @@ class VerifyCorpusGateTest {
                 }
             })
         }
-        val outDir = java.io.File("build").takeIf { it.isDirectory } ?: java.io.File(".")
-        val actualFile = java.io.File(outDir, "$label-verify-ledger-actual.json")
+        val actualFile = oracleLedgerActualFile("$label-verify-ledger-actual.json")
         actualFile.writeText(Json { prettyPrint = true }.encodeToString(JsonObject.serializer(), actualLedger))
 
         val unledgered = failures.keys - ledgered.keys
@@ -220,7 +230,7 @@ class VerifyCorpusGateTest {
 
     /** Engine error message trimmed for the ledger (Doris "expecting {...}" lists run to kilobytes). */
     private fun summarize(result: VerifyResult): String {
-        val message = (result.error ?: "rejected without message").replace("\n", " ")
+        val message = (result.error ?: result.warning ?: "rejected without message").replace("\n", " ")
         val cut = message.take(160).let { if (message.length > 160) "$it…" else it }
         val position = result.line?.let { " (line ${result.line}, col ${result.col})" } ?: ""
         return cut + position
@@ -228,20 +238,45 @@ class VerifyCorpusGateTest {
 
     /** Cross-module corpus files, read from the filesystem relative to repo root or module dir. */
     private fun corpusResource(path: String): String {
-        val candidates = listOf(
-            java.io.File("brikk-sql/brikk-sql/testResources/$path"),
-            java.io.File("../brikk-sql/testResources/$path"),
-        )
-        val file = candidates.firstOrNull { it.exists() }
-            ?: fail("corpus $path not found; tried ${candidates.map { it.absolutePath }}")
+        val file = java.io.File(oracleProjectRoot(), "brikk-sql/brikk-sql/testResources/$path")
+        if (!file.isFile) fail("corpus $path not found at ${file.absolutePath}")
         return file.readText()
     }
 
     private fun ledgerResource(path: String): String {
         val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: java.io.File("brikk-sql/brikk-sql-oracle/testResources/$path").takeIf { it.exists() }?.inputStream()
-            ?: java.io.File("testResources/$path").takeIf { it.exists() }?.inputStream()
+            ?: java.io.File(oracleProjectRoot(), "brikk-sql/brikk-sql-oracle/testResources/$path")
+                .takeIf { it.isFile }?.inputStream()
             ?: fail("ledger $path not found on classpath or filesystem")
         return stream.use { it.readBytes().decodeToString() }
     }
+}
+
+private const val LEDGER_OUT_PROPERTY = "brikk.ledgerOut"
+
+private fun oracleProjectRoot(): java.io.File {
+    val starts = listOf(
+        java.io.File(VerifyCorpusGateTest::class.java.protectionDomain.codeSource.location.toURI()),
+        java.io.File("").absoluteFile,
+    )
+    for (candidate in starts) {
+        val directory = if (candidate.isFile) candidate.parentFile else candidate
+        generateSequence(directory.canonicalFile) { it.parentFile }
+            .firstOrNull { java.io.File(it, "project.yaml").isFile }
+            ?.let { return it }
+    }
+    error("cannot locate project root from ${starts.map { it.absolutePath }}")
+}
+
+private fun oracleLedgerActualFile(name: String): java.io.File {
+    require(name == java.io.File(name).name && name.endsWith("-ledger-actual.json"))
+    val root = oracleProjectRoot()
+    val configured = System.getProperty(LEDGER_OUT_PROPERTY)
+    require(configured == null || configured.isNotBlank()) { "-$LEDGER_OUT_PROPERTY must not be blank" }
+    val requested = configured?.let { java.io.File(it) } ?: java.io.File(root, "build/ledger-actual")
+    val directory = (if (requested.isAbsolute) requested else java.io.File(root, configured!!)).canonicalFile
+    if (!directory.isDirectory && !directory.mkdirs() && !directory.isDirectory) {
+        error("cannot create ledger output directory ${directory.absolutePath}")
+    }
+    return java.io.File(directory, name)
 }

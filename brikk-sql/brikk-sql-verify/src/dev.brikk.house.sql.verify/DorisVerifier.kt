@@ -5,6 +5,7 @@ import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Verifies SQL against Apache Doris's own FE parser (the Nereids ANTLR grammar), using the
@@ -12,7 +13,7 @@ import java.nio.file.Paths
  * for provenance).
  *
  * ### Why reflection instead of a declared dependency
- * Doris does not (yet) publish `fe-sql-parser` to any public Maven repository, and Amper 0.11
+ * Doris does not (yet) publish `fe-sql-parser` to any public Maven repository, and Kotlin Toolchain
  * cannot depend on a local jar declaratively: its schema has no local-jar dependency kind and
  * it rejects non-https repositories (so a committed `file://` Maven layout doesn't work
  * either; `mavenLocal` would require a non-hermetic install step). Until the coordinate lands
@@ -25,8 +26,8 @@ import java.nio.file.Paths
  * jar themselves), then `org.apache.doris.sqlparser.DorisSqlParser` already on the classpath
  * (future Maven-published world), then a walk up from the working directory looking for
  * `vendor/lib/doris-fe-sql-parser-*.jar` (works from the repo root or any module directory —
- * i.e. for corpus gates and repo-local tooling). Use [createOrNull] (what [SqlVerifiers]
- * calls) to get null instead of an exception when none of these succeed.
+ * i.e. for corpus gates and repo-local tooling). [SqlVerifiers] returns an unavailable verifier
+ * with an actionable warning when none of these succeed.
  *
  * Cold start: one-time classloader creation plus ANTLR grammar class loading on the first
  * parse (~tens of ms). A single instance is safe to share across threads: `DorisSqlParser`
@@ -93,39 +94,96 @@ class DorisVerifier private constructor(
         private const val PARSE_EXCEPTION_CLASS = "org.apache.doris.nereids.exceptions.ParseException"
         private const val JAR_PROPERTY = "brikk.doris.parser.jar"
         private val POSITION = Regex("""line\s+(\d+),\s*pos\s+(\d+)""")
+        private val JAR_CLASSES = ConcurrentHashMap<Path, Class<*>>()
+
+        private data class Creation(val verifier: DorisVerifier? = null, val reason: String? = null)
 
         /** Returns a verifier, or null when the Doris parser jar cannot be located/loaded. */
-        fun createOrNull(): DorisVerifier? {
-            val parserClass = loadParserClass() ?: return null
-            return runCatching {
+        fun createOrNull(): DorisVerifier? = create().verifier
+
+        internal fun createOrUnavailable(): SqlVerifier {
+            val creation = create()
+            return creation.verifier ?: UnavailableDorisVerifier(
+                creation.reason ?: "Doris verification was not performed: parser unavailable.",
+            )
+        }
+
+        private fun create(): Creation {
+            val loaded = loadParserClass()
+            val parserClass = loaded.first ?: return Creation(reason = loaded.second)
+            return try {
                 val parser = parserClass.getDeclaredConstructor().newInstance()
-                DorisVerifier(
+                Creation(verifier = DorisVerifier(
                     parser = parser,
                     parseStatement = parserClass.getMethod("parseStatement", String::class.java),
                     parseExpression = parserClass.getMethod("parseExpression", String::class.java),
-                )
-            }.getOrNull()
+                ))
+            } catch (e: InvocationTargetException) {
+                val cause = e.targetException
+                if (cause is Error) throw cause
+                Creation(reason = unavailableReason("could not construct parser", cause))
+            } catch (e: Exception) {
+                Creation(reason = unavailableReason("could not construct parser", e))
+            }
         }
 
-        private fun loadParserClass(): Class<*>? {
+        private fun loadParserClass(): Pair<Class<*>?, String?> {
             val parent = DorisVerifier::class.java.classLoader
             // 1) Explicit jar path (editors/embedders).
             System.getProperty(JAR_PROPERTY)?.let { prop ->
-                val path = Paths.get(prop)
-                if (Files.isRegularFile(path)) {
-                    return runCatching { loadFromJar(path, parent) }.getOrNull()
+                val path = try {
+                    Paths.get(prop)
+                } catch (e: Exception) {
+                    return null to unavailableReason("invalid -D$JAR_PROPERTY path '$prop'", e)
+                }
+                if (!Files.isRegularFile(path)) {
+                    return null to "Doris verification was not performed: -D$JAR_PROPERTY='$prop' is not a regular file."
+                }
+                return try {
+                    loadFromJar(path, parent) to null
+                } catch (e: Exception) {
+                    null to unavailableReason("could not load -D$JAR_PROPERTY='$prop'", e)
                 }
             }
             // 2) Already on the classpath (once Doris publishes the coordinate).
-            runCatching { return Class.forName(PARSER_CLASS, false, parent) }
+            try {
+                return Class.forName(PARSER_CLASS, false, parent) to null
+            } catch (_: ClassNotFoundException) {
+                // Try the repo-local jar next.
+            } catch (e: Exception) {
+                return null to unavailableReason("could not inspect the application classpath", e)
+            }
             // 3) Repo-local vendored jar, found by walking up from the working directory.
-            val jar = findVendoredJar() ?: return null
-            return runCatching { loadFromJar(jar, parent) }.getOrNull()
+            val jar = try {
+                findVendoredJar()
+            } catch (e: Exception) {
+                return null to unavailableReason("could not search for the vendored parser jar", e)
+            } ?: return null to "Doris verification was not performed: parser class not found; " +
+                "set -D$JAR_PROPERTY=/path/to/doris-fe-sql-parser.jar."
+            return try {
+                loadFromJar(jar, parent) to null
+            } catch (e: Exception) {
+                null to unavailableReason("could not load vendored parser jar '$jar'", e)
+            }
         }
 
         private fun loadFromJar(jar: Path, parent: ClassLoader?): Class<*> {
-            val loader = URLClassLoader(arrayOf(jar.toUri().toURL()), parent)
-            return Class.forName(PARSER_CLASS, false, loader)
+            val real = jar.toRealPath()
+            JAR_CLASSES[real]?.let { return it }
+            synchronized(JAR_CLASSES) {
+                JAR_CLASSES[real]?.let { return it }
+                val loader = URLClassLoader(arrayOf(real.toUri().toURL()), parent)
+                try {
+                    return Class.forName(PARSER_CLASS, false, loader).also { JAR_CLASSES[real] = it }
+                } catch (error: Throwable) {
+                    try {
+                        loader.close()
+                    } catch (closeError: Exception) {
+                        error.addSuppressed(closeError)
+                    }
+                    throw error
+                }
+            }
         }
 
         private fun findVendoredJar(): Path? {
@@ -134,12 +192,29 @@ class DorisVerifier private constructor(
                 val lib = dir.resolve("vendor").resolve("lib")
                 if (Files.isDirectory(lib)) {
                     Files.newDirectoryStream(lib, "doris-fe-sql-parser-*.jar").use { stream ->
-                        stream.firstOrNull()?.let { return it }
+                        val jars = stream.toList().sortedBy { it.fileName.toString() }
+                        if (jars.size > 1) {
+                            throw IllegalStateException(
+                                "multiple Doris parser jars found in $lib; set -D$JAR_PROPERTY explicitly",
+                            )
+                        }
+                        jars.firstOrNull()?.let { return it }
                     }
                 }
                 dir = dir.parent
             }
             return null
         }
+
+        private fun unavailableReason(action: String, error: Throwable): String =
+            "Doris verification was not performed: $action (${error::class.simpleName}: " +
+                "${error.message ?: "no detail"})."
     }
+}
+
+private class UnavailableDorisVerifier(private val reason: String) : SqlVerifier {
+    override val engine: String = "doris"
+    override fun verify(sql: String): VerifyResult = unavailable()
+    override fun verifyExpression(sql: String): VerifyResult = unavailable()
+    private fun unavailable() = VerifyResult(accepted = false, verified = false, warning = reason)
 }

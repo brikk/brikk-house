@@ -28,7 +28,7 @@ import kotlinx.serialization.json.put
  *
  * Failures must be exactly the ledgered ones (annotate-corpus/known-failures-<name>
  * .json); the actual failure set is always written to
- * build/<name>-annotate-ledger-actual.json for regeneration.
+ * build/ledger-actual/<name>-annotate-ledger-actual.json for review.
  */
 class AnnotateTypesCorpusTest : LedgerGate() {
 

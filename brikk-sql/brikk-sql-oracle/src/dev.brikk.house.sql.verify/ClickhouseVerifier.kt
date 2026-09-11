@@ -16,9 +16,9 @@ import dev.brikk.house.chdb.ChdbOutputFormat
  * verifier has no catalog dependency; callers that need function name/arity evidence may layer
  * a catalog or a stronger analysis check on top, but neither is required for AST verification.
  *
- * A compatible `libchdb` is currently selected by [ChdbConfig.libraryPath] or the
- * `brikk.chdb.library` system property. No ClickHouse server, CLI, JDBC driver, or child process
- * is involved. Call [close] when the verifier is no longer needed.
+ * A compatible `libchdb` is selected by [ChdbConfig.libraryPath], the `brikk.chdb.library`
+ * system property, or a matching `brikk-chdb-native-*` classpath resource. No ClickHouse server,
+ * CLI, JDBC driver, or child process is involved. Call [close] when the verifier is no longer needed.
  */
 class ClickhouseVerifier private constructor(
     private val session: ChdbSession?,

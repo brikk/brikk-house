@@ -45,19 +45,31 @@ sealed interface TemplateOutcome {
  * (checkers); [SqlTemplateFir.read] uses the resolved symbol when a reference has one and
  * falls back to these name sets otherwise.
  */
+sealed interface ConstSqlText {
+    class Literal(val text: String) : ConstSqlText
+    data object Unsupported : ConstSqlText
+}
+
 class TemplateScope(
     val relParams: Set<String>,
     val otherParams: Set<String>,
     val locals: Set<String>,
-    /** `const val` by simple name -> its value as SQL text; `null` when not a const. */
-    val constByName: (String) -> String?,
+    /** `const val` by simple name; `null` when the name is not a const. */
+    val constByName: (String) -> ConstSqlText?,
 ) {
-    fun classify(name: String): SqlPiece = when (name) {
+    fun classify(name: String): SqlPiece? = when (name) {
         in locals -> SqlPiece.Bind(name)
         in relParams -> SqlPiece.Slot(name)
         in otherParams -> SqlPiece.Bind(name)
-        else -> constByName(name)?.let { SqlPiece.Const(it) } ?: SqlPiece.Bind(name)
+        else -> when (val const = constByName(name)) {
+            is ConstSqlText.Literal -> SqlPiece.Const(const.text)
+            ConstSqlText.Unsupported -> null
+            null -> SqlPiece.Bind(name)
+        }
     }
+
+    fun rejectionReason(name: String): String? =
+        if (constByName(name) == ConstSqlText.Unsupported) computedConstReason(name) else null
 }
 
 object SqlTemplateFir {
@@ -79,11 +91,7 @@ object SqlTemplateFir {
         is FirStringConcatenationCall -> {
             val pieces = ArrayList<SqlPiece>()
             for (entry in expr.arguments) {
-                val piece = classifyEntry(entry, scope) ?: return TemplateOutcome.Rejected(
-                    entry,
-                    "only a parameter, a local val, a property or a const val can be interpolated here; " +
-                        "extract this expression to a val",
-                )
+                val piece = classifyEntry(entry, scope) ?: return TemplateOutcome.Rejected(entry, rejectionReason(entry, scope))
                 pieces += if (piece is SqlPiece.Bind && entry is FirPropertyAccessExpression && bindName != null) {
                     SqlPiece.Bind(bindName(entry))
                 } else piece
@@ -125,7 +133,7 @@ object SqlTemplateFir {
                     return if (isRel) SqlPiece.Slot(name) else SqlPiece.Bind(name)
                 }
                 is FirPropertySymbol -> {
-                    if (symbol.isConst) constText(symbol)?.let { return SqlPiece.Const(it) }
+                    if (symbol.isConst) return constText(symbol)?.let { SqlPiece.Const(it) }
                     return SqlPiece.Bind(name)
                 }
                 else -> return null
@@ -133,6 +141,17 @@ object SqlTemplateFir {
         }
         // Raw (generation phase): classify by name.
         return scope.classify(name)
+    }
+
+    private fun rejectionReason(entry: FirExpression, scope: TemplateScope): String {
+        val access = entry as? FirPropertyAccessExpression
+        val reference = access?.calleeReference as? FirNamedReference
+        val name = reference?.name?.asString()
+        val symbol = (reference as? FirResolvedNamedReference)?.resolvedSymbol
+        if (name != null && symbol is FirPropertySymbol && symbol.isConst) return computedConstReason(name)
+        if (name != null) scope.rejectionReason(name)?.let { return it }
+        return "only a parameter, a local val, a property or a const val can be interpolated here; " +
+            "extract this expression to a val"
     }
 
     /** Value of a `const val` as SQL text (strings unquoted: the author writes the quotes). */
@@ -162,7 +181,7 @@ object SqlTemplateFir {
      * `const val` lookup by simple name: same package, then the file's explicit and star
      * imports. Companion/object constants are out of scope (bind instead).
      */
-    private fun lookupConst(session: FirSession, packageFqName: FqName, file: FirFile?, name: String): String? {
+    private fun lookupConst(session: FirSession, packageFqName: FqName, file: FirFile?, name: String): ConstSqlText? {
         val id = Name.identifier(name)
         val candidates = ArrayList<FqName>()
         candidates += packageFqName
@@ -173,8 +192,11 @@ object SqlTemplateFir {
         for (pkg in candidates) {
             val prop = session.symbolProvider.getTopLevelCallableSymbols(pkg, id)
                 .filterIsInstance<FirPropertySymbol>().firstOrNull() ?: continue
-            return if (prop.isConst) constText(prop) else null
+            return if (!prop.isConst) null else constText(prop)?.let { ConstSqlText.Literal(it) } ?: ConstSqlText.Unsupported
         }
         return null
     }
 }
+
+private fun computedConstReason(name: String): String =
+    "computed const val '$name' cannot be interpolated as SQL; use a literal initializer"

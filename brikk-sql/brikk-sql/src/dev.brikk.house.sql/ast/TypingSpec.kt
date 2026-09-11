@@ -113,6 +113,9 @@ sealed class AnnotatorRef {
      */
     object ApproxQuantileByArgs : AnnotatorRef()
 
+    /** DuckDB json_extract_string returns ARRAY<TEXT> when its path argument is a list. */
+    object JsonExtractScalar : AnnotatorRef()
+
     /**
      * spark2 _annotate_by_similar_args (CONCAT/LPAD/RPAD family, sqlglot/typing/spark2.py):
      * gather the args under [keys]; all-BINARY -> BINARY; else if any arg has a known,

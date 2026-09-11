@@ -32,6 +32,9 @@ object BrikkSqlDiagnostics : KtDiagnosticsContainer() {
     /** brikk-sql could not analyze the function's SQL. Arg: message. */
     val SQL_ANALYSIS_FAILED by error1<KtElement, String>()
 
+    /** Multiple `@BrikkSql` functions map to the same generated output class. Arg: class ID. */
+    val SQL_OUTPUT_NAME_COLLISION by error1<KtElement, String>()
+
     /** A `:name` placeholder has no matching parameter. Args: name, declared parameters. */
     val SQL_UNBOUND_PARAM by error2<KtElement, String, String>()
 
@@ -59,6 +62,11 @@ object BrikkSqlDiagnostics : KtDiagnosticsContainer() {
                 TO_STRING,
             )
             it.put(SQL_ANALYSIS_FAILED, "[BRIKK_SQL] {0}", TO_STRING)
+            it.put(
+                SQL_OUTPUT_NAME_COLLISION,
+                "[BRIKK_SQL] multiple @BrikkSql functions generate output type ''{0}''; rename them so each output type is unique",
+                TO_STRING,
+            )
             it.put(SQL_DEBUG, "[BRIKK_SQL_DEBUG] {0}", TO_STRING)
             it.put(
                 SQL_UNUSED_PARAM,

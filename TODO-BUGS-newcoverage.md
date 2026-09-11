@@ -13,13 +13,13 @@
 > are **out of scope** and already skipped by the gates — never touch them.
 >
 > **Every item below is IN SCOPE**: it involves only ported dialects and is a real divergence
-> from the reference. (~94% of ~16.4k corpus cases match the reference exactly; these are part
-> of the remaining tail.)
+> from the reference. Current coverage totals come from the corpus gate output rather than a
+> duplicated figure in this tracker.
 >
 > **How verification works.** Behaviour is pinned by "corpus gates": generated fixtures under
 > `brikk-sql/testResources/**` capture the reference's output, and each gate enforces an *exact*
 > known-failures ledger (`*-known-failures.json`). Build/test from the repo root with
-> `./kotlin build` and `./kotlin test`. Each run also writes `brikk-sql/*-ledger-actual.json`
+> `./kotlin build` and `./kotlin test`. Each run also writes `build/ledger-actual/*-ledger-actual.json`
 > (gitignored) with the current failing set. **When you fix an item, delete its line from the
 > matching committed `*-known-failures.json`** (or copy the refreshed actual over it); the gate
 > then proves it passes. Reproduce a single item by parsing/generating with the noted dialect(s)

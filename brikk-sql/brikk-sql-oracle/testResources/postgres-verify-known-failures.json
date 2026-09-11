@@ -67,6 +67,11 @@
             "error": "statement: 42601: syntax error at or near \"ACCESS\" (line 1, col 20) | expression: 42601: syntax error at or near \"t1\" (line 1, col 13)"
         },
         {
+            "sql": "ALTER TABLE tested_table ADD CONSTRAINT unique_example UNIQUE (column_name) NOT VALID",
+            "generated": "ALTER TABLE tested_table ADD CONSTRAINT unique_example UNIQUE (column_name) NOT VALID",
+            "error": "statement: 0A000: UNIQUE constraints cannot be marked NOT VALID | expression: 42601: syntax error at or near \"tested_table\" (line 1, col 13)"
+        },
+        {
             "sql": "CREATE TABLE A (LIKE B INCLUDING CONSTRAINT INCLUDING COMPRESSION EXCLUDING COMMENTS)",
             "generated": "CREATE TABLE A (LIKE B INCLUDING CONSTRAINT INCLUDING COMPRESSION EXCLUDING COMMENTS)",
             "error": "statement: 42601: syntax error at or near \"CONSTRAINT\" (line 1, col 34) | expression: 42601: syntax error at or near \"CREATE\" (line 1, col 1)"
@@ -80,6 +85,11 @@
             "sql": "CREATE TABLE tbl (col UUID, UNIQUE NULLS NOT DISTINCT (col))",
             "generated": "CREATE TABLE tbl (col UUID, UNIQUE NULLS NOT DISTINCT (col))",
             "error": "statement: 42601: syntax error at or near \"NULLS\" (line 1, col 36) | expression: 42601: syntax error at or near \"CREATE\" (line 1, col 1)"
+        },
+        {
+            "sql": "\n        CREATE TABLE IF NOT EXISTS public.rental\n        (\n            inventory_id INT NOT NULL,\n            CONSTRAINT rental_customer_id_fkey FOREIGN KEY (customer_id)\n                REFERENCES public.customer (customer_id) MATCH FULL\n                ON UPDATE CASCADE\n                ON DELETE RESTRICT,\n            CONSTRAINT rental_inventory_id_fkey FOREIGN KEY (inventory_id)\n                REFERENCES public.inventory (inventory_id) MATCH PARTIAL\n                ON UPDATE CASCADE\n                ON DELETE RESTRICT,\n            CONSTRAINT rental_staff_id_fkey FOREIGN KEY (staff_id)\n                REFERENCES public.staff (staff_id) MATCH SIMPLE\n                ON UPDATE CASCADE\n                ON DELETE RESTRICT,\n            INITIALLY IMMEDIATE\n        )\n        ",
+            "generated": "CREATE TABLE IF NOT EXISTS public.rental (inventory_id INT NOT NULL, CONSTRAINT rental_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customer (customer_id) MATCH FULL ON UPDATE CASCADE ON DELETE RESTRICT, CONSTRAINT rental_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES public.inventory (inventory_id) MATCH PARTIAL ON UPDATE CASCADE ON DELETE RESTRICT, CONSTRAINT rental_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES public.staff (staff_id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT, INITIALLY IMMEDIATE)",
+            "error": "statement: 0A000: MATCH PARTIAL not yet implemented (line 1, col 327) | expression: 42601: syntax error at or near \"CREATE\" (line 1, col 1)"
         },
         {
             "sql": "SELECT a, LOGICAL_OR(b) FROM table GROUP BY a",

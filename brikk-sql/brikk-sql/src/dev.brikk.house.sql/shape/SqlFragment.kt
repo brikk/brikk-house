@@ -435,7 +435,8 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         )
         val typeAnnotator = TypeAnnotator(
             schema = schema,
-            expressionMetadata = dialectObj.expressionMetadata + SHAPE_LAYER_TYPING,
+            expressionMetadata = dialectObj.expressionMetadata +
+                if (dialect.equals("duckdb", ignoreCase = true)) DUCKDB_SHAPE_LAYER_TYPING else SHAPE_LAYER_TYPING,
         )
         val annotated = typeAnnotator.annotate(qualified)
         // brikk-native: nullability lives in a sidecar (keyed by node identity), NOT in
@@ -618,20 +619,17 @@ class SqlFragment(val sql: String, val dialect: String = "") {
      */
     private fun buildSchema(inputs: ShapeCatalog, rejectNormalizedDuplicates: Boolean = false): MappingSchema {
         val simpleName = Regex("[_a-zA-Z][a-zA-Z0-9_]*")
-        fun columns(shape: Shape): Map<String, String> {
+        fun columns(shape: Shape): Map<String, String> = buildMap {
             val names = mutableSetOf<String>()
             for (column in shape.columns) {
-                val identifier = Identifier(args("this" to column.name, "quoted" to !simpleName.matches(column.name)))
-                val normalized = dialectObj.normalizeIdentifier(identifier).name
+                val quoted = column.quoted || !simpleName.matches(column.name)
+                val identifier = Identifier(args("this" to column.name, "quoted" to quoted))
+                val normalized = dialectObj.normalizeIdentifier(identifier.copy()).name
                 val name = if (dialectObj.name == "doris") normalized.lowercase() else normalized
                 if (!names.add(name) && rejectNormalizedDuplicates) {
                     throw ShapeError("Duplicate schema column name '${column.name}' under ${dialect.ifBlank { "base" }} identifier normalization")
                 }
-            }
-            return shape.toSchemaMapping().mapKeys { (name, _) ->
-                // ColumnShape names are raw metadata, not SQL identifier expressions.
-                if (simpleName.matches(name)) name
-                else dialectObj.generate(Identifier(args("this" to name, "quoted" to true)))
+                put(if (quoted) dialectObj.generate(identifier) else column.name, column.type)
             }
         }
         val mapping = LinkedHashMap<String, Any?>()
@@ -646,13 +644,9 @@ class SqlFragment(val sql: String, val dialect: String = "") {
         // still resolve through the trie's unique-suffix match.
         val slotPrefix = List(depth - 1) { SLOT_QUALIFIER }
         for ((slotName, shape) in inputs.slots) {
-            // A slot with no known columns (`Rel<Partial>` input, or an upstream shape that could
-            // not be computed) is legitimate: it contributes nothing to `*` and resolves no
-            // columns. MappingSchema rejects empty tables, so leave it out of the mapping.
-            if (shape.columns.isEmpty()) continue
             nestedSet(mapping, slotPrefix + slotName, columns(shape))
         }
-        return MappingSchema(schema = mapping, dialect = dialectObj)
+        return MappingSchema(schema = mapping, dialect = dialectObj, allowEmptyTables = true)
     }
 
     private fun Expression.hasStarRename(): Boolean =
@@ -674,6 +668,10 @@ class SqlFragment(val sql: String, val dialect: String = "") {
             dev.brikk.house.sql.ast.JSONBExtractScalar::class to
                 dev.brikk.house.sql.ast.TypingSpec.Returns(dev.brikk.house.sql.ast.DType.TEXT),
         )
+
+        val DUCKDB_SHAPE_LAYER_TYPING = SHAPE_LAYER_TYPING +
+            (dev.brikk.house.sql.ast.JSONExtractScalar::class to
+                dev.brikk.house.sql.ast.TypingSpec.Annotate(dev.brikk.house.sql.ast.AnnotatorRef.JsonExtractScalar))
     }
 
     /** The SELECT whose projections name the output (left-most branch for set ops). */

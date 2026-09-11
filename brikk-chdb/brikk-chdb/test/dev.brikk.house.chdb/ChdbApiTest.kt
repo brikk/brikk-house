@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import org.junit.jupiter.api.Assumptions.assumeTrue
 
 class ChdbApiTest {
     @Test
@@ -26,11 +27,13 @@ class ChdbApiTest {
 
     @Test
     fun configuredNativeLibraryExecutesAMaterializedQuery() {
-        // This is deliberately opt-in until a pinned platform artifact exists. Run with:
-        //   -Dbrikk.chdb.integrationLibrary=/absolute/path/to/libchdb.dylib
+        // Explicit-path integration remains available for local builds. Packaged artifacts use
+        // the name libchdb.so on every supported platform, including macOS.
+        // Run with: -Dbrikk.chdb.integrationLibrary=/absolute/path/to/libchdb.so
         // and --enable-native-access=ALL-UNNAMED.
-        val library = System.getProperty("brikk.chdb.integrationLibrary") ?: return
-        Chdb.open(ChdbConfig(libraryPath = Path.of(library))).use { session ->
+        val library = System.getProperty("brikk.chdb.integrationLibrary")
+        assumeTrue(library != null, "brikk.chdb.integrationLibrary is not configured")
+        Chdb.open(ChdbConfig(libraryPath = Path.of(library!!))).use { session ->
             assertEquals("42\n", session.query("SELECT 6 * 7", ChdbOutputFormat.CSV).text())
         }
     }
