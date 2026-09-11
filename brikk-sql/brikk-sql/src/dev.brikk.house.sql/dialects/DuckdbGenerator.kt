@@ -72,6 +72,7 @@ open class DuckdbGenerator(
     override val joinHints: Boolean get() = false
     override val tableHints: Boolean get() = false
     override val queryHints: Boolean get() = false
+    override val lastDaySupportsDatePart: Boolean get() = false
     override val limitFetch: String get() = "LIMIT"
     override val structDelimiter: Pair<String, String> get() = "(" to ")"
     override val renameTableWithDb: Boolean get() = false
@@ -174,6 +175,23 @@ open class DuckdbGenerator(
         val fromClause = expression.args["from_"]
         val from = if (fromClause != null) " FROM ${sql(fromClause)}" else ""
         return "${force}INSTALL $this_$from"
+    }
+
+    // sqlglot: DuckDBGenerator.round_sql (BigQuery literal modes)
+    open fun roundSql(expression: Round): String {
+        val mode = expression.args["truncate"]
+        val functionName = when ((mode as? Literal)?.takeIf { it.isString }?.name) {
+            "ROUND_HALF_AWAY_FROM_ZERO" -> "ROUND"
+            "ROUND_HALF_EVEN" -> "ROUND_EVEN"
+            else -> {
+                if (mode != null) {
+                    // brikk extension (BQ-30): retain the unresolved argument but diagnose unsupported modes.
+                    unsupported("DuckDB ROUND only supports literal ROUND_HALF_AWAY_FROM_ZERO or ROUND_HALF_EVEN modes")
+                }
+                return functionFallbackSql(expression)
+            }
+        }
+        return func(functionName, expression.thisArg, expression.args["decimals"])
     }
 
     // sqlglot: DuckDBGenerator.sortarray_sql
@@ -748,6 +766,155 @@ open class DuckdbGenerator(
     open fun unixToStrSql(expression: UnixToStr): String =
         func("STRFTIME", func("TO_TIMESTAMP", expression.thisArg), formatTime(expression))
 
+    // sqlglot: Generator.unixdate_sql, lowered through DuckDB DATE_DIFF.
+    open fun unixDateSql(expression: UnixDate): String = func(
+        "DATE_DIFF", Literal.string("DAY"),
+        Cast(args("this" to Literal.string("1970-01-01"), "to" to DataType.build(DType.DATE))),
+        implicitDatetimeCast((expression.thisArg as? Expression)?.copy()),
+    )
+
+    private fun bigqueryTimestampLiteral(expression: Expression): Expression? {
+        val value = expression.copy()
+        val literal = (value as? Literal)?.takeIf { it.isString }
+            ?: (value as? Cast)?.takeIf { (it.args["to"] as? DataType)?.thisArg == DType.TIMESTAMPTZ }
+                ?.thisArg?.let { it as? Literal }?.takeIf { it.isString }
+            ?: return null
+        val hasZone = Regex("(?:[zZ]|[+-]\\d{2}(?::?\\d{2})?|[A-Za-z][A-Za-z0-9_+./-]*)$")
+            .containsMatchIn(literal.name.trim().drop(10))
+        if (!hasZone) {
+            val text = literal.name.trim()
+            literal.set("this", text + (if (text.length == 10) " 00:00:00 UTC" else " UTC"))
+        }
+        return if (value is Literal) Cast(args("this" to value, "to" to DataType.build(DType.TIMESTAMPTZ))) else value
+    }
+
+    // sqlglot: DuckDBGenerator.currentdate_sql
+    override fun currentdateSql(expression: CurrentDate): String {
+        val zone = expression.thisArg as? Expression
+            ?: if (sourceDialect.equals("bigquery", ignoreCase = true)) Literal.string("UTC") else return "CURRENT_DATE"
+        return sql(Cast(args("this" to AtTimeZone(args("this" to CurrentTimestamp(), "zone" to zone.copy())),
+            "to" to DataType.build(DType.DATE))))
+    }
+
+    // sqlglot: generators.duckdb._date_sql
+    open fun dateSql(expression: Date): String {
+        var value = (expression.thisArg as Expression).copy()
+        dev.brikk.house.sql.optimizer.annotateTypes(value, dialect = Dialects.BIGQUERY, overwriteTypes = false)
+        val zone = expression.args["zone"] as? Expression
+        val type = (value.type as? DataType)?.thisArg ?: ((value as? Cast)?.args?.get("to") as? DataType)?.thisArg
+        val instant = type == DType.TIMESTAMPTZ || value is CurrentTimestamp
+        if (instant) {
+            // brikk extension (BQ-5): do not discard a real instant's zone and reinterpret local time as UTC.
+            value = bigqueryTimestampLiteral(value) ?: value
+            value = AtTimeZone(args("this" to value, "zone" to (zone?.copy() ?: Literal.string("UTC"))))
+        } else if (zone != null) {
+            if (value is Literal && value.isString) {
+                value = bigqueryTimestampLiteral(value)!!
+            } else if (type == DType.TIMESTAMP) {
+                value = AtTimeZone(args("this" to value, "zone" to Literal.string("UTC")))
+            } else if (value is Null) {
+                value = Cast(args("this" to value, "to" to DataType.build(DType.TIMESTAMPTZ)))
+            } else {
+                unsupported("BigQuery DATE with a time zone requires a typed timestamp or literal; annotate unknown inputs first")
+                value = Cast(args("this" to value, "to" to DataType.build(DType.TIMESTAMPTZ)))
+            }
+            value = AtTimeZone(args("this" to value, "zone" to zone.copy()))
+        } else if ((type == null || type == DType.UNKNOWN) && value !is Literal && value !is Null) {
+            unsupported("BigQuery DATE requires a known input type to distinguish UTC instants from local dates; annotate unknown inputs first")
+        }
+        return sql(Cast(args("this" to value, "to" to DataType.build(DType.DATE))))
+    }
+
+    // sqlglot: dialect.no_timestamp_sql
+    open fun noTimestampSql(expression: Timestamp): String {
+        if (expression.args["with_tz"] != true) return functionFallbackSql(expression)
+        val value = (expression.thisArg as Expression).copy()
+        val zone = expression.args["zone"] as? Expression
+        if (zone != null) {
+            return sql(AtTimeZone(args(
+                "this" to Cast(args("this" to value, "to" to DataType.build(DType.TIMESTAMP))),
+                "zone" to zone.copy(),
+            )))
+        }
+        val type = (value.type as? DataType)?.thisArg
+        if (type == null || type == DType.UNKNOWN) {
+            unsupported("BigQuery TIMESTAMP without a zone requires a known input type to distinguish instants from UTC civil values")
+        }
+        return sql(Cast(args("this" to value, "to" to DataType.build(
+            if (expression.args["with_tz"] == true) DType.TIMESTAMPTZ else DType.TIMESTAMP,
+        ))))
+    }
+
+    // sqlglot: dialect.no_datetime_sql
+    open fun noDatetimeSql(expression: Datetime): String {
+        val value = expression.thisArg as Expression
+        val second = expression.expressionArg as? Expression
+            ?: return sql(Cast(args("this" to value.copy(), "to" to DataType.build(DType.TIMESTAMP))))
+        val secondCopy = second.copy()
+        dev.brikk.house.sql.optimizer.annotateTypes(secondCopy, dialect = Dialects.BIGQUERY, overwriteTypes = false)
+        val secondType = (secondCopy.type as? DataType)?.thisArg
+        val isTime = second is Time || secondType == DType.TIME
+        if (isTime) {
+            val sum = Add(args(
+                "this" to Cast(args("this" to value.copy(), "to" to DataType.build(DType.DATE))),
+                "expression" to second.copy(),
+            ))
+            return sql(Cast(args("this" to sum, "to" to DataType.build(DType.TIMESTAMP))))
+        }
+        if (secondType == null || secondType == DType.UNKNOWN) {
+            unsupported("BigQuery DATETIME's second argument requires a known TIME or time-zone type")
+            return functionFallbackSql(expression)
+        }
+        // brikk extension (BQ-6): BigQuery coerces an unzoned string to a UTC instant.
+        val instant = bigqueryTimestampLiteral(value)
+            ?: Cast(args("this" to value.copy(), "to" to DataType.build(DType.TIMESTAMPTZ)))
+        return sql(Cast(args(
+            "this" to AtTimeZone(args("this" to instant, "zone" to second.copy())),
+            "to" to DataType.build(DType.TIMESTAMP),
+        )))
+    }
+
+    open fun stringSql(expression: dev.brikk.house.sql.ast.String): String {
+        val value = expression.thisArg as Expression
+        val zone = expression.args["zone"] as? Expression
+            ?: return sql(Cast(args("this" to value.copy(), "to" to DataType.build(DType.TEXT))))
+        // The pin drops the offset after converting to local TIMESTAMP. Refuse that silent loss.
+        unsupported("BigQuery STRING(timestamp, zone) requires offset-preserving formatting in DuckDB")
+        val instant = bigqueryTimestampLiteral(value)
+            ?: Cast(args("this" to value.copy(), "to" to DataType.build(DType.TIMESTAMPTZ)))
+        val local = AtTimeZone(args("this" to instant, "zone" to zone.copy()))
+        return sql(Cast(args("this" to local, "to" to DataType.build(DType.TEXT))))
+    }
+
+    // sqlglot: DuckDBGenerator TRANSFORMS[UnixSeconds / UnixMillis / UnixMicros].
+    open fun unixEpochSql(expression: Expression): String {
+        var value = (expression.thisArg as? Expression)?.copy()
+        if (sourceDialect.equals("bigquery", ignoreCase = true)) {
+            // brikk extension (BQ-4, ASTRA-010): BigQuery defaults to UTC, not the session zone.
+            value = value?.let { bigqueryTimestampLiteral(it) ?: it }
+        } else {
+            value = implicitDatetimeCast(value)
+        }
+        if (expression is UnixMicros) return func("EPOCH_US", value)
+        // brikk extension (BQ-4): truncate the timestamp, not a floating epoch. The pin's
+        // BIGINT cast rounds seconds; EPOCH_MS truncates negative fractions toward zero.
+        val unit = if (expression is UnixMillis) "MILLISECOND" else "SECOND"
+        val truncated = func("DATE_TRUNC", Literal.string(unit), value)
+        return if (expression is UnixMillis) func("EPOCH_MS", truncated)
+        else "CAST(${func("EPOCH", truncated)} AS BIGINT)"
+    }
+
+    // sqlglot: generators.duckdb._timediff_sql. BigQuery supplies end, start, unit.
+    open fun timeDiffSql(expression: TimeDiff): String {
+        fun time(value: Expression?): Expression =
+            if (value is Cast && (value.args["to"] as? DataType)?.thisArg == DType.TIME) value.copy()
+            else Cast(args("this" to value?.copy(), "to" to DataType.build(DType.TIME)))
+        return func(
+            "DATE_DIFF", unitToStr(expression),
+            time(expression.args["expression"] as? Expression), time(expression.thisArg as? Expression),
+        )
+    }
+
     // sqlglot: dialect.date_delta_to_binary_interval_op wrapped by
     // generators.duckdb._date_delta_to_binary_interval_op (nanosecond and
     // float-interval branches; the float branch is annotate_types-driven and
@@ -906,6 +1073,94 @@ open class DuckdbGenerator(
         return func("MAKE_DATE", yearExpr, monthExpr, dayExpr)
     }
 
+    // sqlglot: generators.duckdb._last_day_sql
+    override fun lastdaySql(expression: LastDay): String {
+        val date = expression.thisArg as? Expression ?: return functionFallbackSql(expression)
+        val unit = expression.args["unit"] as? Expression
+        val weekStart = if (unit is Var && unit.name.uppercase() == "WEEK") 1 else weekUnitToDow(unit)
+
+        if (weekStart != null) {
+            val dayOfWeek = Extract(
+                args("this" to Var(args("this" to "DAYOFWEEK")), "expression" to date.copy())
+            )
+            val daysToLast = Mod(
+                args(
+                    "this" to Paren(
+                        args(
+                            "this" to Sub(
+                                args(
+                                    "this" to Literal.number((weekStart + 6).toString()),
+                                    "expression" to dayOfWeek,
+                                )
+                            )
+                        )
+                    ),
+                    "expression" to Literal.number("7"),
+                )
+            )
+            val interval = Interval(
+                args("this" to daysToLast, "unit" to Var(args("this" to "DAY")))
+            )
+            return sql(
+                Cast(
+                    args(
+                        "this" to Add(args("this" to date.copy(), "expression" to interval)),
+                        "to" to DataType(args("this" to DType.DATE)),
+                    )
+                )
+            )
+        }
+
+        if (unit == null || unit.name.uppercase() == "MONTH") return func("LAST_DAY", date)
+
+        unsupported("Unsupported date part '${unit.name}' in LAST_DAY function")
+        return functionFallbackSql(expression)
+    }
+
+    // BigQuery MAKE_INTERVAL has no DuckDB function equivalent.
+    open fun makeintervalSql(expression: MakeInterval): String {
+        val parts = mutableListOf<Pair<String, Expression>>()
+        val supportedUnits = setOf("year", "month", "week", "day", "hour", "minute", "second")
+
+        for ((argKey, valueRaw) in expression.args) {
+            if (valueRaw == null) continue
+            val value = if (valueRaw is Kwarg) valueRaw.args["expression"] else valueRaw
+            val unit = if (valueRaw is Kwarg) {
+                (valueRaw.thisArg as? Expression)?.name?.lowercase() ?: argKey.lowercase()
+            } else {
+                argKey.lowercase()
+            }
+            val valueExpression = value as? Expression
+            if (unit !in supportedUnits || valueExpression == null) {
+                unsupported("DuckDB cannot preserve MAKE_INTERVAL unit '$unit'")
+                return functionFallbackSql(expression)
+            }
+            parts.add(unit to valueExpression)
+        }
+
+        if (parts.isEmpty()) {
+            return sql(Interval(args("this" to Literal.string("0 second"))))
+        }
+
+        if (parts.all { (_, value) -> value is Literal && !value.isString }) {
+            val literal = parts.joinToString(" ") { (unit, value) -> "${value.name} $unit" }
+            return sql(Interval(args("this" to Literal.string(literal))))
+        }
+
+        val intervals: List<Expression> = parts.map { (unit, value) ->
+            Interval(
+                args(
+                    "this" to value.copy(),
+                    "unit" to Var(args("this" to unit.uppercase())),
+                )
+            )
+        }
+        val combined = intervals.reduce { left, right ->
+            Add(args("this" to left, "expression" to right))
+        }
+        return sql(if (intervals.size == 1) combined else Paren(args("this" to combined)))
+    }
+
     // sqlglot: DuckDBGenerator.timestampfromparts_sql
     open fun timestampfrompartsSql(expression: TimestampFromParts): String {
         // Date/time expression form: TIMESTAMP_FROM_PARTS(date_expr, time_expr)
@@ -1026,6 +1281,22 @@ open class DuckdbGenerator(
         )
     }
 
+    // sqlglot: DuckDBGenerator.parsedatetime_sql
+    open fun parsedatetimeSql(expression: ParseDatetime): String {
+        val (value, formattedTime) = strptimeDefaultYear(expression)
+        return func("STRPTIME", value, formattedTime)
+    }
+
+    // sqlglot: DuckDBGenerator.parsetime_sql
+    open fun parsetimeSql(expression: ParseTime): String = sql(
+        Cast(
+            args(
+                "this" to func("STRPTIME", expression.thisArg, formatTime(expression)),
+                "to" to DataType.build(DType.TIME),
+            )
+        )
+    )
+
     // sqlglot: DuckDBGenerator.parsejson_sql
     override fun parsejsonSql(expression: ParseJSON): String {
         val arg = expression.thisArg as? Expression
@@ -1057,6 +1328,33 @@ open class DuckdbGenerator(
             )
         }
         return func("JSON", arg)
+    }
+
+    // sqlglot: DuckDBGenerator.arraytostring_sql (explicit null replacement)
+    open fun arrayToStringSql(expression: ArrayToString): String {
+        // brikk extension (BQ-14): DuckDB treats NULL as its default comma separator.
+        if (sourceDialect.equals("bigquery", ignoreCase = true) && expression.expressionArg is Null) {
+            return sql(Cast(args("this" to Null(), "to" to DataType.build(DType.VARCHAR))))
+        }
+        if ((expression.expressionArg as? Expression)?.findAll<Column>()?.any() == true) {
+            unsupported("DuckDB ARRAY_TO_STRING requires a constant delimiter; row-dependent delimiters need a separate lowering")
+        }
+        val replacement = expression.args["null"] as? Expression
+            ?: return func("ARRAY_TO_STRING", expression.thisArg, expression.expressionArg)
+        // brikk extension (BQ-14): lambda parameters must not shadow replacement columns.
+        val names = expression.root().findAll(Identifier::class).map { it.name.lowercase() }.toSet()
+        var name = "x"
+        var suffix = 0
+        while (name in names) name = "x_${++suffix}"
+        val parameter = toIdentifier(name)!!
+        val transformed = Transform(args(
+            "this" to (expression.thisArg as? Expression)?.copy(),
+            "expression" to Lambda(args(
+                "this" to Coalesce(args("this" to Column(args("this" to parameter.copy())), "expressions" to listOf(replacement.copy()))),
+                "expressions" to listOf(parameter),
+            )),
+        ))
+        return func("ARRAY_TO_STRING", transformed, (expression.expressionArg as? Expression)?.copy())
     }
 
     // sqlglot: DuckDBGenerator.arraydistinct_sql
@@ -1442,7 +1740,7 @@ open class DuckdbGenerator(
 
     // sqlglot: generators.duckdb._week_unit_to_dow
     protected open fun weekUnitToDow(unit: Expression?): Int? {
-        if (unit is Var && unit.name.uppercase() in "ISOWEEK") return 1
+        if ((unit is Var || unit is Literal) && unit.name.uppercase() == "ISOWEEK") return 1
         if (unit is WeekStart) return WEEK_START_DAY_TO_DOW[unit.name.uppercase()]
         return null
     }
@@ -1452,6 +1750,7 @@ open class DuckdbGenerator(
         dateExpr: Expression,
         startDow: Int,
         preserveStartDay: Boolean = false,
+        castToDate: Boolean = true,
     ): Expression {
         val shiftDays = if (startDow == 7) 1 else 1 - startDow
         val truncated: Expression = Anonymous(
@@ -1461,7 +1760,11 @@ open class DuckdbGenerator(
             )
         )
 
-        if (shiftDays == 0) return truncated
+        if (shiftDays == 0) {
+            return if (preserveStartDay && castToDate) {
+                Cast(args("this" to truncated, "to" to DataType(args("this" to DType.DATE))))
+            } else truncated
+        }
 
         val shift = Interval(
             args("this" to Literal.string(shiftDays.toString()), "unit" to Var(args("this" to "DAY")))
@@ -1476,12 +1779,9 @@ open class DuckdbGenerator(
                     "unit" to Var(args("this" to "DAY")),
                 )
             )
-            return Cast(
-                args(
-                    "this" to DateAdd(args("this" to truncated, "expression" to interval)),
-                    "to" to DataType(args("this" to DType.DATE)),
-                )
-            )
+            val restored = DateAdd(args("this" to truncated, "expression" to interval))
+            return if (castToDate) Cast(args("this" to restored, "to" to DataType(args("this" to DType.DATE))))
+            else restored
         }
 
         return truncated
@@ -1625,12 +1925,47 @@ open class DuckdbGenerator(
         return result
     }
 
+    open fun duckdbDatetimetruncSql(expression: DatetimeTrunc): String {
+        val value = Cast(args(
+            "this" to (expression.thisArg as? Expression)?.copy(),
+            "to" to DataType.build(DType.TIMESTAMP),
+        ))
+        val unit = expression.args["unit"] as? Expression
+        val weekStart = weekUnitToDow(unit)
+        return if (weekStart != null) {
+            sql(buildWeekTruncExpression(value, weekStart, preserveStartDay = true, castToDate = false))
+        } else {
+            func("DATE_TRUNC", unitToStr(expression), value)
+        }
+    }
+
     // sqlglot: DuckDBGenerator.timestamptrunc_sql
     open fun duckdbTimestamptruncSql(expression: TimestampTrunc): String {
+        val unitExpr = expression.args["unit"] as? Expression
+        val weekStart = weekUnitToDow(unitExpr)
+        if (weekStart != null) {
+            val zone = (expression.args["zone"] as? Expression)?.copy() ?: Literal.string("UTC")
+            var instant = (expression.thisArg as? Expression)?.copy() ?: return functionFallbackSql(expression)
+            instant = bigqueryTimestampLiteral(instant) ?: instant
+            val civil = AtTimeZone(args("this" to instant, "zone" to zone.copy()))
+            val truncated = buildWeekTruncExpression(
+                civil, weekStart, preserveStartDay = true, castToDate = false,
+            )
+            return sql(AtTimeZone(args("this" to Paren(args("this" to truncated)), "zone" to zone)))
+        }
         val unit = unitToStr(expression)
         val zone = expression.args["zone"] as? Expression
         var timestamp = expression.thisArg as? Expression
         val dateUnit = (unit as? Literal)?.name?.uppercase() in DATE_UNITS
+
+        if (dateUnit && zone == null && sourceDialect.equals("bigquery", ignoreCase = true)) {
+            val utc = Literal.string("UTC")
+            var instant = timestamp?.copy() ?: return functionFallbackSql(expression)
+            instant = bigqueryTimestampLiteral(instant) ?: instant
+            val civil = AtTimeZone(args("this" to instant, "zone" to utc.copy()))
+            val truncated = func("DATE_TRUNC", unit, civil)
+            return sql(AtTimeZone(args("this" to truncated, "zone" to utc)))
+        }
 
         if (dateUnit && zone != null) {
             // Double AT TIME ZONE needed for BigQuery compatibility
@@ -2196,6 +2531,9 @@ open class DuckdbGenerator(
             reg(SHA2Digest::class) { e -> dg().shaSql(e, "SHA256", isBinary = true) }
             reg(MD5Digest::class) { e -> func("UNHEX", func("MD5", e.thisArg)) }
             reg(DateFromParts::class) { e -> dg().datefrompartsSql(e as DateFromParts) }
+            reg(LastDay::class) { e -> dg().lastdaySql(e as LastDay) }
+            reg(MakeInterval::class) { e -> dg().makeintervalSql(e as MakeInterval) }
+            reg(Datetime::class) { e -> dg().noDatetimeSql(e as Datetime) }
             reg(TimestampFromParts::class) { e ->
                 dg().timestampfrompartsSql(e as TimestampFromParts)
             }
@@ -2213,10 +2551,14 @@ open class DuckdbGenerator(
             reg(ApproxTopK::class) { e -> dg().approxtopkSql(e as ApproxTopK) }
             reg(StrToTime::class) { e -> dg().strtotimeSql(e as StrToTime) }
             reg(StrToDate::class) { e -> dg().strtodateSql(e as StrToDate) }
+            reg(ParseDatetime::class) { e -> dg().parsedatetimeSql(e as ParseDatetime) }
+            reg(ParseTime::class) { e -> dg().parsetimeSql(e as ParseTime) }
             reg(ParseJSON::class) { e -> dg().parsejsonSql(e as ParseJSON) }
             reg(ArrayDistinct::class) { e -> dg().arraydistinctSql(e as ArrayDistinct) }
+            reg(ArrayToString::class) { e -> dg().arrayToStringSql(e as ArrayToString) }
             reg(RegexpLike::class) { e -> dg().regexplikeSql(e as RegexpLike) }
             reg(RegexpReplace::class) { e -> dg().regexpreplaceSql(e as RegexpReplace) }
+            reg(Round::class) { e -> dg().roundSql(e as Round) }
             // sqlglot: DuckDBGenerator.{getignorecase,compress,encrypt,decrypt,decryptraw,
             // encryptraw,parseurl,parseip,decompressstring,decompressbinary,soundex}_sql —
             // explicit "not supported in DuckDB" flags over the fallback rendering.
@@ -2278,6 +2620,9 @@ open class DuckdbGenerator(
             reg(Greatest::class) { e -> dg().greatestLeastSql(e) }
             reg(Least::class) { e -> dg().greatestLeastSql(e) }
             reg(Time::class) { e -> dg().noTimeSql(e as Time) }
+            reg(TimeFromParts::class) { e -> func("MAKE_TIME", e.args["hour"], e.args["min"], e.args["sec"]) }
+            reg(Timestamp::class) { e -> dg().noTimestampSql(e as Timestamp) }
+            reg(dev.brikk.house.sql.ast.String::class) { e -> dg().stringSql(e as dev.brikk.house.sql.ast.String) }
             reg(Split::class) { e -> dg().splitSql(e as Split) }
             reg(BitwiseXor::class) { e -> dg().bitwisexorSql(e as BitwiseXor) }
             reg(BitwiseOrAgg::class) { e -> dg().bitwiseAggSql(e) }
@@ -2286,6 +2631,7 @@ open class DuckdbGenerator(
             reg(AnyValue::class) { e -> dg().anyvalueSql(e as AnyValue) }
             reg(ArrayInsert::class) { e -> dg().arrayinsertSql(e as ArrayInsert) }
             reg(DateTrunc::class) { e -> dg().duckdbDatetruncSql(e as DateTrunc) }
+            reg(DatetimeTrunc::class) { e -> dg().duckdbDatetimetruncSql(e as DatetimeTrunc) }
             reg(TimestampTrunc::class) { e -> dg().duckdbTimestamptruncSql(e as TimestampTrunc) }
             reg(Encode::class) { e -> dg().encodeDecodeSql(e, "ENCODE") }
             reg(Decode::class) { e -> dg().encodeDecodeSql(e, "DECODE") }
@@ -2327,6 +2673,8 @@ open class DuckdbGenerator(
             reg(StrPosition::class) { e -> dg().strpositionSql(e as StrPosition) }
             reg(Struct::class) { e -> dg().duckdbStructSql(e as Struct) }
             reg(Transform::class) { e -> dg().renameFuncSql("LIST_TRANSFORM", e) }
+            reg(TimeDiff::class) { e -> dg().timeDiffSql(e as TimeDiff) }
+            reg(Date::class) { e -> dg().dateSql(e as Date) }
             reg(TimeToStr::class) { e -> dg().timeToStrSql(e as TimeToStr) }
             reg(TimeToUnix::class) { e -> dg().renameFuncSql("EPOCH", e) }
             reg(TimestampDiff::class) { e ->
@@ -2337,6 +2685,10 @@ open class DuckdbGenerator(
                     e.thisArg,
                 )
             }
+            reg(UnixDate::class) { e -> dg().unixDateSql(e as UnixDate) }
+            reg(UnixSeconds::class) { e -> dg().unixEpochSql(e) }
+            reg(UnixMillis::class) { e -> dg().unixEpochSql(e) }
+            reg(UnixMicros::class) { e -> dg().unixEpochSql(e) }
             reg(UnixToTime::class) { e -> dg().unixToTimeSql(e as UnixToTime) }
             reg(UnixToStr::class) { e -> dg().unixToStrSql(e as UnixToStr) }
             reg(UnixToTimeStr::class) { e -> "CAST(TO_TIMESTAMP(${sql(e, "this")}) AS TEXT)" }

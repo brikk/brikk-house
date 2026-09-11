@@ -10,19 +10,8 @@
 
 ---
 
-**No remaining qualification cases. All 13 cases exposed by ASTRA-014 are resolved.**
-
-ASTRA-014 enabled previously skipped supported cases. ASTRA-008 resolved the final
-10 cases; `build/astra-008-core.log` lists their exact stale keys and reports
-388/388 qualification assertions passing. Those 10 entries were removed from
-`brikk-sql/brikk-sql/testResources/qualify-corpus/known-failures.json`, leaving it
-empty. See `docs/corpus-coverage.md` for the historical baseline and current status.
-
-- [x] G1: eight BigQuery UNNEST alias, field, star-expansion, and correlation cases,
-  resolved under ASTRA-008.
-- [x] G2: two BigQuery implicit UNNEST conversions, resolved under ASTRA-008.
-- [x] G3: unwrap parenthesized SELECT operands during set-operation column discovery, one case.
-- [x] G4: preserve StarRocks TableFromRows default output-column aliases, two cases.
+**No remaining qualification cases.** The qualification ledger is empty.
+Completed work and its verification history are in `docs/corpus-coverage.md`.
 
 This closes the exposed qualification cases, not all struct-array or offset
 transpilation conversions. Remaining BigQuery parity cases are in `TODO-bigquery.md`.

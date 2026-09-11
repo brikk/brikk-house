@@ -838,6 +838,149 @@ NULL groups, empty inputs, mixed stars, and real helper-like column names. No li
 Doris execution is claimed; other dialects' unresolved star rewrites are not fixed
 by this Doris-specific path. Existing corpus expectations and ledgers are unchanged.
 
+## 26. Presto/Trino struct-array NULL fields (BQ-1)
+
+Literal NULL fields in an array of structs must inherit a type from non-NULL
+sibling fields before rendering named ROW casts. BigQuery's standalone BIGINT
+default otherwise creates incompatible row types beside strings or nested values.
+`PrestoGenerator` reconciles those literal fields positionally, including nested
+structs and arrays. Explicit casts remain authoritative; all-NULL fields keep
+their default. This changes generator-local annotations, not the caller's AST or
+the shared SQLGlot annotation corpus.
+
+`BigqueryStructArrayTypesTest` covers NULL-first/last, duplicates, nested values,
+typed NULLs, all-NULL defaults, and source-AST preservation. The optional Trino
+execution checks in `BigqueryUnnestResultTest` no longer need a string cast around
+the NULL in lowered VALUES. This is a local correction to the pin's per-row typing;
+retain it until upstream reconciles these fields too.
+
+## 27. BigQuery scalar result and mode guards (BQ-26, BQ-30)
+
+BigQuery UUID parsing records its STRING result contract. The base UUID generator
+honors that flag with a target string cast. PostgreSQL's GEN_RANDOM_UUID override
+also honors it, unlike the pin, which otherwise returns PostgreSQL's UUID type.
+Native UUID calls without the flag keep their original return type. Tests cover
+the five pinned BigQuery routes plus PostgreSQL, AST preservation, and DuckDB's
+actual text type and string operations.
+
+DuckDB ROUND lowering supports the two BigQuery literal modes. An unknown or
+dynamic mode is retained, as in the pin, but additionally produces an unsupported
+diagnostic. It must not silently become ordinary rounding. Executed DuckDB tests
+cover signed ties/non-ties, negative and positive scales, NULLs, and native defaults.
+
+## 28. BigQuery epoch floors and UTC date extraction (BQ-4, BQ-5)
+
+DuckDB epoch generation truncates the timestamp to seconds/milliseconds before
+conversion. The pin's BIGINT cast rounds fractional seconds; EPOCH_MS alone
+truncates negative fractions toward zero. Both violate BigQuery whole-unit floor
+semantics. EPOCH_US remains integer-valued and preserves microseconds. UNIX_DATE
+and TIME_DIFF use DATE_DIFF with the correct unit and argument order.
+
+DATE extraction converts a TIMESTAMPTZ instant directly to the requested zone,
+defaulting to UTC, rather than casting it to a session-local TIMESTAMP and then
+reinterpreting that clock time as UTC. Unzoned timestamp literals get explicit
+UTC, with midnight added to date-only literals. Explicit zones survive. With an
+explicit BigQuery source, CURRENT_DATE without a zone also uses UTC; native DuckDB
+CURRENT_DATE remains session-local. Unknown DATE argument types are diagnosed.
+
+Five existing assertion IDs remain protected with reviewed new signatures:
+three BigQuery-ledger UNIX_SECONDS/UNIX_MILLIS writes to DuckDB, and two DuckDB-ledger
+BigQuery DATE reads using Los Angeles/Berlin. The Berlin fixture is equivalent to
+the pin but uses the same UTC-normalized lowering as explicitly zoned inputs.
+They carry `status: intentional-divergence` and are excluded from actionable BQ
+counts. Do not remove them or restore the previous SQL to improve parity.
+
+`BigqueryEpochResultTest` executes negative/fractional boundaries, years 0001/9999,
+INT64 result types, and TIME_DIFF directions in DuckDB under UTC/New York.
+`BigqueryDateResultTest` checks offsets, dates near midnight, typed NULLs, and
+CURRENT_DATE across UTC/New York/Auckland sessions. These are DuckDB execution
+checks, not live BigQuery verification. Upstream issue/PR status: not reported.
+
+## 29. Array-to-string replacement bindings (BQ-14)
+
+DuckDB's three-argument ARRAY_TO_STRING lowering uses LIST_TRANSFORM/COALESCE,
+as in the pin, but allocates a lambda name that cannot shadow identifiers in the
+source expression. A runtime replacement column named `x` must not become a
+reference to the lambda's element. The body uses a Column node so forced identifier
+quoting remains consistent. `BigqueryArrayToStringResultTest` executes runtime
+replacement columns, mixed-case/qualified collisions, escaping, and NULL inputs.
+An explicitly NULL BigQuery delimiter yields NULL, not DuckDB's default comma.
+The two-argument SQL remains unchanged. Column-dependent delimiters are diagnosed:
+DuckDB's underlying STRING_AGG requires a constant separator. Their separate
+lowering is tracked as BQ-36. No existing ledger divergence is needed.
+
+## 30. BigQuery temporal constructors and parsers (BQ-6, BQ-7)
+
+BigQuery DATETIME parsing stores its second argument in the AST's `expression`
+slot, preserving date/time and timestamp/zone overloads through native generation.
+DuckDB lowering keeps absolute TIMESTAMP values separate from civil DATETIME/TIME:
+TIMESTAMP uses TIMESTAMPTZ, date plus time produces TIMESTAMP, and timestamp plus
+zone converts a UTC instant to local civil time. Presto retains WITH TIME ZONE.
+
+Unzoned strings in DATETIME(timestamp, zone) are normalized to UTC before zone
+conversion. This intentionally differs from the pin's session-dependent direct
+TIMESTAMPTZ cast. STRING(timestamp, zone) uses the same instant conversion but
+currently emits a diagnostic because DuckDB TEXT omits BigQuery's UTC offset;
+offset-preserving formatting is BQ-37. Zone-less TIMESTAMP with an unknown input
+type and DATETIME with an unknown second-argument type are also diagnosed instead
+of guessed; schema-driven overload resolution is BQ-38. Native BigQuery keeps both
+arguments.
+
+DuckDB PARSE_DATETIME applies BigQuery's 1970 default year and PARSE_TIME casts
+STRPTIME to TIME. Hive DATE_FORMAT targeting BigQuery uses FORMAT_DATETIME rather
+than the pin's invalid FORMAT_DATE-with-DATETIME call. Three signed rows carry
+reviewed protected signatures: DATETIME zone conversion, diagnosed STRING offset
+loss, and Hive FORMAT_DATETIME. TIMESTAMP(x) matches the pin, while direct tests
+require its ambiguity diagnostic. They are excluded from actionable BQ counts.
+
+`BigqueryTemporalConstructorsResultTest` and `BigqueryParseTemporalResultTest`
+execute NULLs, missing/full years, microseconds, named zones and civil/instant
+boundaries in DuckDB under UTC, New York and Auckland. These are not live BigQuery
+checks. Upstream issue/PR status: not reported.
+
+## 31. BigQuery interval and LAST_DAY guards (BQ-8 to BQ-10)
+
+Temporal ADD/SUB nodes render target-native interval operators without quoting the
+unit twice. BigQuery generation casts Hive/Spark date strings through DATETIME and
+back to DATE before DATE_ADD. Spark renders DATETIME and TIMESTAMP subtraction as
+binary interval arithmetic. PostgreSQL uses real interval units rather than string
+units, so negative amounts remain one valid interval literal.
+
+LAST_DAY drops the redundant MONTH argument for targets that do not support a date
+part. DuckDB lowers WEEK/WEEK(day)/ISOWEEK to a DATE plus weekday offset; PostgreSQL
+uses DATE_TRUNC plus month/day intervals. Presto/Trino diagnose unsupported non-month
+forms instead of silently returning month-end. MAKE_INTERVAL uses the compact literal
+form for integral constants and runtime interval components for dynamic or NULL
+arguments. Source ASTs remain unchanged.
+
+`BigqueryTemporalArithmeticResultTest` executes signed millisecond/second arithmetic.
+`BigqueryLastDayIntervalResultTest` executes month edges, every week start, NULLs,
+literal/dynamic/empty MAKE_INTERVAL, and result types in DuckDB. All eighteen signed
+parity assertions now pass; no protected divergence was added.
+
+## 32. BigQuery temporal truncation types and zones (BQ-11, BQ-12)
+
+DuckDB truncation distinguishes DATE, civil DATETIME, and instant TIMESTAMP.
+DATE week truncation casts back to DATE. DATETIME uses unzoned TIMESTAMP. TIMESTAMP
+converts an instant to civil time in the requested zone, defaults that zone to UTC,
+applies the week-start shift, and converts the boundary back to an instant. Unzoned
+BigQuery timestamp literals are normalized to UTC before truncation.
+
+Four BQ-11 rows retain reviewed signatures: the unknown TIMESTAMP Sunday row, two
+equivalent unzoned timestamp-literal rows, and an ISOWEEK DATE row whose pin output
+has the wrong DuckDB result type. They are executed under UTC, New York, and Auckland
+sessions and excluded from actionable counts. Six other BQ-11 rows match the pin.
+
+WeekStart rendering now reports the pin's unsupported diagnostic for Spark,
+ClickHouse, MySQL, and Hive targets that cannot represent BigQuery custom week starts.
+Fallback SQL uses plain WEEK rather than malformed WEEK_START/WEEK(day)/weekday
+extract units. All six BQ-12 negative assertions pass. Native BigQuery week syntax
+and the all-weekday LAST_DAY behavior from section 31 remain unchanged.
+
+`BigqueryTemporalTruncationResultTest` executes every week start, ISOWEEK, NULLs,
+year boundaries, explicit zones, and result types. These are DuckDB checks, not live
+BigQuery verification. Upstream issue/PR status: not reported.
+
 ## Upstream sync protocol
 
 1. Re-pin `reference/sqlglot`, regenerate all generated tables/corpora (`tools/*.py`),

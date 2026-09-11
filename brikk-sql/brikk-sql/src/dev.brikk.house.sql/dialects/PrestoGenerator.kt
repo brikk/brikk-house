@@ -586,19 +586,29 @@ open class PrestoGenerator(
         return ""
     }
 
-    // sqlglot: dialect.no_timestamp_sql (the zero-arg branch runs annotate_types in
-    // Python to pick TIMESTAMP vs TIMESTAMPTZ; we default to TIMESTAMP)
+    // sqlglot: dialect.no_timestamp_sql
     open fun noTimestampSql(expression: Timestamp): String {
         val zone = expression.args["zone"] as? Expression
         if (zone == null) {
+            val type = if (expression.args["with_tz"] == true) DType.TIMESTAMPTZ else DType.TIMESTAMP
+            val inputType = (expression.thisArg as? Expression)?.type?.thisArg
+            if (expression.args["with_tz"] == true && (inputType == null || inputType == DType.UNKNOWN)) {
+                unsupported("BigQuery TIMESTAMP without a zone requires a known input type to distinguish instants from UTC civil values")
+            }
             return sql(
                 Cast(
                     args(
                         "this" to expression.thisArg,
-                        "to" to DataType(args("this" to DType.TIMESTAMP)),
+                        "to" to DataType(args("this" to type)),
                     )
                 )
             )
+        }
+        if (expression.args["with_tz"] == true) {
+            return sql(AtTimeZone(args(
+                "this" to Cast(args("this" to expression.thisArg, "to" to DataType(args("this" to DType.TIMESTAMP)))),
+                "zone" to zone,
+            )))
         }
         if (zone.name.lowercase() in dev.brikk.house.sql.parser.TIMEZONES) {
             return sql(
@@ -1108,6 +1118,48 @@ open class PrestoGenerator(
         return "CAST(ROW(${values.joinToString(", ")}) AS ROW(${schema.joinToString(", ")}))"
     }
 
+    private fun arrayWithStructNullsSql(expression: ArrayNode): String {
+        // brikk extension (BQ-1): a literal NULL inherits its field type from sibling rows,
+        // not BigQuery's standalone BIGINT default. Leave explicit casts unchanged.
+        if (expression.expressionsArg.any { it is Struct } && expression.find<Null>() != null) {
+            dev.brikk.house.sql.optimizer.annotateTypes(expression, dialect = dialect, overwriteTypes = false)
+            fun reconcile(fields: List<Expression>): DataType? {
+                val values = fields.map { if (it is PropertyEQ) it.expressionArg as Expression else it }
+                val nonNull = values.filter { it !is Null }
+                val structs = nonNull.filterIsInstance<Struct>()
+                if (structs.isNotEmpty() && structs.size == nonNull.size &&
+                    structs.all { it.expressionsArg.size == structs.first().expressionsArg.size }) {
+                    for (i in structs.first().expressionsArg.indices) {
+                        reconcile(structs.map { it.expressionsArg[i] as Expression })
+                    }
+                    for (row in structs) {
+                        val types = row.expressionsArg.filterIsInstance<Expression>().map { field ->
+                            val type = field.type?.copy() ?: DataType(args("this" to DType.UNKNOWN))
+                            if (field is PropertyEQ) ColumnDef(args("this" to (field.thisArg as Expression).copy(), "kind" to type))
+                            else type
+                        }
+                        row.typeSlot = DataType(args("this" to DType.STRUCT, "expressions" to types, "nested" to true))
+                    }
+                }
+                val arrays = nonNull.filterIsInstance<ArrayNode>()
+                if (arrays.isNotEmpty() && arrays.size == nonNull.size) {
+                    val element = reconcile(arrays.flatMap { it.expressionsArg.filterIsInstance<Expression>() })
+                    if (element != null) for (array in arrays) {
+                        array.typeSlot = DataType(args("this" to DType.ARRAY, "expressions" to listOf(element.copy()), "nested" to true))
+                    }
+                }
+                val type = nonNull.mapNotNull { it.type as? DataType }.firstOrNull { !it.isType(DType.UNKNOWN) }
+                if (type != null) for (value in values.filterIsInstance<Null>()) value.typeSlot = type.copy()
+                for ((field, value) in fields.zip(values)) {
+                    if (field is PropertyEQ) field.typeSlot = value.type?.copy()
+                }
+                return type ?: (values.firstOrNull()?.type as? DataType)
+            }
+            reconcile(expression.expressionsArg.filterIsInstance<Expression>())
+        }
+        return "ARRAY[${expressions(expression, flat = true)}]"
+    }
+
     // sqlglot: PrestoGenerator.interval_sql
     override fun intervalSql(expression: Interval): String {
         val this_ = expression.thisArg as? Expression
@@ -1276,7 +1328,7 @@ open class PrestoGenerator(
             reg(ArgMax::class) { e -> pg().renameFuncSql("MAX_BY", e) }
             reg(ArgMin::class) { e -> pg().renameFuncSql("MIN_BY", e) }
             // sqlglot: TRANSFORMS[exp.Array] (inherit_struct_field_names preprocess skipped)
-            reg(ArrayNode::class) { e -> "ARRAY[${expressions(e, flat = true)}]" }
+            reg(ArrayNode::class) { e -> pg().arrayWithStructNullsSql(e as ArrayNode) }
             reg(ArrayAny::class) { e -> pg().renameFuncSql("ANY_MATCH", e) }
             reg(ArrayConcat::class) { e -> pg().renameFuncSql("CONCAT", e) }
             reg(ArrayContains::class) { e -> pg().renameFuncSql("CONTAINS", e) }
@@ -1371,7 +1423,13 @@ open class PrestoGenerator(
                 func("SPLIT", e.thisArg, e.args["expression"])
             }
             reg(Last::class) { e -> pg().firstLastSql(e) }
-            reg(LastDay::class) { e -> func("LAST_DAY_OF_MONTH", e.thisArg) }
+            reg(LastDay::class) { e ->
+                val unit = e.args["unit"] as? Expression
+                if (unit != null && unit.name.uppercase() != "MONTH") {
+                    unsupported("Date parts are not supported in LAST_DAY.")
+                }
+                func("LAST_DAY_OF_MONTH", e.thisArg)
+            }
             reg(Lateral::class) { e -> pg().explodeToUnnestSql(e as Lateral) }
             reg(Left::class) { e -> pg().leftToSubstringSql(e as Left) }
             // sqlglot: unsupported_args("ins_cost", "del_cost", "sub_cost", "max_dist")

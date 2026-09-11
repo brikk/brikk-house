@@ -107,6 +107,7 @@ open class ClickhouseGenerator(
 
     override val selectKinds: Set<String> get() = emptySet()
     override val trySupported: Boolean get() = false
+    override val lastDaySupportsDatePart: Boolean get() = false
     override val supportsUescape: Boolean get() = false
     override val supportsAlterColumnIfExists: Boolean get() = true
     override val queryHints: Boolean get() = false
@@ -722,7 +723,7 @@ open class ClickhouseGenerator(
     // sqlglot: ClickHouseGenerator.timestamptrunc_sql — dialect.version defaults to
     // the latest, so the pre-23.12 lowercase rewrite is never taken
     open fun timestamptruncSql(expression: Expression): String {
-        val unit = unitToStr(expression)
+        val unit = weekstartUnitToStr(expression)
         return func("dateTrunc", unit, expression.thisArg, expression.args["zone"])
     }
 

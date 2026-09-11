@@ -324,7 +324,7 @@ open class DorisGenerator(
     }
 
     // sqlglot: Generator.lastday_sql with LAST_DAY_SUPPORTS_DATE_PART = False
-    open fun lastdaySql(expression: LastDay): String {
+    override fun lastdaySql(expression: LastDay): String {
         val unit = expression.text("unit")
         if (unit.isNotEmpty() && unit != "MONTH") {
             unsupported("Date parts are not supported in LAST_DAY.")

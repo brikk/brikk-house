@@ -215,6 +215,7 @@ object GeneratorTables {
         reg(Apply::class) { e -> applySql(e as Apply) }
         reg(Columns::class) { e -> columnsSql(e as Columns) }
         reg(UuidProperty::class) { e -> uuidpropertySql(e as UuidProperty) }
+        reg(Uuid::class) { e -> uuidSql(e as Uuid) }
         reg(DateAdd::class) { e -> dateaddSql(e as DateAdd) }
         reg(MergeTreeTTL::class) { e -> mergetreettlSql(e as MergeTreeTTL) }
         reg(MergeTreeTTLAction::class) { e -> mergetreettlactionSql(e as MergeTreeTTLAction) }
@@ -405,6 +406,8 @@ object GeneratorTables {
 
         // --- functions with special rendering ---
         reg(Extract::class) { e -> extractSql(e as Extract) }
+        reg(WeekStart::class) { e -> weekstartSql(e as WeekStart) }
+        reg(LastDay::class) { e -> lastdaySql(e as LastDay) }
         reg(Trim::class) { e -> trimSql(e as Trim) }
         reg(Concat::class) { e -> concatSql(e as Concat) }
         reg(ConcatWs::class) { e -> concatwsSql(e as ConcatWs) }

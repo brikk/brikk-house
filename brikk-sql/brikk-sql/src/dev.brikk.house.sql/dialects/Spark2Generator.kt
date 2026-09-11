@@ -11,6 +11,7 @@ import dev.brikk.house.sql.generator.eliminateDistinctOn
 import dev.brikk.house.sql.generator.unnestToExplode
 import dev.brikk.house.sql.generator.anyToExists
 import dev.brikk.house.sql.generator.removeWithinGroupForPercentiles
+import dev.brikk.house.sql.generator.unqualifyColumns
 import dev.brikk.house.sql.parser.Spark2TokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -18,14 +19,6 @@ import kotlin.String
 import kotlin.collections.List
 import kotlin.collections.Map
 import kotlin.reflect.KClass
-
-// sqlglot: dialect.unit_to_str (default "DAY")
-private fun spark2UnitToStr(expression: Expression, default: String = "DAY"): Expression? {
-    val unit = expression.args["unit"] as? Expression
-        ?: return if (default.isNotEmpty()) Literal.string(default) else null
-    if (unit is Placeholder || (unit !is Var && unit !is Literal)) return unit
-    return Literal.string(unit.name)
-}
 
 // sqlglot: dialect.is_parse_json
 private fun isParseJson(expression: Expression?): Boolean =
@@ -41,8 +34,7 @@ private const val HIVE_DATE_FORMAT = "'yyyy-MM-dd'"
  *
  * NOT PORTED (no Kotlin equivalents of sqlglot's transforms/preprocess pipelines yet):
  * exp.Select preprocess (unnest_to_explode / any_to_exists / eliminate_distinct_on — only
- * eliminate_qualify is applied), exp.From (_unalias_pivot), exp.Pivot
- * (_unqualify_pivot_columns), exp.WithinGroup (remove_within_group_for_percentiles),
+ * eliminate_qualify is applied), exp.From (_unalias_pivot),
  * exp.Create (remove_unique_constraints / ctas_with_tmp_tables_to_create_tmp_view /
  * move_schema_columns_to_partitioned_by). These render via the inherited generator; any
  * mismatches are ledgered.
@@ -99,6 +91,15 @@ open class Spark2Generator(
 
     // sqlglot: Spark2Generator.struct_sql — delegates to the base Generator (named structs OK)
     override fun structSql(expression: Struct): String = baseStructSql(expression)
+
+    // sqlglot: transforms.unqualify_pivot_fields; aggregate qualifiers remain intact.
+    override fun pivotSql(expression: Pivot): String {
+        val copy = expression.copy() as Pivot
+        for (field in (copy.args["fields"] as? List<*>).orEmpty().filterIsInstance<Expression>()) {
+            unqualifyColumns(field)
+        }
+        return super.pivotSql(copy)
+    }
 
     // sqlglot: Spark2Generator.cast_sql
     override fun castSql(expression: Cast, safePrefix: String?): String {
@@ -254,7 +255,7 @@ open class Spark2Generator(
             reg(BitwiseLeftShift::class) { e -> sg().renameFuncSql("SHIFTLEFT", e) }
             reg(BitwiseRightShift::class) { e -> sg().renameFuncSql("SHIFTRIGHT", e) }
             reg(DateFromParts::class) { e -> sg().renameFuncSql("MAKE_DATE", e) }
-            reg(DateTrunc::class) { e -> func("TRUNC", e.thisArg, spark2UnitToStr(e)) }
+            reg(DateTrunc::class) { e -> func("TRUNC", e.thisArg, weekstartUnitToStr(e)) }
             reg(DayOfMonth::class) { e -> sg().renameFuncSql("DAYOFMONTH", e) }
             reg(DayOfWeek::class) { e -> sg().renameFuncSql("DAYOFWEEK", e) }
             reg(DayOfWeekIso::class) { e -> "((${func("DAYOFWEEK", e.thisArg)} % 7) + 1)" }
@@ -287,7 +288,7 @@ open class Spark2Generator(
             }
             reg(StrToDate::class) { e -> sg().strToDateSpark(e as StrToDate) }
             reg(StrToTime::class) { e -> func("TO_TIMESTAMP", e.thisArg, sg().formatTime(e)) }
-            reg(TimestampTrunc::class) { e -> func("DATE_TRUNC", spark2UnitToStr(e), e.thisArg) }
+            reg(TimestampTrunc::class) { e -> func("DATE_TRUNC", weekstartUnitToStr(e), e.thisArg) }
             reg(Trim::class) { e -> sg().sparkTrimSql(e as Trim) }
             reg(UnixToTime::class) { e -> sg().unixToTimeSpark(e as UnixToTime) }
             reg(VariancePop::class) { e -> sg().renameFuncSql("VAR_POP", e) }

@@ -4,25 +4,29 @@
             "id": "assertion:v1:sha256:adcc456fd14d029aa221f371c6f076b4df93106ce5bb76303e2e1cb1f4d55d5e:1",
             "case": "write|bigquery|STRPOS(haystack, needle, occurrence)",
             "reason": "expected `INSTR(haystack, needle, 1, occurrence)` actual `STR_POSITION(haystack, needle, occurrence)`",
-            "signature": "sql-mismatch:v1:sha256:be868d07c36143cb5580a7197768a5438797040a214dab908d8d02b4629dab13"
+            "signature": "sql-mismatch:v1:sha256:be868d07c36143cb5580a7197768a5438797040a214dab908d8d02b4629dab13",
+            "issue": "BQ-31"
         },
         {
             "id": "assertion:v1:sha256:5b2cf8908ce38b556d53eca81347a252f30ae2a7ee4de46dfcf69645378d96a0:1",
             "case": "write|bigquery|SELECT SHA256(x)",
             "reason": "expected `SELECT SHA256(x)` actual `SELECT S_H_A2_DIGEST(x, 256)`",
-            "signature": "sql-mismatch:v1:sha256:f7fdce993ad18d30556b8e5117ce5f7bd2c2d3313196a37ee162f57494e12faf"
+            "signature": "sql-mismatch:v1:sha256:f7fdce993ad18d30556b8e5117ce5f7bd2c2d3313196a37ee162f57494e12faf",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:0c787e3113e8109bcdb738c4f31a02bbafb86538bbc8d582edf5a5d4a761de31:1",
             "case": "write|bigquery|SELECT SHA512(x)",
             "reason": "expected `SELECT SHA512(x)` actual `SELECT S_H_A2_DIGEST(x, 512)`",
-            "signature": "sql-mismatch:v1:sha256:6d18005549d1d03cfc8f817804db87e2a9f587fdaafde760b2f34348c68507aa"
+            "signature": "sql-mismatch:v1:sha256:6d18005549d1d03cfc8f817804db87e2a9f587fdaafde760b2f34348c68507aa",
+            "issue": "BQ-24"
         },
         {
             "id": "assertion:v1:sha256:cd600c572861cbe373110e648a68585f0b1981154330072d100319ae8a48e490:1",
             "case": "write|bigquery|SELECT MAX_BY(a.id, a.timestamp) FROM a",
             "reason": "expected `SELECT MAX_BY(a.id, a.timestamp) FROM a` actual `SELECT ARG_MAX(a.id, a.timestamp) FROM a`",
-            "signature": "sql-mismatch:v1:sha256:70a6d7ae521b772e83ae1f20ae3e00f0d954cc538dc51ff8434a5a20debeced6"
+            "signature": "sql-mismatch:v1:sha256:70a6d7ae521b772e83ae1f20ae3e00f0d954cc538dc51ff8434a5a20debeced6",
+            "issue": "BQ-31"
         }
     ]
 }

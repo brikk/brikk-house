@@ -159,6 +159,7 @@ open class Generator(
     open val createFunctionReturnAs: Boolean get() = true
     open val singleStringInterval: Boolean get() = false
     open val intervalAllowsPluralForm: Boolean get() = true
+    open val lastDaySupportsDatePart: Boolean get() = true
 
     // sqlglot: Generator.AUTO_REFRESH_BARE_INTERVALS — intervals in a REFRESH schedule
     // (AutoRefreshProperty) render without the INTERVAL keyword (ClickHouse).
@@ -3343,7 +3344,11 @@ open class Generator(
     // sqlglot: Generator.extract_sql (base: NORMALIZE_EXTRACT_DATE_PARTS=false)
     open fun extractSql(expression: Extract): String {
         val thisNode = expression.args["this"] as? Expression
-        val thisSql = if (extractAllowsQuotes) sql(thisNode) else thisNode?.name ?: ""
+        val thisSql = when {
+            extractAllowsQuotes -> sql(thisNode)
+            thisNode is WeekStart -> weekstartName(thisNode)
+            else -> thisNode?.name ?: ""
+        }
         val expressionSql = sql(expression, "expression")
         return "EXTRACT($thisSql FROM $expressionSql)"
     }
@@ -4835,14 +4840,27 @@ open class Generator(
         return binary(expression, "/")
     }
 
+    // sqlglot: Generator.uuid_sql (BigQuery's native dispatch already returns STRING)
+    open fun uuidSql(expression: Uuid): String {
+        if (expression.args["is_string"] != true) return functionFallbackSql(expression)
+        val native = expression.copy() as Uuid
+        native.set("is_string", null)
+        return sql(Cast(args("this" to native, "to" to DataType(args("this" to DType.VARCHAR)))))
+    }
+
     // sqlglot: Generator.safedivide_sql
     open fun safedivideSql(expression: SafeDivide): String {
-        val denominator = expression.expressionArg as Expression
+        val numerator = (expression.thisArg as Expression).copy().let {
+            if (it is Binary) Paren(args("this" to it)) else it
+        }
+        val denominator = (expression.expressionArg as Expression).copy().let {
+            if (it is Binary) Paren(args("this" to it)) else it
+        }
         return sql(
             If(
                 args(
                     "this" to NEQ(args("this" to denominator.copy(), "expression" to Literal.number("0"))),
-                    "true" to Div(args("this" to expression.thisArg, "expression" to denominator)),
+                    "true" to Div(args("this" to numerator, "expression" to denominator)),
                     "false" to Null(),
                 )
             )
@@ -5249,6 +5267,31 @@ open class Generator(
     open fun partitionrangeSql(expression: PartitionRange): String =
         "${sql(expression, "this")} TO ${sql(expression, "expression")}"
 
+    // sqlglot: Generator.weekstart_name
+    open fun weekstartName(expression: WeekStart): String {
+        val day = (expression.thisArg as? Expression)?.name?.uppercase().orEmpty()
+        // The base dialect week offset is Monday. BigQuery overrides WeekStart rendering.
+        if (day != "MONDAY") {
+            unsupported("WEEK($day) is not supported; falling back to the default week start day")
+        }
+        return "WEEK"
+    }
+
+    // sqlglot: Generator.weekstart_sql
+    open fun weekstartSql(expression: WeekStart): String {
+        val name = weekstartName(expression)
+        return if (expression.parent is DateTrunc) sql(Literal.string(name)) else name
+    }
+
+    // sqlglot: dialect.weekstart_unit_to_str
+    open fun weekstartUnitToStr(expression: Expression, default: String = "DAY"): Expression? {
+        val unit = expression.args["unit"] as? Expression
+            ?: return if (default.isNotEmpty()) Literal.string(default) else null
+        if (unit is WeekStart) return Literal.string(weekstartName(unit))
+        if (unit is Placeholder || (unit !is Var && unit !is Literal)) return unit
+        return Literal.string(unit.name)
+    }
+
     // sqlglot: Generator.chr_sql
     open fun chrSql(expression: Chr, name: String = "CHR"): String {
         val thisSql = expressions(expression)
@@ -5349,6 +5392,17 @@ open class Generator(
             expression.sqlName()
         }
         return func(name, *args.toTypedArray())
+    }
+
+    // sqlglot: Generator.lastday_sql
+    open fun lastdaySql(expression: LastDay): String {
+        if (lastDaySupportsDatePart) return functionFallbackSql(expression)
+
+        val unit = expression.args["unit"] as? Expression
+        if (unit != null && unit.name.uppercase() != "MONTH") {
+            unsupported("Date parts are not supported in LAST_DAY.")
+        }
+        return func("LAST_DAY", expression.thisArg)
     }
 
     // sqlglot bac1a897b: Generator._ml_sql and specialized BigQuery ML/AI TVFs.

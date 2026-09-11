@@ -521,6 +521,7 @@ open class BigqueryGenerator(
             is TsOrDsToDatetime -> "FORMAT_DATETIME"
             is TsOrDsToTimestamp -> "FORMAT_TIMESTAMP"
             is TsOrDsToTime -> "FORMAT_TIME"
+            is TimeStrToTime -> "FORMAT_DATETIME"
             else -> "FORMAT_DATE"
         }
         val timeExpr: Expression? = when (this0) {
@@ -538,6 +539,13 @@ open class BigqueryGenerator(
             args("this" to expression.args["expression"], "unit" to unitToVar(expression))
         )
         return "${dataType}_$kind($this0, ${sql(interval)})"
+    }
+
+    internal fun tsOrDsAddSql(expression: TsOrDsAdd): String {
+        val copy = expression.copy() as TsOrDsAdd
+        val timestamp = Cast(args("this" to (copy.thisArg as Expression).copy(), "to" to DataType.build(DType.DATETIME)))
+        copy.set("this", Cast(args("this" to timestamp, "to" to DataType.build(DType.DATE))))
+        return dateAddIntervalSql("DATE", "ADD", copy)
     }
 
     companion object {
@@ -735,17 +743,21 @@ open class BigqueryGenerator(
             reg(StabilityProperty::class) { e ->
                 if (e.name == "IMMUTABLE") "DETERMINISTIC" else "NOT DETERMINISTIC"
             }
-            reg(dev.brikk.house.sql.ast.String::class) { e -> bg().renameFuncSql("STRING", e) }
+            reg(dev.brikk.house.sql.ast.String::class) { e -> func("STRING", e.thisArg, e.args["zone"]) }
             reg(SessionUser::class) { _ -> "SESSION_USER()" }
             reg(TimeAdd::class) { e -> bg().dateAddIntervalSql("TIME", "ADD", e) }
             reg(TimeSub::class) { e -> bg().dateAddIntervalSql("TIME", "SUB", e) }
             reg(TimestampAdd::class) { e -> bg().dateAddIntervalSql("TIMESTAMP", "ADD", e) }
             reg(TimestampDiff::class) { e -> func("TIMESTAMP_DIFF", e.thisArg, e.expressionArg, unitToVar(e)) }
             reg(TimestampSub::class) { e -> bg().dateAddIntervalSql("TIMESTAMP", "SUB", e) }
+            reg(TimeStrToTime::class) { e ->
+                sql(Cast(args("this" to e.thisArg, "to" to DataType.build(DType.DATETIME))))
+            }
             reg(Transaction::class) { _ -> "BEGIN TRANSACTION" }
             reg(TsOrDsToTime::class) { e -> bg().renameFuncSql("TIME", e) }
             reg(TsOrDsToDatetime::class) { e -> bg().renameFuncSql("DATETIME", e) }
             reg(TsOrDsToTimestamp::class) { e -> bg().renameFuncSql("TIMESTAMP", e) }
+            reg(TsOrDsAdd::class) { e -> bg().tsOrDsAddSql(e as TsOrDsAdd) }
             reg(Unhex::class) { e -> bg().renameFuncSql("FROM_HEX", e) }
             reg(UnixDate::class) { e -> bg().renameFuncSql("UNIX_DATE", e) }
             reg(Uuid::class) { _ -> "GENERATE_UUID()" }

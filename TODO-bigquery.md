@@ -1,92 +1,90 @@
-# TODO - BigQuery SQLGlot parity
+# TODO - BigQuery
 
 > This file owns every current SQLGlot parity case whose source or target is
 > BigQuery. The oracle is the pinned SQLGlot reference at
 > `v30.17.0-93-gdcc36544a` in `reference/sqlglot/`.
 >
 > The authoritative cases remain in
-> `brikk-sql/testResources/dialect-corpus/*-transpile-known-failures.json`.
+> `brikk-sql/brikk-sql/testResources/dialect-corpus/*-transpile-known-failures.json`.
 > Native BigQuery generation currently has no ledgered failures.
+>
+> Owner: this BigQuery workstream. Compiler/shape review belongs to the separate
+> compiler-review agent. Work in batches of two or three BQ issues; verify and
+> commit each completed batch before starting another. Never reuse retired BQ IDs.
 
 ---
 
-**183 failing transpile assertions across 19 source-to-target routes.**
+**100 actionable failing transpile assertions across 19 source-to-target routes.**
+Twelve additional signed assertions are protected correctness divergences, documented
+in `docs/brikk-extensions.md` sections 28, 30, and 32. They are not open BQ issues. BQ-36
+and BQ-37 are execution limitations with no current parity-ledger entries.
 
-## BigQuery as source (143)
+## BigQuery as source (64)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 88 |
-| bigquery -> spark | 12 |
-| bigquery -> presto | 5 |
-| bigquery -> bigquery | 9 |
-| bigquery -> trino | 3 |
-| bigquery -> hive | 6 |
-| bigquery -> postgres | 6 |
-| bigquery -> clickhouse | 5 |
-| bigquery -> mysql | 4 |
-| bigquery -> spark2 | 3 |
+| bigquery -> duckdb | 39 |
+| bigquery -> spark | 3 |
+| bigquery -> presto | 2 |
+| bigquery -> bigquery | 6 |
+| bigquery -> trino | 1 |
+| bigquery -> hive | 3 |
+| bigquery -> postgres | 2 |
+| bigquery -> clickhouse | 3 |
+| bigquery -> mysql | 2 |
+| bigquery -> spark2 | 1 |
 | bigquery -> base | 2 |
 
-## BigQuery as target (40)
+## BigQuery as target (36)
 
 The `bigquery -> bigquery` cases are counted only in the source table above.
 
 | Route | Items |
 |---|---:|
-| spark -> bigquery | 11 |
+| spark -> bigquery | 10 |
 | postgres -> bigquery | 7 |
 | duckdb -> bigquery | 7 |
 | presto -> bigquery | 6 |
-| hive -> bigquery | 4 |
+| hive -> bigquery | 1 |
 | trino -> bigquery | 2 |
 | clickhouse -> bigquery | 2 |
 | base -> bigquery | 1 |
 
-## Main clusters
+## Open issues
 
-ASTRA-009 closed six exact ledger keys covering seven input assertions. Derived
-VALUES now become arrays of named structs, and explicit CTE column lists become
-projection aliases. This left 144 old-style BigQuery ledger keys. Unexpanded CTE stars,
-shadowed aliases used in query modifiers, and mismatched VALUES widths remain
-diagnosed rather than silently losing names or cells.
+Each signed ledger entry has an `issue` label linking it to this inventory.
+Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
+BQ-12, plus BQ-14, BQ-26, BQ-30, and BQ-34. Completed ASTRA history
+belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
-Execution follow-up: converting BigQuery
-`SELECT t.b FROM UNNEST([STRUCT('x' AS b), STRUCT(NULL AS b)]) AS t` to
-Presto/Trino casts the NULL field as BIGINT, making the array's row types
-incompatible. The ASTRA-009 cross-engine execution check uses an explicit
-string cast for NULL; its direct BigQuery generation test retains untyped NULL.
-Fix array-wide field type reconciliation rather than changing VALUES lowering.
+| ID | Issue | Assertions |
+|---|---|---:|
+| BQ-13 | DuckDB array aggregation NULL handling and modifiers | 6 |
+| BQ-15 | DuckDB IN/NOT IN UNNEST NULL and empty-array semantics | 3 |
+| BQ-16 | DuckDB struct-array UNNEST field expansion | 7 |
+| BQ-17 | Inherit struct field names across array elements | 3 |
+| BQ-18 | SELECT AS STRUCT lowering | 1 |
+| BQ-19 | Base-to-BigQuery nested UNNEST alias cleanup and pretty output | 1 |
+| BQ-20 | Projection EXPLODE/UNNEST to BigQuery relations, including outer/zipped inputs | 12 |
+| BQ-21 | PostgreSQL projected GENERATE_SERIES to BigQuery | 6 |
+| BQ-22 | EDIT_DISTANCE maximum argument and target capability | 5 |
+| BQ-23 | TO_HEX/LOWER_HEX operation and letter-case preservation | 13 |
+| BQ-24 | SHA256/SHA512 digest generation | 12 |
+| BQ-25 | Byte/escaped-string and numeric-hex literal fidelity | 6 |
+| BQ-27 | DuckDB JSON scalar/array conversions | 2 |
+| BQ-28 | REGEXP_EXTRACT position/occurrence | 2 |
+| BQ-29 | APPROX_QUANTILES boundaries and modifiers | 5 |
+| BQ-31 | SPACE, STRPOS occurrence, ARG_MAX/MIN and binary/text LENGTH helpers | 7 |
+| BQ-32 | Typed date/timestamp arrays and UNNEST aliases | 6 |
+| BQ-33 | Presto named-window expansion | 1 |
+| BQ-35 | Into-BigQuery timezone operator lowering | 2 |
+| BQ-36 | DuckDB ARRAY_TO_STRING row-dependent delimiters; currently diagnosed | execution |
+| BQ-37 | DuckDB offset-preserving STRING(timestamp, zone) formatting; currently diagnosed | execution |
+| BQ-38 | Schema-driven TIMESTAMP/DATETIME overload resolution for unknown inputs; currently diagnosed | execution |
 
-ASTRA-015 replaced SQL-based keys with assertion IDs and exact failure signatures.
-The BigQuery ledger now records 146 failing assertions. Two repeated byte-literal
-assertions were previously collapsed, one each for DuckDB and Postgres. They have
-the same output mismatch as their sibling, so the total rises from 181 old keys
-to 183 assertions without adding a new SQL failure.
-
-ASTRA-008 closed the 18 exact stale transpile keys reported in
-`build/astra-008-core.log`: 16 from the BigQuery ledger and two from the Presto
-ledger. By read/write ownership, these remove 11 BigQuery-source items and seven
-BigQuery-target items, reducing the total from 205 to 187. The ledgers now contain
-150 and four keys respectively. This does not close all struct-array or offset
-conversions; remaining entries and the clusters below stay open.
-
-ASTRA-010 closed 11 temporal cases: native TIMESTAMP_DIFF unit preservation,
-Presto/Trino TimestampDiff and DatetimeDiff dispatch, and week-start alignment.
-`TemporalDiffResultTest` adds executed Trino 483 checks for negative/fractional
-differences, all seven week starts, microsecond boundary rounding, and elapsed
-days across DST. Other temporal items in the cluster below remain open.
-
-- BigQuery temporal semantics: `DATE_*`, `DATETIME_*`, `TIMESTAMP_*`, week
-  boundaries, time zones, epoch conversion, and format strings.
-- Arrays and structs: typed arrays, `STRUCT`, `UNNEST`, aliases, and null-aware
-  membership rewrites, especially for DuckDB.
-- Function semantics: safe division, null handling, JSON, regex, hashing,
-  approximate quantiles, and function-name mappings.
-- AST fidelity: optional arguments, named arguments, modifiers, and aliases
-  that are currently dropped or normalized incorrectly.
-- Unsupported behavior: cases where SQLGlot deliberately raises rather than
-  emitting target SQL.
+Keep the existing diagnostics for unexpanded CTE stars, shadowed alias references,
+and unsafe VALUES widths/modifiers. Unsupported shapes and registered intentional
+divergences are not permission to weaken semantic guards for parity.
 
 ## Workflow
 
@@ -97,6 +95,9 @@ port the behavior, remove the passing ledger entry, and run the affected
 concrete transpile gate.
 
 The `id` and `signature` fields determine approval; `case` is only a display label.
+The `issue` field is ownership metadata, not an exemption or part of the signature.
+Exclude rows marked `status: intentional-divergence` from the actionable inventory;
+their exact failure signatures and extension rationale remain protected.
 Remove only the exact stale assertion IDs. Review signature changes against the
 full actual output, and retain curated explanations when updating a ledger.
 

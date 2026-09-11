@@ -58,6 +58,7 @@ open class SparkGenerator(
 
     // sqlglot: SparkGenerator.SUPPORTS_MEDIAN = True
     override val supportsMedian: Boolean get() = true
+    override val lastDaySupportsDatePart: Boolean get() = false
 
     // sqlglot: SparkGenerator.SET_ASSIGNMENT_REQUIRES_VARIABLE_KEYWORD = True
     override val setAssignmentRequiresVariableKeyword: Boolean get() = true
@@ -116,6 +117,15 @@ open class SparkGenerator(
             }
         }
         return rendered
+    }
+
+    internal fun dateDeltaBinarySql(expression: Expression, operator: String): String {
+        val unit = expression.args["unit"] as? Expression
+        val interval = Interval(args(
+            "this" to (expression.args["expression"] as? Expression)?.copy(),
+            "unit" to unit?.let { if (it is Literal || it is Var) Var(args("this" to it.name)) else it.copy() },
+        ))
+        return "${sql(expression, "this")} $operator ${sql(interval)}"
     }
 
     // sqlglot: SparkGenerator.readparquet_sql
@@ -191,6 +201,9 @@ open class SparkGenerator(
             reg(StartsWith::class) { e -> sg().renameFuncSql("STARTSWITH", e) }
             reg(TsOrDsAdd::class) { e -> sg().dateaddSpark(e) }
             reg(TimestampAdd::class) { e -> sg().dateaddSpark(e) }
+            reg(TimestampSub::class) { e -> sg().dateDeltaBinarySql(e, "-") }
+            reg(DatetimeAdd::class) { e -> sg().dateDeltaBinarySql(e, "+") }
+            reg(DatetimeSub::class) { e -> sg().dateDeltaBinarySql(e, "-") }
             reg(TimestampFromParts::class) { e -> sg().renameFuncSql("MAKE_TIMESTAMP", e) }
             reg(TimestampDiff::class) { e -> sg().timestampdiffSpark(e as TimestampDiff) }
             reg(DateDiff::class) { e -> sg().datediffSpark(e as DateDiff) }

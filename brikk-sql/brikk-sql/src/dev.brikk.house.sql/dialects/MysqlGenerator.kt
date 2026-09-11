@@ -96,6 +96,7 @@ open class MysqlGenerator(
     override val supportsChangeColumn: Boolean get() = true
     override val intervalAllowsPluralForm: Boolean get() = false
     override val lockingReadsSupported: Boolean get() = true
+    override val lastDaySupportsDatePart: Boolean get() = false
     override val nullOrderingSupported: Boolean? get() = null
     override val joinHints: Boolean get() = false
     override val tableHints: Boolean get() = true
@@ -185,7 +186,12 @@ open class MysqlGenerator(
     // sqlglot: generators.mysql._date_trunc_sql
     open fun dateTruncSql(expression: DateTrunc): String {
         val expr = sql(expression, "this")
-        val unit = expression.text("unit").uppercase()
+        val unitExpression = expression.args["unit"] as? Expression
+        val unit = if (unitExpression is WeekStart) {
+            weekstartName(unitExpression)
+        } else {
+            expression.text("unit").uppercase()
+        }
 
         val concat: String
         val dateFormat: String
@@ -614,7 +620,8 @@ open class MysqlGenerator(
 
     // sqlglot: MySQLGenerator.timestamptrunc_sql
     open fun timestamptruncSql(expression: TimestampTrunc): String {
-        val unit = expression.args["unit"] as? Expression
+        var unit = expression.args["unit"] as? Expression
+        if (unit is WeekStart) unit = Var(args("this" to weekstartName(unit)))
 
         // Pick an old-enough date to avoid negative timestamp diffs
         val startTs = "'0000-01-01 00:00:00'"
