@@ -614,6 +614,94 @@ open class DuckdbGenerator(
         )
     }
 
+    // sqlglot: DuckDBGenerator.in_sql
+    override fun inSql(expression: In): String {
+        val unnest = expression.args["unnest"] as? Unnest ?: return super.inSql(expression)
+        val array = unnest.expressionsArg.firstOrNull() as? Expression ?: return super.inSql(expression)
+        val value = expression.thisArg as Expression
+        val size = { input: Expression -> ArraySize(args("this" to input)) }
+        val count = { input: Expression ->
+            Anonymous(args("this" to "LIST_COUNT", "expressions" to listOf(input)))
+        }
+        return sql(
+            Case(
+                args(
+                    "ifs" to listOf(
+                        If(
+                            args(
+                                "this" to Or(
+                                    args(
+                                        "this" to Is(args("this" to array.copy(), "expression" to Null())),
+                                        "expression" to EQ(
+                                            args("this" to size(array.copy()), "expression" to Literal.number("0"))
+                                        ),
+                                    )
+                                ),
+                                "true" to BooleanNode(args("this" to false)),
+                            )
+                        ),
+                        If(
+                            args(
+                                "this" to ArrayContains(
+                                    args("this" to array.copy(), "expression" to value.copy())
+                                ),
+                                "true" to BooleanNode(args("this" to true)),
+                            )
+                        ),
+                        If(
+                            args(
+                                "this" to Or(
+                                    args(
+                                        "this" to Is(args("this" to value.copy(), "expression" to Null())),
+                                        "expression" to NEQ(
+                                            args(
+                                                "this" to size(array.copy()),
+                                                "expression" to count(array.copy()),
+                                            )
+                                        ),
+                                    )
+                                ),
+                                "true" to Null(),
+                            )
+                        ),
+                    ),
+                    "default" to BooleanNode(args("this" to false)),
+                )
+            )
+        )
+    }
+
+    // sqlglot: DuckDBGenerator.arrayconcatagg_sql
+    open fun arrayconcataggSql(expression: ArrayConcatAgg): String {
+        var this_ = expression.thisArg as Expression
+        if (this_ is Limit) {
+            unsupported("LIMIT in ARRAY_CONCAT_AGG cannot be transpiled to DuckDB")
+            this_ = this_.thisArg as Expression
+        }
+        val inner = if (this_ is Order) this_.thisArg as Expression else this_
+        val aggregate = Filter(
+            args(
+                "this" to ArrayAgg(args("this" to this_)),
+                "expression" to Where(
+                    args(
+                        "this" to Not(
+                            args("this" to Is(args("this" to inner.copy(), "expression" to Null())))
+                        )
+                    )
+                ),
+            )
+        )
+        return func("FLATTEN", aggregate)
+    }
+
+    // sqlglot: DuckDBGenerator.arrayagg_sql
+    override fun arrayaggSql(expression: ArrayAgg): String {
+        if (expression.thisArg is Limit) {
+            unsupported("LIMIT inside ARRAY_AGG is not supported in DuckDB")
+        }
+        return super.arrayaggSql(expression)
+    }
+
     // sqlglot: DuckDBGenerator.IGNORE_RESPECT_NULLS_WINDOW_FUNCTIONS gate for
     // respectnulls_sql — RESPECT NULLS renders only for general-purpose window funcs
     override fun respectnullsSql(expression: RespectNulls): String {
@@ -1902,6 +1990,11 @@ open class DuckdbGenerator(
             return super.ignorenullsSql(expression)
         }
 
+        if (this_ is ArrayAgg) {
+            this_.set("nulls_excluded", true)
+            return sql(this_)
+        }
+
         if (this_ is First) {
             this_ = AnyValue(args("this" to this_.thisArg))
         }
@@ -2761,6 +2854,7 @@ open class DuckdbGenerator(
             reg(GroupConcat::class) { e -> dg().groupconcatSql(e as GroupConcat) }
             reg(ApproxQuantile::class) { e -> dg().approxquantileSql(e as ApproxQuantile) }
             reg(ApproxQuantiles::class) { e -> dg().approxquantilesSql(e as ApproxQuantiles) }
+            reg(ArrayConcatAgg::class) { e -> dg().arrayconcataggSql(e as ArrayConcatAgg) }
             reg(ByteLength::class) { e -> dg().bytelengthSql(e as ByteLength) }
             reg(Length::class) { e -> dg().lengthSql(e as Length) }
             reg(Levenshtein::class) { e -> dg().levenshteinSql(e as Levenshtein) }

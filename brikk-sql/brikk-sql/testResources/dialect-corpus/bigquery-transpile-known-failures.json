@@ -1,20 +1,6 @@
 {
     "cases": [
         {
-            "id": "assertion:v1:sha256:d4dcc57a8a40157b77824b1c5eb58a5e6428b22ce139195f293dfb7f15f21a62:1",
-            "case": "write|duckdb|SELECT ARRAY_AGG(x IGNORE NULLS) AS x",
-            "reason": "expected `SELECT ARRAY_AGG(x) FILTER(WHERE x IS NOT NULL) AS x` actual `SELECT ARRAY_AGG(x) AS x`",
-            "signature": "sql-mismatch:v1:sha256:544a67823f4ef60bd322e6ee497408bd4074a671a13a5204cdd39b5506b34b18",
-            "issue": "BQ-13"
-        },
-        {
-            "id": "assertion:v1:sha256:a8d6781acc3ced94416be791c64241d2044d7afda5998f533bc2cf96a24bc9cf:1",
-            "case": "write|duckdb|SELECT ARRAY_AGG(DISTINCT x IGNORE NULLS ORDER BY x) AS x",
-            "reason": "expected `SELECT ARRAY_AGG(DISTINCT x ORDER BY x NULLS FIRST) FILTER(WHERE x IS NOT NULL) AS x` actual `SELECT ARRAY_AGG(DISTINCT x ORDER BY x NULLS FIRST) AS x`",
-            "signature": "sql-mismatch:v1:sha256:9ea2f56a950e052b97fab6d340556e56fada29552793777c6157f69c99d4be36",
-            "issue": "BQ-13"
-        },
-        {
             "id": "assertion:v1:sha256:75d2cd25a843f8f6b9514c8bffb07c0d6d621ccf8562e4b7d6237da54c6e7427:1",
             "case": "read|spark|WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(arr)) - 1)) AS pos CROSS JOIN UNNEST(arr) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(arr) - 1) AND pos_2 = (ARRAY_LENGTH(arr) - 1))",
             "reason": "expected `WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(arr)) - 1)) AS pos CROSS JOIN UNNEST(arr) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(arr) - 1) AND pos_2 = (ARRAY_LENGTH(arr) - 1))` actual `WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT EXPLODE(arr) FROM cte`",
@@ -34,20 +20,6 @@
             "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))` actual `SELECT POSEXPLODE_OUTER([])`",
             "signature": "sql-mismatch:v1:sha256:4c3e229650efefc5b8e654a16078e020b617e6ce7bc4ceff984ca62e7b190bc1",
             "issue": "BQ-20"
-        },
-        {
-            "id": "assertion:v1:sha256:d8e87fd7c99e62012402582bd5cac251865479cc9f54e30347aa78e74e70a3bb:1",
-            "case": "write|duckdb|SELECT * FROM a WHERE b IN UNNEST([1, 2, 3])",
-            "reason": "expected `SELECT * FROM a WHERE CASE WHEN [1, 2, 3] IS NULL OR ARRAY_LENGTH([1, 2, 3]) = 0 THEN FALSE WHEN ARRAY_CONTAINS([1, 2, 3], b) THEN TRUE WHEN b IS NULL OR ARRAY_LENGTH([1, 2, 3]) <> LIST_COUNT([1, 2, 3]) THEN NULL ELSE FALSE END` actual `SELECT * FROM a WHERE b IN (SELECT UNNEST([1, 2, 3]))`",
-            "signature": "sql-mismatch:v1:sha256:f8acdad441f15875dfea1fbc41052df9e0f36a56e529a64459f828fa156e38e6",
-            "issue": "BQ-15"
-        },
-        {
-            "id": "assertion:v1:sha256:0835dfde8e9d0d52519448a1c4a4630140e9a62eeba911d4dc25ef792345bc15:1",
-            "case": "write|duckdb|SELECT * FROM a WHERE b NOT IN UNNEST([1, 2, 3])",
-            "reason": "expected `SELECT * FROM a WHERE NOT CASE WHEN [1, 2, 3] IS NULL OR ARRAY_LENGTH([1, 2, 3]) = 0 THEN FALSE WHEN ARRAY_CONTAINS([1, 2, 3], b) THEN TRUE WHEN b IS NULL OR ARRAY_LENGTH([1, 2, 3]) <> LIST_COUNT([1, 2, 3]) THEN NULL ELSE FALSE END` actual `SELECT * FROM a WHERE NOT b IN (SELECT UNNEST([1, 2, 3]))`",
-            "signature": "sql-mismatch:v1:sha256:8224c9f55aa02481b98b3c4d07eeeca0fdcdb3151130792845e5a770375bb38b",
-            "issue": "BQ-15"
         },
         {
             "id": "assertion:v1:sha256:0aa580c8b32815d8f0dca988768ce93ce60ce9364e381270cb3307c386fbbf4e:1",
@@ -78,41 +50,6 @@
             "reason": "expected `SELECT 0xA` actual `SELECT 10`",
             "signature": "sql-mismatch:v1:sha256:de7dbf8a885ff9514ca718ea8d9f76d29a7f21f168aef089be3ee03b85cc8b4e",
             "issue": "BQ-25"
-        },
-        {
-            "id": "assertion:v1:sha256:9db4a2a8472b62a6fcdae367b73aae8e0b68b7a09efae791e0648780127da042:1",
-            "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr) FROM (SELECT [1, 2] AS arr) AS t",
-            "reason": "expected `SELECT FLATTEN(ARRAY_AGG(arr) FILTER(WHERE NOT arr IS NULL)) FROM (SELECT [1, 2] AS arr) AS t` actual `SELECT ARRAY_CONCAT_AGG(arr) FROM (SELECT [1, 2] AS arr) AS t`",
-            "signature": "sql-mismatch:v1:sha256:7df86032680841e2f41a20b8c59accaa2e0a327d1b55d7f3155bc049b17b14d4",
-            "issue": "BQ-13"
-        },
-        {
-            "id": "assertion:v1:sha256:6c154c57c2201835e61bfc3a2792267d689e0469bb965636f1c62f4398257e3f:1",
-            "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr ORDER BY y) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t",
-            "reason": "expected `SELECT FLATTEN(ARRAY_AGG(arr ORDER BY y NULLS FIRST) FILTER(WHERE NOT arr IS NULL)) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t` actual `SELECT ARRAY_CONCAT_AGG(arr ORDER BY y NULLS FIRST) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t`",
-            "signature": "sql-mismatch:v1:sha256:16790510362696c7c761451ef29fc9d032250bf22d0a00e409c771f8f18c6a7d",
-            "issue": "BQ-13"
-        },
-        {
-            "id": "assertion:v1:sha256:2e6f50be17177e846455112b186bce6e6d671db9d9820eed501f6cef3cec5f4a:1",
-            "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr LIMIT 2) FROM (SELECT [1, 2] AS arr) AS t",
-            "reason": "expected UnsupportedError, got `SELECT ARRAY_CONCAT_AGG(arr LIMIT 2) FROM (SELECT [1, 2] AS arr) AS t`",
-            "signature": "missing-error:v1:sha256:116fcc39469d5681bd8bf46744e2b15e1fdd534804fff56af2810fbd7f37355f",
-            "issue": "BQ-13"
-        },
-        {
-            "id": "assertion:v1:sha256:261e1d76c082f0e7ba62e2690eb59a50bb370c5009d48466435059426dcde9d4:1",
-            "case": "write|duckdb|SELECT ARRAY_CONCAT_AGG(arr ORDER BY y DESC LIMIT 2) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t",
-            "reason": "expected UnsupportedError, got `SELECT ARRAY_CONCAT_AGG(arr ORDER BY y DESC LIMIT 2) FROM (SELECT [1, 2] AS arr, 1 AS y) AS t`",
-            "signature": "missing-error:v1:sha256:1b15897e60d5fc08629bf2833ee830bf928296cda1fd25b6ab09f8732892148c",
-            "issue": "BQ-13"
-        },
-        {
-            "id": "assertion:v1:sha256:de73f65779b02405653e9116bf351dc8b7be4b3b23c70bcf4c82415ea92ac9aa:1",
-            "case": "write|duckdb|SELECT * FROM a LEFT JOIN b ON a.key = b.key AND a.val IN UNNEST(b.arr)",
-            "reason": "expected `SELECT * FROM a LEFT JOIN b ON a.key = b.key AND CASE WHEN b.arr IS NULL OR ARRAY_LENGTH(b.arr) = 0 THEN FALSE WHEN ARRAY_CONTAINS(b.arr, a.val) THEN TRUE WHEN a.val IS NULL OR ARRAY_LENGTH(b.arr) <> LIST_COUNT(b.arr) THEN NULL ELSE FALSE END` actual `SELECT * FROM a LEFT JOIN b ON a.key = b.key AND a.val IN (SELECT UNNEST(b.arr))`",
-            "signature": "sql-mismatch:v1:sha256:ff66a5bd5ecd65bb0958892d56f768577c89279db27f3b1640da00407b942306",
-            "issue": "BQ-15"
         },
         {
             "id": "assertion:v1:sha256:fd5c17186befd9899a1e5a705f4d023c14ee189db35fb037f3c84efc5bbccb9b:1",

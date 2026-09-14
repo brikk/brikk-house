@@ -63,6 +63,9 @@ open class BigqueryGenerator(
 
     override val dialect: Dialect get() = Dialects.BIGQUERY
 
+    // sqlglot: BigQuery.ARRAY_AGG_INCLUDES_NULLS = False
+    override val dialectArrayAggIncludesNulls: Boolean get() = false
+
     // sqlglot: BigQueryGenerator flags
     override val trySupported: Boolean get() = false
     override val supportsUescape: Boolean get() = false
