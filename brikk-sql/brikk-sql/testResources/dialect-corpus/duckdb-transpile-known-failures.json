@@ -68,13 +68,6 @@
             "signature": "sql-mismatch:v1:sha256:ed0386ce8811098e983a9021804cc94538ed85292f4ab1dd690e3390fd553562",
             "issue": "BQ-5",
             "status": "intentional-divergence"
-        },
-        {
-            "id": "assertion:v1:sha256:13f943fab1b26bd51916a82f16e83e2944bb5337954cc3487cf82c01573f5c00:1",
-            "case": "write|bigquery|CAST(start AS TIMESTAMPTZ) AT TIME ZONE 'America/New_York'",
-            "reason": "expected `TIMESTAMP(DATETIME(CAST(start AS TIMESTAMP), 'America/New_York'))` actual `CAST(start AS TIMESTAMP) AT TIME ZONE 'America/New_York'`",
-            "signature": "sql-mismatch:v1:sha256:6f52a3059e0c401d53b1b079b7dc0781b8d2ef69fba8993253cd1072df3f535d",
-            "issue": "BQ-35"
         }
     ]
 }

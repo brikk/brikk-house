@@ -575,6 +575,16 @@ open class BigqueryGenerator(
         return func("INSTR", expression.thisArg, expression.args["substr"], position, occurrence)
     }
 
+    // sqlglot: BigQueryGenerator.attimezone_sql
+    override fun attimezoneSql(expression: AtTimeZone): String {
+        val parent = expression.parent
+        val target = (parent as? Cast)?.args?.get("to") as? DataType
+        if (parent !is Cast || target?.thisArg !in TEXT_TYPES) {
+            return func("TIMESTAMP", func("DATETIME", expression.thisArg, expression.args["zone"]))
+        }
+        return super.attimezoneSql(expression)
+    }
+
     internal fun tsOrDsAddSql(expression: TsOrDsAdd): String {
         val copy = expression.copy() as TsOrDsAdd
         val timestamp = Cast(args("this" to (copy.thisArg as Expression).copy(), "to" to DataType.build(DType.DATETIME)))
@@ -709,6 +719,13 @@ open class BigqueryGenerator(
             reg(DatetimeAdd::class) { e -> bg().dateAddIntervalSql("DATETIME", "ADD", e) }
             reg(DatetimeSub::class) { e -> bg().dateAddIntervalSql("DATETIME", "SUB", e) }
             reg(DateFromUnixDate::class) { e -> bg().renameFuncSql("DATE_FROM_UNIX_DATE", e) }
+            reg(FromTimeZone::class) { e ->
+                func(
+                    "DATETIME",
+                    func("TIMESTAMP", e.thisArg, e.args["zone"]),
+                    Literal.string("UTC"),
+                )
+            }
             reg(GroupConcat::class) { e -> bg().groupConcatSql(e as GroupConcat) }
             reg(Hex::class) { e -> func("UPPER", func("TO_HEX", sql(e, "this"))) }
             reg(LowerHex::class) { e -> bg().renameFuncSql("TO_HEX", e) }

@@ -62,6 +62,9 @@ open class DuckdbGenerator(
 
     // sqlglot: dialect back-reference for annotate_types-driven paths
     override val dialect: Dialect get() = Dialects.DUCKDB
+
+    // sqlglot: DuckDBGenerator.SELECT_KINDS = ()
+    override val selectKinds: Set<String> get() = emptySet()
     override val historicalDataPostAlias: Boolean get() = true
 
     // ------------------------------------------------------------------
@@ -365,6 +368,34 @@ open class DuckdbGenerator(
             expression.args["end"],
             expression.args["step"],
         )
+    }
+
+    // sqlglot: generators.duckdb._generate_datetime_array_sql
+    open fun generateDatetimeArraySql(expression: Expression): String {
+        val isDate = expression is GenerateDateArray
+        val type = if (isDate) DType.DATE else DType.TIMESTAMP
+        var series: Expression = GenerateSeries(
+            args(
+                "start" to implicitDatetimeCast(expression.args["start"] as? Expression, type),
+                "end" to implicitDatetimeCast(expression.args["end"] as? Expression, type),
+                "step" to expression.args["step"],
+            )
+        )
+        if (isDate) {
+            series = Cast(
+                args(
+                    "this" to series,
+                    "to" to DataType(
+                        args(
+                            "this" to DType.ARRAY,
+                            "expressions" to listOf(DataType.build(DType.DATE)),
+                            "nested" to true,
+                        )
+                    ),
+                )
+            )
+        }
+        return sql(series)
     }
 
     // sqlglot: generators.duckdb._regexp_extract_sql
@@ -2691,6 +2722,8 @@ open class DuckdbGenerator(
             reg(LogicalOr::class) { e -> func("BOOL_OR", castToBoolean(e.thisArg)) }
             reg(LogicalAnd::class) { e -> func("BOOL_AND", castToBoolean(e.thisArg)) }
             reg(Getbit::class) { e -> dg().getbitSql(e as Getbit) }
+            reg(GenerateDateArray::class) { e -> dg().generateDatetimeArraySql(e) }
+            reg(GenerateTimestampArray::class) { e -> dg().generateDatetimeArraySql(e) }
             reg(JarowinklerSimilarity::class) { e ->
                 dg().jarowinklersimilaritySql(e as JarowinklerSimilarity)
             }

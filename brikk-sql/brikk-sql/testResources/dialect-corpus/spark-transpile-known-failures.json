@@ -13,13 +13,6 @@
             "signature": "sql-mismatch:v1:sha256:5fe6fbc2a7931221b29671db7080d125196430e6d85a0c5acb52b20e3946e7b1"
         },
         {
-            "id": "assertion:v1:sha256:dac946ecc4751001025c0c4201ec43a90be44a55d459342709727852946d83f4:1",
-            "case": "write|bigquery|SELECT TO_UTC_TIMESTAMP('2016-08-31', 'Asia/Seoul')",
-            "reason": "expected `SELECT DATETIME(TIMESTAMP(CAST('2016-08-31' AS DATETIME), 'Asia/Seoul'), 'UTC')` actual `SELECT CAST('2016-08-31' AS DATETIME) AT TIME ZONE 'Asia/Seoul' AT TIME ZONE 'UTC'`",
-            "signature": "sql-mismatch:v1:sha256:9190eabb1a57bff9604f55a474151b08b8a3ad63bf44277b07814fa0bd65bdba",
-            "issue": "BQ-35"
-        },
-        {
             "id": "assertion:v1:sha256:e064957e90f80e48faaa725cedf76c92fb5f5245473cd3c9313e0c01215e9640:1",
             "case": "write|spark, version=3.0.0|STRING_AGG(x, ', ')",
             "reason": "expected `ARRAY_JOIN(COLLECT_LIST(x), ', ')` actual `LISTAGG(x, ', ')`",

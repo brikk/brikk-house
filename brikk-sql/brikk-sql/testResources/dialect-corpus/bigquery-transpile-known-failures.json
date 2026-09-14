@@ -36,13 +36,6 @@
             "issue": "BQ-20"
         },
         {
-            "id": "assertion:v1:sha256:14b4fd5a3ff71c6f666ac42735ce64e1fdcb70de128f5d0b3aadf88e9bdc9ee3:1",
-            "case": "write|duckdb|SELECT AS STRUCT ARRAY(SELECT AS STRUCT 1 AS b FROM x) AS y FROM z",
-            "reason": "expected `SELECT {'y': ARRAY(SELECT {'b': 1} FROM x)} FROM z` actual `SELECT AS STRUCT ARRAY(SELECT AS STRUCT 1 AS b FROM x) AS y FROM z`",
-            "signature": "sql-mismatch:v1:sha256:37331431771d0210ae1e9152b3dd7cb5d7126afadf142ba6100c4cb5b546ad6a",
-            "issue": "BQ-18"
-        },
-        {
             "id": "assertion:v1:sha256:d8e87fd7c99e62012402582bd5cac251865479cc9f54e30347aa78e74e70a3bb:1",
             "case": "write|duckdb|SELECT * FROM a WHERE b IN UNNEST([1, 2, 3])",
             "reason": "expected `SELECT * FROM a WHERE CASE WHEN [1, 2, 3] IS NULL OR ARRAY_LENGTH([1, 2, 3]) = 0 THEN FALSE WHEN ARRAY_CONTAINS([1, 2, 3], b) THEN TRUE WHEN b IS NULL OR ARRAY_LENGTH([1, 2, 3]) <> LIST_COUNT([1, 2, 3]) THEN NULL ELSE FALSE END` actual `SELECT * FROM a WHERE b IN (SELECT UNNEST([1, 2, 3]))`",
@@ -70,13 +63,6 @@
             "signature": "sql-mismatch:v1:sha256:358646c44b0746b586d17381739f71c8b1609d59ee553f543d87787b3edc77f4",
             "issue": "BQ-6",
             "status": "intentional-divergence"
-        },
-        {
-            "id": "assertion:v1:sha256:283a3b2b849f7212fafcc305a8a377abca464f465095a695a6ae6dbd1a14ce32:1",
-            "case": "write|duckdb|SELECT GENERATE_TIMESTAMP_ARRAY('2016-10-05 00:00:00', '2016-10-07 00:00:00', INTERVAL '1' DAY)",
-            "reason": "expected `SELECT GENERATE_SERIES(CAST('2016-10-05 00:00:00' AS TIMESTAMP), CAST('2016-10-07 00:00:00' AS TIMESTAMP), INTERVAL '1' DAY)` actual `SELECT GENERATE_TIMESTAMP_ARRAY('2016-10-05 00:00:00', '2016-10-07 00:00:00', INTERVAL '1' DAY)`",
-            "signature": "sql-mismatch:v1:sha256:7309789cb5685e28a51c8035f367bb1ee1db0d40babc5634b3658c859cad3093",
-            "issue": "BQ-32"
         },
         {
             "id": "assertion:v1:sha256:214ebc397fb13403b902c9b74fd0c5efc91bbf4ba74c27359e227e6df929bfa4:1",
@@ -249,41 +235,6 @@
             "signature": "sql-mismatch:v1:sha256:6a7498f8ed531adbe679f65894b9788fa96e2c5f44076a6f9be11b47cfce12f1",
             "issue": "BQ-4",
             "status": "intentional-divergence"
-        },
-        {
-            "id": "assertion:v1:sha256:e0242903d050896f944c59de894ced783aaa8020ce2344057c5547930e91e5c4:1",
-            "case": "write|duckdb|SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08')",
-            "reason": "expected `SELECT CAST(GENERATE_SERIES(CAST('2016-10-05' AS DATE), CAST('2016-10-08' AS DATE), INTERVAL '1' DAY) AS DATE[])` actual `SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' DAY)`",
-            "signature": "sql-mismatch:v1:sha256:f315178cdefc53f416a45b21e86382af7222cb10fb6ea7f389ea950bf5d2356d",
-            "issue": "BQ-32"
-        },
-        {
-            "id": "assertion:v1:sha256:0e8c6348cfb6923e21077e8c410db9b5cc6415db9e1666b3bd7fc2956b8d1612:1",
-            "case": "write|duckdb|SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' MONTH)",
-            "reason": "expected `SELECT CAST(GENERATE_SERIES(CAST('2016-10-05' AS DATE), CAST('2016-10-08' AS DATE), INTERVAL '1' MONTH) AS DATE[])` actual `SELECT GENERATE_DATE_ARRAY('2016-10-05', '2016-10-08', INTERVAL '1' MONTH)`",
-            "signature": "sql-mismatch:v1:sha256:4e3c60ed0df3434b9be5fff376656827c845623d661606c1c7627c096012fda3",
-            "issue": "BQ-32"
-        },
-        {
-            "id": "assertion:v1:sha256:c23154ade99d98cfaa86d1a56d6ee460074ac9a8e1d1e77c92e1531982793995:1",
-            "case": "write|duckdb|SELECT id, mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC(CURRENT_DATE, MONTH), INTERVAL '1' MONTH)) AS mnth",
-            "reason": "expected `SELECT id, mnth FROM t CROSS JOIN UNNEST(CAST(GENERATE_SERIES(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH) AS DATE[])) AS _t0(mnth)` actual `SELECT id, mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH)) AS mnth`",
-            "signature": "sql-mismatch:v1:sha256:a190e9ba21643b72f09aff2c94b45686c76ddfe9201b5303467289a8fe84e8cb",
-            "issue": "BQ-32"
-        },
-        {
-            "id": "assertion:v1:sha256:5c5a706d3e8d0c84e1dd25651af511db7f6e0cd42a1571560a506eb251642b65:1",
-            "case": "write|duckdb|SELECT id, mnth AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC(CURRENT_DATE, MONTH), INTERVAL '1' MONTH)) AS mnth",
-            "reason": "expected `SELECT id, mnth AS a_mnth FROM t CROSS JOIN UNNEST(CAST(GENERATE_SERIES(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH) AS DATE[])) AS _t0(mnth)` actual `SELECT id, mnth AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH)) AS mnth`",
-            "signature": "sql-mismatch:v1:sha256:0cb5321105b53c8c56fba7d4f3e3f6653627343b04a75e2f323f2d99f41506e2",
-            "issue": "BQ-32"
-        },
-        {
-            "id": "assertion:v1:sha256:a65f22225247f328c942be9668eb51ddec26de099818b48ddd16123ab0262a20:1",
-            "case": "write|duckdb|SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC(CURRENT_DATE, MONTH), INTERVAL '1' MONTH)) AS mnth",
-            "reason": "expected `SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(CAST(GENERATE_SERIES(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH) AS DATE[])) AS _t0(mnth)` actual `SELECT id, mnth + 1 AS a_mnth FROM t CROSS JOIN UNNEST(GENERATE_DATE_ARRAY(start_month, DATE_TRUNC('MONTH', CURRENT_DATE), INTERVAL '1' MONTH)) AS mnth`",
-            "signature": "sql-mismatch:v1:sha256:9ca4e07ce1a12dbd5213b029715b89f8c0cf2bd36f9eb25d77ba64c2b4a626d4",
-            "issue": "BQ-32"
         },
         {
             "id": "assertion:v1:sha256:d470c18c99ffece92a7996294f424b41b5bd691cdfe12d56cb20a7c2af32117c:1",

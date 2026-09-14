@@ -14,37 +14,37 @@
 
 ---
 
-**53 actionable failing transpile assertions across 9 source-to-target routes.**
+**44 actionable failing transpile assertions across 9 source-to-target routes.**
 Twelve additional signed assertions are protected correctness divergences, documented
 in `docs/brikk-extensions.md` sections 28, 30, and 32. They are not open BQ issues. BQ-36
 and BQ-37 are execution limitations with no current parity-ledger entries.
 
-## BigQuery as source (31)
+## BigQuery as source (24)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 26 |
+| bigquery -> duckdb | 19 |
 | bigquery -> presto | 1 |
 | bigquery -> bigquery | 1 |
 | bigquery -> trino | 1 |
 | bigquery -> postgres | 2 |
 
-## BigQuery as target (22)
+## BigQuery as target (20)
 
 The `bigquery -> bigquery` cases are counted only in the source table above.
 
 | Route | Items |
 |---|---:|
-| spark -> bigquery | 9 |
+| spark -> bigquery | 8 |
 | postgres -> bigquery | 6 |
-| duckdb -> bigquery | 6 |
+| duckdb -> bigquery | 5 |
 | base -> bigquery | 1 |
 
 ## Open issues
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-12, plus BQ-14, BQ-22 through BQ-24, BQ-26 through BQ-31, BQ-33, and BQ-34.
+BQ-12, plus BQ-14, BQ-18, BQ-22 through BQ-24, and BQ-26 through BQ-35.
 Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
@@ -54,13 +54,10 @@ belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TO
 | BQ-15 | DuckDB IN/NOT IN UNNEST NULL and empty-array semantics | 3 |
 | BQ-16 | DuckDB struct-array UNNEST field expansion | 7 |
 | BQ-17 | Inherit struct field names across array elements | 3 |
-| BQ-18 | SELECT AS STRUCT lowering | 1 |
 | BQ-19 | Base-to-BigQuery nested UNNEST alias cleanup and pretty output | 1 |
 | BQ-20 | Projection EXPLODE/UNNEST to BigQuery relations, including outer/zipped inputs | 12 |
 | BQ-21 | PostgreSQL projected GENERATE_SERIES to BigQuery | 6 |
 | BQ-25 | Byte/escaped-string and numeric-hex literal fidelity | 6 |
-| BQ-32 | Typed date/timestamp arrays and UNNEST aliases | 6 |
-| BQ-35 | Into-BigQuery timezone operator lowering | 2 |
 | BQ-36 | DuckDB ARRAY_TO_STRING row-dependent delimiters; currently diagnosed | execution |
 | BQ-37 | DuckDB offset-preserving STRING(timestamp, zone) formatting; currently diagnosed | execution |
 | BQ-38 | Schema-driven TIMESTAMP/DATETIME overload resolution for unknown inputs; currently diagnosed | execution |
