@@ -541,6 +541,10 @@ open class BigqueryGenerator(
         return "${dataType}_$kind($this0, ${sql(interval)})"
     }
 
+    // sqlglot: dialect.sha256_sql / dialect.sha2_digest_sql
+    internal fun shaSql(expression: Expression): String =
+        func("SHA${expression.text("length").ifEmpty { "256" }}", expression.thisArg)
+
     internal fun tsOrDsAddSql(expression: TsOrDsAdd): String {
         val copy = expression.copy() as TsOrDsAdd
         val timestamp = Cast(args("this" to (copy.thisArg as Expression).copy(), "to" to DataType.build(DType.DATETIME)))
@@ -676,6 +680,8 @@ open class BigqueryGenerator(
             reg(GroupConcat::class) { e -> bg().groupConcatSql(e as GroupConcat) }
             reg(Hex::class) { e -> func("UPPER", func("TO_HEX", sql(e, "this"))) }
             reg(LowerHex::class) { e -> bg().renameFuncSql("TO_HEX", e) }
+            reg(SHA2::class) { e -> bg().shaSql(e) }
+            reg(SHA2Digest::class) { e -> bg().shaSql(e) }
             reg(HexString::class) { e -> bg().hexstringSql(e as HexString, binaryFunctionRepr = "FROM_HEX") }
             reg(IntDiv::class) { e -> bg().renameFuncSql("DIV", e) }
             reg(Int64::class) { e -> bg().renameFuncSql("INT64", e) }
