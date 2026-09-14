@@ -336,7 +336,7 @@ object GeneratorTables {
         reg(Div::class) { e -> divSql(e as Div) }
         reg(SafeDivide::class) { e -> safedivideSql(e as SafeDivide) }
         reg(IntDiv::class) { e -> intdivSql(e as IntDiv) }
-        reg(Mod::class) { e -> binary(e as Binary, "%") }
+        reg(Mod::class) { e -> modSql(e as Mod) }
         reg(DPipe::class) { e -> dpipeSql(e as DPipe) }
         reg(EQ::class) { e -> binary(e as Binary, "=") }
         reg(NEQ::class) { e -> binary(e as Binary, "<>") }

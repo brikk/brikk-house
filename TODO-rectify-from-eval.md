@@ -4,7 +4,7 @@ This active backlog contains only unresolved findings from the 2026-09-02
 quality and correctness evaluation. Resolved findings are removed rather than
 retained as completed-item noise.
 
-`brikk-sql` is pinned to SQLGlot `v30.17.0-93-gdcc36544a`; generated fixtures
+`brikk-sql` is pinned to SQLGlot `v30.18.0-43-g3ca82489`; generated fixtures
 and exact known-failure ledgers under `brikk-sql/brikk-sql/testResources/` are
 the behavioral oracle. Intentional divergences in `docs/brikk-extensions.md`
 are out of scope.

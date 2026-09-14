@@ -396,7 +396,7 @@ open class PostgresParser(
         val value = parseBitwise()
 
         if (part != null && (part is Column || part is Literal)) {
-            part = Var(args("this" to part.name))
+            part = Var(args("this" to part.name.uppercase()))
         }
 
         return expression(Extract(args("this" to part, "expression" to value)))
@@ -479,7 +479,9 @@ object PostgresParserTables {
         // sqlglot: dialect.build_timestamp_trunc
         put("DATE_TRUNC") { a ->
             applyTimeUnitCoercion(
-                TimestampTrunc(args("this" to seqGet(a, 1), "unit" to seqGet(a, 0)))
+                TimestampTrunc(
+                    args("this" to seqGet(a, 1), "unit" to seqGet(a, 0), "zone" to seqGet(a, 2))
+                )
             )
         }
         put("DIV") { a ->

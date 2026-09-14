@@ -16,6 +16,8 @@ import dev.brikk.house.sql.ast.Coalesce
 import dev.brikk.house.sql.ast.CTE
 import dev.brikk.house.sql.ast.Column
 import dev.brikk.house.sql.ast.ColumnDef
+import dev.brikk.house.sql.ast.ColumnConstraint
+import dev.brikk.house.sql.ast.Constraint
 import dev.brikk.house.sql.ast.Create
 import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.Distinct
@@ -63,6 +65,7 @@ import dev.brikk.house.sql.ast.Table
 import dev.brikk.house.sql.ast.TableAlias
 import dev.brikk.house.sql.ast.Unnest
 import dev.brikk.house.sql.ast.Union
+import dev.brikk.house.sql.ast.UniqueColumnConstraint
 import dev.brikk.house.sql.ast.Where
 import dev.brikk.house.sql.ast.Window
 import dev.brikk.house.sql.ast.With
@@ -789,6 +792,16 @@ fun moveSchemaColumnsToPartitionedBy(expression: Expression): Expression {
     val partitions = columns.filter { it.name.uppercase() in names }
     schema.set("expressions", columns.filterNot { it in partitions })
     property.set("this", Schema(args("expressions" to partitions)))
+    return expression
+}
+
+/** sqlglot: transforms.remove_unique_constraints. */
+fun removeUniqueConstraints(expression: Expression): Expression {
+    if (expression !is Create) return expression
+    for (constraint in expression.findAll<UniqueColumnConstraint>().toList()) {
+        val parent = constraint.parent
+        if (parent is ColumnConstraint || parent is Constraint) parent.pop() else constraint.pop()
+    }
     return expression
 }
 

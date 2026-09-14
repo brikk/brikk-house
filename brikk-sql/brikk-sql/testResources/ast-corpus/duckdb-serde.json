@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.17.0-93-gdcc36544a",
+ "sqlglot_version": "v30.18.0-43-g3ca82489",
  "fixture": "dialect-corpus/duckdb.json",
  "dialect": "duckdb",
  "case_count": 386,
@@ -10643,7 +10643,7 @@
     },
     {
      "i": 17,
-     "k": "grouping_sets",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.GroupingSets"
     },
@@ -10676,7 +10676,7 @@
     },
     {
      "i": 17,
-     "k": "grouping_sets",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.GroupingSets"
     },
@@ -10836,7 +10836,7 @@
     },
     {
      "i": 17,
-     "k": "cube",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Cube"
     },
@@ -10869,7 +10869,7 @@
     },
     {
      "i": 17,
-     "k": "cube",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Cube"
     },
@@ -11029,7 +11029,7 @@
     },
     {
      "i": 17,
-     "k": "rollup",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Rollup"
     },
@@ -11062,7 +11062,7 @@
     },
     {
      "i": 17,
-     "k": "rollup",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Rollup"
     },

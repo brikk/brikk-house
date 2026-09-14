@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 class BigqueryRoundingTest {
     @Test
     fun explicitModesMatchBothBq30Fixtures() {
-        // SQLGlot v30.17.0-93-gdcc36544a, tests/dialects/test_bigquery.py.
+        // SQLGlot v30.18.0-43-g3ca82489, tests/dialects/test_bigquery.py.
         for ((mode, function) in listOf(
             "ROUND_HALF_AWAY_FROM_ZERO" to "ROUND",
             "ROUND_HALF_EVEN" to "ROUND_EVEN",

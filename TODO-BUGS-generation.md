@@ -2,7 +2,7 @@
 
 > **Context for an agent picking this up fresh.**
 > `brikk-sql` is a hand-written **Kotlin port of the Python library `sqlglot`** (SQL
-> parser / transpiler / optimizer). It is pinned to upstream **`v30.17.0-93-gdcc36544a`**;
+> parser / transpiler / optimizer). It is pinned to upstream **`v30.18.0-43-g3ca82489`**;
 > a read-only reference clone of that exact version lives at **`reference/sqlglot/`** — treat
 > its behaviour as the oracle for every item here.
 >

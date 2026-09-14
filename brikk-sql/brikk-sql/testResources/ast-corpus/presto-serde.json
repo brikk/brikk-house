@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.17.0-93-gdcc36544a",
+ "sqlglot_version": "v30.18.0-43-g3ca82489",
  "fixture": "dialect-corpus/presto.json",
  "dialect": "presto",
  "case_count": 48,
@@ -1543,7 +1543,7 @@
     },
     {
      "i": 10,
-     "k": "rollup",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Rollup"
     },
@@ -1576,7 +1576,7 @@
     },
     {
      "i": 10,
-     "k": "rollup",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Rollup"
     },
@@ -1609,7 +1609,7 @@
     },
     {
      "i": 10,
-     "k": "rollup",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Rollup"
     },
@@ -3189,7 +3189,7 @@
     },
     {
      "i": 23,
-     "k": "cube",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Cube"
     },
@@ -3249,7 +3249,7 @@
     },
     {
      "i": 23,
-     "k": "rollup",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Rollup"
     },
@@ -3478,7 +3478,7 @@
     },
     {
      "i": 23,
-     "k": "cube",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Cube"
     },
@@ -3538,7 +3538,7 @@
     },
     {
      "i": 23,
-     "k": "rollup",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Rollup"
     },

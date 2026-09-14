@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "presto",
   "identity": [
     {
@@ -1324,14 +1324,6 @@
       }
     },
     {
-      "sql": "SELECT a, b, c, d, sum(y) FROM z GROUP BY CUBE(a) ROLLUP(a), GROUPING SETS((b, c)), d",
-      "read": {},
-      "write": {
-        "presto": "SELECT a, b, c, d, SUM(y) FROM z GROUP BY d, GROUPING SETS ((b, c)), CUBE (a), ROLLUP (a)",
-        "hive": "SELECT a, b, c, d, SUM(y) FROM z GROUP BY d, GROUPING SETS ((b, c)), CUBE (a), ROLLUP (a)"
-      }
-    },
-    {
       "sql": "JSON_FORMAT(CAST(MAP_FROM_ENTRIES(ARRAY[('action_type', 'at')]) AS JSON))",
       "read": {},
       "write": {
@@ -1654,7 +1646,7 @@
   ],
   "stats": {
     "identity_count": 48,
-    "transpile_count": 147,
+    "transpile_count": 146,
     "skipped_dynamic": 3
   }
 }

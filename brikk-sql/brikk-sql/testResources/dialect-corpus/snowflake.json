@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "snowflake",
   "identity": [
     {
@@ -2716,6 +2716,11 @@
       "pretty": false
     },
     {
+      "sql": "CREATE TABLE t (a ARRAY(INT), b ARRAY(ARRAY(INT)), c OBJECT(x INT), d MAP(VARCHAR, INT))",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "CREATE ICEBERG TABLE my_iceberg_table (amount ARRAY(INT)) CATALOG='SNOWFLAKE' EXTERNAL_VOLUME='my_external_volume' BASE_LOCATION='my/relative/path/from/extvol'",
       "expected": null,
       "pretty": false
@@ -2763,6 +2768,31 @@
     {
       "sql": "CREATE OR REPLACE FUNCTION repro_fn() RETURNS INT LANGUAGE PYTHON HANDLER = 'fn' RUNTIME_VERSION='3.11' PACKAGES=() AS '\\ndef fn():\\n    return 1\\n'",
       "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT rollback FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "WITH rollback(rollback) AS (SELECT 1) SELECT rollback.rollback FROM rollback",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT ROLLBACK(3)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT 1 rollback",
+      "expected": "SELECT 1 AS rollback",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT rollback.x FROM (SELECT 1 AS x) rollback",
+      "expected": "SELECT rollback.x FROM (SELECT 1 AS x) AS rollback",
       "pretty": false
     },
     {
@@ -8745,8 +8775,8 @@
     }
   ],
   "stats": {
-    "identity_count": 841,
+    "identity_count": 847,
     "transpile_count": 530,
-    "skipped_dynamic": 32
+    "skipped_dynamic": 33
   }
 }

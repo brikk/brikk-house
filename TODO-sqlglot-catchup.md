@@ -3,30 +3,30 @@
 Tracking upstream SQLGlot changes that affect Brikk's supported parser,
 transpiler, semantic-analysis, and dialect surface.
 
-- Previous pin: `v30.17.0-72-gbac1a897b`
-- Current pin: `v30.17.0-93-gdcc36544a`
+- Previous pin: `v30.17.0-93-gdcc36544a`
+- Current pin: `v30.18.0-43-g3ca82489`
 - Supported dialects: base, MySQL, Doris, StarRocks, Presto, Trino, DuckDB,
   PostgreSQL, ClickHouse, Hive, Spark2, Spark, and BigQuery
 
 ## Current Sync
 
-- [x] Regenerate AST nodes, tokenizer tables, typing metadata, and corpora at
-  `dcc36544a`.
-- [x] Port `4303c3f30f`: report a parse error instead of constructing an empty
-  GRANT/REVOKE privilege.
-- [x] Port `3762ef4361`: parse `MOD` at multiplicative precedence without
-  consuming `LIMIT ... PERCENT`.
-- [x] Port `d0aa2b4324`: reject invalid set-operation operands instead of
-  constructing a self-referential scope graph.
-- [x] Port `222eb11fc4`: parse ClickHouse `view(SELECT ...)` table functions.
-- [x] Port `45158c35c7`: preserve Spark map-explode semantics when generating
-  Presto/Trino `UNNEST`.
-- [x] Port `5a91be3fbc`: preserve PostgreSQL `LOCK` statements as commands.
-- [x] Port `9b25ca5dbe`: parse MySQL `BINARY` column attributes as constraints.
-- [x] Port `67cf1ec91d`: stop `GROUP BY` from consuming query modifiers.
-- [x] Port `6b9cb87bd0`: preserve PostgreSQL's quoted one-byte `"char"` type.
-- [x] Regenerate PostgreSQL `BIT_OR`/`BIT_XOR` typing metadata from
-  `f481c22bcb` and `5294204448`.
+- [x] Regenerate AST nodes, tokenizer tables, typing metadata, and all oracle
+  corpora at `3ca824895`.
+- [x] Preserve `CUBE`, `ROLLUP`, and `GROUPING SETS` order and Hive suffix syntax
+  (`97941935`, `d5468304`).
+- [x] Port MySQL index prefixes, `UNIQUE` options, null-order cleanup, and
+  `ALTER TABLE ... COMMENT` (`9ec72cf8`, `8b374bd5`, `45595690`, `3f154bfb`).
+- [x] Preserve PostgreSQL `DATE_TRUNC` zones and normalize `DATE_PART` units
+  (`23911445`, `f064484b`).
+- [x] Prefix structured Trino `JSON_QUERY` paths with `lax` (`3086608e`).
+- [x] Add Doris 4.1 reserved keywords (`5dea5571`).
+- [x] Preserve `MOD` precedence and escape complete JSON paths once
+  (`b3f23fe3`, `8bf484ce`).
+- [x] Make star detection iterative and render dynamic table identifiers
+  (`70951c72`, `83abff65`).
+- [x] Rename set-operation scopes, mark `Inline` as a UDTF, and refresh
+  PostgreSQL `LOCALTIMESTAMP`/`REPLACE` typing metadata.
+- [x] Drop unsupported Hive/Spark `UNIQUE` constraints during generation.
 - [x] Reconcile exact known-failure ledgers and run `./kotlin build` plus
   `./kotlin test`.
 
@@ -49,9 +49,8 @@ canonicalization, and full simplification passes.
 
 ## Excluded Commits
 
-- Non-ported dialects: `f131ec9f9` (Snowflake), `3110e151b` and `9fac05c06`
-  (SQLite), `1e6c6c58e` (TSQL), `e2f4ad7d5` (Redshift).
-- Upstream-only maintenance: `99947fbcc`, `eef60ff5c`, and `5ae73df94`.
+- Changes confined to non-ported dialects, SQLGlot's executor, integration-test
+  syncs, and query-plan optimizer passes remain excluded under the boundary above.
 
 ## Durable Rules
 

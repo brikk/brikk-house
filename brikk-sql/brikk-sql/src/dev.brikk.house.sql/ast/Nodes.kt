@@ -428,7 +428,11 @@ class Table(initArgs: Args = emptyMap()) : Expression(initArgs), Selectable {
     override val name: String
         get() {
             val t = thisArg
-            return if (t !is Expression || t is Func) "" else t.name
+            return when {
+                t is DynamicIdentifier -> t.name
+                t !is Expression || t is Func -> ""
+                else -> t.name
+            }
         }
 
     // sqlglot: Table.db / catalog

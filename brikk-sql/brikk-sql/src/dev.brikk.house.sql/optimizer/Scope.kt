@@ -48,7 +48,7 @@ import kotlin.reflect.KClass
 class OptimizeError(message: String) : RuntimeException(message)
 
 // sqlglot: scope.ScopeType
-enum class ScopeType { ROOT, SUBQUERY, DERIVED_TABLE, CTE, UNION, UDTF }
+enum class ScopeType { ROOT, SUBQUERY, DERIVED_TABLE, CTE, SET_OPERATION, UDTF }
 
 // sqlglot: scope.TRAVERSABLES = (exp.Query, exp.DDL, exp.DML)
 private fun isTraversable(expression: Expression): Boolean =
@@ -444,7 +444,7 @@ class Scope(
     // sqlglot: Scope.is_subquery / is_derived_table / is_union / is_cte / is_root / is_udtf
     val isSubquery: Boolean get() = scopeType == ScopeType.SUBQUERY
     val isDerivedTable: Boolean get() = scopeType == ScopeType.DERIVED_TABLE
-    val isUnion: Boolean get() = scopeType == ScopeType.UNION
+    val isUnion: Boolean get() = scopeType == ScopeType.SET_OPERATION
     val isCte: Boolean get() = scopeType == ScopeType.CTE
     val isRoot: Boolean get() = scopeType == ScopeType.ROOT
     val isUdtf: Boolean get() = scopeType == ScopeType.UDTF
@@ -629,7 +629,7 @@ private fun traverseUnion(scope: Scope, acc: MutableList<Scope>) {
         val newScope = unionScope.branch(
             expression,
             outerColumns = unionScope.outerColumns,
-            scopeType = ScopeType.UNION,
+            scopeType = ScopeType.SET_OPERATION,
         )
 
         if (expression is SetOperation) {

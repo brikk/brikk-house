@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.17.0-93-gdcc36544a",
+ "sqlglot_version": "v30.18.0-43-g3ca82489",
  "cases": [
   {
    "sql": "SUM(1)",
@@ -3439,7 +3439,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -3453,7 +3453,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -3511,7 +3511,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -3525,7 +3525,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -3583,7 +3583,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -3597,7 +3597,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -3855,7 +3855,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "x",
@@ -3876,7 +3876,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "Y",
@@ -4138,7 +4138,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -4152,7 +4152,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -7659,7 +7659,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "a",
@@ -7680,7 +7680,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "b",
@@ -7720,7 +7720,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "a",
@@ -7741,7 +7741,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "b",
@@ -8169,7 +8169,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8183,7 +8183,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8216,7 +8216,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8230,7 +8230,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8263,7 +8263,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8277,7 +8277,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8520,7 +8520,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8534,7 +8534,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8588,7 +8588,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8602,7 +8602,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8656,7 +8656,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8670,7 +8670,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8724,7 +8724,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8738,7 +8738,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8832,7 +8832,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8846,7 +8846,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8860,7 +8860,7 @@
     },
     {
      "expression_class": "Union",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -8874,7 +8874,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -9679,7 +9679,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "a",
@@ -9698,7 +9698,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "a",
@@ -9755,7 +9755,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "a",
@@ -9774,7 +9774,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "a",
@@ -9831,7 +9831,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "a",
@@ -9850,7 +9850,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "a",
@@ -9907,7 +9907,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "a",
@@ -9926,7 +9926,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "a",
@@ -9969,7 +9969,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -9983,7 +9983,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10016,7 +10016,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10030,7 +10030,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10063,7 +10063,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10077,7 +10077,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10152,7 +10152,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10166,7 +10166,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10180,7 +10180,7 @@
     },
     {
      "expression_class": "Union",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10194,7 +10194,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10208,7 +10208,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10222,7 +10222,7 @@
     },
     {
      "expression_class": "Union",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10255,7 +10255,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10269,7 +10269,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10325,7 +10325,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10339,7 +10339,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10374,7 +10374,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10388,7 +10388,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10423,7 +10423,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10437,7 +10437,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10533,7 +10533,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -10547,7 +10547,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -12714,7 +12714,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -12728,7 +12728,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -13988,7 +13988,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "T1",
@@ -14013,7 +14013,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "T2",
@@ -14654,7 +14654,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -14668,7 +14668,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -15299,7 +15299,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "b",
@@ -15323,7 +15323,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "c",
@@ -15387,7 +15387,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -15401,7 +15401,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -15542,7 +15542,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -15556,7 +15556,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -15603,7 +15603,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -15617,7 +15617,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -17246,7 +17246,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "",
@@ -17288,7 +17288,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "",
@@ -17331,7 +17331,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t1",
@@ -17356,7 +17356,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t2",
@@ -17403,7 +17403,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t1",
@@ -17428,7 +17428,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t2",
@@ -17453,7 +17453,7 @@
     },
     {
      "expression_class": "Union",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -17470,7 +17470,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t3",
@@ -19894,7 +19894,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t",
@@ -19919,7 +19919,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t",
@@ -19944,7 +19944,7 @@
     },
     {
      "expression_class": "Union",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -19961,7 +19961,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t",
@@ -20009,7 +20009,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t",
@@ -20034,7 +20034,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "u",
@@ -20059,7 +20059,7 @@
     },
     {
      "expression_class": "Union",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [],
      "selected_source_names": [],
      "column_names": [],
@@ -20076,7 +20076,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "v",
@@ -20992,7 +20992,7 @@
    "scopes": [
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t",
@@ -21011,7 +21011,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "t",
@@ -22282,7 +22282,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "x",
@@ -22303,7 +22303,7 @@
     },
     {
      "expression_class": "Select",
-     "scope_type": "UNION",
+     "scope_type": "SET_OPERATION",
      "sources": [
       [
        "z",

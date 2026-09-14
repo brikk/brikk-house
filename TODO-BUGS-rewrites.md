@@ -1,7 +1,7 @@
 # TODO - mixed-dialect transpile rewrites (in scope)
 
 > `brikk-sql` is a Kotlin port of Python `sqlglot`, pinned to
-> `v30.17.0-93-gdcc36544a`. The reference clone at `reference/sqlglot/` is the
+> `v30.18.0-43-g3ca82489`. The reference clone at `reference/sqlglot/` is the
 > oracle for this backlog.
 >
 > This file tracks only transpile parity cases that do not involve BigQuery.

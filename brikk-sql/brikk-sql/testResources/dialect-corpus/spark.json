@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "spark",
   "identity": [
     {
@@ -404,6 +404,26 @@
       "pretty": false
     },
     {
+      "sql": "SELECT c1, c2, c3, c4 FROM t GROUP BY CUBE (c1, c2), c3, c4",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT c1, c2, c3, c4 FROM t GROUP BY c3, CUBE (c1, c2), c4",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT a, b, c FROM t GROUP BY ROLLUP (a), b, CUBE (c)",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT a, b, c FROM t GROUP BY a, GROUPING SETS ((a), (b)), c",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "SELECT TRANSFORM(x) USING 'x' AS (x INT) FROM t",
       "expected": null,
       "pretty": false
@@ -536,6 +556,18 @@
   ],
   "transpile": [
     {
+      "sql": "CREATE TABLE t (a INT, b STRING, UNIQUE (a))",
+      "read": {},
+      "write": {
+        "databricks": "CREATE TABLE t (a INT, b STRING)",
+        "hive": "CREATE TABLE t (a INT, b STRING)",
+        "materialize": "CREATE TABLE t (a INT, b TEXT)",
+        "spark": "CREATE TABLE t (a INT, b STRING)",
+        "spark2": "CREATE TABLE t (a INT, b STRING)",
+        "duckdb": "CREATE TABLE t (a INT, b TEXT, UNIQUE (a))"
+      }
+    },
+    {
       "sql": "CREATE TABLE db.example_table (col_a struct<struct_col_a:int, struct_col_b:string>)",
       "read": {},
       "write": {
@@ -565,7 +597,7 @@
         "presto": "CREATE TABLE db.example_table (col_a ARRAY(INTEGER), col_b ARRAY(ARRAY(INTEGER)))",
         "hive": "CREATE TABLE db.example_table (col_a ARRAY<INT>, col_b ARRAY<ARRAY<INT>>)",
         "spark": "CREATE TABLE db.example_table (col_a ARRAY<INT>, col_b ARRAY<ARRAY<INT>>)",
-        "snowflake": "CREATE TABLE db.example_table (col_a ARRAY, col_b ARRAY)"
+        "snowflake": "CREATE TABLE db.example_table (col_a ARRAY(INT), col_b ARRAY(ARRAY(INT)))"
       }
     },
     {
@@ -1764,8 +1796,8 @@
     }
   ],
   "stats": {
-    "identity_count": 106,
-    "transpile_count": 135,
-    "skipped_dynamic": 3
+    "identity_count": 110,
+    "transpile_count": 136,
+    "skipped_dynamic": 4
   }
 }

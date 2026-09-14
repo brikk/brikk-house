@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "trino",
   "identity": [
     {

@@ -104,7 +104,7 @@ class ScopeTest {
         val scopes = traverseScope(parseOne("SELECT x FROM t UNION SELECT y FROM u"))
         assertEquals(3, scopes.size)
         assertEquals(
-            listOf(ScopeType.UNION, ScopeType.UNION, ScopeType.ROOT),
+            listOf(ScopeType.SET_OPERATION, ScopeType.SET_OPERATION, ScopeType.ROOT),
             scopes.map { it.scopeType },
         )
         assertEquals(listOf("t"), scopes[0].sources.keys.toList())

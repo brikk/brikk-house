@@ -3580,25 +3580,19 @@ open class Parser(
         val expressions = mutableListOf<Expression>()
 
         while (true) {
-            val iterationIndex = index
-
             if (matchSet(queryModifierTokens, advance = false)) break
 
             elements["expressions"] = expressions
             expressions.addAll(
                 parseCsv {
-                    if (matchSet(setOf(TokenType.CUBE, TokenType.ROLLUP), advance = false)) {
-                        null
-                    } else {
-                        parseDisjunction()
-                    }
+                    parseGroupingSets() ?: parseCubeOrRollup() ?: parseDisjunction()
                 }
             )
 
             val beforeWithIndex = index
-            val withPrefix = match(TokenType.WITH)
-
-            val cubeOrRollup = parseCubeOrRollup(withPrefix = withPrefix)
+            val cubeOrRollup = if (match(TokenType.WITH)) {
+                parseCubeOrRollup(withPrefix = true)
+            } else null
             if (cubeOrRollup != null) {
                 val key = if (cubeOrRollup is Rollup) "rollup" else "cube"
                 @Suppress("UNCHECKED_CAST")
@@ -3610,6 +3604,7 @@ open class Parser(
                     @Suppress("UNCHECKED_CAST")
                     val list = elements.getOrPut("grouping_sets") { mutableListOf<Expression>() } as MutableList<Expression>
                     list.add(groupingSets)
+                    break
                 } else if (matchTextSeq("TOTALS")) {
                     elements["totals"] = true
                 }
@@ -3619,8 +3614,6 @@ open class Parser(
                 retreat(beforeWithIndex)
                 break
             }
-
-            if (iterationIndex == index) break
         }
 
         return expression(Group(elements), comments = comments)
@@ -8191,7 +8184,7 @@ open class Parser(
     }
 
     // sqlglot: Parser._parse_unique
-    fun parseUnique(): Expression {
+    open fun parseUnique(): Expression {
         matchTexts(setOf("KEY", "INDEX"))
         return expression(
             UniqueColumnConstraint(

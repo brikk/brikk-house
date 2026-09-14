@@ -1,5 +1,5 @@
 {
-    "sqlglot_version": "v30.17.0-93-gdcc36544a",
+    "sqlglot_version": "v30.18.0-43-g3ca82489",
     "cases": [
         {
             "id": "assertion:v1:sha256:58bb8d32daa12e185066d46c462c0838120fcaf4d20cb1491d65127ce0955671:1",

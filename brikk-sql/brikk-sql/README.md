@@ -8,7 +8,7 @@ Target-specific fixes and other deliberate differences are listed in the
 [extensions registry](../../docs/brikk-extensions.md).
 
 Differential gates compare token streams, serialized AST structure, and generated SQL
-against pinned sqlglot (`v30.17.0-93-gdcc36544a`) across thousands of corpus cases,
+against pinned sqlglot (`v30.18.0-43-g3ca82489`) across thousands of corpus cases,
 with explicit expectations for deliberate divergences. Separate semantic tests check
 row results and output schemas. See [parsing research and plan](../../docs/parsing-research-and-plan.md)
 for architecture and status. Oracle parity alone does not prove correct row results

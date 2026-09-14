@@ -14,6 +14,7 @@ import dev.brikk.house.sql.generator.anyToExists
 import dev.brikk.house.sql.generator.inheritStructFieldNames
 import dev.brikk.house.sql.generator.moveSchemaColumnsToPartitionedBy
 import dev.brikk.house.sql.generator.unnestGenerateSeries
+import dev.brikk.house.sql.generator.removeUniqueConstraints
 import dev.brikk.house.sql.parser.HiveTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import dev.brikk.house.sql.parser.formatTimeString
@@ -166,6 +167,7 @@ open class HiveGenerator(
     // ------------------------------------------------------------------
 
     override val selectKinds: Set<String> get() = emptySet()
+    override val supportsGroupingSetsAsSuffix: Boolean get() = true
     override val trySupported: Boolean get() = false
     override val supportsUescape: Boolean get() = false
     override val limitFetch: String get() = "LIMIT"
@@ -867,7 +869,9 @@ open class HiveGenerator(
                 func("SORT_ARRAY", e.thisArg)
             }
             reg(With::class) { e -> hg().noRecursiveCteSql(e as With) }
-            reg(Create::class) { e -> createSql(moveSchemaColumnsToPartitionedBy(e) as Create) }
+            reg(Create::class) { e ->
+                createSql(moveSchemaColumnsToPartitionedBy(removeUniqueConstraints(e)) as Create)
+            }
             // sqlglot: hive exp.Array preprocess [inherit_struct_field_names]
             reg(ArrayNode::class) { e -> functionFallbackSql(inheritStructFieldNames(e) as ArrayNode) }
             // sqlglot: hive exp.Select preprocess pipeline

@@ -5,6 +5,7 @@ import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.movePartitionedByToSchemaColumns
+import dev.brikk.house.sql.generator.removeUniqueConstraints
 import dev.brikk.house.sql.parser.SparkTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -188,7 +189,9 @@ open class SparkGenerator(
             reg(BitwiseXorAgg::class) { e -> sg().renameFuncSql("BIT_XOR", e) }
             reg(BitwiseCount::class) { e -> sg().renameFuncSql("BIT_COUNT", e) }
             reg(CurrentVersion::class) { e -> sg().renameFuncSql("VERSION", e) }
-            reg(Create::class) { e -> createSql(movePartitionedByToSchemaColumns(e) as Create) }
+            reg(Create::class) { e ->
+                createSql(movePartitionedByToSchemaColumns(removeUniqueConstraints(e)) as Create)
+            }
             reg(DateFromUnixDate::class) { e -> sg().renameFuncSql("DATE_FROM_UNIX_DATE", e) }
             reg(GroupConcat::class) { e -> sg().groupConcatSpark(e as GroupConcat) }
             reg(EndsWith::class) { e -> sg().renameFuncSql("ENDSWITH", e) }

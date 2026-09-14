@@ -1374,6 +1374,10 @@ open class DorisGenerator(
             "using", "value", "values", "varchar", "variables", "variant", "vault", "verbose",
             "version", "view", "warnings", "week", "when", "where", "whitelist", "with", "work",
             "workload", "write", "xor", "year",
+        ) + setOf(
+            "analyzer", "asof", "both", "char_filter", "dump", "layout", "leading",
+            "match_condition", "no_use_mv", "play", "token_filter", "tokenizer", "trailing",
+            "try_cast", "use_mv",
         )
     }
 }

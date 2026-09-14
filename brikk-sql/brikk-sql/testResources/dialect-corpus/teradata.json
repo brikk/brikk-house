@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "teradata",
   "identity": [
     {
@@ -225,6 +225,16 @@
     {
       "sql": "CREATE TABLE db.foo (id INT NOT NULL, valid_date DATE FORMAT 'YYYY-MM-DD' COMPRESS (CAST('9999-09-09' AS DATE)), measurement INT)",
       "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT MOD(8, 5)",
+      "expected": "SELECT 8 MOD 5",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT 2 ** MOD(8, 5)",
+      "expected": "SELECT 2 ** (8 MOD 5)",
       "pretty": false
     },
     {
@@ -600,7 +610,7 @@
     }
   ],
   "stats": {
-    "identity_count": 74,
+    "identity_count": 76,
     "transpile_count": 24,
     "skipped_dynamic": 0
   }

@@ -322,7 +322,10 @@ open class TrinoGenerator(
             return super.jsonextractSql(expression)
         }
 
-        val jsonPath = sql(expression, "expression")
+        var jsonPath = sql(expression, "expression")
+        if (expression.expressionArg is JSONPath) {
+            jsonPath = "${quoteStart}lax ${jsonPath.removePrefix(quoteStart)}"
+        }
 
         var option = sql(expression, "option")
         // brikk extension (docs/brikk-extensions.md #8): see normalizeJsonQueryWrapperOption.

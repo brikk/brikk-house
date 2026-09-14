@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "hive",
   "identity": [
     {
@@ -175,17 +175,17 @@
       "pretty": false
     },
     {
-      "sql": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, b, GROUPING SETS ((a, b), a)",
+      "sql": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, b GROUPING SETS ((a, b), a)",
       "expected": null,
       "pretty": false
     },
     {
-      "sql": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, b, GROUPING SETS ((t.a, b), a)",
+      "sql": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY t.a, b GROUPING SETS ((t.a, b), t.a)",
       "expected": null,
       "pretty": false
     },
     {
-      "sql": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, FOO(b), GROUPING SETS ((a, FOO(b)), a)",
+      "sql": "SELECT a, ABS(b) AS b, SUM(c) FROM tabl AS t GROUP BY a, ABS(b) GROUPING SETS ((a, ABS(b)), a)",
       "expected": null,
       "pretty": false
     },
@@ -1133,10 +1133,10 @@
       }
     },
     {
-      "sql": "SELECT a, SUM(c) FROM t GROUP BY a, DATE_FORMAT(b, 'yyyy'), GROUPING SETS ((a, DATE_FORMAT(b, 'yyyy')), a)",
+      "sql": "SELECT a, SUM(c) FROM t GROUP BY a, DATE_FORMAT(b, 'yyyy') GROUPING SETS ((a, DATE_FORMAT(b, 'yyyy')), a)",
       "read": {},
       "write": {
-        "hive": "SELECT a, SUM(c) FROM t GROUP BY a, DATE_FORMAT(b, 'yyyy'), GROUPING SETS ((a, DATE_FORMAT(b, 'yyyy')), a)"
+        "hive": "SELECT a, SUM(c) FROM t GROUP BY a, DATE_FORMAT(b, 'yyyy') GROUPING SETS ((a, DATE_FORMAT(b, 'yyyy')), a)"
       }
     },
     {

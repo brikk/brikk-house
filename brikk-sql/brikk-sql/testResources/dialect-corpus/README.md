@@ -2,7 +2,7 @@
 
 Machine-extracted from the inline dialect test assertions of
 [sqlglot](https://github.com/tobymao/sqlglot) (`tests/dialects/test_*.py`),
-pinned at **v30.17.0-93-gdcc36544a** (see `reference/sqlglot`).
+pinned at **v30.18.0-43-g3ca82489** (see `reference/sqlglot`).
 
 sqlglot is Copyright (c) 2025 Toby Mao and released under the MIT License.
 This corpus is a mechanical transformation of its test suite and carries the
@@ -38,7 +38,7 @@ python3 tools/extract_dialect_tests.py
 | bigquery | 360 | 288 | 27 |
 | clickhouse | 323 | 79 | 23 |
 | databricks | 144 | 32 | 1 |
-| doris | 44 | 18 | 0 |
+| doris | 44 | 18 | 1 |
 | dremio | 43 | 7 | 2 |
 | drill | 4 | 8 | 0 |
 | druid | 10 | 0 | 3 |
@@ -48,25 +48,25 @@ python3 tools/extract_dialect_tests.py
 | fabric | 45 | 2 | 0 |
 | hive | 61 | 94 | 2 |
 | materialize | 18 | 6 | 0 |
-| mysql | 324 | 103 | 34 |
+| mysql | 339 | 104 | 34 |
 | oracle | 184 | 33 | 9 |
-| postgres | 426 | 99 | 17 |
-| presto | 48 | 147 | 3 |
+| postgres | 428 | 99 | 17 |
+| presto | 48 | 146 | 3 |
 | prql | 0 | 29 | 0 |
-| redshift | 132 | 52 | 2 |
+| redshift | 134 | 52 | 2 |
 | risingwave | 7 | 1 | 0 |
-| singlestore | 106 | 112 | 0 |
-| snowflake | 841 | 530 | 32 |
+| singlestore | 106 | 113 | 2 |
+| snowflake | 847 | 530 | 33 |
 | solr | 3 | 0 | 0 |
-| spark | 106 | 135 | 3 |
-| sqlite | 124 | 37 | 1 |
+| spark | 110 | 136 | 4 |
+| sqlite | 124 | 49 | 1 |
 | starrocks | 78 | 18 | 6 |
 | tableau | 0 | 7 | 0 |
-| teradata | 74 | 24 | 0 |
+| teradata | 76 | 24 | 0 |
 | trino | 109 | 4 | 3 |
 | tsql | 227 | 216 | 21 |
-| **TOTAL** | **4464** | **2667** | **249** |
+| **TOTAL** | **4495** | **2681** | **254** |
 
-Coverage: 7131 of 7278 textual `validate_*` call sites
-(98.0%). Skipped calls use runtime-computed arguments (loops,
+Coverage: 7176 of 7328 textual `validate_*` call sites
+(97.9%). Skipped calls use runtime-computed arguments (loops,
 variables, f-string interpolation) and cannot be extracted statically.

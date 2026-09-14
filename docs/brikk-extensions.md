@@ -1,6 +1,6 @@
 # brikk-sql extensions registry — deliberate divergences from sqlglot
 
-brikk-sql is a SQLGlot-derived Kotlin engine (pinned: `v30.17.0-93-gdcc36544a`), checked by
+brikk-sql is a SQLGlot-derived Kotlin engine (pinned: `v30.18.0-43-g3ca82489`), checked by
 differential and semantic gates. This file registers where brikk **deliberately diverges**
 from or **extends beyond** sqlglot, so that upstream syncs know exactly where conflicts
 can arise: when a future sqlglot version adds its own handling for one of these, the
@@ -189,7 +189,7 @@ exceptions today:
   DISTINCT ON (a) a, b FROM x ORDER BY c DESC`. The upstream fixture remains intact;
   only its exact divergence is ledgered. No oracle-gate behavior changes.
 - **Upstream tracking:** ASTRA-001 is inherited from the pinned
-  `v30.17.0-93-gdcc36544a`. Owner: Brikk maintainers. Reporting status: pending;
+  `v30.18.0-43-g3ca82489`. Owner: Brikk maintainers. Reporting status: pending;
   no upstream issue/PR has been filed by this change. Adoption revision: none.
   On each upstream sync, check `eliminate_qualify` and `eliminate_distinct_on`
   against these result regressions before adopting them, then reconcile this entry
@@ -217,7 +217,7 @@ exceptions today:
 ## 7. Doris: first-class arrays
 
 - **What:** sqlglot's Doris dialect inherits MySQL's array rejection wholesale, but Doris
-  supports arrays natively. Divergences from the Python oracle (v30.17.0-93-gdcc36544a),
+  supports arrays natively. Divergences from the Python oracle (v30.18.0-43-g3ca82489),
   each rendering pinned against the real Doris FE parser
   (`SqlVerifierTest.dorisAcceptsBrikkArrayRenderings`):
   - **Array literals** render as the canonical constructor `ARRAY(1, 2, 3)` — the same

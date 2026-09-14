@@ -54,6 +54,7 @@ import dev.brikk.house.sql.ast.NumberToStr
 import dev.brikk.house.sql.ast.OnCondition
 import dev.brikk.house.sql.ast.Or
 import dev.brikk.house.sql.ast.Order
+import dev.brikk.house.sql.ast.Ordered
 import dev.brikk.house.sql.ast.Paren
 import dev.brikk.house.sql.ast.Partition
 import dev.brikk.house.sql.ast.PartitionByListProperty
@@ -61,6 +62,8 @@ import dev.brikk.house.sql.ast.PartitionByRangeProperty
 import dev.brikk.house.sql.ast.PartitionList
 import dev.brikk.house.sql.ast.PartitionRange
 import dev.brikk.house.sql.ast.RenameIndex
+import dev.brikk.house.sql.ast.Schema
+import dev.brikk.house.sql.ast.SchemaCommentProperty
 import dev.brikk.house.sql.ast.SetItem
 import dev.brikk.house.sql.ast.Show
 import dev.brikk.house.sql.ast.Soundex
@@ -68,6 +71,7 @@ import dev.brikk.house.sql.ast.StrToDate
 import dev.brikk.house.sql.ast.StrToTime
 import dev.brikk.house.sql.ast.TimeToStr
 import dev.brikk.house.sql.ast.TimestampDiff
+import dev.brikk.house.sql.ast.UniqueColumnConstraint
 import dev.brikk.house.sql.ast.TsOrDsToDate
 import dev.brikk.house.sql.ast.TsOrDsToTimestamp
 import dev.brikk.house.sql.ast.Var
@@ -367,6 +371,20 @@ open class MysqlParser(
         return expression(ColumnPrefix(args("this" to this_, "expression" to expr)))
     }
 
+    // sqlglot: MySQLParser._parse_index_constraint_part
+    private fun parseIndexConstraintPart(): Expression? =
+        if (!match(TokenType.L_PAREN, advance = false) && nextToken.tokenType == TokenType.L_PAREN) {
+            parsePrimaryKeyPart()
+        } else {
+            parseDisjunction()
+        }
+
+    // sqlglot: MySQLParser._parse_index_key_part
+    private fun parseIndexKeyPart(): Expression? {
+        val ordered = parseOrdered { parseIndexConstraintPart() } as? Ordered ?: return null
+        return if (ordered.args["desc"] == null) ordered.thisArg as? Expression else ordered
+    }
+
     // sqlglot: MySQLParser._parse_index_constraint
     open fun parseIndexConstraint(kind: String? = null): Expression {
         if (kind != null) {
@@ -378,7 +396,7 @@ open class MysqlParser(
         // (evaluates to False, not None, when USING is absent)
         val indexType: kotlin.Any =
             if (match(TokenType.USING) && advanceAny() != null) prevToken.text else false
-        val expressions = parseWrappedCsv({ parseOrdered() })
+        val expressions = parseWrappedCsv({ parseIndexKeyPart() })
 
         val options = mutableListOf<Expression>()
         while (true) {
@@ -398,6 +416,33 @@ open class MysqlParser(
             )
         )
     }
+
+    // sqlglot: MySQLParser._parse_unique
+    override fun parseUnique(): Expression {
+        matchTexts(setOf("KEY", "INDEX"))
+        val this_ = parseUniqueKey()
+        val indexType = parseIndexType()
+        if (!match(TokenType.L_PAREN, advance = false)) {
+            return expression(UniqueColumnConstraint(args("this" to this_, "index_type" to indexType)))
+        }
+
+        val expressions = parseWrappedCsv({ parseIndexKeyPart() })
+        val finalIndexType = indexType ?: parseIndexType()
+        val options = mutableListOf<Expression>()
+        while (true) options.add(parseIndexConstraintOption() ?: break)
+        return expression(
+            UniqueColumnConstraint(
+                args(
+                    "this" to expression(Schema(args("this" to this_, "expressions" to expressions))),
+                    "index_type" to finalIndexType,
+                    "options" to options,
+                )
+            )
+        )
+    }
+
+    private fun parseIndexType(): String? =
+        if (match(TokenType.USING) && advanceAny() != null) prevToken.text else null
 
     // sqlglot: the option loop body of MySQLParser._parse_index_constraint. Split out
     // (brikk) so DorisParser can add its INDEX PROPERTIES (...) option; behavior unchanged.
@@ -1072,6 +1117,7 @@ object MysqlParserTables {
         "CHANGE" to { p -> (p as MysqlParser).parseAlterTableModify(rename = true) },
         "MODIFY" to { p -> (p as MysqlParser).parseAlterTableModify() },
         "AUTO_INCREMENT" to { p -> p.parsePropertyAssignment({ a -> AutoIncrementProperty(a) }) },
+        "COMMENT" to { p -> p.parsePropertyAssignment({ a -> SchemaCommentProperty(a) }) },
     )
 
     // sqlglot: MySQLParser.ALTER_ALTER_PARSERS (extra entries over the base map)

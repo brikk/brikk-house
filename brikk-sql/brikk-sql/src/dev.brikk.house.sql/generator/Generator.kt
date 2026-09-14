@@ -171,6 +171,7 @@ open class Generator(
     open val unpivotAliasesAreIdentifiers: Boolean get() = true
     open val renameTableWithDb: Boolean get() = true
     open val groupingsSep: String get() = ","
+    open val supportsGroupingSetsAsSuffix: Boolean get() = false
 
     // sqlglot: Generator.DECLARE_DEFAULT_ASSIGNMENT (base "="; bigquery/trino use "DEFAULT")
     open val declareDefaultAssignment: String get() = "="
@@ -2418,8 +2419,12 @@ open class Generator(
         if (
             expression.expressionsArg.isNotEmpty() &&
             groupings.isNotEmpty() &&
-            groupings.trim() !in setOf("WITH CUBE", "WITH ROLLUP")
+            groupings.trim() !in setOf("WITH CUBE", "WITH ROLLUP") &&
+            !(groupingSets.isNotEmpty() && supportsGroupingSetsAsSuffix)
         ) {
+            if (groupingSets.isNotEmpty()) {
+                unsupported("GROUPING SETS without a comma after GROUP BY expressions is not supported")
+            }
             groupBy = "$groupBy$groupingsSep"
         }
 
@@ -3512,7 +3517,10 @@ open class Generator(
     // sqlglot: Generator.jsonpath_sql
     open fun jsonpathSql(expression: JSONPath): String {
         var path = expressions(expression, sep = "", flat = true).trimStart('.')
-        if (quoteJsonPath) path = "$quoteStart$path$quoteEnd"
+        if (quoteJsonPath) {
+            path = escapeStr(path)
+            path = "$quoteStart$path$quoteEnd"
+        }
         return path
     }
 
@@ -3551,8 +3559,7 @@ open class Generator(
             return ".$thisArg"
         }
 
-        var thisSql = jsonPathPart(thisArg)
-        if (quoted && quoteJsonPath) thisSql = escapeStr(thisSql)
+        val thisSql = jsonPathPart(thisArg)
 
         return if (jsonPathBracketedKeySupported) "[$thisSql]" else ".$thisSql"
     }
@@ -4906,6 +4913,15 @@ open class Generator(
 
     // sqlglot: Generator.ilike_sql
     open fun ilikeSql(expression: ILike): String = likeOpSql(expression, "ILIKE")
+
+    // sqlglot: Generator.mod_sql
+    open fun modSql(expression: Mod): String {
+        val rendered = binary(expression, "%")
+        val parent = expression.parent
+        return if (parent is Mul || parent is Div || parent is IntDiv || parent is Mod || parent is Pow) {
+            if (parent.expressionArg === expression) wrap(rendered) else rendered
+        } else rendered
+    }
 
     // sqlglot: Generator.trycast_sql
     open fun trycastSql(expression: TryCast): String = castSql(expression, safePrefix = "TRY_")

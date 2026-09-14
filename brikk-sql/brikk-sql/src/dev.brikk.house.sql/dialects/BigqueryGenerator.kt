@@ -214,7 +214,7 @@ open class BigqueryGenerator(
     }
 
     // sqlglot: BigQueryGenerator.mod_sql
-    fun modSql(expression: Mod): String {
+    override fun modSql(expression: Mod): String {
         val this0 = expression.args["this"] as? Expression
         val expr0 = expression.args["expression"] as? Expression
         return func(

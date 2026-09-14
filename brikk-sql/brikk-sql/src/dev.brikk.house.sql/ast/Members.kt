@@ -43,12 +43,22 @@ val Expression.outputName: String
 
 // sqlglot: Expression.is_star and its overrides (Dot, Select, SetOperation, Subquery).
 val Expression.isStar: kotlin.Boolean
-    get() = when (this) {
-        is Dot -> (expressionArg as Expression).isStar
-        is Select -> expressionsArg.any { it is Expression && it.isStar }
-        is SetOperation -> left.isStar || right.isStar
-        is Subquery -> (thisArg as Expression).isStar
-        else -> this is Star || (this is Column && thisArg is Star)
+    get() {
+        val stack = mutableListOf(this)
+        while (stack.isNotEmpty()) {
+            when (val node = stack.removeAt(stack.lastIndex)) {
+                is Dot -> stack.add(node.expressionArg as Expression)
+                is Select -> stack.addAll(node.expressionsArg.filterIsInstance<Expression>())
+                is SetOperation -> {
+                    stack.add(node.left)
+                    stack.add(node.right)
+                }
+                is Subquery -> stack.add(node.thisArg as Expression)
+                is Star -> return true
+                is Column -> if (node.thisArg is Star) return true
+            }
+        }
+        return false
     }
 
 // sqlglot: Expression.alias_column_names

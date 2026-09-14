@@ -1,8 +1,8 @@
 {
- "sqlglot_version": "v30.17.0-93-gdcc36544a",
+ "sqlglot_version": "v30.18.0-43-g3ca82489",
  "fixture": "dialect-corpus/postgres.json",
  "dialect": "postgres",
- "case_count": 426,
+ "case_count": 428,
  "skipped": [],
  "cases": [
   {
@@ -1513,7 +1513,7 @@
     },
     {
      "i": 7,
-     "k": "rollup",
+     "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Rollup",
      "t": [
@@ -2910,6 +2910,151 @@
      "i": 9,
      "k": "this",
      "v": "QUARTER"
+    }
+   ]
+  },
+  {
+   "sql": "SELECT DATE_TRUNC('DAY', x, 'America/New_York')",
+   "generated": "SELECT DATE_TRUNC('DAY', x, 'America/New_York')",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.temporal.TimestampTrunc",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 17,
+      "start": 7,
+      "end": 16
+     }
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 26,
+      "start": 25,
+      "end": 25
+     }
+    },
+    {
+     "i": 3,
+     "k": "this",
+     "v": "x"
+    },
+    {
+     "i": 3,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 1,
+     "k": "unit",
+     "c": "sqlglot.expressions.core.Var",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "v": "DAY"
+    },
+    {
+     "i": 1,
+     "k": "zone",
+     "c": "sqlglot.expressions.core.Literal",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "VARCHAR"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 46,
+      "start": 28,
+      "end": 45,
+      "nonnull": true
+     }
+    },
+    {
+     "i": 8,
+     "k": "this",
+     "v": "America/New_York"
+    },
+    {
+     "i": 8,
+     "k": "is_string",
+     "v": true
     }
    ]
   },
@@ -21951,6 +22096,112 @@
        "v": "DATE"
       }
      ]
+    }
+   ]
+  },
+  {
+   "sql": "SELECT DATE_PART('isoyear', ts)",
+   "generated": "SELECT EXTRACT(ISOYEAR FROM ts)",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.temporal.Extract",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "INT"
+      }
+     ]
+    },
+    {
+     "i": 1,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Var",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 2,
+     "k": "this",
+     "v": "ISOYEAR"
+    },
+    {
+     "i": 1,
+     "k": "expression",
+     "c": "sqlglot.expressions.core.Column",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ]
+    },
+    {
+     "i": 4,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "t": [
+      {
+       "c": "sqlglot.expressions.datatypes.DataType"
+      },
+      {
+       "i": 0,
+       "k": "this",
+       "c": "DataType.Type",
+       "v": "UNKNOWN"
+      }
+     ],
+     "m": {
+      "line": 1,
+      "col": 30,
+      "start": 28,
+      "end": 29
+     }
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "v": "ts"
+    },
+    {
+     "i": 5,
+     "k": "quoted",
+     "v": false
     }
    ]
   },

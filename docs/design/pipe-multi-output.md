@@ -366,7 +366,7 @@ callers; fragments compose by AST graft or generate+re-parse.
 
 ## 5. sqlglot upstream-conflict considerations
 
-Facts, verified against the pinned checkout (`v30.17.0-93-gdcc36544a`):
+Facts, verified against the pinned checkout (`v30.18.0-43-g3ca82489`):
 
 - sqlglot has **no FORK/TEE/terminal-op pipe handling**: no match for `FORK`/`TEE` in
   `sqlglot/parser.py`; the `PIPE_SYNTAX_TRANSFORM_PARSERS` table stops at the read-side

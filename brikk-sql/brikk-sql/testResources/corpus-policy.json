@@ -5,7 +5,7 @@
   "gated_dialect_fixtures": ["bigquery", "clickhouse", "doris", "duckdb", "hive", "mysql", "postgres", "presto", "spark", "starrocks", "trino"],
   "named_identity_deferral": {
     "reason": "Named fixtures have transpile gates, but their exact identity sql/expected/pretty assertions have no direct consumer. Separate parser/generator corpora overlap without proving these assertions were executed.",
-    "count": 2265
+    "count": 2286
   },
   "base_deferral": {
     "reason": "The base fixture's 59 pipe identities run in PipeDesugarCorpusTest. Its non-pipe identities and supported transpile directions have no base assertion consumer yet; inventory them explicitly rather than claim parity.",

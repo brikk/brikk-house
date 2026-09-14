@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "mysql",
   "identity": [
     {
@@ -254,6 +254,16 @@
       "pretty": false
     },
     {
+      "sql": "ALTER TABLE t COMMENT='hi'",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE t COMMENT 'hi'",
+      "expected": "ALTER TABLE t COMMENT='hi'",
+      "pretty": false
+    },
+    {
       "sql": "ALTER VIEW v AS SELECT a, b, c, d FROM foo",
       "expected": null,
       "pretty": false
@@ -437,6 +447,31 @@
       "pretty": false
     },
     {
+      "sql": "ALTER TABLE t ADD UNIQUE KEY uq (a) USING BTREE COMMENT 'why' INVISIBLE",
+      "expected": "ALTER TABLE t ADD UNIQUE uq (a) USING BTREE COMMENT 'why' INVISIBLE",
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE t ADD UNIQUE KEY u USING BTREE (c)",
+      "expected": "ALTER TABLE t ADD UNIQUE u (c) USING BTREE",
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t (a INT, UNIQUE KEY u USING BTREE (a))",
+      "expected": "CREATE TABLE t (a INT, UNIQUE u (a) USING BTREE)",
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t (a INT, UNIQUE USING BTREE (a))",
+      "expected": "CREATE TABLE t (a INT, UNIQUE (a) USING BTREE)",
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t (a INT, UNIQUE KEY `using` (a) USING BTREE)",
+      "expected": "CREATE TABLE t (a INT, UNIQUE `using` (a) USING BTREE)",
+      "pretty": false
+    },
+    {
       "sql": "CREATE TABLE `foo` (`id` char(36) NOT NULL DEFAULT (uuid()), PRIMARY KEY (`id`), UNIQUE KEY `id` (`id`))",
       "expected": "CREATE TABLE `foo` (`id` CHAR(36) NOT NULL DEFAULT (UUID()), PRIMARY KEY (`id`), UNIQUE `id` (`id`))",
       "pretty": false
@@ -459,6 +494,46 @@
     {
       "sql": "CREATE TABLE t (a INT, UNIQUE KEY `Key` (a))",
       "expected": "CREATE TABLE t (a INT, UNIQUE `Key` (a))",
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE foo (a BIGINT, UNIQUE KEY b (a) USING BTREE COMMENT 'c' VISIBLE, UNIQUE KEY d (a) KEY_BLOCK_SIZE=8)",
+      "expected": "CREATE TABLE foo (a BIGINT, UNIQUE b (a) USING BTREE COMMENT 'c' VISIBLE, UNIQUE d (a) KEY_BLOCK_SIZE = 8)",
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t (c VARCHAR(64), PRIMARY KEY (c(20)))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t (d INT, INDEX k ((d + 1)))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t (c VARCHAR(64), KEY k (c(20)))",
+      "expected": "CREATE TABLE t (c VARCHAR(64), INDEX k (c(20)))",
+      "pretty": false
+    },
+    {
+      "sql": "CREATE TABLE t (c VARCHAR(64), UNIQUE KEY u (c(20) DESC))",
+      "expected": "CREATE TABLE t (c VARCHAR(64), UNIQUE u (c(20) DESC))",
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE t ADD INDEX k (c(20))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE t ADD PRIMARY KEY (c(20))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "ALTER TABLE t ADD UNIQUE KEY u (c(20))",
+      "expected": "ALTER TABLE t ADD UNIQUE u (c(20))",
       "pretty": false
     },
     {
@@ -1648,6 +1723,15 @@
   ],
   "transpile": [
     {
+      "sql": "CREATE TABLE t (a INT, b INT, CONSTRAINT u UNIQUE (a, b))",
+      "read": {},
+      "write": {
+        "mysql": "CREATE TABLE t (a INT, b INT, CONSTRAINT u UNIQUE (a, b))",
+        "postgres": "CREATE TABLE t (a INT, b INT, CONSTRAINT u UNIQUE (a, b))",
+        "duckdb": "CREATE TABLE t (a INT, b INT, CONSTRAINT u UNIQUE (a, b))"
+      }
+    },
+    {
       "sql": "insert into t(i) values (default)",
       "read": {},
       "write": {
@@ -2549,8 +2633,8 @@
     }
   ],
   "stats": {
-    "identity_count": 324,
-    "transpile_count": 103,
+    "identity_count": 339,
+    "transpile_count": 104,
     "skipped_dynamic": 34
   }
 }

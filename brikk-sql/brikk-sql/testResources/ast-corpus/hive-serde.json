@@ -1,5 +1,5 @@
 {
- "sqlglot_version": "v30.17.0-93-gdcc36544a",
+ "sqlglot_version": "v30.18.0-43-g3ca82489",
  "fixture": "dialect-corpus/hive.json",
  "dialect": "hive",
  "case_count": 61,
@@ -5198,8 +5198,8 @@
    ]
   },
   {
-   "sql": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, b, GROUPING SETS ((a, b), a)",
-   "generated": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, b, GROUPING SETS ((a, b), a)",
+   "sql": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, b GROUPING SETS ((a, b), a)",
+   "generated": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, b GROUPING SETS ((a, b), a)",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -5436,9 +5436,9 @@
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
       "line": 1,
-      "col": 67,
-      "start": 66,
-      "end": 66
+      "col": 66,
+      "start": 65,
+      "end": 65
      }
     },
     {
@@ -5459,289 +5459,6 @@
     },
     {
      "i": 38,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 70,
-      "start": 69,
-      "end": 69
-     }
-    },
-    {
-     "i": 39,
-     "k": "this",
-     "v": "b"
-    },
-    {
-     "i": 39,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 32,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Column"
-    },
-    {
-     "i": 42,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 74,
-      "start": 73,
-      "end": 73
-     }
-    },
-    {
-     "i": 43,
-     "k": "this",
-     "v": "a"
-    },
-    {
-     "i": 43,
-     "k": "quoted",
-     "v": false
-    }
-   ]
-  },
-  {
-   "sql": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, b, GROUPING SETS ((t.a, b), a)",
-   "generated": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, b, GROUPING SETS ((t.a, b), a)",
-   "dump": [
-    {
-     "c": "sqlglot.expressions.query.Select"
-    },
-    {
-     "i": 0,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Column"
-    },
-    {
-     "i": 1,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 8,
-      "start": 7,
-      "end": 7
-     }
-    },
-    {
-     "i": 2,
-     "k": "this",
-     "v": "a"
-    },
-    {
-     "i": 2,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 0,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Column"
-    },
-    {
-     "i": 5,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 11,
-      "start": 10,
-      "end": 10
-     }
-    },
-    {
-     "i": 6,
-     "k": "this",
-     "v": "b"
-    },
-    {
-     "i": 6,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 0,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.aggregate.Sum",
-     "m": {
-      "line": 1,
-      "col": 16,
-      "start": 13,
-      "end": 15
-     }
-    },
-    {
-     "i": 9,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Column"
-    },
-    {
-     "i": 10,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 18,
-      "start": 17,
-      "end": 17
-     }
-    },
-    {
-     "i": 11,
-     "k": "this",
-     "v": "c"
-    },
-    {
-     "i": 11,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 0,
-     "k": "from_",
-     "c": "sqlglot.expressions.query.From"
-    },
-    {
-     "i": 14,
-     "k": "this",
-     "c": "sqlglot.expressions.query.Table"
-    },
-    {
-     "i": 15,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 29,
-      "start": 25,
-      "end": 28
-     }
-    },
-    {
-     "i": 16,
-     "k": "this",
-     "v": "tabl"
-    },
-    {
-     "i": 16,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 15,
-     "k": "alias",
-     "c": "sqlglot.expressions.query.TableAlias"
-    },
-    {
-     "i": 19,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 34,
-      "start": 33,
-      "end": 33
-     }
-    },
-    {
-     "i": 20,
-     "k": "this",
-     "v": "t"
-    },
-    {
-     "i": 20,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 0,
-     "k": "group",
-     "c": "sqlglot.expressions.query.Group"
-    },
-    {
-     "i": 23,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Column"
-    },
-    {
-     "i": 24,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 45,
-      "start": 44,
-      "end": 44
-     }
-    },
-    {
-     "i": 25,
-     "k": "this",
-     "v": "a"
-    },
-    {
-     "i": 25,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 23,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Column"
-    },
-    {
-     "i": 28,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 48,
-      "start": 47,
-      "end": 47
-     }
-    },
-    {
-     "i": 29,
-     "k": "this",
-     "v": "b"
-    },
-    {
-     "i": 29,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 23,
-     "k": "grouping_sets",
-     "a": true,
-     "c": "sqlglot.expressions.query.GroupingSets"
-    },
-    {
-     "i": 32,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.query.Tuple"
-    },
-    {
-     "i": 33,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Column"
-    },
-    {
-     "i": 34,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
@@ -5752,60 +5469,12 @@
      }
     },
     {
-     "i": 35,
-     "k": "this",
-     "v": "a"
-    },
-    {
-     "i": 35,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 34,
-     "k": "table",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 67,
-      "start": 66,
-      "end": 66
-     }
-    },
-    {
-     "i": 38,
-     "k": "this",
-     "v": "t"
-    },
-    {
-     "i": 38,
-     "k": "quoted",
-     "v": false
-    },
-    {
-     "i": 33,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Column"
-    },
-    {
-     "i": 41,
-     "k": "this",
-     "c": "sqlglot.expressions.core.Identifier",
-     "m": {
-      "line": 1,
-      "col": 72,
-      "start": 71,
-      "end": 71
-     }
-    },
-    {
-     "i": 42,
+     "i": 39,
      "k": "this",
      "v": "b"
     },
     {
-     "i": 42,
+     "i": 39,
      "k": "quoted",
      "v": false
     },
@@ -5816,31 +5485,31 @@
      "c": "sqlglot.expressions.core.Column"
     },
     {
-     "i": 45,
+     "i": 42,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
       "line": 1,
-      "col": 76,
-      "start": 75,
-      "end": 75
+      "col": 73,
+      "start": 72,
+      "end": 72
      }
     },
     {
-     "i": 46,
+     "i": 43,
      "k": "this",
      "v": "a"
     },
     {
-     "i": 46,
+     "i": 43,
      "k": "quoted",
      "v": false
     }
    ]
   },
   {
-   "sql": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, FOO(b), GROUPING SETS ((a, FOO(b)), a)",
-   "generated": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY a, FOO(b), GROUPING SETS ((a, FOO(b)), a)",
+   "sql": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY t.a, b GROUPING SETS ((t.a, b), t.a)",
+   "generated": "SELECT a, b, SUM(c) FROM tabl AS t GROUP BY t.a, b GROUPING SETS ((t.a, b), t.a)",
    "dump": [
     {
      "c": "sqlglot.expressions.query.Select"
@@ -6011,9 +5680,9 @@
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
       "line": 1,
-      "col": 45,
-      "start": 44,
-      "end": 44
+      "col": 47,
+      "start": 46,
+      "end": 46
      }
     },
     {
@@ -6027,46 +5696,50 @@
      "v": false
     },
     {
-     "i": 23,
-     "k": "expressions",
-     "a": true,
-     "c": "sqlglot.expressions.core.Anonymous",
+     "i": 24,
+     "k": "table",
+     "c": "sqlglot.expressions.core.Identifier",
      "m": {
       "line": 1,
-      "col": 50,
-      "start": 47,
-      "end": 49
+      "col": 45,
+      "start": 44,
+      "end": 44
      }
     },
     {
      "i": 28,
      "k": "this",
-     "v": "FOO"
+     "v": "t"
     },
     {
      "i": 28,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 23,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column"
     },
     {
-     "i": 30,
+     "i": 31,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
       "line": 1,
-      "col": 52,
-      "start": 51,
-      "end": 51
+      "col": 50,
+      "start": 49,
+      "end": 49
      }
     },
     {
-     "i": 31,
+     "i": 32,
      "k": "this",
      "v": "b"
     },
     {
-     "i": 31,
+     "i": 32,
      "k": "quoted",
      "v": false
     },
@@ -6077,35 +5750,83 @@
      "c": "sqlglot.expressions.query.GroupingSets"
     },
     {
-     "i": 34,
+     "i": 35,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.query.Tuple"
     },
     {
-     "i": 35,
+     "i": 36,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column"
     },
     {
-     "i": 36,
+     "i": 37,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
       "line": 1,
-      "col": 72,
-      "start": 71,
-      "end": 71
+      "col": 70,
+      "start": 69,
+      "end": 69
      }
     },
     {
-     "i": 37,
+     "i": 38,
      "k": "this",
      "v": "a"
     },
     {
+     "i": 38,
+     "k": "quoted",
+     "v": false
+    },
+    {
      "i": 37,
+     "k": "table",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 68,
+      "start": 67,
+      "end": 67
+     }
+    },
+    {
+     "i": 41,
+     "k": "this",
+     "v": "t"
+    },
+    {
+     "i": 41,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 36,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 44,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 73,
+      "start": 72,
+      "end": 72
+     }
+    },
+    {
+     "i": 45,
+     "k": "this",
+     "v": "b"
+    },
+    {
+     "i": 45,
      "k": "quoted",
      "v": false
     },
@@ -6113,27 +5834,10 @@
      "i": 35,
      "k": "expressions",
      "a": true,
-     "c": "sqlglot.expressions.core.Anonymous",
-     "m": {
-      "line": 1,
-      "col": 77,
-      "start": 74,
-      "end": 76
-     }
-    },
-    {
-     "i": 40,
-     "k": "this",
-     "v": "FOO"
-    },
-    {
-     "i": 40,
-     "k": "expressions",
-     "a": true,
      "c": "sqlglot.expressions.core.Column"
     },
     {
-     "i": 42,
+     "i": 48,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
@@ -6144,39 +5848,402 @@
      }
     },
     {
-     "i": 43,
+     "i": 49,
      "k": "this",
-     "v": "b"
+     "v": "a"
     },
     {
-     "i": 43,
+     "i": 49,
      "k": "quoted",
      "v": false
     },
     {
-     "i": 34,
+     "i": 48,
+     "k": "table",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 77,
+      "start": 76,
+      "end": 76
+     }
+    },
+    {
+     "i": 52,
+     "k": "this",
+     "v": "t"
+    },
+    {
+     "i": 52,
+     "k": "quoted",
+     "v": false
+    }
+   ]
+  },
+  {
+   "sql": "SELECT a, ABS(b) AS b, SUM(c) FROM tabl AS t GROUP BY a, ABS(b) GROUPING SETS ((a, ABS(b)), a)",
+   "generated": "SELECT a, ABS(b) AS b, SUM(c) FROM tabl AS t GROUP BY a, ABS(b) GROUPING SETS ((a, ABS(b)), a)",
+   "dump": [
+    {
+     "c": "sqlglot.expressions.query.Select"
+    },
+    {
+     "i": 0,
      "k": "expressions",
      "a": true,
      "c": "sqlglot.expressions.core.Column"
     },
     {
-     "i": 46,
+     "i": 1,
      "k": "this",
      "c": "sqlglot.expressions.core.Identifier",
      "m": {
       "line": 1,
-      "col": 84,
-      "start": 83,
-      "end": 83
+      "col": 8,
+      "start": 7,
+      "end": 7
      }
     },
     {
-     "i": 47,
+     "i": 2,
      "k": "this",
      "v": "a"
     },
     {
-     "i": 47,
+     "i": 2,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Alias"
+    },
+    {
+     "i": 5,
+     "k": "this",
+     "c": "sqlglot.expressions.math.Abs",
+     "m": {
+      "line": 1,
+      "col": 13,
+      "start": 10,
+      "end": 12
+     }
+    },
+    {
+     "i": 6,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 7,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 15,
+      "start": 14,
+      "end": 14
+     }
+    },
+    {
+     "i": 8,
+     "k": "this",
+     "v": "b"
+    },
+    {
+     "i": 8,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 5,
+     "k": "alias",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 21,
+      "start": 20,
+      "end": 20
+     }
+    },
+    {
+     "i": 11,
+     "k": "this",
+     "v": "b"
+    },
+    {
+     "i": 11,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.aggregate.Sum",
+     "m": {
+      "line": 1,
+      "col": 26,
+      "start": 23,
+      "end": 25
+     }
+    },
+    {
+     "i": 14,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 15,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 28,
+      "start": 27,
+      "end": 27
+     }
+    },
+    {
+     "i": 16,
+     "k": "this",
+     "v": "c"
+    },
+    {
+     "i": 16,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "from_",
+     "c": "sqlglot.expressions.query.From"
+    },
+    {
+     "i": 19,
+     "k": "this",
+     "c": "sqlglot.expressions.query.Table"
+    },
+    {
+     "i": 20,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 39,
+      "start": 35,
+      "end": 38
+     }
+    },
+    {
+     "i": 21,
+     "k": "this",
+     "v": "tabl"
+    },
+    {
+     "i": 21,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 20,
+     "k": "alias",
+     "c": "sqlglot.expressions.query.TableAlias"
+    },
+    {
+     "i": 24,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 44,
+      "start": 43,
+      "end": 43
+     }
+    },
+    {
+     "i": 25,
+     "k": "this",
+     "v": "t"
+    },
+    {
+     "i": 25,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 0,
+     "k": "group",
+     "c": "sqlglot.expressions.query.Group"
+    },
+    {
+     "i": 28,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 29,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 55,
+      "start": 54,
+      "end": 54
+     }
+    },
+    {
+     "i": 30,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 30,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 28,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.math.Abs",
+     "m": {
+      "line": 1,
+      "col": 60,
+      "start": 57,
+      "end": 59
+     }
+    },
+    {
+     "i": 33,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 34,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 62,
+      "start": 61,
+      "end": 61
+     }
+    },
+    {
+     "i": 35,
+     "k": "this",
+     "v": "b"
+    },
+    {
+     "i": 35,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 28,
+     "k": "grouping_sets",
+     "a": true,
+     "c": "sqlglot.expressions.query.GroupingSets"
+    },
+    {
+     "i": 38,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.query.Tuple"
+    },
+    {
+     "i": 39,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 40,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 81,
+      "start": 80,
+      "end": 80
+     }
+    },
+    {
+     "i": 41,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 41,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 39,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.math.Abs",
+     "m": {
+      "line": 1,
+      "col": 86,
+      "start": 83,
+      "end": 85
+     }
+    },
+    {
+     "i": 44,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 45,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 88,
+      "start": 87,
+      "end": 87
+     }
+    },
+    {
+     "i": 46,
+     "k": "this",
+     "v": "b"
+    },
+    {
+     "i": 46,
+     "k": "quoted",
+     "v": false
+    },
+    {
+     "i": 38,
+     "k": "expressions",
+     "a": true,
+     "c": "sqlglot.expressions.core.Column"
+    },
+    {
+     "i": 49,
+     "k": "this",
+     "c": "sqlglot.expressions.core.Identifier",
+     "m": {
+      "line": 1,
+      "col": 93,
+      "start": 92,
+      "end": 92
+     }
+    },
+    {
+     "i": 50,
+     "k": "this",
+     "v": "a"
+    },
+    {
+     "i": 50,
      "k": "quoted",
      "v": false
     }

@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "sqlite",
   "identity": [
     {
@@ -676,7 +676,6 @@
     {
       "sql": "SELECT MIN(a, b) FROM t",
       "read": {
-        "postgres": "SELECT LEAST(a, b) FROM t",
         "sqlite": "SELECT MIN(a, b) FROM t"
       },
       "write": {}
@@ -684,25 +683,108 @@
     {
       "sql": "SELECT MAX(a, b) FROM t",
       "read": {
-        "postgres": "SELECT GREATEST(a, b) FROM t",
         "sqlite": "SELECT MAX(a, b) FROM t"
       },
       "write": {}
     },
     {
-      "sql": "SELECT COALESCE(a, '') || COALESCE(b, '') FROM t",
+      "sql": "SELECT MAX(COALESCE(a, b), COALESCE(b, a)) FROM t",
+      "read": {
+        "postgres": "SELECT GREATEST(a, b) FROM t"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT MIN(COALESCE(a, b), COALESCE(b, a)) FROM t",
+      "read": {
+        "postgres": "SELECT LEAST(a, b) FROM t"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT MAX(COALESCE(a, b, c), COALESCE(b, c, a), COALESCE(c, a, b)) FROM t",
+      "read": {
+        "duckdb": "SELECT GREATEST(a, b, c) FROM t"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT MIN(COALESCE(a, b, c), COALESCE(b, c, a), COALESCE(c, a, b)) FROM t",
+      "read": {
+        "postgres": "SELECT LEAST(a, b, c) FROM t"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT MAX(COALESCE(NULL, 1), COALESCE(1, NULL))",
+      "read": {
+        "postgres": "SELECT GREATEST(NULL, 1)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT MIN(COALESCE(3, NULL, 1), COALESCE(NULL, 1, 3), COALESCE(1, 3, NULL))",
+      "read": {
+        "postgres": "SELECT LEAST(3, NULL, 1)"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT MAX(a, b) FROM t",
+      "read": {
+        "mysql": "SELECT GREATEST(a, b) FROM t"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT MIN(a, b) FROM t",
+      "read": {
+        "mysql": "SELECT LEAST(a, b) FROM t"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT CONCAT(a, b) FROM t",
       "read": {
         "duckdb": "SELECT CONCAT(a, b) FROM t",
         "postgres": "SELECT CONCAT(a, b) FROM t",
         "tsql": "SELECT CONCAT(a, b) FROM t"
       },
-      "write": {}
+      "write": {
+        "duckdb": "SELECT CONCAT(a, b) FROM t",
+        "mysql": "SELECT CONCAT(COALESCE(a, ''), COALESCE(b, '')) FROM t",
+        "postgres": "SELECT CONCAT(a, b) FROM t",
+        "snowflake": "SELECT CONCAT(COALESCE(a, ''), COALESCE(b, '')) FROM t",
+        "sqlite": "SELECT CONCAT(a, b) FROM t"
+      }
+    },
+    {
+      "sql": "SELECT CONCAT_WS(',', a, b) FROM t",
+      "read": {
+        "duckdb": "SELECT CONCAT_WS(',', a, b) FROM t",
+        "mysql": "SELECT CONCAT_WS(',', a, b) FROM t",
+        "postgres": "SELECT CONCAT_WS(',', a, b) FROM t"
+      },
+      "write": {
+        "duckdb": "SELECT CONCAT_WS(',', a, b) FROM t",
+        "mysql": "SELECT CONCAT_WS(',', a, b) FROM t",
+        "postgres": "SELECT CONCAT_WS(',', a, b) FROM t",
+        "snowflake": "SELECT CONCAT_WS(',', COALESCE(a, ''), COALESCE(b, '')) FROM t",
+        "sqlite": "SELECT CONCAT_WS(',', a, b) FROM t"
+      }
     },
     {
       "sql": "SELECT a || b FROM t",
       "read": {
         "mysql": "SELECT CONCAT(a, b) FROM t",
         "snowflake": "SELECT CONCAT(a, b) FROM t"
+      },
+      "write": {}
+    },
+    {
+      "sql": "SELECT CASE WHEN ',' IS NULL OR a IS NULL OR b IS NULL THEN NULL ELSE CONCAT_WS(',', a, b) END FROM t",
+      "read": {
+        "snowflake": "SELECT CONCAT_WS(',', a, b) FROM t"
       },
       "write": {}
     },
@@ -873,6 +955,21 @@
       }
     },
     {
+      "sql": "DATEDIFF(a, b, 'nanosecond')",
+      "read": {},
+      "write": {
+        "sqlite": "CAST((JULIANDAY(a) - JULIANDAY(b)) * 86400000000000.0 AS INTEGER)"
+      }
+    },
+    {
+      "sql": "CAST((JULIANDAY(a) - JULIANDAY(b)) * 86400000000000.0 AS INTEGER)",
+      "read": {
+        "snowflake": "DATEDIFF(NANOSECOND, b, a)",
+        "tsql": "DATEDIFF_BIG(NANOSECOND, b, a)"
+      },
+      "write": {}
+    },
+    {
       "sql": "SELECT 0XCC",
       "read": {},
       "write": {
@@ -932,7 +1029,7 @@
   ],
   "stats": {
     "identity_count": 124,
-    "transpile_count": 37,
+    "transpile_count": 49,
     "skipped_dynamic": 1
   }
 }

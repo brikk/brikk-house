@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "redshift",
   "identity": [
     {
@@ -334,6 +334,16 @@
       "pretty": false
     },
     {
+      "sql": "WITH qualify AS (SELECT 1 AS x) SELECT * FROM qualify",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT qualify FROM t",
+      "expected": null,
+      "pretty": false
+    },
+    {
       "sql": "INSERT INTO t (a) VALUES (1), (2), (3)",
       "expected": null,
       "pretty": false
@@ -585,7 +595,7 @@
     },
     {
       "sql": "DATE_PART(year, \"somecol\")",
-      "expected": "EXTRACT(year FROM \"somecol\")",
+      "expected": "EXTRACT(YEAR FROM \"somecol\")",
       "pretty": false
     },
     {
@@ -861,18 +871,18 @@
       "sql": "SELECT DATE_PART(minute, timestamp '2023-01-04 04:05:06.789')",
       "read": {},
       "write": {
-        "postgres": "SELECT EXTRACT(minute FROM CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))",
-        "redshift": "SELECT EXTRACT(minute FROM CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))",
-        "snowflake": "SELECT DATE_PART(minute, CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))"
+        "postgres": "SELECT EXTRACT(MINUTE FROM CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))",
+        "redshift": "SELECT EXTRACT(MINUTE FROM CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))",
+        "snowflake": "SELECT DATE_PART(MINUTE, CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))"
       }
     },
     {
       "sql": "SELECT DATE_PART(month, date '20220502')",
       "read": {},
       "write": {
-        "postgres": "SELECT EXTRACT(month FROM CAST('20220502' AS DATE))",
-        "redshift": "SELECT EXTRACT(month FROM CAST('20220502' AS DATE))",
-        "snowflake": "SELECT DATE_PART(month, CAST('20220502' AS DATE))"
+        "postgres": "SELECT EXTRACT(MONTH FROM CAST('20220502' AS DATE))",
+        "redshift": "SELECT EXTRACT(MONTH FROM CAST('20220502' AS DATE))",
+        "snowflake": "SELECT DATE_PART(MONTH, CAST('20220502' AS DATE))"
       }
     },
     {
@@ -1164,7 +1174,7 @@
     }
   ],
   "stats": {
-    "identity_count": 132,
+    "identity_count": 134,
     "transpile_count": 52,
     "skipped_dynamic": 2
   }

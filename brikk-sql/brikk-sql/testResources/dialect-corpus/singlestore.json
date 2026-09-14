@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "singlestore",
   "identity": [
     {
@@ -534,6 +534,13 @@
     }
   ],
   "transpile": [
+    {
+      "sql": "SELECT PERCENTILE_CONT(1) WITHIN GROUP (ORDER BY x) FROM t ORDER BY x NULLS LAST",
+      "read": {
+        "postgres": "SELECT PERCENTILE_CONT(1) WITHIN GROUP (ORDER BY x) FROM t ORDER BY x"
+      },
+      "write": {}
+    },
     {
       "sql": "SELECT 'text'",
       "read": {
@@ -1438,7 +1445,7 @@
   ],
   "stats": {
     "identity_count": 106,
-    "transpile_count": 112,
-    "skipped_dynamic": 0
+    "transpile_count": 113,
+    "skipped_dynamic": 2
   }
 }

@@ -12,7 +12,7 @@ import kotlin.test.assertSame
 class BigqueryScalarSemanticsTest {
     @Test
     fun safeDivideMatchesPinnedTargets() {
-        // SQLGlot v30.17.0-93-gdcc36544a, tests/dialects/test_bigquery.py.
+        // SQLGlot v30.18.0-43-g3ca82489, tests/dialects/test_bigquery.py.
         for ((source, targets) in listOf(
             "SAFE_DIVIDE(x, y)" to mapOf(
                 "bigquery" to "SAFE_DIVIDE(x, y)",

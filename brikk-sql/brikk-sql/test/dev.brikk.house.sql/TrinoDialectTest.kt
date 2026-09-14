@@ -8,6 +8,12 @@ import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.MatchPredicate
 import dev.brikk.house.sql.ast.UniquePredicate
+import dev.brikk.house.sql.ast.JSONExtract
+import dev.brikk.house.sql.ast.JSONPath
+import dev.brikk.house.sql.ast.JSONPathKey
+import dev.brikk.house.sql.ast.JSONPathRoot
+import dev.brikk.house.sql.ast.args
+import dev.brikk.house.sql.ast.column
 import dev.brikk.house.sql.parser.parseOne
 import dev.brikk.house.sql.optimizer.annotateTypes
 import kotlin.test.Test
@@ -65,6 +71,28 @@ class TrinoDialectTest {
         assertEquals(
             "JSON_QUERY(content, 'strict $.HY.*' WITH CONDITIONAL ARRAY WRAPPER)",
             roundTrip("JSON_QUERY(content, 'strict $.HY.*' WITH CONDITIONAL ARRAY WRAPPED)"),
+        )
+    }
+
+    @Test
+    fun jsonQueryAddsLaxModeToStructuredPathsFromOtherDialects() {
+        val expression = JSONExtract(
+            args(
+                "this" to column("content"),
+                "expression" to JSONPath(
+                    args(
+                        "expressions" to listOf(
+                            JSONPathRoot(),
+                            JSONPathKey(args("this" to "a")),
+                        )
+                    )
+                ),
+                "json_query" to true,
+            )
+        )
+        assertEquals(
+            "JSON_QUERY(content, 'lax $.a')",
+            expression.sql("trino"),
         )
     }
 

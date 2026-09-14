@@ -1,5 +1,5 @@
 {
-  "sqlglot_version": "v30.17.0-93-gdcc36544a",
+  "sqlglot_version": "v30.18.0-43-g3ca82489",
   "dialect": "postgres",
   "identity": [
     {
@@ -84,6 +84,11 @@
     },
     {
       "sql": "SELECT DATE_TRUNC('QUARTER', CAST('2025-04-26' AS DATE))",
+      "expected": null,
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_TRUNC('DAY', x, 'America/New_York')",
       "expected": null,
       "pretty": false
     },
@@ -576,6 +581,11 @@
     {
       "sql": "SELECT DATE_PART('isodow'::varchar(6), current_date)",
       "expected": "SELECT EXTRACT(CAST('isodow' AS VARCHAR(6)) FROM CURRENT_DATE)",
+      "pretty": false
+    },
+    {
+      "sql": "SELECT DATE_PART('isoyear', ts)",
+      "expected": "SELECT EXTRACT(ISOYEAR FROM ts)",
       "pretty": false
     },
     {
@@ -2416,18 +2426,18 @@
       "sql": "SELECT DATE_PART('minute', timestamp '2023-01-04 04:05:06.789')",
       "read": {},
       "write": {
-        "postgres": "SELECT EXTRACT(minute FROM CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))",
-        "redshift": "SELECT EXTRACT(minute FROM CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))",
-        "snowflake": "SELECT DATE_PART(minute, CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))"
+        "postgres": "SELECT EXTRACT(MINUTE FROM CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))",
+        "redshift": "SELECT EXTRACT(MINUTE FROM CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))",
+        "snowflake": "SELECT DATE_PART(MINUTE, CAST('2023-01-04 04:05:06.789' AS TIMESTAMP))"
       }
     },
     {
       "sql": "SELECT DATE_PART('month', date '20220502')",
       "read": {},
       "write": {
-        "postgres": "SELECT EXTRACT(month FROM CAST('20220502' AS DATE))",
-        "redshift": "SELECT EXTRACT(month FROM CAST('20220502' AS DATE))",
-        "snowflake": "SELECT DATE_PART(month, CAST('20220502' AS DATE))"
+        "postgres": "SELECT EXTRACT(MONTH FROM CAST('20220502' AS DATE))",
+        "redshift": "SELECT EXTRACT(MONTH FROM CAST('20220502' AS DATE))",
+        "snowflake": "SELECT DATE_PART(MONTH, CAST('20220502' AS DATE))"
       }
     },
     {
@@ -3092,7 +3102,7 @@
     }
   ],
   "stats": {
-    "identity_count": 426,
+    "identity_count": 428,
     "transpile_count": 99,
     "skipped_dynamic": 17
   }

@@ -182,9 +182,9 @@ class TranspileCorpusGateTest {
                 assertNotEquals(pair[0].second.substringBeforeLast(':'), pair[1].second.substringBeforeLast(':'))
             }
         }
-        assertEquals(3059, allIds.size)
-        assertEquals(3059, allIds.toSet().size)
-        assertEquals(3040, allLabels.toSet().size)
+        assertEquals(3064, allIds.size)
+        assertEquals(3064, allIds.toSet().size)
+        assertEquals(3045, allLabels.toSet().size)
         assertEquals(19, allLabels.groupingBy { it }.eachCount().count { it.value > 1 })
     }
 }
