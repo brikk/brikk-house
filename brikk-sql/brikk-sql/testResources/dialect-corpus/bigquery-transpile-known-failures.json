@@ -1,27 +1,6 @@
 {
     "cases": [
         {
-            "id": "assertion:v1:sha256:75d2cd25a843f8f6b9514c8bffb07c0d6d621ccf8562e4b7d6237da54c6e7427:1",
-            "case": "read|spark|WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(arr)) - 1)) AS pos CROSS JOIN UNNEST(arr) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(arr) - 1) AND pos_2 = (ARRAY_LENGTH(arr) - 1))",
-            "reason": "expected `WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT IF(pos = pos_2, col, NULL) AS col FROM cte CROSS JOIN UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(arr)) - 1)) AS pos CROSS JOIN UNNEST(arr) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(arr) - 1) AND pos_2 = (ARRAY_LENGTH(arr) - 1))` actual `WITH cte AS (SELECT [1, 2, 3] AS arr) SELECT EXPLODE(arr) FROM cte`",
-            "signature": "sql-mismatch:v1:sha256:cf7d0faa140036de168b1babaf14016b0f30a12bc492524e0a1fdae242da07a0",
-            "issue": "BQ-20"
-        },
-        {
-            "id": "assertion:v1:sha256:c69797c7bbcb36ce08170c53cf0b85ae5027aadc5eff13a4fa02dceae2181f34:1",
-            "case": "read|spark|SELECT IF(pos = pos_2, col, NULL) AS col FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))",
-            "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))` actual `SELECT EXPLODE_OUTER([])`",
-            "signature": "sql-mismatch:v1:sha256:44e321b5f670c8f7b2bb29754100ca4d6e3cbd217150ba71c1b0d4e588e4bc76",
-            "issue": "BQ-20"
-        },
-        {
-            "id": "assertion:v1:sha256:18a7a4e39317c69a055c1e682330c53562ee040b0ade22313f610dce2e8cd1b9:1",
-            "case": "read|spark|SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))",
-            "reason": "expected `SELECT IF(pos = pos_2, col, NULL) AS col, IF(pos = pos_2, pos_2, NULL) AS pos_2 FROM UNNEST(GENERATE_ARRAY(0, GREATEST(ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], []))) - 1)) AS pos CROSS JOIN UNNEST(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) AS col WITH OFFSET AS pos_2 WHERE pos = pos_2 OR (pos > (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1) AND pos_2 = (ARRAY_LENGTH(IF(ARRAY_LENGTH(COALESCE([], [])) = 0, [[][SAFE_ORDINAL(0)]], [])) - 1))` actual `SELECT POSEXPLODE_OUTER([])`",
-            "signature": "sql-mismatch:v1:sha256:4c3e229650efefc5b8e654a16078e020b617e6ce7bc4ceff984ca62e7b190bc1",
-            "issue": "BQ-20"
-        },
-        {
             "id": "assertion:v1:sha256:0aa580c8b32815d8f0dca988768ce93ce60ce9364e381270cb3307c386fbbf4e:1",
             "case": "read||SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL",
             "reason": "expected `SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL` actual `SELECT `u`.`user_email` AS `user_email`, `_q_0`.`d`.`user_id` AS `user_id`, `_q_1`.`account_id` AS `account_id` FROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `_q_0`, UNNEST(`_q_0`.`d`.`account_ids`) AS `_q_1` WHERE NOT `_q_1`.`account_id` IS NULL`",

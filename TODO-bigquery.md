@@ -14,7 +14,7 @@
 
 ---
 
-**19 actionable failing transpile assertions across 4 source-to-target routes.**
+**1 actionable failing transpile assertion across 1 source-to-target route.**
 Twelve additional signed assertions are protected correctness divergences, documented
 in `docs/brikk-extensions.md` sections 28, 30, and 32. They are not open BQ issues. BQ-36
 and BQ-37 are execution limitations with no current parity-ledger entries.
@@ -23,29 +23,24 @@ and BQ-37 are execution limitations with no current parity-ledger entries.
 
 No signed source-direction parity failures remain.
 
-## BigQuery as target (19)
+## BigQuery as target (1)
 
 The `bigquery -> bigquery` cases are counted only in the source table above.
 
 | Route | Items |
 |---|---:|
-| spark -> bigquery | 8 |
-| postgres -> bigquery | 6 |
-| duckdb -> bigquery | 4 |
 | base -> bigquery | 1 |
 
 ## Open issues
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-18, and BQ-22 through BQ-35. Completed ASTRA history
+BQ-18, and BQ-20 through BQ-35. Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
 | ID | Issue | Assertions |
 |---|---|---:|
 | BQ-19 | Base-to-BigQuery nested UNNEST alias cleanup and pretty output | 1 |
-| BQ-20 | Projection EXPLODE/UNNEST to BigQuery relations, including outer/zipped inputs | 12 |
-| BQ-21 | PostgreSQL projected GENERATE_SERIES to BigQuery | 6 |
 | BQ-36 | DuckDB ARRAY_TO_STRING row-dependent delimiters; currently diagnosed | execution |
 | BQ-37 | DuckDB offset-preserving STRING(timestamp, zone) formatting; currently diagnosed | execution |
 | BQ-38 | Schema-driven TIMESTAMP/DATETIME overload resolution for unknown inputs; currently diagnosed | execution |

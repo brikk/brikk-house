@@ -814,7 +814,13 @@ fun movePartitionedByToSchemaColumns(expression: Expression): Expression {
 /** sqlglot: transforms.unnest_generate_series. */
 fun unnestGenerateSeries(expression: Expression): Expression {
     if (expression !is Table || expression.thisArg !is GenerateSeries) return expression
-    return Unnest(args("expressions" to listOf(expression.thisArg)))
+    val unnest = Unnest(args("expressions" to listOf(expression.thisArg)))
+    val alias = expression.alias
+    return if (alias.isNotEmpty()) {
+        aliasExpression(unnest, "_u", tableColumns = listOf(alias), copy = false)
+    } else {
+        unnest
+    }
 }
 
 /** sqlglot: transforms.explode_projection_to_unnest. */
@@ -822,6 +828,9 @@ fun explodeProjectionToUnnest(
     expression: Expression,
     indexOffset: Int = 0,
     unnestMap: kotlin.Boolean = false,
+    preserveEmptyZip: kotlin.Boolean = true,
+    preserveOuterPosition: kotlin.Boolean = true,
+    parenthesizeArrayBounds: kotlin.Boolean = false,
 ): Expression {
     if (expression !is Select) return expression
 
@@ -832,6 +841,7 @@ fun explodeProjectionToUnnest(
     val takenSourceNames = Scope(expression).references.map { it.first }.toMutableSet()
     val zip = expression.selects.filterIsInstance<Expression>()
         .mapNotNull { it.find<Explode>() }.count { !(it.thisArg as Expression).isType(DType.MAP) } > 1
+    val safeZip = zip && preserveEmptyZip
     fun newName(names: MutableSet<String>, base: String): String =
         findNewName(names, base).also { names.add(it) }
 
@@ -946,25 +956,28 @@ fun explodeProjectionToUnnest(
         )) else null
         if (emptyOuter != null) {
             // sqlglot: replace empty/null outer inputs with one typed null element.
-            val first = Bracket(args("this" to explodeArg.copy(), "expressions" to listOf(Literal.number("1")),
+            val first = Bracket(args("this" to explodeArg.copy(), "expressions" to listOf(Literal.number(
+                if (preserveOuterPosition) "1" else "0"
+            )),
                 "offset" to 1, "safe" to true))
             explodeArg = If(args("this" to emptyOuter.copy(), "true" to ArrayNode(args("expressions" to listOf(first))),
                 "false" to explodeArg))
         }
+        val safeOuter = emptyOuter != null && preserveOuterPosition
         if (explodeArg is Column) takenSelectNames.add(explodeArg.outputName)
 
         val unnestSourceAlias = newName(takenSourceNames, "_u")
         if (explodeAlias == null || explodeAlias.name.isEmpty()) {
-            explodeAlias = toIdentifier(if (emptyOuter != null) "col" else newName(takenSelectNames, "col"))
-            if (isPosexplode) posAlias = toIdentifier(if (emptyOuter != null) "pos" else newName(takenSelectNames, "pos"))
+            explodeAlias = toIdentifier(if (safeOuter) "col" else newName(takenSelectNames, "col"))
+            if (isPosexplode) posAlias = toIdentifier(if (safeOuter) "pos" else newName(takenSelectNames, "pos"))
         }
         if (posAlias == null || posAlias.name.isEmpty()) {
-            posAlias = toIdentifier(if (emptyOuter != null) "pos" else newName(takenSelectNames, "pos"))
+            posAlias = toIdentifier(if (safeOuter) "pos" else newName(takenSelectNames, "pos"))
         }
         val finalExplodeAlias = requireNotNull(explodeAlias)
         val finalPosAlias = requireNotNull(posAlias)
-        val innerExplodeAlias = if (emptyOuter != null) toIdentifier(newName(takenSelectNames, "_value"))!! else finalExplodeAlias
-        val innerPosAlias = if (emptyOuter != null) toIdentifier(newName(takenSelectNames, "_ordinal"))!! else finalPosAlias
+        val innerExplodeAlias = if (safeOuter) toIdentifier(newName(takenSelectNames, "_value"))!! else finalExplodeAlias
+        val innerPosAlias = if (safeOuter) toIdentifier(newName(takenSelectNames, "_ordinal"))!! else finalPosAlias
         val explodedName = innerExplodeAlias.name
         val positionName = innerPosAlias.name
         alias.set("alias", finalExplodeAlias)
@@ -991,7 +1004,7 @@ fun explodeProjectionToUnnest(
                     args(
                         "this" to If(
                             args(
-                                "this" to if (emptyOuter != null) And(args(
+                                "this" to if (safeOuter) And(args(
                                     "this" to positionMatches.copy(), "expression" to Not(args("this" to emptyOuter.copy())),
                                 )) else EQ(
                                     args(
@@ -999,7 +1012,7 @@ fun explodeProjectionToUnnest(
                                         "expression" to qualified(positionName, unnestSourceAlias),
                                     )
                                 ),
-                                "true" to if (emptyOuter != null) Sub(args(
+                                "true" to if (safeOuter) Sub(args(
                                     "this" to qualified(positionName, unnestSourceAlias),
                                     "expression" to Literal.number(indexOffset.toString()),
                                 )) else qualified(positionName, unnestSourceAlias),
@@ -1010,7 +1023,7 @@ fun explodeProjectionToUnnest(
                 )
             // Spark exposes position before value, with null position for the
             // synthetic outer row. Keep non-outer upstream behavior separate.
-            if (emptyOuter != null) selections.add(selections.lastIndex, positionSelect)
+            if (safeOuter) selections.add(selections.lastIndex, positionSelect)
             else selections.add(positionSelect)
         }
 
@@ -1023,7 +1036,7 @@ fun explodeProjectionToUnnest(
         }
 
         var size: Expression = ArraySize(args("this" to explodeArg.copy()))
-        arrays.add(if (zip) Coalesce(args("this" to size.copy(), "expressions" to listOf(Literal.number("0")))) else size)
+        arrays.add(if (safeZip) Coalesce(args("this" to size.copy(), "expressions" to listOf(Literal.number("0")))) else size)
         val unnest = aliasExpression(
             Unnest(
                 args(
@@ -1037,7 +1050,7 @@ fun explodeProjectionToUnnest(
         )
         // brikk extension (ASTRA-002-ZIP): an empty input contributes nulls to
         // the longest input's positions instead of annihilating the zipped row.
-        expression.append("joins", if (zip) Join(args("this" to unnest, "side" to "LEFT",
+        expression.append("joins", if (safeZip) Join(args("this" to unnest, "side" to "LEFT",
             "on" to dev.brikk.house.sql.ast.Boolean(args("this" to true))))
             else Join(args("this" to unnest, "kind" to "CROSS")))
 
@@ -1047,7 +1060,9 @@ fun explodeProjectionToUnnest(
         val lastPosition = EQ(
             args(
                 "this" to qualified(positionName, unnestSourceAlias),
-                "expression" to size.copy(),
+                "expression" to if (parenthesizeArrayBounds) {
+                    dev.brikk.house.sql.ast.Paren(args("this" to size.copy()))
+                } else size.copy(),
             )
         )
         var condition: Expression = Or(
@@ -1065,7 +1080,9 @@ fun explodeProjectionToUnnest(
                                 "this" to GT(
                                     args(
                                         "this" to qualified(seriesAlias, seriesSourceAlias),
-                                        "expression" to size.copy(),
+                                        "expression" to if (parenthesizeArrayBounds) {
+                                            dev.brikk.house.sql.ast.Paren(args("this" to size.copy()))
+                                        } else size.copy(),
                                     )
                                 ),
                                 "expression" to lastPosition,
@@ -1075,7 +1092,7 @@ fun explodeProjectionToUnnest(
                 ),
             )
         )
-        if (zip) condition = Or(args("this" to condition,
+        if (safeZip) condition = Or(args("this" to condition,
             "expression" to Is(args("this" to qualified(positionName, unnestSourceAlias), "expression" to Null()))))
         val where = expression.args["where"] as? Where
         if (where == null) {
@@ -1098,7 +1115,7 @@ fun explodeProjectionToUnnest(
             end = Sub(args("this" to end, "expression" to Literal.number((1 - indexOffset).toString())))
         }
         seriesExpression.set("end", end)
-        if (zip) {
+        if (safeZip) {
             // SEQUENCE(1, 0) counts down in Presto/Trino. All-empty inputs need
             // an empty sequence, not two synthetic rows.
             seriesExpression.replace(If(args("this" to EQ(args("this" to maxSize, "expression" to Literal.number("0"))),

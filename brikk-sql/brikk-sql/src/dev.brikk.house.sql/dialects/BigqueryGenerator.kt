@@ -9,6 +9,8 @@ import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.generator.eliminateDistinctOn
 import dev.brikk.house.sql.generator.unqualifyUnnest
 import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
+import dev.brikk.house.sql.generator.explodeProjectionToUnnest
+import dev.brikk.house.sql.generator.unnestGenerateSeries
 import dev.brikk.house.sql.optimizer.annotateTypes
 import dev.brikk.house.sql.optimizer.findAllInScope
 import dev.brikk.house.sql.optimizer.findNewName
@@ -583,6 +585,28 @@ open class BigqueryGenerator(
         return func("INSTR", expression.thisArg, expression.args["substr"], position, occurrence)
     }
 
+    // sqlglot: generators.bigquery._unnest_explode_generate_series
+    private fun unnestExplodingGenerateSeries(expression: Expression): Expression {
+        val select = expression as? Select ?: return expression
+        for (projection in select.selects.filterIsInstance<Expression>().toList()) {
+            val series = projection.unalias() as? ExplodingGenerateSeries ?: continue
+            val columnName = projection.outputName.ifEmpty { "_gen_series_value" }
+            projection.replace(column(columnName))
+            val table = Table(
+                args(
+                    "this" to series,
+                    "alias" to TableAlias(args("this" to toIdentifier(columnName))),
+                )
+            )
+            if (select.args["from_"] != null) {
+                select.append("joins", Join(args("this" to table, "kind" to "CROSS")))
+            } else {
+                select.set("from_", From(args("this" to table)))
+            }
+        }
+        return select
+    }
+
     // sqlglot: BigQueryGenerator.attimezone_sql
     override fun attimezoneSql(expression: AtTimeZone): String {
         val parent = expression.parent
@@ -727,6 +751,9 @@ open class BigqueryGenerator(
             reg(DatetimeAdd::class) { e -> bg().dateAddIntervalSql("DATETIME", "ADD", e) }
             reg(DatetimeSub::class) { e -> bg().dateAddIntervalSql("DATETIME", "SUB", e) }
             reg(DateFromUnixDate::class) { e -> bg().renameFuncSql("DATE_FROM_UNIX_DATE", e) }
+            reg(GenerateSeries::class) { e ->
+                func("GENERATE_ARRAY", e.args["start"], e.args["end"], e.args["step"])
+            }
             reg(FromTimeZone::class) { e ->
                 func(
                     "DATETIME",
@@ -740,6 +767,9 @@ open class BigqueryGenerator(
             reg(SHA2::class) { e -> bg().shaSql(e) }
             reg(SHA2Digest::class) { e -> bg().shaSql(e) }
             reg(HexString::class) { e -> bg().hexstringSql(e as HexString, binaryFunctionRepr = "FROM_HEX") }
+            reg(If::class) { e ->
+                func("IF", e.thisArg, e.args["true"], e.args["false"] ?: Null())
+            }
             reg(IntDiv::class) { e -> bg().renameFuncSql("DIV", e) }
             reg(Int64::class) { e -> bg().renameFuncSql("INT64", e) }
             reg(JSONBool::class) { e -> bg().renameFuncSql("BOOL", e) }
@@ -782,7 +812,14 @@ open class BigqueryGenerator(
             // Parser aliases are column-only; only qualifier-added relation aliases
             // are removed. Legitimate value/struct qualifications stay intact.
             reg(Select::class) { e ->
-                var s = eliminateDistinctOn(unqualifyUnnest(bg().preserveUnnestRelationAliases(e)))
+                var s = bg().unnestExplodingGenerateSeries(e)
+                s = explodeProjectionToUnnest(
+                    s,
+                    preserveEmptyZip = false,
+                    preserveOuterPosition = false,
+                    parenthesizeArrayBounds = true,
+                )
+                s = eliminateDistinctOn(unqualifyUnnest(bg().preserveUnnestRelationAliases(s)))
                 // sqlglot bac1a897b: _alias_ordered_group works around BigQuery's grouped
                 // expression + ordered alias bug by grouping on the projection alias.
                 val select = s as Select
@@ -806,6 +843,10 @@ open class BigqueryGenerator(
             reg(SHA1Digest::class) { e -> bg().renameFuncSql("SHA1", e) }
             reg(StabilityProperty::class) { e ->
                 if (e.name == "IMMUTABLE") "DETERMINISTIC" else "NOT DETERMINISTIC"
+            }
+            reg(Table::class) { e ->
+                val transformed = unnestGenerateSeries(e)
+                if (transformed is Table) tableSql(transformed) else sql(transformed, comment = false)
             }
             reg(dev.brikk.house.sql.ast.String::class) { e -> func("STRING", e.thisArg, e.args["zone"]) }
             reg(StrPosition::class) { e -> bg().strpositionSql(e as StrPosition) }
