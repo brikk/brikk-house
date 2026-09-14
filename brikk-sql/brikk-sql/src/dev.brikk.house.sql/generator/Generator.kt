@@ -5401,6 +5401,10 @@ open class Generator(
     open fun lowerhexSql(expression: LowerHex): String =
         func("LOWER", func("HEX", sql(expression, "this")))
 
+    // sqlglot: Generator.space_sql
+    open fun spaceSql(expression: Space): String =
+        sql(Repeat(args("this" to Literal.string(" "), "times" to expression.thisArg)))
+
     // sqlglot: Generator.lastday_sql
     open fun lastdaySql(expression: LastDay): String {
         if (lastDaySupportsDatePart) return functionFallbackSql(expression)

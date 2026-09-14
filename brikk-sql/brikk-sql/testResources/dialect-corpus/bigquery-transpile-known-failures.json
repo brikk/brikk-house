@@ -1,60 +1,11 @@
 {
     "cases": [
         {
-            "id": "assertion:v1:sha256:4c11bf5cf298569353e18be9602d5f51488eff55c404d71b71089f3d47ea2556:1",
-            "case": "read|hive|SELECT REPEAT(' ', 2)",
-            "reason": "expected `SELECT REPEAT(' ', 2)` actual `SELECT SPACE(2)`",
-            "signature": "sql-mismatch:v1:sha256:4a2ede3057de019c74c82582d9024fa0e9d9734bc917d29834b16f97202412d2",
-            "issue": "BQ-31"
-        },
-        {
-            "id": "assertion:v1:sha256:a51642dab7c54200d962cd06def639a25c49cfd10eca54172a4164d4d21d8f69:1",
-            "case": "read|spark|SELECT REPEAT(' ', 2)",
-            "reason": "expected `SELECT REPEAT(' ', 2)` actual `SELECT SPACE(2)`",
-            "signature": "sql-mismatch:v1:sha256:4a2ede3057de019c74c82582d9024fa0e9d9734bc917d29834b16f97202412d2",
-            "issue": "BQ-31"
-        },
-        {
             "id": "assertion:v1:sha256:7c567c1222b9f9f65f90dcd4361e7b5a97cbe553ca26de8862d92a3277d11b18:1",
             "case": "write|presto|SELECT purchases, LAST_VALUE(item) OVER item_window AS most_popular FROM Produce WINDOW item_window AS (PARTITION BY purchases ORDER BY purchases ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)",
             "reason": "expected `SELECT purchases, LAST_VALUE(item) OVER (PARTITION BY purchases ORDER BY purchases NULLS FIRST ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS most_popular FROM Produce` actual `SELECT purchases, LAST_VALUE(item) OVER item_window AS most_popular FROM Produce WINDOW item_window AS (PARTITION BY purchases ORDER BY purchases NULLS FIRST ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)`",
             "signature": "sql-mismatch:v1:sha256:c8a93b49710acf280b1f1d3e16333b74d44c780f730957801418adfe097f14cb",
             "issue": "BQ-33"
-        },
-        {
-            "id": "assertion:v1:sha256:5fdb816ff186bcdb4c0a1097b209456fef53b548c7460407bd8699aead95278e:1",
-            "case": "write|bigquery|EDIT_DISTANCE(col1, col2, max_distance => 3)",
-            "reason": "expected `EDIT_DISTANCE(col1, col2, max_distance => 3)` actual `EDIT_DISTANCE(col1, col2, 3)`",
-            "signature": "sql-mismatch:v1:sha256:573ce37812c2985db52e9df5320f90f2e6ad1bc576133d2af3c717d5fe6136c8",
-            "issue": "BQ-22"
-        },
-        {
-            "id": "assertion:v1:sha256:5bdfb5097cd57d1671ec315e77bb052c49afcb0685e379c32c13906cb14e940a:1",
-            "case": "write|duckdb|EDIT_DISTANCE(col1, col2, max_distance => 3)",
-            "reason": "expected `CASE WHEN LEVENSHTEIN(col1, col2) IS NULL OR 3 IS NULL THEN NULL ELSE LEAST(LEVENSHTEIN(col1, col2), 3) END` actual `LEVENSHTEIN(col1, col2, 3)`",
-            "signature": "sql-mismatch:v1:sha256:e160288fc8f924c4855c8ffc2ea2622d1612d0733d9a0c0dd0830ecefb4a950a",
-            "issue": "BQ-22"
-        },
-        {
-            "id": "assertion:v1:sha256:e937cb3322a226deb7e0939c6d60a8f18eacff410a406d8f58956b68f87c5210:1",
-            "case": "write|hive|EDIT_DISTANCE(col1, col2, max_distance => 3)",
-            "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`",
-            "signature": "missing-error:v1:sha256:beb038d0b0ebd492df05e199290725fc3488b18479c120c144567f8fe8494729",
-            "issue": "BQ-22"
-        },
-        {
-            "id": "assertion:v1:sha256:c598a57d5d0ebb3ab41ab1ddf93a02d0ccce267d8d785a918fcf7a924e637e24:1",
-            "case": "write|spark|EDIT_DISTANCE(col1, col2, max_distance => 3)",
-            "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`",
-            "signature": "missing-error:v1:sha256:beb038d0b0ebd492df05e199290725fc3488b18479c120c144567f8fe8494729",
-            "issue": "BQ-22"
-        },
-        {
-            "id": "assertion:v1:sha256:3fe9d339df3f30e9f5b791d7d594720452a37911ef9f2546d292c7aba6ba80e7:1",
-            "case": "write|spark2|EDIT_DISTANCE(col1, col2, max_distance => 3)",
-            "reason": "expected UnsupportedError, got `LEVENSHTEIN(col1, col2, 3)`",
-            "signature": "missing-error:v1:sha256:beb038d0b0ebd492df05e199290725fc3488b18479c120c144567f8fe8494729",
-            "issue": "BQ-22"
         },
         {
             "id": "assertion:v1:sha256:d4dcc57a8a40157b77824b1c5eb58a5e6428b22ce139195f293dfb7f15f21a62:1",
@@ -126,13 +77,6 @@
             "signature": "sql-mismatch:v1:sha256:358646c44b0746b586d17381739f71c8b1609d59ee553f543d87787b3edc77f4",
             "issue": "BQ-6",
             "status": "intentional-divergence"
-        },
-        {
-            "id": "assertion:v1:sha256:f2f1c06683a7895bb3079db4d2edc0e966c11e87083af9cceffe49cd275d45b3:1",
-            "case": "write|duckdb|SELECT LENGTH(foo)",
-            "reason": "expected `SELECT CASE TYPEOF(foo) WHEN 'BLOB' THEN OCTET_LENGTH(CAST(foo AS BLOB)) ELSE LENGTH(CAST(foo AS TEXT)) END` actual `SELECT LENGTH(foo)`",
-            "signature": "sql-mismatch:v1:sha256:b0e86e886d30a70bbbf550e31f476e65a21773e19c51834fe18cb7444f8e56b4",
-            "issue": "BQ-31"
         },
         {
             "id": "assertion:v1:sha256:283a3b2b849f7212fafcc305a8a377abca464f465095a695a6ae6dbd1a14ce32:1",
@@ -248,20 +192,6 @@
             "issue": "BQ-16"
         },
         {
-            "id": "assertion:v1:sha256:a9ee42cc5680bb7b8223f0facfbde65ca7c59a08fc3f21441224f223ddeedc90:1",
-            "case": "write|bigquery|SELECT MAX_BY(name, score) FROM table1",
-            "reason": "expected `SELECT MAX_BY(name, score) FROM table1` actual `SELECT ARG_MAX(name, score) FROM table1`",
-            "signature": "sql-mismatch:v1:sha256:fa0310d0f8eb8506dc2d37075fdce1dca7d0a48c92083f20578fa04e0aa94189",
-            "issue": "BQ-31"
-        },
-        {
-            "id": "assertion:v1:sha256:cf29c0ca2bfd54db4ca82c79c185acd35d78ff25b24a01802a4640e5e771af24:1",
-            "case": "write|bigquery|SELECT MIN_BY(product, price) FROM table1",
-            "reason": "expected `SELECT MIN_BY(product, price) FROM table1` actual `SELECT ARG_MIN(product, price) FROM table1`",
-            "signature": "sql-mismatch:v1:sha256:bfada6a6c17402bdb957c0566ed2f422b92b0d32ca51268eb1bf2868cd8b1f18",
-            "issue": "BQ-31"
-        },
-        {
             "id": "assertion:v1:sha256:a38aa06ce2eca281137bb13cb78c341e026759eae7c8d71348feac5d7b235931:1",
             "case": "write|duckdb|SELECT name, laps FROM UNNEST([STRUCT('Rudisha' AS name, [23.4, 26.3, 26.4, 26.1] AS laps), STRUCT('Makhloufi' AS name, [24.5, 25.4, 26.6, 26.1] AS laps)])",
             "reason": "expected `SELECT name, laps FROM (SELECT UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}, {'name': 'Makhloufi', 'laps': [24.5, 25.4, 26.6, 26.1]}], max_depth => 2))` actual `SELECT name, laps FROM UNNEST([{'name': 'Rudisha', 'laps': [23.4, 26.3, 26.4, 26.1]}, {'name': 'Makhloufi', 'laps': [24.5, 25.4, 26.6, 26.1]}])`",
@@ -340,20 +270,6 @@
             "signature": "sql-mismatch:v1:sha256:6a7498f8ed531adbe679f65894b9788fa96e2c5f44076a6f9be11b47cfce12f1",
             "issue": "BQ-4",
             "status": "intentional-divergence"
-        },
-        {
-            "id": "assertion:v1:sha256:eeef7c09b1953a15ce5b35dee124f6e617c333e4534e7fe4b14c31ba63dbc35a:1",
-            "case": "write|duckdb|SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 2) FROM table",
-            "reason": "expected `SELECT REGEXP_EXTRACT(NULLIF(SUBSTRING(abc, 2), ''), 'pattern(group)', 1) FROM \"table\"` actual `SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 1) FROM \"table\"`",
-            "signature": "sql-mismatch:v1:sha256:d1907161d47a03ca829d95bde79173ee0acd05b68daab17e76cdd4706cc6c7a3",
-            "issue": "BQ-28"
-        },
-        {
-            "id": "assertion:v1:sha256:5e40feb22defd1016017fec1568ac37c10741a953932098012637733e29d47cf:1",
-            "case": "write|duckdb|SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 2, 3) FROM table",
-            "reason": "expected `SELECT ARRAY_EXTRACT(REGEXP_EXTRACT_ALL(NULLIF(SUBSTRING(abc, 2), ''), 'pattern(group)', 1), 3) FROM \"table\"` actual `SELECT REGEXP_EXTRACT(abc, 'pattern(group)', 1) FROM \"table\"`",
-            "signature": "sql-mismatch:v1:sha256:1f1f4dcd97384435a2126f5c4f2d7b0a9323ae15e5186f91bbb0cdf23c7755de",
-            "issue": "BQ-28"
         },
         {
             "id": "assertion:v1:sha256:e0242903d050896f944c59de894ced783aaa8020ce2344057c5547930e91e5c4:1",

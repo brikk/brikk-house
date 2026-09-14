@@ -575,6 +575,7 @@ object GeneratorTables {
         reg(HexString::class) { e -> hexstringSql(e as HexString) }
         reg(Hex::class) { e -> hexSql(e as Hex) }
         reg(LowerHex::class) { e -> lowerhexSql(e as LowerHex) }
+        reg(Space::class) { e -> spaceSql(e as Space) }
         reg(UsingData::class) { e -> "USING DATA ${sql(e, "this")}" }
         reg(TsOrDsToDate::class) { e -> tsordstodateSql(e as TsOrDsToDate) }
         reg(TsOrDsToTime::class) { e -> tsordstotimeSql(e as TsOrDsToTime) }

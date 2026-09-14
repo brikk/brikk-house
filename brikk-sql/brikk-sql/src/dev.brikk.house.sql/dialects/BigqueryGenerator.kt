@@ -545,6 +545,36 @@ open class BigqueryGenerator(
     internal fun shaSql(expression: Expression): String =
         func("SHA${expression.text("length").ifEmpty { "256" }}", expression.thisArg)
 
+    // sqlglot: generators.bigquery._levenshtein_sql
+    internal fun levenshteinSql(expression: Levenshtein): String {
+        for (arg in listOf("ins_cost", "del_cost", "sub_cost")) {
+            if (expression.args[arg] != null) {
+                unsupported(
+                    "Argument '$arg' is not supported for expression 'Levenshtein' when targeting BigQuery."
+                )
+            }
+        }
+        val maxDist = expression.args["max_dist"]?.let {
+            Kwarg(args("this" to Var(args("this" to "max_distance")), "expression" to it))
+        }
+        return func("EDIT_DISTANCE", expression.thisArg, expression.expressionArg, maxDist)
+    }
+
+    // sqlglot: dialect.arg_max_or_min_no_count
+    internal fun argMaxOrMinSql(name: String, expression: Expression): String {
+        if (expression.args["count"] != null) {
+            unsupported("Argument 'count' is not supported for expression '${expression::class.simpleName}' when targeting BigQuery.")
+        }
+        return func(name, expression.thisArg, expression.args["expression"])
+    }
+
+    // sqlglot: dialect.strposition_sql with BigQuery INSTR capabilities
+    internal fun strpositionSql(expression: StrPosition): String {
+        val occurrence = expression.args["occurrence"]
+        val position = expression.args["position"] ?: if (occurrence != null) Literal.number("1") else null
+        return func("INSTR", expression.thisArg, expression.args["substr"], position, occurrence)
+    }
+
     internal fun tsOrDsAddSql(expression: TsOrDsAdd): String {
         val copy = expression.copy() as TsOrDsAdd
         val timestamp = Cast(args("this" to (copy.thisArg as Expression).copy(), "to" to DataType.build(DType.DATETIME)))
@@ -653,6 +683,8 @@ open class BigqueryGenerator(
             reg(BitwiseOrAgg::class) { e -> bg().renameFuncSql("BIT_OR", e) }
             reg(BitwiseXorAgg::class) { e -> bg().renameFuncSql("BIT_XOR", e) }
             reg(BitwiseCount::class) { e -> bg().renameFuncSql("BIT_COUNT", e) }
+            reg(ArgMax::class) { e -> bg().argMaxOrMinSql("MAX_BY", e) }
+            reg(ArgMin::class) { e -> bg().argMaxOrMinSql("MIN_BY", e) }
             reg(ByteLength::class) { e -> bg().renameFuncSql("BYTE_LENGTH", e) }
             reg(Commit::class) { _ -> "COMMIT TRANSACTION" }
             reg(CountIf::class) { e -> bg().renameFuncSql("COUNTIF", e) }
@@ -697,6 +729,7 @@ open class BigqueryGenerator(
                 func("JSON_KEYS", e.args["this"], e.args["expression"], e.args["mode"])
             }
             reg(JSONValueArray::class) { e -> bg().renameFuncSql("JSON_VALUE_ARRAY", e) }
+            reg(Levenshtein::class) { e -> bg().levenshteinSql(e as Levenshtein) }
             reg(MD5::class) { e -> func("TO_HEX", func("MD5", e.args["this"])) }
             reg(MD5Digest::class) { e -> bg().renameFuncSql("MD5", e) }
             reg(Normalize::class) { e ->
@@ -750,6 +783,7 @@ open class BigqueryGenerator(
                 if (e.name == "IMMUTABLE") "DETERMINISTIC" else "NOT DETERMINISTIC"
             }
             reg(dev.brikk.house.sql.ast.String::class) { e -> func("STRING", e.thisArg, e.args["zone"]) }
+            reg(StrPosition::class) { e -> bg().strpositionSql(e as StrPosition) }
             reg(SessionUser::class) { _ -> "SESSION_USER()" }
             reg(TimeAdd::class) { e -> bg().dateAddIntervalSql("TIME", "ADD", e) }
             reg(TimeSub::class) { e -> bg().dateAddIntervalSql("TIME", "SUB", e) }

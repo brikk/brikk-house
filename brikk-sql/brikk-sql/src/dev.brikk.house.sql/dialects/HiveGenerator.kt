@@ -378,6 +378,18 @@ open class HiveGenerator(
     internal fun argMaxOrMinNoCount(name: String, expression: Expression): String =
         func(name, expression.thisArg, expression.args["expression"])
 
+    // sqlglot: unsupported_args on HiveGenerator Levenshtein
+    internal fun levenshteinSql(expression: Levenshtein): String {
+        for (arg in listOf("ins_cost", "del_cost", "sub_cost", "max_dist")) {
+            if (expression.args[arg] != null) {
+                unsupported(
+                    "Argument '$arg' is not supported for expression 'Levenshtein' when targeting Hive."
+                )
+            }
+        }
+        return func("LEVENSHTEIN", expression.thisArg, expression.expressionArg)
+    }
+
     // sqlglot: dialect.max_or_greatest / min_or_least
     internal fun maxOrGreatestSql(expression: Max): String =
         if (expression.expressionsArg.isNotEmpty()) {
@@ -955,7 +967,7 @@ open class HiveGenerator(
             reg(WeekOfYear::class) { e -> hg().renameFuncSql("WEEKOFYEAR", e) }
             reg(DayOfMonth::class) { e -> hg().renameFuncSql("DAYOFMONTH", e) }
             reg(DayOfWeek::class) { e -> hg().renameFuncSql("DAYOFWEEK", e) }
-            reg(Levenshtein::class) { e -> hg().renameFuncSql("LEVENSHTEIN", e) }
+            reg(Levenshtein::class) { e -> hg().levenshteinSql(e as Levenshtein) }
             reg(SerdeProperties::class) { e -> hg().serdepropertiesSql(e as SerdeProperties) }
             // sqlglot: Generator.inputoutputformat_sql (base method; not yet in Kotlin base)
             reg(InputOutputFormat::class) { e ->

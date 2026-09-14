@@ -14,42 +14,38 @@
 
 ---
 
-**75 actionable failing transpile assertions across 14 source-to-target routes.**
+**61 actionable failing transpile assertions across 9 source-to-target routes.**
 Twelve additional signed assertions are protected correctness divergences, documented
 in `docs/brikk-extensions.md` sections 28, 30, and 32. They are not open BQ issues. BQ-36
 and BQ-37 are execution limitations with no current parity-ledger entries.
 
-## BigQuery as source (49)
+## BigQuery as source (39)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 37 |
-| bigquery -> spark | 1 |
+| bigquery -> duckdb | 33 |
 | bigquery -> presto | 2 |
-| bigquery -> bigquery | 4 |
+| bigquery -> bigquery | 1 |
 | bigquery -> trino | 1 |
-| bigquery -> hive | 1 |
 | bigquery -> postgres | 2 |
-| bigquery -> spark2 | 1 |
 
-## BigQuery as target (26)
+## BigQuery as target (22)
 
 The `bigquery -> bigquery` cases are counted only in the source table above.
 
 | Route | Items |
 |---|---:|
-| spark -> bigquery | 10 |
+| spark -> bigquery | 9 |
 | postgres -> bigquery | 6 |
 | duckdb -> bigquery | 6 |
-| presto -> bigquery | 2 |
-| hive -> bigquery | 1 |
 | base -> bigquery | 1 |
 
 ## Open issues
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-12, plus BQ-14, BQ-23, BQ-24, BQ-26, BQ-30, and BQ-34. Completed ASTRA history
+BQ-12, plus BQ-14, BQ-22 through BQ-24, BQ-26, BQ-28, BQ-30, BQ-31, and BQ-34.
+Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
 | ID | Issue | Assertions |
@@ -62,12 +58,9 @@ belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TO
 | BQ-19 | Base-to-BigQuery nested UNNEST alias cleanup and pretty output | 1 |
 | BQ-20 | Projection EXPLODE/UNNEST to BigQuery relations, including outer/zipped inputs | 12 |
 | BQ-21 | PostgreSQL projected GENERATE_SERIES to BigQuery | 6 |
-| BQ-22 | EDIT_DISTANCE maximum argument and target capability | 5 |
 | BQ-25 | Byte/escaped-string and numeric-hex literal fidelity | 6 |
 | BQ-27 | DuckDB JSON scalar/array conversions | 2 |
-| BQ-28 | REGEXP_EXTRACT position/occurrence | 2 |
 | BQ-29 | APPROX_QUANTILES boundaries and modifiers | 5 |
-| BQ-31 | SPACE, STRPOS occurrence, ARG_MAX/MIN and binary/text LENGTH helpers | 7 |
 | BQ-32 | Typed date/timestamp arrays and UNNEST aliases | 6 |
 | BQ-33 | Presto named-window expansion | 1 |
 | BQ-35 | Into-BigQuery timezone operator lowering | 2 |

@@ -7,6 +7,7 @@ import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
+import dev.brikk.house.sql.optimizer.annotateTypes
 import dev.brikk.house.sql.parser.DuckdbTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -368,21 +369,119 @@ open class DuckdbGenerator(
 
     // sqlglot: generators.duckdb._regexp_extract_sql
     open fun regexpExtractSql(expression: Expression): String {
+        var this_ = expression.thisArg as Expression
+        var group = expression.args["group"] as? Expression
+        var params = expression.args["parameters"] as? Expression
+        val position = expression.args["position"] as? Expression
+        val occurrence = expression.args["occurrence"] as? Expression
+
+        if (params is Literal && params.isString && "e" in params.name) {
+            params = Literal.string(params.name.replace("e", ""))
+        }
+        val validatedFlags = validateRegexpFlags(params, supportedFlags = "cims")
+        if (validatedFlags == null && group is Literal && !group.isString && group.name == "0") {
+            group = null
+        }
+        val flags = validatedFlags?.let { Literal.string(it) }
+
+        fun isGreaterThanOne(value: Expression?): Boolean {
+            if (value == null) return false
+            val literal = (value as? Literal)?.takeIf { !it.isString }?.name?.toLongOrNull()
+            return literal == null || literal > 1
+        }
+
+        if (isGreaterThanOne(position)) {
+            this_ = Substring(args("this" to this_, "start" to position))
+            if (expression.args["null_if_pos_overflow"] == true) {
+                this_ = Nullif(args("this" to this_, "expression" to Literal.string("")))
+            }
+        }
+
         val all = expression is RegexpExtractAll
-        val funcName = if (all) "REGEXP_EXTRACT_ALL" else "REGEXP_EXTRACT"
+        val nonSingleOccurrence = isGreaterThanOne(occurrence)
+        var result: Expression = Anonymous(
+            args(
+                "this" to if (all || nonSingleOccurrence) "REGEXP_EXTRACT_ALL" else "REGEXP_EXTRACT",
+                "expressions" to listOf(this_, expression.expressionArg, group, flags),
+            )
+        )
+        result = when {
+            all && nonSingleOccurrence -> Bracket(
+                args("this" to result, "expressions" to listOf(Slice(args("this" to occurrence))))
+            )
+            nonSingleOccurrence -> Anonymous(
+                args("this" to "ARRAY_EXTRACT", "expressions" to listOf(result, occurrence))
+            )
+            else -> result
+        }
+        return sql(result)
+    }
 
-        val group = expression.args["group"] as? Expression
-        val groupIsZero = group is Literal && !group.isString && group.name == "0"
-        val params = expression.args["parameters"]
-
-        return func(
-            funcName,
-            expression.thisArg,
-            expression.args["expression"],
-            if (groupIsZero && params == null) null else group,
-            params,
+    // sqlglot: DuckDBGenerator.levenshtein_sql
+    open fun levenshteinSql(expression: Levenshtein): String {
+        for (arg in listOf("ins_cost", "del_cost", "sub_cost")) {
+            if (expression.args[arg] != null) {
+                unsupported(
+                    "Argument '$arg' is not supported for expression 'Levenshtein' when targeting DuckDB."
+                )
+            }
+        }
+        val maxDist = expression.args["max_dist"]
+            ?: return func("LEVENSHTEIN", expression.thisArg, expression.expressionArg)
+        return sql(
+            Least(
+                args(
+                    "this" to Levenshtein(
+                        args("this" to expression.thisArg, "expression" to expression.expressionArg)
+                    ),
+                    "expressions" to listOf(maxDist),
+                )
+            )
         )
     }
+
+    // sqlglot: DuckDBGenerator.length_sql
+    open fun lengthSql(expression: Length): String {
+        var arg = expression.thisArg as Expression
+        if (expression.args["binary"] != true || (arg is Literal && arg.isString)) {
+            return func("LENGTH", arg)
+        }
+        if (arg.type == null) arg = annotateTypes(arg, dialect = dialect)
+        if (arg.type?.thisArg in TEXT_TYPES) return func("LENGTH", arg)
+
+        val blob = Cast(args("this" to arg, "to" to DataType.build(DType.VARBINARY)))
+        val text = Cast(args("this" to arg.copy(), "to" to DataType.build(DType.VARCHAR)))
+        return sql(
+            Case(
+                args(
+                    "this" to Anonymous(args("this" to "TYPEOF", "expressions" to listOf(arg.copy()))),
+                    "ifs" to listOf(
+                        If(
+                            args(
+                                "this" to Literal.string("BLOB"),
+                                "true" to ByteLength(args("this" to blob)),
+                            )
+                        )
+                    ),
+                    "default" to Anonymous(args("this" to "LENGTH", "expressions" to listOf(text))),
+                )
+            )
+        )
+    }
+
+    // sqlglot: DuckDBGenerator.bytelength_sql
+    open fun bytelengthSql(expression: ByteLength): String =
+        func("OCTET_LENGTH", expression.thisArg)
+
+    // sqlglot: DuckDBGenerator.space_sql
+    override fun spaceSql(expression: Space): String = sql(
+        Repeat(
+            args(
+                "this" to Literal.string(" "),
+                "times" to Cast(args("this" to expression.thisArg, "to" to DataType.build(DType.BIGINT))),
+            )
+        )
+    )
 
     // sqlglot: DuckDBGenerator.IGNORE_RESPECT_NULLS_WINDOW_FUNCTIONS gate for
     // respectnulls_sql — RESPECT NULLS renders only for general-purpose window funcs
@@ -2525,6 +2624,10 @@ open class DuckdbGenerator(
             }
             reg(NthValue::class) { e -> dg().nthvalueSql(e as NthValue) }
             reg(GroupConcat::class) { e -> dg().groupconcatSql(e as GroupConcat) }
+            reg(ByteLength::class) { e -> dg().bytelengthSql(e as ByteLength) }
+            reg(Length::class) { e -> dg().lengthSql(e as Length) }
+            reg(Levenshtein::class) { e -> dg().levenshteinSql(e as Levenshtein) }
+            reg(Space::class) { e -> dg().spaceSql(e as Space) }
             reg(SHA::class) { e -> dg().shaSql(e, "SHA1") }
             reg(SHA1Digest::class) { e -> dg().shaSql(e, "SHA1", isBinary = true) }
             reg(SHA2::class) { e -> dg().shaSql(e, "SHA256") }
