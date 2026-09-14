@@ -45,41 +45,6 @@
             "status": "intentional-divergence"
         },
         {
-            "id": "assertion:v1:sha256:f624430f6f46b4f255c51b1cb4e50a92a052ed3c0a775f127ebb082b6e2f186f:1",
-            "case": "write|bigquery|SELECT 0xA",
-            "reason": "expected `SELECT 0xA` actual `SELECT 10`",
-            "signature": "sql-mismatch:v1:sha256:de7dbf8a885ff9514ca718ea8d9f76d29a7f21f168aef089be3ee03b85cc8b4e",
-            "issue": "BQ-25"
-        },
-        {
-            "id": "assertion:v1:sha256:fd5c17186befd9899a1e5a705f4d023c14ee189db35fb037f3c84efc5bbccb9b:1",
-            "case": "write|duckdb|SELECT b'a'",
-            "reason": "expected `SELECT CAST(e'a' AS BLOB)` actual `SELECT CAST('e''a''' AS BLOB)`",
-            "signature": "sql-mismatch:v1:sha256:1c241eeee5f262c9912f95185d7a7289c7d64bad419aa7863d4e015d549dba82",
-            "issue": "BQ-25"
-        },
-        {
-            "id": "assertion:v1:sha256:59f223ccd08bec2eb391bfe60b68bf87967820ecab4e9b24fe7639ef9467f42f:1",
-            "case": "write|postgres|SELECT b'a'",
-            "reason": "expected `SELECT CAST(e'a' AS BYTEA)` actual `SELECT CAST('e''a''' AS BYTEA)`",
-            "signature": "sql-mismatch:v1:sha256:8f2991da2a0dd243c998c23bb5bd578f481599265adeb84bc15e355e30993edf",
-            "issue": "BQ-25"
-        },
-        {
-            "id": "assertion:v1:sha256:fd5c17186befd9899a1e5a705f4d023c14ee189db35fb037f3c84efc5bbccb9b:2",
-            "case": "write|duckdb|SELECT b'a'",
-            "reason": "expected `SELECT CAST(e'a' AS BLOB)` actual `SELECT CAST('e''a''' AS BLOB)`",
-            "signature": "sql-mismatch:v1:sha256:1c241eeee5f262c9912f95185d7a7289c7d64bad419aa7863d4e015d549dba82",
-            "issue": "BQ-25"
-        },
-        {
-            "id": "assertion:v1:sha256:59f223ccd08bec2eb391bfe60b68bf87967820ecab4e9b24fe7639ef9467f42f:2",
-            "case": "write|postgres|SELECT b'a'",
-            "reason": "expected `SELECT CAST(e'a' AS BYTEA)` actual `SELECT CAST('e''a''' AS BYTEA)`",
-            "signature": "sql-mismatch:v1:sha256:8f2991da2a0dd243c998c23bb5bd578f481599265adeb84bc15e355e30993edf",
-            "issue": "BQ-25"
-        },
-        {
             "id": "assertion:v1:sha256:140fef6e514f6d3485c0c6a0959b658747a086df58eb4e21d8a2b5415b07e7f9:1",
             "case": "write|duckdb|SELECT UNIX_SECONDS('2008-12-25 15:30:00+00')",
             "reason": "brikk extension BQ-4, registry section 28: DATE_TRUNC before EPOCH preserves whole-second floor semantics; the pin's BIGINT cast rounds fractional epochs. Executed in DuckDB with negative fractions and UTC/New York sessions.",

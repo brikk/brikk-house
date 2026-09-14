@@ -14,20 +14,16 @@
 
 ---
 
-**25 actionable failing transpile assertions across 7 source-to-target routes.**
+**19 actionable failing transpile assertions across 4 source-to-target routes.**
 Twelve additional signed assertions are protected correctness divergences, documented
 in `docs/brikk-extensions.md` sections 28, 30, and 32. They are not open BQ issues. BQ-36
 and BQ-37 are execution limitations with no current parity-ledger entries.
 
-## BigQuery as source (5)
+## BigQuery as source (0)
 
-| Route | Items |
-|---|---:|
-| bigquery -> duckdb | 2 |
-| bigquery -> bigquery | 1 |
-| bigquery -> postgres | 2 |
+No signed source-direction parity failures remain.
 
-## BigQuery as target (20)
+## BigQuery as target (19)
 
 The `bigquery -> bigquery` cases are counted only in the source table above.
 
@@ -35,14 +31,14 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 |---|---:|
 | spark -> bigquery | 8 |
 | postgres -> bigquery | 6 |
-| duckdb -> bigquery | 5 |
+| duckdb -> bigquery | 4 |
 | base -> bigquery | 1 |
 
 ## Open issues
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-18, BQ-22 through BQ-24, and BQ-26 through BQ-35. Completed ASTRA history
+BQ-18, and BQ-22 through BQ-35. Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
 | ID | Issue | Assertions |
@@ -50,7 +46,6 @@ belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TO
 | BQ-19 | Base-to-BigQuery nested UNNEST alias cleanup and pretty output | 1 |
 | BQ-20 | Projection EXPLODE/UNNEST to BigQuery relations, including outer/zipped inputs | 12 |
 | BQ-21 | PostgreSQL projected GENERATE_SERIES to BigQuery | 6 |
-| BQ-25 | Byte/escaped-string and numeric-hex literal fidelity | 6 |
 | BQ-36 | DuckDB ARRAY_TO_STRING row-dependent delimiters; currently diagnosed | execution |
 | BQ-37 | DuckDB offset-preserving STRING(timestamp, zone) formatting; currently diagnosed | execution |
 | BQ-38 | Schema-driven TIMESTAMP/DATETIME overload resolution for unknown inputs; currently diagnosed | execution |

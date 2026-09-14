@@ -47,13 +47,6 @@
             "signature": "sql-mismatch:v1:sha256:b62d291cc4b40741eaa065d6b24560d203a947ff1821e248fe5f0212ac012354"
         },
         {
-            "id": "assertion:v1:sha256:482d8065b6e608fe2c77f5d1f384a8cf74d791a8e61c63d305630efa1da33d94:1",
-            "case": "write|bigquery|SELECT e'Hello\nworld'",
-            "reason": "expected `SELECT CAST(b'Hello\\nworld' AS STRING)` actual `SELECT CAST('b\\'Hello\\\\nworld\\'' AS STRING)`",
-            "signature": "sql-mismatch:v1:sha256:7a5a310c224e38260275b528716ac7e31ca5cc523250edac063e2ea8f6e35daa",
-            "issue": "BQ-25"
-        },
-        {
             "id": "assertion:v1:sha256:0c070cb8dd1812ac8942d0a1953d833cb7e1927a62c15dd9ff4a38bd4518b1b6:1",
             "case": "read|bigquery|SELECT CAST(CAST(CAST('2016-12-25' AS TIMESTAMPTZ) AS TIMESTAMP) AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' AS DATE)",
             "reason": "brikk extension BQ-5, registry section 28: normalize the timestamp literal to UTC and convert the instant directly to the requested zone. Avoid the pin's session-local TIMESTAMP reinterpretation. Date-only literals use explicit midnight. Executed under UTC, New York and Auckland sessions.",

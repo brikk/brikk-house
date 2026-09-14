@@ -4275,7 +4275,7 @@ open class Generator(
                 return sql(
                     Cast(
                         args(
-                            "this" to Literal.string(delimited),
+                            "this" to Var(args("this" to delimited)),
                             "to" to DataType(args("this" to DType.BINARY)),
                         )
                     )
@@ -4285,7 +4285,7 @@ open class Generator(
                 return sql(
                     Cast(
                         args(
-                            "this" to Literal.string(delimited),
+                            "this" to Var(args("this" to delimited)),
                             "to" to DataType(args("this" to DType.VARCHAR)),
                         )
                     )

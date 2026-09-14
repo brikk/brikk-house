@@ -125,6 +125,11 @@ open class BigqueryGenerator(
     override val byteEnd: String? get() = "'"
     override val dialectByteStringIsBytesType: Boolean get() = true
 
+    // sqlglot: BigQuery.HEX_STRING_IS_INTEGER_TYPE = True
+    override val hexStringIsIntegerType: Boolean get() = true
+    override val hexStart: String? get() = "0x"
+    override val hexEnd: String? get() = ""
+
     // sqlglot: BigQueryGenerator dispatch helper used by TRANSFORMS entries.
     internal fun renameFuncSql(name: String, expression: Expression): String {
         val exprs = expression.expressionsArg.filterIsInstance<Expression>()
