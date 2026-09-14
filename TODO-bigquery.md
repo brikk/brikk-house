@@ -14,19 +14,17 @@
 
 ---
 
-**44 actionable failing transpile assertions across 9 source-to-target routes.**
+**34 actionable failing transpile assertions across 7 source-to-target routes.**
 Twelve additional signed assertions are protected correctness divergences, documented
 in `docs/brikk-extensions.md` sections 28, 30, and 32. They are not open BQ issues. BQ-36
 and BQ-37 are execution limitations with no current parity-ledger entries.
 
-## BigQuery as source (24)
+## BigQuery as source (14)
 
 | Route | Items |
 |---|---:|
-| bigquery -> duckdb | 19 |
-| bigquery -> presto | 1 |
+| bigquery -> duckdb | 11 |
 | bigquery -> bigquery | 1 |
-| bigquery -> trino | 1 |
 | bigquery -> postgres | 2 |
 
 ## BigQuery as target (20)
@@ -44,7 +42,7 @@ The `bigquery -> bigquery` cases are counted only in the source table above.
 
 Each signed ledger entry has an `issue` label linking it to this inventory.
 Counts are failing assertions, not distinct SQL strings. Retired IDs: BQ-1 through
-BQ-12, plus BQ-14, BQ-18, BQ-22 through BQ-24, and BQ-26 through BQ-35.
+BQ-12, plus BQ-14, BQ-16 through BQ-18, BQ-22 through BQ-24, and BQ-26 through BQ-35.
 Completed ASTRA history
 belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TODO.
 
@@ -52,8 +50,6 @@ belongs in `docs/brikk-extensions.md` and `docs/corpus-coverage.md`, not this TO
 |---|---|---:|
 | BQ-13 | DuckDB array aggregation NULL handling and modifiers | 6 |
 | BQ-15 | DuckDB IN/NOT IN UNNEST NULL and empty-array semantics | 3 |
-| BQ-16 | DuckDB struct-array UNNEST field expansion | 7 |
-| BQ-17 | Inherit struct field names across array elements | 3 |
 | BQ-19 | Base-to-BigQuery nested UNNEST alias cleanup and pretty output | 1 |
 | BQ-20 | Projection EXPLODE/UNNEST to BigQuery relations, including outer/zipped inputs | 12 |
 | BQ-21 | PostgreSQL projected GENERATE_SERIES to BigQuery | 6 |

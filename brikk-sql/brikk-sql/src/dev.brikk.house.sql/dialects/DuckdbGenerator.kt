@@ -7,6 +7,7 @@ import dev.brikk.house.sql.ast.Boolean as BooleanNode
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
+import dev.brikk.house.sql.generator.inheritStructFieldNames
 import dev.brikk.house.sql.optimizer.annotateTypes
 import dev.brikk.house.sql.parser.DuckdbTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
@@ -583,6 +584,35 @@ open class DuckdbGenerator(
             )
         )
     )
+
+    // sqlglot: DuckDBGenerator.unnest_sql
+    override fun unnestSql(expression: Unnest): String {
+        if (expression.args["explode_array"] != true) return super.unnestSql(expression)
+
+        expression.append(
+            "expressions",
+            Kwarg(
+                args(
+                    "this" to Var(args("this" to "max_depth")),
+                    "expression" to Literal.number("2"),
+                )
+            )
+        )
+        val alias = expression.args["alias"] as? TableAlias
+        expression.set("alias", null)
+        expression.set("explode_array", null)
+        val subqueryAlias = alias?.columns?.firstOrNull()?.let {
+            TableAlias(args("this" to (it as Expression).copy()))
+        } ?: alias
+        return sql(
+            Subquery(
+                args(
+                    "this" to Select(args("expressions" to listOf(expression))),
+                    "alias" to subqueryAlias,
+                )
+            )
+        )
+    }
 
     // sqlglot: DuckDBGenerator.IGNORE_RESPECT_NULLS_WINDOW_FUNCTIONS gate for
     // respectnulls_sql — RESPECT NULLS renders only for general-purpose window funcs
@@ -2616,15 +2646,15 @@ open class DuckdbGenerator(
                     functionFallbackSql(e as Func)
                 }
             }
-            // sqlglot: TRANSFORMS[exp.Array] (inherit_struct_field_names preprocess
-            // skipped; generator=inline_array_unless_query)
+            // sqlglot: TRANSFORMS[exp.Array] (inherit_struct_field_names + inline_array_unless_query)
             reg(ArrayNode::class) { e ->
-                val elem = e.expressionsArg.firstOrNull() as? Expression
+                val array = inheritStructFieldNames(e) as ArrayNode
+                val elem = array.expressionsArg.firstOrNull() as? Expression
                 if (elem?.find(Select::class, Union::class, Except::class, Intersect::class) != null) {
                     func("ARRAY", elem)
                 } else {
                     "[" + expressions(
-                        e, dynamic = true, newLine = true, skipFirst = true, skipLast = true
+                        array, dynamic = true, newLine = true, skipFirst = true, skipLast = true
                     ) + "]"
                 }
             }

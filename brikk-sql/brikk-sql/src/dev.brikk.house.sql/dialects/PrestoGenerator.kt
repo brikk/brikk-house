@@ -10,6 +10,7 @@ import dev.brikk.house.sql.generator.eliminateDistinctOn
 import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
 import dev.brikk.house.sql.generator.eliminateWindowClause
 import dev.brikk.house.sql.generator.explodeProjectionToUnnest
+import dev.brikk.house.sql.generator.inheritStructFieldNames
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
 import dev.brikk.house.sql.parser.PrestoTokenizerTables
@@ -1328,8 +1329,10 @@ open class PrestoGenerator(
             }
             reg(ArgMax::class) { e -> pg().renameFuncSql("MAX_BY", e) }
             reg(ArgMin::class) { e -> pg().renameFuncSql("MIN_BY", e) }
-            // sqlglot: TRANSFORMS[exp.Array] (inherit_struct_field_names preprocess skipped)
-            reg(ArrayNode::class) { e -> pg().arrayWithStructNullsSql(e as ArrayNode) }
+            // sqlglot: TRANSFORMS[exp.Array] (inherit_struct_field_names preprocess)
+            reg(ArrayNode::class) { e ->
+                pg().arrayWithStructNullsSql(inheritStructFieldNames(e) as ArrayNode)
+            }
             reg(ArrayAny::class) { e -> pg().renameFuncSql("ANY_MATCH", e) }
             reg(ArrayConcat::class) { e -> pg().renameFuncSql("CONCAT", e) }
             reg(ArrayContains::class) { e -> pg().renameFuncSql("CONTAINS", e) }
