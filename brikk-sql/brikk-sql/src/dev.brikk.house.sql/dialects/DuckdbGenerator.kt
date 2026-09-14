@@ -473,6 +473,76 @@ open class DuckdbGenerator(
     open fun bytelengthSql(expression: ByteLength): String =
         func("OCTET_LENGTH", expression.thisArg)
 
+    // sqlglot: generators.duckdb._json_extract_value_array_sql
+    open fun jsonExtractValueArraySql(expression: Expression): String {
+        val elementType = if (expression is JSONValueArray) DType.TEXT else DType.JSON
+        val arrayType = DataType(
+            args(
+                "this" to DType.ARRAY,
+                "expressions" to listOf(DataType.build(elementType)),
+                "nested" to true,
+            )
+        )
+        return sql(
+            Cast(
+                args(
+                    "this" to JSONExtract(
+                        args("this" to expression.thisArg, "expression" to expression.expressionArg)
+                    ),
+                    "to" to arrayType,
+                )
+            )
+        )
+    }
+
+    // sqlglot: DuckDBGenerator.approxquantile_sql
+    open fun approxquantileSql(expression: ApproxQuantile): String =
+        func("APPROX_QUANTILE", expression.thisArg, expression.args["quantile"])
+
+    // sqlglot: DuckDBGenerator.approxquantiles_sql
+    open fun approxquantilesSql(expression: ApproxQuantiles): String {
+        var input = expression.thisArg as Expression
+        val bucketCount: Expression?
+        if (input is Distinct) {
+            val distinct = input.copy() as Distinct
+            val values = distinct.expressionsArg.filterIsInstance<Expression>().toMutableList()
+            if (values.size < 2) {
+                unsupported("APPROX_QUANTILES requires a bucket count argument")
+                return functionFallbackSql(expression)
+            }
+            bucketCount = values.removeAt(1)
+            distinct.set("expressions", values)
+            input = distinct
+        } else {
+            bucketCount = expression.expressionArg as? Expression
+        }
+
+        val count = (bucketCount as? Literal)?.takeIf { !it.isString }?.name?.toIntOrNull()
+        if (count == null || count <= 0) {
+            unsupported("APPROX_QUANTILES bucket count must be a positive integer")
+            return functionFallbackSql(expression)
+        }
+
+        fun fraction(numerator: Int, denominator: Int): String {
+            if (numerator == 0) return "0"
+            if (numerator == denominator) return "1"
+            var remainder = numerator
+            val digits = StringBuilder("0.")
+            repeat(28) {
+                remainder *= 10
+                digits.append(remainder / denominator)
+                remainder %= denominator
+                if (remainder == 0) return digits.toString()
+            }
+            return digits.toString()
+        }
+
+        val quantiles = ArrayNode(
+            args("expressions" to (0..count).map { Literal.number(fraction(it, count)) })
+        )
+        return sql(ApproxQuantile(args("this" to input, "quantile" to quantiles)))
+    }
+
     // sqlglot: DuckDBGenerator.space_sql
     override fun spaceSql(expression: Space): String = sql(
         Repeat(
@@ -2607,7 +2677,9 @@ open class DuckdbGenerator(
             reg(IsInf::class) { e -> dg().renameFuncSql("ISINF", e) }
             reg(IsNan::class) { e -> dg().renameFuncSql("ISNAN", e) }
             reg(JSONExtract::class) { e -> dg().arrowJsonExtractSql(e as JSONExtract) }
+            reg(JSONExtractArray::class) { e -> dg().jsonExtractValueArraySql(e) }
             reg(JSONExtractScalar::class) { e -> dg().arrowJsonExtractSql(e as JSONExtractScalar) }
+            reg(JSONValueArray::class) { e -> dg().jsonExtractValueArraySql(e) }
             reg(JSONFormat::class) { e -> dg().jsonformatSql(e as JSONFormat) }
             // sqlglot: _cast_to_boolean — untyped args always cast
             fun castToBoolean(arg: kotlin.Any?): kotlin.Any? {
@@ -2624,6 +2696,8 @@ open class DuckdbGenerator(
             }
             reg(NthValue::class) { e -> dg().nthvalueSql(e as NthValue) }
             reg(GroupConcat::class) { e -> dg().groupconcatSql(e as GroupConcat) }
+            reg(ApproxQuantile::class) { e -> dg().approxquantileSql(e as ApproxQuantile) }
+            reg(ApproxQuantiles::class) { e -> dg().approxquantilesSql(e as ApproxQuantiles) }
             reg(ByteLength::class) { e -> dg().bytelengthSql(e as ByteLength) }
             reg(Length::class) { e -> dg().lengthSql(e as Length) }
             reg(Levenshtein::class) { e -> dg().levenshteinSql(e as Levenshtein) }

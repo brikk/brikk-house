@@ -81,6 +81,36 @@ import dev.brikk.house.sql.optimizer.findNewName
 import dev.brikk.house.sql.optimizer.Scope
 import dev.brikk.house.sql.optimizer.traverseScope
 
+// sqlglot: transforms.eliminate_window_clause
+fun eliminateWindowClause(expression: Expression): Expression {
+    val select = expression as? Select ?: return expression
+    val windows = (select.args["windows"] as? List<*>)?.filterIsInstance<Window>() ?: return select
+    select.set("windows", null)
+
+    val definitions = mutableMapOf<String, Window>()
+    fun inlineInheritedWindow(window: Window) {
+        val alias = (window.args["alias"] as? Expression)?.name?.lowercase() ?: return
+        val inherited = definitions[alias] ?: return
+        window.set("alias", null)
+        for (key in listOf("partition_by", "order", "spec")) {
+            when (val value = inherited.args[key]) {
+                is Expression -> window.set(key, value.copy())
+                is List<*> -> window.set(key, value.map { (it as Expression).copy() })
+            }
+        }
+    }
+
+    for (window in windows) {
+        inlineInheritedWindow(window)
+        val name = (window.thisArg as? Expression)?.name?.lowercase() ?: continue
+        definitions[name] = window
+    }
+    for (window in findAllInScope(select, Window::class)) {
+        inlineInheritedWindow(window as Window)
+    }
+    return select
+}
+
 /**
  * sqlglot: transforms.eliminate_qualify — converts SELECT statements that contain the
  * QUALIFY clause into subqueries, filtered equivalently.

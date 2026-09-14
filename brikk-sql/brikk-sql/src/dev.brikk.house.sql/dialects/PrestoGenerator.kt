@@ -8,6 +8,7 @@ import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.eliminateQualify
 import dev.brikk.house.sql.generator.eliminateDistinctOn
 import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
+import dev.brikk.house.sql.generator.eliminateWindowClause
 import dev.brikk.house.sql.generator.explodeProjectionToUnnest
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
@@ -1452,13 +1453,14 @@ open class PrestoGenerator(
             reg(Right::class) { e -> pg().rightToSubstringSql(e as Right) }
             reg(Schema::class) { e -> pg().prestoSchemaSql(e as Schema) }
             reg(SchemaCommentProperty::class) { e -> nakedProperty(e as Property) }
-            // sqlglot: exp.Select preprocess pipeline. Only eliminate_qualify is ported;
+            // sqlglot: exp.Select preprocess pipeline.
             // sqlglot presto order: [eliminate_window_clause, eliminate_qualify,
             // eliminate_distinct_on, explode_projection_to_unnest(1),
             // eliminate_semi_and_anti_joins, amend_exploded_column_table].
-            // eliminate_window_clause and amend_exploded_column_table remain NOT PORTED.
+            // amend_exploded_column_table remains NOT PORTED.
             reg(Select::class) { e ->
-                var s = eliminateQualify(e)
+                var s = eliminateWindowClause(e)
+                s = eliminateQualify(s)
                 s = eliminateDistinctOn(s)
                 s = explodeProjectionToUnnest(s, indexOffset = 1, unnestMap = true)
                 s = eliminateSemiAndAntiJoins(s)

@@ -1,13 +1,6 @@
 {
     "cases": [
         {
-            "id": "assertion:v1:sha256:7c567c1222b9f9f65f90dcd4361e7b5a97cbe553ca26de8862d92a3277d11b18:1",
-            "case": "write|presto|SELECT purchases, LAST_VALUE(item) OVER item_window AS most_popular FROM Produce WINDOW item_window AS (PARTITION BY purchases ORDER BY purchases ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)",
-            "reason": "expected `SELECT purchases, LAST_VALUE(item) OVER (PARTITION BY purchases ORDER BY purchases NULLS FIRST ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS most_popular FROM Produce` actual `SELECT purchases, LAST_VALUE(item) OVER item_window AS most_popular FROM Produce WINDOW item_window AS (PARTITION BY purchases ORDER BY purchases NULLS FIRST ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)`",
-            "signature": "sql-mismatch:v1:sha256:c8a93b49710acf280b1f1d3e16333b74d44c780f730957801418adfe097f14cb",
-            "issue": "BQ-33"
-        },
-        {
             "id": "assertion:v1:sha256:d4dcc57a8a40157b77824b1c5eb58a5e6428b22ce139195f293dfb7f15f21a62:1",
             "case": "write|duckdb|SELECT ARRAY_AGG(x IGNORE NULLS) AS x",
             "reason": "expected `SELECT ARRAY_AGG(x) FILTER(WHERE x IS NOT NULL) AS x` actual `SELECT ARRAY_AGG(x) AS x`",
@@ -92,20 +85,6 @@
             "signature": "sql-mismatch:v1:sha256:69da7981882e550c0d2576968066d1bac666b14c5581d52aa983c6b5e13810cd",
             "issue": "BQ-6",
             "status": "intentional-divergence"
-        },
-        {
-            "id": "assertion:v1:sha256:49b228a2f4911890568a53dc89f6a670f8560ec0540664aeed96cdaab837528c:1",
-            "case": "write|duckdb|SELECT JSON_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')",
-            "reason": "expected `SELECT CAST('{\"arr\": [1, \"a\"]}' -> '$.arr' AS TEXT[])` actual `SELECT J_S_O_N_VALUE_ARRAY('{\"arr\": [1, \"a\"]}', '$.arr')`",
-            "signature": "sql-mismatch:v1:sha256:ed9b52d19e01a5e79e286045c29d6f567cb8ef2abaa1c9a873ec5615305c8641",
-            "issue": "BQ-27"
-        },
-        {
-            "id": "assertion:v1:sha256:14c128bb4182e431792194dfa716e9a7beb95b61c1c00f821b715662b0bb60ad:1",
-            "case": "write|duckdb|SELECT INT64(JSON_QUERY(JSON '{\"key\": 2000}', '$.key'))",
-            "reason": "expected `SELECT CAST(JSON('{\"key\": 2000}') -> '$.key' AS BIGINT)` actual `SELECT INT64(JSON('{\"key\": 2000}') -> '$.key')`",
-            "signature": "sql-mismatch:v1:sha256:f11cfda91bb262f7be79a5c0182d2d7d07fff303683f611a86a343da3e7c79b1",
-            "issue": "BQ-27"
         },
         {
             "id": "assertion:v1:sha256:f624430f6f46b4f255c51b1cb4e50a92a052ed3c0a775f127ebb082b6e2f186f:1",
@@ -337,41 +316,6 @@
             "signature": "sql-mismatch:v1:sha256:8323d583c55875d0222882e5b01409cf0e8390eda037864358c96409996f20a9",
             "issue": "BQ-11",
             "status": "intentional-divergence"
-        },
-        {
-            "id": "assertion:v1:sha256:4c50d16c6cd26faf58f87998f85ac5dd2007f9ae68ed06b85e361f35eb4dd53a:1",
-            "case": "write|duckdb|APPROX_QUANTILES(x, 1)",
-            "reason": "expected `APPROX_QUANTILE(x, [0, 1])` actual `APPROX_QUANTILES(x, 1)`",
-            "signature": "sql-mismatch:v1:sha256:e00f4612db189493f263b368b253d85e6e56992ff937c4f39d5cbfd83e31c1f9",
-            "issue": "BQ-29"
-        },
-        {
-            "id": "assertion:v1:sha256:21c565aa19b6d9087428f0843df52de61b2d79dc4ec526b014ef447d6b63a54d:1",
-            "case": "write|duckdb|APPROX_QUANTILES(x, 2)",
-            "reason": "expected `APPROX_QUANTILE(x, [0, 0.5, 1])` actual `APPROX_QUANTILES(x, 2)`",
-            "signature": "sql-mismatch:v1:sha256:346d996dd729965e626d0342b074067d31c33bd99613ce548010bfd138f04bc6",
-            "issue": "BQ-29"
-        },
-        {
-            "id": "assertion:v1:sha256:2d0a7503c6b37da138bad1c4e86fd8d9059760b9f75240f52597c8d339b50dae:1",
-            "case": "write|duckdb|APPROX_QUANTILES(x, 4)",
-            "reason": "expected `APPROX_QUANTILE(x, [0, 0.25, 0.5, 0.75, 1])` actual `APPROX_QUANTILES(x, 4)`",
-            "signature": "sql-mismatch:v1:sha256:69cd6c83405e0d4ed3e9cbec7689a27bc2b694a1284195a38086f95a3cc45d04",
-            "issue": "BQ-29"
-        },
-        {
-            "id": "assertion:v1:sha256:fc0a16491ac00ccedd2dc0f9bb9cbfaaa9bb091e16919a2be5a2364926263a79:1",
-            "case": "write|duckdb|APPROX_QUANTILES(DISTINCT x, 2)",
-            "reason": "expected `APPROX_QUANTILE(DISTINCT x, [0, 0.5, 1])` actual `APPROX_QUANTILES(DISTINCT CASE WHEN x IS NULL THEN NULL WHEN 2 IS NULL THEN NULL ELSE (x, 2) END)`",
-            "signature": "sql-mismatch:v1:sha256:602ee7b071485014d69648f6962e7207a19bbeaf9a5292f5275a3f416b1d618b",
-            "issue": "BQ-29"
-        },
-        {
-            "id": "assertion:v1:sha256:16dea63ad667e7c6bba2261f24cf07532a8ccd8e76b9c812bbf101c9b7ea320c:1",
-            "case": "write|duckdb|APPROX_QUANTILES(x, 2 IGNORE NULLS)",
-            "reason": "expected `APPROX_QUANTILE(x, [0, 0.5, 1])` actual `APPROX_QUANTILES(x, 2)`",
-            "signature": "sql-mismatch:v1:sha256:346d996dd729965e626d0342b074067d31c33bd99613ce548010bfd138f04bc6",
-            "issue": "BQ-29"
         }
     ]
 }

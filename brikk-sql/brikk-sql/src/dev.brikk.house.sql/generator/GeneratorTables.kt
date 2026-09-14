@@ -572,6 +572,9 @@ object GeneratorTables {
         reg(PositionalColumn::class) { e -> "#${sql(e, "this")}" }
         reg(ToMap::class) { e -> "MAP ${sql(e, "this")}" }
         reg(Introducer::class) { e -> introducerSql(e as Introducer) }
+        reg(Int64::class) { e ->
+            sql(Cast(args("this" to e.thisArg, "to" to DataType.build(DType.BIGINT))))
+        }
         reg(HexString::class) { e -> hexstringSql(e as HexString) }
         reg(Hex::class) { e -> hexSql(e as Hex) }
         reg(LowerHex::class) { e -> lowerhexSql(e as LowerHex) }

@@ -5,6 +5,10 @@ import dev.brikk.house.sql.ast.*
 import dev.brikk.house.sql.generator.GenMethod
 import dev.brikk.house.sql.generator.Generator
 import dev.brikk.house.sql.generator.GeneratorTables
+import dev.brikk.house.sql.generator.eliminateDistinctOn
+import dev.brikk.house.sql.generator.eliminateQualify
+import dev.brikk.house.sql.generator.eliminateSemiAndAntiJoins
+import dev.brikk.house.sql.generator.explodeProjectionToUnnest
 import dev.brikk.house.sql.parser.TrinoTokenizerTables
 import dev.brikk.house.sql.parser.TokenizerConfig
 import kotlin.Boolean
@@ -377,6 +381,13 @@ open class TrinoGenerator(
             reg(GroupConcat::class) { e -> tg().groupconcatSql(e as GroupConcat) }
             reg(LocationProperty::class) { e -> propertySql(e as Property) }
             reg(Merge::class) { e -> tg().mergeWithoutTargetSql(e as Merge) }
+            reg(Select::class) { e ->
+                var s = eliminateQualify(e)
+                s = eliminateDistinctOn(s)
+                s = explodeProjectionToUnnest(s, indexOffset = 1, unnestMap = true)
+                s = eliminateSemiAndAntiJoins(s)
+                selectSql(s as Select)
+            }
             // sqlglot: TrinoGenerator.TRANSFORMS[StabilityProperty]
             reg(StabilityProperty::class) { e ->
                 if (e.name == "IMMUTABLE") "DETERMINISTIC" else "NOT DETERMINISTIC"
