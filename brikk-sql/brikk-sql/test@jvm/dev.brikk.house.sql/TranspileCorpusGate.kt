@@ -128,8 +128,9 @@ abstract class TranspileCorpusGate(private val dialect: String) : LedgerGate() {
                 val failure = transpileAssertionFailure(
                     key, expected,
                     parse = { reader.parseOne(readSql) },
-                    // Preserve existing execution semantics: read generation ignores pretty/identify.
-                    generate = { Dialects.forName(dialect).generate(it) },
+                    generate = {
+                        Dialects.forName(dialect).generator(pretty = pretty).generate(it)
+                    },
                 )
                 if (failure == null) {
                     passedCount += 1

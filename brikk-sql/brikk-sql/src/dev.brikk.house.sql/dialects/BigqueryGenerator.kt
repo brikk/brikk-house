@@ -373,6 +373,29 @@ open class BigqueryGenerator(
         return expression
     }
 
+    // sqlglot's base dialect qualifies BigQuery-style value aliases as
+    // `_q_N(value)`. BigQuery needs the value alias without the synthetic table layer.
+    private fun removeSyntheticUnnestQualifiers(expression: Expression): Expression {
+        val syntheticAliases = mutableSetOf<String>()
+        for (unnest in expression.findAll<Unnest>()) {
+            val alias = unnest.args["alias"] as? TableAlias ?: continue
+            val table = alias.thisArg as? Expression ?: continue
+            if (table.name.startsWith("_q_") && alias.columns.size == 1) {
+                syntheticAliases.add(table.name)
+                alias.set("this", null)
+            }
+        }
+        if (syntheticAliases.isNotEmpty()) {
+            for (column in expression.findAll<Column>()) {
+                val leftmost = column.parts.first()
+                if (leftmost.argKey != "this" && leftmost.name in syntheticAliases) {
+                    leftmost.pop()
+                }
+            }
+        }
+        return expression
+    }
+
     override fun unnestSql(expression: Unnest): String {
         val aliases = (expression.args["alias"] as? TableAlias)?.columns.orEmpty()
         if (sourceDialect?.lowercase() in setOf("presto", "trino") && expression.args["offset"] == true) {
@@ -812,7 +835,8 @@ open class BigqueryGenerator(
             // Parser aliases are column-only; only qualifier-added relation aliases
             // are removed. Legitimate value/struct qualifications stay intact.
             reg(Select::class) { e ->
-                var s = bg().unnestExplodingGenerateSeries(e)
+                var s = bg().removeSyntheticUnnestQualifiers(e)
+                s = bg().unnestExplodingGenerateSeries(s)
                 s = explodeProjectionToUnnest(
                     s,
                     preserveEmptyZip = false,

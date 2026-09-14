@@ -1,13 +1,6 @@
 {
     "cases": [
         {
-            "id": "assertion:v1:sha256:0aa580c8b32815d8f0dca988768ce93ce60ce9364e381270cb3307c386fbbf4e:1",
-            "case": "read||SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL",
-            "reason": "expected `SELECT\n  `u`.`user_email` AS `user_email`,\n  `d`.`user_id` AS `user_id`,\n  `account_id` AS `account_id`\nFROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `d`, UNNEST(`d`.`account_ids`) AS `account_id`\nWHERE\n  NOT `account_id` IS NULL` actual `SELECT `u`.`user_email` AS `user_email`, `_q_0`.`d`.`user_id` AS `user_id`, `_q_1`.`account_id` AS `account_id` FROM `analytics_staging`.`stg_mongodb__users` AS `u`, UNNEST(`u`.`cluster_details`) AS `_q_0`, UNNEST(`_q_0`.`d`.`account_ids`) AS `_q_1` WHERE NOT `_q_1`.`account_id` IS NULL`",
-            "signature": "sql-mismatch:v1:sha256:633128bb55388da7df60f64d22c7522ae48c233d440fbf834a7e4d7603427ccd",
-            "issue": "BQ-19"
-        },
-        {
             "id": "assertion:v1:sha256:2147b84d237d3bc20e2173dda6ad11ca9ac56488652e469ca817f33b80c2960a:1",
             "case": "write|duckdb|SELECT DATETIME('2020-01-01', 'America/Los_Angeles')",
             "reason": "brikk extension BQ-6, registry section 30: normalize an unzoned string to a UTC instant before deriving Los Angeles civil time. The pin's direct TIMESTAMPTZ cast depends on DuckDB's session zone. Executed under UTC, New York and Auckland.",
