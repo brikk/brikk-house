@@ -417,6 +417,7 @@ class SqlVerifierTest {
             "ALTER TABLE t MODIFY PARTITION p1 SET ('replication_num'='1')",
             "ALTER TABLE t MODIFY PARTITION (p1, p2) SET ('replication_num'='1')",
             "ALTER TABLE t MODIFY PARTITION (*) SET ('replication_num'='1')",
+            "INSERT INTO t TEMPORARY PARTITION(p1) SELECT 1",
             "ALTER TABLE t RENAME PARTITION p1 p2",
             "ALTER TABLE t RENAME ROLLUP r1 r2",
             "ALTER TABLE t RENAME COLUMN a b",

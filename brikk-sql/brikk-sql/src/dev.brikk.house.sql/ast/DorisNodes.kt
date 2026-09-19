@@ -90,6 +90,18 @@ class DorisVariantField(initArgs: Args = emptyMap()) : Expression(initArgs) {
 }
 
 /**
+ * Doris DML partition selection: `TEMPORARY PARTITION (p1, ...)`. `this` is the
+ * ordinary [Partition] selection so partition-aware tree consumers retain its structure.
+ */
+class DorisTemporaryPartition(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true)
+    }
+}
+
+/**
  * `REFRESH MATERIALIZED VIEW [db.]mv [AUTO | COMPLETE] [PARTITION[S] (p1, ...)]`,
  * `REFRESH CATALOG c [PROPERTIES (...)]`, `REFRESH DATABASE [c.]db`. `kind` is the keyword
  * text; `method` is a [Var] (AUTO / COMPLETE); `partitions` a list of identifiers.
@@ -316,6 +328,7 @@ internal fun registerNativeDorisNodes(
     entries["IndexPropertiesOption"] = ExpressionRegistry.Entry(module) { IndexPropertiesOption() }
     entries["DorisRollupIndex"] = ExpressionRegistry.Entry(module) { DorisRollupIndex() }
     entries["DorisVariantField"] = ExpressionRegistry.Entry(module) { DorisVariantField() }
+    entries["DorisTemporaryPartition"] = ExpressionRegistry.Entry(module) { DorisTemporaryPartition() }
     entries["DorisRefresh"] = ExpressionRegistry.Entry(module) { DorisRefresh() }
     entries["DorisIndexParameters"] = ExpressionRegistry.Entry(module) { DorisIndexParameters() }
     entries["DorisAddPartition"] = ExpressionRegistry.Entry(module) { DorisAddPartition() }

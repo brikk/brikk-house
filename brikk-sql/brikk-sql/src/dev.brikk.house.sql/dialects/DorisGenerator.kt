@@ -1275,6 +1275,7 @@ open class DorisGenerator(
             reg(AutoPartitionProperty::class) { e -> "AUTO ${sql(e, "this")}" }
             reg(IndexPropertiesOption::class) { e -> "PROPERTIES (${expressions(e, flat = true)})" }
             reg(DorisRollupIndex::class) { e -> dg().dorisrollupindexSql(e as DorisRollupIndex) }
+            reg(DorisTemporaryPartition::class) { e -> "TEMPORARY ${sql(e, "this")}" }
             reg(DorisRefresh::class) { e -> dg().dorisrefreshSql(e as DorisRefresh) }
             // group B: DEFAULT / ON UPDATE keep CURRENT_TIMESTAMP[(n)] / CURRENT_DATE spelling
             reg(DefaultColumnConstraint::class) { e -> "DEFAULT ${dg().defaultValueSql(e.thisArg)}" }

@@ -590,6 +590,9 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
     range; sqlglot rendered every multi-value `PartitionRange` as one, turning a
     multi-column `LESS THAN ('2020-01-01', 100)` into `[('2020-01-01'), (100))`.
     The kind-less `PARTITION BY (cols)` path of #9 is unchanged.
+  - *Temporary-partition DML targets* — `INSERT INTO t TEMPORARY PARTITION (p, ...)
+    [(columns)] SELECT ...` keeps the ordinary `Partition` selection inside a
+    `DorisTemporaryPartition` wrapper and round-trips through `DorisGenerator`.
   - *`AUTO PARTITION BY RANGE|LIST (...) (...)`* → `AutoPartitionProperty(this =
     inner partition property)`; a bare `AUTO` not followed by `PARTITION BY` is given
     back to the property loop. Previously an opaque `Command`.

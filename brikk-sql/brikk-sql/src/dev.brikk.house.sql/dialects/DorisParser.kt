@@ -48,6 +48,7 @@ import dev.brikk.house.sql.ast.DorisRefresh
 import dev.brikk.house.sql.ast.DorisRename
 import dev.brikk.house.sql.ast.DorisReplacePartition
 import dev.brikk.house.sql.ast.DorisReplaceWith
+import dev.brikk.house.sql.ast.DorisTemporaryPartition
 import dev.brikk.house.sql.ast.DorisVariantField
 import dev.brikk.house.sql.ast.Tuple
 import dev.brikk.house.sql.ast.DorisAddColumn
@@ -167,6 +168,26 @@ open class DorisParser(
 
     // brikk-native (docs/brikk-extensions.md #19): MySQL's + BITMAP / HLL / QUANTILE_STATE.
     override val typeTokens: Set<TokenType> get() = DorisParserTables.TYPE_TOKENS
+
+    // brikk-native (docs/brikk-extensions.md #19): Doris INSERT targets may select a temporary partition:
+    // INSERT INTO t TEMPORARY PARTITION (p, ...) [(columns)] SELECT ...
+    override fun parseDmlTarget(
+        schema: kotlin.Boolean,
+        joins: kotlin.Boolean,
+        aliasTokens: Collection<TokenType>?,
+        parsePartition: kotlin.Boolean,
+    ): Expression? {
+        val target = super.parseDmlTarget(schema, joins, aliasTokens, parsePartition)
+        if (!parsePartition || !match(TokenType.TEMPORARY)) return target
+
+        val partition = parsePartition()
+            ?: raiseError("Expected PARTITION after TEMPORARY in Doris DML target")
+        target?.set(
+            "partition",
+            expression(DorisTemporaryPartition(args("this" to partition))),
+        )
+        return if (schema) parseSchema(target) else target
+    }
 
     // brikk-native (docs/brikk-extensions.md #19): MySQL's ALTER actions + Doris partition /
     // rollup / swap actions (each falls back to the MySQL parser when its keyword is absent).

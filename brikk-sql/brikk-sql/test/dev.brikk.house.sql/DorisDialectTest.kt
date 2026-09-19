@@ -10,6 +10,7 @@ import dev.brikk.house.sql.ast.DorisMaterializedViewJob
 import dev.brikk.house.sql.ast.DorisModifyPartition
 import dev.brikk.house.sql.ast.DorisRecover
 import dev.brikk.house.sql.ast.DorisRefresh
+import dev.brikk.house.sql.ast.DorisTemporaryPartition
 import dev.brikk.house.sql.ast.DorisVariantField
 import dev.brikk.house.sql.ast.Drop
 import dev.brikk.house.sql.ast.Refresh
@@ -21,6 +22,7 @@ import dev.brikk.house.sql.ast.Create
 import dev.brikk.house.sql.ast.DType
 import dev.brikk.house.sql.ast.DataType
 import dev.brikk.house.sql.ast.Expression
+import dev.brikk.house.sql.ast.Insert
 import dev.brikk.house.sql.ast.PartitionByListProperty
 import dev.brikk.house.sql.ast.PartitionByRangeProperty
 import dev.brikk.house.sql.ast.Schema
@@ -562,6 +564,19 @@ class DorisDialectTest {
         assertEquals(expected, rendered)
         assertEquals(expected, roundTrip(rendered), "unstable re-parse")
         return parsed as T
+    }
+
+    @Test
+    fun insertIntoTemporaryPartition() {
+        val sql = "INSERT INTO pm_swap_hourly TEMPORARY PARTITION(p_20240501_day) " +
+            "SELECT event_at, id, amount, note FROM pm_swap_hourly " +
+            "WHERE event_at >= '2024-05-01 00:00:00' AND event_at < '2024-05-02 00:00:00'"
+        val insert = assertStatementRoundTrip<Insert>(sql)
+        assertTrue(insert.find(DorisTemporaryPartition::class) != null)
+
+        assertStatementRoundTrip<Insert>(
+            "INSERT INTO t TEMPORARY PARTITION(p1) (a, b) SELECT a, b FROM source",
+        )
     }
 
     @Test
