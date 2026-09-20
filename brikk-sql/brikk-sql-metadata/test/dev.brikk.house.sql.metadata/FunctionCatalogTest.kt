@@ -29,7 +29,7 @@ class FunctionCatalogTest {
     @Test
     fun dorisCatalogLoadsWithExpectedSurface() {
         // Pinned to the reference/doris checkout the generator ran against.
-        assertEquals(728, DORIS_FUNCTION_CATALOG.size)
+        assertEquals(731, DORIS_FUNCTION_CATALOG.size)
         assertTrue("ABS" in DORIS_FUNCTION_CATALOG)
         // alias lookup (SUBSTR/SUBSTRING/MID registered on one def)
         val substr = DORIS_FUNCTION_CATALOG["substr"]
@@ -43,6 +43,26 @@ class FunctionCatalogTest {
         assertTrue(DORIS_FUNCTION_CATALOG.isTableFunction("numbers"))
         assertTrue(DORIS_FUNCTION_CATALOG.isTableFunction("explode"))
         assertTrue(!DORIS_FUNCTION_CATALOG.isTableFunction("abs"))
+    }
+
+    @Test
+    fun doris414AdditionsKeepTheirKindsSignaturesAndNullability() {
+        val parse = DORIS_FUNCTION_CATALOG["parse_to_variant"]!!
+        val tryParse = DORIS_FUNCTION_CATALOG["try_parse_to_variant"]!!
+        for (def in listOf(parse, tryParse)) {
+            assertEquals(FunctionKind.SCALAR, def.kind)
+            assertEquals(listOf(FunctionOverload(listOf("VARCHAR"), "VARIANT")), def.overloads)
+        }
+        assertEquals(NullPropagation.STRICT, parse.profile?.nullPropagation)
+        assertEquals(NullPropagation.ALWAYS_NULLABLE, tryParse.profile?.nullPropagation)
+        val vectorSearch = DORIS_FUNCTION_CATALOG["vector_search"]!!
+        assertEquals(FunctionKind.TABLE_VALUED, vectorSearch.kind)
+        assertTrue(vectorSearch.overloads.isEmpty(), "VectorSearch has a dynamic relation schema")
+        // The release supplement must not remove registrations from the base snapshot.
+        for (name in listOf("LEVENSHTEIN", "AVG_MAP", "BINLOG", "EMBED")) {
+            assertTrue(name in DORIS_FUNCTION_CATALOG, name)
+        }
+        assertTrue("DEFAULT" in DORIS_GRAMMAR_BUILTINS)
     }
 
     @Test
@@ -149,11 +169,11 @@ class FunctionCatalogTest {
 
     @Test
     fun dorisOverloadTotalsArePinned() {
-        // Static extraction coverage at the pinned checkout: 630 defs carry 1434
+        // Base snapshot plus release supplement: 632 defs carry 1436
         // overloads; the rest (dynamic getSignatures(): all table-valued functions,
         // rank-like window functions, ...) stay empty.
-        assertEquals(1434, DORIS_FUNCTION_CATALOG.functions.sumOf { it.overloads.size })
-        assertEquals(630, DORIS_FUNCTION_CATALOG.functions.count { it.overloads.isNotEmpty() })
+        assertEquals(1436, DORIS_FUNCTION_CATALOG.functions.sumOf { it.overloads.size })
+        assertEquals(632, DORIS_FUNCTION_CATALOG.functions.count { it.overloads.isNotEmpty() })
         // Dynamic-signature examples remain overload-free (names still resolvable).
         assertTrue(DORIS_FUNCTION_CATALOG["rank"]!!.overloads.isEmpty())
         assertTrue(DORIS_FUNCTION_CATALOG["numbers"]!!.overloads.isEmpty())
@@ -184,15 +204,15 @@ class FunctionCatalogTest {
 
     @Test
     fun dorisProfileCoverageIsPinned() {
-        // Per-mode def counts at the pinned checkout (728 defs total). A regeneration
+        // Base snapshot plus the pinned 4.1.4 supplement (731 defs total). A regeneration
         // against a new Doris pin is EXPECTED to move these — update deliberately.
         val byMode = DORIS_FUNCTION_CATALOG.functions.groupingBy { it.profile?.nullPropagation }.eachCount()
-        assertEquals(339, byMode[NullPropagation.STRICT])
-        assertEquals(152, byMode[NullPropagation.ALWAYS_NULLABLE])
+        assertEquals(340, byMode[NullPropagation.STRICT])
+        assertEquals(153, byMode[NullPropagation.ALWAYS_NULLABLE])
         assertEquals(116, byMode[NullPropagation.NEVER_NULL])
         assertEquals(68, byMode[NullPropagation.UNKNOWN]) // all custom nullable() overrides
-        assertEquals(53, byMode[null]) // no marker on the class (incl. all table kinds)
-        assertEquals(728, byMode.values.sum())
+        assertEquals(54, byMode[null]) // no marker on the class (incl. all table kinds)
+        assertEquals(731, byMode.values.sum())
         // Every emitted UNKNOWN carries its provenance note; no unmapped markers at the pin.
         assertTrue(
             DORIS_FUNCTION_CATALOG.functions
@@ -420,14 +440,14 @@ class FunctionCatalogTest {
     @Test
     fun dorisSinceVersionCoverageIsPinned() {
         // Coverage at the pinned doris-website clone SHA (vendor/README.md): 650 of
-        // 728 defs matched to a version tier; the rest have no doc anywhere at that
+        // 731 defs matched to a version tier; the rest have no doc anywhere at that
         // clone (mostly internal/legacy/undocumented functions) or are documented
         // only in the live/unreleased tree (not yet in a shipped version tier — see
         // extract_doris_since_versions.py). A regeneration against a newer clone is
         // EXPECTED to move this — update deliberately.
         val withVersion = DORIS_FUNCTION_CATALOG.functions.count { it.sinceVersion != null }
         assertEquals(650, withVersion)
-        assertEquals(728, DORIS_FUNCTION_CATALOG.size)
+        assertEquals(731, DORIS_FUNCTION_CATALOG.size)
     }
 
     @Test

@@ -20,4 +20,5 @@ val DORIS_GRAMMAR_BUILTINS: Set<String> = setOf(
     "EXTRACT",        // EXTRACT(unit FROM x) — unit keyword, standard-SQL grammar form
     "CAST",           // CAST(x AS type) — grammar form
     "CONVERT",        // CONVERT(x, type) / CONVERT(x USING charset) — MySQL-compat grammar form
+    "DEFAULT",        // DEFAULT(column) reads a write-schema default, not the column's row value
 )

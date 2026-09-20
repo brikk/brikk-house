@@ -2000,10 +2000,7 @@ open class Parser(
     // sqlglot: Parser._parse_value (the `values` flag is only consulted by dialect overrides)
     open fun parseValue(@Suppress("UNUSED_PARAMETER") values: kotlin.Boolean = true): Expression? {
         fun parseValueExpression(): Expression? {
-            if (supportsValuesDefault && match(TokenType.DEFAULT)) {
-                return Var(args("this" to prevToken.text.uppercase()))
-            }
-            return parseExpression()
+            return parseValuesDefault() ?: parseExpression()
         }
 
         if (match(TokenType.L_PAREN)) {
@@ -2019,6 +2016,13 @@ open class Parser(
         }
         return null
     }
+
+    // brikk-native (docs/brikk-extensions.md #19): dialect hook so Doris DEFAULT(column)
+    // reaches expression parsing without the VALUES parser consuming its DEFAULT token.
+    protected open fun parseValuesDefault(): Expression? =
+        if (supportsValuesDefault && match(TokenType.DEFAULT)) {
+            Var(args("this" to prevToken.text.uppercase()))
+        } else null
 
     // sqlglot: Parser._parse_wrapped_select
     protected fun parseWrappedSelect(table: kotlin.Boolean = false): Expression? {
@@ -5847,11 +5851,7 @@ open class Parser(
             fun parseSetAssignment(): Expression? {
                 val target = parseColumn()
                 if (target is Column && match(TokenType.EQ)) {
-                    val value = if (supportsValuesDefault && match(TokenType.DEFAULT)) {
-                        Var(args("this" to prevToken.text.uppercase()))
-                    } else {
-                        parseDisjunction()
-                    }
+                    val value = parseValuesDefault() ?: parseDisjunction()
                     if (value != null) {
                         (target.thisArg as? Expression)?.let { columns.add(it) }
                         values.add(value)

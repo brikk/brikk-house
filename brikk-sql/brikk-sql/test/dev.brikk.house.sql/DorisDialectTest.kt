@@ -124,9 +124,9 @@ class DorisDialectTest {
 
     @Test
     fun baseToDorisTypeMapping() {
-        // TEXT -> STRING and TIMESTAMPTZ -> DATETIME under Doris's TYPE_MAPPING
+        // TEXT -> STRING; timezone-aware timestamps retain their Doris 4.1 type.
         assertEquals(
-            "CREATE TABLE t (c STRING, d DATETIME)",
+            "CREATE TABLE t (c STRING, d TIMESTAMPTZ)",
             transpile("CREATE TABLE t (c TEXT, d TIMESTAMPTZ)", read = "", write = "doris"),
         )
     }

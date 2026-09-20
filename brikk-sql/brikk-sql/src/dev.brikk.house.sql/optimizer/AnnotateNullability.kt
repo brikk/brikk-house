@@ -2,6 +2,7 @@ package dev.brikk.house.sql.optimizer
 
 import dev.brikk.house.sql.ast.AggFunc
 import dev.brikk.house.sql.ast.Alias
+import dev.brikk.house.sql.ast.Anonymous
 import dev.brikk.house.sql.ast.Binary
 import dev.brikk.house.sql.ast.Case
 import dev.brikk.house.sql.ast.Cast
@@ -399,7 +400,10 @@ private class NullabilityAnnotator(
      *      UNKNOWN / none / no catalog -> unknown.
      */
     private fun functionNullability(node: Func): Boolean? {
-        val name = node.sqlName()
+        // Generic builtin calls retain their SQL name in Anonymous.name; sqlName()
+        // returns the node class name. A qualified call may be a schema-owned UDF.
+        if (node is Anonymous && node.parent is dev.brikk.house.sql.ast.Dot) return null
+        val name = if (node is Anonymous) node.name else node.sqlName()
         val catalog = dialect.functionCatalog
         val def = catalog?.get(name)
 
@@ -413,7 +417,9 @@ private class NullabilityAnnotator(
 
         val propagation = def?.profile?.nullPropagation ?: return null
         return when (propagation) {
-            NullPropagation.STRICT -> operatorRule(operands(node as Expression))
+            NullPropagation.STRICT -> operatorRule(
+                if (node is Anonymous) node.expressionsArg.filterIsInstance<Expression>() else operands(node as Expression)
+            )
             NullPropagation.ALWAYS_NULLABLE -> true
             NullPropagation.NEVER_NULL -> false
             NullPropagation.SKIPS_NULLS -> null

@@ -1,0 +1,49 @@
+{
+ "doris_version": "ad35a140c7fd0b842f18c23300bac581f7d04326",
+ "classes": {
+  "ParseToVariant": {
+   "kind": "SCALAR",
+   "names": [
+    "PARSE_TO_VARIANT"
+   ],
+   "signatures": [
+    {
+     "return": "VARIANT",
+     "args": [
+      "VARCHAR"
+     ],
+     "variadic": false
+    }
+   ],
+   "unparsed": [],
+   "nullable_mode": "PropagateNullable"
+  },
+  "TryParseToVariant": {
+   "kind": "SCALAR",
+   "names": [
+    "TRY_PARSE_TO_VARIANT"
+   ],
+   "signatures": [
+    {
+     "return": "VARIANT",
+     "args": [
+      "VARCHAR"
+     ],
+     "variadic": false
+    }
+   ],
+   "unparsed": [],
+   "nullable_mode": "AlwaysNullable"
+  },
+  "VectorSearch": {
+   "kind": "TABLE_VALUED",
+   "names": [
+    "VECTOR_SEARCH"
+   ],
+   "signatures": [],
+   "unparsed": [],
+   "nullable_mode": null
+  }
+ },
+ "source_sha": "ad35a140c7fd0b842f18c23300bac581f7d04326"
+}

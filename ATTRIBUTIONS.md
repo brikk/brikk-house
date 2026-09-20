@@ -47,11 +47,14 @@ https://github.com/apache/doris-website, both Apache License 2.0:
 
 - `vendor/lib/doris-fe-sql-parser-*.jar` — a locally-built snapshot of Doris's standalone
   `fe-sql-parser` module (pre-release; see vendor/README.md for provenance and refresh
-  procedure). Vendored in coordination with the doris-intellij-plugin project.
+  procedure). The current artifact combines the exact 4.1.4 release grammar with
+  the upstream standalone parser facade; both source pins are in `vendor/README.md`.
 - `brikk-sql-metadata/.../GeneratedDorisFunctionCatalog.kt` — function names/aliases/kinds
   extracted from Doris's runtime function registry
   (`fe/fe-core/.../catalog/Builtin*Functions.java`) by `tools/generate_doris_functions.py`
-  (adapted from the doris-intellij-plugin extraction script).
+  (adapted from the doris-intellij-plugin extraction script). Includes the separately
+  pinned `vendor/data/doris-4.1.4-additions.json` release-branch supplement, generated
+  by `tools/extract_doris_signatures.py`.
 - `vendor/data/doris-since-versions.json` — per-function "first documented in" version,
   extracted from `apache/doris-website`'s function docs
   (`docs/sql-manual/sql-functions/`, `versioned_docs/version-*/sql-manual/sql-functions/`)

@@ -688,7 +688,18 @@ class TypeAnnotator(
                 annotateByArgs(e, branchArgs)
             }
             is AnnotatorRef.ByArrayElement -> annotateByArrayElement(e)
-            is AnnotatorRef.UdfType -> setType(e, schema.getUdfType(e))
+            is AnnotatorRef.UdfType -> {
+                // brikk-native (docs/brikk-extensions.md #19): these Doris 4.1.4
+                // builtins use generic call nodes but have a fixed VARIANT return type.
+                // Qualified calls may be UDFs and must continue through the schema.
+                if (dialect.name == "doris" && e is Anonymous && e.parent !is dev.brikk.house.sql.ast.Dot &&
+                    e.expressionsArg.size == 1 && e.name.uppercase() in setOf("PARSE_TO_VARIANT", "TRY_PARSE_TO_VARIANT")
+                ) {
+                    setType(e, DType.VARIANT)
+                } else {
+                    setType(e, schema.getUdfType(e))
+                }
+            }
             is AnnotatorRef.TimeUnitCoercion -> annotateTimeunit(e)
             is AnnotatorRef.SetTypeFromArg -> setType(e, e.args[ref.key])
             is AnnotatorRef.MapAnn -> annotateMap(e)

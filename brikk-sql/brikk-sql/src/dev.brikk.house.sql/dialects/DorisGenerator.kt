@@ -954,7 +954,8 @@ open class DorisGenerator(
         val TYPE_MAPPING: Map<DType, String> = MysqlGenerator.TYPE_MAPPING + mapOf(
             DType.TEXT to "STRING",
             DType.TIMESTAMP to "DATETIME",
-            DType.TIMESTAMPTZ to "DATETIME",
+            // brikk-native (docs/brikk-extensions.md #19): Doris 4.1 preserves timezone-aware types.
+            DType.TIMESTAMPTZ to "TIMESTAMPTZ",
             // brikk-native (docs/brikk-extensions.md #19): StarRocks' mapping, never propagated
             // to Doris upstream; sqlglot emits INT128, which the Doris FE rejects.
             DType.INT128 to "LARGEINT",
@@ -1232,14 +1233,8 @@ open class DorisGenerator(
             // emits GENERATE_SERIES, which Doris does not have.
             reg(GenerateSeries::class) { e -> dg().dorisGenerateSeriesSql(e as GenerateSeries) }
 
-            // BUGS-doris-generator-mappings row 9 (P3): trino from_iso8601_timestamp_nanos(s)
-            // parses to FromISO8601TimestampNanos, whose base rendering is CAST(s AS
-            // TIMESTAMPTZ) -> Doris CAST(s AS DATETIME), which drops ALL fractional seconds.
-            // Doris DATETIME(6) keeps microseconds (its max sub-second precision), so cast
-            // to DATETIME(6) to retain as much as Doris can represent. LOSSY: the Trino
-            // source keeps NANOseconds (9 digits); Doris DATETIME tops out at microseconds
-            // (6 digits), so the final 3 digits of nanosecond precision are unrepresentable
-            // and silently dropped.
+            // brikk-native (docs/brikk-extensions.md #19): retain timezone awareness and
+            // microseconds. Doris cannot represent the source's nanosecond precision.
             reg(FromISO8601TimestampNanos::class) { e ->
                 sql(
                     Cast(
@@ -1247,7 +1242,7 @@ open class DorisGenerator(
                             "this" to e.thisArg,
                             "to" to DataType(
                                 args(
-                                    "this" to DType.DATETIME,
+                                    "this" to DType.TIMESTAMPTZ,
                                     "expressions" to listOf(
                                         DataTypeParam(args("this" to Literal.number("6")))
                                     ),
@@ -1306,6 +1301,12 @@ open class DorisGenerator(
                 "CANCEL MATERIALIZED VIEW TASK ${sql(e, "this")} ON ${sql(e, "table")}"
             }
             reg(DorisRecover::class) { e -> dg().dorisrecoverSql(e as DorisRecover) }
+            reg(DorisDefault::class) { e -> "DEFAULT(${sql(e, "this")})" }
+            reg(DorisCompactTablet::class) { e -> "ADMIN COMPACT TABLET ${sql(e, "this")} WHERE TYPE = ${sql(e, "kind")}" }
+            reg(DorisModifyColumn::class) { e ->
+                val from = sql(e, "from_index").let { if (it.isEmpty()) "" else " FROM $it" }
+                "${sql(e, "this")}$from${dg().propertiesClause(e)}"
+            }
         }
 
         // sqlglot: DorisGenerator.RESERVED_KEYWORDS

@@ -77,6 +77,7 @@ class DorisDialect : Dialect() {
                 // VIEW` hard-fails. The COMMAND words make their statements parse to an
                 // opaque Command (text preserved) instead of "Invalid expression" errors.
                 "REFRESH" to TokenType.REFRESH,
+                "ADMIN" to TokenType.COMMAND,
                 "BUILD" to TokenType.COMMAND,
                 "CANCEL" to TokenType.COMMAND,
                 "PAUSE" to TokenType.COMMAND,

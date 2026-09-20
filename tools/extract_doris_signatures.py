@@ -427,13 +427,25 @@ def extract_class(
 
 
 def main() -> None:
-    doris_root = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "reference" / "doris"
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("doris_root", type=pathlib.Path, nargs="?", default=ROOT / "reference" / "doris")
+    parser.add_argument("--classes", nargs="+", help="Extract only these registered function classes")
+    parser.add_argument("--output", type=pathlib.Path, default=OUT)
+    options = parser.parse_args()
+    doris_root = options.doris_root
     functions_dir = doris_root / FUNCTIONS_REL
     registry_dir = doris_root / REGISTRY_REL
     if not functions_dir.is_dir():
         sys.exit(f"error: {functions_dir} not found — pass a Doris checkout root")
 
     registry = parse_registry(registry_dir)
+    if options.classes:
+        missing = set(options.classes) - registry.keys()
+        if missing:
+            sys.exit(f"error: unregistered classes: {sorted(missing)}")
+        registry = {cls: registry[cls] for cls in options.classes}
 
     # Index function class sources by simple name (verified unique across subdirs).
     # Also index the parent expressions/ dir non-recursively: a few registered scalar
@@ -476,12 +488,20 @@ def main() -> None:
             "nullable_mode": nullable_mode,
         }
 
+    if options.classes and n_missing:
+        sys.exit("error: missing sources for requested classes")
     out = {"doris_version": doris_version(doris_root), "classes": classes}
-    OUT.write_text(json.dumps(out, indent=1, sort_keys=False) + "\n")
+    if options.classes:
+        out["source_sha"] = subprocess.check_output(
+            ["git", "-C", str(doris_root), "rev-parse", "HEAD"], text=True,
+        ).strip()
+        # A supplement must reproduce regardless of which tags exist in the checkout.
+        out["doris_version"] = out["source_sha"]
+    options.output.write_text(json.dumps(out, indent=1, sort_keys=False) + "\n")
 
     parsed_pct = 100.0 * total_sigs / (total_sigs + total_unparsed) if total_sigs + total_unparsed else 0.0
     n_classes = len(classes)
-    print(f"wrote {OUT} (doris {out['doris_version']})")
+    print(f"wrote {options.output} (doris {out['doris_version']})")
     print(f"classes: {n_classes} registered ({n_missing} missing sources)")
     print(f"  fully parsed: {n_full}  partial: {n_partial}  no static SIGNATURES: {n_empty}")
     print(f"signatures: {total_sigs} parsed, {total_unparsed} unparsed "

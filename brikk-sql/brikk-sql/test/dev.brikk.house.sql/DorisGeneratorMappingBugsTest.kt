@@ -97,14 +97,14 @@ class DorisGeneratorMappingBugsTest {
     }
 
     @Test
-    fun p3_fromIso8601TimestampNanos_datetime6() {
-        // Lossy: Doris DATETIME tops out at microseconds; nanoseconds are unrepresentable.
+    fun p3_fromIso8601TimestampNanos_timestampTz6() {
+        // Retains timezone awareness; nanosecond precision still exceeds Doris's microseconds.
         assertEquals(
-            "SELECT CAST(s AS DATETIME(6))",
+            "SELECT CAST(s AS TIMESTAMPTZ(6))",
             doris("SELECT from_iso8601_timestamp_nanos(s)", "trino"),
         )
         // BEHAVIOR CHANGE (certify policy #2, 2026-07-13): the `from_iso8601_timestamp_nanos
-        // -> CAST(... AS DATETIME(6))` hazard is honestly DIVERGENT (LOSSY — nanosecond
+        // -> CAST(... AS TIMESTAMPTZ(6))` hazard is honestly DIVERGENT (LOSSY — nanosecond
         // precision dropped), and the mapping is a TRANSLATED function: Doris has a
         // dedicated (Cast) renderer for the node. Under policy #2 a divergent-but-
         // translated function is a NON-BLOCKING WARNING, not a refusal — the lossy cast is

@@ -669,6 +669,15 @@ round-trips, and every rendering is accepted by the real Doris FE parser.
     `parseIndexConstraintOption`, `parseRollupProperty`, `DorisParserTables`).
     Generator: `dialects/DorisGenerator.kt` TRANSFORMS / PROPERTIES_LOCATION /
     `dorisrollupindexSql`.
+  - Doris 4.1.4: `DEFAULT(qualifiedName)` uses `DorisDefault`, whose identifier path
+    denotes a write-schema default rather than input-row lineage. Single-column
+    ALTER ADD/MODIFY retains nested field paths, quoting, nullability, comments, and
+    position. Nested defaults and ON UPDATE remain grammar-invalid. Tablet compaction
+    uses `DorisCompactTablet`; SHOW COMPUTE GROUPS uses Show. TIMESTAMPTZ now stays
+    TIMESTAMPTZ during generation, including the microsecond ISO timestamp conversion.
+    The two Variant parsing functions infer VARIANT and use their catalog nullability.
+    Tests: `Doris414Test`, `Doris414GrammarTest`, and `FunctionCatalogTest`.
+    Native verification uses the exact release grammar; see `vendor/README.md`.
 - **Tests:** `DorisDialectTest` (DDL section: each clause + realistic `SHOW CREATE TABLE`
   statements incl. a MoW unique-key table with `ORDER BY`, typed VARIANTs and a function
   RANGE partition, all asserted as `Create` with a stable re-parse; statement section:

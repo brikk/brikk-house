@@ -318,6 +318,37 @@ class DorisRecover(initArgs: Args = emptyMap()) : Expression(initArgs) {
     }
 }
 
+/**
+ * `DEFAULT(column.path)` reads a target column's write default, not its row value.
+ * `this` is an Identifier or Dot of identifiers, deliberately not a Column: source
+ * qualification and lineage must not treat the argument as an input-row dependency.
+ */
+class DorisDefault(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true)
+    }
+}
+
+/** `ADMIN COMPACT TABLET id WHERE TYPE = 'BASE|CUMULATIVE|FULL'`. */
+class DorisCompactTablet(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "kind" to true)
+    }
+}
+
+/** A MODIFY COLUMN action with a trailing rollup target or properties. */
+class DorisModifyColumn(initArgs: Args = emptyMap()) : Expression(initArgs) {
+    override val argTypes get() = ARG_TYPES
+
+    companion object {
+        private val ARG_TYPES = argTypesOf("this" to true, "from_index" to false, "properties" to false)
+    }
+}
+
 internal fun registerNativeDorisNodes(
     entries: kotlin.collections.MutableMap<String, ExpressionRegistry.Entry>,
 ) {
@@ -348,4 +379,7 @@ internal fun registerNativeDorisNodes(
     entries["DorisMaterializedViewJob"] = ExpressionRegistry.Entry(module) { DorisMaterializedViewJob() }
     entries["DorisCancelMaterializedViewTask"] = ExpressionRegistry.Entry(module) { DorisCancelMaterializedViewTask() }
     entries["DorisRecover"] = ExpressionRegistry.Entry(module) { DorisRecover() }
+    entries["DorisDefault"] = ExpressionRegistry.Entry(module) { DorisDefault() }
+    entries["DorisCompactTablet"] = ExpressionRegistry.Entry(module) { DorisCompactTablet() }
+    entries["DorisModifyColumn"] = ExpressionRegistry.Entry(module) { DorisModifyColumn() }
 }

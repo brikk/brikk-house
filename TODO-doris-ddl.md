@@ -20,6 +20,9 @@
 Run: `./kotlin test -m brikk-sql --include-classes='dev.brikk.house.sql.DorisDialectTest'`
 and `./kotlin test -m brikk-sql-verify --include-classes='dev.brikk.house.sql.verify.SqlVerifierTest'`.
 
+Release follow-up: [Doris 4.1.4 SQL review](docs/research/doris-4.1.4-sql-gaps.md)
+records the PR sources and original gaps addressed by the 4.1.4 support below.
+
 ---
 
 ## A. `SHOW CREATE TABLE` output that still fails to parse (blockers)
@@ -47,6 +50,12 @@ Not a bug (checked against the FE grammar): a sync materialized view takes `PROP
 *before* `AS SELECT`, which sqlglot already parses; the trailing form is rejected by the FE.
 
 ## Done
+
+- Sep 2026 (4.1.4): nested-column ADD/MODIFY, DEFAULT(column), ADMIN COMPACT TABLET,
+  structured SHOW COMPUTE GROUPS, and timezone-aware TIMESTAMPTZ generation.
+  Added PARSE_TO_VARIANT, TRY_PARSE_TO_VARIANT, and VECTOR_SEARCH catalog entries.
+  Native parser refreshed to exact 4.1.4 grammar. Tests: `Doris414Test`,
+  `Doris414GrammarTest`, `FunctionCatalogTest`.
 
 - Sep 2026 (rest): group B renderings (`KEY`, `STRUCT<x:INT>`, `DEFAULT CURRENT_TIMESTAMP[(n)]`
   / `ON UPDATE` / `CURRENT_DATE`, `AS (expr)`, `AUTO_INCREMENT(n)`, `SHOW CREATE .. db.t`,
