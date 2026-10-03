@@ -5,7 +5,7 @@ SQL pipelines. Generic parsing, SQL analysis, and lowering live in
 [brikk-sql](https://github.com/brikk/brikk-sql); embedded ClickHouse bindings live in
 [brikk-chdb](https://github.com/brikk/brikk-chdb).
 
-Engine consumes the published `dev.brikk.house:brikk-sql-jvm:0.16.0` release;
+Engine consumes the published `dev.brikk.house:brikk-sql-jvm:0.17.0` release;
 neither external repository is required in a clean Engine checkout. Keep the SQL
 dependency version aligned across the runtime, compiler-plugin, and tooling modules.
 
@@ -38,17 +38,29 @@ source as possible. Important hints, comments, and statement semantics matter.
 Cross-dialect changes must be requested explicitly. Parsing for checks is not
 permission to regenerate, optimize, or canonicalize unchanged SQL.
 
-This policy is not yet implemented end-to-end. [Rel.render()](brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/Rel.kt)
-preserves standalone same-dialect native queries when no binding-name rewrite is
-needed. This includes their parameter spelling, whitespace, and comments. The
-compiler no longer applies an unrequested outer trim. Composed queries, pipes,
-and explicit dialect translation still use generation; source preservation for
-those paths remains work. Driver placeholder adaptation is separate, and binding
+Source-preserving rendering has explicit supported/refused boundaries, rather
+than a blanket guarantee for every SQL form. [Rel.render()](brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/Rel.kt)
+preserves native same-dialect stages, standalone or composed: only bound slot
+names, colliding binding names and embedded statement terminators are edited.
+Their parameter style, whitespace, comments, hints and native syntax stay intact.
+The compiler no longer applies an unrequested outer trim. Pipes (including nested
+pipes) and FROM-first normalization use SQL 0.17's `toSourcePreservingExecutable`;
+the SQL library reuses proved native intervals and reports structural regeneration.
+Explicit cross-dialect translation still regenerates the affected stages using
+their own source dialect context. Unsafe preservation (for example, moving
+ClickHouse `SETTINGS` across a pipe boundary) refuses rather than silently
+falling back. See the [SQL-05 handoff](../docs/HANDOFF-SQL-05-source-preserving-lowering.md).
+Driver placeholder adaptation is separate, and binding
 keys must come from `bindings()` rather than being guessed from parameter names.
 AST round-trip equality does not prove text preservation. Check
 source/output diffs alongside result-equivalence tests for each required lowering.
 Pipe lowering is the largest risk; fix failures in `brikk-sql` with regressions,
 not permanent copied handwritten SQL in consumers.
+
+Call `Rel.renderWithDiagnostics()` to inspect the SQL and every stage's
+regeneration diagnostics/unsupported messages. Diagnostic ranges refer to that
+stage's `sourceSql` **after** Engine's slot/binding edits, not the final composed
+SQL. No stale or approximate source map is exposed as an exact composed map.
 
 ## Local development
 

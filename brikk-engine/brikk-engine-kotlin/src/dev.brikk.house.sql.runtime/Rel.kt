@@ -1,18 +1,27 @@
 package dev.brikk.house.sql.runtime
 
-import dev.brikk.house.sql.ast.Anonymous
-import dev.brikk.house.sql.ast.Expression
 import dev.brikk.house.sql.ast.Identifier
-import dev.brikk.house.sql.ast.Parameter
-import dev.brikk.house.sql.ast.PipeQuery
-import dev.brikk.house.sql.ast.Placeholder
-import dev.brikk.house.sql.ast.Table
-import dev.brikk.house.sql.ast.TableAlias
-import dev.brikk.house.sql.ast.args
-import dev.brikk.house.sql.ast.desugarPipes
-import dev.brikk.house.sql.ast.toIdentifier
 import dev.brikk.house.sql.dialects.Dialects
+import dev.brikk.house.sql.shape.PreservationDiagnostic
 import dev.brikk.house.sql.shape.SqlFragment
+import dev.brikk.house.sql.shape.toSourcePreservingExecutable
+
+/** Executable SQL plus per-stage reports of portions that needed regeneration. */
+data class RelRenderResult(val sql: String, val stages: List<RelRenderStage>)
+
+/**
+ * A report for one upstream stage. [name] is its composed CTE name (null for a standalone
+ * stage). Diagnostic ranges index [sourceSql], after Engine's slot/binding-name edits,
+ * not the final composed SQL. No approximate map is presented as an exact output map.
+ */
+data class RelRenderStage(
+    val name: String?,
+    val sourceSql: String,
+    val sourceDialect: String,
+    val targetDialect: String,
+    val diagnostics: List<PreservationDiagnostic>,
+    val unsupportedMessages: List<String>,
+)
 
 /**
  * A relation-valued pipeline node: one SQL fragment plus its table inputs and scalar
@@ -80,23 +89,39 @@ class Rel<out T : Partial>(
     /**
      * Renders the pipeline as a single standard-SQL statement:
      * `WITH s0 AS (...), s1 AS (...) SELECT * FROM sN`, where each stage's slot references
-     * are rewired to the CTE of the input feeding them. A single native stage in the
-     * same dialect preserves its text unless binding-name collisions require rewriting.
+     * are rewired to the CTE of the input feeding them. Native stages already in the
+     * target dialect preserve their text; only slot names, colliding binding names and
+     * embedded statement terminators are edited. Pipes and FROM-first normalization
+     * use SQL-library source-preserving lowering; explicit translation regenerates
+     * only the stages that need a dialect change. Use [renderWithDiagnostics] to inspect
+     * which portions needed structural regeneration and any unsupported warnings.
      * Driver-specific placeholder adaptation is separate from this SQL representation.
      */
-    fun render(target: String = dialect): String {
+    fun render(target: String = dialect): String = renderWithDiagnostics(target).sql
+
+    /** [render] with the SQL library's regeneration/unsupported reports for every stage. */
+    fun renderWithDiagnostics(target: String = dialect): RelRenderResult {
         val order = topologicalOrder()
         val bindings = bindingNames(order)
         val fragments = order.associateWith { SqlFragment(it.sql, it.dialect) }
-        val gen = Dialects.forName(target)
-        if (order.size == 1 && gen.name == Dialects.forName(dialect).name &&
-            fragments.getValue(this).ast.find(PipeQuery::class) == null &&
-            (gen.name == "duckdb" || !fragments.getValue(this).hasFromFirstQuery) &&
-            bindings.getValue(this).all { (original, rendered) -> original == rendered }
-        ) return sql
+        val targetDialect = Dialects.forName(target).name
+        val reports = mutableListOf<RelRenderStage>()
+        fun renderStage(node: Rel<*>, name: String?, slots: Map<String, String>): String {
+            val source = fragments.getValue(node).rewriteInputs(slots, bindings.getValue(node), target)
+            val result = SqlFragment(source, node.dialect).toSourcePreservingExecutable(target)
+            reports += RelRenderStage(
+                name, source, Dialects.forName(node.dialect).name, targetDialect,
+                result.diagnostics, result.unsupportedMessages,
+            )
+            return if (name == null) result.sql else embedQuery(result.sql, target)
+        }
 
-        val trees = fragments.mapValues { (_, fragment) -> desugarPipes(fragment.ast, copy = true) }
-        val reserved = trees.values.flatMap { it.findAll(Identifier::class).map { id -> id.name.lowercase() } }.toMutableSet()
+        if (order.size == 1) {
+            return RelRenderResult(renderStage(this, null, emptyMap()), reports.toList())
+        }
+        val reserved = fragments.values.flatMap {
+            it.ast.findAll(Identifier::class).map { id -> id.name.lowercase() }
+        }.toMutableSet()
         val names = HashMap<Rel<*>, String>()
         var next = 0
         for (node in order) {
@@ -105,42 +130,14 @@ class Rel<out T : Partial>(
             names[node] = name
         }
 
-        if (order.size == 1) {
-            return gen.generate(standardTree(trees.getValue(this), emptyMap(), bindings.getValue(this)), sourceDialect = dialect)
-        }
-
         val ctes = order.map { node ->
             val slotToCte = node.inputSlots.mapValues { (_, rel) -> names.getValue(rel) }
-            val tree = node.standardTree(trees.getValue(node), slotToCte, bindings.getValue(node))
-            "${names.getValue(node)} AS (${gen.generate(tree, sourceDialect = node.dialect)})"
+            val rendered = renderStage(node, names.getValue(node), slotToCte)
+            "${names.getValue(node)} AS ($rendered)"
         }
-        return "WITH ${ctes.joinToString(", ")} SELECT * FROM ${names.getValue(order.last())}"
-    }
-
-    /** Desugared (non-pipe) AST with slot calls replaced by plain table references. */
-    private fun standardTree(tree: Expression, slotToCte: Map<String, String>, bindNames: Map<String, String>): Expression {
-        val byUpper = slotToCte.mapKeys { it.key.uppercase() }
-        tree.transform(copy = false) { node ->
-            if (node is Table) {
-                val fn = node.thisArg as? Anonymous
-                val cte = fn?.name?.uppercase()?.let { byUpper[it] }
-                if (cte != null) {
-                    if (node.args["alias"] == null) {
-                        val alias = (fn.thisArg as? Identifier)?.copy()
-                            ?: Identifier(args("this" to fn.name, "quoted" to false))
-                        node.set("alias", TableAlias(args("this" to alias)))
-                    }
-                    node.set("this", Identifier(args("this" to cte, "quoted" to false)))
-                }
-            } else if (node is Placeholder || node is Parameter) {
-                val name = bindNames[node.name]
-                if (name != null && name != node.name) {
-                    node.set("this", if (node is Parameter) toIdentifier(name) else name)
-                }
-            }
-            node
-        }
-        return tree
+        return RelRenderResult(
+            "WITH ${ctes.joinToString(", ")} SELECT * FROM ${names.getValue(order.last())}", reports.toList(),
+        )
     }
 
     private fun topologicalOrder(): List<Rel<*>> {

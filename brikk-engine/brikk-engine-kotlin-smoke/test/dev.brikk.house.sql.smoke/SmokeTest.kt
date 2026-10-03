@@ -1,6 +1,9 @@
 package dev.brikk.house.sql.smoke
 
+import dev.brikk.house.sql.ast.CTE
+import dev.brikk.house.sql.ast.With
 import dev.brikk.house.sql.runtime.Rel
+import dev.brikk.house.sql.shape.SqlFragment
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -16,7 +19,10 @@ class SmokeTest {
         val report: Rel<LoginDailyOut> = report(Instant.EPOCH, Instant.now())
         val sql = report.render()
         // Three stages -> CTE chain s0 (catalog source), s1 (extract), s2 (aggregate).
-        assertTrue(sql.startsWith("WITH s0 AS (SELECT * FROM "), sql)
+        val fragment = SqlFragment(sql, report.dialect)
+        val with = fragment.ast.args["with_"] as With
+        assertEquals(listOf("s0", "s1", "s2"), with.expressionsArg.filterIsInstance<CTE>().map { it.alias })
+        assertContains(sql, "SELECT * FROM ")
         assertContains(sql, "s1 AS (")
         assertContains(sql, "s2 AS (")
         assertContains(sql, "FROM s0")

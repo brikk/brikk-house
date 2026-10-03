@@ -33,7 +33,7 @@ are unchanged. Engine modules are not published to Maven Central.
 
 ## Dependencies
 
-Engine consumes `dev.brikk.house:brikk-sql-jvm:0.16.0` from Maven Central.
+Engine consumes `dev.brikk.house:brikk-sql-jvm:0.17.0` from Maven Central.
 No sibling SQL/chDB checkout, Maven Local installation, credentials, or `.env`
 is needed for public Engine builds. Keep the SQL version aligned in the runtime,
 compiler-plugin, and tooling module configurations when upgrading.
@@ -79,9 +79,13 @@ Unchanged same-dialect native queries must run as written. Bindings, relation
 slots, pipe lowering, and explicit transpilation permit only their necessary
 changes. Preserve important hints, comments, and statement semantics.
 
-`Rel.render()` preserves standalone same-dialect native SQL when no binding-name
-rewrite is needed. Composed queries, pipes, and explicit translation still use
-generation; source preservation through those changes remains work. Check output
+`Rel.render()` preserves native same-dialect stages even in composition, editing
+only bound slots, colliding binding names and embedded terminators. Pipes and
+FROM-first normalization use SQL 0.17's source-preserving executable API;
+explicit cross-dialect translation remains source-aware. `renderWithDiagnostics()`
+reports any portions that needed regeneration and unsupported warnings per stage.
+The [SQL-05 handoff](docs/HANDOFF-SQL-05-source-preserving-lowering.md) records the
+ownership and acceptance contract. Check output
 diffs alongside semantic tests. Fix lowering failures in `brikk-sql`, rather than
 keeping permanent handwritten SQL copies in consumers.
 

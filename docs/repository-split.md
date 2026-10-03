@@ -25,6 +25,11 @@ Windows wrappers. Kotlin/compiler API versions remain **2.4.10**.
 
 ## Cross-repository dependencies
 
+The versions below record the extraction baseline. Engine has since upgraded
+its three SQL consumers to **0.17.0** from Maven Central; see the
+[current Engine README](../README.md#dependencies) and
+[ENG-01 acceptance record](HANDOFF-SQL-05-source-preserving-lowering.md).
+
 - Engine runtime, compiler plugin, and tooling consume
   `dev.brikk.house:brikk-sql-jvm:0.16.0` from Maven Central.
 - SQL's heavyweight oracle consumes `dev.brikk.house:brikk-chdb:0.16.0`.

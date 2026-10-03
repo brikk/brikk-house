@@ -64,15 +64,15 @@ class RelTest {
     fun singleStageRenderingPreservesSourceDialectContext() {
         assertEquals("SELECT lowerUTF8(x) AS x FROM t",
             Rel<Partial>("SELECT LOWER(x) AS x FROM t", "duckdb").render("clickhouse"))
-        assertEquals("WITH __tmp1 AS (SELECT lower(x) AS x FROM t) SELECT * FROM __tmp1",
+        assertEquals("WITH __tmp1 AS (SELECT LOWER(x) AS x FROM t ) SELECT * FROM __tmp1",
             Rel<Partial>("FROM t |> SELECT LOWER(x) AS x", "clickhouse").render())
     }
 
     @Test
     fun mixedChainsUseEachNodesDialectRatherThanTheRootDialect() {
         for ((sourceDialect, rootDialect, first, second) in listOf(
-            listOf("duckdb", "clickhouse", "lowerUTF8", "lower"),
-            listOf("clickhouse", "duckdb", "lower", "lowerUTF8"),
+            listOf("duckdb", "clickhouse", "lowerUTF8", "LOWER"),
+            listOf("clickhouse", "duckdb", "LOWER", "lowerUTF8"),
         )) {
             val source = Rel<Partial>("SELECT LOWER(x) AS x FROM t", sourceDialect)
             val root = Rel<Partial>("SELECT LOWER(x) AS x FROM src()", rootDialect).input("src", source)
@@ -85,11 +85,11 @@ class RelTest {
     fun runtimeAlsoAppliesSourceSpecificWeekAndRoundingRules() {
         assertEquals("SELECT toISOWeek(d) AS w FROM t",
             Rel<Partial>("SELECT WEEK(d) AS w FROM t", "duckdb").render("clickhouse"))
-        assertEquals("WITH __tmp1 AS (SELECT week(d) AS w FROM t) SELECT * FROM __tmp1",
+        assertEquals("WITH __tmp1 AS (SELECT WEEK(d) AS w FROM t ) SELECT * FROM __tmp1",
             Rel<Partial>("FROM t |> SELECT WEEK(d) AS w", "clickhouse").render())
         assertEquals("SELECT sign(x) * floor(abs(x) * pow(10, 0) + 0.5) / pow(10, 0) AS n FROM t",
             Rel<Partial>("SELECT ROUND(x) AS n FROM t", "duckdb").render("clickhouse"))
-        assertEquals("WITH __tmp1 AS (SELECT ROUND(x) AS n FROM t) SELECT * FROM __tmp1",
+        assertEquals("WITH __tmp1 AS (SELECT ROUND(x) AS n FROM t ) SELECT * FROM __tmp1",
             Rel<Partial>("FROM t |> SELECT ROUND(x) AS n", "clickhouse").render())
     }
 
@@ -97,7 +97,7 @@ class RelTest {
     fun singleStageRendersDirectly() {
         val src = Rel<Partial>("FROM public.events |> WHERE event_at >= :start", "postgres").bind("start", 1)
         val sql = src.render()
-        assertEquals("SELECT * FROM public.events WHERE event_at >= %(start)s", sql)
+        assertEquals("SELECT * FROM public.events  WHERE event_at >= :start", sql)
         assertEquals(mapOf("start" to 1), src.bindings())
     }
 
@@ -114,7 +114,7 @@ class RelTest {
         ).input("events", ext)
 
         val sql = agg.render()
-        assertTrue(sql.startsWith("WITH s0 AS (SELECT * FROM public.events WHERE event_at >= %(start)s), s1 AS ("), sql)
+        assertTrue(sql.startsWith("WITH s0 AS (SELECT * FROM public.events  WHERE event_at >= :start), s1 AS ("), sql)
         assertTrue(sql.contains("FROM s0"), sql)
         assertTrue(sql.contains("FROM s1"), sql)
         assertTrue(sql.endsWith(" SELECT * FROM s2"), sql)
@@ -244,6 +244,160 @@ class RelTest {
         cyclic.input("src", cyclic)
         assertEquals("Cyclic Rel inputs", assertFailsWith<IllegalArgumentException> { cyclic.render() }.message)
         assertFailsWith<IllegalArgumentException> { cyclic.bindings() }
+    }
+
+    @Test
+    fun nativeCompositionEditsOnlySlotsAndRequiredTerminators() {
+        val sourceSql = "\n-- head\nselect /* source */ 5::integer as id; -- source end"
+        val rootSql = "\tselect /* root */ src.id::integer as id from src(/* inside */); -- root end"
+        val source = Rel<Partial>(sourceSql, "postgres")
+        val root = Rel<Partial>(rootSql, "postgres").input("src", source)
+        assertEquals(
+            "WITH s0 AS (\n-- head\nselect /* source */ 5::integer as id -- source end\n), " +
+                "s1 AS (\tselect /* root */ src.id::integer as id from s0/* inside */ AS src -- root end\n) SELECT * FROM s1",
+            root.render(),
+        )
+        assertEquals(5, scalar(root))
+    }
+
+    @Test
+    fun nativeBindingCollisionsRetainMarkerStyleCastsAndCommentText() {
+        val source = Rel<Partial>("select :n::int as x /* :n */;", "postgres").bind("n", 2)
+        val root = Rel<Partial>(
+            "select src.x + %(n)s::int as y, ':n; %(n)s src() 😀' as note from src() -- %(n)s", "postgres",
+        ).input("src", source).bind("n", 3)
+        assertEquals(
+            "WITH s0 AS (select :__brikk_bind_0_0::int as x /* :n */), " +
+                "s1 AS (select src.x + %(__brikk_bind_1_0)s::int as y, ':n; %(n)s src() 😀' as note " +
+                "from s0 AS src -- %(n)s\n) SELECT * FROM s1",
+            root.render(),
+        )
+        assertEquals(5, scalar(root))
+        assertEquals(setOf(2, 3), root.bindings().values.toSet())
+    }
+
+    @Test
+    fun singleNativeQueryCanRenameBindingsWithoutRegeneration() {
+        val root = Rel<Partial>(" \nselect :n::int + :N::int as y /* :N */;\n", "postgres")
+            .bind("n", 2).bind("N", 3)
+        assertEquals(
+            " \nselect :__brikk_bind_0_0::int + :__brikk_bind_0_1::int as y /* :N */;\n",
+            root.render(),
+        )
+        assertEquals(5, scalar(root))
+    }
+
+    @Test
+    fun sourceCoordinatesAreUtf16AndDoNotRewriteScalarCalls() {
+        val source = Rel<Partial>("select 5 as id", "postgres")
+        val root = Rel<Partial>(
+            "select '😀; src()' as note, src.id as id from src ( ) as src /* src() */", "postgres",
+        ).input("src", source)
+        assertContains(root.render(), "select '😀; src()' as note, src.id as id from s0   as src /* src() */")
+        // Only Table(this=Anonymous) nodes are slots, never same-named scalar functions.
+        val scalarCall = Rel<Partial>("select src(), src.id from src()", "postgres").input("src", source)
+        assertContains(scalarCall.render(), "select src(), src.id from s0 AS src")
+    }
+
+    @Test
+    fun existingCtesQuotedAliasesAndRecursiveQueriesKeepTheirText() {
+        val source = Rel<Partial>(
+            "with recursive r(n) as (select 1 union all select n + 1 from r where n < 3) select max(n) as id from r;",
+            "postgres",
+        )
+        val rootSql = "with s0 as (select 10 as id) select \"Mixed\".id from \"Mixed\"()"
+        val root = Rel<Partial>(rootSql, "postgres").input("Mixed", source)
+        assertEquals(
+            "WITH s1 AS (${source.sql.dropLast(1)}), s2 AS (with s0 as (select 10 as id) " +
+                "select \"Mixed\".id from s1 AS \"Mixed\") SELECT * FROM s2",
+            root.render(),
+        )
+        assertEquals(3, scalar(root))
+    }
+
+    @Test
+    fun nativeDorisAndClickhouseHintsAndSettingsSurviveComposition() {
+        for ((dialect, sourceSql, rootSql) in listOf(
+            Triple("doris", "select /*+ SET_VAR(exec_mem_limit=1234) */ 1 as id;",
+                "select /*+ SET_VAR(query_timeout=10) */ q.id from src() as q;"),
+            Triple("clickhouse", "select lower('AbC') as id SETTINGS max_threads = 1;",
+                "select q.id from src() as q SETTINGS max_threads = 2;"),
+        )) {
+            val root = Rel<Partial>(rootSql, dialect).input("src", Rel<Partial>(sourceSql, dialect))
+            assertEquals(
+                "WITH s0 AS (${sourceSql.dropLast(1)}), s1 AS (${rootSql.dropLast(1).replace("src()", "s0")}) SELECT * FROM s1",
+                root.render(), dialect,
+            )
+        }
+    }
+
+    @Test
+    fun nativeStagesArePreservedEvenWhenAnotherStageNeedsPipeLowering() {
+        val sql = "select /* native island */ 2::integer as id; -- not pipe |>"
+        val root = Rel<Partial>("FROM src() |> WHERE id = 2 |> SELECT id", "postgres")
+            .input("src", Rel<Partial>(sql, "postgres"))
+        val rendered = root.render()
+        assertContains(rendered, "s0 AS (select /* native island */ 2::integer as id -- not pipe |>\n)")
+        assertTrue(!rendered.substringAfter("), s1 AS (").contains("|>"), rendered)
+        assertEquals(2, scalar(root))
+    }
+
+    @Test
+    fun parameterizedSlotCallsAreRejectedRatherThanDroppingArguments() {
+        val root = Rel<Partial>("select * from src(5)", "postgres")
+            .input("src", Rel<Partial>("select 1 as id", "postgres"))
+        val error = assertFailsWith<dev.brikk.house.sql.generator.UnsupportedError> { root.render() }
+        assertContains(error.message!!, "zero-argument")
+        assertFailsWith<dev.brikk.house.sql.generator.UnsupportedError> { root.render("duckdb") }
+    }
+
+    @Test
+    fun nativeTypedAndAtOrDollarBindingsKeepTheirDialectSyntax() {
+        for ((dialect, marker) in listOf("clickhouse" to "{n: UInt32}", "doris" to "@n", "duckdb" to "\$n")) {
+            val source = Rel<Partial>("select $marker as id;", dialect).bind("n", 2)
+            val root = Rel<Partial>("select src.id + $marker as id from src();", dialect)
+                .input("src", source).bind("n", 3)
+            val first = marker.replaceFirst("n", "__brikk_bind_0_0")
+            val second = marker.replaceFirst("n", "__brikk_bind_1_0")
+            assertEquals(
+                "WITH s0 AS (select $first as id), s1 AS (select src.id + $second as id from s0 AS src) SELECT * FROM s1",
+                root.render(), dialect,
+            )
+            assertEquals(5, scalar(root), dialect)
+        }
+    }
+
+    @Test
+    fun exactParameterRangesLeaveStructPunctuationAndColumnsUnchanged() {
+        val source = Rel<Partial>("select :n as n", "sqlglot").bind("n", 2)
+        val root = Rel<Partial>("select {'key': n} as data, :n as value from src()", "sqlglot")
+            .input("src", source).bind("n", 3)
+        assertContains(root.render(), "{'key': n} as data, :__brikk_bind_1_0 as value from s0 AS src")
+        assertEquals(setOf(2, 3), root.bindings().values.toSet())
+    }
+
+    @Test
+    fun sourcePreservedDuckdbCompositionExecutesWithoutRegeneratingTheTestInput() {
+        val sourceSql = "\n-- native source\nselect /* keep */ 2::integer as id; -- end"
+        val source = Rel<Partial>(sourceSql, "duckdb")
+        val root = Rel<Partial>("select src.id + 3 as id from src(/* slot trivia */);", "duckdb")
+            .input("src", source)
+        val rendered = root.render()
+        assertEquals(
+            "WITH s0 AS (\n-- native source\nselect /* keep */ 2::integer as id -- end\n), " +
+                "s1 AS (select src.id + 3 as id from s0/* slot trivia */ AS src) SELECT * FROM s1",
+            rendered,
+        )
+        DriverManager.getConnection("jdbc:duckdb:").use { connection ->
+            connection.createStatement().use { statement ->
+                // No parse/generate adapter here: execute exactly what render() returned.
+                statement.executeQuery(rendered).use { rows ->
+                    assertTrue(rows.next())
+                    assertEquals(5, rows.getInt(1))
+                    assertTrue(!rows.next())
+                }
+            }
+        }
     }
 
     /** DuckDB JDBC requires numeric parameters; map parsed names to indexes by binding key. */

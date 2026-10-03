@@ -29,8 +29,11 @@ The earlier green slice is not acceptance of the newer SQL preservation requirem
   `@BrikkSql`, `@BrikkTrait`, `@BrikkSqlDialect`, `Sql.postgres/doris/clickhouse/duckdb`,
   `Rel<out T : Partial>(sql, dialect).input(slot, rel).bind(name, v)` with `render()` (CTE
   chain, slot → CTE name) and `bindings()`. Standalone same-dialect native queries
-  retain their text unless binding names need rewriting. Other paths still generate
-  SQL. Binding-name and CTE collisions are isolated; slot aliases are preserved.
+  retain their text in same-dialect composition; source edits affect only bound slots,
+  colliding binding names and embedded terminators. SQL 0.17 owns source-preserving
+  pipe/FROM-first lowering; explicit translation still generates the affected stages.
+  `renderWithDiagnostics()` exposes per-stage regeneration/unsupported reports.
+  Binding-name and CTE collisions are isolated; slot aliases are preserved.
 - [brikk-engine/brikk-engine-kotlin-compiler-plugin/](../brikk-engine/brikk-engine-kotlin-compiler-plugin/): `analysis/` (TypeMap, SqlAnalyzer over raw function facts),
   `fir/` (session component with catalog/traits/analyses; `ShapeDeclarationGenerator` emitting
   `<Fn>Out : Shape|Partial, <satisfied traits>` with abstract vals; `BrikkSqlCallRefinement`
@@ -63,7 +66,11 @@ require only necessary slot/CTE changes. Pipe lowering may change required struc
 but must preserve unaffected native SQL as close to source as possible, including
 important hints/comments and statement semantics. Cross-dialect changes are explicit.
 
-Only the standalone native path currently satisfies the text-preservation policy.
+Native same-dialect stages retain their text even in composition. Pipe-containing
+stages and FROM-first normalization now go through SQL 0.17's source-preserving
+executable API: only proved unchanged ranges are reused, regenerated ranges are
+reported, and unsafe preservation refuses. Explicit translation never reuses
+incompatible source-dialect SQL. See the [SQL-05 handoff](HANDOFF-SQL-05-source-preserving-lowering.md).
 Parsing for validation or shape checks
 does not imply regeneration, automatic optimization, or canonicalization of the
 executed SQL. AST round-trip equality does not prove source-text preservation.
@@ -308,8 +315,9 @@ the merged tree before the work above and failed identically.
 
 ## Open items
 
-- Implement the minimum-change rendering paths and output-diff acceptance tests.
-  Prioritize pipe-lowering correctness; fix failures in `brikk-sql` with regressions.
+- ~~Implement minimum-change rendering paths and output-diff acceptance tests~~ →
+  ENG-01 complete with SQL 0.17.0 and per-stage diagnostics. Keep testing
+  pipe-lowering correctness; future generic SQL defects belong in `brikk-sql`.
 - Runtime-only render vs compile-time rendered artifact (see above).
 - ~~Two-slot `Rel<Base, Ext>` vs refinement for EXTEND-on-generic~~ → refinement (C) built;
   works. Known limitation: a call-site local shape cannot escape through a plain helper with an

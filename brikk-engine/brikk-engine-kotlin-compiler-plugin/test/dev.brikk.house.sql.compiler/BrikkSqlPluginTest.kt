@@ -4,8 +4,11 @@ import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.PluginOption
 import com.tschuchort.compiletesting.SourceFile
+import dev.brikk.house.sql.ast.CTE
+import dev.brikk.house.sql.ast.With
 import dev.brikk.house.sql.compiler.analysis.SqlPiece
 import dev.brikk.house.sql.compiler.fir.TemplateScope
+import dev.brikk.house.sql.shape.SqlFragment
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import java.io.File
 import kotlin.test.Test
@@ -350,9 +353,16 @@ class BrikkSqlPluginTest {
 
         val mainKt = result.classLoader.loadClass("demo.MainKt")
         val sql = mainKt.getMethod("renderReport").invoke(null) as String
-        assertTrue(sql.startsWith("WITH s0 AS (SELECT * FROM public.events WHERE event_at >= %(start)s AND event_at < %(end)s), s1 AS ("), sql)
+        // Source-preserving lowering retains the template's whitespace and bind style;
+        // assert CTE structure instead of requiring a canonical single-line prefix.
+        val fragment = SqlFragment(sql, "postgres")
+        val with = fragment.ast.args["with_"] as With
+        assertEquals(listOf("s0", "s1", "s2"), with.expressionsArg.filterIsInstance<CTE>().map { it.alias })
+        assertContains(sql, "SELECT * FROM public.events")
+        assertContains(sql, "WHERE event_at >= :start AND event_at < :end")
+        assertEquals(setOf("start", "end"), fragment.scalarParams.mapNotNull { it.name }.toSet())
         assertContains(sql, "FROM s0")
-        assertContains(sql, "payload ->> 'user_id' AS user_id")
+        assertContains(sql, "payload->>'user_id' AS user_id")
         assertContains(sql, "WHERE action = 'login'")
         assertContains(sql, "GROUP BY user_id, day")
         assertTrue(sql.endsWith(" SELECT * FROM s2"), sql)
@@ -846,9 +856,9 @@ class BrikkSqlPluginTest {
         val main = result.classLoader.loadClass("demo.MainKt")
         val sql = main.getMethod("render").invoke(null) as String
         assertContains(sql, "FROM public.events")          // const spliced as text
-        assertContains(sql, "%(start)s")                    // parameter bind
-        assertContains(sql, "%(cutoff)s")                   // local bind
-        assertContains(sql, "%(minDuration)s")              // top-level val bind
+        assertContains(sql, ":start")                       // authored parameter bind
+        assertContains(sql, ":cutoff")                      // authored local bind
+        assertContains(sql, ":minDuration")                 // authored top-level val bind
         @Suppress("UNCHECKED_CAST")
         assertEquals(setOf("start", "cutoff", "minDuration"), main.getMethod("bindings").invoke(null) as Set<String>)
     }
