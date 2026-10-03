@@ -1,5 +1,11 @@
 # Review guide: brikk-sql compiler plugin (as of `d9d3970`)
 
+> **Historical review, not an active backlog.** Reviewed on 2026-09-05; all 15
+> findings were resolved by 2026-09-10. The review used in-process compiler
+> invocations, reflection, runtime rendering, SQL AST checks, and pure analysis,
+> but did not run a live IDE session or live database checks. New work is indexed
+> by `ENG-*` in [TODO.md](../TODO.md).
+
 For a reviewer coming in cold. Covers what the plugin does, where the code is, what is
 deliberate, and where to look hardest. Commit range: `d3df965..d9d3970` on `main`
 (`git log --first-parent d3df965..d9d3970`).

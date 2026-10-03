@@ -94,9 +94,10 @@ See the [local add/remove workflow](brikk-engine/README.md#private-consumer).
 
 ## Documentation
 
+- [Active work list](TODO.md) — `ENG-*` items with links to the SQL and chDB backlogs
 - [Brikk Engine](brikk-engine/README.md)
 - [Pipeline wiring](docs/virtual-pipelines-wiring.md)
 - [Schema cache](docs/schema-cache.md)
-- [Compiler-plugin review](docs/REVIEW-compiler-plugin.md) and [findings](TODO-review-findings.md)
+- [Completed compiler-plugin review](docs/REVIEW-compiler-plugin.md)
 - [SQL API and publishing](https://github.com/brikk/brikk-sql)
 - [Embedded chDB API and publishing](https://github.com/brikk/brikk-chdb)

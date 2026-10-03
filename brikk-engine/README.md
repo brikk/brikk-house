@@ -91,9 +91,10 @@ disable publication; private SQL, fixtures, logs, and generated artifacts must n
 enter public sources or release uploads. Verify `git check-ignore` for its files
 and remove the include before staging `project.yaml`.
 
-See the [wiring notes](../docs/virtual-pipelines-wiring.md) and the
-[review findings](../TODO-review-findings.md) for current behavior and known
-compiler/runtime defects.
+See the [active work list](../TODO.md) and
+[wiring notes](../docs/virtual-pipelines-wiring.md) for current limitations.
+The [compiler-plugin review](../docs/REVIEW-compiler-plugin.md) is historical;
+all its findings are resolved.
 
 ## Schema capture
 

@@ -1,5 +1,10 @@
 # Multi-output pipe operators (FORK / TEE / terminal ops) — design proposal
 
+> **Ownership/handoff:** SQL parsing and desugaring belong to `brikk-sql` (`SQL-01`),
+> and a copy of this proposal has been prepared in that checkout. Keep this
+> copy available until the SQL-owned design is committed and published there;
+> Engine's eventual DSL/runner integration is `ENG-07` in [TODO.md](../../TODO.md).
+
 Status: proposal, for owner review. No code changes yet.
 Scope: GoogleSQL's multi-output and terminal pipe operators in brikk-sql — AST, desugar,
 shape layer, certification, and the Kotlin-DSL surface they must serve.
