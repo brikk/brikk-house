@@ -1,9 +1,5 @@
 product: jvm/lib
 
-# Not published; see publish-targets.module-template.yaml for why this is applied anyway.
-apply:
-  - ../../publish-targets.module-template.yaml
-
 # Dev-loop tasks (see ../brikk-engine-kotlin-tooling/):
 #   ./kotlin do assemblePluginJar   -> build/plugin/brikk-engine-kotlin-compiler-plugin-<kotlin>-<lib>.jar
 #   ./kotlin do publishKefsRepo     -> build/repo (Maven layout) for KEFS in the IDE
@@ -22,7 +18,7 @@ dependencies:
   # The SQL brain: parse/qualify/annotate the literals at compile time. For a distributable
   # plugin jar this must be shaded+relocated (KEFS requirement); in-repo we rely on the
   # module classpath (kctfork tests) and explicit -Xplugin entries (smoke module).
-  - ../../brikk-sql/brikk-sql
+  - dev.brikk.house:brikk-sql-jvm:0.16.0
 
 test-dependencies:
   # kctfork = maintained fork of kotlin-compile-testing (0.13.0 is built for Kotlin 2.4.0; the

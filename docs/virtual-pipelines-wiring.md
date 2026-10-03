@@ -1,7 +1,7 @@
 # Brikk Engine virtual pipelines in Kotlin
 
 Status: Sep 2026. Builds on [compiler-plugin learnings](sql-compiler-plugin-learnings.md)
-sections 9-13 and [parsing research](parsing-research-and-plan.md) "North star".
+sections 9-13 and [parsing research](https://github.com/brikk/brikk-sql/blob/main/docs/parsing-research-and-plan.md) "North star".
 
 **The original minimum see-it-work slice was implemented and green** (option C, Postgres, three-step
 pipeline): `brikk-engine-kotlin` (Shape/Partial/Rel/Sql), the plugin's declaration generation +
@@ -10,8 +10,9 @@ smoke module compiled by the real toolchain. Mechanics and verified gotchas:
 [FIR refinement and generation](RESEARCH-fir-refinement-and-generation.md). Sections below that describe design intent
 still hold; "What exists" is updated.
 
-The modules now live under `brikk-engine/`, `brikk-sql/`, and `brikk-chdb/`; see the
-[repository map](../README.md#repository-layout) and [Brikk Engine README](../brikk-engine/README.md).
+Engine modules live under `brikk-engine/`; generic SQL and chDB now live in the
+standalone `brikk/brikk-sql` and `brikk/brikk-chdb` repositories. See the
+[repository map](../README.md) and [Brikk Engine README](../brikk-engine/README.md).
 Kotlin packages, `@BrikkSql` and related annotations, and compiler ID
 `dev.brikk.house.sql.compiler` are unchanged. Public SQL/chDB Maven IDs are unchanged;
 the assembled/local KEFS artifact is `brikk-engine-kotlin-compiler-plugin`.
@@ -19,7 +20,7 @@ The earlier green slice is not acceptance of the newer SQL preservation requirem
 
 ## What exists
 
-- [brikk-sql shape layer](../brikk-sql/brikk-sql/src/dev.brikk.house.sql/shape/): `Shape`, `ColumnShape`, `ShapeCatalog` (+ slots), `ShapeVerdict`,
+- [brikk-sql shape layer](https://github.com/brikk/brikk-sql/tree/main/brikk-sql/src/dev.brikk.house.sql/shape): `Shape`, `ColumnShape`, `ShapeCatalog` (+ slots), `ShapeVerdict`,
   `SqlFragment` (one statement → scalar params, TVF slots, sources, output shape, lineage,
   serializable `FragmentDescription`/`FragmentContract`), `DdlCatalog` (DDL text → catalog).
   Slots nest under a synthetic qualifier so they coexist with qualified tables. Shape-layer
@@ -287,7 +288,7 @@ above identically — sqlglot's Doris dialect (15-line dialect, 135-line parser:
 property, dynamic granularity, MV BUILD/REFRESH; rest inherited from MySQL) is used for
 transpiling queries *into* Doris, never for parsing Doris DDL. No upstream sync fixes this.
 
-**DONE (Sep 2026): Doris DDL parsing, [brikk extensions](brikk-extensions.md) #19.** Every PARSE
+**DONE (Sep 2026): Doris DDL parsing, [brikk extensions](https://github.com/brikk/brikk-sql/blob/main/docs/brikk-extensions.md) #19.** Every PARSE
 FAIL / Command-fallback case above now parses to a `Create` and round-trips; each
 rendering is accepted by the real Doris FE parser
 (`SqlVerifierTest.dorisAcceptsBrikkDdlRenderings`). Deviations from the plan as written:

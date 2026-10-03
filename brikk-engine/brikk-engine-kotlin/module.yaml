@@ -3,12 +3,8 @@
 # composed pipeline value back to dialect SQL via brikk-sql.
 product: jvm/lib
 
-# Not published; see publish-targets.module-template.yaml for why this is applied anyway.
-apply:
-  - ../../publish-targets.module-template.yaml
-
 dependencies:
-  - ../../brikk-sql/brikk-sql: exported
+  - dev.brikk.house:brikk-sql-jvm:0.16.0: exported
 
 test-dependencies:
   - org.duckdb:duckdb_jdbc:1.5.5.0

@@ -1,22 +1,8 @@
 name: Test
 
-# Builds every module and runs the full test suite — including the exact known-failure
-# corpus gates in brikk-sql and the engine verify gates in brikk-sql-oracle — on every pull
-# request and feature-branch push. For main and release/**, snapshot.yml and
-# release.yml call this workflow first and refuse to publish unless it is green (EVAL-03,
-# TODO-rectify-from-eval.md). Those branches are excluded here so their gate runs once.
-#
-# Requirements satisfied by ubuntu-latest: an embedded PostgreSQL platform archive and JDK 25
-# provisioned by the ./kotlin wrapper. The Linux x64 chDB resource module executes its packaged
-# library during the normal test step; packaging also builds the other pinned native artifacts.
-
 on:
   push:
-    branches-ignore:
-      - main
-      - 'release/**'
   pull_request:
-  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -28,51 +14,18 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      # The wrapper downloads the Kotlin Toolchain CLI, JDKs and dependencies into
-      # ~/.cache/JetBrains/Kotlin (~1.5 GB); extract.cache is re-derived from download.cache,
-      # so only the downloads are cached. Key on the wrapper (toolchain version) and module
-      # configs (dependency set); fall back to any earlier cache for partial reuse.
       - name: Cache Kotlin Toolchain and dependencies
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
             ~/.cache/JetBrains/Kotlin/cli
             ~/.cache/JetBrains/Kotlin/download.cache
-          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', '**/plugin.yaml', 'publish.module-template.yaml', 'publish-targets.module-template.yaml') }}
+          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', '**/plugin.yaml') }}
           restore-keys: |
             kotlin-toolchain-${{ runner.os }}-
-
-      # publish.module-template.yaml declares `.env` as the centralSnapshots credentials file,
-      # and Toolchain 0.11 refuses to load the project model when that file is missing — even
-      # for build/test. This job never publishes (and the repo is resolve: false), so a
-      # placeholder with the expected keys is enough. No secrets are exposed to PR builds.
-      - name: Write placeholder .env (required for the project model to load)
-        run: |
-          umask 077
-          printf 'brikk.mavencentral.user=ci-placeholder\nbrikk.mavencentral.pass=ci-placeholder\n' > .env
-
       - name: Assemble Brikk Engine Kotlin compiler plugin
         run: ./kotlin do assemblePluginJar
-
       - name: Build
         run: ./kotlin build
-
       - name: Test
         run: ./kotlin test
-
-      # Exercise the public publication graph and package sources/native resources
-      # without credentials, signing, or uploading anything to a remote repository.
-      - name: Verify Maven publications locally
-        run: ./kotlin publish mavenLocal
-
-      # On a red gate, build/ledger-actual contains the review artifacts needed to update
-      # committed *-known-failures.json ledgers (see TODO-BUGS-*.md).
-      - name: Upload actual ledgers
-        if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: ledger-actual
-          path: build/ledger-actual/*-ledger-actual.json
-          if-no-files-found: ignore
-          retention-days: 14

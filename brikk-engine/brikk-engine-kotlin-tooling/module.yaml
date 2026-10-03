@@ -6,15 +6,11 @@
 # classpath) instead of globbing the dependency cache.
 product: jvm/amper-plugin
 
-# Not published; see publish-targets.module-template.yaml for why this is applied anyway.
-apply:
-  - ../../publish-targets.module-template.yaml
-
 pluginInfo:
   settingsClass: dev.brikk.house.sql.tooling.Settings
 
 dependencies:
-  - ../../brikk-sql/brikk-sql
+  - dev.brikk.house:brikk-sql-jvm:0.16.0
   # Capture tooling only: never bundled into the Kotlin compiler plugin or runtime.
   - com.mysql:mysql-connector-j:9.4.0: runtime-only
 

@@ -117,7 +117,7 @@ Compilation does not connect to the database. Missing or malformed snapshots are
 compiler diagnostics. Resolution is session-local; one project's relative schema
 option must not reuse another project's resolved path.
 
-Toolchain 0.12 does not automatically track this external snapshot as a compiler
+The Toolchain integration does not explicitly track this external snapshot as a compiler
 input. After a refresh, force a new compilation before trusting generated shapes.
 The conservative rebuild route is `./kotlin clean`, then
 `./kotlin do assemblePluginJar`, followed by the consumer build/run. Re-publish

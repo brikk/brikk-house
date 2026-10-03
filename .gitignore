@@ -3,6 +3,9 @@
 /*/build/
 /*/*/build/
 
+# Leftover generated ledgers from pre-extraction local test runs.
+*-ledger-actual.json
+
 # Private Brikk Engine consumer: never part of public module includes or publication.
 /brikk-engine/dogfood/
 

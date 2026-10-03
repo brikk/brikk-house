@@ -2,8 +2,12 @@
 
 Brikk Engine is the Kotlin runtime and compiler integration for typed, composable
 SQL pipelines. Generic parsing, SQL analysis, and lowering live in
-[brikk-sql](../brikk-sql/brikk-sql/README.md); embedded ClickHouse bindings live under
-[brikk-chdb](../brikk-chdb/).
+[brikk-sql](https://github.com/brikk/brikk-sql); embedded ClickHouse bindings live in
+[brikk-chdb](https://github.com/brikk/brikk-chdb).
+
+Engine consumes the published `dev.brikk.house:brikk-sql-jvm:0.16.0` release;
+neither external repository is required in a clean Engine checkout. Keep the SQL
+dependency version aligned across the runtime, compiler-plugin, and tooling modules.
 
 ## Modules
 
@@ -48,7 +52,7 @@ not permanent copied handwritten SQL in consumers.
 
 ## Local development
 
-Run from the repository root with Kotlin Toolchain 0.12. Module names come from
+Run from the repository root with Kotlin Toolchain 0.13.0. Module names come from
 leaf directories, with no `name` override.
 
 ```sh

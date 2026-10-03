@@ -64,7 +64,7 @@ brikk-engine/brikk-engine-kotlin-compiler-plugin/test/  kctfork tests + unit tes
 brikk-engine/brikk-engine-kotlin/                      Rel, Shape, Partial, annotations, Sql
 brikk-engine/brikk-engine-kotlin-smoke/                real Toolchain -Xplugin consumer
 brikk-engine/brikk-engine-kotlin-tooling/              assemblePluginJar / publishKefsRepo
-brikk-sql/brikk-sql/src/dev.brikk.house.sql/shape/      SqlFragment, DdlCatalog, shape analysis
+brikk/brikk-sql repository: brikk-sql/src/.../shape/   SqlFragment, DdlCatalog, shape analysis
 ```
 
 The pipeline for one `@BrikkSql fun`: `RawFir.rawFunction` (signature + template, no
@@ -174,9 +174,11 @@ under `plugins.brikk-engine-kotlin-tooling`. The local KEFS coordinate is now
 bundles to that artifact ID. The compiler ID in `-P` options stays
 `dev.brikk.house.sql.compiler`.
 
-[publish-targets.module-template.yaml](../publish-targets.module-template.yaml) exists because Toolchain 0.12 validates the publish
-repository id against *every* module before filtering on `publishing.enabled`; non-published
-modules apply it so `./kotlin publish <repo>` does not abort.
+The standalone [SQL](https://github.com/brikk/brikk-sql/blob/main/publish-targets.module-template.yaml)
+and [chDB](https://github.com/brikk/brikk-chdb/blob/main/publish-targets.module-template.yaml)
+repositories retain the publish-target template for Toolchain's project-wide
+repository validation. Engine modules no longer apply it: Central publication
+belongs exclusively to those extracted repositories.
 
 Version strings that must agree (hand-maintained): `settings.kotlin.version` in each module,
 `kotlin-compiler-embeddable` in the plugin module, and the `-Xplugin=` path in

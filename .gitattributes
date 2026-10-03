@@ -1,0 +1,2 @@
+# Preserve upstream Windows-wrapper CRLF without treating carriage returns as trailing whitespace.
+kotlin.bat whitespace=cr-at-eol
