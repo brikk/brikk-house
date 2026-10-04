@@ -30,6 +30,9 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildRegularClass
 import org.jetbrains.kotlin.fir.declarations.hasAnnotation
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
+import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.FirNamedArgumentExpression
+import org.jetbrains.kotlin.fir.expressions.FirWrappedArgumentExpression
 import org.jetbrains.kotlin.fir.expressions.buildResolvedArgumentList
 import org.jetbrains.kotlin.fir.expressions.builder.buildAnonymousFunctionExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildBlock
@@ -129,19 +132,28 @@ class BrikkSqlCallRefinement(session: FirSession) : FirFunctionCallRefinementExt
         val analysis = brikk.analysisOfFunction(symbol) ?: return giveUp("not a known @BrikkSql function (predicate index empty?)")
         if (analysis.error != null) return giveUp("analysis error: ${analysis.error}")
 
-        // Concrete input columns from the argument types, positionally matched to Rel parameters.
+        // Match named arguments by parameter identity, not their written position. Unwrap
+        // argument wrappers before reading types (including reordered named arguments).
         val paramNames = symbol.valueParameterSymbols.map { it.name.asString() }
+        val argsByName = LinkedHashMap<String, FirExpression>()
+        var positional = 0
+        for (argument in callInfo.arguments) {
+            val name = if (argument is FirNamedArgumentExpression) argument.name.asString() else {
+                while (paramNames.getOrNull(positional) in argsByName) positional++
+                paramNames.getOrNull(positional++) ?: return giveUp("too many positional arguments")
+            }
+            val value = if (argument is FirWrappedArgumentExpression) argument.expression else argument
+            argsByName[name] = value
+        }
         val inputs = LinkedHashMap<String, List<ShapeColumn>>()
         for (rp in analysis.relParams) {
-            val index = paramNames.indexOf(rp.name)
-            val arg = callInfo.arguments.getOrNull(index) ?: return giveUp("no argument for '${rp.name}'")
+            val arg = argsByName[rp.name] ?: return giveUp("no argument for '${rp.name}'")
             val argType = arg.resolvedType as? ConeClassLikeType
                 ?: return giveUp("argument '${rp.name}' has no resolved class type (${arg.resolvedType})")
             if (argType.classId != BrikkSqlNames.REL_CLASS_ID) return giveUp("argument '${rp.name}' is ${argType.classId}, not Rel")
             val shapeType = argType.typeArguments.firstOrNull()?.type as? ConeClassLikeType
                 ?: return giveUp("argument '${rp.name}' Rel type argument is not a class type")
             val shapeClassId = shapeType.classId
-                ?: return giveUp("argument '${rp.name}' Rel type argument has no class id")
             val shapeSymbol = shapeType.toRegularClassSymbol(session)
             // Prefer the analysis of the producing function: it is what the columns *are*, and
             // it exists even when this session did not generate the `XyzOut` class (IDE sessions

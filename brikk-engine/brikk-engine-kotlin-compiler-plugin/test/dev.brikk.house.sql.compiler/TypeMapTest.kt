@@ -1,6 +1,10 @@
 package dev.brikk.house.sql.compiler
 
 import dev.brikk.house.sql.compiler.analysis.TypeMap
+import dev.brikk.house.sql.compiler.analysis.KType
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,6 +12,23 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class TypeMapTest {
+    @Test
+    fun unrelatedClassesWithBuiltinShortNamesAreNotSqlScalarTypes() {
+        for (name in listOf("String", "Long", "Instant", "BigInteger")) {
+            assertEquals(null, TypeMap.kotlinClassIdToSql(ClassId(FqName("unrelated"), Name.identifier(name))))
+        }
+    }
+
+    @Test
+    fun traitSatisfactionIncludesNullabilityEvenForAny() {
+        val nullable = KType(StandardClassIds.String, true)
+        val nonNull = KType(StandardClassIds.String, false)
+        assertFalse(TypeMap.satisfies(nullable, nonNull))
+        assertTrue(TypeMap.satisfies(nonNull, nullable))
+        assertFalse(TypeMap.satisfies(nullable, KType(StandardClassIds.Any, false)))
+        assertTrue(TypeMap.satisfies(nullable, KType(StandardClassIds.Any, true)))
+        assertTrue(TypeMap.sqlToKotlin("INT", nullable = null).nullable)
+    }
     @Test
     fun integerDomainsAreNotNarrowedToJvmPrimitivesThatCannotHoldThem() {
         for (sql in listOf("INT128", "UBIGINT")) {

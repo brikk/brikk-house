@@ -154,27 +154,38 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
     /** The schema catalog (empty if none configured or it failed to load; see [analyzer]). */
     val catalog: ShapeCatalog get() = loadCatalog(null).catalog
 
-    /** All `@BrikkTrait` interfaces in the module, by short name. */
+    /** Names retain package/nested identity; equally named traits must never overwrite each other. */
     private var traitsCache: Map<String, TraitInfo>? = null
-    val traitsByShortName: Map<String, TraitInfo>
+    val traitsByName: Map<String, TraitInfo>
         get() = traitsCache ?: computeTraits().also { if (it.isNotEmpty()) traitsCache = it }
 
+    val knownShapeIds: Set<ClassId> get() = functionsByOutClassId.keys +
+        session.predicateBasedProvider.getSymbolsByPredicate(TRAIT_PREDICATE)
+            .filterIsInstance<FirRegularClassSymbol>().map { it.classId }
+
     private fun computeTraits(): Map<String, TraitInfo> {
-        val classes = session.predicateBasedProvider.getSymbolsByPredicate(TRAIT_PREDICATE)
+        val groups = session.predicateBasedProvider.getSymbolsByPredicate(TRAIT_PREDICATE)
             .filterIsInstance<FirRegularClassSymbol>()
-            .associate { it.classId.shortClassName.asString() to it.fir }
+            .groupBy { it.classId.asSingleFqName().asString() }
+        check(groups.values.all { it.size == 1 }) { "Ambiguous package/nested @BrikkTrait identity" }
+        val classes = groups.mapValues { it.value.single().fir }
         val resolved = HashMap<String, TraitInfo>()
         fun build(name: String, visiting: Set<String>): TraitInfo? {
             resolved[name]?.let { return it }
             val klass = classes[name] ?: return null
             if (name in visiting) return null
+            val file = session.firProvider.getFirClassifierContainerFileIfAny(klass.symbol)
+            val types = RawTypes(session, file, klass.symbol.classId.packageFqName)
             val cols = LinkedHashMap<String, ShapeColumn>()
-            for (superName in RawFir.superTypeShortNames(klass)) {
+            for (superName in klass.superTypeRefs.mapNotNull { types.name(it) }) {
                 build(superName, visiting + name)?.columns?.forEach { cols.putIfAbsent(it.name.lowercase(), it) }
             }
             for ((pName, typeShort, nullable) in RawFir.traitProperties(klass)) {
-                val sql = TypeMap.kotlinShortNameToSql(typeShort) ?: "UNKNOWN"
-                val classId = TypeMap.kotlinShortNameToClassId(typeShort) ?: org.jetbrains.kotlin.name.StandardClassIds.Any
+                val property = klass.declarations.filterIsInstance<org.jetbrains.kotlin.fir.declarations.FirProperty>()
+                    .first { it.name.asString() == pName }
+                val classId = types.name(property.returnTypeRef)?.let(types::resolve)
+                    ?: error("Cannot resolve trait property type '$typeShort' in '$name.$pName'")
+                val sql = TypeMap.kotlinClassIdToSql(classId) ?: "UNKNOWN"
                 cols[pName.lowercase()] = ShapeColumn(pName, sql, KType(classId, nullable))
             }
             return TraitInfo(klass.symbol.classId, cols.values.toList()).also { resolved[name] = it }
@@ -213,16 +224,14 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         return classId.takeIf { it in functionsIndex().collidingOutClassIds }
     }
 
-    private val functionsByOutShortName: Map<String, FirNamedFunctionSymbol>
-        get() = functionsByOutClassId.entries.associate { it.key.shortClassName.asString() to it.value }
-
     private var analyzerCache: SqlAnalyzer? = null
 
     private fun analyzerFor(anchorFilePath: String?): SqlAnalyzer {
         analyzerCache?.let { return it }
         val loaded = loadCatalog(anchorFilePath)
-        val analyzer = SqlAnalyzer(loaded.catalog, traitsByShortName, loaded.error) { outShortName ->
-            functionsByOutShortName[outShortName]?.let { analysisOf(it) }
+        val analyzer = SqlAnalyzer(loaded.catalog, traitsByName, loaded.error) { outName ->
+            functionsByOutClassId.entries.firstOrNull { it.key.asSingleFqName().asString() == outName }
+                ?.value?.let { analysisOf(it) }
         }
         if (loaded.error == null || anchorFilePath != null) analyzerCache = analyzer
         return analyzer

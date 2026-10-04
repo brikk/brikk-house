@@ -108,6 +108,11 @@ See the [active work list](../TODO.md) and
 The [compiler-plugin review](../docs/REVIEW-compiler-plugin.md) is historical;
 all its findings are resolved.
 
+[ENG-02 hardening](../docs/ENG-02-compiler-hardening.md) covers import-aware
+type identity, nullability, generic argument matching, scoped SQL checks and
+literal diagnostic ranges. Dotted placeholders are deliberately diagnosed;
+extract a property into a local and interpolate that local instead.
+
 ## Schema capture
 
 The forced `./kotlin do captureDorisSchema` command captures one Doris

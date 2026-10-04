@@ -164,8 +164,10 @@ object SqlTemplateFir {
     fun scopeOf(function: FirNamedFunction, session: FirSession, containerFile: FirFile?): TemplateScope {
         val rel = HashSet<String>()
         val other = HashSet<String>()
+        val types = RawTypes(session, containerFile, function.symbol.callableId.packageName)
         for (p in function.valueParameters) {
-            with(RawFir) { if (p.returnTypeRef.shortName() == "Rel") rel += p.name.asString() else other += p.name.asString() }
+            if (types.name(p.returnTypeRef) == BrikkSqlNames.REL_CLASS_ID.asSingleFqName().asString()) rel += p.name.asString()
+            else other += p.name.asString()
         }
         val body = function.body
         val locals = if (body is FirBlock && body !is FirLazyBlock) {

@@ -9,18 +9,19 @@ import dev.brikk.house.sql.shape.ColumnShape
 import dev.brikk.house.sql.shape.Shape
 import dev.brikk.house.sql.shape.ShapeCatalog
 import dev.brikk.house.sql.shape.SqlFragment
+import dev.brikk.house.sql.parser.ParseError
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 /** One column of a shape as the plugin reasons about it: SQL type string + mapped Kotlin type. */
-data class ShapeColumn(val name: String, val sqlType: String, val type: KType) {
+data class ShapeColumn(val name: String, val sqlType: String, val type: KType, val quoted: Boolean = false) {
     companion object {
-        fun from(c: ColumnShape): ShapeColumn = ShapeColumn(c.name, c.type, TypeMap.sqlToKotlin(c.type, c.nullable))
+        fun from(c: ColumnShape): ShapeColumn = ShapeColumn(c.name, c.type, TypeMap.sqlToKotlin(c.type, c.nullable), c.quoted)
     }
 }
 
-fun List<ShapeColumn>.toShape(): Shape = Shape(map { ColumnShape(it.name, it.sqlType) })
+fun List<ShapeColumn>.toShape(): Shape = Shape(map { ColumnShape(it.name, it.sqlType, nullable = it.type.nullable, quoted = it.quoted) })
 fun Shape.toColumns(): List<ShapeColumn> = columns.map { ShapeColumn.from(it) }
 
 /** A `@BrikkTrait` interface: its ClassId and the columns it requires (own + inherited). */
@@ -28,7 +29,7 @@ data class TraitInfo(val classId: ClassId, val columns: List<ShapeColumn>)
 
 /**
  * A `Rel<...>`-typed parameter: Kotlin name, the slot it feeds (always the parameter name; the
- * SQL references it as `FROM name()` / `JOIN name() ...`), and the raw type-argument name.
+ * SQL references it as `FROM name()` / `JOIN name() ...`), and its resolved type-argument name.
  */
 data class RelParam(val name: String, val slot: String, val typeArgName: String)
 
@@ -47,7 +48,7 @@ data class FunctionAnalysis(
     val scalarParams: List<String>,
     /** Extra bind names from `$name` template entries (locals, properties); see [RawFunction.binds]. */
     val binds: List<String>,
-    /** Type parameter name -> bound short names (raw). */
+    /** Type parameter name -> import-resolved bound names. */
     val typeParamBounds: Map<String, List<String>>,
     /** Declared input columns per slot, as resolvable from the signature. */
     val inputs: Map<String, List<ShapeColumn>>,
@@ -59,6 +60,8 @@ data class FunctionAnalysis(
     val satisfiedTraits: List<ClassId>,
     /** Non-null when analysis failed (parse error, unknown table, ...). Checker reports it. */
     val error: String? = null,
+    val errorStart: Int? = null,
+    val errorEnd: Int? = null,
 ) {
     val isGeneric: Boolean get() = typeParamBounds.isNotEmpty()
     val fragment: SqlFragment get() = SqlFragment(sqlText, dialect)
@@ -74,39 +77,39 @@ data class RawFunction(
     /** Callee short name of the `Sql.<dialect>` call, e.g. "postgres". */
     val dialect: String?,
     val sqlText: String?,
-    /** (param name, raw type short name, raw type-argument short name if any). */
+    /** Parameter names and canonical class names (or unresolved type-parameter names). */
     val params: List<RawParam>,
     val typeParamBounds: Map<String, List<String>>,
     /** Names bound through `$name` template entries that are not parameters (locals, properties). */
     val binds: List<String> = emptyList(),
 )
 
-data class RawParam(val name: String, val typeShortName: String, val typeArgShortName: String?)
+data class RawParam(val name: String, val typeName: String, val typeArgName: String?)
 
 /** Pure analysis over the catalog + traits + other functions' outputs. */
 class SqlAnalyzer(
     private val catalog: ShapeCatalog,
-    /** Trait short name -> info. */
-    private val traitsByShortName: Map<String, TraitInfo>,
+    /** Fully qualified trait name -> info; raw import resolution happens in FIR. */
+    private val traitsByName: Map<String, TraitInfo>,
     /** Non-null when the schema catalog could not be loaded; every analysis then fails with it. */
     private val catalogError: String? = null,
-    /** Generated output class short name (e.g. "EventsInRangeOut") -> the function it belongs to. */
+    /** Fully qualified generated output name -> the function it belongs to. */
     private val functionsByOutName: (String) -> FunctionAnalysis?,
 ) {
-    val traits: Collection<TraitInfo> get() = traitsByShortName.values
+    val traits: Collection<TraitInfo> get() = traitsByName.values
 
     /** Signature-derived parts of an analysis; shared by the success and failure paths. */
     private class Signature(raw: RawFunction) {
         val outClassId = ClassId(raw.packageFqName, BrikkSqlNames.outputClassName(raw.name))
         val relParams = ArrayList<RelParam>()
         val scalarParams = ArrayList<String>()
-        val sqlText = raw.sqlText?.trim().orEmpty()
+        val sqlText = raw.sqlText.orEmpty()
         val dialect = raw.dialect ?: "postgres"
 
         init {
             for (p in raw.params) {
-                if (p.typeShortName == "Rel") {
-                    relParams.add(RelParam(p.name, slot = p.name, p.typeArgShortName ?: "Partial"))
+                if (p.typeName == BrikkSqlNames.REL_CLASS_ID.asSingleFqName().asString()) {
+                    relParams.add(RelParam(p.name, slot = p.name, p.typeArgName ?: BrikkSqlNames.PARTIAL_CLASS_ID.asSingleFqName().asString()))
                 } else {
                     scalarParams.add(p.name)
                 }
@@ -121,6 +124,19 @@ class SqlAnalyzer(
         raw.packageFqName, raw.name, outClassId, dialect, sqlText, relParams, scalarParams, raw.binds,
         raw.typeParamBounds, emptyMap(), emptyList(), isShape = false, satisfiedTraits = emptyList(), error = msg,
     )
+
+    private fun Signature.failed(raw: RawFunction, failure: Exception): FunctionAnalysis {
+        val info = (failure as? ParseError)?.errors?.firstOrNull()
+        val line = info?.line
+        val col = info?.col
+        val lines = sqlText.split('\n')
+        val end = if (line != null && col != null && line in 1..lines.size) {
+            lines.take(line - 1).sumOf { it.length + 1 } + col
+        } else null
+        return failed(raw, failure.message ?: failure.toString()).copy(
+            errorStart = end?.minus(info?.highlight?.length?.coerceAtLeast(1) ?: 1), errorEnd = end,
+        )
+    }
 
     /** Never throws: any failure becomes [FunctionAnalysis.error]. */
     fun analyze(raw: RawFunction): FunctionAnalysis = try {
@@ -150,7 +166,7 @@ class SqlAnalyzer(
             SqlFragment(sqlText, dialect).also { it.tableSlots }
         } catch (e: Exception) {
             rethrowIfCancellation(e)
-            return failed(e.message ?: e.toString())
+            return sig.failed(raw, e)
         }
         val slotsInSql = fragment.tableSlots
         val slotKeys = slotsInSql.mapTo(HashSet()) { it.uppercase() }
@@ -176,7 +192,7 @@ class SqlAnalyzer(
             computeOutput(sqlText, dialect, inputs)
         } catch (e: Exception) {
             rethrowIfCancellation(e)
-            return failed(e.message ?: e.toString())
+            return sig.failed(raw, e)
         }
 
         val isGeneric = raw.typeParamBounds.isNotEmpty()
@@ -216,7 +232,7 @@ class SqlAnalyzer(
         computeOutput(fn.sqlText, fn.dialect, inputs)
 
     fun satisfiedTraits(output: List<ShapeColumn>): List<ClassId> =
-        traitsByShortName.values.filter { satisfies(output, it) }.map { it.classId }
+        traitsByName.values.filter { satisfies(output, it) }.map { it.classId }
 
     fun satisfies(output: List<ShapeColumn>, trait: TraitInfo): Boolean =
         trait.columns.all { req ->
@@ -239,20 +255,31 @@ class SqlAnalyzer(
 
     /**
      * `Rel<X>` where X is: a type parameter (-> union of its trait bounds' columns), a trait
-     * short name, or another function's generated output class short name.
+     * canonical name, or another function's fully qualified generated output class name.
      */
     private fun resolveDeclaredInput(typeArgName: String, bounds: Map<String, List<String>>): DeclaredInput? {
         bounds[typeArgName]?.let { boundNames ->
             val cols = LinkedHashMap<String, ShapeColumn>()
             for (b in boundNames) {
-                val t = traitsByShortName[b] ?: return null
-                for (c in t.columns) cols.putIfAbsent(c.name.lowercase(), c)
+                if (b in listOf(BrikkSqlNames.PARTIAL_CLASS_ID, BrikkSqlNames.SHAPE_CLASS_ID)
+                    .map { it.asSingleFqName().asString() }) continue
+                val t = traitsByName[b] ?: return null
+                for (c in t.columns) {
+                    val key = c.name.lowercase()
+                    val previous = cols[key]
+                    if (previous == null) cols[key] = c else {
+                        require(previous.type.classId == c.type.classId) { "Incompatible trait bounds for column '${c.name}'" }
+                        // A value satisfying both bounds must obey the stricter nullability.
+                        if (previous.type.nullable && !c.type.nullable) cols[key] = c
+                    }
+                }
             }
             return DeclaredInput(cols.values.toList(), closed = false)
         }
-        traitsByShortName[typeArgName]?.let { return DeclaredInput(it.columns, closed = false) }
+        traitsByName[typeArgName]?.let { return DeclaredInput(it.columns, closed = false) }
         functionsByOutName(typeArgName)?.let { return DeclaredInput(it.output, it.isShape) }
-        if (typeArgName == "Partial" || typeArgName == "Shape") return DeclaredInput(emptyList(), closed = false)
+        if (typeArgName in listOf(BrikkSqlNames.PARTIAL_CLASS_ID, BrikkSqlNames.SHAPE_CLASS_ID)
+            .map { it.asSingleFqName().asString() }) return DeclaredInput(emptyList(), closed = false)
         return null
     }
 }

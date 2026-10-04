@@ -148,7 +148,7 @@ private class SqlCallTransformer(
         // Template references own their binding values, including locals shadowing parameters.
         // FIR rejects a plain placeholder sharing that name with a different template symbol.
         val templateNames = template.binds.mapTo(HashSet()) { it.first }
-        val usedNames = SqlFragment(sql, dialect).scalarParams.mapNotNullTo(HashSet()) { it.name?.substringBefore('.') }
+        val usedNames = SqlFragment(sql, dialect).scalarParams.mapNotNullTo(HashSet()) { it.name }
         val bound = HashSet<String>()
         for (param in enclosing.parameters.filter { it.kind == IrParameterKind.Regular }) {
             val name = param.name.asString()

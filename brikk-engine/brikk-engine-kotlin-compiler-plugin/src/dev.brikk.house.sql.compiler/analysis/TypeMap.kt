@@ -13,8 +13,8 @@ data class KType(val classId: ClassId, val nullable: Boolean) {
 
 /**
  * Fixed SQL <-> Kotlin type table (JVM). SQL side uses brikk-sql base-dialect renderings
- * (what `ColumnShape.type` holds); Kotlin side is by ClassId, and — for reading raw FIR
- * `FirUserTypeRef`s in trait declarations — by short name.
+ * (what `ColumnShape.type` holds); Kotlin-side analysis uses canonical ClassIds.
+ * The short-name helpers below are explicit table utilities, not type resolution.
  */
 object TypeMap {
     private val JAVA_TIME = FqName("java.time")
@@ -41,7 +41,8 @@ object TypeMap {
             "UNKNOWN", "NULL" -> return KType(StandardClassIds.Any, nullable = true)
             else -> return KType(StandardClassIds.Any, nullable = true)
         }
-        return KType(classId, nullable = nullable == true)
+        // Unknown SQL nullability is not evidence of a non-null Kotlin getter.
+        return KType(classId, nullable = nullable != false)
     }
 
     /**
@@ -81,14 +82,29 @@ object TypeMap {
     }
 
     /** Resolved Kotlin ClassId -> base-dialect SQL type (for reading resolved user interfaces). */
-    fun kotlinClassIdToSql(classId: ClassId): String? = kotlinShortNameToSql(classId.shortClassName.asString())
+    fun kotlinClassIdToSql(classId: ClassId): String? = when (classId) {
+        StandardClassIds.String -> "TEXT"
+        StandardClassIds.Long -> "BIGINT"
+        StandardClassIds.Int -> "INT"
+        StandardClassIds.Short -> "SMALLINT"
+        StandardClassIds.Boolean -> "BOOLEAN"
+        StandardClassIds.Double -> "DOUBLE"
+        StandardClassIds.Float -> "FLOAT"
+        BIG_DECIMAL -> "DECIMAL"
+        BIG_INTEGER -> "INT128"
+        INSTANT -> "TIMESTAMPTZ"
+        LOCAL_DATE -> "DATE"
+        StandardClassIds.Any -> "UNKNOWN"
+        else -> null
+    }
 
     /**
      * Whether a column of [actual] Kotlin type can satisfy a trait property of [required]
-     * type. Nullability is ignored for now (see RESEARCH doc: output shapes do not surface
-     * nullability yet). `Any` on the required side accepts anything; `Any` on the actual
+     * type. A nullable output cannot implement a non-null property. `Any` on the required
+     * side accepts compatible nullability; `Any` on the actual
      * side (UNKNOWN SQL type) satisfies only `Any`.
      */
     fun satisfies(actual: KType, required: KType): Boolean =
-        required.classId == StandardClassIds.Any || actual.classId == required.classId
+        (!actual.nullable || required.nullable) &&
+            (required.classId == StandardClassIds.Any || actual.classId == required.classId)
 }

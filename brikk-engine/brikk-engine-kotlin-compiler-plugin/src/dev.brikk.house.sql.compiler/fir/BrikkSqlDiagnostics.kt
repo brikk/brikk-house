@@ -6,15 +6,15 @@ import org.jetbrains.kotlin.diagnostics.KtDiagnosticsContainer
 import org.jetbrains.kotlin.diagnostics.error1
 import org.jetbrains.kotlin.diagnostics.error2
 import org.jetbrains.kotlin.diagnostics.warning1
+import org.jetbrains.kotlin.diagnostics.OffsetsOnlyPositioningStrategy
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
  * Frontend diagnostics for brikk-sql.
  *
- * Note: arbitrary sub-literal ranges (pointing *inside* the SQL string) are possible via a
- * custom `SourceElementPositioningStrategy` returning explicit `TextRange`s — not done yet;
- * diagnostics anchor on the whole literal.
+ * Literal diagnostics use proven UTF-16 offsets; uncertain/folded source mappings retain
+ * the whole literal rather than underline an unrelated occurrence.
  */
 object BrikkSqlDiagnostics : KtDiagnosticsContainer() {
     /** SQL argument was not a compile-time constant string. Arg: callee name. */
@@ -30,13 +30,19 @@ object BrikkSqlDiagnostics : KtDiagnosticsContainer() {
     val SQL_OUTSIDE_BRIKK_FUNCTION by error1<KtElement, String>()
 
     /** brikk-sql could not analyze the function's SQL. Arg: message. */
-    val SQL_ANALYSIS_FAILED by error1<KtElement, String>()
+    val SQL_ANALYSIS_FAILED by error1<KtElement, String>(OffsetsOnlyPositioningStrategy())
 
     /** Multiple `@BrikkSql` functions map to the same generated output class. Arg: class ID. */
     val SQL_OUTPUT_NAME_COLLISION by error1<KtElement, String>()
 
     /** A `:name` placeholder has no matching parameter. Args: name, declared parameters. */
-    val SQL_UNBOUND_PARAM by error2<KtElement, String, String>()
+    val SQL_UNBOUND_PARAM by error2<KtElement, String, String>(OffsetsOnlyPositioningStrategy())
+
+    /** Dotted named binds are unsupported, never silently bound on the first segment. */
+    val SQL_DOTTED_PARAM by error1<KtElement, String>(OffsetsOnlyPositioningStrategy())
+
+    /** A call-site-local shape is approximated to Rel<Shape> when an inferred helper returns it. */
+    val SQL_ESCAPING_LOCAL_SHAPE by warning1<KtElement, String>()
 
     /** A scalar parameter the SQL never references (`:name` or `$name`). Arg: name. */
     val SQL_UNUSED_PARAM by error1<KtElement, String>()
@@ -55,6 +61,8 @@ object BrikkSqlDiagnostics : KtDiagnosticsContainer() {
                 TO_STRING,
             )
             it.put(SQL_BAD_INTERPOLATION, "[BRIKK_SQL] {0}", TO_STRING)
+            it.put(SQL_DOTTED_PARAM, "[BRIKK_SQL] dotted placeholder ''{0}'' is not supported; extract the Kotlin property to a local val and interpolate that val", TO_STRING)
+            it.put(SQL_ESCAPING_LOCAL_SHAPE, "[BRIKK_SQL] inferred helper ''{0}'' lets a local SQL shape escape as Rel<Shape>, losing columns/traits; chain inline, declare an explicit return shape, or use a named @BrikkSql pipe", TO_STRING)
             it.put(SQL_EMPTY, "[BRIKK_SQL] argument to ''{0}'' is blank", TO_STRING)
             it.put(
                 SQL_OUTSIDE_BRIKK_FUNCTION,

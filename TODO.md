@@ -30,14 +30,22 @@ See [the repository split](docs/repository-split.md) for ownership boundaries.
   Plugin assembly, build and all 107 tests pass (zero skips), including direct
   DuckDB execution of preserved compositions and pipe-boundary regressions.
   Acceptance record: [SQL-05 handoff](docs/HANDOFF-SQL-05-source-preserving-lowering.md).
-- [ ] **ENG-02 — Harden compiler analysis and diagnostics beyond the demo.** Resolve
+- [x] **ENG-02 — Harden compiler analysis and diagnostics beyond the demo.** Resolve
   traits/types without short-name collisions; finish nullability checks for
   trait satisfaction (outer joins and set operations already have focused output
   tests); handle dotted binds and named/reordered generic-pipe arguments; qualify columns by
   scope; report accurate sub-literal ranges. Add a useful diagnostic for a
   call-site-local shape escaping through a plain inferred-return helper.
-  Details: [demo-grade shortcuts and helper limitation](docs/RESEARCH-fir-refinement-and-generation.md#demo-grade-shortcuts-to-revisit),
+  Details: [historical shortcuts and helper limitation](docs/RESEARCH-fir-refinement-and-generation.md#historical-demo-grade-shortcuts),
   [wiring open items](docs/virtual-pipelines-wiring.md#open-items).
+  **Complete:** import/package/type-alias-aware identity, nullable trait/input
+  contracts, named/reordered/defaulted generic argument mapping, strict SQL
+  scope checks and proved UTF-16 literal diagnostic ranges are implemented.
+  Dotted binds are explicitly rejected with a local-val remedy, not truncated;
+  inferred helpers receive a local-shape escape warning. Plugin assembly,
+  build and all 132 tests pass (25 new regressions; zero skips). Live IDE
+  compatibility remains ENG-03. Acceptance record:
+  [compiler hardening](docs/ENG-02-compiler-hardening.md).
 - [ ] **ENG-03 — Make the compiler plugin distributable and IDE-compatible.** Relocate
   dependencies into one shaded KEFS artifact, build/test against each supported
   IDE compiler version (not just name a 2.4.10 JAR after it), and validate plugin

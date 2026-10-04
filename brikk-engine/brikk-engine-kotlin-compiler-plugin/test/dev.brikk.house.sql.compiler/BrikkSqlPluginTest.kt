@@ -24,6 +24,297 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCompilerApi::class)
 class BrikkSqlPluginTest {
 
+    @Test
+    fun `same named traits in different packages and import aliases remain distinct`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            import dev.brikk.house.sql.runtime.Rel as R
+            import left.Row as LeftRow
+            import right.Row as RightRow
+            @BrikkSql fun leftSource() = Sql.postgres("SELECT 1 AS id")
+            @BrikkSql fun rightSource() = Sql.postgres("SELECT 'x' AS code")
+            @BrikkSql fun leftPipe(src: R<LeftRow>) = Sql.postgres("SELECT id FROM src()")
+            @BrikkSql fun rightPipe(src: R<RightRow>) = Sql.postgres("SELECT code FROM src()")
+            fun left() = leftPipe(leftSource())
+            fun right() = rightPipe(rightSource())
+        """.trimIndent(), extraSources = listOf(
+            SourceFile.kotlin("left.kt", "package left; import dev.brikk.house.sql.runtime.*; @BrikkTrait interface Row : Partial { val id: Int }"),
+            SourceFile.kotlin("right.kt", "package right; import dev.brikk.house.sql.runtime.*; @BrikkTrait interface Row : Partial { val code: String }"),
+        ))
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        assertEquals("int", result.classLoader.loadClass("demo.LeftPipeOut").getMethod("getId").returnType.name)
+        assertEquals("java.lang.String", result.classLoader.loadClass("demo.RightPipeOut").getMethod("getCode").returnType.name)
+    }
+
+    @Test
+    fun `equally named generated inputs in separate packages do not cross resolve`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql fun combine(a: Rel<left.SourceOut>, b: Rel<right.SourceOut>) =
+                Sql.postgres("SELECT a.id, b.code FROM a() CROSS JOIN b()")
+            fun report() = combine(left.source(), right.source())
+        """.trimIndent(), extraSources = listOf(
+            SourceFile.kotlin("left.kt", "package left; import dev.brikk.house.sql.runtime.*; @BrikkSql fun source() = Sql.postgres(\"SELECT 1 AS id\")"),
+            SourceFile.kotlin("right.kt", "package right; import dev.brikk.house.sql.runtime.*; @BrikkSql fun source() = Sql.postgres(\"SELECT 'x' AS code\")"),
+        ))
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val out = result.classLoader.loadClass("demo.CombineOut")
+        assertEquals("int", out.getMethod("getId").returnType.name)
+        assertEquals("java.lang.String", out.getMethod("getCode").returnType.name)
+    }
+
+    @Test
+    fun `type aliases and imported scalar aliases work before resolution`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            import java.time.Instant as Stamp
+            @BrikkTrait interface Event : Partial { val event_at: Stamp }
+            typealias Rows = Rel<Event>
+            @BrikkSql fun source() = Sql.postgres("SELECT event_at FROM public.events")
+            @BrikkSql fun keep(src: Rows) = Sql.postgres("SELECT event_at FROM src()")
+            fun report() = keep(source())
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+    }
+
+    @Test
+    fun `generic relation aliases follow their expanded argument not the first written argument`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkTrait interface Id : Partial { val id: Int }
+            @BrikkTrait interface Text : Partial { val code: String }
+            typealias PickSecond<A, B> = Rel<B>
+            @BrikkSql fun source() = Sql.postgres("SELECT 'x' AS code")
+            @BrikkSql fun keep(src: PickSecond<Id, Text>) = Sql.postgres("SELECT code FROM src()")
+            fun report() = keep(source())
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        assertEquals("java.lang.String", result.classLoader.loadClass("demo.KeepOut").getMethod("getCode").returnType.name)
+    }
+
+    @Test
+    fun `a user String class is not treated as kotlin String in trait resolution`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkTrait interface CustomText : Partial { val text: other.String }
+            @BrikkSql fun source() = Sql.postgres("SELECT 'x' AS text")
+            fun require(src: Rel<CustomText>) = 1
+            val bad = require(source())
+        """.trimIndent(), extraSources = listOf(SourceFile.kotlin("other.kt", "package other; class String")))
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(result.messages, "Argument type mismatch")
+    }
+
+    @Test
+    fun `an unrelated class named Rel is a scalar parameter not a relation slot`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.BrikkSql
+            import dev.brikk.house.sql.runtime.Sql
+            import other.Rel
+            @BrikkSql fun scalar(value: Rel) = Sql.postgres("SELECT ${'$'}value AS x")
+        """.trimIndent(), extraSources = listOf(SourceFile.kotlin("other.kt", "package other; class Rel")))
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+    }
+
+    @Test
+    fun `inherited traits resolve their parent and property types through imports`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            import other.Event as ImportedEvent
+            @BrikkTrait interface Child : ImportedEvent { val extra: Int }
+            @BrikkSql fun source() = Sql.postgres("SELECT event_at, 1 AS extra FROM public.events")
+            fun require(src: Rel<Child>) = 1
+            val good = require(source())
+        """.trimIndent(), extraSources = listOf(SourceFile.kotlin("other.kt", """
+            package other
+            import dev.brikk.house.sql.runtime.*
+            import java.time.Instant as Timestamp
+            @BrikkTrait interface Event : Partial { val event_at: Timestamp }
+        """.trimIndent())))
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+    }
+
+    @Test
+    fun `nullable results cannot satisfy a non null trait but may satisfy nullable traits`() {
+        val prelude = """
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkTrait interface Required : Partial { val id: Int }
+            @BrikkTrait interface Optional : Partial { val id: Int? }
+            @BrikkSql fun absent() = Sql.postgres("SELECT CAST(NULL AS INT) AS id")
+            fun require(src: Rel<Required>) = 1
+            fun optional(src: Rel<Optional>) = 1
+        """.trimIndent()
+        val bad = compile(prelude + "\nval bad = require(absent())")
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, bad.exitCode)
+        assertContains(bad.messages, "Argument type mismatch")
+        val good = compile(prelude + "\nval good = optional(absent())")
+        assertEquals(KotlinCompilation.ExitCode.OK, good.exitCode, good.messages)
+    }
+
+    @Test
+    fun `nullable trait inputs remain nullable after a generic identity pipe`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkTrait interface Optional : Partial { val id: Int? }
+            @BrikkTrait interface Required : Partial { val id: Int }
+            @BrikkSql fun absent() = Sql.postgres("SELECT CAST(NULL AS INT) AS id")
+            @BrikkSql fun <T: Optional> identity(src: Rel<T>) = Sql.postgres("SELECT id FROM src()")
+            fun require(src: Rel<Required>) = 1
+            val bad = require(identity(absent()))
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(result.messages, "Argument type mismatch")
+    }
+
+    @Test
+    fun `named reordered mixed and omitted default arguments refine the correct Rel input`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkTrait interface Id : Partial { val id: Int }
+            @BrikkTrait interface HasCode : Partial { val code: String }
+            @BrikkSql fun source() = Sql.postgres("SELECT 1 AS id, 'x' AS code")
+            @BrikkSql fun <T: Id> stamp(mark: Int = 7, src: Rel<T>) = Sql.postgres("FROM src() |> EXTEND ${'$'}mark AS mark")
+            fun code(src: Rel<HasCode>) = 1
+            val reordered = code(stamp(src = source(), mark = 1))
+            val omitted = code(stamp(src = source()))
+            val mixed = code(stamp(1, src = source()))
+            val namedThenPositional = code(stamp(mark = 1, source()))
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+    }
+
+    @Test
+    fun `Shape marker bounds preserve the concrete columns of generic identity calls`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkTrait interface NeedsId : Partial { val id: Int }
+            @BrikkSql fun source() = Sql.postgres("SELECT 1 AS id")
+            @BrikkSql fun <T: Shape> identity(src: Rel<T>) = Sql.postgres("FROM src()")
+            fun require(src: Rel<NeedsId>) = 1
+            val good = require(identity(source()))
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+    }
+
+    @Test
+    fun `qualified references cannot borrow columns from unrelated catalog tables`() {
+        val schema = File.createTempFile("brikk-scopes", ".sql").apply {
+            deleteOnExit()
+            writeText("CREATE TABLE a (id INT); CREATE TABLE unrelated (secret INT);")
+        }
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql fun bad() = Sql.postgres("SELECT ghost.id FROM a")
+            @BrikkSql fun alsoBad() = Sql.postgres("SELECT secret FROM a")
+        """.trimIndent(), schema = schema.absolutePath)
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(result.messages, "[BRIKK_SQL]")
+        assertContains(result.messages, "ghost")
+        assertContains(result.messages, "secret")
+    }
+
+    @Test
+    fun `CTE projections correlated references and aliases are checked by SQL scope`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql fun cte() = Sql.postgres("WITH q AS (SELECT event_id AS chosen FROM public.events) SELECT chosen FROM q")
+            @BrikkSql fun correlated() = Sql.postgres("SELECT e.event_id FROM public.events e WHERE EXISTS (SELECT 1 FROM public.events d WHERE d.event_id = e.event_id)")
+            @BrikkSql fun alias() = Sql.postgres("SELECT event_id + 1 AS next_id FROM public.events ORDER BY next_id")
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+    }
+
+    @Test
+    fun `columns hidden by a CTE projection cannot leak from the catalog`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql fun bad() = Sql.postgres("WITH q AS (SELECT event_id AS chosen FROM public.events) SELECT event_id FROM q")
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(result.messages, "event_id")
+        assertContains(result.messages, "[BRIKK_SQL]")
+    }
+
+    @Test
+    fun `quoted generated column identity survives input shape conversion`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql fun source() = Sql.postgres("SELECT 1 AS \"Mixed\"")
+            @BrikkSql fun keep(src: Rel<SourceOut>) = Sql.postgres("SELECT src.\"Mixed\" FROM src()")
+            fun report() = keep(source())
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        assertEquals("int", result.classLoader.loadClass("demo.SourceOut").getMethod("getMixed").returnType.name)
+        // SQL does not currently prove the quoted slot projection's nullability;
+        // retain the numeric type without inventing a non-null guarantee.
+        assertEquals("java.lang.Integer", result.classLoader.loadClass("demo.KeepOut").getMethod("getMixed").returnType.name)
+    }
+
+    @Test
+    fun `dotted placeholders are diagnosed instead of binding only their root`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            data class Filter(val since: Int)
+            @BrikkSql fun bad(filter: Filter) = Sql.postgres("SELECT :filter.since AS since")
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertContains(result.messages, "dotted placeholder")
+        assertContains(result.messages, "local val")
+    }
+
+    @Test
+    fun `SQL diagnostics point at decoded escaped and trimmed literal offsets`() {
+        val escaped = "package demo\nimport dev.brikk.house.sql.runtime.*\n@BrikkSql fun bad() = Sql.postgres(\"SELECT event_id FROM public.events WHERE \\n evnt_at > 1\")"
+        val raw = "package demo\nimport dev.brikk.house.sql.runtime.*\n@BrikkSql fun bad() = Sql.postgres(" + q + "\n    |SELECT event_id FROM public.events\n    |WHERE evnt_at > 1\n" + q + ".trimMargin())"
+        for (source in listOf(escaped, raw)) {
+            val result = compile(source)
+            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+            val before = source.substring(0, source.indexOf("evnt_at"))
+            val line = before.count { it == '\n' } + 1
+            val col = before.substringAfterLast('\n').length + 1
+            assertContains(result.messages, ":$line:$col [BRIKK_SQL]", message = result.messages)
+        }
+    }
+
+    @Test
+    fun `unbound parameter diagnostics map past Kotlin interpolation and Unicode`() {
+        val source = "package demo\nimport dev.brikk.house.sql.runtime.*\n@BrikkSql fun bad(n: Int) = Sql.postgres(\"SELECT '😀' AS note, ${'$'}n AS id, :missing AS x\")"
+        val result = compile(source)
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        val before = source.substring(0, source.indexOf(":missing"))
+        val col = before.substringAfterLast('\n').length + 1
+        assertContains(result.messages, ":3:$col [BRIKK_SQL]", message = result.messages)
+    }
+
+    @Test
+    fun `parse errors and Unicode escaped column names underline their authored token`() {
+        val broken = "package demo\nimport dev.brikk.house.sql.runtime.*\n@BrikkSql fun bad() = Sql.postgres(\"SELECT 1 +\")"
+        val escaped = "package demo\nimport dev.brikk.house.sql.runtime.*\n@BrikkSql fun bad() = Sql.postgres(\"SELECT event_id FROM public.events WHERE \\u0065vnt_at > 1\")"
+        for ((source, token) in listOf(broken to "+", escaped to "\\u0065")) {
+            val result = compile(source)
+            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+            val before = source.substring(0, source.indexOf(token))
+            val col = before.substringAfterLast('\n').length + 1
+            assertContains(result.messages, ":3:$col [BRIKK_SQL]", message = result.messages)
+        }
+    }
+
     /** The schema cache: plain DDL, the "as if it existed" table for the demo. */
     private val schemaFile: File = File.createTempFile("brikk-schema", ".sql").apply {
         deleteOnExit()
@@ -44,9 +335,10 @@ class BrikkSqlPluginTest {
         debug: Boolean = false,
         schema: String = schemaFile.absolutePath,
         workingDir: File? = null,
+        extraSources: List<SourceFile> = emptyList(),
     ): JvmCompilationResult =
         KotlinCompilation().apply {
-            sources = listOf(SourceFile.kotlin("main.kt", source))
+            sources = listOf(SourceFile.kotlin("main.kt", source)) + extraSources
             compilerPluginRegistrars = listOf(BrikkSqlCompilerPluginRegistrar())
             commandLineProcessors = listOf(BrikkSqlCommandLineProcessor())
             pluginOptions = buildList {
@@ -306,12 +598,12 @@ class BrikkSqlPluginTest {
         import java.time.Instant
 
         @BrikkTrait
-        interface HasPayload : Partial { val payload: String }
+        interface HasPayload : Partial { val payload: String? }
 
         @BrikkTrait
         interface LoginInput : Partial {
-            val user_id: String
-            val action: String
+            val user_id: String?
+            val action: String?
             val event_at: Instant
         }
 
@@ -431,6 +723,14 @@ class BrikkSqlPluginTest {
     }
 
     @Test
+    fun `a plain inferred helper returning a local SQL shape receives an actionable hint`() {
+        val result = compile(pipeline + "\nfun mid(start: Instant, end: Instant) = extractEvent(eventsInRange(start, end))")
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        assertContains(result.messages, "local SQL shape escape")
+        assertContains(result.messages, "chain inline")
+    }
+
+    @Test
     fun `unknown column is a frontend error`() {
         val result = compile(
             """
@@ -443,7 +743,7 @@ class BrikkSqlPluginTest {
             """.trimIndent(),
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
-        assertContains(result.messages, "[BRIKK_SQL] unknown column(s): evnt_at")
+        assertContains(result.messages, "[BRIKK_SQL] Column 'evnt_at' could not be resolved")
     }
 
     @Test
@@ -538,8 +838,8 @@ class BrikkSqlPluginTest {
 
         @BrikkTrait
         interface LoginInput : Partial {
-            val user_id: String
-            val action: String
+            val user_id: String?
+            val action: String?
             val event_at: Instant
         }
     """.trimIndent()
@@ -590,7 +890,7 @@ class BrikkSqlPluginTest {
 
             @BrikkTrait
             interface UserDim : Partial {
-                val user_id: String
+                val user_id: String?
                 val tenant: String
             }
 

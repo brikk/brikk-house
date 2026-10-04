@@ -28,12 +28,12 @@ import java.time.Instant
  */
 
 @BrikkTrait
-interface HasPayload : Partial { val payload: String }
+interface HasPayload : Partial { val payload: String? }
 
 @BrikkTrait
 interface LoginInput : Partial {
-    val user_id: String
-    val action: String
+    val user_id: String?
+    val action: String?
     val event_at: Instant
 }
 

@@ -130,10 +130,18 @@ fun useMid(...) = loginDaily(mid(a, b))   // error: actual 'Rel<Shape>', expecte
 
 Kotlin approximates a local class escaping through an inferred return type to its first
 supertype (`Shape`), dropping the traits. Same limitation as DataFrame. Options: chain inline;
-make `mid` a `@BrikkSql` pipe (named, non-local output); or write an explicit type. A checker
-with that hint is a good follow-up. Documented by a test.
+make `mid` a `@BrikkSql` pipe (named, non-local output); or write an explicit type.
+ENG-02 now supplies a checker warning with that hint; it does not change Kotlin's
+approximation. Both the limitation and the warning have regression tests.
 
-### Demo-grade shortcuts to revisit
+### Historical demo-grade shortcuts
+
+The list below describes the original demo, not the current backlog.
+[ENG-02](ENG-02-compiler-hardening.md) now resolves type identity through imports,
+checks/preserves nullability, matches named generic arguments, qualifies columns
+by SQL scope, and maps proved diagnostic intervals into literals. Dotted binds
+are explicitly rejected rather than truncated; the local-shape escape has a
+checker hint. Live IDE compatibility is still a separate ENG-03 validation.
 
 - Traits are resolved by **short name** from the `@BrikkTrait` predicate set; trait property
   types by short name through `TypeMap` (`String`, `Long`, `Instant`, ...). Real resolution

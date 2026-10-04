@@ -95,6 +95,8 @@ object RawFir {
 
     fun rawFunction(function: FirNamedFunction, session: FirSession, containerFile: FirFile?): RawFunction {
         val (dialect, template) = sqlTemplateOf(function, session, containerFile)
+        val types = RawTypes(session, containerFile, function.symbol.callableId.packageName)
+        val typeParameters = function.typeParameters.mapTo(HashSet()) { it.symbol.name.asString() }
         return RawFunction(
             packageFqName = function.symbol.callableId.packageName,
             name = function.name,
@@ -104,12 +106,12 @@ object RawFir {
             params = function.valueParameters.map { p ->
                 RawParam(
                     name = p.name.asString(),
-                    typeShortName = p.returnTypeRef.shortName() ?: "?",
-                    typeArgShortName = p.returnTypeRef.firstTypeArgumentShortName(),
+                    typeName = types.name(p.returnTypeRef, typeParameters) ?: "?",
+                    typeArgName = types.argument(p.returnTypeRef, typeParameters),
                 )
             },
             typeParamBounds = function.typeParameters.associate { tp ->
-                tp.symbol.name.asString() to tp.symbol.resolvedBoundsSafe().mapNotNull { it.shortName() }
+                tp.symbol.name.asString() to tp.symbol.resolvedBoundsSafe().mapNotNull { types.name(it, typeParameters) }
             },
         )
     }
@@ -144,6 +146,7 @@ object RawFir {
         try {
             fir.bounds
         } catch (e: Throwable) {
+            dev.brikk.house.sql.compiler.analysis.PluginGuard.recoverable(e, "raw type parameter bounds")
             emptyList()
         }
 

@@ -321,10 +321,11 @@ the merged tree before the work above and failed identically.
 - Runtime-only render vs compile-time rendered artifact (see above).
 - ~~Two-slot `Rel<Base, Ext>` vs refinement for EXTEND-on-generic~~ → refinement (C) built;
   works. Known limitation: a call-site local shape cannot escape through a plain helper with an
-  inferred return type (approximated to `Rel<Shape>`); needs a checker hint. See RESEARCH doc.
-- Demo shortcuts to harden (RESEARCH doc "Demo-grade shortcuts"): trait resolution by short
-  name, nullability, dotted placeholders, positional args at generic call sites, flat column
-  check, sub-literal diagnostic ranges.
+  inferred return type (approximated to `Rel<Shape>`); ENG-02 now emits an actionable
+  checker warning. See RESEARCH doc.
+- ~~Demo shortcuts to harden~~ → [ENG-02](ENG-02-compiler-hardening.md) implements
+  import-aware identity, nullability checks, named-argument matching, strict SQL scopes,
+  explicit dotted-bind rejection and proved literal diagnostic ranges.
 - Publishing: `./kotlin publish` to a local repo dir with KEFS-compatible versioning; how to
   produce IDE-compiler-version builds under Kotlin Toolchain.
 - Shading brikk-sql into the plugin jar with relocation (`assemblePluginJar` is a plain
