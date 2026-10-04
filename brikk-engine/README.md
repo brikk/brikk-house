@@ -33,6 +33,15 @@ migration. Execution order and storage boundaries remain author choices.
 
 ## SQL preservation
 
+Engine is **runtime-first**: declarations define virtual parameterized views /
+pipe sequences; compile time validates SQL and shape compatibility, while runtime
+chooses inputs and composes the final SQL. No executable SQL build artifact is
+promised. For optional rough drafts, pass
+`-P plugin:dev.brikk.house.sql.compiler:dumpSql=build/sql-drafts/{module}.draft.sql`.
+These are uncomposed stage templates, not final SQL; runtime binding values are
+omitted, but authored SQL literals remain. See
+[the decision and report lifecycle](../docs/ENG-05-runtime-first-and-drafts.md).
+
 The requirement is to change no more SQL than necessary: unchanged same-dialect
 native queries run as written; parameterization changes only parameter
 representation; relation inputs require only their slot/CTE changes; pipe lowering

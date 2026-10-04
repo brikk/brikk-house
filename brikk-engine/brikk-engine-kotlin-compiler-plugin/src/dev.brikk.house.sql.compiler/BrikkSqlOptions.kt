@@ -7,6 +7,8 @@ import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
 
 /** Immutable snapshot of plugin CLI options, resolved once at registration time. */
 data class BrikkSqlOptions(
@@ -21,18 +23,22 @@ data class BrikkSqlOptions(
     val schemaDialect: String = "postgres",
     /** Qualifies single-part table names in a legacy DDL file (`t` -> `public.t`). */
     val defaultSchema: String? = null,
+    /** Optional inspection-only SQL template report; never consumed by runtime execution. */
+    val dumpSqlPath: String? = null,
 ) {
     companion object {
         val KEY_DEBUG = CompilerConfigurationKey<Boolean>("brikk-sql debug")
         val KEY_SCHEMA = CompilerConfigurationKey<String>("brikk-sql schema path")
         val KEY_SCHEMA_DIALECT = CompilerConfigurationKey<String>("brikk-sql schema dialect")
         val KEY_DEFAULT_SCHEMA = CompilerConfigurationKey<String>("brikk-sql default schema")
+        val KEY_DUMP_SQL = CompilerConfigurationKey<String>("brikk-sql rough draft output file")
 
         fun from(configuration: CompilerConfiguration): BrikkSqlOptions = BrikkSqlOptions(
             debug = configuration.get(KEY_DEBUG, false),
             schemaPath = configuration.get(KEY_SCHEMA),
             schemaDialect = configuration.get(KEY_SCHEMA_DIALECT, "postgres"),
             defaultSchema = configuration.get(KEY_DEFAULT_SCHEMA),
+            dumpSqlPath = configuration.get(KEY_DUMP_SQL),
         )
     }
 }
@@ -45,7 +51,7 @@ data class BrikkSqlOptions(
 class BrikkSqlCommandLineProcessor : CommandLineProcessor {
     override val pluginId: String = BrikkSqlNames.PLUGIN_ID
 
-    override val pluginOptions: Collection<AbstractCliOption> = listOf(DEBUG, SCHEMA, SCHEMA_DIALECT, DEFAULT_SCHEMA)
+    override val pluginOptions: Collection<AbstractCliOption> = listOf(DEBUG, SCHEMA, SCHEMA_DIALECT, DEFAULT_SCHEMA, DUMP_SQL)
 
     override fun processOption(option: AbstractCliOption, value: String, configuration: CompilerConfiguration) {
         when (option.optionName) {
@@ -53,6 +59,13 @@ class BrikkSqlCommandLineProcessor : CommandLineProcessor {
             SCHEMA.optionName -> configuration.put(BrikkSqlOptions.KEY_SCHEMA, value)
             SCHEMA_DIALECT.optionName -> configuration.put(BrikkSqlOptions.KEY_SCHEMA_DIALECT, value)
             DEFAULT_SCHEMA.optionName -> configuration.put(BrikkSqlOptions.KEY_DEFAULT_SCHEMA, value)
+            DUMP_SQL.optionName -> {
+                if (value.isBlank()) throw CliOptionProcessingException("dumpSql requires an output file path")
+                try { Path.of(value) } catch (_: InvalidPathException) {
+                    throw CliOptionProcessingException("dumpSql requires a valid output file path")
+                }
+                configuration.put(BrikkSqlOptions.KEY_DUMP_SQL, value)
+            }
             else -> throw CliOptionProcessingException("Unknown option: ${option.optionName}")
         }
     }
@@ -88,6 +101,12 @@ class BrikkSqlCommandLineProcessor : CommandLineProcessor {
             optionName = "defaultSchema",
             valueDescription = "<name>",
             description = "Schema used to qualify unqualified table names in a legacy DDL file; ignored for snapshot directories",
+            required = false,
+        )
+        val DUMP_SQL = CliOption(
+            optionName = "dumpSql",
+            valueDescription = "<file>",
+            description = "Dump inspection-only SQL stage templates to a file ({module} separates compilations); not executable or final SQL",
             required = false,
         )
     }

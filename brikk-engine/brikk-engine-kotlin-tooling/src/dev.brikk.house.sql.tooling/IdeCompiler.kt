@@ -113,12 +113,13 @@ fun verifyIdePlugin(
             val apiFixture = "// PLUGIN-API" in sourceText
             val snapshot = "// SNAPSHOT" in sourceText
             val consumer = if (apiFixture) jars + listOf(plugin) else jars
-            val options = if (snapshot) {
+            val draft = if ("// DRAFT" in sourceText) outputDir.resolve("${source.name}.draft.sql") else null
+            val options = (if (snapshot) {
                 val schema = outputDir.resolve("schema")
                 SchemaCache.replace(schema, "sample", "analytics", "doris", "synthetic-matrix-fixture",
                     listOf(CapturedObject("sample", "analytics", "records", "TABLE", listOf(CapturedColumn("id", "BIGINT", nullable = false)))))
                 listOf("-P", "plugin:dev.brikk.house.sql.compiler:schema=$schema")
-            } else emptyList()
+            } else emptyList()) + (draft?.let { listOf("-P", "plugin:dev.brikk.house.sql.compiler:dumpSql=$it") } ?: emptyList())
             val classes = outputDir.resolve(source.name.removeSuffix(".kt"))
             val result = runCompiler(jars, listOf("-no-stdlib", "-no-reflect", "-jvm-target", "17",
                 "-classpath", consumer.joinToString(File.pathSeparator), "-Xplugin=$plugin",
@@ -129,6 +130,14 @@ fun verifyIdePlugin(
                 "Artifact fixture ${source.name} failed (exit $result):\n$text"
             }
             check(warnings.all { it in text }) { "Expected warning missing from ${source.name}:\n$text" }
+            if (draft != null && !bad) {
+                val report = draft.readText()
+                check(report.startsWith("-- BRIKK SQL ROUGH DRAFT v1\n")) { "Missing draft report header" }
+                for (directive in sourceText.lineSequence()) {
+                    if (directive.startsWith("// DRAFT-EXPECT: ")) check(directive.removePrefix("// DRAFT-EXPECT: ") in report) { "Draft content missing: $directive" }
+                    if (directive.startsWith("// DRAFT-ABSENT: ")) check(directive.removePrefix("// DRAFT-ABSENT: ") !in report) { "Unexpected draft content: $directive" }
+                }
+            }
             sourceText.lineSequence().filter { it.startsWith("// ERROR-AT: ") }.forEach { directive ->
                 val token = directive.removePrefix("// ERROR-AT: ")
                 val offset = sourceText.lastIndexOf(token)

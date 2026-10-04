@@ -2,6 +2,7 @@ package dev.brikk.house.sql.compiler.ir
 
 import dev.brikk.house.sql.compiler.BrikkSqlNames
 import dev.brikk.house.sql.compiler.BrikkSqlOptions
+import dev.brikk.house.sql.compiler.analysis.rethrowIfCancellation
 import dev.brikk.house.sql.shape.SqlFragment
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -38,6 +39,8 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.typeOrNull
 import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
+import java.nio.file.Path
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 
@@ -62,6 +65,17 @@ class BrikkSqlIrGenerationExtension(
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         val transformer = SqlCallTransformer(pluginContext, messageCollector, options)
         moduleFragment.transformChildrenVoid(transformer)
+        options.dumpSqlPath?.let { path ->
+            try {
+                RoughDraftSql.write(Path.of(path), moduleFragment.name.asString(), transformer.draftStages)
+            } catch (e: Exception) {
+                rethrowIfCancellation(e)
+                // An explicitly requested dump must not fail silently, nor throw from the plugin.
+                // Do not embed SQL or raw I/O exceptions in a failure message.
+                messageCollector.report(CompilerMessageSeverity.ERROR,
+                    "[BRIKK_SQL] could not write rough draft SQL report ($path): ${e.javaClass.simpleName}; check the path and use a dedicated report file")
+            }
+        }
         val message = "brikk-sql: intercepted ${transformer.intercepted} SQL call(s) in ${moduleFragment.name}"
         messageCollector.report(
             if (options.debug) CompilerMessageSeverity.WARNING else CompilerMessageSeverity.LOGGING,
@@ -77,6 +91,7 @@ private class SqlCallTransformer(
 ) : IrElementTransformerVoid() {
     var intercepted: Int = 0
         private set
+    val draftStages = mutableListOf<RoughDraftStage>()
 
     private val functionStack = ArrayDeque<IrFunction>()
 
@@ -125,6 +140,14 @@ private class SqlCallTransformer(
         val template = sqlExpression.sqlTemplate() ?: return expression
         val sql = template.sql
         val dialect = callee.name.asString()
+        val usedNames = SqlFragment(sql, dialect).scalarParams.mapNotNullTo(LinkedHashSet()) { it.name }
+        if (options.dumpSqlPath != null) {
+            draftStages += RoughDraftStage(
+                enclosing.fqNameWhenAvailable?.asString() ?: enclosing.name.asString(), dialect, sql,
+                enclosing.parameters.filter { it.kind == IrParameterKind.Regular && it.isRel() }.map { it.name.asString() },
+                usedNames.toList(),
+            )
+        }
 
         intercepted++
         if (options.debug) {
@@ -148,7 +171,6 @@ private class SqlCallTransformer(
         // Template references own their binding values, including locals shadowing parameters.
         // FIR rejects a plain placeholder sharing that name with a different template symbol.
         val templateNames = template.binds.mapTo(HashSet()) { it.first }
-        val usedNames = SqlFragment(sql, dialect).scalarParams.mapNotNullTo(HashSet()) { it.name }
         val bound = HashSet<String>()
         for (param in enclosing.parameters.filter { it.kind == IrParameterKind.Regular }) {
             val name = param.name.asString()

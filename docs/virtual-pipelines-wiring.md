@@ -40,7 +40,8 @@ The earlier green slice is not acceptance of the newer SQL preservation requirem
   typing `Sql.x()` inside `@BrikkSql` as `Rel<FnOut>` and generic pipe call sites as a local
   full Shape; checkers: non-const, outside-@BrikkSql, analysis failure, unbound `:param`,
   unknown column), `ir/` (rewrite to `Rel(...).input(...).bind(...)`, constructor bodies for
-  local shapes). Options: `schema`, `schemaDialect`, `defaultSchema`, `debug`.
+  local shapes). Options: `schema`, `schemaDialect`, `defaultSchema`, `debug`,
+  optional inspection-only `dumpSql`.
 - [brikk-engine/brikk-engine-kotlin-smoke/](../brikk-engine/brikk-engine-kotlin-smoke/): the same three-step pipeline compiled by the real toolchain via
   `-Xplugin=build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar` (merged by
   `./kotlin do assemblePluginJar`, a `brikk-engine-kotlin-tooling` task) and
@@ -89,14 +90,18 @@ in `brikk-sql`. The proposals below must obey the SQL preservation requirement.
   literal in its dialect; qualifies against catalog + parameter shapes; annotate-types +
   lineage; reports diagnostics with sub-literal ranges.
 - Plugin generates nominal shape types (§9) and checks call-site compatibility.
-- IR shrinks to: embed `FragmentDescription` + typed bindings. Composition
-  (`f(g(h(x)))`) is a runtime slot bind in `brikk-engine-kotlin`; required lowering
+- IR embeds authored stage templates and constructs typed `Rel` values with
+  input/binding calls. Composition (`f(g(h(x)))`) is a runtime slot bind in
+  `brikk-engine-kotlin`; required lowering
   uses `brikk-sql` when rendering. No OwnerChain / packed-AST store / `inline`
   machinery for MVP, and no general materialized-view planner before migration.
 - §12 execution modes: static requirements (output ⊆ target, key lineage) are FIR checks over
   `SqlFragment` shapes/lineage; lowering (INSERT wrap, watermark inject) is runtime.
-- Open: is runtime-only rendering acceptable, or do we want rendered SQL as an inspectable
-  compile-time artifact (dbt-style)?
+- **ENG-05 decision: runtime-first virtual parameterized views/pipe sequences.**
+  Compile time validates and detects compatible shapes; runtime glues the graph
+  and determines final SQL. Optional `dumpSql=<file>` is an inspection-only stage
+  template report, not a dbt-style executable artifact. See
+  [the decision and draft lifecycle](ENG-05-runtime-first-and-drafts.md).
 
 ## Surface sketch
 
@@ -323,7 +328,8 @@ the merged tree before the work above and failed identically.
 - ~~Implement minimum-change rendering paths and output-diff acceptance tests~~ →
   ENG-01 complete with SQL 0.17.0 and per-stage diagnostics. Keep testing
   pipe-lowering correctness; future generic SQL defects belong in `brikk-sql`.
-- Runtime-only render vs compile-time rendered artifact (see above).
+- ~~Runtime render vs compile-time executable artifact~~ → ENG-05 chooses
+  runtime-first, with optional non-final stage drafts for inspection.
 - ~~Two-slot `Rel<Base, Ext>` vs refinement for EXTEND-on-generic~~ → refinement (C) built;
   works. Known limitation: a call-site local shape cannot escape through a plain helper with an
   inferred return type (approximated to `Rel<Shape>`); ENG-02 now emits an actionable

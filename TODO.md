@@ -75,9 +75,16 @@ See [the repository split](docs/repository-split.md) for ownership boundaries.
 
 ## Decisions and later surfaces
 
-- [ ] **ENG-05 — Decide whether rendered SQL is a compile-time artifact.** Choose
+- [x] **ENG-05 — Decide whether rendered SQL is a compile-time artifact.** Choose
   runtime-only rendering or an inspectable compiled artifact (and its invalidation
   story) before promising dbt-style generated SQL. Details: [wiring decisions](docs/virtual-pipelines-wiring.md#division-of-labour-proposed).
+  **Complete:** runtime-first virtual parameterized views/pipe sequences;
+  compile time validates SQL and compatible shapes, while runtime glues the graph
+  and determines final SQL. Optional `dumpSql=<file>` emits inspection-only stage
+  templates, never executable/final SQL or runtime binding values. `{module}`
+  separates main/test reports. Assembly/build, 159 tests, eight IDE-compiler
+  artifact fixtures and seven schema refresh checks pass. Decision/lifecycle:
+  [runtime-first and drafts](docs/ENG-05-runtime-first-and-drafts.md).
 - [ ] **ENG-06 — Design the next composition surface.** Step 4 (`then`/wiring) is
   deferred; specify the API and tests only after the underlying composition
   invariants in ENG-01 hold. Details: [wiring open items](docs/virtual-pipelines-wiring.md#open-items).

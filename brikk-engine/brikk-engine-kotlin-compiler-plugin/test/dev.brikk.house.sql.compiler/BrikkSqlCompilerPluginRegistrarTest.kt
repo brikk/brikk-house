@@ -53,4 +53,18 @@ class BrikkSqlCompilerPluginRegistrarTest {
         assertContains(failure.message.orEmpty(), "debug")
         assertContains(failure.message.orEmpty(), "'yes'")
     }
+
+    @Test
+    fun draftOutputIsOptInAndRequiresAValidNonemptyPath() {
+        assertEquals(null, BrikkSqlOptions.from(CompilerConfiguration()).dumpSqlPath)
+        val processor = BrikkSqlCommandLineProcessor()
+        val configuration = CompilerConfiguration()
+        processor.processOption(BrikkSqlCommandLineProcessor.DUMP_SQL, "build/views.draft.sql", configuration)
+        assertEquals("build/views.draft.sql", BrikkSqlOptions.from(configuration).dumpSqlPath)
+        for (bad in listOf("", " ", "invalid\u0000path")) {
+            assertFailsWith<CliOptionProcessingException> {
+                processor.processOption(BrikkSqlCommandLineProcessor.DUMP_SQL, bad, CompilerConfiguration())
+            }
+        }
+    }
 }

@@ -24,6 +24,116 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCompilerApi::class)
 class BrikkSqlPluginTest {
 
+    private fun draftFile(): File = java.nio.file.Files.createTempDirectory(
+        java.nio.file.Files.createDirectories(java.nio.file.Path.of(System.getProperty("java.io.tmpdir"), "opencode")), "brikk-draft-")
+        .resolve("views.draft.sql").toFile()
+
+    @Test
+    fun `opt in draft dumps exact stage templates not composed SQL or runtime bindings`() {
+        val draft = draftFile()
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkTrait interface HasId : Partial { val id: Int }
+            val token: String get() = error("runtime getter must not run during compilation")
+            @BrikkSql fun source(n: String) = Sql.postgres("  SELECT /* keep */ 1 AS id WHERE ${'$'}n <> ''  ")
+            @BrikkSql fun <T: HasId> extend(src: Rel<T>, value: Int) = Sql.postgres("FROM ${'$'}src() |> EXTEND ${'$'}value AS extra")
+            @BrikkSql fun property() = Sql.postgres("SELECT 1 AS id WHERE ${'$'}token <> ''")
+            fun finalSql() = extend(source("RUNTIME_ONLY_SECRET_VALUE"), 42).render()
+            fun actualBindings() = extend(source("RUNTIME_ONLY_SECRET_VALUE"), 42).bindings()
+        """.trimIndent(), draftFile = draft)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val text = draft.readText()
+        assertContains(text, "BRIKK SQL ROUGH DRAFT v1")
+        assertContains(text, "NOT final or composed executable SQL")
+        assertContains(text, "-- Stages: 3")
+        assertContains(text, "demo.source")
+        assertContains(text, "-- Source dialect: postgres")
+        assertContains(text, "-- Rel input slots: src")
+        assertContains(text, "-- Named parameters: value")
+        assertContains(text, "  SELECT /* keep */ 1 AS id WHERE :n <> ''  \n")
+        assertContains(text, "FROM src() |> EXTEND :value AS extra")
+        assertContains(text, "WHERE :token <> ''")
+        kotlin.test.assertFalse(text.contains("WITH s0"))
+        kotlin.test.assertFalse(text.contains("RUNTIME_ONLY_SECRET_VALUE"))
+        kotlin.test.assertFalse(text.contains("runtime getter must not run"))
+        val main = result.classLoader.loadClass("demo.MainKt")
+        assertContains(main.getMethod("finalSql").invoke(null) as String, "WITH s0")
+        val bindings = main.getMethod("actualBindings").invoke(null) as Map<*, *>
+        assertEquals(setOf("RUNTIME_ONLY_SECRET_VALUE", 42), bindings.values.toSet())
+    }
+
+    @Test
+    fun `runtime graph choice remains authoritative and never reads the compiler draft`() {
+        val draft = draftFile()
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkTrait interface HasId : Partial { val id: Int }
+            @BrikkSql fun live() = Sql.postgres("SELECT /* live */ 1 AS id")
+            @BrikkSql fun archive() = Sql.postgres("SELECT /* archive */ 2 AS id")
+            @BrikkSql fun <T: HasId> summary(src: Rel<T>) = Sql.postgres("SELECT id FROM ${'$'}src()")
+            fun runtimeSql(archived: Boolean): String {
+                val src: Rel<HasId> = if (archived) archive() else live()
+                return summary(src).render()
+            }
+        """.trimIndent(), draftFile = draft)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val text = draft.readText()
+        assertContains(text, "/* live */")
+        assertContains(text, "/* archive */")
+        assertContains(text, "SELECT id FROM src()")
+        assertTrue(draft.delete()) // Only the report created by this test.
+        val main = result.classLoader.loadClass("demo.MainKt")
+        val method = main.getMethod("runtimeSql", Boolean::class.javaPrimitiveType)
+        val live = method.invoke(null, false) as String
+        val archive = method.invoke(null, true) as String
+        assertContains(live, "/* live */")
+        kotlin.test.assertFalse(live.contains("/* archive */"))
+        assertContains(archive, "/* archive */")
+        kotlin.test.assertFalse(archive.contains("/* live */"))
+    }
+
+    @Test
+    fun `draft reports replace prior invocation stages including an empty compilation slice`() {
+        val draft = draftFile()
+        val prelude = "package demo; import dev.brikk.house.sql.runtime.*; "
+        val before = compile(prelude + "@BrikkSql fun kept() = Sql.postgres(\"SELECT 1 AS id\"); @BrikkSql fun removed() = Sql.postgres(\"SELECT 2 AS id\")", draftFile = draft)
+        assertEquals(KotlinCompilation.ExitCode.OK, before.exitCode, before.messages)
+        assertContains(draft.readText(), "demo.removed")
+        val after = compile(prelude + "@BrikkSql fun kept() = Sql.postgres(\"SELECT 3 AS id\")", draftFile = draft)
+        assertEquals(KotlinCompilation.ExitCode.OK, after.exitCode, after.messages)
+        assertContains(draft.readText(), "-- Stages: 1")
+        assertContains(draft.readText(), "SELECT 3 AS id")
+        kotlin.test.assertFalse(draft.readText().contains("demo.removed"))
+        val empty = compile(prelude + "fun plain() = 1", draftFile = draft)
+        assertEquals(KotlinCompilation.ExitCode.OK, empty.exitCode, empty.messages)
+        assertContains(draft.readText(), "-- Stages: 0")
+        kotlin.test.assertFalse(draft.readText().contains("demo.kept"))
+    }
+
+    @Test
+    fun `a draft is not a successful build marker and failed validation leaves the previous report alone`() {
+        val draft = draftFile()
+        val before = compile("package demo; import dev.brikk.house.sql.runtime.*; @BrikkSql fun good() = Sql.postgres(\"SELECT 1 AS id\")", draftFile = draft)
+        assertEquals(KotlinCompilation.ExitCode.OK, before.exitCode, before.messages)
+        val saved = draft.readText()
+        val bad = compile("package demo; import dev.brikk.house.sql.runtime.*; @BrikkSql fun bad() = Sql.postgres(\"SELECT nonexistent FROM public.events\")", draftFile = draft)
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, bad.exitCode)
+        assertEquals(saved, draft.readText())
+        assertContains(saved, "not a complete module inventory or proof of a successful/current build")
+    }
+
+    @Test
+    fun `requested draft output failures are compiler errors and never overwrite user files`() {
+        val draft = draftFile()
+        draft.writeText("user-authored SQL")
+        val result = compile("package demo; import dev.brikk.house.sql.runtime.*; @BrikkSql fun source() = Sql.postgres(\"SELECT 1 AS id\")", draftFile = draft)
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertContains(result.messages, "could not write rough draft SQL report")
+        assertEquals("user-authored SQL", draft.readText())
+    }
+
     @Test
     fun `same named traits in different packages and import aliases remain distinct`() {
         val result = compile("""
@@ -336,6 +446,7 @@ class BrikkSqlPluginTest {
         schema: String = schemaFile.absolutePath,
         workingDir: File? = null,
         extraSources: List<SourceFile> = emptyList(),
+        draftFile: File? = null,
     ): JvmCompilationResult =
         KotlinCompilation().apply {
             sources = listOf(SourceFile.kotlin("main.kt", source)) + extraSources
@@ -345,6 +456,7 @@ class BrikkSqlPluginTest {
                 add(PluginOption(BrikkSqlNames.PLUGIN_ID, "schema", schema))
                 add(PluginOption(BrikkSqlNames.PLUGIN_ID, "defaultSchema", "public"))
                 if (debug) add(PluginOption(BrikkSqlNames.PLUGIN_ID, "debug", "true"))
+                if (draftFile != null) add(PluginOption(BrikkSqlNames.PLUGIN_ID, "dumpSql", draftFile.absolutePath))
             }
             if (workingDir != null) this.workingDir = workingDir
             inheritClassPath = true

@@ -77,6 +77,11 @@ Live IDE loading/highlighting/hot reload are still unverified. See the
 
 ## SQL preservation
 
+Virtual parameterized views/pipes are checked for compatible shapes at compile
+time, then glued together and rendered at runtime. Optional
+`dumpSql=build/sql-drafts/{module}.draft.sql` compiler output shows rough stage
+templates, not final/executable SQL. See [runtime-first and draft inspection](docs/ENG-05-runtime-first-and-drafts.md).
+
 Parsing for checks is not permission to regenerate or optimize executable SQL.
 Unchanged same-dialect native queries must run as written. Bindings, relation
 slots, pipe lowering, and explicit transpilation permit only their necessary

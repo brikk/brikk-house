@@ -32,3 +32,6 @@ settings:
       - plugin:dev.brikk.house.sql.compiler:schema=brikk-engine/brikk-engine-kotlin-smoke/schema/events.sql
       - -P
       - plugin:dev.brikk.house.sql.compiler:defaultSchema=public
+      # Synthetic opt-in example; production consumers leave this unset unless inspecting.
+      - -P
+      - plugin:dev.brikk.house.sql.compiler:dumpSql=build/sql-drafts/{module}.draft.sql
