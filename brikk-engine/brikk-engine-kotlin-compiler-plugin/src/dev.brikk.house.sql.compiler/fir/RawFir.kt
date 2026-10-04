@@ -60,8 +60,8 @@ object RawFir {
      * declaration: a callee in another file has a [FirLazyBlock] whose statements throw when
      * touched, and forcing its resolution from inside another declaration's resolution is not
      * allowed. The declaration's *source text* is available either way, so lazy bodies are read
-     * textually. (PSI is deliberately not used: the plugin is compiled against the embeddable
-     * compiler, where `com.intellij` types are relocated, so PSI signatures do not link in the IDE.)
+     * textually without forcing body resolution. Import lookup can still use the owning PSI
+     * file when the IDE's FIR provider has not registered it yet.
      *
      * A rejected `${'$'}{...}` entry yields a null template here; the call checker reports it
      * precisely, this path only needs "no analyzable SQL".
@@ -95,7 +95,7 @@ object RawFir {
 
     fun rawFunction(function: FirNamedFunction, session: FirSession, containerFile: FirFile?): RawFunction {
         val (dialect, template) = sqlTemplateOf(function, session, containerFile)
-        val types = RawTypes(session, containerFile, function.symbol.callableId.packageName)
+        val types = RawTypes(session, containerFile, function.symbol.callableId.packageName, source = function.source)
         val typeParameters = function.typeParameters.mapTo(HashSet()) { it.symbol.name.asString() }
         return RawFunction(
             packageFqName = function.symbol.callableId.packageName,

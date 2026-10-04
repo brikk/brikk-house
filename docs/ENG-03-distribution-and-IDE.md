@@ -85,8 +85,13 @@ From the repository root:
 
 KEFS must use the **IDE candidate's repository root**, not an old relabeled CLI
 artifact. Bundle coordinates are
-`dev.brikk.house:brikk-engine-kotlin-compiler-plugin`; keep default detection and
-replacement patterns. The CLI smoke filename still lets KEFS detect this bundle.
+`dev.brikk.house:brikk-engine-kotlin-compiler-plugin`. For the flat `build/plugin`
+consumer path, enable **custom replacement patterns** with version
+`<kotlin-version>-<lib-version>`, detect `<artifact-id>` and search `<artifact-id>`.
+These default-looking values must be saved as an explicit replacement: KEFS
+0.3.14's default matching expects a Maven directory path, while custom matching
+recognizes the filename. The saved `.idea/kotlin-plugins.xml` contains a
+`pluginsReplacements` entry for the configured bundle.
 Configure the local repo and library-version matching as described in the
 [vendored guide](vendor/kefs/PLUGIN_AUTHORS.md#3-plugin-hot-reload-in-kefs).
 Re-run the module-scoped assembly/publication commands after plugin changes.
@@ -112,6 +117,29 @@ No user's `.idea` or global IDE settings were edited by this work.
   has not been run remotely as part of this acceptance record.
 
 ## Remaining live IDE gate
+
+### Cold-open failure observed on 2026-10-04
+
+With KEFS loading the correct artifact, opening DuckDB `Views.kt` initially left
+the generated output interfaces unresolved until an edit. `idea.log` recorded
+`Cannot resolve trait property type 'Instant'` for `RawEvent.event_at`, causing
+generation of `DailyRevenueOut`, `DailyRefundsOut` and `DataQualityOut` to return
+no class. The IDE's FIR provider can omit a containing file even though declaration
+PSI is available; raw type lookup then loses its imports.
+
+`SourceContext.kt` now reads imports and the schema anchor from the owning Kotlin
+PSI file when FIR file context is absent. Trait, function, relation-slot and
+type-alias lookup use this fallback without forcing body resolution. Four unit
+regressions exercise missing FIR context, aliases, wildcard ambiguity, per-file
+identity and schema anchoring. The `source-context.kt` artifact fixture exercises
+the non-embeddable IDE API. Neither test substitutes for opening the file after
+IDE startup without making an edit. That live retest remains required.
+
+A separate startup `ClassNotFoundException` for `BrikkSqlCompilerPluginRegistrar`
+was also observed in IntelliJ's compiler-plugin cache. This source-context fix
+does not change KEFS's loading/invalidation implementation.
+
+### Live checklist
 
 Record IDE build, Kotlin compiler version, KEFS version, artifact SHA-256 and
 screenshots/report paths when performing these checks:

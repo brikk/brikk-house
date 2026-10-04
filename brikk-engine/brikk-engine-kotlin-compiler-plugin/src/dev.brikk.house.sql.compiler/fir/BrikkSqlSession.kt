@@ -175,7 +175,7 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
             val klass = classes[name] ?: return null
             if (name in visiting) return null
             val file = session.firProvider.getFirClassifierContainerFileIfAny(klass.symbol)
-            val types = RawTypes(session, file, klass.symbol.classId.packageFqName)
+            val types = RawTypes(session, file, klass.symbol.classId.packageFqName, source = klass.source)
             val cols = LinkedHashMap<String, ShapeColumn>()
             for (superName in klass.superTypeRefs.mapNotNull { types.name(it) }) {
                 build(superName, visiting + name)?.columns?.forEach { cols.putIfAbsent(it.name.lowercase(), it) }
@@ -248,7 +248,7 @@ class BrikkSqlSession(session: FirSession, val options: BrikkSqlOptions) : FirEx
         try {
             val containerFile = containerFileOf(symbol)
             currentPackage = symbol.callableId.packageName
-            val analyzer = analyzerFor(containerFile?.sourceFile?.path.also { if (it == null) noteNoAnchor(symbol) })
+            val analyzer = analyzerFor(sourceFilePath(containerFile, symbol.fir.source).also { if (it == null) noteNoAnchor(symbol) })
             val analysis = try {
                 analyzer.analyze(RawFir.rawFunction(symbol.fir as FirNamedFunction, session, containerFile))
             } catch (e: Throwable) {

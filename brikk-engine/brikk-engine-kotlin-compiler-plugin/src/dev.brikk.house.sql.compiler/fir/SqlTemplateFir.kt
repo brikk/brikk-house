@@ -164,7 +164,7 @@ object SqlTemplateFir {
     fun scopeOf(function: FirNamedFunction, session: FirSession, containerFile: FirFile?): TemplateScope {
         val rel = HashSet<String>()
         val other = HashSet<String>()
-        val types = RawTypes(session, containerFile, function.symbol.callableId.packageName)
+        val types = RawTypes(session, containerFile, function.symbol.callableId.packageName, source = function.source)
         for (p in function.valueParameters) {
             if (types.name(p.returnTypeRef) == BrikkSqlNames.REL_CLASS_ID.asSingleFqName().asString()) rel += p.name.asString()
             else other += p.name.asString()
@@ -176,19 +176,20 @@ object SqlTemplateFir {
             emptySet()
         }
         val packageFqName = function.symbol.callableId.packageName
-        return TemplateScope(rel, other, locals) { name -> lookupConst(session, packageFqName, containerFile, name) }
+        val imports = sourceImports(containerFile, function.source)
+        return TemplateScope(rel, other, locals) { name -> lookupConst(session, packageFqName, imports, name) }
     }
 
     /**
      * `const val` lookup by simple name: same package, then the file's explicit and star
      * imports. Companion/object constants are out of scope (bind instead).
      */
-    private fun lookupConst(session: FirSession, packageFqName: FqName, file: FirFile?, name: String): ConstSqlText? {
+    private fun lookupConst(session: FirSession, packageFqName: FqName, imports: List<SourceImport>, name: String): ConstSqlText? {
         val id = Name.identifier(name)
         val candidates = ArrayList<FqName>()
         candidates += packageFqName
-        file?.imports?.forEach { imp ->
-            val fq = imp.importedFqName ?: return@forEach
+        imports.forEach { imp ->
+            val fq = imp.fqName
             if (imp.isAllUnder) candidates += fq else if (fq.shortName() == id) candidates += fq.parent()
         }
         for (pkg in candidates) {

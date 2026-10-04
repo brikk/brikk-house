@@ -228,9 +228,11 @@ other versions require reviewed matrix entries and tests. Publication checks bui
 provenance and rejects relabeling. CLI artifacts still use `build/plugin` and
 `build/repo`; do not point KEFS at an old mislabeled CLI artifact.
 
-Add the candidate repository as a KEFS Local repository and the bundle above,
-leaving detection/replacement patterns at their defaults. The smoke `-Xplugin`
-filename follows `<artifact-id>-<compiler>-<lib>.jar` so KEFS can detect the bundle.
+Add the candidate repository as a KEFS Local repository and the bundle above.
+Enable custom replacement patterns with version `<kotlin-version>-<lib-version>`,
+detect `<artifact-id>` and search `<artifact-id>`. For KEFS 0.3.14 this explicit
+replacement matches the flat smoke `-Xplugin` filename; default Maven-path
+detection does not. See the [acceptance record](ENG-03-distribution-and-IDE.md).
 Do not change the compiler option ID `dev.brikk.house.sql.compiler`.
 
 Re-publish after changes; KEFS's file watcher must be validated in the actual IDE
