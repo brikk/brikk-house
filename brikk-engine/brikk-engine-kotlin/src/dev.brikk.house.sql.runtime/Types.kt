@@ -57,7 +57,7 @@ object Sql {
     fun clickhouse(@Language("BrikkSQL", prefix = "-- dialect: clickhouse\n") sql: String): Rel<Nothing> = notRewritten("clickhouse")
 
     @BrikkSqlDialect("duckdb")
-    fun duckdb(@Language("BrikkSQL", prefix = "-- dialect: duckdb\n") sql: String): Rel<Nothing> = notRewritten("duckdb")
+    fun duckdb(@Language("DuckDBSQL", prefix = "-- dialect: duckdb\n") sql: String): Rel<Nothing> = notRewritten("duckdb")
 
     private fun notRewritten(dialect: String): Nothing =
         error("Sql.$dialect(...) reached at runtime: the brikk-sql compiler plugin was not applied")
