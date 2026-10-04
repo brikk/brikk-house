@@ -1,0 +1,23 @@
+# A Toolchain-owned compiler matrix harness, not a runtime/application module.
+# Runs the exact non-embeddable compiler used by KEFS, in a separate JVM.
+product: jvm/lib
+
+repositories:
+  - https://packages.jetbrains.team/maven/p/ij/intellij-dependencies
+
+plugins:
+  brikk-engine-kotlin-tooling:
+    enabled: true
+    ideKotlinVersion: 2.4.20-ij262-34
+    libVersion: 0.2.0
+    assembledDir: build/plugin-ide/2.4.20-ij262-34
+    repoDir: build/repo-ide/2.4.20-ij262-34
+
+dependencies:
+  - org.jetbrains.kotlin:kotlin-compiler:2.4.20-ij262-34
+  - dev.brikk.house:brikk-sql-jvm:0.17.0
+  - ../brikk-engine-kotlin
+
+settings:
+  kotlin:
+    version: 2.4.10

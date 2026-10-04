@@ -2,8 +2,8 @@
 #
 # Kotlin Toolchain's first-class `settings.kotlin.compilerPlugins` only accepts Maven
 # coordinates (not module deps), so until we publish (KEFS-style versioned + shaded jar) we
-# attach the plugin via freeCompilerArgs. The plugin needs brikk-sql (its SQL brain) and
-# kotlinx-serialization on the *plugin* classpath, so we point -Xplugin at a merged jar whose
+# attach the plugin via freeCompilerArgs. SQL and serialization are relocated into
+# the single *plugin* artifact, so we point -Xplugin at that shaded jar whose
 # name follows KEFS's `<artifact-id>-<kotlin-version>-<lib-version>.jar` convention (lets the
 # IDE plugin recognise it without replacement patterns). Paths are relative to the project
 # root; build it first (brikk-engine-kotlin-tooling task; compiles the plugin as needed):

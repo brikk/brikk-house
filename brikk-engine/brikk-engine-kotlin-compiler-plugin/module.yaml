@@ -7,7 +7,9 @@ plugins:
   brikk-engine-kotlin-tooling:
     enabled: true
     # KEFS action "Copy Kotlin IDE Version". Bump when the IDE's Kotlin compiler changes.
-    ideKotlinVersion: 2.4.20-ij262-34
+    # CLI publication must use the compiler it was actually built against.
+    # The separate compiler-IDE module builds/publishes the IDE artifact.
+    ideKotlinVersion: ""
     libVersion: 0.2.0
 
 dependencies:
@@ -15,9 +17,8 @@ dependencies:
   # compilation in-process via the Build Tools API (embeddable), so the plugin
   # jar must be embeddable-compatible.
   - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.10: compile-only
-  # The SQL brain: parse/qualify/annotate the literals at compile time. For a distributable
-  # plugin jar this must be shaded+relocated (KEFS requirement); in-repo we rely on the
-  # module classpath (kctfork tests) and explicit -Xplugin entries (smoke module).
+  # The SQL brain: normal module dependency for development/kctfork; assembly
+  # relocates SQL/serialization into a single artifact for CLI/KEFS distribution.
   - dev.brikk.house:brikk-sql-jvm:0.17.0
 
 test-dependencies:

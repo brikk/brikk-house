@@ -206,29 +206,33 @@ build. Required for B as much as for C.
 
 ### Local IDE loop (KEFS hot-reload)
 
-The local publishing setup exists; rebuilding after relocation is not proof of IDE
-compatibility. Check the loaded JAR and diagnostics in the actual IDE.
+[ENG-03's acceptance record](ENG-03-distribution-and-IDE.md) is authoritative:
+dependencies are now relocated and the IDE candidate is genuinely compiled/tested
+against `2.4.20-ij262-34`, not a relabeled CLI JAR. Live IDE acceptance remains open.
 
 ```sh
-./kotlin do publishKefsRepo     # compiles the plugin, runs assemblePluginJar, then publishes
+./kotlin do verifyIdePlugin -m brikk-engine-kotlin-compiler-ide
+./kotlin do publishKefsRepo -m brikk-engine-kotlin-compiler-ide
 ```
-publishes `dev.brikk.house:brikk-engine-kotlin-compiler-plugin:<ide>-0.2.0` into `build/repo` (Maven
-layout). `<ide>` is `plugins.brikk-engine-kotlin-tooling.ideKotlinVersion` in
-[brikk-engine/brikk-engine-kotlin-compiler-plugin/module.yaml](../brikk-engine/brikk-engine-kotlin-compiler-plugin/module.yaml) (from "KEFS: Copy Kotlin IDE Version"; `./kotlin do`
-takes no task arguments, so it lives in the yaml). The assembled jar's own name uses the real
-`settings.kotlin.version` of the plugin module, read by the task, so it cannot drift. KEFS: add `build/repo` as a Local repository and a bundle with those coordinates
-("Latest" matching); leave the three replacement patterns at their defaults
-(`<kotlin-version>-<lib-version>`, `<artifact-id>`, `<artifact-id>`). KEFS detects the plugin
-from the `-Xplugin` jar *file name*, matched as `<detect>-<version>.jar`, which is why the
-assembled jar is named `brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar` and not `...-all.jar`.
-Update existing KEFS bundles to the new artifact ID; do not change the compiler ID
-`dev.brikk.house.sql.compiler` in `-P` options.
-KEFS file-watches the repo: re-run `./kotlin do publishKefsRepo` after a plugin change. The
-jar is compiled against 2.4.10 regardless of the name — the first thing to learn is whether the
-IDE's compiler build accepts it (the exception analyzer says so).
 
-Running a 2.4.10-built jar on the IDE's `2.4.20-ij*` compiler means any FIR API that moved
-between the two is a runtime link error, not a compile error. Two rules keep this workable:
+The candidate's Maven repository root is `build/repo-ide/2.4.20-ij262-34`, with
+coordinates `dev.brikk.house:brikk-engine-kotlin-compiler-plugin:2.4.20-ij262-34-0.2.0`.
+The [IDE harness config](../brikk-engine/brikk-engine-kotlin-compiler-ide/module.yaml)
+pins the exact actual compiler. Confirm "KEFS: Copy Kotlin IDE Version" matches it;
+other versions require reviewed matrix entries and tests. Publication checks build
+provenance and rejects relabeling. CLI artifacts still use `build/plugin` and
+`build/repo`; do not point KEFS at an old mislabeled CLI artifact.
+
+Add the candidate repository as a KEFS Local repository and the bundle above,
+leaving detection/replacement patterns at their defaults. The smoke `-Xplugin`
+filename follows `<artifact-id>-<compiler>-<lib>.jar` so KEFS can detect the bundle.
+Do not change the compiler option ID `dev.brikk.house.sql.compiler`.
+
+Re-publish after changes; KEFS's file watcher must be validated in the actual IDE
+using the [live checklist](ENG-03-distribution-and-IDE.md#remaining-live-ide-gate).
+Compiler fixtures alone cannot prove lazy FIR, highlighting or hot reload.
+
+Two compiler-safety rules remain:
 
 - **The plugin never throws.** Catalog loading, raw-FIR reading and the three extension entry
   points (`intercept`, `generateTopLevelClassLikeDeclaration`, the function checker) convert
@@ -237,8 +241,9 @@ between the two is a runtime link error, not a compile error. Two rules keep thi
   so one throwing line shows up as hundreds of stacks in `idea.log`.
 - **[fir/CompilerCompat.kt](../brikk-engine/brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/fir/CompilerCompat.kt) shims the known API differences** (`KtFakeSourceElementKind.
   PluginGenerated` object -> sealed class in 2.4.20; `FirResolvedQualifier.classId` removed).
-  When a new `NoSuchFieldError`/`NoSuchMethodError` appears, add the shim there rather than
-  around the call site. The remaining IDE-only difference is lazy bodies (`FirLazyBlock`),
+  New API changes must be compiled/tested in an explicit matrix entry, with small
+  reviewed adapters rather than silently reusing another compiler's artifact.
+  An IDE-only difference is lazy bodies (`FirLazyBlock`),
   handled in `RawFir.sqlLiteralOf` by reading the declaration's source text.
 
 Exceptions from the loaded plugin are in `~/.cache/JetBrains/IntelliJIdea<ver>/log/idea.log`
@@ -326,9 +331,10 @@ the merged tree before the work above and failed identically.
 - ~~Demo shortcuts to harden~~ → [ENG-02](ENG-02-compiler-hardening.md) implements
   import-aware identity, nullability checks, named-argument matching, strict SQL scopes,
   explicit dotted-bind rejection and proved literal diagnostic ranges.
-- Publishing: `./kotlin publish` to a local repo dir with KEFS-compatible versioning; how to
-  produce IDE-compiler-version builds under Kotlin Toolchain.
-- Shading brikk-sql into the plugin jar with relocation (`assemblePluginJar` is a plain
-  merge; KEFS requires relocation).
+- ~~Versioned local publication and actual IDE-compiler builds~~ → ENG-03 supplies
+  Toolchain tasks, checked provenance and an exact compiler CI gate. Live IDE/KEFS
+  loading and hot reload are still open, not established by the compiler fixtures.
+- ~~Dependency relocation~~ → `assemblePluginJar` now relocates SQL/metadata and
+  serialization into one artifact; see [distribution evidence](ENG-03-distribution-and-IDE.md).
 - ~~Doris DDL parser work before Doris can be the schema-cache dialect~~ → done (brikk-extensions #19).
 - Step 4 (wiring / `then` operator) deferred.

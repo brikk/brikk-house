@@ -299,8 +299,9 @@ fun rethrowIfCancellation(e: Throwable) {
 /**
  * The plugin's "never throw" boundary. Recoverable = any [Exception] (except cancellation) or a
  * [LinkageError] - the latter is what running a jar built against one Kotlin version on
- * another looks like (`NoSuchFieldError`, `NoSuchMethodError`, ...; the KEFS setup does
- * exactly that). Other errors (OOM, stack overflow, assertion) are rethrown.
+ * another looks like (`NoSuchFieldError`, `NoSuchMethodError`, ...). Publication now
+ * refuses compiler-version relabeling, but stale IDE caches still need a safe failure
+ * boundary. Other errors (OOM, stack overflow, assertion) are rethrown.
  *
  * Every suppressed failure is logged once per distinct message to stderr (the IDE routes
  * that into idea.log; the CLI prints it), so degraded behaviour is visible without turning
@@ -312,7 +313,13 @@ object PluginGuard {
     /** Build stamp written into the jar by the assemble task; tells apart jars the IDE has loaded. */
     val build: String by lazy {
         PluginGuard::class.java.getResourceAsStream("/META-INF/brikk-engine-kotlin-compiler-plugin.build")
-            ?.use { it.readBytes().decodeToString().trim() } ?: "dev"
+            ?.use { stream ->
+                val stamp = java.util.Properties().apply { load(stream) }
+                val code = stamp.getProperty("input.brikk-engine-kotlin-compiler-plugin-jvm.jar")
+                    ?: stamp.getProperty("input.unshaded.tmp") ?: "unknown"
+                "${stamp.getProperty("compilerVersion")}-${stamp.getProperty("libVersion")} " +
+                    "relocated=${stamp.getProperty("relocated")} code=${code.take(12)}"
+            } ?: "dev"
     }
     private val tag get() = "brikk-sql compiler plugin [$build]"
 

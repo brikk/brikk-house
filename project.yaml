@@ -1,5 +1,6 @@
 modules:
   - brikk-engine/brikk-engine-kotlin
+  - brikk-engine/brikk-engine-kotlin-compiler-ide
   - brikk-engine/brikk-engine-kotlin-compiler-plugin
   - brikk-engine/brikk-engine-kotlin-smoke
   - brikk-engine/brikk-engine-kotlin-tooling

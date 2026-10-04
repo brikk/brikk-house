@@ -6,10 +6,11 @@ import java.nio.file.StandardCopyOption
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Properties
+import java.util.zip.ZipFile
 import kotlin.io.path.createDirectories
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
-import kotlin.io.path.writeText
 import org.jetbrains.amper.plugins.ExecutionAvoidance
 import org.jetbrains.amper.plugins.Input
 import org.jetbrains.amper.plugins.Output
@@ -27,10 +28,8 @@ private const val GROUP = "dev.brikk.house"
  * <repoDir>/dev/brikk/house/<artifactId>/maven-metadata.xml
  * ```
  * The version follows the KEFS scheme `<kotlin-version>-<lib-version>`. [ideKotlinVersion] is
- * the value from the IDE action "KEFS: Copy Kotlin IDE Version"; the jar itself is always the
- * one compiled against the project's Kotlin version - naming it with the IDE's version is the
- * cheap compatibility experiment, and KEFS's exception analyzer reports if the IDE compiler
- * rejects it.
+ * the value from the IDE action "KEFS: Copy Kotlin IDE Version". Publication refuses
+ * to relabel a JAR built against a different compiler or without dependency relocation.
  *
  * Execution avoidance is disabled: the task rewrites `maven-metadata.xml` from whatever
  * versions already exist in the repo, which is state outside its declared inputs.
@@ -40,20 +39,26 @@ fun publishKefsRepo(
     @Input assembledDir: Path,
     artifactId: String,
     ideKotlinVersion: String,
+    kotlinVersion: String,
     libVersion: String,
     @Output repoDir: Path,
 ) {
-    val jar = singleJarIn(assembledDir)
     // <artifactId>-<kotlin>-<lib>.jar -> <kotlin>
+    require(artifactId.matches(Regex("[A-Za-z0-9][A-Za-z0-9._-]*"))) { "Invalid artifact ID" }
+    val kotlinSegment = ideKotlinVersion.ifBlank { kotlinVersion }
+    val jar = assembledDir.resolve("$artifactId-$kotlinSegment-$libVersion.jar")
+    require(Files.isRegularFile(jar)) { "Missing assembled artifact $jar" }
     val builtKotlinVersion = jar.name.removePrefix("$artifactId-").removeSuffix("-$libVersion.jar")
-    val kotlinSegment = ideKotlinVersion.ifBlank { builtKotlinVersion }
+    validatePublication(jar, builtKotlinVersion, kotlinSegment, libVersion)
     val version = "$kotlinSegment-$libVersion"
 
     val artifactDir = repoDir.resolve(GROUP.replace('.', '/')).resolve(artifactId)
     val versionDir = artifactDir.resolve(version).createDirectories()
     val base = "$artifactId-$version"
-    Files.copy(jar, versionDir.resolve("$base.jar"), StandardCopyOption.REPLACE_EXISTING)
-    versionDir.resolve("$base.pom").writeText(
+    val jarBytes = Files.readAllBytes(jar)
+    atomicWrite(versionDir.resolve("$base.jar"), jarBytes)
+    atomicWrite(versionDir.resolve("$base.jar.sha256"), sha256(jarBytes).toByteArray())
+    atomicWrite(versionDir.resolve("$base.pom"),
         """
         |<?xml version="1.0" encoding="UTF-8"?>
         |<project xmlns="http://maven.apache.org/POM/4.0.0">
@@ -63,12 +68,12 @@ fun publishKefsRepo(
         |  <version>$version</version>
         |  <packaging>jar</packaging>
         |</project>
-        |""".trimMargin(),
+        |""".trimMargin().toByteArray(),
     )
 
     val versions = Files.list(artifactDir).use { s -> s.filter { it.isDirectory() }.map { it.name }.sorted().toList() }
     val stamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
-    artifactDir.resolve("maven-metadata.xml").writeText(
+    atomicWrite(artifactDir.resolve("maven-metadata.xml"),
         """
         |<?xml version="1.0" encoding="UTF-8"?>
         |<metadata>
@@ -83,10 +88,28 @@ fun publishKefsRepo(
         |    <lastUpdated>$stamp</lastUpdated>
         |  </versioning>
         |</metadata>
-        |""".trimMargin(),
+        |""".trimMargin().toByteArray(),
     )
-    if (ideKotlinVersion.isNotBlank() && ideKotlinVersion != builtKotlinVersion) {
-        println("note: jar compiled against Kotlin $builtKotlinVersion, published as $kotlinSegment for the IDE")
-    }
     println("published $GROUP:$artifactId:$version -> $versionDir")
+}
+
+private fun atomicWrite(target: Path, content: ByteArray) {
+    val temporary = Files.createTempFile(target.parent, ".publish-", ".tmp")
+    try {
+        Files.write(temporary, content)
+        Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+    } finally { Files.deleteIfExists(temporary) }
+}
+
+internal fun validatePublication(jar: Path, filenameVersion: String, requestedVersion: String, libVersion: String) {
+    val stamp = ZipFile(jar.toFile()).use { zip ->
+        val entry = zip.getEntry(BUILD_STAMP) ?: error("Missing compiler build provenance in $jar")
+        Properties().also { props -> zip.getInputStream(entry).use { props.load(it) } }
+    }
+    require(stamp.getProperty("relocated") == "true") { "Refusing to publish an unrelocated compiler plugin" }
+    val built = stamp.getProperty("compilerVersion")
+    require(built == filenameVersion && built == requestedVersion) {
+        "Refusing compiler-version relabel: built=$built, filename=$filenameVersion, requested=$requestedVersion"
+    }
+    require(stamp.getProperty("libVersion") == libVersion) { "Library version does not match build provenance" }
 }

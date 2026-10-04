@@ -7,23 +7,39 @@ tasks:
     action: !dev.brikk.house.sql.tooling.assemblePluginJar
       pluginJar: ${module.jar}
       runtimeClasspath: ${module.runtimeClasspath}
-      artifactId: ${module.name}
+      compileClasspath: ${module.compileClasspath}
+      artifactId: ${pluginSettings.artifactId}
       kotlinVersion: ${module.settings.kotlin.version}
+      ideKotlinVersion: ${pluginSettings.ideKotlinVersion}
+      sourceDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin-compiler-plugin/src
+      resourcesDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin-compiler-plugin/resources
       libVersion: ${pluginSettings.libVersion}
       bundleExcludes: ${pluginSettings.bundleExcludes}
       # Stable, short location (not ${taskOutputDir}) because brikk-engine-kotlin-smoke refers to
       # the jar by path in its `-Xplugin=` argument, and KEFS matches on the file name.
-      outputDir: ${project.rootDir}/build/plugin
+      outputDir: ${project.rootDir}/${pluginSettings.assembledDir}
 
   publishKefsRepo:
     action: !dev.brikk.house.sql.tooling.publishKefsRepo
       assembledDir: ${tasks.assemblePluginJar.action.outputDir}
-      artifactId: ${module.name}
+      artifactId: ${pluginSettings.artifactId}
       ideKotlinVersion: ${pluginSettings.ideKotlinVersion}
+      kotlinVersion: ${module.settings.kotlin.version}
       libVersion: ${pluginSettings.libVersion}
       repoDir: ${project.rootDir}/${pluginSettings.repoDir}
+
+  verifyIdePlugin:
+    action: !dev.brikk.house.sql.tooling.verifyIdePlugin
+      assembledDir: ${tasks.assemblePluginJar.action.outputDir}
+      compilerClasspath: ${module.runtimeClasspath}
+      compilerVersion: ${pluginSettings.ideKotlinVersion}
+      artifactId: ${pluginSettings.artifactId}
+      libVersion: ${pluginSettings.libVersion}
+      fixturesDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin-compiler-ide/fixtures
+      outputDir: ${taskOutputDir}
 
 commands:
   - captureDorisSchema
   - assemblePluginJar
   - publishKefsRepo
+  - verifyIdePlugin

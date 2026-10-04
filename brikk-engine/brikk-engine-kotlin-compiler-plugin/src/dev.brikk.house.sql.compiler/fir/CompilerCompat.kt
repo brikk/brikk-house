@@ -4,8 +4,8 @@ import org.jetbrains.kotlin.KtFakeSourceElementKind
 
 /**
  * Shims for compiler-API shapes that differ between the Kotlin version this plugin is compiled
- * against and the one the IDE runs it on (the KEFS setup publishes the same jar under the IDE's
- * compiler version; see docs/virtual-pipelines-wiring.md).
+ * against. CLI and IDE artifacts are compiled separately against their actual APIs;
+ * this small runtime shape adapter is tested in both, not a license to relabel artifacts.
  *
  * Only reflection over `org.jetbrains.kotlin.*` types here: those are not relocated in the
  * embeddable compiler, so the names are identical in both worlds.

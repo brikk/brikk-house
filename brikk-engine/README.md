@@ -15,6 +15,7 @@ dependency version aligned across the runtime, compiler-plugin, and tooling modu
 | --- | --- |
 | [brikk-engine-kotlin](brikk-engine-kotlin/) | The single runtime module: `Rel`, `Shape`, `Partial`, annotations, `Sql` entrypoints, bindings, and rendering. |
 | [brikk-engine-kotlin-compiler-plugin](brikk-engine-kotlin-compiler-plugin/) | FIR analysis, shape generation, checks, call refinement, and IR rewriting. |
+| [brikk-engine-kotlin-compiler-ide](brikk-engine-kotlin-compiler-ide/) | Toolchain harness to compile/test the plugin against the exact configured non-embeddable IDE compiler. |
 | [brikk-engine-kotlin-tooling](brikk-engine-kotlin-tooling/) | Local Toolchain tasks to assemble the plugin and publish a KEFS repository. |
 | [brikk-engine-kotlin-smoke](brikk-engine-kotlin-smoke/) | Synthetic consumer compiled through the real Toolchain `-Xplugin` path. |
 
@@ -70,6 +71,7 @@ leaf directories, with no `name` override.
 ```sh
 ./kotlin do assemblePluginJar
 ./kotlin test -m brikk-engine-kotlin-compiler-plugin -m brikk-engine-kotlin -m brikk-engine-kotlin-smoke
+./kotlin do verifyIdePlugin -m brikk-engine-kotlin-compiler-ide
 ./kotlin do publishKefsRepo
 ```
 
@@ -80,14 +82,13 @@ path `brikk-engine/brikk-engine-kotlin-smoke/schema/events.sql`, relative to the
 repository root. The option prefix remains
 `-P plugin:dev.brikk.house.sql.compiler:...`.
 
-KEFS uses `dev.brikk.house:brikk-engine-kotlin-compiler-plugin:<ide>-0.2.0` from
-`build/repo`. Update existing bundles to this artifact ID. `ideKotlinVersion` and
-`libVersion` live under `plugins.brikk-engine-kotlin-tooling` in the
-[compiler module config](brikk-engine-kotlin-compiler-plugin/module.yaml).
-Publishing under the IDE version does not rebuild against that compiler; the
-current JAR merge also does not relocate dependencies. See the
-[wiring notes](../docs/virtual-pipelines-wiring.md#local-ide-loop-kefs-hot-reload)
-for the compatibility and distribution limits.
+Both artifacts relocate SQL/serialization dependencies. CLI publication uses
+`build/repo`; KEFS's IDE candidate uses `build/repo-ide/2.4.20-ij262-34` and
+`dev.brikk.house:brikk-engine-kotlin-compiler-plugin:2.4.20-ij262-34-0.2.0`.
+The [IDE harness config](brikk-engine-kotlin-compiler-ide/module.yaml) pins the
+actual compiler and library version; publishing rejects mismatched provenance.
+The candidate's compiler/artifact tests pass, but live IDE loading and hot reload
+are still unverified. See [ENG-03 acceptance and the live checklist](../docs/ENG-03-distribution-and-IDE.md).
 
 ## Private consumer
 

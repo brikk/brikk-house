@@ -45,8 +45,8 @@ depend on unpublished sibling source directories.
 ## Build and test
 
 Use the pinned **Kotlin Toolchain 0.13.0** wrapper from the repository root.
-The Kotlin compiler remains explicitly pinned to **2.4.10**, including the
-compiler-plugin API dependency.
+The CLI compiler/API remain pinned to **2.4.10**. The IDE-candidate harness
+separately builds/tests against **2.4.20-ij262-34**'s actual non-embeddable API.
 
 ```sh
 ./kotlin do assemblePluginJar
@@ -60,17 +60,19 @@ the same assembly/build/test sequence on pushes and pull requests.
 ## Local IDE development
 
 ```sh
+./kotlin do verifyIdePlugin -m brikk-engine-kotlin-compiler-ide
 ./kotlin do publishKefsRepo
 ./kotlin check
 ./kotlin show commands
 ```
 
-The assembled JAR is
-`build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar`. KEFS uses
-`dev.brikk.house:brikk-engine-kotlin-compiler-plugin:<ide>-0.2.0` from `build/repo`.
-Publishing under an IDE version does not rebuild against that compiler; the
-current JAR merge does not relocate dependencies. See the
-[wiring notes](docs/virtual-pipelines-wiring.md) for compatibility/distribution limits.
+The CLI JAR remains
+`build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar`. Both builds
+relocate SQL/serialization dependencies. KEFS's IDE candidate is published as
+`dev.brikk.house:brikk-engine-kotlin-compiler-plugin:2.4.20-ij262-34-0.2.0` in
+`build/repo-ide/2.4.20-ij262-34`; publication refuses compiler-version relabeling.
+Live IDE loading/highlighting/hot reload are still unverified. See the
+[ENG-03 acceptance record](docs/ENG-03-distribution-and-IDE.md).
 
 ## SQL preservation
 

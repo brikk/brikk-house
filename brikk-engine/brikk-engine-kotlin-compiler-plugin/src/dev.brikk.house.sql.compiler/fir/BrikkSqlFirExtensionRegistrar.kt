@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.DeclarationCheckers
-import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirSimpleFunctionChecker
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirDeclarationChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.ExpressionCheckers
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChecker
 import org.jetbrains.kotlin.fir.analysis.extensions.FirAdditionalCheckersExtension
@@ -64,7 +64,7 @@ class BrikkSqlAdditionalCheckers(session: FirSession) : FirAdditionalCheckersExt
             get() = setOf(SqlLiteralCallChecker)
     }
     override val declarationCheckers: DeclarationCheckers = object : DeclarationCheckers() {
-        override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker>
+        override val simpleFunctionCheckers: Set<FirDeclarationChecker<FirNamedFunction>>
             get() = setOf(BrikkSqlFunctionChecker)
     }
 }
@@ -121,7 +121,7 @@ object SqlLiteralCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
  * Surfaces the analysis outcome of a `@BrikkSql` function: SQL parse/resolution errors, and
  * `:name` placeholders that do not match a parameter.
  */
-object BrikkSqlFunctionChecker : FirSimpleFunctionChecker(MppCheckerKind.Common) {
+object BrikkSqlFunctionChecker : FirDeclarationChecker<FirNamedFunction>(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(declaration: FirNamedFunction) {
         if (!declaration.hasAnnotation(BrikkSqlNames.BRIKK_SQL_ANNOTATION_CLASS_ID, context.session)) {

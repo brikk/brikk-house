@@ -52,6 +52,13 @@ See [the repository split](docs/repository-split.md) for ownership boundaries.
   loading, diagnostics and hot reload in a live IDE. CLI/smoke tests alone do
   not establish IDE compatibility. Details: [KEFS requirements and current limits](docs/virtual-pipelines-wiring.md#ide-support),
   [Engine dev loop](brikk-engine/README.md#local-development).
+  **In progress:** CLI and actual `2.4.20-ij262-34` IDE-candidate builds now
+  produce one relocated artifact with checked compiler provenance. Full build
+  and 141 tests pass; seven finished-artifact fixtures pass on the actual IDE
+  compiler, and an exact compiler CI gate is wired. Local publication refuses
+  version relabeling. **Still open:** live KEFS loading/highlighting/completion
+  and same-version hot reload (no running IDE/KEFS available here). Evidence and
+  remaining checklist: [distribution/IDE acceptance](docs/ENG-03-distribution-and-IDE.md).
 - [ ] **ENG-04 — Close the offline-schema refresh loop.** Track captured schema
   snapshots as compiler inputs so refreshes invalidate builds and IDE completion;
   verify capture and resulting shapes against the target Doris deployment.
