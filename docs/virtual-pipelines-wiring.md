@@ -343,4 +343,7 @@ the merged tree before the work above and failed identically.
 - ~~Dependency relocation~~ → `assemblePluginJar` now relocates SQL/metadata and
   serialization into one artifact; see [distribution evidence](ENG-03-distribution-and-IDE.md).
 - ~~Doris DDL parser work before Doris can be the schema-cache dialect~~ → done (brikk-extensions #19).
-- Step 4 (wiring / `then` operator) deferred.
+- Step 4 (wiring / `then` operator or receiver-extension surface) deferred until
+  personal dogfooding identifies concrete friction. Ordinary calls and named
+  `Rel` inputs remain the supported composition surface; do not add speculative
+  wiring APIs before that evidence.

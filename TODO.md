@@ -85,9 +85,12 @@ See [the repository split](docs/repository-split.md) for ownership boundaries.
   separates main/test reports. Assembly/build, 159 tests, eight IDE-compiler
   artifact fixtures and seven schema refresh checks pass. Decision/lifecycle:
   [runtime-first and drafts](docs/ENG-05-runtime-first-and-drafts.md).
-- [ ] **ENG-06 — Design the next composition surface.** Step 4 (`then`/wiring) is
-  deferred; specify the API and tests only after the underlying composition
-  invariants in ENG-01 hold. Details: [wiring open items](docs/virtual-pipelines-wiring.md#open-items).
+- [ ] **ENG-06 — Design the next composition surface.** **Deferred pending personal
+  dogfooding.** Keep ordinary function calls and named `Rel` inputs; do not add
+  speculative `then`, receiver extensions or a new wiring DSL. Revisit only when
+  real usage identifies concrete friction, preserving ENG-01 composition
+  invariants and precise shape checking. Details:
+  [wiring open items](docs/virtual-pipelines-wiring.md#open-items).
 - [ ] **ENG-07 — Integrate multi-output pipes into Engine when SQL owns them.** Decide
   the DSL/runner surface for `FORK`/`TEE` branches (and execution/cleanup), after
   SQL-side parsing, desugaring, fidelity certification and owner decisions land.
