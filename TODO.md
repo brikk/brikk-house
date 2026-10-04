@@ -98,6 +98,17 @@ See [the repository split](docs/repository-split.md) for ownership boundaries.
   (`SQL-01` in brikk-sql). This is **not** a request to implement the SQL AST
   or desugar in Engine.
 
+## Current dogfood baseline
+
+The public [DuckDB sample](brikk-engine/samples/duckdb-pipelines/README.md) now
+executes four reporting views sharing JSON extraction/field cleaning over 18
+deterministic fake events. All five Engine consumers use Central SQL **0.18.0**;
+the first finding, **DDB-001**, is fixed and covered by positive regressions.
+The current gate is **172 tests, nine IDE-compiler artifact fixtures and seven
+schema refresh checks**, all passing; live IDE and Doris gates above remain open.
+Review/continue view by view rather than adding speculative wiring. Evidence:
+[release acceptance](brikk-engine/samples/duckdb-pipelines/SQL-018-RELEASE-ACCEPTANCE.md).
+
 ## Repository ownership / handoff
 
 | Repository | Active index | Key work |

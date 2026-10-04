@@ -11,7 +11,7 @@ pluginInfo:
   settingsClass: dev.brikk.house.sql.tooling.Settings
 
 dependencies:
-  - dev.brikk.house:brikk-sql-jvm:0.17.0
+  - dev.brikk.house:brikk-sql-jvm:0.18.0
   - ../brikk-engine-kotlin-schema-inputs
   # Build-time bytecode relocation; never bundled into the compiler plugin.
   - org.ow2.asm:asm-commons:9.9.1

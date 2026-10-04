@@ -1,0 +1,28 @@
+# Public, deterministic dogfood. No credentials, production data or publication.
+product: jvm/app
+
+plugins:
+  brikk-engine-kotlin-schema-inputs:
+    enabled: true
+    schemaPath: brikk-engine/samples/duckdb-pipelines/resources/schema.sql
+    schemaDialect: duckdb
+
+dependencies:
+  - //brikk-engine/brikk-engine-kotlin
+  - org.duckdb:duckdb_jdbc:1.5.5.0
+
+settings:
+  jvm:
+    mainClass: dev.brikk.house.samples.duckdb.MainKt
+    test:
+      freeJvmArgs: ["--enable-native-access=ALL-UNNAMED"]
+  kotlin:
+    version: 2.4.10
+    freeCompilerArgs:
+      - -Xplugin=build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar
+      - -P
+      - plugin:dev.brikk.house.sql.compiler:schema=brikk-engine/samples/duckdb-pipelines/resources/schema.sql
+      - -P
+      - plugin:dev.brikk.house.sql.compiler:schemaDialect=duckdb
+      - -P
+      - plugin:dev.brikk.house.sql.compiler:dumpSql=build/sql-drafts/{module}.draft.sql

@@ -33,7 +33,7 @@ are unchanged. Engine modules are not published to Maven Central.
 
 ## Dependencies
 
-Engine consumes `dev.brikk.house:brikk-sql-jvm:0.17.0` from Maven Central.
+Engine consumes `dev.brikk.house:brikk-sql-jvm:0.18.0` from Maven Central.
 No sibling SQL/chDB checkout, Maven Local installation, credentials, or `.env`
 is needed for public Engine builds. Keep the SQL version aligned in the runtime,
 compiler-plugin, and tooling module configurations when upgrading.
@@ -58,6 +58,11 @@ The smoke consumer needs the assembled plugin JAR before compilation. CI runs
 the same assembly/build/test sequence on pushes and pull requests.
 
 ## Local IDE development
+
+For runnable, credential-free dogfood, see the
+[DuckDB pipeline sample](brikk-engine/samples/duckdb-pipelines/README.md): four
+reporting views share JSON extraction and field cleaning over deterministic fake
+data, with real JDBC execution and expected-row tests.
 
 ```sh
 ./kotlin do verifyIdePlugin -m brikk-engine-kotlin-compiler-ide
@@ -89,7 +94,7 @@ changes. Preserve important hints, comments, and statement semantics.
 
 `Rel.render()` preserves native same-dialect stages even in composition, editing
 only bound slots, colliding binding names and embedded terminators. Pipes and
-FROM-first normalization use SQL 0.17's source-preserving executable API;
+FROM-first normalization use SQL's source-preserving executable API;
 explicit cross-dialect translation remains source-aware. `renderWithDiagnostics()`
 reports any portions that needed regeneration and unsupported warnings per stage.
 The [SQL-05 handoff](docs/HANDOFF-SQL-05-source-preserving-lowering.md) records the

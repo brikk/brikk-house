@@ -15,7 +15,7 @@ plugins:
 
 dependencies:
   - org.jetbrains.kotlin:kotlin-compiler:2.4.20-ij262-34
-  - dev.brikk.house:brikk-sql-jvm:0.17.0
+  - dev.brikk.house:brikk-sql-jvm:0.18.0
   - ../brikk-engine-kotlin
 
 settings:

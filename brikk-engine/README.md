@@ -5,7 +5,7 @@ SQL pipelines. Generic parsing, SQL analysis, and lowering live in
 [brikk-sql](https://github.com/brikk/brikk-sql); embedded ClickHouse bindings live in
 [brikk-chdb](https://github.com/brikk/brikk-chdb).
 
-Engine consumes the published `dev.brikk.house:brikk-sql-jvm:0.17.0` release;
+Engine consumes the published `dev.brikk.house:brikk-sql-jvm:0.18.0` release;
 neither external repository is required in a clean Engine checkout. Keep the SQL
 dependency version aligned across runtime, compiler, tooling, schema-inputs and
 IDE-harness modules.
@@ -56,7 +56,7 @@ preserves native same-dialect stages, standalone or composed: only bound slot
 names, colliding binding names and embedded statement terminators are edited.
 Their parameter style, whitespace, comments, hints and native syntax stay intact.
 The compiler no longer applies an unrequested outer trim. Pipes (including nested
-pipes) and FROM-first normalization use SQL 0.17's `toSourcePreservingExecutable`;
+pipes) and FROM-first normalization use SQL's `toSourcePreservingExecutable`;
 the SQL library reuses proved native intervals and reports structural regeneration.
 Explicit cross-dialect translation still regenerates the affected stages using
 their own source dialect context. Unsafe preservation (for example, moving
@@ -103,6 +103,11 @@ The candidate's compiler/artifact tests pass, but live IDE loading and hot reloa
 are still unverified. See [ENG-03 acceptance and the live checklist](../docs/ENG-03-distribution-and-IDE.md).
 
 ## Private consumer
+
+Start with the public [DuckDB dogfood sample](samples/duckdb-pipelines/README.md)
+for local, deterministic scenarios. Its four reporting views share extraction /
+cleaning and execute against a fresh in-memory DB. It does not replace target
+Doris or live IDE acceptance, and it adds no speculative wiring API.
 
 `brikk-engine/dogfood/` is ignored and excluded from the public manifest. It must
 remain non-published and may be absent from any public checkout. There is no

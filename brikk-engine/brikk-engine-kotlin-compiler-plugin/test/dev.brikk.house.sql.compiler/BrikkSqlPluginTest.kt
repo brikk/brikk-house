@@ -24,6 +24,21 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCompilerApi::class)
 class BrikkSqlPluginTest {
 
+    @Test
+    fun `DuckDB dogfood DDB-001 bare interpolated projection compiles and preserves its template`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql fun echo(n: Int) = Sql.duckdb("SELECT ${'$'}n AS n")
+            fun sql() = echo(7).render()
+            fun values() = echo(7).bindings()
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val main = result.classLoader.loadClass("demo.MainKt")
+        assertEquals("SELECT :n AS n", main.getMethod("sql").invoke(null))
+        assertEquals(mapOf("n" to 7), main.getMethod("values").invoke(null))
+    }
+
     private fun draftFile(): File = java.nio.file.Files.createTempDirectory(
         java.nio.file.Files.createDirectories(java.nio.file.Path.of(System.getProperty("java.io.tmpdir"), "opencode")), "brikk-draft-")
         .resolve("views.draft.sql").toFile()

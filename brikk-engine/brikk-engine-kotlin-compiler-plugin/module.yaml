@@ -19,7 +19,7 @@ dependencies:
   - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.10: compile-only
   # The SQL brain: normal module dependency for development/kctfork; assembly
   # relocates SQL/serialization into a single artifact for CLI/KEFS distribution.
-  - dev.brikk.house:brikk-sql-jvm:0.17.0
+  - dev.brikk.house:brikk-sql-jvm:0.18.0
 
 test-dependencies:
   # kctfork = maintained fork of kotlin-compile-testing (0.13.0 is built for Kotlin 2.4.0; the

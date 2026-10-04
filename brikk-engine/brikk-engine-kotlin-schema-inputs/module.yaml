@@ -5,7 +5,7 @@ pluginInfo:
   settingsClass: dev.brikk.house.sql.schema.inputs.Settings
 
 dependencies:
-  - dev.brikk.house:brikk-sql-jvm:0.17.0
+  - dev.brikk.house:brikk-sql-jvm:0.18.0
 
 settings:
   kotlin:

@@ -4,7 +4,7 @@
 product: jvm/lib
 
 dependencies:
-  - dev.brikk.house:brikk-sql-jvm:0.17.0: exported
+  - dev.brikk.house:brikk-sql-jvm:0.18.0: exported
 
 test-dependencies:
   - org.duckdb:duckdb_jdbc:1.5.5.0
