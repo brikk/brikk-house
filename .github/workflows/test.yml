@@ -29,6 +29,8 @@ jobs:
         run: ./kotlin build
       - name: Test
         run: ./kotlin test
+      - name: Verify schema-only incremental rebuilds without a clean
+        run: ./kotlin do verifySchemaRefresh -m brikk-engine-kotlin-compiler-plugin
 
   ide-compiler:
     # This is compiler API/artifact acceptance, NOT live IDE/KEFS acceptance.

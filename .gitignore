@@ -3,6 +3,9 @@
 /*/build/
 /*/*/build/
 
+# Stable generated schema source roots (also watched by the IDE).
+**/.brikk/schema-inputs/
+
 # Leftover generated ledgers from pre-extraction local test runs.
 *-ledger-actual.json
 

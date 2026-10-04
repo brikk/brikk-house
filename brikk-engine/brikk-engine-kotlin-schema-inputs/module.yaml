@@ -1,0 +1,12 @@
+# Build-time integration only: no database connection or compiler implementation.
+product: jvm/amper-plugin
+
+pluginInfo:
+  settingsClass: dev.brikk.house.sql.schema.inputs.Settings
+
+dependencies:
+  - dev.brikk.house:brikk-sql-jvm:0.17.0
+
+settings:
+  kotlin:
+    version: 2.4.10

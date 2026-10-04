@@ -62,8 +62,16 @@ See [the repository split](docs/repository-split.md) for ownership boundaries.
 - [ ] **ENG-04 — Close the offline-schema refresh loop.** Track captured schema
   snapshots as compiler inputs so refreshes invalidate builds and IDE completion;
   verify capture and resulting shapes against the target Doris deployment.
-  Until then, a forced clean build is required after refresh. Details:
+  Until integrated, a forced new compilation is required after refresh. Details:
   [schema cache](docs/schema-cache.md#compiler-input).
+  **In progress:** a Toolchain schema-input plugin generates a registered revision
+  source; explicit capture updates the private consumer marker. Real incremental
+  builds verify changed/removed shapes and failure/recovery without cleaning;
+  identical recaptures skip recompilation. Assembly/build, 150 tests and both
+  seven-step incremental/artifact gates pass. **Still open:** live IDE completion
+  invalidation and metadata/shapes against the target Doris deployment (no live
+  IDE or Doris configuration available here). Evidence:
+  [refresh-loop acceptance](docs/ENG-04-schema-refresh.md).
 
 ## Decisions and later surfaces
 

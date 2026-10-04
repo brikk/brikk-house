@@ -13,6 +13,12 @@
 # Acceptable for a smoke module, not for production wiring (see KEFS notes in docs/).
 product: jvm/lib
 
+plugins:
+  brikk-engine-kotlin-schema-inputs:
+    enabled: true
+    schemaPath: brikk-engine/brikk-engine-kotlin-smoke/schema/events.sql
+    defaultSchema: public
+
 # Synthetic consumer only; not published.
 dependencies:
   - ../brikk-engine-kotlin

@@ -38,8 +38,18 @@ tasks:
       fixturesDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin-compiler-ide/fixtures
       outputDir: ${taskOutputDir}
 
+  verifySchemaRefresh:
+    action: !dev.brikk.house.sql.tooling.verifySchemaRefresh
+      wrapper: ${project.rootDir}/kotlin
+      assembledDir: ${tasks.assemblePluginJar.action.outputDir}
+      runtimeModuleDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin
+      schemaPluginDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin-schema-inputs
+      libVersion: ${pluginSettings.libVersion}
+      outputDir: ${taskOutputDir}
+
 commands:
   - captureDorisSchema
   - assemblePluginJar
   - publishKefsRepo
   - verifyIdePlugin
+  - verifySchemaRefresh

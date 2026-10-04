@@ -61,6 +61,7 @@ the same assembly/build/test sequence on pushes and pull requests.
 
 ```sh
 ./kotlin do verifyIdePlugin -m brikk-engine-kotlin-compiler-ide
+./kotlin do verifySchemaRefresh -m brikk-engine-kotlin-compiler-plugin
 ./kotlin do publishKefsRepo
 ./kotlin check
 ./kotlin show commands

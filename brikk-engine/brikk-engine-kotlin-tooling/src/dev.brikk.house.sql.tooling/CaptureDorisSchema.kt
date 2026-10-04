@@ -3,6 +3,7 @@ package dev.brikk.house.sql.tooling
 import dev.brikk.house.sql.shape.CapturedColumn
 import dev.brikk.house.sql.shape.CapturedObject
 import dev.brikk.house.sql.shape.SchemaCache
+import dev.brikk.house.sql.schema.inputs.writeSchemaRevision
 import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets.UTF_8
@@ -19,6 +20,7 @@ import org.jetbrains.amper.plugins.TaskAction
 @TaskAction(executionAvoidance = ExecutionAvoidance.Disabled)
 fun captureDorisSchema(@Input projectFile: Path) {
     var phase = "configuration"
+    var published = false
     try {
         val config = dorisCaptureConfig(projectFile.toAbsolutePath().parent, System.getenv())
         val properties = Properties().apply {
@@ -50,8 +52,12 @@ fun captureDorisSchema(@Input projectFile: Path) {
                 config.output, config.catalog, config.schema, "doris", config.sourceId,
                 objects, connection.metaData.databaseProductVersion,
             )
+            published = true
             phase = "offline validation"
             val loaded = SchemaCache.load(config.output)
+            phase = "consumer invalidation"
+            val privateRoot = projectFile.toAbsolutePath().parent.resolve("brikk-engine/dogfood")
+            writeSchemaRevision(config.output, "doris", "", "dogfood", privateRoot.resolve(".brikk/schema-inputs"))
             println("Captured ${objects.size} relations and ${objects.sumOf { it.columns.size }} columns into the private dogfood cache.")
             println("Offline catalog loaded ${loaded.tables.size} active relations.")
         }
@@ -59,7 +65,9 @@ fun captureDorisSchema(@Input projectFile: Path) {
         if (e is InterruptedException || e is java.util.concurrent.CancellationException) throw e
         val detail = if (e is SQLException) "SQLState=${e.sqlState}, code=${e.errorCode}" else e.javaClass.simpleName
         // JDBC/JSON errors can embed URLs, credentials, SQL, or metadata. Do not chain them.
-        error("Doris schema capture failed during $phase ($detail). No incomplete snapshot was activated.")
+        val status = if (published) "The snapshot was published, but offline validation/consumer invalidation did not finish; retry or run refreshSchemaInputs." else
+            "No incomplete snapshot was activated."
+        error("Doris schema capture failed during $phase ($detail). $status")
     }
 }
 

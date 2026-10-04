@@ -1,0 +1,19 @@
+tasks:
+  prepareSchemaInput:
+    action: !dev.brikk.house.sql.schema.inputs.prepareSchemaInput
+      schemaInput: ${project.rootDir}/${pluginSettings.schemaPath}
+      projectFile: ${project.rootDir}/project.yaml
+      compilerArgs: ${module.settings.kotlin.freeCompilerArgs}
+      schemaDialect: ${pluginSettings.schemaDialect}
+      defaultSchema: ${pluginSettings.defaultSchema}
+      moduleName: ${module.name}
+      sourceDir: ${module.rootDir}/.brikk/schema-inputs
+
+generated:
+  sources:
+    - directory: ${tasks.prepareSchemaInput.action.sourceDir}
+      language: kotlin
+
+commands:
+  - name: refreshSchemaInputs
+    performedBy: prepareSchemaInput

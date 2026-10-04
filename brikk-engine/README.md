@@ -7,7 +7,8 @@ SQL pipelines. Generic parsing, SQL analysis, and lowering live in
 
 Engine consumes the published `dev.brikk.house:brikk-sql-jvm:0.17.0` release;
 neither external repository is required in a clean Engine checkout. Keep the SQL
-dependency version aligned across the runtime, compiler-plugin, and tooling modules.
+dependency version aligned across runtime, compiler, tooling, schema-inputs and
+IDE-harness modules.
 
 ## Modules
 
@@ -16,6 +17,7 @@ dependency version aligned across the runtime, compiler-plugin, and tooling modu
 | [brikk-engine-kotlin](brikk-engine-kotlin/) | The single runtime module: `Rel`, `Shape`, `Partial`, annotations, `Sql` entrypoints, bindings, and rendering. |
 | [brikk-engine-kotlin-compiler-plugin](brikk-engine-kotlin-compiler-plugin/) | FIR analysis, shape generation, checks, call refinement, and IR rewriting. |
 | [brikk-engine-kotlin-compiler-ide](brikk-engine-kotlin-compiler-ide/) | Toolchain harness to compile/test the plugin against the exact configured non-embeddable IDE compiler. |
+| [brikk-engine-kotlin-schema-inputs](brikk-engine-kotlin-schema-inputs/) | Tracks offline schema files/snapshots as generated Kotlin revision inputs for consuming modules. |
 | [brikk-engine-kotlin-tooling](brikk-engine-kotlin-tooling/) | Local Toolchain tasks to assemble the plugin and publish a KEFS repository. |
 | [brikk-engine-kotlin-smoke](brikk-engine-kotlin-smoke/) | Synthetic consumer compiled through the real Toolchain `-Xplugin` path. |
 
@@ -72,6 +74,7 @@ leaf directories, with no `name` override.
 ./kotlin do assemblePluginJar
 ./kotlin test -m brikk-engine-kotlin-compiler-plugin -m brikk-engine-kotlin -m brikk-engine-kotlin-smoke
 ./kotlin do verifyIdePlugin -m brikk-engine-kotlin-compiler-ide
+./kotlin do verifySchemaRefresh -m brikk-engine-kotlin-compiler-plugin
 ./kotlin do publishKefsRepo
 ```
 
@@ -116,7 +119,12 @@ extract a property into a local and interpolate that local instead.
 
 ## Schema capture
 
-The forced `./kotlin do captureDorisSchema` command captures one Doris
+The forced `./kotlin do captureDorisSchema -m brikk-engine-kotlin-compiler-plugin` command captures one Doris
 catalog/database into the private dogfood cache. The compiler accepts the
 resulting directory through its existing `schema` option and loads it offline.
-See [connection settings, refresh behavior, and limits](../docs/schema-cache.md).
+Integrated consumers use `brikk-engine-kotlin-schema-inputs` to regenerate a
+registered Kotlin revision source and recompile after schema changes without
+cleaning. Explicit capture updates the default private marker; other imports or
+scopes use `./kotlin do refreshSchemaInputs -m <consumer>`. Live IDE invalidation
+and target Doris acceptance remain open. See [refresh-loop evidence](../docs/ENG-04-schema-refresh.md)
+and [connection settings, refresh behavior, and limits](../docs/schema-cache.md).

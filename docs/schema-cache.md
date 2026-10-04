@@ -52,7 +52,7 @@ From the repository root, source the settings in a subshell without tracing:
   set -a
   source /path/to/.env.doris
   set +a
-  ./kotlin do captureDorisSchema
+   ./kotlin do captureDorisSchema -m brikk-engine-kotlin-compiler-plugin
 )
 ```
 
@@ -60,6 +60,11 @@ The command prints counts, not SQL, object names, credentials, or raw driver
 errors. A failed connection reports its phase, SQLState, and vendor error code.
 It must not activate an incomplete capture. Correct the cause and invoke the
 same command again to refresh.
+
+After successful publication/offline validation, capture also atomically updates
+the private consumer's `.brikk/schema-inputs/BrikkSchemaInput.kt` revision source.
+If this later step fails, the error explicitly says the snapshot was already
+published; retry or run the offline revision refresh before trusting completion.
 
 ## Cache layout
 
@@ -96,9 +101,15 @@ when moving a snapshot.
 
 ## Compiler input
 
-The existing `schema` option accepts a DDL file or a captured directory:
+The `schema` option accepts a DDL file or a captured directory. Enable the local
+schema-inputs plugin on every consumer that uses it:
 
 ```yaml
+plugins:
+  brikk-engine-kotlin-schema-inputs:
+    enabled: true
+    schemaPath: brikk-engine/dogfood/schema-cache
+
 settings:
   kotlin:
     freeCompilerArgs:
@@ -114,15 +125,49 @@ use source-file ancestors before the working-directory fallback. Absolute paths
 are preferable for IDE contexts that cannot provide source anchors.
 
 Compilation does not connect to the database. Missing or malformed snapshots are
-compiler diagnostics. Resolution is session-local; one project's relative schema
+compiler diagnostics, or preparation failures for integrated consumers. Resolution is session-local; one project's relative schema
 option must not reuse another project's resolved path.
 
-The Toolchain integration does not explicitly track this external snapshot as a compiler
-input. After a refresh, force a new compilation before trusting generated shapes.
-The conservative rebuild route is `./kotlin clean`, then
-`./kotlin do assemblePluginJar`, followed by the consumer build/run. Re-publish
-the local KEFS repository if it was removed by cleaning. IDE snapshot-change
-invalidation and shared cached completion remain follow-up work.
+The root project already registers `brikk-engine-kotlin-schema-inputs`. Its
+`prepareSchemaInput` task declares the schema file/directory as an `@Input` and
+registers `.brikk/schema-inputs` as **generated Kotlin sources** in Toolchain's
+project model. The task runs before compilation and emits an opaque, deterministic
+revision of the active typing contract. Changed types, column order/names,
+nullability, quoted identities or table inventory change that source; identical
+recaptures, timestamps, generation UUIDs and archived JSON do not.
+
+The task requires an explicit compiler `schema` option in `freeCompilerArgs` and
+checks it against `schemaPath`. For DDL, configure matching `schemaDialect` and
+`defaultSchema` in both places. Captured directories ignore those legacy options.
+First-class Maven compiler-plugin options are not inspected by this integration;
+the current supported consumer wiring is the explicit `freeCompilerArgs` form.
+
+An integrated **CLI consumer no longer needs `clean` after refresh**. A normal
+build notices the changed generated source and recompiles with a fresh FIR session.
+Malformed inputs fail the preparation task instead of silently compiling against
+an old revision. FIR still pins one loaded catalog per session: this does not
+mutate shapes that were already generated within an existing session.
+
+For externally refreshed/imported snapshots, and to update an IDE's registered
+source root without a build, use:
+
+```sh
+./kotlin do refreshSchemaInputs -m dogfood
+```
+
+Explicit capture updates the default private root automatically. If the consumer
+selects a narrower catalog/schema scope or a different schema input, refresh its
+configured marker afterward. All generated markers are ignored by git and contain
+only a module-disambiguating package and revision, not captured metadata/credentials.
+
+This is an **IDE invalidation candidate**, not live completion acceptance. A
+registered Kotlin constant changes out-of-block source state, but KEFS lazy FIR,
+completion recovery and the IDE's external file refresh still require live checks
+(ENG-03 is also open). Unintegrated consumers still need a forced new compilation;
+do not extend the no-clean guarantee to raw `-P schema=...` alone.
+
+Acceptance and remaining deployment/IDE checks:
+[ENG-04 refresh loop](ENG-04-schema-refresh.md).
 
 ## Initial limits
 
