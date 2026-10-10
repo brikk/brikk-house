@@ -11,11 +11,11 @@ deliberate, and where to look hardest. Commit range: `d3df965..d9d3970` on `main
 (`git log --first-parent d3df965..d9d3970`).
 
 Relocation note: the compiler/runtime/tooling/smoke modules now live under
-[Brikk Engine](../brikk-engine/README.md); generic SQL and chDB have their own
+[Brikk Engine](engine.md); generic SQL and chDB have their own
 group directories. The code map, links, and current build paths below use the new
 layout. Descriptions, commit names, counts, and evidence still record `d9d3970`.
 Kotlin packages, annotations, and compiler ID `dev.brikk.house.sql.compiler` are
-unchanged. The later [SQL preservation requirement](../brikk-engine/README.md#sql-preservation)
+unchanged. The later [SQL preservation requirement](engine.md#sql-preservation)
 is not implemented behavior established by this snapshot.
 
 ## 1. What it does, in one paragraph
@@ -40,14 +40,14 @@ Design docs: [virtual pipelines wiring](virtual-pipelines-wiring.md) (surface + 
 
 ## 2. Map of the code
 
-Current [compiler source](../brikk-engine/brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/),
-[compiler tests](../brikk-engine/brikk-engine-kotlin-compiler-plugin/test/),
-[runtime](../brikk-engine/brikk-engine-kotlin/),
-[smoke consumer](../brikk-engine/brikk-engine-kotlin-smoke/), and
-[tooling](../brikk-engine/brikk-engine-kotlin-tooling/):
+Current [compiler source](../brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/),
+[compiler tests](../brikk-engine-kotlin-compiler-plugin/test/),
+[runtime](../brikk-engine-kotlin/),
+[smoke consumer](../brikk-engine-kotlin-smoke/), and
+[tooling](../brikk-engine-kotlin-tooling/):
 
 ```
-brikk-engine/brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/
+brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/
   BrikkSqlCompilerPluginRegistrar.kt   entry point (META-INF/services); registers FIR + IR
   BrikkSqlOptions.kt                   -P options: schema, schemaDialect, defaultSchema, debug
   BrikkSqlNames.kt                     ClassIds/FqNames of runtime types; XyzOut naming
@@ -66,10 +66,10 @@ brikk-engine/brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compile
     BrikkSqlDiagnostics.kt        all [BRIKK_SQL] diagnostics
     CompilerCompat.kt             reflection shims for 2.4.10 vs 2.4.20 API differences
   ir/BrikkSqlIrGenerationExtension.kt   the rewrite to Rel(...).input(...).bind(...)
-brikk-engine/brikk-engine-kotlin-compiler-plugin/test/  kctfork tests + unit tests
-brikk-engine/brikk-engine-kotlin/                      Rel, Shape, Partial, annotations, Sql
-brikk-engine/brikk-engine-kotlin-smoke/                real Toolchain -Xplugin consumer
-brikk-engine/brikk-engine-kotlin-tooling/              assemblePluginJar / publishKefsRepo
+brikk-engine-kotlin-compiler-plugin/test/  kctfork tests + unit tests
+brikk-engine-kotlin/                      Rel, Shape, Partial, annotations, Sql
+brikk-engine-kotlin-smoke/                real Toolchain -Xplugin consumer
+brikk-engine-kotlin-tooling/              assemblePluginJar / publishKefsRepo
 brikk/brikk-sql repository: brikk-sql/src/.../shape/   SqlFragment, DdlCatalog, shape analysis
 ```
 
@@ -174,7 +174,7 @@ On a clean checkout, assemble the JAR before compiling the smoke consumer.
 graph (`${module.jar}`, `${module.runtimeClasspath}`), so bundled dependency versions cannot
 drift. Merge is not relocation - fine in-repo, not for publishing (KEFS requires relocation,
 [KEFS plugin authors guide](vendor/kefs/PLUGIN_AUTHORS.md)). `ideKotlinVersion` (the IDE's compiler build) and
-`libVersion` live in [brikk-engine/brikk-engine-kotlin-compiler-plugin/module.yaml](../brikk-engine/brikk-engine-kotlin-compiler-plugin/module.yaml)
+`libVersion` live in [brikk-engine-kotlin-compiler-plugin/module.yaml](../brikk-engine-kotlin-compiler-plugin/module.yaml)
 under `plugins.brikk-engine-kotlin-tooling`. The local KEFS coordinate is now
 `dev.brikk.house:brikk-engine-kotlin-compiler-plugin:<ide>-<lib>`; update existing
 bundles to that artifact ID. The compiler ID in `-P` options stays
@@ -188,10 +188,10 @@ belongs exclusively to those extracted repositories.
 
 Version strings that must agree (hand-maintained): `settings.kotlin.version` in each module,
 `kotlin-compiler-embeddable` in the plugin module, and the `-Xplugin=` path in
-[brikk-engine/brikk-engine-kotlin-smoke/module.yaml](../brikk-engine/brikk-engine-kotlin-smoke/module.yaml)
+[brikk-engine-kotlin-smoke/module.yaml](../brikk-engine-kotlin-smoke/module.yaml)
 (`freeCompilerArgs` cannot reference task outputs). Toolchain module names come
-from leaf directories, with no `name` override. Private `brikk-engine/dogfood/`
-is not included in the public manifest; see the [local registration procedure](../brikk-engine/README.md#private-consumer).
+from leaf directories, with no `name` override. Private `dogfood/`
+is not included in the public manifest; see the [local registration procedure](engine.md#private-consumer).
 
 ## 7. Tests - what is and is not covered
 

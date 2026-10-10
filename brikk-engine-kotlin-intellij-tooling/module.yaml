@@ -1,0 +1,10 @@
+# Build-only SDK provisioning and real IDEA fixtures. Never published or bundled.
+product: jvm/amper-plugin
+
+dependencies:
+  - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.10
+  - junit:junit:4.13.2
+
+settings:
+  kotlin:
+    version: 2.4.10

@@ -10,9 +10,9 @@ smoke module compiled by the real toolchain. Mechanics and verified gotchas:
 [FIR refinement and generation](RESEARCH-fir-refinement-and-generation.md). Sections below that describe design intent
 still hold; "What exists" is updated.
 
-Engine modules live under `brikk-engine/`; generic SQL and chDB now live in the
+Engine modules live at the repository root; generic SQL and chDB now live in the
 standalone `brikk/brikk-sql` and `brikk/brikk-chdb` repositories. See the
-[repository map](../README.md) and [Brikk Engine README](../brikk-engine/README.md).
+[repository map](../README.md) and [Brikk Engine README](engine.md).
 Kotlin packages, `@BrikkSql` and related annotations, and compiler ID
 `dev.brikk.house.sql.compiler` are unchanged. Public SQL/chDB Maven IDs are unchanged;
 the assembled/local KEFS artifact is `brikk-engine-kotlin-compiler-plugin`.
@@ -25,7 +25,7 @@ The earlier green slice is not acceptance of the newer SQL preservation requirem
   serializable `FragmentDescription`/`FragmentContract`), `DdlCatalog` (DDL text → catalog).
   Slots nest under a synthetic qualifier so they coexist with qualified tables. Shape-layer
   typing override: scalar JSON extraction is TEXT (dialect tables stay sqlglot-faithful).
-- [brikk-engine/brikk-engine-kotlin/](../brikk-engine/brikk-engine-kotlin/): `Partial` (minimum requirements), `Shape : Partial` (full, closed),
+- [brikk-engine-kotlin/](../brikk-engine-kotlin/): `Partial` (minimum requirements), `Shape : Partial` (full, closed),
   `@BrikkSql`, `@BrikkTrait`, `@BrikkSqlDialect`, `Sql.postgres/doris/clickhouse/duckdb`,
   `Rel<out T : Partial>(sql, dialect).input(slot, rel).bind(name, v)` with `render()` (CTE
   chain, slot → CTE name) and `bindings()`. Standalone same-dialect native queries
@@ -34,7 +34,7 @@ The earlier green slice is not acceptance of the newer SQL preservation requirem
   pipe/FROM-first lowering; explicit translation still generates the affected stages.
   `renderWithDiagnostics()` exposes per-stage regeneration/unsupported reports.
   Binding-name and CTE collisions are isolated; slot aliases are preserved.
-- [brikk-engine/brikk-engine-kotlin-compiler-plugin/](../brikk-engine/brikk-engine-kotlin-compiler-plugin/): `analysis/` (TypeMap, SqlAnalyzer over raw function facts),
+- [brikk-engine-kotlin-compiler-plugin/](../brikk-engine-kotlin-compiler-plugin/): `analysis/` (TypeMap, SqlAnalyzer over raw function facts),
   `fir/` (session component with catalog/traits/analyses; `ShapeDeclarationGenerator` emitting
   `<Fn>Out : Shape|Partial, <satisfied traits>` with abstract vals; `BrikkSqlCallRefinement`
   typing `Sql.x()` inside `@BrikkSql` as `Rel<FnOut>` and generic pipe call sites as a local
@@ -42,25 +42,25 @@ The earlier green slice is not acceptance of the newer SQL preservation requirem
   unknown column), `ir/` (rewrite to `Rel(...).input(...).bind(...)`, constructor bodies for
   local shapes). Options: `schema`, `schemaDialect`, `defaultSchema`, `debug`,
   optional inspection-only `dumpSql`.
-- [brikk-engine/brikk-engine-kotlin-smoke/](../brikk-engine/brikk-engine-kotlin-smoke/): the same three-step pipeline compiled by the real toolchain via
+- [brikk-engine-kotlin-smoke/](../brikk-engine-kotlin-smoke/): the same three-step pipeline compiled by the real toolchain via
   `-Xplugin=build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar` (merged by
   `./kotlin do assemblePluginJar`, a `brikk-engine-kotlin-tooling` task) and
-  `-P plugin:dev.brikk.house.sql.compiler:schema=brikk-engine/brikk-engine-kotlin-smoke/schema/events.sql`.
-- [brikk-engine/brikk-engine-kotlin-tooling/](../brikk-engine/brikk-engine-kotlin-tooling/): local Kotlin Toolchain plugin with the dev-loop tasks
+  `-P plugin:dev.brikk.house.sql.compiler:schema=brikk-engine-kotlin-smoke/schema/events.sql`.
+- [brikk-engine-kotlin-tooling/](../brikk-engine-kotlin-tooling/): local Kotlin Toolchain plugin with the dev-loop tasks
   `assemblePluginJar` / `publishKefsRepo` (below). Applied to `brikk-engine-kotlin-compiler-plugin`.
 
 Keep one runtime module, `brikk-engine-kotlin`. Helpers such as a future
 `brikk-engine-doris` should come from migration needs, not empty modules created
-in advance. The ignored `brikk-engine/dogfood/` consumer stays outside the public
+in advance. The ignored `dogfood/` consumer stays outside the public
 manifest. Toolchain 0.12 uses leaf-directory names with no `name` override; missing
 explicit includes fail and there is no `project.local.yaml` overlay. Follow the
-[temporary local add/remove procedure](../brikk-engine/README.md#private-consumer)
+[temporary local add/remove procedure](engine.md#private-consumer)
 with synthetic content first. Remove the dogfood include before finishing; public
 builds and publication must not require private content.
 
 ## SQL preservation requirement
 
-Never change more SQL than necessary. The [SQL preservation policy](../brikk-engine/README.md#sql-preservation)
+Never change more SQL than necessary. The [SQL preservation policy](engine.md#sql-preservation)
 requires unchanged same-dialect native SQL to run as written, parameter-only
 changes to stay within parameter representation, and native relation inputs to
 require only necessary slot/CTE changes. Pipe lowering may change required structure
@@ -222,7 +222,7 @@ against `2.4.20-ij262-34`, not a relabeled CLI JAR. Live IDE acceptance remains 
 
 The candidate's Maven repository root is `build/repo-ide/2.4.20-ij262-34`, with
 coordinates `dev.brikk.house:brikk-engine-kotlin-compiler-plugin:2.4.20-ij262-34-0.2.0`.
-The [IDE harness config](../brikk-engine/brikk-engine-kotlin-compiler-ide/module.yaml)
+The [IDE harness config](../brikk-engine-kotlin-compiler-ide/module.yaml)
 pins the exact actual compiler. Confirm "KEFS: Copy Kotlin IDE Version" matches it;
 other versions require reviewed matrix entries and tests. Publication checks build
 provenance and rejects relabeling. CLI artifacts still use `build/plugin` and
@@ -246,7 +246,7 @@ Two compiler-safety rules remain:
   failures into `SQL_ANALYSIS_FAILED` diagnostics or "no refinement"; cancellation exceptions are
   rethrown by name. The IDE re-runs resolution on every keystroke from several passes at once,
   so one throwing line shows up as hundreds of stacks in `idea.log`.
-- **[fir/CompilerCompat.kt](../brikk-engine/brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/fir/CompilerCompat.kt) shims the known API differences** (`KtFakeSourceElementKind.
+- **[fir/CompilerCompat.kt](../brikk-engine-kotlin-compiler-plugin/src/dev.brikk.house.sql.compiler/fir/CompilerCompat.kt) shims the known API differences** (`KtFakeSourceElementKind.
   PluginGenerated` object -> sealed class in 2.4.20; `FirResolvedQualifier.classId` removed).
   New API changes must be compiled/tested in an explicit matrix entry, with small
   reviewed adapters rather than silently reusing another compiler's artifact.

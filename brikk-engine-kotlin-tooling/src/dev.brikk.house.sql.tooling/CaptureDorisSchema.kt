@@ -56,7 +56,7 @@ fun captureDorisSchema(@Input projectFile: Path) {
             phase = "offline validation"
             val loaded = SchemaCache.load(config.output)
             phase = "consumer invalidation"
-            val privateRoot = projectFile.toAbsolutePath().parent.resolve("brikk-engine/dogfood")
+            val privateRoot = projectFile.toAbsolutePath().parent.resolve("dogfood")
             writeSchemaRevision(config.output, "doris", "", "dogfood", privateRoot.resolve(".brikk/schema-inputs"))
             println("Captured ${objects.size} relations and ${objects.sumOf { it.columns.size }} columns into the private dogfood cache.")
             println("Offline catalog loaded ${loaded.tables.size} active relations.")
@@ -95,17 +95,17 @@ internal fun dorisCaptureConfig(projectRoot: Path, env: Map<String, String>): Do
     }) { "Supply credentials through DORIS_USER and DORIS_PASSWORD, not the URL" }
 
     val root = projectRoot.toAbsolutePath().normalize()
-    val privateRoot = root.resolve("brikk-engine/dogfood")
+    val privateRoot = root.resolve("dogfood")
     val configured = Path.of(env["BRIKK_SCHEMA_CACHE_DIR"]?.takeIf { it.isNotBlank() } ?: "schema-cache")
     require(configured.none { it.toString() == ".." }) { "Cache output must not contain parent traversal" }
     val normalized = configured.normalize()
     val output = when {
         normalized.isAbsolute -> normalized
-        normalized.startsWith(Path.of("brikk-engine/dogfood")) -> root.resolve(normalized)
+        normalized.startsWith(Path.of("dogfood")) -> root.resolve(normalized)
         else -> privateRoot.resolve(normalized)
     }
     require(output.normalize().startsWith(privateRoot) && output.normalize() != privateRoot) {
-        "Cache output must be a subdirectory of this worktree's brikk-engine/dogfood"
+        "Cache output must be a subdirectory of this worktree's dogfood"
     }
     val endpoint = "mysql://${uri.host.lowercase()}:${uri.port.takeIf { it >= 0 } ?: 3306}"
     val fingerprint = MessageDigest.getInstance("SHA-256").digest(endpoint.toByteArray(UTF_8))

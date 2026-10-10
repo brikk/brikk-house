@@ -20,7 +20,7 @@ See [the repository split](docs/repository-split.md) for ownership boundaries.
   bindings, slots/CTEs and pipe desugaring should alter only the required parts of
   native SQL. Test authored-vs-rendered text (hints, comments, whitespace where
   relevant) *and* semantics; fix generic lowering gaps in brikk-sql, not with
-  permanent consumer-side SQL copies. Details: [Engine SQL policy](brikk-engine/README.md#sql-preservation),
+  permanent consumer-side SQL copies. Details: [Engine SQL policy](docs/engine.md#sql-preservation),
   [wiring notes](docs/virtual-pipelines-wiring.md#sql-preservation-requirement).
   SQL-side owner: `SQL-05` in brikk-sql's work list.
   **Complete:** all three consumers use Maven Central SQL 0.17.0. `Rel` uses
@@ -51,7 +51,7 @@ See [the repository split](docs/repository-split.md) for ownership boundaries.
   IDE compiler version (not just name a 2.4.10 JAR after it), and validate plugin
   loading, diagnostics and hot reload in a live IDE. CLI/smoke tests alone do
   not establish IDE compatibility. Details: [KEFS requirements and current limits](docs/virtual-pipelines-wiring.md#ide-support),
-  [Engine dev loop](brikk-engine/README.md#local-development).
+  [Engine dev loop](docs/engine.md#local-development).
   **In progress:** CLI and actual `2.4.20-ij262-34` IDE-candidate builds now
   produce one relocated artifact with checked compiler provenance. Full build
   and 141 tests pass; seven finished-artifact fixtures pass on the actual IDE
@@ -100,14 +100,14 @@ See [the repository split](docs/repository-split.md) for ownership boundaries.
 
 ## Current dogfood baseline
 
-The public [DuckDB sample](brikk-engine/samples/duckdb-pipelines/README.md) now
+The public [DuckDB sample](samples/duckdb-pipelines/README.md) now
 executes four reporting views sharing JSON extraction/field cleaning over 18
 deterministic fake events. All five Engine consumers use Central SQL **0.18.0**;
 the first finding, **DDB-001**, is fixed and covered by positive regressions.
 The current gate is **172 tests, nine IDE-compiler artifact fixtures and seven
 schema refresh checks**, all passing; live IDE and Doris gates above remain open.
 Review/continue view by view rather than adding speculative wiring. Evidence:
-[release acceptance](brikk-engine/samples/duckdb-pipelines/SQL-018-RELEASE-ACCEPTANCE.md).
+[release acceptance](samples/duckdb-pipelines/SQL-018-RELEASE-ACCEPTANCE.md).
 
 ## Repository ownership / handoff
 

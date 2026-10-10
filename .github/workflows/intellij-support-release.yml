@@ -1,0 +1,71 @@
+name: Release IntelliJ support
+
+on:
+  push:
+    branches: [ 'release/**' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Non-SNAPSHOT helper release version
+        required: true
+      auto_publish:
+        description: Automatically publish after Central validation
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: intellij-support-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Determine release version and publication mode
+        id: release
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_AUTO_PUBLISH: ${{ inputs.auto_publish }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            VERSION="${GITHUB_REF_NAME#release/}"
+            AUTO_PUBLISH=true
+          else
+            VERSION="$INPUT_VERSION"
+            AUTO_PUBLISH="$INPUT_AUTO_PUBLISH"
+          fi
+          python3 tools/release_config.py validate "$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "auto_publish=$AUTO_PUBLISH" >> "$GITHUB_OUTPUT"
+      - name: Cache Kotlin Toolchain and dependencies
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: |
+            ~/.cache/JetBrains/Kotlin/cli
+            ~/.cache/JetBrains/Kotlin/download.cache
+          key: kotlin-toolchain-${{ runner.os }}-${{ hashFiles('kotlin', 'project.yaml', '**/module.yaml', '**/plugin.yaml') }}
+          restore-keys: |
+            kotlin-toolchain-${{ runner.os }}-
+      - name: Publish checked, signed helper to Central
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          AUTO_PUBLISH: ${{ steps.release.outputs.auto_publish }}
+          KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME: ${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME || secrets.KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME }}
+          KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD: ${{ secrets.KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD || secrets.KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD }}
+          KOTLIN_TOOLCHAIN_SIGNING_KEY: ${{ secrets.KOTLIN_TOOLCHAIN_SIGNING_KEY }}
+          KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE: ${{ secrets.KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE || secrets.KOTLIN_TOOLCHAIN_SIGNING_PASSPHRASE }}
+        run: |
+          if [ "$AUTO_PUBLISH" = "true" ]; then
+            bash ./publish-release.sh "$RELEASE_VERSION" --auto
+          else
+            bash ./publish-release.sh "$RELEASE_VERSION"
+          fi

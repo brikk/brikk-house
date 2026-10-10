@@ -11,8 +11,8 @@ tasks:
       artifactId: ${pluginSettings.artifactId}
       kotlinVersion: ${module.settings.kotlin.version}
       ideKotlinVersion: ${pluginSettings.ideKotlinVersion}
-      sourceDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin-compiler-plugin/src
-      resourcesDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin-compiler-plugin/resources
+      sourceDir: ${project.rootDir}/brikk-engine-kotlin-compiler-plugin/src
+      resourcesDir: ${project.rootDir}/brikk-engine-kotlin-compiler-plugin/resources
       libVersion: ${pluginSettings.libVersion}
       bundleExcludes: ${pluginSettings.bundleExcludes}
       # Stable, short location (not ${taskOutputDir}) because brikk-engine-kotlin-smoke refers to
@@ -35,15 +35,15 @@ tasks:
       compilerVersion: ${pluginSettings.ideKotlinVersion}
       artifactId: ${pluginSettings.artifactId}
       libVersion: ${pluginSettings.libVersion}
-      fixturesDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin-compiler-ide/fixtures
+      fixturesDir: ${project.rootDir}/brikk-engine-kotlin-compiler-ide/fixtures
       outputDir: ${taskOutputDir}
 
   verifySchemaRefresh:
     action: !dev.brikk.house.sql.tooling.verifySchemaRefresh
       wrapper: ${project.rootDir}/kotlin
       assembledDir: ${tasks.assemblePluginJar.action.outputDir}
-      runtimeModuleDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin
-      schemaPluginDir: ${project.rootDir}/brikk-engine/brikk-engine-kotlin-schema-inputs
+      runtimeModuleDir: ${project.rootDir}/brikk-engine-kotlin
+      schemaPluginDir: ${project.rootDir}/brikk-engine-kotlin-schema-inputs
       libVersion: ${pluginSettings.libVersion}
       outputDir: ${taskOutputDir}
 

@@ -16,7 +16,7 @@ product: jvm/lib
 plugins:
   brikk-engine-kotlin-schema-inputs:
     enabled: true
-    schemaPath: brikk-engine/brikk-engine-kotlin-smoke/schema/events.sql
+    schemaPath: brikk-engine-kotlin-smoke/schema/events.sql
     defaultSchema: public
 
 # Synthetic consumer only; not published.
@@ -29,7 +29,7 @@ settings:
     freeCompilerArgs:
       - -Xplugin=build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar
       - -P
-      - plugin:dev.brikk.house.sql.compiler:schema=brikk-engine/brikk-engine-kotlin-smoke/schema/events.sql
+      - plugin:dev.brikk.house.sql.compiler:schema=brikk-engine-kotlin-smoke/schema/events.sql
       - -P
       - plugin:dev.brikk.house.sql.compiler:defaultSchema=public
       # Synthetic opt-in example; production consumers leave this unset unless inspecting.

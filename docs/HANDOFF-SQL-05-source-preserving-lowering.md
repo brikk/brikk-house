@@ -57,9 +57,9 @@ line break when necessary to protect generated closing parentheses from a
 trailing comment. It preserves native same-dialect stages even in mixed
 native/pipe graphs. See:
 
-- `brikk-engine/brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/Rel.kt`
-- `brikk-engine/brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/NativeSqlEdits.kt`
-- `brikk-engine/brikk-engine-kotlin/test/dev.brikk.house.sql.runtime/RelTest.kt`
+- `brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/Rel.kt`
+- `brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/NativeSqlEdits.kt`
+- `brikk-engine-kotlin/test/dev.brikk.house.sql.runtime/RelTest.kt`
 
 **0.17.0 integration:** Engine rewrites only its bound slot and binding names in
 the source, reparses that source, and calls `toSourcePreservingExecutable` for

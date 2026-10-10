@@ -14,17 +14,20 @@ IDE-harness modules.
 
 | Module | Responsibility |
 | --- | --- |
-| [brikk-engine-kotlin](brikk-engine-kotlin/) | The single runtime module: `Rel`, `Shape`, `Partial`, annotations, `Sql` entrypoints, bindings, and rendering. |
-| [brikk-engine-kotlin-compiler-plugin](brikk-engine-kotlin-compiler-plugin/) | FIR analysis, shape generation, checks, call refinement, and IR rewriting. |
-| [brikk-engine-kotlin-compiler-ide](brikk-engine-kotlin-compiler-ide/) | Toolchain harness to compile/test the plugin against the exact configured non-embeddable IDE compiler. |
-| [brikk-engine-kotlin-schema-inputs](brikk-engine-kotlin-schema-inputs/) | Tracks offline schema files/snapshots as generated Kotlin revision inputs for consuming modules. |
-| [brikk-engine-kotlin-tooling](brikk-engine-kotlin-tooling/) | Local Toolchain tasks to assemble the plugin and publish a KEFS repository. |
-| [brikk-engine-kotlin-smoke](brikk-engine-kotlin-smoke/) | Synthetic consumer compiled through the real Toolchain `-Xplugin` path. |
+| [brikk-engine-kotlin](../brikk-engine-kotlin/) | The single runtime module: `Rel`, `Shape`, `Partial`, annotations, `Sql` entrypoints, bindings, and rendering. |
+| [brikk-engine-kotlin-compiler-plugin](../brikk-engine-kotlin-compiler-plugin/) | FIR analysis, shape generation, checks, call refinement, and IR rewriting. |
+| [brikk-engine-kotlin-compiler-ide](../brikk-engine-kotlin-compiler-ide/) | Toolchain harness to compile/test the plugin against the exact configured non-embeddable IDE compiler. |
+| [brikk-engine-kotlin-schema-inputs](../brikk-engine-kotlin-schema-inputs/) | Tracks offline schema files/snapshots as generated Kotlin revision inputs for consuming modules. |
+| [brikk-engine-kotlin-tooling](../brikk-engine-kotlin-tooling/) | Local Toolchain tasks to assemble the plugin and publish a KEFS repository. |
+| [brikk-engine-kotlin-smoke](../brikk-engine-kotlin-smoke/) | Synthetic consumer compiled through the real Toolchain `-Xplugin` path. |
+| [brikk-engine-kotlin-intellij-support](../brikk-engine-kotlin-intellij-support/) | Shared Brikk host, interpolation and Kotlin relation-shape discovery for dialect IDE plugins. |
+| [brikk-engine-kotlin-intellij-tooling](../brikk-engine-kotlin-intellij-tooling/) | Build-only SDK preparation and real IDEA fixture checks for that helper. |
 
 The relocation does not rename Kotlin packages,
 `@BrikkSql`, related annotations, or compiler ID `dev.brikk.house.sql.compiler`.
-Public SQL/chDB Maven IDs stay unchanged. Engine modules are not published to
-Central; the assembled/local KEFS artifact is `brikk-engine-kotlin-compiler-plugin`.
+Public SQL/chDB Maven IDs stay unchanged. Only the new IntelliJ support helper is
+configured for Central publication. Runtime/compiler modules remain unpublished;
+the assembled/local KEFS artifact is `brikk-engine-kotlin-compiler-plugin`.
 
 Keep the runtime in one module. Future database helpers such as
 `brikk-engine-doris` should come from working application code when needed. Do not
@@ -51,7 +54,7 @@ Cross-dialect changes must be requested explicitly. Parsing for checks is not
 permission to regenerate, optimize, or canonicalize unchanged SQL.
 
 Source-preserving rendering has explicit supported/refused boundaries, rather
-than a blanket guarantee for every SQL form. [Rel.render()](brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/Rel.kt)
+than a blanket guarantee for every SQL form. [Rel.render()](../brikk-engine-kotlin/src/dev.brikk.house.sql.runtime/Rel.kt)
 preserves native same-dialect stages, standalone or composed: only bound slot
 names, colliding binding names and embedded statement terminators are edited.
 Their parameter style, whitespace, comments, hints and native syntax stay intact.
@@ -89,32 +92,32 @@ leaf directories, with no `name` override.
 
 The assembled JAR is
 `build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar`. The
-[smoke config](brikk-engine-kotlin-smoke/module.yaml) consumes it and uses schema
-path `brikk-engine/brikk-engine-kotlin-smoke/schema/events.sql`, relative to the
+[smoke config](../brikk-engine-kotlin-smoke/module.yaml) consumes it and uses schema
+path `brikk-engine-kotlin-smoke/schema/events.sql`, relative to the
 repository root. The option prefix remains
 `-P plugin:dev.brikk.house.sql.compiler:...`.
 
 Both artifacts relocate SQL/serialization dependencies. CLI publication uses
 `build/repo`; KEFS's IDE candidate uses `build/repo-ide/2.4.20-ij262-34` and
 `dev.brikk.house:brikk-engine-kotlin-compiler-plugin:2.4.20-ij262-34-0.2.0`.
-The [IDE harness config](brikk-engine-kotlin-compiler-ide/module.yaml) pins the
+The [IDE harness config](../brikk-engine-kotlin-compiler-ide/module.yaml) pins the
 actual compiler and library version; publishing rejects mismatched provenance.
 The candidate's compiler/artifact tests pass, but live IDE loading and hot reload
 are still unverified. See [ENG-03 acceptance and the live checklist](../docs/ENG-03-distribution-and-IDE.md).
 
 ## Private consumer
 
-Start with the public [DuckDB dogfood sample](samples/duckdb-pipelines/README.md)
+Start with the public [DuckDB dogfood sample](../samples/duckdb-pipelines/README.md)
 for local, deterministic scenarios. Its four reporting views share extraction /
 cleaning and execute against a fresh in-memory DB. It does not replace target
 Doris or live IDE acceptance, and it adds no speculative wiring API.
 
-`brikk-engine/dogfood/` is ignored and excluded from the public manifest. It must
+`dogfood/` is ignored and excluded from the public manifest. It must
 remain non-published and may be absent from any public checkout. There is no
 `project.local.yaml` overlay; an explicit include of a missing module fails.
 
 Use a synthetic module to validate the setup first. Temporarily add the local
-`brikk-engine/dogfood` entry to `project.yaml`, then remove it before finishing or
+`dogfood` entry to `project.yaml`, then remove it before finishing or
 running public build/publish checks. With the local include present, assemble the
 plugin and run the application with `./kotlin run -m dogfood`. Its module must
 disable publication; private SQL, fixtures, logs, and generated artifacts must not

@@ -2,7 +2,10 @@ name: Test
 
 on:
   push:
+    branches-ignore:
+      - 'release/**'
   pull_request:
+  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -14,6 +17,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check helper release configuration
+        run: python3 -m unittest discover -s tools -p 'test_*.py'
       - name: Cache Kotlin Toolchain and dependencies
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -31,6 +36,12 @@ jobs:
         run: ./kotlin test
       - name: Verify schema-only incremental rebuilds without a clean
         run: ./kotlin do verifySchemaRefresh -m brikk-engine-kotlin-compiler-plugin
+      - name: Verify real IntelliJ host and shape fixtures
+        run: ./kotlin check intellijSupport -m brikk-engine-kotlin-intellij-support
+      - name: Publish and verify the helper in Maven Local
+        run: |
+          ./kotlin publish mavenLocal -m brikk-engine-kotlin-intellij-support
+          ./kotlin do verifyLocalIntellijPublication -m brikk-engine-kotlin-intellij-support
 
   ide-compiler:
     # This is compiler API/artifact acceptance, NOT live IDE/KEFS acceptance.

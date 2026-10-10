@@ -108,8 +108,8 @@ class CaptureDorisSchemaTest {
     fun relativeOutputPathsResolveUnderDogfoodWithoutExposingConnectionSettings() {
         val root = createTempDirectory("doris-config-test")
         try {
-            val expected = root.resolve("brikk-engine/dogfood/schema-cache")
-            for (configured in listOf("schema-cache", "./brikk-engine/dogfood/schema-cache", "brikk-engine/dogfood/schema-cache", expected.toString())) {
+            val expected = root.resolve("dogfood/schema-cache")
+            for (configured in listOf("schema-cache", "./dogfood/schema-cache", "dogfood/schema-cache", expected.toString())) {
                 val config = dorisCaptureConfig(root, environment + ("BRIKK_SCHEMA_CACHE_DIR" to configured))
                 assertEquals(expected, config.output)
                 assertTrue(config.sourceId.matches(Regex("sha256:[0-9a-f]{64}")))

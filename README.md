@@ -18,18 +18,23 @@ workflows. This repository no longer publishes SQL or chDB libraries.
 
 [project.yaml](project.yaml) explicitly includes these public modules:
 
-- `brikk-engine/brikk-engine-kotlin`: `Rel`, `Shape`, `Partial`, annotations,
+- `brikk-engine-kotlin`: `Rel`, `Shape`, `Partial`, annotations,
   `Sql` entrypoints, bindings, and rendering.
-- `brikk-engine/brikk-engine-kotlin-compiler-plugin`: compile-time SQL analysis,
+- `brikk-engine-kotlin-compiler-plugin`: compile-time SQL analysis,
   generated shapes, checks, call refinement, and IR rewriting.
-- `brikk-engine/brikk-engine-kotlin-tooling`: plugin assembly, local KEFS
+- `brikk-engine-kotlin-tooling`: plugin assembly, local KEFS
   publishing, and offline schema-capture tooling.
-- `brikk-engine/brikk-engine-kotlin-smoke`: synthetic consumer of the actual
+- `brikk-engine-kotlin-smoke`: synthetic consumer of the actual
   compiler-plugin build path.
+- `brikk-engine-kotlin-intellij-support`: shared Brikk host/interpolation and
+  relation-shape discovery for the DuckDB and Doris IntelliJ plugins.
+- `brikk-engine-kotlin-intellij-tooling`: build-only API preparation and real
+  IDEA fixture checks for that helper.
 
 Module selectors use the leaf name, for example `-m brikk-engine-kotlin`.
 Kotlin packages, annotations, and compiler ID `dev.brikk.house.sql.compiler`
-are unchanged. Engine modules are not published to Maven Central.
+are unchanged. Only the IntelliJ support helper is configured for Central
+publication; runtime/compiler artifacts and build plugins remain unpublished.
 
 ## Dependencies
 
@@ -60,7 +65,7 @@ the same assembly/build/test sequence on pushes and pull requests.
 ## Local IDE development
 
 For runnable, credential-free dogfood, see the
-[DuckDB pipeline sample](brikk-engine/samples/duckdb-pipelines/README.md): four
+[DuckDB pipeline sample](samples/duckdb-pipelines/README.md): four
 reporting views share JSON extraction and field cleaning over deterministic fake
 data, with real JDBC execution and expected-row tests.
 
@@ -71,6 +76,17 @@ data, with real JDBC execution and expected-row tests.
 ./kotlin check
 ./kotlin show commands
 ```
+
+For the shared helper and peer-plugin integration:
+
+```sh
+./kotlin check intellijSupport -m brikk-engine-kotlin-intellij-support
+./kotlin publish mavenLocal -m brikk-engine-kotlin-intellij-support
+./kotlin do verifyLocalIntellijPublication -m brikk-engine-kotlin-intellij-support
+```
+
+The [helper guide](brikk-engine-kotlin-intellij-support/README.md) describes API,
+optional Kotlin loading, fixture SDK selection and explicit Central release.
 
 The CLI JAR remains
 `build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar`. Both builds
@@ -104,15 +120,16 @@ keeping permanent handwritten SQL copies in consumers.
 
 ## Private consumer
 
-The ignored `brikk-engine/dogfood/` consumer is excluded from the public manifest
+The ignored `dogfood/` consumer is excluded from the public manifest
 and must remain non-published. Public builds work without it. Never copy private
 SQL, schemas, logs, or generated artifacts into either extracted repository.
-See the [local add/remove workflow](brikk-engine/README.md#private-consumer).
+See the [local add/remove workflow](docs/engine.md#private-consumer).
 
 ## Documentation
 
 - [Active work list](TODO.md) — `ENG-*` items with links to the SQL and chDB backlogs
-- [Brikk Engine](brikk-engine/README.md)
+- [Brikk Engine](docs/engine.md)
+- [IntelliJ helper](brikk-engine-kotlin-intellij-support/README.md)
 - [Pipeline wiring](docs/virtual-pipelines-wiring.md)
 - [Schema cache](docs/schema-cache.md)
 - [Completed compiler-plugin review](docs/REVIEW-compiler-plugin.md)

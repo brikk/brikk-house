@@ -38,9 +38,9 @@ protocol, normally port 9030. The initial command supports a single-host MySQL
 JDBC URL. The driver is a dependency of build tooling only, not the runtime or
 the assembled Kotlin compiler plugin.
 
-Relative cache paths resolve under this worktree's `brikk-engine/dogfood`.
+Relative cache paths resolve under this worktree's `dogfood`.
 The default is `schema-cache`. A project-relative path beginning with
-`brikk-engine/dogfood` is also accepted. Absolute paths must stay below that same
+`dogfood` is also accepted. Absolute paths must stay below that same
 private directory; parent traversal and managed symlink paths are rejected.
 Using a connection file in another worktree does not change the output base.
 
@@ -108,14 +108,14 @@ schema-inputs plugin on every consumer that uses it:
 plugins:
   brikk-engine-kotlin-schema-inputs:
     enabled: true
-    schemaPath: brikk-engine/dogfood/schema-cache
+    schemaPath: dogfood/schema-cache
 
 settings:
   kotlin:
     freeCompilerArgs:
       - -Xplugin=build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar
       - -P
-      - plugin:dev.brikk.house.sql.compiler:schema=brikk-engine/dogfood/schema-cache
+      - plugin:dev.brikk.house.sql.compiler:schema=dogfood/schema-cache
 ```
 
 A full cache root, catalog directory, or schema directory can be selected. JSON

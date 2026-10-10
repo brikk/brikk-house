@@ -25,6 +25,35 @@ import kotlin.test.assertTrue
 class BrikkSqlPluginTest {
 
     @Test
+    fun `IDE helper parity - imported binary constants keep their compiler semantics`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            import kotlin.math.PI
+            import kotlin.Int.Companion.MAX_VALUE
+            @BrikkSql fun value() = Sql.postgres("SELECT ${'$'}PI AS ratio")
+            @BrikkSql fun maximum() = Sql.postgres("SELECT ${'$'}MAX_VALUE AS id")
+            fun rendered() = value().render()
+            fun renderedMaximum() = maximum().render()
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        assertContains(result.classLoader.loadClass("demo.MainKt").getMethod("rendered").invoke(null) as String, "3.141592653589793")
+        assertContains(result.classLoader.loadClass("demo.MainKt").getMethod("renderedMaximum").invoke(null) as String, "2147483647")
+    }
+
+    @Test
+    fun `IDE helper parity - literal interpolation preserves null as SQL text`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql fun value() = Sql.postgres("SELECT ${'$'}{1} AS n, ${'$'}{null} AS missing, '${'$'}{'$'}' AS dollar")
+            fun rendered() = value().render()
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        assertContains(result.classLoader.loadClass("demo.MainKt").getMethod("rendered").invoke(null) as String, "SELECT 1 AS n, null AS missing, '$' AS dollar")
+    }
+
+    @Test
     fun `DuckDB dogfood DDB-001 bare interpolated projection compiles and preserves its template`() {
         val result = compile("""
             package demo

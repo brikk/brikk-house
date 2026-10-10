@@ -4,11 +4,11 @@ product: jvm/app
 plugins:
   brikk-engine-kotlin-schema-inputs:
     enabled: true
-    schemaPath: brikk-engine/samples/duckdb-pipelines/resources/schema.sql
+    schemaPath: samples/duckdb-pipelines/resources/schema.sql
     schemaDialect: duckdb
 
 dependencies:
-  - //brikk-engine/brikk-engine-kotlin
+  - //brikk-engine-kotlin
   - org.duckdb:duckdb_jdbc:1.5.5.0
 
 settings:
@@ -21,7 +21,7 @@ settings:
     freeCompilerArgs:
       - -Xplugin=build/plugin/brikk-engine-kotlin-compiler-plugin-2.4.10-0.2.0.jar
       - -P
-      - plugin:dev.brikk.house.sql.compiler:schema=brikk-engine/samples/duckdb-pipelines/resources/schema.sql
+      - plugin:dev.brikk.house.sql.compiler:schema=samples/duckdb-pipelines/resources/schema.sql
       - -P
       - plugin:dev.brikk.house.sql.compiler:schemaDialect=duckdb
       - -P

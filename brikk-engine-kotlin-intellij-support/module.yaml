@@ -1,0 +1,22 @@
+product: jvm/lib
+
+description: Brikk Kotlin host, interpolation, and relation-shape contracts for IntelliJ SQL plugins.
+
+apply:
+  - //publish.module-template.yaml
+
+plugins:
+  brikk-engine-kotlin-intellij-tooling: enabled
+
+settings:
+  jvm:
+    release: 21
+  kotlin:
+    version: 2.4.10
+    freeCompilerArgs:
+      # Prepared as a build prerequisite, not a Maven dependency. Toolchain 0.13
+      # publishes compile-only Maven dependencies as 'provided' in the POM;
+      # an SDK coordinate must not become part of this library's contract.
+      - -classpath=build/intellij-api/intellij-kotlin-api-261.25134.95.jar
+    optIns:
+      - org.jetbrains.kotlin.analysis.api.KaExperimentalApi

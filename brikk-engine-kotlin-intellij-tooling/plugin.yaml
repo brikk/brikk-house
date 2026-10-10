@@ -5,6 +5,7 @@ tasks:
       # point this at the BUSL root LICENSE.
       license: ${module.rootDir}/LICENSE
       notice: ${module.rootDir}/NOTICE
+      sourceNotices: ${module.rootDir}/src/META-INF
       resourceDir: ${taskOutputDir}
 
   prepareIntellijApi:
@@ -30,6 +31,8 @@ tasks:
       library: ${module.jar}
       wrapper: ${project.rootDir}/kotlin
       consumerSource: ${module.rootDir}/fixtures/LocalConsumer.kt
+      license: ${module.rootDir}/LICENSE
+      notice: ${module.rootDir}/NOTICE
       version: ${module.settings.publishing.version}
       outputDir: ${taskOutputDir}
 

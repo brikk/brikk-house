@@ -17,7 +17,7 @@ rewritten in the extracted histories; brikk-house's original history is intact.
 SQL owns its generators, committed corpora, vendor data/Doris parser, SQL
 research/docs, and backlog. chDB owns its native manifests and binding design.
 Compiler integration, KEFS docs, pipeline wiring, schema capture, and the private
-ignored `brikk-engine/dogfood/` consumer stay in brikk-house. At the initial split,
+ignored `dogfood/` consumer stay in brikk-house. At the initial split,
 existing ignored/untracked build artifacts were not transferred or deleted.
 
 Subsequent ledger cleanup verified that the committed corpora, curated
@@ -31,12 +31,18 @@ under the SQL checkout's `build/ledger-actual/`, not the Engine checkout.
 All three projects pin Kotlin Toolchain **0.13.0**, using its generated shell and
 Windows wrappers. Kotlin/compiler API versions remain **2.4.10**.
 
+On 2026-10-10, Engine module directories and `samples/` moved to the repository
+root; names, packages and compiler IDs stayed unchanged. Private `dogfood/` moved
+intact and remains ignored. The new `brikk-engine-kotlin-intellij-support` library
+is the sole Central-publication target here. That extends the split-time ownership
+table above; runtime/compiler/KEFS and build-only modules are still not Central libraries.
+
 ## Cross-repository dependencies
 
 The versions below record the extraction baseline. Engine has since upgraded
 all five SQL consumers to **0.18.0** from Maven Central; see the
 [current Engine README](../README.md#dependencies) and
-[current release acceptance](../brikk-engine/samples/duckdb-pipelines/SQL-018-RELEASE-ACCEPTANCE.md).
+[current release acceptance](../samples/duckdb-pipelines/SQL-018-RELEASE-ACCEPTANCE.md).
 
 - Engine runtime, compiler plugin, and tooling consume
   `dev.brikk.house:brikk-sql-jvm:0.16.0` from Maven Central.

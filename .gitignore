@@ -10,7 +10,7 @@
 *-ledger-actual.json
 
 # Private Brikk Engine consumer: never part of public module includes or publication.
-/brikk-engine/dogfood/
+/dogfood/
 
 # Owner-review specification remains local until approved for publication.
 /docs/DRAFT-sql-to-brikk-migration.md
@@ -25,6 +25,7 @@
 __pycache__/
 .env
 .env.doris
+/.publish-base.*.module-template.yaml
 
 # reference symlink/dir (worktrees symlink to the main tree clone)
 /reference

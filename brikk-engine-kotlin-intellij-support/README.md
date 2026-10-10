@@ -147,6 +147,14 @@ coordinate should be published here. The distributed JAR contains only helper
 classes and notices. Its POM/Gradle metadata has no IntelliJ or compiler dependency.
 The local verification command also builds/runs an independent Maven Local consumer.
 
+The binary JAR contains the module's Apache LICENSE and NOTICE under `META-INF`.
+Toolchain 0.13's sources JAR includes static source roots, not generated resources,
+so matching copies live in `src/META-INF` and appear under `main/META-INF` there.
+If the authoritative module LICENSE or NOTICE changes, update those source copies
+too. A build-time check rejects missing/stale copies, and publication verification
+compares both JARs byte-for-byte against the authoritative files. Neither archive
+is modified after native checksum/signature generation.
+
 ## Real IDE checks
 
 ```sh
@@ -205,7 +213,10 @@ validates a non-SNAPSHOT SemVer, runs build/test/IDE gates, temporarily applies
 release settings, verifies Maven Local output, signs and uploads only this
 artifact. It restores the development template on exit. Central Portal approval
 is manual by default; `--auto` explicitly enables automatic publication after
-validation. No push to main triggers publication.
+validation. Alternatively, pushing `release/<version>` runs the reusable CI gates
+first, then publishes only the helper with Central auto-publication. Signing and
+Central credentials come from the Brikk organization secrets. No push to main
+triggers publication.
 
 Required credentials are `KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME`,
 `KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD` and `KOTLIN_TOOLCHAIN_SIGNING_KEY`.
