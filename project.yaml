@@ -1,12 +1,15 @@
 modules:
-  - brikk-engine/brikk-engine-kotlin
-  - brikk-engine/brikk-engine-kotlin-compiler-ide
-  - brikk-engine/brikk-engine-kotlin-compiler-plugin
-  - brikk-engine/brikk-engine-kotlin-schema-inputs
-  - brikk-engine/brikk-engine-kotlin-smoke
-  - brikk-engine/brikk-engine-kotlin-tooling
-  - brikk-engine/samples/duckdb-pipelines
+  - brikk-engine-kotlin
+  - brikk-engine-kotlin-compiler-ide
+  - brikk-engine-kotlin-compiler-plugin
+  - brikk-engine-kotlin-intellij-support
+  - brikk-engine-kotlin-intellij-tooling
+  - brikk-engine-kotlin-schema-inputs
+  - brikk-engine-kotlin-smoke
+  - brikk-engine-kotlin-tooling
+  - samples/duckdb-pipelines
 
 plugins:
-  - ./brikk-engine/brikk-engine-kotlin-schema-inputs
-  - ./brikk-engine/brikk-engine-kotlin-tooling
+  - ./brikk-engine-kotlin-schema-inputs
+  - ./brikk-engine-kotlin-tooling
+  - ./brikk-engine-kotlin-intellij-tooling
