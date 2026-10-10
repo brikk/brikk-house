@@ -1,0 +1,16 @@
+Brikk Engine Kotlin IntelliJ support
+Copyright 2026 Sortdev SRL and Jayson Minard
+Licensed under the Apache License, Version 2.0 (see LICENSE in this artifact).
+This library is excluded from the Business Source License that covers the rest
+of the brikk-house repository.
+
+Brikk-specific context and interpolation handling was consolidated from:
+https://github.com/sort-dev/duckdb-intellij-plugin
+commit 8a8f1f7da7ec2df09dbea43a510c9c07af2c1024
+https://github.com/sort-dev/doris-intellij-plugin
+implementation commit fbfc50c, release reference 9e7cb99
+Both source projects are Apache-2.0 licensed.
+
+IntelliJ Platform and Kotlin IDE API binaries are used only for compilation and
+test fixtures. They are not bundled in this artifact. The consuming IDE supplies
+those APIs. No SQL dialect implementation, JDBC driver or KEFS code is bundled.

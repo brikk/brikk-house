@@ -1,0 +1,24 @@
+# Only the IntelliJ support library applies this template. Engine runtime,
+# compiler artifacts, build plugins and private consumers remain unpublished.
+# The support library is Apache-2.0 (its own LICENSE), not the root BUSL, so
+# the Apache-2.0 dialect plugins can embed it. Keep this POM entry in sync.
+repositories:
+  - url: mavenLocal
+    publish: true
+    resolve: false
+
+settings:
+  publishing:
+    enabled: true
+    group: dev.brikk.house
+    version: 0.1.0-SNAPSHOT
+    publishSources: true
+    pom:
+      url: https://github.com/brikk/brikk-house
+      scm: https://github.com/brikk/brikk-house.git
+      licenses:
+        - name: The Apache License, Version 2.0
+          url: https://www.apache.org/licenses/LICENSE-2.0.txt
+      developers:
+        - name: Jayson Minard
+        - name: Sortdev SRL

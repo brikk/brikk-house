@@ -1,0 +1,50 @@
+tasks:
+  prepareSupportNotices:
+    action: !dev.brikk.house.intellij.tooling.prepareSupportNotices
+      # The helper stays Apache-2.0 so the dialect plugins can embed it; do not
+      # point this at the BUSL root LICENSE.
+      license: ${module.rootDir}/LICENSE
+      notice: ${module.rootDir}/NOTICE
+      resourceDir: ${taskOutputDir}
+
+  prepareIntellijApi:
+    action: !dev.brikk.house.intellij.tooling.prepareIntellijApi
+      outputDir: ${project.rootDir}/build/intellij-api
+      revisionDir: ${project.rootDir}/build/intellij-api-revision
+
+  verifyIntellijSupport:
+    action: !dev.brikk.house.intellij.tooling.verifyIntellijSupport
+      library: ${module.jar}
+      compilerClasspath:
+        dependencies:
+          - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.10
+          - junit:junit:4.13.2
+          - org.opentest4j:opentest4j:1.3.0
+          - org.assertj:assertj-core:4.0.0-M1
+      fixturesDir: ${module.rootDir}/fixtures
+      compilerPluginJar: ${project.rootDir}/build/plugin-ide/2.4.20-ij262-34/brikk-engine-kotlin-compiler-plugin-2.4.20-ij262-34-0.2.0.jar
+      outputRoot: ${taskOutputDir}
+
+  verifyLocalIntellijPublication:
+    action: !dev.brikk.house.intellij.tooling.verifyLocalIntellijPublication
+      library: ${module.jar}
+      wrapper: ${project.rootDir}/kotlin
+      consumerSource: ${module.rootDir}/fixtures/LocalConsumer.kt
+      version: ${module.settings.publishing.version}
+      outputDir: ${taskOutputDir}
+
+commands:
+  - prepareIntellijApi
+  - verifyIntellijSupport
+  - verifyLocalIntellijPublication
+
+generated:
+  sources:
+    - directory: ${tasks.prepareIntellijApi.action.revisionDir}
+      language: kotlin
+  resources:
+    - directory: ${tasks.prepareSupportNotices.action.resourceDir}
+
+checks:
+  - name: intellijSupport
+    performedBy: verifyIntellijSupport
