@@ -11,12 +11,13 @@ rest of the repository, so the Apache-2.0 dialect plugins can embed it.
 Development coordinate:
 
 ```text
-dev.brikk.house:brikk-engine-kotlin-intellij-support:0.2.0-SNAPSHOT
+dev.brikk.house:brikk-engine-kotlin-intellij-support:0.3.0-SNAPSHOT
 ```
 
-This snapshot adds `Sql.trino` recognition and `BrikkDialect.TRINO`, with language
-ID `TrinoSQL`. Released helper `0.1.0` recognizes only DuckDB and Doris. The runtime
-entry point lives in `brikk-engine-kotlin`, not in this helper artifact.
+Trino support requires helper `0.2.0` or newer. It recognizes `Sql.trino` as
+`BrikkDialect.TRINO`, with language ID `TrinoSQL`. Released helper `0.1.0` recognizes
+only DuckDB and Doris. The runtime entry point lives in `brikk-engine-kotlin`, not
+in this helper artifact.
 
 ## Consume from a dialect plugin
 
@@ -24,7 +25,7 @@ entry point lives in `brikk-engine-kotlin`, not in this helper artifact.
 repositories { mavenLocal(); mavenCentral() }
 
 dependencies {
-    implementation("dev.brikk.house:brikk-engine-kotlin-intellij-support:0.2.0-SNAPSHOT") {
+    implementation("dev.brikk.house:brikk-engine-kotlin-intellij-support:0.3.0-SNAPSHOT") {
         // IntelliJ supplies Kotlin. Do not bundle another stdlib in the plugin ZIP.
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
