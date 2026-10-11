@@ -33,13 +33,14 @@ interface CleanEvent : RawEvent {
     val channel: String?
 }
 
+
 /** Virtual view 1: half-open, tenant-scoped event source. Native SQL stays native. */
 @BrikkSql
 fun eventsInRange(tenant: String, start: Instant, end: Instant) = Sql.duckdb("""
     SELECT /* sample: event source */ event_id, tenant, event_at, payload
     FROM sample.raw_events
     WHERE tenant = $tenant AND event_at >= $start AND event_at < $end
-""".trimIndent())
+""")
 
 /** Shared pipe: JSON extraction is defined once for all four reports. */
 @BrikkSql
@@ -49,7 +50,7 @@ fun <T : RawEvent> extractEventFields(src: Rel<T>) = Sql.duckdb("""
               json_extract_string(payload, '$.kind') AS kind_raw,
               json_extract_string(payload, '$.amount') AS amount_raw,
               json_extract_string(payload, '$.channel') AS channel_raw
-""".trimIndent())
+""")
 
 /** Shared pipe: normalization does not silently discard bad/null events. */
 @BrikkSql
@@ -59,7 +60,7 @@ fun <T : ExtractedEvent> cleanEventFields(src: Rel<T>) = Sql.duckdb("""
               NULLIF(LOWER(TRIM(kind_raw)), '') AS event_kind,
               TRY_CAST(NULLIF(TRIM(amount_raw), '') AS DECIMAL(12, 2)) AS amount,
               COALESCE(NULLIF(LOWER(TRIM(channel_raw)), ''), 'unknown') AS channel
-""".trimIndent())
+""")
 
 /**
  * Explicit trait boundary for a reusable helper: do not let a local refined shape
@@ -75,7 +76,7 @@ fun customerDirectory(tenant: String) = Sql.duckdb("""
            NULLIF(LOWER(TRIM(segment)), '') AS segment
     FROM sample.customers
     WHERE tenant = $tenant
-""".trimIndent())
+""")
 
 /** Reporting view A: valid orders only; malformed amounts are counted by quality. */
 @BrikkSql
@@ -86,7 +87,7 @@ fun dailyRevenue(events: Rel<CleanEvent>) = Sql.duckdb("""
     WHERE event_kind = 'order' AND amount IS NOT NULL
     GROUP BY tenant, CAST(event_at AS DATE)
     ORDER BY tenant, day
-""".trimIndent())
+""")
 
 /** Reporting view B: same cleaned events, with a pipe aggregate. */
 @BrikkSql
@@ -96,7 +97,7 @@ fun dailyRefunds(events: Rel<CleanEvent>) = Sql.duckdb("""
     |> AGGREGATE COUNT(*) AS refunds, SUM(amount) AS refunded_amount
        GROUP BY tenant, CAST(event_at AS DATE) AS day
     |> ORDER BY tenant, day
-""".trimIndent())
+""")
 
 /** Reporting view C: explicit two-input wiring and outer-join preservation. */
 @BrikkSql
@@ -113,7 +114,7 @@ fun customerRevenue(events: Rel<CleanEvent>, customers: Rel<CustomerDirectoryOut
              CASE WHEN customers.customer_key IS NULL THEN 'unmatched'
                   ELSE COALESCE(customers.segment, 'unclassified') END
     ORDER BY events.tenant, segment
-""".trimIndent())
+""")
 
 /** Reporting view D: deliberately observes the rows financial reports exclude. */
 @BrikkSql
@@ -127,7 +128,7 @@ fun dataQuality(events: Rel<CleanEvent>) = Sql.duckdb("""
     FROM $events()
     GROUP BY tenant
     ORDER BY tenant
-""".trimIndent())
+""")
 
 data class SampleReport(val name: String, val relation: Rel<*>)
 
@@ -151,3 +152,4 @@ fun refundShape(row: DailyRefundsOut): Pair<Long, BigDecimal?> =
     row.refunds to row.refunded_amount
 
 fun qualityShape(row: DataQualityOut): Long = row.invalid_amount
+

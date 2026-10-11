@@ -301,6 +301,9 @@ class BrikkSqlCallRefinement(session: FirSession) : FirFunctionCallRefinementExt
         }
 
         return buildFunctionCall {
+            // Checkers report type mismatches on the expression that replaced the user's call
+            // (return/argument/initializer). Without a source they throw instead of reporting.
+            source = call.source?.fakeElement(CompilerCompat.pluginGenerated)
             coneTypeOrNull = returnType
             typeArguments += buildTypeProjectionWithVariance {
                 typeRef = buildResolvedTypeRef { coneType = returnType }

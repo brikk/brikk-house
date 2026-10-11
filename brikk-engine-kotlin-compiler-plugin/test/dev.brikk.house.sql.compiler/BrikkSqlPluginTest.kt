@@ -356,6 +356,25 @@ class BrikkSqlPluginTest {
     }
 
     @Test
+    fun `a refined generic pipe call returned with a mismatching declared type is a diagnostic not a crash`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            enum class Kind { a, b }
+            @BrikkTrait interface Base : Partial { val id: Int }
+            @BrikkTrait interface Typed : Base { val kind: Kind? }
+            @BrikkSql fun src() = Sql.postgres("SELECT 1 AS id")
+            @BrikkSql fun <T : Base> withKind(src: Rel<T>) = Sql.postgres("FROM src() |> EXTEND CAST(NULL AS TEXT) AS kind")
+            fun typed(): Rel<Typed> = withKind(src())
+            fun generated(): Rel<WithKindOut> = withKind(src())
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertTrue("source must not be null" !in result.messages, result.messages)
+        val mismatches = result.messages.lines().filter { "Return type mismatch" in it }
+        assertEquals(listOf("main.kt:8:", "main.kt:9:"), mismatches.map { Regex("main\\.kt:\\d+:").find(it)?.value }, result.messages)
+    }
+
+    @Test
     fun `named reordered mixed and omitted default arguments refine the correct Rel input`() {
         val result = compile("""
             package demo
