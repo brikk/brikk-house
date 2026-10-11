@@ -7,6 +7,8 @@ class ContractsTest {
     @Test fun dialectIdentitiesAreExplicit() {
         assertEquals("DuckDBSQL", BrikkDialect.DUCKDB.languageId)
         assertEquals("doris", BrikkDialect.DORIS.sqlName)
+        assertEquals("trino", BrikkDialect.TRINO.sqlName)
+        assertEquals("TrinoSQL", BrikkDialect.TRINO.languageId)
     }
 
     @Test fun editingFactsNeverClaimExecutionAndDistinguishEntryRoles() {

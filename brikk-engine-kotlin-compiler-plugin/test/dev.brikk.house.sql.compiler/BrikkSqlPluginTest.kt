@@ -68,6 +68,32 @@ class BrikkSqlPluginTest {
         assertEquals(mapOf("n" to 7), main.getMethod("values").invoke(null))
     }
 
+    @Test
+    fun `Trino entry point rewrites bindings and infers composed output shapes`() {
+        val result = compile("""
+            package demo
+            import dev.brikk.house.sql.runtime.*
+            @BrikkSql fun source(n: Int) = Sql.trino("SELECT 1 AS id, 'x' AS code WHERE ${'$'}n > 0")
+            @BrikkSql fun keep(src: Rel<SourceOut>, minimum: Int) = Sql.trino("FROM ${'$'}src() |> WHERE id > ${'$'}minimum |> SELECT id, code")
+            fun sourceDialect() = source(7).dialect
+            fun sourceSql() = source(7).render()
+            fun sql() = keep(source(7), 3).render()
+            fun values() = keep(source(7), 3).bindings()
+        """.trimIndent())
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+        val main = result.classLoader.loadClass("demo.MainKt")
+        assertEquals("trino", main.getMethod("sourceDialect").invoke(null))
+        assertEquals("SELECT 1 AS id, 'x' AS code WHERE :n > 0", main.getMethod("sourceSql").invoke(null))
+        val rendered = main.getMethod("sql").invoke(null) as String
+        assertContains(rendered, "WITH s0 AS")
+        assertContains(rendered, "id > :minimum")
+        assertTrue(!rendered.contains("src()") && !rendered.contains("|>"), rendered)
+        assertEquals(mapOf("n" to 7, "minimum" to 3), main.getMethod("values").invoke(null))
+        val output = result.classLoader.loadClass("demo.KeepOut")
+        assertEquals("int", output.getMethod("getId").returnType.name)
+        assertEquals("java.lang.String", output.getMethod("getCode").returnType.name)
+    }
+
     private fun draftFile(): File = java.nio.file.Files.createTempDirectory(
         java.nio.file.Files.createDirectories(java.nio.file.Path.of(System.getProperty("java.io.tmpdir"), "opencode")), "brikk-draft-")
         .resolve("views.draft.sql").toFile()

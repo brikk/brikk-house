@@ -2,7 +2,7 @@ package dev.brikk.house.intellij
 
 /** Immutable editing facts. No Kotlin analysis session, symbol, runtime value or SQL AST escapes here. */
 public enum class BrikkDialect(public val sqlName: String, public val languageId: String) {
-    DUCKDB("duckdb", "DuckDBSQL"), DORIS("doris", "DorisSQL"),
+    DUCKDB("duckdb", "DuckDBSQL"), DORIS("doris", "DorisSQL"), TRINO("trino", "TrinoSQL"),
 }
 
 public enum class EntryRole { BIND, RELATION_SLOT, SQL_CONSTANT, LITERAL, PENDING, UNSUPPORTED }

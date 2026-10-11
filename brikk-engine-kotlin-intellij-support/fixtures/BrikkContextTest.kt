@@ -38,7 +38,8 @@ class BrikkContextTest : BasePlatformTestCase() {
             annotation class BrikkTrait
             class Rel<out T : Partial>
             object Sql { fun duckdb(sql: String): Rel<Nothing> = error("compiler")
-                fun doris(sql: String): Rel<Nothing> = error("compiler") }
+                fun doris(sql: String): Rel<Nothing> = error("compiler")
+                fun trino(sql: String): Rel<Nothing> = error("compiler") }
         """.trimIndent())
     }
 
@@ -77,7 +78,8 @@ class BrikkContextTest : BasePlatformTestCase() {
         val document = PsiDocumentManager.getInstance(project).getDocument(com.intellij.psi.PsiManager.getInstance(project).findFile(runtime)!!)!!
         WriteCommandAction.runWriteCommandAction(project) {
             document.setText(document.text.replace("fun duckdb", "@BrikkSqlDialect(\"duckdb\") fun duckdb")
-                .replace("fun doris", "@BrikkSqlDialect(\"doris\") fun doris"))
+                .replace("fun doris", "@BrikkSqlDialect(\"doris\") fun doris")
+                .replace("fun trino", "@BrikkSqlDialect(\"trino\") fun trino"))
             PsiDocumentManager.getInstance(project).commitAllDocuments()
         }
     }
@@ -114,14 +116,54 @@ class BrikkContextTest : BasePlatformTestCase() {
         return (result as ShapeResult.Available).shape
     }
 
-    fun testBothDialectsResolveWithoutInjectionOrAnInitialEdit() {
-        for ((entry, dialect) in listOf("duckdb" to BrikkDialect.DUCKDB, "doris" to BrikkDialect.DORIS)) {
+    fun testAllDialectsResolveWithoutInjectionOrAnInitialEdit() {
+        for (dialect in BrikkDialect.entries) {
+            val entry = dialect.sqlName
             val context = context(host("@BrikkSql fun query(tenant: String) = Sql.$entry(\"SELECT tenant WHERE tenant = \$tenant\")"))
             assertEquals(dialect, context.dialect)
             assertEquals(listOf("tenant"), context.binds)
             assertEquals(":tenant", context.entries.last().replacement)
             assertFalse(context.executable)
         }
+    }
+
+    fun testTrinoAliasRecognizesSlotsBindingsConstantsAndTrimmedHost() {
+        val context = context(host("""
+            import dev.brikk.house.sql.runtime.BrikkSql as Query
+            import dev.brikk.house.sql.runtime.Sql.trino as sql
+            interface Event : Partial { val id: Int; val code: String? }
+            const val COLS = "id, code"
+            @Query fun query(src: Rel<Event>, minimum: Int) = sql("FROM ${'$'}src() |> WHERE id > ${'$'}minimum |> SELECT ${'$'}COLS".trimIndent())
+        """.trimIndent()))
+        assertEquals(BrikkDialect.TRINO, context.dialect)
+        assertEquals("TrinoSQL", context.dialect.languageId)
+        assertEquals(listOf("trimIndent"), context.trims)
+        assertEquals(listOf("src"), context.slots)
+        assertEquals(listOf("minimum"), context.binds)
+        assertEquals(EntryRole.SQL_CONSTANT, context.entries.single { it.name == "COLS" }.role)
+        assertEquals(setOf("id", "code"), shape(context, "src").columns.map { it.name }.toSet())
+        assertFalse(context.uncertain)
+        assertFalse(context.executable)
+    }
+
+    fun testTrinoLookalikeIsNotBrikk() {
+        val host = host("""
+            object Sql { fun trino(sql: String): Rel<Nothing> = error("not Brikk") }
+            @BrikkSql fun query() = Sql.trino("SELECT 1 AS id")
+        """.trimIndent())
+        assertEquals(ContextResult.NotBrikk, BrikkKotlinContext.inspect(host))
+    }
+
+    fun testActualCompilerGeneratedTrinoShapeIsVisibleOnColdAnalysis() {
+        enableCompiler()
+        val context = context(host("""
+            @BrikkSql fun source() = Sql.trino("SELECT 1 AS id, 'x' AS code")
+            @BrikkSql fun query(src: Rel<SourceOut>) = Sql.trino("FROM ${'$'}src() |> SELECT id, code")
+        """.trimIndent()))
+        assertEquals(BrikkDialect.TRINO, context.dialect)
+        val shape = shape(context, "src")
+        assertEquals(ShapeKnowledge.FULL, shape.knowledge)
+        assertEquals(setOf("id", "code"), shape.columns.map { it.name }.toSet())
     }
 
     fun testAliasesSlotsScalarsAndSourceLiteralsHaveDistinctRoles() {

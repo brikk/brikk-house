@@ -1,8 +1,8 @@
 # Brikk Kotlin IntelliJ support
 
 Shared Brikk-specific context, interpolation and relation-shape discovery for the
-DuckDB and Doris SQL plugins. This is a Java 21 library, not an IntelliJ plugin or
-a compiler plugin. It registers no extensions and depends on neither dialect plugin.
+DuckDB, Doris and Trino SQL plugins. This is a Java 21 library, not an IntelliJ plugin or
+a compiler plugin. It registers no extensions and has no dialect-plugin dependencies.
 
 This module is licensed under the Apache License 2.0 (see [LICENSE](LICENSE)
 and [NOTICE](NOTICE) here), not the Business Source License that covers the
@@ -11,8 +11,12 @@ rest of the repository, so the Apache-2.0 dialect plugins can embed it.
 Development coordinate:
 
 ```text
-dev.brikk.house:brikk-engine-kotlin-intellij-support:0.1.0-SNAPSHOT
+dev.brikk.house:brikk-engine-kotlin-intellij-support:0.2.0-SNAPSHOT
 ```
+
+This snapshot adds `Sql.trino` recognition and `BrikkDialect.TRINO`, with language
+ID `TrinoSQL`. Released helper `0.1.0` recognizes only DuckDB and Doris. The runtime
+entry point lives in `brikk-engine-kotlin`, not in this helper artifact.
 
 ## Consume from a dialect plugin
 
@@ -20,7 +24,7 @@ dev.brikk.house:brikk-engine-kotlin-intellij-support:0.1.0-SNAPSHOT
 repositories { mavenLocal(); mavenCentral() }
 
 dependencies {
-    implementation("dev.brikk.house:brikk-engine-kotlin-intellij-support:0.1.0-SNAPSHOT") {
+    implementation("dev.brikk.house:brikk-engine-kotlin-intellij-support:0.2.0-SNAPSHOT") {
         // IntelliJ supplies Kotlin. Do not bundle another stdlib in the plugin ZIP.
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
@@ -38,7 +42,7 @@ classes. The copied contract types do not depend on Kotlin IDE APIs.
 
 The helper owns:
 
-- Exact resolved `Sql.duckdb`/`Sql.doris` and `@BrikkSql` recognition, including aliases.
+- Exact resolved `Sql.duckdb`/`Sql.doris`/`Sql.trino` and `@BrikkSql` recognition, including aliases.
 - Stdlib trim recognition, without claiming lookalike extension functions.
 - Interpolation roles, supported source/binary constants, pending resolution and
   authored host ranges. Scalar properties/getters are never evaluated.
@@ -174,12 +178,12 @@ Fixtures compile against 261 and run against `BRIKK_INTELLIJ_SDK`. Configuration
 and system caches live in separate per-build test directories, not the user's profile.
 
 The source-generated named/local shape lane runs only when the actual IDE compiler
-matches the reviewed `2.4.20-ij262-34` artifact. Other runtime checks omit those two
+matches the reviewed `2.4.20-ij262-34` artifact. Other runtime checks omit those
 cases explicitly; they do not relabel the compiler artifact or fake generated rows.
 The fixture provider substitutes the genuine plugin JAR in the IDE's compiler-plugin
 cache, without needing a user's KEFS installation.
 
-Fixture coverage includes cold analysis, both dialects, aliases, source and binary
+Fixture coverage includes cold analysis, all three dialects, aliases, source and binary
 constants, pending/unsupported distinctions, inherited bounds, full/partial shapes,
 Kotlin property navigation and trait edits without SQL edits. Compiler parity for
 binary constants is also checked by the real compiler-plugin test suite.
@@ -191,6 +195,11 @@ Local verification on 2026-10-10:
 | IDEA `261.25134.95` | 15 passed | Not enabled for this compiler |
 | IDEA `262.9437.185` | 17 passed | Named output and refined local shape passed on `2.4.20-ij262-34` |
 | IDEA `263.5701.42` | 15 passed | Not enabled for this compiler |
+
+Trino `0.2.0-SNAPSHOT` validation passed 17 fixtures on IDEA `261.25134.95` and
+20 on `262.9437.185`, including a genuine compiler-generated Trino output shape.
+All 184 normal tests, 11 exact IDE-compiler fixtures and the independent Maven
+Local consumer passed. This snapshot was published to Maven Local, not Central.
 
 All fixture classes were compiled against the 261 baseline. Machine-readable
 results and logs are under the verification task's per-build output directory.
