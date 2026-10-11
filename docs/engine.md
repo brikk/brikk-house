@@ -5,7 +5,7 @@ SQL pipelines. Generic parsing, SQL analysis, and lowering live in
 [brikk-sql](https://github.com/brikk/brikk-sql); embedded ClickHouse bindings live in
 [brikk-chdb](https://github.com/brikk/brikk-chdb).
 
-Engine consumes the published `dev.brikk.house:brikk-sql-jvm:0.18.0` release;
+Engine consumes the published `dev.brikk.house:brikk-sql-jvm:0.19.1` release;
 neither external repository is required in a clean Engine checkout. Keep the SQL
 dependency version aligned across runtime, compiler, tooling, schema-inputs and
 IDE-harness modules.

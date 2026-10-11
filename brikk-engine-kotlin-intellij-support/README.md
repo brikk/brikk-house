@@ -126,7 +126,7 @@ database query or build runtime `Rel` objects. It does not make injected SQL
 executable. Keep both plugins' existing execution guards.
 
 Use non-keyword relation parameter names such as `src`, `events` or `customers`.
-With the current `brikk-sql` 0.18.0 parser, a slot named `rows()` can fail in a
+With the `brikk-sql` 0.18.0 parser, a slot named `rows()` can fail in a
 `SELECT ... FROM` clause because `ROWS` is a SQL keyword. Rename the Kotlin
 parameter and its template reference rather than relying on an editor-only
 parser workaround. No shared parser change is required for this helper release.

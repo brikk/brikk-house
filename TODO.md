@@ -102,9 +102,9 @@ See [the repository split](docs/repository-split.md) for ownership boundaries.
 
 The public [DuckDB sample](samples/duckdb-pipelines/README.md) now
 executes four reporting views sharing JSON extraction/field cleaning over 18
-deterministic fake events. All five Engine consumers use Central SQL **0.18.0**;
+deterministic fake events. All five Engine consumers use Central SQL **0.19.1**;
 the first finding, **DDB-001**, is fixed and covered by positive regressions.
-The current gate is **172 tests, nine IDE-compiler artifact fixtures and seven
+The current gate is **184 tests, eleven IDE-compiler artifact fixtures and seven
 schema refresh checks**, all passing; live IDE and Doris gates above remain open.
 Review/continue view by view rather than adding speculative wiring. Evidence:
 [release acceptance](samples/duckdb-pipelines/SQL-018-RELEASE-ACCEPTANCE.md).

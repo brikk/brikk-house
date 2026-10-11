@@ -38,7 +38,7 @@ publication; runtime/compiler artifacts and build plugins remain unpublished.
 
 ## Dependencies
 
-Engine consumes `dev.brikk.house:brikk-sql-jvm:0.18.0` from Maven Central.
+Engine consumes `dev.brikk.house:brikk-sql-jvm:0.19.1` from Maven Central.
 No sibling SQL/chDB checkout, Maven Local installation, credentials, or `.env`
 is needed for public Engine builds. Keep the SQL version aligned in the runtime,
 compiler-plugin, and tooling module configurations when upgrading.
