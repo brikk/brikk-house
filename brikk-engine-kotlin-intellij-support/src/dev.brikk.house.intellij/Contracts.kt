@@ -55,13 +55,33 @@ public data class TemplateEntry(
     /** Replacement text is for inspections only. A null replacement retains the literal host range. */
     public val replacement: String? = null,
     public val problem: String? = null,
-)
+) {
+    /**
+     * Whether [replacement] is a fabricated, non-executable placeholder (pending or unsupported
+     * Kotlin): pass it as support's `HostSqlEntry` placeholder, for its marker and error filtering.
+     */
+    public val placeholder: Boolean get() = role == EntryRole.PENDING || role == EntryRole.UNSUPPORTED
+}
+
+/**
+ * One stdlib trim applied to the host, in call order. [marginPrefix] is set for `trimMargin`,
+ * `|` unless the call passes a literal prefix, and null for `trimIndent`; map it to support's
+ * `HostSqlTrim.Margin(prefix)`.
+ */
+public data class BrikkTrim(public val function: String, public val marginPrefix: String?) {
+    internal companion object {
+        fun of(function: String, prefix: String? = null): BrikkTrim =
+            BrikkTrim(function, if (function == "trimMargin") prefix ?: "|" else null)
+    }
+}
 
 public data class BrikkContext(
     public val dialect: BrikkDialect,
     public val trims: List<String>,
     public val entries: List<TemplateEntry>,
     public val relations: Map<String, ShapeResult>,
+    /** [trims] with their margin prefixes. */
+    public val trimSteps: List<BrikkTrim> = trims.map { BrikkTrim.of(it) },
 ) {
     public val pipeEditingEnabled: Boolean get() = true
     public val executable: Boolean get() = false

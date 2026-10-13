@@ -136,6 +136,14 @@ class BrikkContextTest : BrikkFixtureCase() {
         assertEquals(listOf("n"), context.binds)
     }
 
+    fun testTrimStepsCarryTheMarginPrefix() {
+        val custom = context(host("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\".trimMargin(\"#\"))"))
+        assertEquals(listOf("trimMargin"), custom.trims)
+        assertEquals(listOf(BrikkTrim("trimMargin", "#")), custom.trimSteps)
+        val default = context(host("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\".trimMargin().trimIndent())"))
+        assertEquals(listOf(BrikkTrim("trimMargin", "|"), BrikkTrim("trimIndent", null)), default.trimSteps)
+    }
+
     fun testTrinoLookalikeIsNotBrikk() {
         val host = host("""
             object Sql { fun trino(sql: String): Rel<Nothing> = error("not Brikk") }

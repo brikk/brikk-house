@@ -55,7 +55,7 @@ public object BrikkKotlinContext {
                 val result = BrikkRelationShapes.parameterInSession(this, parameter)
                 if (result == ShapeResult.NotRelation) null else parameter.name?.let { it to result }
             }.toMap() else emptyMap()
-            ContextResult.Available(BrikkContext(dialect, callContext.trimCalls.map { it.calleeExpression!!.text }, entries, shapes))
+            ContextResult.Available(BrikkContext(dialect, callContext.trimCalls.map { it.calleeExpression!!.text }, entries, shapes, callContext.trimSteps))
         }
     }
 
@@ -96,7 +96,16 @@ public object BrikkKotlinContext {
         ((annotation.arguments.firstOrNull { it.name.asString() == name }?.expression as? KaAnnotationValue.ConstantValue)
             ?.value as? KaConstantValue.StringValue)?.value
 
-    internal data class SyntaxContext(val call: KtCallExpression, val function: KtNamedFunction, val trimCalls: List<KtCallExpression>)
+    internal data class SyntaxContext(val call: KtCallExpression, val function: KtNamedFunction, val trimCalls: List<KtCallExpression>) {
+        val trimSteps: List<BrikkTrim> get() = trimCalls.map { BrikkTrim.of(it.calleeExpression!!.text, marginPrefix(it)) }
+    }
+
+    /** The literal prefix argument of a `trimMargin` call, without interpolation; null when there is none. */
+    internal fun marginPrefix(trim: KtCallExpression): String? {
+        val argument = trim.valueArguments.singleOrNull()?.getArgumentExpression() as? KtStringTemplateExpression ?: return null
+        if (argument.hasInterpolation()) return null
+        return buildString { argument.entries.forEach { append((it as? KtEscapeStringTemplateEntry)?.unescapedValue ?: it.text) } }
+    }
 
     internal fun syntaxContext(host: KtStringTemplateExpression): SyntaxContext? {
         var expression: KtExpression = host
@@ -109,7 +118,11 @@ public object BrikkKotlinContext {
             val qualified = expression.parent as? KtDotQualifiedExpression ?: break
             if (qualified.receiverExpression !== expression) return null
             val trim = qualified.selectorExpression as? KtCallExpression ?: return null
-            if (trim.calleeExpression?.text !in setOf("trimIndent", "trimMargin") || trim.valueArguments.isNotEmpty()) return null
+            val name = trim.calleeExpression?.text
+            val arguments = trim.valueArguments
+            // trimMargin may name its prefix with a literal string; anything else is not a supported trim.
+            if (name == "trimIndent" && arguments.isNotEmpty() || name !in setOf("trimIndent", "trimMargin")) return null
+            if (arguments.size > 1 || arguments.singleOrNull()?.let { marginPrefix(trim) == null } == true) return null
             trims += trim
             expression = qualified
         }

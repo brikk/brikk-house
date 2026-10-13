@@ -33,6 +33,8 @@ class BrikkHostsTest : BrikkFixtureCase() {
         val projection = checkNotNull(state.projection) { "A previously recognized host keeps a pending projection" }
         assertEquals(BrikkDialect.TRINO, state.dialect)
         assertEquals(listOf("trimIndent"), projection.trims)
+        assertEquals(listOf(BrikkTrim("trimIndent", null)), projection.trimSteps)
+        assertTrue(projection.entries.filter { it.role == EntryRole.PENDING }.all { it.placeholder })
         assertEquals(recognized.context.entries.map { it.range }, projection.entries.map { it.range })
         // No remembered role is reused: every interpolation is pending, literal text stays.
         val interpolations = projection.entries.filter { it.role != EntryRole.LITERAL }
@@ -174,5 +176,11 @@ class BrikkHostsTest : BrikkFixtureCase() {
             val projection = checkNotNull((BrikkHosts.state(updated) as BrikkHostState.Pending).projection)
             assertEquals(updated.entries.map { HostRange(it.startOffsetInParent, it.startOffsetInParent + it.textLength) }, projection.entries.map { it.range })
         }
+    }
+
+    fun testProjectionKeepsACustomMarginPrefix() {
+        val host = host("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\".trimMargin(\">\"))")
+        assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
+        assertEquals(listOf(BrikkTrim("trimMargin", ">")), pending(host).projection!!.trimSteps)
     }
 }

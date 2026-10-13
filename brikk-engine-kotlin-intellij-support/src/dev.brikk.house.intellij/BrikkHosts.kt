@@ -92,7 +92,7 @@ public object BrikkHosts {
                 val previous = host.getUserData(lastRecognized)?.takeIf { it.fingerprint == fingerprint }?.context
                 val entry = BrikkSyntax.entryName(syntax.call)
                 return when {
-                    previous != null -> BrikkHostState.Pending(result.reason, project(host, previous, syntax.trimCalls.map { it.calleeExpression!!.text }, result.reason), null)
+                    previous != null -> BrikkHostState.Pending(result.reason, project(host, previous, syntax, result.reason), null)
                     entry != null && BrikkSyntax.annotated(syntax.function) ->
                         BrikkHostState.Pending(result.reason, null, BrikkDialect.entries.firstOrNull { it.sqlName == entry })
                     else -> BrikkHostState.NotBrikk
@@ -105,8 +105,9 @@ public object BrikkHosts {
     }
 
     /** The current host's entries, every interpolation pending: no remembered range or role is reused. */
-    private fun project(host: KtStringTemplateExpression, previous: BrikkContext, trims: List<String>, reason: String): BrikkContext =
-        previous.copy(trims = trims, relations = emptyMap(), entries = host.entries.mapIndexed { index, entry ->
+    private fun project(host: KtStringTemplateExpression, previous: BrikkContext, syntax: BrikkKotlinContext.SyntaxContext, reason: String): BrikkContext =
+        previous.copy(trims = syntax.trimCalls.map { it.calleeExpression!!.text }, trimSteps = syntax.trimSteps, relations = emptyMap(),
+            entries = host.entries.mapIndexed { index, entry ->
             val range = HostRange(entry.startOffsetInParent, entry.startOffsetInParent + entry.textLength)
             if (entry.expression == null) TemplateEntry(range, EntryRole.LITERAL)
             else TemplateEntry(range, EntryRole.PENDING, replacement = ":__brikk_pending_$index", problem = reason)

@@ -66,6 +66,19 @@ class ContractsTest {
         assertTrue(context.copy(entries = context.entries + TemplateEntry(HostRange(16, 17), EntryRole.PENDING)).uncertain)
     }
 
+    @Test fun onlyFabricatedReplacementsArePlaceholders() {
+        assertTrue(TemplateEntry(HostRange(0, 2), EntryRole.PENDING, replacement = ":__brikk_pending_0").placeholder)
+        assertTrue(TemplateEntry(HostRange(0, 2), EntryRole.UNSUPPORTED, replacement = ":__brikk_unsupported_0").placeholder)
+        for (role in listOf(EntryRole.BIND, EntryRole.RELATION_SLOT, EntryRole.SQL_CONSTANT, EntryRole.LITERAL)) {
+            assertFalse(role.name, TemplateEntry(HostRange(0, 2), role, replacement = "x").placeholder)
+        }
+    }
+
+    @Test fun trimStepsDefaultFromTrimNames() {
+        val context = BrikkContext(BrikkDialect.DUCKDB, listOf("trimIndent", "trimMargin"), emptyList(), emptyMap())
+        assertEquals(listOf(BrikkTrim("trimIndent", null), BrikkTrim("trimMargin", "|")), context.trimSteps)
+    }
+
     @Test fun scalarFamiliesDoNotInventNativeSqlTypes() {
         assertEquals(SqlFamily.TIMESTAMP, BrikkTypeFamilies.forClassId("java.time.Instant"))
         assertEquals(SqlFamily.UNKNOWN, BrikkTypeFamilies.forClassId("my.Instant"))
