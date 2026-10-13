@@ -65,15 +65,24 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
         }
     }
 
-    /** The Kotlin element a fact's [provenance] names in [file]'s current facts; null when there is none. */
+    /**
+     * The Kotlin element a fact's [provenance] names in [file]'s current facts; null when the
+     * facts are pending or no longer name it, never a stale target. While the PSI is unchanged
+     * (as during find usages) the facts are cached, so this is a map lookup and a smart pointer;
+     * the first call after an edit computes the facts, as the next analysis would.
+     */
     public fun navigationTarget(file: PsiFile, provenance: String): PsiElement? {
         val host = host(file) ?: return null
-        val targets = host.getUserData(TARGETS) ?: run { facts(file); host.getUserData(TARGETS) } ?: return null
-        return (targets[provenance] as? BrikkRelationShapes.PsiNavigation)?.element
+        val current = facts(file) as? BrikkRelationFactsResult.Available ?: return null
+        val targets = host.getUserData(TARGETS)?.takeIf { it.revision == current.revision } ?: return null
+        return (targets.byProvenance[provenance] as? BrikkRelationShapes.PsiNavigation)?.element
     }
 
     private fun host(file: PsiFile): KtStringTemplateExpression? =
         InjectedLanguageManager.getInstance(file.project).getInjectionHost(file) as? KtStringTemplateExpression
+
+    /** The navigation targets of the facts with [revision]. */
+    private class Targets(val revision: Long, val byProvenance: Map<String, NavigationTarget>)
 
     private sealed interface Computed {
         class Facts(val dialect: BrikkDialect, val facts: RelationFacts, val revision: Long) : Computed
@@ -86,7 +95,7 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
         @JvmField public val LABELS: BrikkColumnLabels = BrikkColumnLabels()
 
         private val CACHE: Key<CachedValue<Computed>> = Key.create("dev.brikk.house.intellij.relationFacts")
-        private val TARGETS: Key<Map<String, NavigationTarget>> = Key.create("dev.brikk.house.intellij.relationTargets")
+        private val TARGETS: Key<Targets> = Key.create("dev.brikk.house.intellij.relationTargets")
 
         /** Slot facts of a host function's relation contracts; null when any contract is unavailable (the host is pending). */
         @JvmStatic public fun factsOf(relations: Map<String, ShapeResult>): RelationFacts? = mapped(relations)?.first
@@ -131,8 +140,9 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
                         val (name, result) = state.context.relations.entries.first { it.value is ShapeResult.Unavailable }
                         pending(Computed.Pending("Relation '$name': ${(result as ShapeResult.Unavailable).reason}", state.dialect))
                     } else {
-                        host.putUserData(TARGETS, mapped.second)
-                        CachedValueProvider.Result.create(Computed.Facts(state.dialect, mapped.first, revision(mapped.first)),
+                        val revision = revision(mapped.first)
+                        host.putUserData(TARGETS, Targets(revision, mapped.second))
+                        CachedValueProvider.Result.create(Computed.Facts(state.dialect, mapped.first, revision),
                             PsiModificationTracker.getInstance(host.project), ProjectRootModificationTracker.getInstance(host.project))
                     }
                 }

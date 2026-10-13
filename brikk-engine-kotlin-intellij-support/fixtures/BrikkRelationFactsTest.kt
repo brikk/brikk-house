@@ -83,14 +83,18 @@ class BrikkRelationFactsTest : BrikkFixtureCase() {
         assertNull(provider.navigationTarget(file, "brikk:column:events:missing"))
     }
 
-    fun testNavigationIsCheapAndNeedsNoKotlinAnalysis() {
+    fun testNavigationReusesCachedFactsWhilePsiIsUnchangedAndIsNullWhilePending() {
         val file = fragment("""
             $events
             @BrikkSql fun <T : RawEvent> query(events: Rel<T>) = Sql.duckdb("FROM ${'$'}events()")
         """.trimIndent())
-        val id = available(file).facts.slots.getValue("events").columns.single { it.name == "id" }.provenance!!
-        // Analysis is unavailable in dumb mode, yet navigation (as find usages calls it per candidate) still answers.
-        assertEquals("id", dumb { (provider.navigationTarget(file, id) as KtProperty).name })
+        val first = available(file)
+        val id = first.facts.slots.getValue("events").columns.single { it.name == "id" }.provenance!!
+        // Find usages asks per candidate: with unchanged PSI each ask reuses the same computed facts.
+        repeat(3) { assertEquals("id", (provider.navigationTarget(file, id) as KtProperty).name) }
+        assertSame(first.facts, available(file).facts)
+        // While analysis is unavailable there are no current facts, so no target rather than a stale one.
+        assertNull(dumb { provider.navigationTarget(file, id) })
     }
 
     fun testPendingWhileKotlinAnalysisIsUnavailable() {
@@ -128,6 +132,38 @@ class BrikkRelationFactsTest : BrikkFixtureCase() {
 
     fun testBrikkLabelsArePlainData() {
         assertEquals(BrikkColumnLabels("brikk column", "relation contract", brikkColumnStyle = true), BrikkRelationFacts.LABELS)
+    }
+
+    private fun replace(from: String, to: String) {
+        WriteCommandAction.runWriteCommandAction(project) {
+            val document = myFixture.editor.document
+            val start = document.text.indexOf(from)
+            document.replaceString(start, start + from.length, to)
+            PsiDocumentManager.getInstance(project).commitAllDocuments()
+        }
+    }
+
+    fun testNavigationFollowsTheCurrentContractNeverAStaleOne() {
+        val file = fragment("""
+            interface A : Partial { val id: Int }
+            interface B : Partial { val id: Int }
+            @BrikkSql fun query(src: Rel<A>) = Sql.duckdb("FROM ${'$'}src()")
+        """.trimIndent())
+        val id = available(file).facts.slots.getValue("src").columns.single().provenance!!
+        assertEquals("A", PsiTreeUtil.getParentOfType(provider.navigationTarget(file, id), org.jetbrains.kotlin.psi.KtClass::class.java)?.name)
+        replace("Rel<A>", "Rel<B>")
+        val target = provider.navigationTarget(injectedFile(lastHost()), id)
+        assertEquals("B", PsiTreeUtil.getParentOfType(target, org.jetbrains.kotlin.psi.KtClass::class.java)?.name)
+    }
+
+    fun testNavigationOfARenamedColumnIsGone() {
+        val file = fragment("""
+            interface A : Partial { val id: Int }
+            @BrikkSql fun query(src: Rel<A>) = Sql.duckdb("FROM ${'$'}src()")
+        """.trimIndent())
+        val id = available(file).facts.slots.getValue("src").columns.single().provenance!!
+        replace("val id:", "val other:")
+        assertNull(provider.navigationTarget(injectedFile(lastHost()), id))
     }
 
     private fun lastHost(): KtStringTemplateExpression =
