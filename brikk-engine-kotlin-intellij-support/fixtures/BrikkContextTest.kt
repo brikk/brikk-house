@@ -129,6 +129,13 @@ class BrikkContextTest : BrikkFixtureCase() {
         assertEquals(ContextResult.NotBrikk, BrikkKotlinContext.inspect(host("@BrikkSql fun query() = Sql.raw(\"SELECT 1\")")))
     }
 
+    fun testParenthesizedArgumentAndTrimReceiverAreStillTheBrikkHost() {
+        val context = context(host("@BrikkSql fun query(n: Int) = Sql.duckdb(((\"SELECT \$n\").trimIndent()))"))
+        assertEquals(BrikkDialect.DUCKDB, context.dialect)
+        assertEquals(listOf("trimIndent"), context.trims)
+        assertEquals(listOf("n"), context.binds)
+    }
+
     fun testTrinoLookalikeIsNotBrikk() {
         val host = host("""
             object Sql { fun trino(sql: String): Rel<Nothing> = error("not Brikk") }

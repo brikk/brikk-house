@@ -78,7 +78,11 @@ public object BrikkKotlinContext {
     internal fun syntaxContext(host: KtStringTemplateExpression): SyntaxContext? {
         var expression: KtExpression = host
         val trims = mutableListOf<KtCallExpression>()
+        // Parentheses change nothing Brikk-relevant: `Sql.duckdb(("..."))` is still the Brikk host,
+        // and so inspection-only, even where the compiler rejects it.
+        fun unwrap() { while (expression.parent is KtParenthesizedExpression) expression = expression.parent as KtExpression }
         while (true) {
+            unwrap()
             val qualified = expression.parent as? KtDotQualifiedExpression ?: break
             if (qualified.receiverExpression !== expression) return null
             val trim = qualified.selectorExpression as? KtCallExpression ?: return null
