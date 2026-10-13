@@ -1,10 +1,8 @@
 package dev.brikk.house.intellij
 
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 /** What one host string is to Brikk now. Decided by [BrikkHosts.state]. */
@@ -44,29 +42,41 @@ public sealed interface BrikkHostState {
  */
 public object BrikkHosts {
     private val lastRecognized: Key<BrikkContext> = Key.create("dev.brikk.house.intellij.lastRecognizedContext")
+    private val validatedNegative: Key<String> = Key.create("dev.brikk.house.intellij.validatedNotBrikk")
 
     /**
-     * Decides what [element] is now. A host recognized before but unavailable now is pending with
-     * a projection; an unavailable host whose function is annotated `@BrikkSql` (by name or import
-     * alias) is pending without one; any other unavailable host is not Brikk.
+     * Decides what [element] is now. When its Kotlin analysis is unavailable: a host recognized
+     * before is pending with a projection; one whose syntax can only be a runtime `Sql` entry
+     * (or an import alias of one) in a function annotated with the runtime's `@BrikkSql` is
+     * pending without one; anything else is not Brikk. So is a host Kotlin ruled out before,
+     * while the syntax deciding it is unchanged.
      */
     public fun state(element: PsiElement, includeShapes: Boolean = false): BrikkHostState {
         val host = element as? KtStringTemplateExpression ?: return BrikkHostState.NotBrikk
         return when (val result = BrikkKotlinContext.inspect(host, includeShapes)) {
             is ContextResult.Available -> {
                 host.putUserData(lastRecognized, result.context.copy(relations = emptyMap()))
+                host.putUserData(validatedNegative, null)
                 BrikkHostState.Recognized(result.context)
             }
             ContextResult.NotBrikk -> {
                 forget(host)
+                // Remember a negative Kotlin validated, not one syntax alone decided while indexing.
+                if (!DumbService.isDumb(host.project)) {
+                    host.putUserData(validatedNegative, BrikkKotlinContext.syntaxContext(host)?.let(BrikkSyntax::fingerprint))
+                }
                 BrikkHostState.NotBrikk
             }
             is ContextResult.Unavailable -> {
                 val syntax = BrikkKotlinContext.syntaxContext(host) ?: return BrikkHostState.NotBrikk
+                val fingerprint = BrikkSyntax.fingerprint(syntax)
+                if (host.getUserData(validatedNegative) == fingerprint) return BrikkHostState.NotBrikk
                 val previous = host.getUserData(lastRecognized)
+                val entry = BrikkSyntax.entryName(syntax.call)
                 when {
                     previous != null -> BrikkHostState.Pending(result.reason, project(host, previous, syntax.trimCalls.map { it.calleeExpression!!.text }, result.reason), null)
-                    annotated(syntax.function) -> BrikkHostState.Pending(result.reason, null, hint(syntax.call))
+                    entry != null && BrikkSyntax.annotated(syntax.function) ->
+                        BrikkHostState.Pending(result.reason, null, BrikkDialect.entries.firstOrNull { it.sqlName == entry })
                     else -> BrikkHostState.NotBrikk
                 }
             }
@@ -85,18 +95,4 @@ public object BrikkHosts {
             if (entry.expression == null) TemplateEntry(range, EntryRole.LITERAL)
             else TemplateEntry(range, EntryRole.PENDING, replacement = ":__brikk_pending_$index", problem = reason)
         })
-
-    private fun annotated(function: KtNamedFunction): Boolean {
-        val qualified = "${BrikkKotlinContext.RUNTIME}.BrikkSql"
-        val aliases = function.containingKtFile.importDirectives.filter { it.importedFqName?.asString() == qualified }.mapNotNull { it.aliasName }
-        return function.annotationEntries.any { it.shortName?.asString().let { name -> name == "BrikkSql" || name in aliases } }
-    }
-
-    private fun hint(call: KtCallExpression): BrikkDialect? {
-        val callee = (call.calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return null
-        val entry = "${BrikkKotlinContext.RUNTIME}.Sql."
-        val imported = call.containingKtFile.importDirectives.firstOrNull { it.aliasName == callee }?.importedFqName?.asString()
-        val name = if (imported == null) callee else imported.takeIf { it.startsWith(entry) }?.removePrefix(entry) ?: return null
-        return BrikkDialect.entries.firstOrNull { it.sqlName == name }
-    }
 }

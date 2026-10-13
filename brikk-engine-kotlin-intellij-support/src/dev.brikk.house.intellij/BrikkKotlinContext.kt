@@ -31,12 +31,15 @@ public object BrikkKotlinContext {
         val callContext = syntaxContext(host) ?: return ContextResult.NotBrikk
         if (DumbService.isDumb(host.project)) return ContextResult.Unavailable("Kotlin indexing is in progress")
         return analysis(host) {
-            val target = callContext.call.resolveSymbol() as? KaCallableSymbol
-                ?: return@analysis ContextResult.Unavailable("SQL entry point is not resolved")
-            val dialect = dialect(target) ?: return@analysis ContextResult.NotBrikk
+            // Smart mode: the annotation must resolve to the runtime's, and an unresolved callee is
+            // pending only when its syntax can name the runtime's entry, never for any call.
             if (callContext.function.symbol.annotations.none { it.classId?.asSingleFqName()?.asString() == "$RUNTIME.BrikkSql" }) {
                 return@analysis ContextResult.NotBrikk
             }
+            val target = callContext.call.resolveSymbol() as? KaCallableSymbol
+                ?: return@analysis if (BrikkSyntax.entryName(callContext.call) != null) ContextResult.Unavailable("SQL entry point is not resolved")
+                else ContextResult.NotBrikk
+            val dialect = dialect(target) ?: return@analysis ContextResult.NotBrikk
             for (trimCall in callContext.trimCalls) {
                 val trim = trimCall.resolveSymbol() as? KaCallableSymbol
                     ?: return@analysis ContextResult.Unavailable("Trim call is not resolved")

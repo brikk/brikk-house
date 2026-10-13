@@ -1,5 +1,8 @@
 package dev.brikk.house.intellij.fixtures
 
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.DumbModeTestUtils
 import dev.brikk.house.intellij.*
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -80,5 +83,58 @@ class BrikkHostsTest : BrikkFixtureCase() {
     fun testOtherStringsAreNotBrikk() {
         val host = host("@BrikkSql fun query(n: Int) = listOf(\"SELECT \$n\", \"x\")")
         assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(host))
+    }
+
+    private fun edit(from: String, to: String) {
+        WriteCommandAction.runWriteCommandAction(project) {
+            val document = myFixture.editor.document
+            val start = document.text.indexOf(from)
+            check(start >= 0) { from }
+            document.replaceString(start, start + from.length, to)
+            PsiDocumentManager.getInstance(project).commitAllDocuments()
+        }
+    }
+
+    private fun sqlHost(marker: String = "SELECT") =
+        PsiTreeUtil.findChildrenOfType(myFixture.file, KtStringTemplateExpression::class.java).first { it.text.contains(marker) }
+
+    fun testNativeSqlInsideAnAnnotatedFunctionIsNeverClaimed() {
+        host("""
+            fun native(@org.intellij.lang.annotations.Language("SQL") text: String) = Unit
+            @BrikkSql fun query() {
+                native("SELECT 123")
+                return Sql.duckdb("FROM real_table")
+            }
+        """.trimIndent())
+        val plain = sqlHost("123")
+        assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(plain))
+        assertEquals(BrikkHostState.NotBrikk, dumb { BrikkHosts.state(plain) })
+    }
+
+    fun testLookalikeAnnotationConfersNoOwnershipWhileIndexing() {
+        val host = host("annotation class BrikkSql\n@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
+        assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(host))
+        assertEquals(BrikkHostState.NotBrikk, dumb { BrikkHosts.state(host) })
+    }
+
+    fun testLookalikeEntryObjectConfersNoOwnershipWhileIndexing() {
+        val host = host("object Sql { fun duckdb(sql: String) = sql }\n@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
+        assertEquals(BrikkHostState.NotBrikk, dumb { BrikkHosts.state(host) })
+    }
+
+    fun testUnresolvedNonEntryCalleeIsNotBrikkWhenSmart() {
+        val host = host("@BrikkSql fun query(n: Int) = missing(\"SELECT \$n\")")
+        assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(host))
+        assertEquals(ContextResult.NotBrikk, BrikkKotlinContext.inspect(host))
+    }
+
+    fun testValidatedNegativeHoldsWhileIndexingUntilItsSyntaxChanges() {
+        val host = host("fun String.trimIndent() = this\n@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\".trimIndent())")
+        assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(host))
+        assertEquals(BrikkHostState.NotBrikk, dumb { BrikkHosts.state(host) })
+        dumb {
+            edit(".trimIndent()", ".trimMargin()")
+            assertTrue(BrikkHosts.state(sqlHost()) is BrikkHostState.Pending)
+        }
     }
 }
