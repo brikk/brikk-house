@@ -91,6 +91,14 @@ class ContractsTest {
         assertEquals("String", code.displayType)
     }
 
+    @Test fun aColumnWithoutNavigationIsDeclaredInFactsAndLabels() {
+        val column = ColumnContract("id", "kotlin.Int", ColumnNullability.NON_NULL, SqlFamily.INTEGER, navigation = null)
+        val shape = RelationShape(ShapeKnowledge.PARTIAL, listOf(column), ShapeOrigin.DECLARED)
+        val fact = BrikkRelationFacts.factsOf(mapOf("src" to ShapeResult.Available(shape)))!!.slots.getValue("src").columns.single()
+        assertEquals("brikk column", column.originLabel())
+        assertEquals(dev.brikk.house.sql.scope.ColumnOrigin.DECLARED, fact.origin)
+    }
+
     @Test fun anUnavailableContractMakesTheWholeHostPending() {
         val partial = ShapeResult.Available(RelationShape(ShapeKnowledge.PARTIAL, emptyList(), ShapeOrigin.UNKNOWN))
         assertNotNull(BrikkRelationFacts.factsOf(mapOf("a" to partial)))

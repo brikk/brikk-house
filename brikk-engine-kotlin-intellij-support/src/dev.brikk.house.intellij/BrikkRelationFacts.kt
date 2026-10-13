@@ -112,9 +112,9 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
                     is ShapeResult.Available -> {
                         result.shape.navigation?.let { targets[relation] = it }
                         val columns = result.shape.columns.map { column ->
-                            val declared = column.navigation?.kind == NavigationKind.PROPERTY
+                            val declared = !column.relationLevel
                             val provenance = if (declared) columnId(name, column.name) else relation
-                            if (declared) targets[provenance] = column.navigation!!
+                            if (declared) column.navigation?.let { targets[provenance] = it }
                             ColumnFact(column.name, column.exactSqlType, column.kotlinTypeName, when (column.nullability) {
                                 ColumnNullability.NON_NULL -> Nullability.NON_NULL
                                 ColumnNullability.NULLABLE -> Nullability.NULLABLE

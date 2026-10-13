@@ -115,7 +115,10 @@ public data class ColumnContract(
     }
 
     /** `relation contract` when only the relation is navigable (a generated column), otherwise `brikk column`. */
-    public fun originLabel(): String = if (navigation?.kind == NavigationKind.RELATION_FALLBACK) RELATION_CONTRACT_LABEL else COLUMN_LABEL
+    public fun originLabel(): String = if (relationLevel) RELATION_CONTRACT_LABEL else COLUMN_LABEL
+
+    /** Known only through its relation (a generated column): the one rule for labels and fact origins. */
+    internal val relationLevel: Boolean get() = navigation?.kind == NavigationKind.RELATION_FALLBACK
 
     public companion object {
         public const val COLUMN_LABEL: String = "brikk column"
