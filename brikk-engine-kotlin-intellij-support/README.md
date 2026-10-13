@@ -117,9 +117,17 @@ when (val state = BrikkHosts.state(host)) {
 }
 ```
 
-Only a host whose function carries `@BrikkSql` (by name or import alias) becomes pending
-without a projection; any other unresolved string is `NotBrikk`, so native injections
-of unrelated strings survive indexing. `state.dialect` is the recognized or remembered
+A never-recognized host becomes pending only on syntactic evidence: its callee can only
+be a runtime `Sql` entry (`Sql.x` with the runtime's `Sql` imported or star-imported and
+no lookalike in the file, fully qualified, or an import alias of `Sql.x`), and its
+function carries an annotation that can only be the runtime's `@BrikkSql`. Any other
+unresolved string, including native SQL elsewhere in a `@BrikkSql` function, is
+`NotBrikk`, so unrelated native injections survive indexing. In smart mode the annotation
+must resolve, and an unresolved callee without that evidence is `NotBrikk`. A `NotBrikk`
+that Kotlin decided holds while indexing, and a remembered projection is kept, only while
+the deciding syntax (annotations, callee and receiver, trims, imports, top-level names)
+is unchanged: removing `@BrikkSql` or switching `Sql.duckdb` to `Sql.trino` re-decides.
+SQL text edits keep the projection. `state.dialect` is the recognized or remembered
 dialect, and for a never-recognized pending host a hint from its callee (`Sql.trino`,
 an import alias of it), null when the callee names no registered dialect. Prefer the
 native injection's language when the hint is null. `BrikkHosts.forget(host)` drops the
@@ -156,8 +164,11 @@ class KotlinBrikkRelationFacts : ExternalRelationFacts {
   SQL type); `displayType` is the Kotlin simple type name; nullability is copied.
 - A column with a Kotlin property is `DECLARED`, its provenance navigating to the
   property; a column known only through its relation (generated) is `RELATION_CONTRACT`,
-  navigating like the relation to the `Rel` parameter. `navigationTarget` is a map lookup
-  plus a smart pointer, with no Kotlin analysis, so find usages may ask per candidate.
+  navigating like the relation to the `Rel` parameter. `navigationTarget` reads the
+  current facts (cached while PSI is unchanged, so find usages asking per candidate costs
+  a lookup and a smart pointer) and only their targets: a retyped `Rel` navigates to the
+  new contract, a renamed column's old provenance and pending facts have no target. The
+  first call after an edit computes the facts, as the next analysis would.
 - Facts are `Pending` while the host is pending (`BrikkHosts.state`) or any contract is
   unavailable; pending results are never cached. Available facts are cached per host
   until PSI or roots change. The revision is a hash of the facts, so it survives
@@ -171,7 +182,9 @@ class KotlinBrikkRelationFacts : ExternalRelationFacts {
 
 ### Inspection-only SQL
 
-Execution guards share one rule, `BrikkInspectionView.isInspectionOnly(file, offset)`:
+Execution guards share one rule, `BrikkInspectionView.isInspectionOnly(file, offset)` (a literal nested in a template,
+`${"1"}`, is judged by the outermost template; parentheses around the argument count as
+the Brikk host):
 `file` is an injected fragment (judged by its host) or a Kotlin file (judged by the
 string at `offset`, the selection start or else the caret). It is true for a recognized
 Brikk host of any dialect, including ones this plugin does not own (`Sql.postgres`,
@@ -294,13 +307,23 @@ constants, pending/unsupported distinctions, inherited bounds, full/partial shap
 Kotlin property navigation and trait edits without SQL edits. Compiler parity for
 binary constants is also checked by the real compiler-plugin test suite.
 
-Local verification on 2026-10-10:
+Local verification on 2026-10-13 (helper `0.3.0-SNAPSHOT` against brikk-sql core
+`0.20.0-SNAPSHOT` from Maven Local):
 
 | Runtime build | Fixtures | Compiler-generated shape cases |
 | --- | --- | --- |
-| IDEA `261.25134.95` | 15 passed | Not enabled for this compiler |
-| IDEA `262.9437.185` | 17 passed | Named output and refined local shape passed on `2.4.20-ij262-34` |
-| IDEA `263.5701.42` | 15 passed | Not enabled for this compiler |
+| IDEA `261.25134.95` | 62 passed | Not enabled for this compiler |
+| IDEA `262.9437.185` | 65 passed | Named output, refined local shape and Trino output passed on `2.4.20-ij262-34` |
+
+The fixtures cover every registered dialect including ClickHouse, an unregistered
+runtime dialect, the pending policy (projection, evidence, validated negatives,
+ownership edits), the inspection-view rule (nested literals, parentheses, non-Kotlin
+hosts) and the relation facts (mapping, revision, current-only navigation). Earlier,
+on 2026-10-10, helper `0.2.0` passed 15/17/15 fixtures on IDEA 261/262/263.
+
+The repository's Test workflow cannot resolve the Maven Local brikk-sql snapshot, so
+it fails on this branch until brikk-sql core `0.20.0` is released and the helper
+moves to it.
 
 Trino `0.2.0-SNAPSHOT` validation passed 17 fixtures on IDEA `261.25134.95` and
 20 on `262.9437.185`, including a genuine compiler-generated Trino output shape.
