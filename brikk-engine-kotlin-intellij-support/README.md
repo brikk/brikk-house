@@ -185,6 +185,36 @@ class KotlinBrikkRelationFacts : ExternalRelationFacts {
 - The constructor's dialect restricts facts to that dialect's hosts; null serves any.
   `BrikkRelationFacts.factsOf(relations)` maps a context's relations without a file.
 
+### Pending causes and actions
+
+Every pending result carries a typed `BrikkPendingCause` beside its text (on
+`ContextResult.Unavailable`, `ShapeResult.Unavailable`, `BrikkHostState.Pending` and
+`BrikkRelationFactsResult.Pending`): `INDEXING`, `ANALYSIS_PROHIBITED` (a write action
+such as a rename), `UNRESOLVED`, `RUNTIME_ENTRY_MISSING`, `GENERATED_SHAPES` or
+`COMPILER_PLUGIN_MISSING`. Tooltips switch on it instead of parsing messages.
+
+`BrikkHosts.actionNeeded(file)` (and `actionsNeeded(file)`, in priority order) returns
+what the user must fix, as plain `BrikkAction` data for a banner: `kind`, `message`,
+`fixText`, `docsUrl`, `buildFileUrl` (the nearest `module.yaml`, Gradle or Maven build
+file) and, for a dialect, `dialect`. Only reliably detected, user-fixable conditions:
+
+- `RUNTIME_OUTDATED`: Kotlin proves the receiver is the runtime's `Sql` but the called
+  entry point does not exist.
+- `COMPILER_PLUGIN_MISSING`: a relation's row type does not resolve and the module
+  registers no Brikk FIR extension. Detected while reading shapes (relation facts or
+  `inspect(includeShapes = true)`), not by recognition alone.
+- `DIALECT_PLUGIN_MISSING`: no installed plugin provides the language of a recognized
+  host's dialect. A plugin may show it only for dialects it cares about.
+
+Indexing and other pending states are never actions. The answer reads what analysis
+already recorded on the file's hosts: no analysis, cached until PSI or a record changes,
+safe in dumb mode.
+
+No helper entry point runs Kotlin analysis while it is prohibited. During a write action
+`BrikkRelationFacts` serves still-valid cached facts, else the last facts computed for
+the host, else `Pending(ANALYSIS_PROHIBITED)`; nothing served that way is cached as
+fresh, and navigation targets (smart pointers) follow a rename.
+
 ### Inspection-only SQL
 
 Execution guards share one rule, `BrikkInspectionView.isInspectionOnly(file, offset)`,
@@ -328,8 +358,8 @@ Local verification on 2026-10-13 (helper `0.3.0-SNAPSHOT` against brikk-sql core
 
 | Runtime build | Fixtures | Compiler-generated shape cases |
 | --- | --- | --- |
-| IDEA `261.25134.95` | 86 passed | Not enabled for this compiler |
-| IDEA `262.9437.185` | 89 passed | Named output, refined local shape and Trino output passed on `2.4.20-ij262-34` |
+| IDEA `261.25134.95` | 96 passed | Not enabled for this compiler |
+| IDEA `262.9437.185` | 100 passed | Named output, refined local shape, Trino output and active-plugin detection passed on `2.4.20-ij262-34` |
 
 The fixtures cover every registered dialect including ClickHouse, an unregistered
 runtime dialect, the pending policy (projection, evidence, validated negatives,
