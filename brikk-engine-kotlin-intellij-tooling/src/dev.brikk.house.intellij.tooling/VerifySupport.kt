@@ -50,6 +50,8 @@ fun verifyIntellijSupport(
     val sources = Files.walk(fixturesDir).use { paths -> paths.filter { it.toString().endsWith(".kt") }.sorted().toList() }
     val compiler = compilerClasspath.resolvedFiles
     run(compiler, "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler", listOf("-no-stdlib", "-no-reflect", "-jvm-target", "21",
+        // Fixtures may use the helper's internal test seams.
+        "-Xfriend-paths=${library.artifact}",
         "-classpath", compileCp.joinToString(File.pathSeparator), "-d", classes.toString()) + sources.map(Path::toString), outputDir.resolve("compile.log"))
     Files.createDirectories(classes.resolve("META-INF"))
     Files.copy(fixturesDir.resolve("plugin.xml"), classes.resolve("META-INF/plugin.xml"), java.nio.file.StandardCopyOption.REPLACE_EXISTING)

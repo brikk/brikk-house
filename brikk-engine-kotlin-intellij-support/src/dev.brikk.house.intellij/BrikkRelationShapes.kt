@@ -6,8 +6,6 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.pom.Navigatable
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
-import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -44,8 +42,10 @@ public object BrikkRelationShapes {
         val row = (classType.typeArguments.singleOrNull() as? KaTypeArgumentWithVariance)?.type?.fullyExpandedType
             ?: return ShapeResult.Available(RelationShape(ShapeKnowledge.PARTIAL, emptyList(), ShapeOrigin.UNKNOWN, fallback))
         if (row is KaErrorType) {
-            return if (brikkPluginActive(session, anchor)) ShapeResult.Unavailable("Row type is unresolved")
-            else ShapeResult.Unavailable("Row type is unresolved and the Brikk compiler plugin is not active", BrikkPendingCause.COMPILER_PLUGIN_MISSING)
+            // Only a known-absent plugin is reported; unknown (the IDE cannot say) is a plain unresolved type.
+            return if (BrikkPlatformApi.compilerPluginActive(session, anchor) == false) {
+                ShapeResult.Unavailable("Row type is unresolved and the Brikk compiler plugin is not active", BrikkPendingCause.COMPILER_PLUGIN_MISSING)
+            } else ShapeResult.Unavailable("Row type is unresolved")
         }
         val markerNames = setOf("${BrikkKotlinContext.RUNTIME}.Partial", "${BrikkKotlinContext.RUNTIME}.Shape")
         val rowClass = row as? KaClassType
@@ -94,18 +94,6 @@ public object BrikkRelationShapes {
             else -> ShapeOrigin.UNKNOWN
         }
         ShapeResult.Available(RelationShape(if (full) ShapeKnowledge.FULL else ShapeKnowledge.PARTIAL, properties.values.toList(), origin, fallback))
-    }
-
-    /**
-     * Whether the Brikk FIR extension is registered for the analyzed module: its generated row types
-     * can exist. The registered-extensions query is platform API (opted in): the IDE's own answer to
-     * "which compiler plugins does this module run", with no stable alternative.
-     */
-    @OptIn(org.jetbrains.kotlin.analysis.api.KaPlatformInterface::class)
-    private fun brikkPluginActive(session: KaSession, anchor: PsiElement): Boolean {
-        val provider = KotlinCompilerPluginsProvider.getInstance(anchor.project) ?: return false
-        return provider.getRegisteredExtensions(session.useSiteModule, FirExtensionRegistrarAdapter.Companion)
-            .any { it.javaClass.name == "dev.brikk.house.sql.compiler.fir.BrikkSqlFirExtensionRegistrar" }
     }
 
     private fun navigation(element: PsiElement, kind: NavigationKind): NavigationTarget =

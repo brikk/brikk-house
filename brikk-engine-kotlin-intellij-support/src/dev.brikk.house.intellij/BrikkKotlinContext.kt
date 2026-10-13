@@ -194,10 +194,7 @@ public object BrikkKotlinContext {
     }
 
     /** Whether Kotlin analysis may run now: not in a write action (a rename) or an explicitly analysis-free region. */
-    @OptIn(KaAllowAnalysisOnEdt::class, org.jetbrains.kotlin.analysis.api.KaPlatformInterface::class)
-    internal fun analysisAllowed(element: PsiElement): Boolean = allowAnalysisOnEdt {
-        org.jetbrains.kotlin.analysis.api.platform.permissions.KaAnalysisPermissionChecker.getInstance(element.project).isAnalysisAllowed()
-    }
+    internal fun analysisAllowed(element: PsiElement): Boolean = BrikkPlatformApi.analysisAllowed(element)
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     internal fun <T> analysis(element: KtElement, action: KaSession.() -> T): T =

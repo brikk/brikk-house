@@ -200,8 +200,8 @@ file) and, for a dialect, `dialect`. Only reliably detected, user-fixable condit
 
 - `RUNTIME_OUTDATED`: Kotlin proves the receiver is the runtime's `Sql` but the called
   entry point does not exist.
-- `COMPILER_PLUGIN_MISSING`: a relation's row type does not resolve and the module
-  registers no Brikk FIR extension. Detected while reading shapes (relation facts or
+- `COMPILER_PLUGIN_MISSING`: a relation's row type does not resolve and the IDE says the
+  module registers no Brikk FIR extension. When the IDE cannot say, it is never reported. Detected while reading shapes (relation facts or
   `inspect(includeShapes = true)`), not by recognition alone.
 - `DIALECT_PLUGIN_MISSING`: no installed plugin provides the language of a recognized
   host's dialect. A plugin may show it only for dialects it cares about.
@@ -290,6 +290,20 @@ With the `brikk-sql` 0.18.0 parser, a slot named `rows()` can fail in a
 parameter and its template reference rather than relying on an editor-only
 parser workaround. No shared parser change is required for this helper release.
 
+## Non-stable API use
+
+The helper uses one non-stable API family: the Analysis API platform interface
+(`@KaPlatformInterface`, opted in), all of it in `BrikkPlatformApi`:
+
+- `KotlinCompilerPluginsProvider.getRegisteredExtensions` with
+  `FirExtensionRegistrarAdapter`, to tell whether the Brikk compiler plugin is active.
+- `KaAnalysisPermissionChecker.isAnalysisAllowed`, to avoid analysis in write actions.
+
+Each call is guarded: a missing or changed API, a linkage error or any exception on an
+IDE version makes the answer unknown (cancellation still propagates). Unknown plugin
+state never reports `COMPILER_PLUGIN_MISSING`; unknown permission falls back to "no
+write action in progress". Everything else uses the stable Analysis API and platform.
+
 ## Build and publish locally
 
 From the repository root with Kotlin Toolchain 0.13.0:
@@ -358,8 +372,9 @@ Local verification on 2026-10-13 (helper `0.3.0-SNAPSHOT` against brikk-sql core
 
 | Runtime build | Fixtures | Compiler-generated shape cases |
 | --- | --- | --- |
-| IDEA `261.25134.95` | 96 passed | Not enabled for this compiler |
-| IDEA `262.9437.185` | 100 passed | Named output, refined local shape, Trino output and active-plugin detection passed on `2.4.20-ij262-34` |
+| IDEA `261.25134.95` | 100 passed | Not enabled for this compiler |
+| IDEA `262.9437.185` | 104 passed | Named output, refined local shape, Trino output and active-plugin detection passed on `2.4.20-ij262-34` |
+| IDEA `263.5701.42` | 100 passed | Not enabled for this compiler (`2.5.0-dev-7866`) |
 
 The fixtures cover every registered dialect including ClickHouse, an unregistered
 runtime dialect, the pending policy (projection, evidence, validated negatives,
