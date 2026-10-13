@@ -27,10 +27,18 @@ public object BrikkInspectionView {
         return isInspectionOnly(host)
     }
 
-    /** Whether [host] is a Brikk host whose SQL is inspection-only now. */
-    public fun isInspectionOnly(host: PsiElement): Boolean = when (val state = BrikkHosts.state(host)) {
+    /**
+     * Whether [host] is (or is nested in) a Brikk host whose SQL is inspection-only now. A literal
+     * interpolated into a template (`${"1"}`) is judged by the outermost template holding it.
+     */
+    public fun isInspectionOnly(host: PsiElement): Boolean = when (val state = BrikkHosts.state(outermost(host))) {
         is BrikkHostState.Recognized -> !state.context.executable
         is BrikkHostState.Pending -> true
         BrikkHostState.NotBrikk -> false
+    }
+
+    private fun outermost(element: PsiElement): PsiElement {
+        var outer = element
+        while (true) outer = PsiTreeUtil.getParentOfType(outer, KtStringTemplateExpression::class.java, true) ?: return outer
     }
 }

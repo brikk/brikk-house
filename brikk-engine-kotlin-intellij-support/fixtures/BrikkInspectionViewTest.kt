@@ -52,4 +52,15 @@ class BrikkInspectionViewTest : BrikkFixtureCase() {
         assertTrue(BrikkInspectionView.isInspectionOnly(brikkFragment, 0))
         assertFalse(BrikkInspectionView.isInspectionOnly(plainFragment, 0))
     }
+
+    fun testCaretInNestedLiteralBelongsToTheOuterBrikkTemplate() {
+        assertTrue(atCaret("@BrikkSql fun query() = Sql.duckdb(\"SELECT \${\"<caret>1\"} AS n\")"))
+        val inner = PsiTreeUtil.findChildrenOfType(myFixture.file, KtStringTemplateExpression::class.java).single { it.text == "\"1\"" }
+        assertTrue(BrikkInspectionView.isInspectionOnly(inner))
+    }
+
+    fun testParenthesizedSqlArgumentIsStillInspectionOnly() {
+        assertTrue(atCaret("@BrikkSql fun query(n: Int) = Sql.duckdb((\"SELECT <caret>\$n\"))"))
+        assertTrue(atCaret("@BrikkSql fun query(n: Int) = Sql.trino(((\"SELECT <caret>\$n\").trimIndent()))"))
+    }
 }
