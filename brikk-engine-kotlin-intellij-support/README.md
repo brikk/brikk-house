@@ -117,17 +117,22 @@ when (val state = BrikkHosts.state(host)) {
 }
 ```
 
-A never-recognized host becomes pending only on syntactic evidence: its callee can only
-be a runtime `Sql` entry (`Sql.x` with the runtime's `Sql` imported or star-imported and
-no lookalike in the file, fully qualified, or an import alias of `Sql.x`), and its
-function carries an annotation that can only be the runtime's `@BrikkSql`. Any other
-unresolved string, including native SQL elsewhere in a `@BrikkSql` function, is
-`NotBrikk`, so unrelated native injections survive indexing. In smart mode the annotation
-must resolve, and an unresolved callee without that evidence is `NotBrikk`. A `NotBrikk`
-that Kotlin decided holds while indexing, and a remembered projection is kept, only while
-the deciding syntax (annotations, callee and receiver, trims, imports, top-level names)
-is unchanged: removing `@BrikkSql` or switching `Sql.duckdb` to `Sql.trino` re-decides.
-SQL text edits keep the projection. `state.dialect` is the recognized or remembered
+The policy is split by consequence. Injection claims err toward not claiming: while
+Kotlin cannot resolve, a never-recognized host is pending only on strong evidence. Its
+callee must be the runtime's `Sql.x` by explicit import or alias of `Sql`/`Sql.x`, or
+fully qualified, and its annotation the runtime's `@BrikkSql` the same way, with no
+lexical binding of those names in scope (parameters, locals, members, file
+declarations). Star imports (a same-package or other star-imported `Sql` could win),
+typealiases, competing imports and shadowed names are no claim: `NotBrikk` then means
+no decision, and native injection stays as the platform makes it. In smart mode the
+annotation must resolve, and an unresolved callee is pending only when its syntax is
+strong or Kotlin proves its receiver is the runtime's `Sql` (also through a typealias).
+A remembered projection, or a `NotBrikk` Kotlin decided, is reused while indexing only
+under the same deciding syntax: annotations, callee and receiver, trims, imports,
+top-level names, typealiases with their targets, and lexical bindings named like the
+receiver, callee, annotations, `Sql` or `BrikkSql`. Removing `@BrikkSql`, switching
+`Sql.duckdb` to `Sql.trino`, adding a parameter named `Sql` or retargeting a typealias
+re-decides. SQL text edits keep the projection. `state.dialect` is the recognized or remembered
 dialect, and for a never-recognized pending host a hint from its callee (`Sql.trino`,
 an import alias of it), null when the callee names no registered dialect. Prefer the
 native injection's language when the hint is null. `BrikkHosts.forget(host)` drops the
@@ -182,13 +187,18 @@ class KotlinBrikkRelationFacts : ExternalRelationFacts {
 
 ### Inspection-only SQL
 
-Execution guards share one rule, `BrikkInspectionView.isInspectionOnly(file, offset)` (a literal nested in a template,
-`${"1"}`, is judged by the outermost template; parentheses around the argument count as
-the Brikk host):
+Execution guards share one rule, `BrikkInspectionView.isInspectionOnly(file, offset)`,
+which errs toward Brikk: a false positive only blocks Execute until indexing ends.
 `file` is an injected fragment (judged by its host) or a Kotlin file (judged by the
-string at `offset`, the selection start or else the caret). It is true for a recognized
-Brikk host of any dialect, including ones this plugin does not own (`Sql.postgres`,
-another plugin's dialect), and for a pending host; false for anything else.
+string at `offset`, the selection start or else the caret). The string and every
+string template enclosing it are checked; any one blocks. A template blocks when it is a
+recognized Brikk host of any dialect (including `Sql.postgres` and other plugins'
+dialects) or pending, and, while Kotlin cannot resolve, on weak evidence: a callee named
+`Sql.x` or reached through an import, alias or in-file typealias chain of an `Sql`,
+`Sql.x` or any explicitly imported name, in a function whose annotation is named
+`BrikkSql` or reached the same way. Star imports count and shadowing is ignored; a
+`NotBrikk` that syntax decided while Kotlin could not resolve is never trusted.
+Parentheses around the argument count as the Brikk host.
 `isInspectionOnly(host)` judges a host directly. It replaces each plugin's own-profile
 check and the Transpiler's `KotlinInspectionHostGuard` body.
 
@@ -209,7 +219,13 @@ bounds, not a union of its callers' shapes.
 the opening quote delimiter. `$src` referring to a `Rel` parameter is a relation
 slot and must be followed by `()`. Ordinary values become `:name`; literal SQL
 constants become text. Pending and unsupported entries have distinct roles and
-nonexecutable inspection placeholders. Preserve the authored Kotlin references.
+nonexecutable inspection placeholders; `TemplateEntry.placeholder` marks them, for
+support's `HostSqlEntry(placeholder = true)`. Preserve the authored Kotlin references.
+
+`BrikkContext.trimSteps` lists the trims in call order with their margin prefix
+(`BrikkTrim("trimMargin", "#")` for `trimMargin("#")`, `|` by default, null for
+`trimIndent`), for support's `HostSqlTrim.Margin(prefix)`. Only a literal prefix is a
+supported trim. `trims` keeps the bare names.
 
 Read navigation locations inside a normal IDE read action. They are current Kotlin
 source locations backed by smart pointers. A generated column can instead have
@@ -312,13 +328,14 @@ Local verification on 2026-10-13 (helper `0.3.0-SNAPSHOT` against brikk-sql core
 
 | Runtime build | Fixtures | Compiler-generated shape cases |
 | --- | --- | --- |
-| IDEA `261.25134.95` | 62 passed | Not enabled for this compiler |
-| IDEA `262.9437.185` | 65 passed | Named output, refined local shape and Trino output passed on `2.4.20-ij262-34` |
+| IDEA `261.25134.95` | 86 passed | Not enabled for this compiler |
+| IDEA `262.9437.185` | 89 passed | Named output, refined local shape and Trino output passed on `2.4.20-ij262-34` |
 
 The fixtures cover every registered dialect including ClickHouse, an unregistered
 runtime dialect, the pending policy (projection, evidence, validated negatives,
 ownership edits), the inspection-view rule (nested literals, parentheses, non-Kotlin
-hosts) and the relation facts (mapping, revision, current-only navigation). Earlier,
+hosts, the strong/weak evidence split and typealias chains) and the relation facts
+(mapping, revision, current-only navigation). Earlier,
 on 2026-10-10, helper `0.2.0` passed 15/17/15 fixtures on IDEA 261/262/263.
 
 The repository's Test workflow cannot resolve the Maven Local brikk-sql snapshot, so
