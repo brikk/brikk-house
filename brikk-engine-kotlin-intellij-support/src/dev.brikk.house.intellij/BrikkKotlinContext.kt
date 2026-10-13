@@ -36,6 +36,7 @@ public object BrikkKotlinContext {
     private fun inspectHost(host: KtStringTemplateExpression, includeShapes: Boolean): ContextResult {
         val callContext = syntaxContext(host) ?: return ContextResult.NotBrikk
         if (DumbService.isDumb(host.project)) return ContextResult.Unavailable("Kotlin indexing is in progress", BrikkPendingCause.INDEXING)
+        if (!analysisAllowed(host)) return ContextResult.Unavailable("Kotlin analysis is not allowed here (a write action)", BrikkPendingCause.ANALYSIS_PROHIBITED)
         return analysis(host) {
             // Smart mode: the annotation must resolve to the runtime's, and an unresolved callee is
             // pending only when its syntax can name the runtime's entry, never for any call.
@@ -190,6 +191,12 @@ public object BrikkKotlinContext {
             expression.evaluate()?.takeUnless { it is KaConstantValue.ErrorValue }?.let { it.value.toString() }
         } else null
         else -> null
+    }
+
+    /** Whether Kotlin analysis may run now: not in a write action (a rename) or an explicitly analysis-free region. */
+    @OptIn(KaAllowAnalysisOnEdt::class, org.jetbrains.kotlin.analysis.api.KaPlatformInterface::class)
+    internal fun analysisAllowed(element: PsiElement): Boolean = allowAnalysisOnEdt {
+        org.jetbrains.kotlin.analysis.api.platform.permissions.KaAnalysisPermissionChecker.getInstance(element.project).isAnalysisAllowed()
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)

@@ -59,7 +59,7 @@ internal object BrikkActions {
         when (result) {
             ContextResult.NotBrikk -> { put(host, fromHost, null); put(host, fromShapes, null) }
             is ContextResult.Unavailable -> when (result.cause) {
-                BrikkPendingCause.INDEXING -> Unit
+                BrikkPendingCause.INDEXING, BrikkPendingCause.ANALYSIS_PROHIBITED -> Unit
                 BrikkPendingCause.RUNTIME_ENTRY_MISSING -> {
                     val entry = BrikkKotlinContext.syntaxContext(host)?.call?.calleeExpression?.text
                     put(host, fromHost, BrikkAction(BrikkActionKind.RUNTIME_OUTDATED,

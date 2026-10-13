@@ -18,11 +18,13 @@ import org.jetbrains.kotlin.psi.KtParameter
 public object BrikkRelationShapes {
     public fun ofParameter(parameter: KtParameter): ShapeResult {
         if (DumbService.isDumb(parameter.project)) return ShapeResult.Unavailable("Kotlin indexing is in progress", BrikkPendingCause.INDEXING)
+        if (!BrikkKotlinContext.analysisAllowed(parameter)) return ShapeResult.Unavailable("Kotlin analysis is not allowed here (a write action)", BrikkPendingCause.ANALYSIS_PROHIBITED)
         return BrikkKotlinContext.analysis(parameter) { parameterInSession(this, parameter) }
     }
 
     public fun ofExpression(expression: KtExpression): ShapeResult {
         if (DumbService.isDumb(expression.project)) return ShapeResult.Unavailable("Kotlin indexing is in progress", BrikkPendingCause.INDEXING)
+        if (!BrikkKotlinContext.analysisAllowed(expression)) return ShapeResult.Unavailable("Kotlin analysis is not allowed here (a write action)", BrikkPendingCause.ANALYSIS_PROHIBITED)
         return BrikkKotlinContext.analysis(expression) {
             val type = expression.expressionType ?: return@analysis ShapeResult.Unavailable("Expression type is not resolved")
             read(this, type, expression)

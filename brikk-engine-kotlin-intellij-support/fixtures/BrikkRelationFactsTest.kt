@@ -184,6 +184,39 @@ class BrikkRelationFactsTest : BrikkFixtureCase() {
         assertNull(provider.navigationTarget(injectedFile(lastHost()), id))
     }
 
+    fun testRenameWriteActionNeverRunsKotlinAnalysisAndKeepsTargets() {
+        // The contract follows the host so the rename does not move the host string.
+        val file = fragment("""
+            @BrikkSql fun query(src: Rel<Row>) = Sql.plain("SELECT e.code FROM ${'$'}src() AS e WHERE e.code IS NOT NULL")
+            interface Row : Shape { val code: String? }
+        """.trimIndent())
+        val before = available(file)
+        val code = before.facts.slots.getValue("src").columns.single().provenance!!
+        WriteCommandAction.runWriteCommandAction(project) {
+            (provider.navigationTarget(file, code) as KtProperty).setName("renamed")
+            // The rename's first PSI change invalidated the cache; no Kotlin analysis may run here.
+            val during = provider.facts(file)
+            assertTrue(during.toString(), during is BrikkRelationFactsResult.Available)
+            assertEquals(before.facts, (during as BrikkRelationFactsResult.Available).facts)
+            assertEquals("renamed", (provider.navigationTarget(file, code) as KtProperty).name)
+            val state = BrikkHosts.state(lastHost())
+            assertEquals(state.toString(), BrikkPendingCause.ANALYSIS_PROHIBITED, (state as BrikkHostState.Pending).cause)
+        }
+        // Facts served during the write action were not cached as fresh.
+        val after = available(injectedFile(lastHost()))
+        assertEquals("renamed", after.facts.slots.getValue("src").columns.single().name)
+        assertFalse(after.revision == before.revision)
+    }
+
+    fun testWithoutEarlierFactsAWriteActionIsPending() {
+        val file = fragment("@BrikkSql fun query(src: Rel<Row>) = Sql.plain(\"SELECT 1 FROM \$src()\")\ninterface Row : Shape { val id: Int }")
+        WriteCommandAction.runWriteCommandAction(project) {
+            val result = provider.facts(file)
+            assertEquals(result.toString(), BrikkPendingCause.ANALYSIS_PROHIBITED, (result as BrikkRelationFactsResult.Pending).cause)
+        }
+        assertTrue(provider.facts(file) is BrikkRelationFactsResult.Available)
+    }
+
     private fun lastHost(): KtStringTemplateExpression =
         PsiTreeUtil.findChildrenOfType(myFixture.file, KtStringTemplateExpression::class.java).last { it.text.contains("FROM") }
 

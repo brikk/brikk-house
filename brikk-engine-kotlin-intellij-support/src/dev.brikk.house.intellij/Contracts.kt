@@ -44,6 +44,8 @@ public class BrikkDialect private constructor(public val sqlName: String, public
 public enum class BrikkPendingCause {
     /** Kotlin indexing is in progress. */
     INDEXING,
+    /** Kotlin analysis is not allowed here (a write action, such as a rename): retried after it. */
+    ANALYSIS_PROHIBITED,
     /** A Kotlin symbol or type does not resolve (yet). */
     UNRESOLVED,
     /** The call's receiver is the runtime's `Sql`, which has no such entry point: the runtime is older than the code. */

@@ -7,6 +7,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -58,7 +61,7 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
     /** The facts for [file], an injected fragment of a Kotlin host string; null when it is none of this provider's. */
     public fun facts(file: PsiFile): BrikkRelationFactsResult? {
         val host = host(file) ?: return null
-        return when (val computed = CachedValuesManager.getManager(host.project).getCachedValue(host, CACHE, { compute(host) }, false)) {
+        return when (val computed = computed(host)) {
             is Computed.Facts -> if (dialect == null || computed.dialect == dialect) BrikkRelationFactsResult.Available(computed.facts, computed.revision) else null
             is Computed.Pending -> if (dialect == null || computed.dialect == null || computed.dialect == dialect) BrikkRelationFactsResult.Pending(computed.reason, computed.cause) else null
             Computed.None -> null
@@ -73,19 +76,28 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
      */
     public fun navigationTarget(file: PsiFile, provenance: String): PsiElement? {
         val host = host(file) ?: return null
-        val current = facts(file) as? BrikkRelationFactsResult.Available ?: return null
-        val targets = host.getUserData(TARGETS)?.takeIf { it.revision == current.revision } ?: return null
-        return (targets.byProvenance[provenance] as? BrikkRelationShapes.PsiNavigation)?.element
+        val current = computed(host) as? Computed.Facts ?: return null
+        if (dialect != null && current.dialect != dialect) return null
+        return (current.targets[provenance] as? BrikkRelationShapes.PsiNavigation)?.element
+    }
+
+    /**
+     * The current facts; while Kotlin analysis is not allowed (a write action such as a rename),
+     * the cached ones if still valid, else the last facts computed for this host (found through
+     * smart pointers, so a reparsed host still matches), else pending. Facts served that way
+     * are never cached as fresh. Their targets are smart pointers and follow the rename.
+     */
+    private fun computed(host: KtStringTemplateExpression): Computed {
+        if (BrikkKotlinContext.analysisAllowed(host)) return CachedValuesManager.getManager(host.project).getCachedValue(host, CACHE, { compute(host) }, false)
+        host.getUserData(CACHE)?.upToDateOrNull?.get()?.let { return it }
+        return lastKnown(host) ?: Computed.Pending("Kotlin analysis is not allowed during a write action", null, BrikkPendingCause.ANALYSIS_PROHIBITED)
     }
 
     private fun host(file: PsiFile): KtStringTemplateExpression? =
         InjectedLanguageManager.getInstance(file.project).getInjectionHost(file) as? KtStringTemplateExpression
 
-    /** The navigation targets of the facts with [revision]. */
-    private class Targets(val revision: Long, val byProvenance: Map<String, NavigationTarget>)
-
     private sealed interface Computed {
-        class Facts(val dialect: BrikkDialect, val facts: RelationFacts, val revision: Long) : Computed
+        class Facts(val dialect: BrikkDialect, val facts: RelationFacts, val revision: Long, val targets: Map<String, NavigationTarget>) : Computed
         class Pending(val reason: String, val dialect: BrikkDialect?, val cause: BrikkPendingCause) : Computed
         data object None : Computed
     }
@@ -95,7 +107,27 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
         @JvmField public val LABELS: BrikkColumnLabels = BrikkColumnLabels()
 
         private val CACHE: Key<CachedValue<Computed>> = Key.create("dev.brikk.house.intellij.relationFacts")
-        private val TARGETS: Key<Targets> = Key.create("dev.brikk.house.intellij.relationTargets")
+        /** Per file: each host's last computed facts, matched by a smart pointer to the host. */
+        private val LAST: Key<MutableList<Pair<SmartPsiElementPointer<KtStringTemplateExpression>, Computed.Facts>>> =
+            Key.create("dev.brikk.house.intellij.lastRelationFacts")
+
+        private fun lastKnown(host: KtStringTemplateExpression): Computed.Facts? {
+            val entries = host.containingFile.originalFile.getUserData(LAST) ?: return null
+            return synchronized(entries) { entries.firstOrNull { entry -> val element: KtStringTemplateExpression? = entry.first.element; element === host }?.second }
+        }
+
+        private fun remember(host: KtStringTemplateExpression, facts: Computed.Facts) {
+            val file = host.containingFile.originalFile
+            val entries = file.getUserData(LAST) ?: (file as UserDataHolderEx).putUserDataIfAbsent(LAST, mutableListOf())
+            val pointer = SmartPointerManager.getInstance(host.project).createSmartPsiElementPointer(host)
+            synchronized(entries) {
+                entries.removeAll { entry ->
+                    val element: KtStringTemplateExpression? = entry.first.element
+                    element == null || element === host
+                }
+                entries += pointer to facts
+            }
+        }
 
         /** Slot facts of a host function's relation contracts; null when any contract is unavailable (the host is pending). */
         @JvmStatic public fun factsOf(relations: Map<String, ShapeResult>): RelationFacts? = mapped(relations)?.first
@@ -140,15 +172,14 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
                         val (name, result) = state.context.relations.entries.first { it.value is ShapeResult.Unavailable }
                         pending(Computed.Pending("Relation '$name': ${(result as ShapeResult.Unavailable).reason}", state.dialect, result.cause))
                     } else {
-                        val revision = revision(mapped.first)
-                        host.putUserData(TARGETS, Targets(revision, mapped.second))
-                        CachedValueProvider.Result.create(Computed.Facts(state.dialect, mapped.first, revision),
+                        val facts = Computed.Facts(state.dialect, mapped.first, revision(mapped.first), mapped.second)
+                        remember(host, facts)
+                        CachedValueProvider.Result.create(facts,
                             PsiModificationTracker.getInstance(host.project), ProjectRootModificationTracker.getInstance(host.project))
                     }
                 }
                 is BrikkHostState.Pending -> pending(Computed.Pending(state.reason, state.dialect, state.cause))
                 BrikkHostState.NotBrikk -> {
-                    host.putUserData(TARGETS, null)
                     CachedValueProvider.Result.create(Computed.None, PsiModificationTracker.getInstance(host.project),
                         DumbService.getInstance(host.project).modificationTracker)
                 }
