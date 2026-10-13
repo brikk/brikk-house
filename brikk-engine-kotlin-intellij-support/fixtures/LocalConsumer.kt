@@ -9,6 +9,7 @@ object LocalConsumer {
     @JvmStatic fun main(args: Array<String>) {
         check(BrikkDialect.DUCKDB.languageId == "DuckDBSQL")
         check(BrikkDialect.TRINO.sqlName == "trino" && BrikkDialect.TRINO.languageId == "TrinoSQL")
+        check(BrikkDialect.of("clickhouse") == BrikkDialect.CLICKHOUSE && BrikkDialect.CLICKHOUSE.languageId == "ClickHouseSQL")
         check(BrikkTypeFamilies.forClassId("java.time.Instant") == SqlFamily.TIMESTAMP)
         println("Maven Local consumer: contract layer works without IDE SDK dependencies")
     }

@@ -1,8 +1,39 @@
 package dev.brikk.house.intellij
 
 /** Immutable editing facts. No Kotlin analysis session, symbol, runtime value or SQL AST escapes here. */
-public enum class BrikkDialect(public val sqlName: String, public val languageId: String) {
-    DUCKDB("duckdb", "DuckDBSQL"), DORIS("doris", "DorisSQL"), TRINO("trino", "TrinoSQL"),
+/**
+ * A Brikk entry point's dialect, identified by its runtime name (`Sql.<sqlName>`). [entries] are
+ * the dialects with a known plugin language; any other dialect the runtime declares with
+ * `@BrikkSqlDialect` is still Brikk, with the language its SQL parameter declares. Not a closed
+ * set: compare with `==`, and give `when` an `else` branch.
+ */
+public class BrikkDialect private constructor(public val sqlName: String, public val languageId: String) {
+    /** Constant-style name, `DUCKDB` for `duckdb`. */
+    public val name: String get() = sqlName.uppercase(java.util.Locale.ROOT)
+
+    /** Whether a plugin language is known for this dialect, not just the runtime's declaration. */
+    public val registered: Boolean get() = entries.any { it.sqlName == sqlName }
+
+    override fun equals(other: Any?): Boolean = other is BrikkDialect && other.sqlName == sqlName
+    override fun hashCode(): Int = sqlName.hashCode()
+    override fun toString(): String = name
+
+    public companion object {
+        /** The runtime's language for Brikk SQL that no dialect plugin owns. */
+        public const val GENERIC_LANGUAGE_ID: String = "BrikkSQL"
+
+        @JvmField public val DUCKDB: BrikkDialect = BrikkDialect("duckdb", "DuckDBSQL")
+        @JvmField public val DORIS: BrikkDialect = BrikkDialect("doris", "DorisSQL")
+        @JvmField public val TRINO: BrikkDialect = BrikkDialect("trino", "TrinoSQL")
+        @JvmField public val CLICKHOUSE: BrikkDialect = BrikkDialect("clickhouse", "ClickHouseSQL")
+
+        /** The registered dialects. */
+        @JvmStatic public val entries: List<BrikkDialect> = listOf(DUCKDB, DORIS, TRINO, CLICKHOUSE)
+
+        /** The registered dialect named [sqlName]; otherwise one in [languageId], the runtime's declaration, or [GENERIC_LANGUAGE_ID]. */
+        @JvmStatic public fun of(sqlName: String, languageId: String? = null): BrikkDialect =
+            entries.firstOrNull { it.sqlName == sqlName } ?: BrikkDialect(sqlName, languageId ?: GENERIC_LANGUAGE_ID)
+    }
 }
 
 public enum class EntryRole { BIND, RELATION_SLOT, SQL_CONSTANT, LITERAL, PENDING, UNSUPPORTED }
@@ -72,6 +103,24 @@ public data class ColumnContract(
     /** Kotlin types cannot recover decimal parameters, native SQL variants or SQL quote identity. */
     public val exactSqlType: String? get() = null
     public val quotedSqlIdentity: Boolean? get() = null
+
+    /** The Kotlin type's simple name for display (`EventKind`), without nullability; null when it is no class. */
+    public val kotlinTypeName: String? get() = kotlinClassId?.substringAfterLast('.')
+
+    /** Three-state nullability: true, false, or null when unknown. */
+    public fun nullableOrNull(): Boolean? = when (nullability) {
+        ColumnNullability.NON_NULL -> false
+        ColumnNullability.NULLABLE -> true
+        ColumnNullability.UNKNOWN -> null
+    }
+
+    /** `relation contract` when only the relation is navigable (a generated column), otherwise `brikk column`. */
+    public fun originLabel(): String = if (navigation?.kind == NavigationKind.RELATION_FALLBACK) RELATION_CONTRACT_LABEL else COLUMN_LABEL
+
+    public companion object {
+        public const val COLUMN_LABEL: String = "brikk column"
+        public const val RELATION_CONTRACT_LABEL: String = "relation contract"
+    }
 }
 
 public data class RelationShape(

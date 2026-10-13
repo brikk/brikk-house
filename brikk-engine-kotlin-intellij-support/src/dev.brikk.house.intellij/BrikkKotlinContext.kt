@@ -5,6 +5,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -30,9 +33,7 @@ public object BrikkKotlinContext {
         return analysis(host) {
             val target = callContext.call.resolveSymbol() as? KaCallableSymbol
                 ?: return@analysis ContextResult.Unavailable("SQL entry point is not resolved")
-            val dialect = BrikkDialect.entries.firstOrNull {
-                target.callableId?.asSingleFqName()?.asString() == "$RUNTIME.Sql.${it.sqlName}"
-            } ?: return@analysis ContextResult.NotBrikk
+            val dialect = dialect(target) ?: return@analysis ContextResult.NotBrikk
             if (callContext.function.symbol.annotations.none { it.classId?.asSingleFqName()?.asString() == "$RUNTIME.BrikkSql" }) {
                 return@analysis ContextResult.NotBrikk
             }
@@ -51,6 +52,26 @@ public object BrikkKotlinContext {
             ContextResult.Available(BrikkContext(dialect, callContext.trimCalls.map { it.calleeExpression!!.text }, entries, shapes))
         }
     }
+
+    /**
+     * A runtime `Sql` member is an entry point when it declares `@BrikkSqlDialect`, or, for runtimes
+     * before that annotation, when its name is a registered dialect.
+     */
+    private fun dialect(target: KaCallableSymbol): BrikkDialect? {
+        val id = target.callableId ?: return null
+        if (id.packageName.asString() != RUNTIME || id.className?.asString() != "Sql") return null
+        val declared = target.annotations.firstOrNull { it.classId?.asSingleFqName()?.asString() == "$RUNTIME.BrikkSqlDialect" }
+            ?.let { stringArgument(it, "dialect") }
+        val name = declared ?: id.callableName.asString().takeIf { name -> BrikkDialect.entries.any { it.sqlName == name } } ?: return null
+        val language = (target as? KaFunctionSymbol)?.valueParameters?.singleOrNull()?.annotations
+            ?.firstOrNull { it.classId?.asSingleFqName()?.asString() == "org.intellij.lang.annotations.Language" }
+            ?.let { stringArgument(it, "value") }
+        return BrikkDialect.of(name, language)
+    }
+
+    private fun stringArgument(annotation: KaAnnotation, name: String): String? =
+        ((annotation.arguments.firstOrNull { it.name.asString() == name }?.expression as? KaAnnotationValue.ConstantValue)
+            ?.value as? KaConstantValue.StringValue)?.value
 
     private data class SyntaxContext(val call: KtCallExpression, val function: KtNamedFunction, val trimCalls: List<KtCallExpression>)
 

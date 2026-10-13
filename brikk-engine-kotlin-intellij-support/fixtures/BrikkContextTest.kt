@@ -37,9 +37,17 @@ class BrikkContextTest : BasePlatformTestCase() {
             interface Shape : Partial
             annotation class BrikkTrait
             class Rel<out T : Partial>
+            @Target(AnnotationTarget.FUNCTION) annotation class BrikkSqlDialect(val dialect: String)
             object Sql { fun duckdb(sql: String): Rel<Nothing> = error("compiler")
                 fun doris(sql: String): Rel<Nothing> = error("compiler")
-                fun trino(sql: String): Rel<Nothing> = error("compiler") }
+                fun trino(sql: String): Rel<Nothing> = error("compiler")
+                fun clickhouse(sql: String): Rel<Nothing> = error("compiler")
+                @BrikkSqlDialect("postgres") fun postgres(@org.intellij.lang.annotations.Language("BrikkSQL") sql: String): Rel<Nothing> = error("compiler")
+                fun raw(sql: String): Rel<Nothing> = error("not an entry point") }
+        """.trimIndent())
+        myFixture.addFileToProject("Language.kt", """
+            package org.intellij.lang.annotations
+            annotation class Language(val value: String, val prefix: String = "", val suffix: String = "")
         """.trimIndent())
     }
 
@@ -70,10 +78,6 @@ class BrikkContextTest : BasePlatformTestCase() {
                 model.commit()
             }
         }
-        myFixture.addFileToProject("Dialect.kt", """
-            package dev.brikk.house.sql.runtime
-            @Target(AnnotationTarget.FUNCTION) annotation class BrikkSqlDialect(val dialect: String)
-        """.trimIndent())
         val runtime = myFixture.findFileInTempDir("Runtime.kt")
         val document = PsiDocumentManager.getInstance(project).getDocument(com.intellij.psi.PsiManager.getInstance(project).findFile(runtime)!!)!!
         WriteCommandAction.runWriteCommandAction(project) {
@@ -144,6 +148,24 @@ class BrikkContextTest : BasePlatformTestCase() {
         assertEquals(setOf("id", "code"), shape(context, "src").columns.map { it.name }.toSet())
         assertFalse(context.uncertain)
         assertFalse(context.executable)
+    }
+
+    fun testClickHouseIsARegisteredDialect() {
+        val context = context(host("@BrikkSql fun query(n: Int) = Sql.clickhouse(\"SELECT \$n\")"))
+        assertEquals(BrikkDialect.CLICKHOUSE, context.dialect)
+        assertEquals("ClickHouseSQL", context.dialect.languageId)
+    }
+
+    fun testRuntimeDeclaredDialectIsBrikkEvenWithoutAPluginEntry() {
+        val context = context(host("@BrikkSql fun query(n: Int) = Sql.postgres(\"SELECT \$n\")"))
+        assertEquals("postgres", context.dialect.sqlName)
+        assertEquals("BrikkSQL", context.dialect.languageId)
+        assertFalse(context.dialect.registered)
+        assertEquals(listOf("n"), context.binds)
+    }
+
+    fun testUndeclaredRuntimeMemberIsNotAnEntryPoint() {
+        assertEquals(ContextResult.NotBrikk, BrikkKotlinContext.inspect(host("@BrikkSql fun query() = Sql.raw(\"SELECT 1\")")))
     }
 
     fun testTrinoLookalikeIsNotBrikk() {

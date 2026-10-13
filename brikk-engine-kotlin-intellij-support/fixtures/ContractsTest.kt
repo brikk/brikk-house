@@ -9,6 +9,46 @@ class ContractsTest {
         assertEquals("doris", BrikkDialect.DORIS.sqlName)
         assertEquals("trino", BrikkDialect.TRINO.sqlName)
         assertEquals("TrinoSQL", BrikkDialect.TRINO.languageId)
+        assertEquals("clickhouse", BrikkDialect.CLICKHOUSE.sqlName)
+        assertEquals("ClickHouseSQL", BrikkDialect.CLICKHOUSE.languageId)
+    }
+
+    @Test fun dialectsAreRegistryEntriesNotAClosedSet() {
+        assertTrue(BrikkDialect.CLICKHOUSE in BrikkDialect.entries)
+        assertSame(BrikkDialect.DUCKDB, BrikkDialect.of("duckdb"))
+        // A registered dialect keeps its plugin language whatever the runtime's parameter declares.
+        assertEquals("ClickHouseSQL", BrikkDialect.of("clickhouse", "BrikkSQL").languageId)
+        val postgres = BrikkDialect.of("postgres", "BrikkSQL")
+        assertEquals("postgres", postgres.sqlName)
+        assertEquals("BrikkSQL", postgres.languageId)
+        assertFalse(postgres.registered)
+        assertTrue(BrikkDialect.TRINO.registered)
+        assertEquals(postgres, BrikkDialect.of("postgres"))
+        assertEquals(BrikkDialect.GENERIC_LANGUAGE_ID, BrikkDialect.of("postgres").languageId)
+        assertNotEquals(BrikkDialect.DUCKDB, postgres)
+        assertEquals("DUCKDB", BrikkDialect.DUCKDB.name)
+    }
+
+    @Test fun columnContractsAnswerNullabilityAndOriginOnce() {
+        val property = object : NavigationTarget {
+            override val kind = NavigationKind.PROPERTY
+            override fun navigate(requestFocus: Boolean) = Unit
+        }
+        val fallback = object : NavigationTarget {
+            override val kind = NavigationKind.RELATION_FALLBACK
+            override fun navigate(requestFocus: Boolean) = Unit
+        }
+        val declared = ColumnContract("kind", "com.example.EventKind", ColumnNullability.NULLABLE, SqlFamily.UNKNOWN, property)
+        assertEquals(true, declared.nullableOrNull())
+        assertEquals("brikk column", declared.originLabel())
+        assertEquals("EventKind", declared.kotlinTypeName)
+        val generated = declared.copy(nullability = ColumnNullability.NON_NULL, navigation = fallback)
+        assertEquals(false, generated.nullableOrNull())
+        assertEquals("relation contract", generated.originLabel())
+        assertNull(declared.copy(nullability = ColumnNullability.UNKNOWN).nullableOrNull())
+        assertNull(declared.copy(kotlinClassId = null).kotlinTypeName)
+        // No navigation is not evidence of a relation-level contract.
+        assertEquals("brikk column", declared.copy(navigation = null).originLabel())
     }
 
     @Test fun editingFactsNeverClaimExecutionAndDistinguishEntryRoles() {

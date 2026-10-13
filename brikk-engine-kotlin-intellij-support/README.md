@@ -19,6 +19,17 @@ Trino support requires helper `0.2.0` or newer. It recognizes `Sql.trino` as
 only DuckDB and Doris. The runtime entry point lives in `brikk-engine-kotlin`, not
 in this helper artifact.
 
+From `0.3.0`, `BrikkDialect` is a class with registry entries, not an enum:
+`DUCKDB`, `DORIS`, `TRINO` and `CLICKHOUSE` (`ClickHouseSQL`). A runtime `Sql` member
+that declares `@BrikkSqlDialect` is Brikk even without an entry (`Sql.postgres`): its
+dialect has the language its SQL parameter's `@Language` declares, `BrikkSQL` by
+default, and `registered == false`. Compare dialects with `==` and give `when` an
+`else` branch. `BrikkDialect.of(sqlName)` returns the registered entry.
+
+`ColumnContract.nullableOrNull()`, `originLabel()` (`brikk column`, or `relation
+contract` for a relation-level fallback) and `kotlinTypeName` replace the plugins'
+copies of those projections.
+
 ## Consume from a dialect plugin
 
 ```kotlin
@@ -43,7 +54,8 @@ classes. The copied contract types do not depend on Kotlin IDE APIs.
 
 The helper owns:
 
-- Exact resolved `Sql.duckdb`/`Sql.doris`/`Sql.trino` and `@BrikkSql` recognition, including aliases.
+- Exact resolved `Sql.duckdb`/`Sql.doris`/`Sql.trino`/`Sql.clickhouse` (and any other
+  `@BrikkSqlDialect` runtime entry) and `@BrikkSql` recognition, including aliases.
 - Stdlib trim recognition, without claiming lookalike extension functions.
 - Interpolation roles, supported source/binary constants, pending resolution and
   authored host ranges. Scalar properties/getters are never evaluated.
@@ -184,7 +196,8 @@ cases explicitly; they do not relabel the compiler artifact or fake generated ro
 The fixture provider substitutes the genuine plugin JAR in the IDE's compiler-plugin
 cache, without needing a user's KEFS installation.
 
-Fixture coverage includes cold analysis, all three dialects, aliases, source and binary
+Fixture coverage includes cold analysis, every registered dialect, an unregistered
+runtime dialect, aliases, source and binary
 constants, pending/unsupported distinctions, inherited bounds, full/partial shapes,
 Kotlin property navigation and trait edits without SQL edits. Compiler parity for
 binary constants is also checked by the real compiler-plugin test suite.
