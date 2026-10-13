@@ -30,6 +30,10 @@ public object BrikkKotlinContext {
     /** Full host recognition and template classification in one bounded analysis session. */
     public fun inspect(element: PsiElement, includeShapes: Boolean = true): ContextResult {
         val host = element as? KtStringTemplateExpression ?: return ContextResult.NotBrikk
+        return inspectHost(host, includeShapes).also { BrikkActions.record(host, it, includeShapes) }
+    }
+
+    private fun inspectHost(host: KtStringTemplateExpression, includeShapes: Boolean): ContextResult {
         val callContext = syntaxContext(host) ?: return ContextResult.NotBrikk
         if (DumbService.isDumb(host.project)) return ContextResult.Unavailable("Kotlin indexing is in progress", BrikkPendingCause.INDEXING)
         return analysis(host) {

@@ -3,6 +3,7 @@ package dev.brikk.house.intellij
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 /** What one host string is to Brikk now. Decided by [BrikkHosts.state]. */
@@ -100,6 +101,18 @@ public object BrikkHosts {
                     else -> BrikkHostState.NotBrikk
                 }
     }
+
+    /**
+     * The most important condition in [file] (a Kotlin file, or an injected fragment for its host)
+     * that the user must fix, for a banner with a fix link; null when there is none. Pending and
+     * indexing are never actions. Answers from what Kotlin analysis already found for its hosts
+     * (recognition finds an outdated runtime or an uninstalled dialect plugin; relation facts or
+     * shape-including inspection find a missing compiler plugin): no analysis, cached, dumb-safe.
+     */
+    public fun actionNeeded(file: PsiFile): BrikkAction? = BrikkActions.of(file).firstOrNull()
+
+    /** All of [file]'s actions in priority order, one per kind and dialect. */
+    public fun actionsNeeded(file: PsiFile): List<BrikkAction> = BrikkActions.of(file)
 
     /** Drops [element]'s remembered context, for a host this plugin withdraws. */
     public fun forget(element: PsiElement) {
