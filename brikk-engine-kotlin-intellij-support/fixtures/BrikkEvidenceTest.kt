@@ -102,6 +102,48 @@ class BrikkEvidenceTest : BrikkFixtureCase() {
         assertTrue(dumb { BrikkInspectionView.isInspectionOnly(host) })
     }
 
+    fun testRuntimeAnnotationTypealiasIsProtectedOnColdIndexing() {
+        val host = host("typealias Query = dev.brikk.house.sql.runtime.BrikkSql\n@Query fun query() = Sql.duckdb(\"SELECT 1\")")
+        // Cold first: nothing is remembered yet.
+        assertEquals("A typealias is never a claim while indexing", BrikkHostState.NotBrikk, dumb { BrikkHosts.state(host) })
+        assertTrue(dumb { BrikkInspectionView.isInspectionOnly(host) })
+        assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
+    }
+
+    fun testRuntimeObjectTypealiasIsProtectedOnColdIndexing() {
+        val host = host("typealias Queries = dev.brikk.house.sql.runtime.Sql\n@BrikkSql fun query() = Queries.duckdb(\"SELECT 1\")")
+        assertTrue(dumb { BrikkInspectionView.isInspectionOnly(host) })
+        assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
+    }
+
+    fun testTypealiasChainsAreFollowedAndCyclesEnd() {
+        val chained = host("""
+            typealias Base = dev.brikk.house.sql.runtime.BrikkSql
+            typealias Query = Base
+            typealias Entry = Queries
+            typealias Queries = dev.brikk.house.sql.runtime.Sql
+            @Query fun query() = Entry.trino("SELECT 1")
+        """.trimIndent())
+        assertTrue(dumb { BrikkInspectionView.isInspectionOnly(chained) })
+        assertTrue(BrikkHosts.state(chained) is BrikkHostState.Recognized)
+        val cyclic = host("""
+            typealias A = B
+            typealias B = A
+            @A fun query() = println("SELECT 1")
+        """.trimIndent())
+        assertFalse(dumb { BrikkInspectionView.isInspectionOnly(cyclic) })
+        assertEquals(BrikkHostState.NotBrikk, dumb { BrikkHosts.state(cyclic) })
+    }
+
+    fun testOlderRuntimeMemberThroughATypealiasIsPendingWhenSmart() {
+        val host = host("typealias Queries = dev.brikk.house.sql.runtime.Sql\n@BrikkSql fun query() = Queries.snowflake(\"SELECT 1\")")
+        assertTrue(BrikkKotlinContext.inspect(host).toString(), BrikkKotlinContext.inspect(host) is ContextResult.Unavailable)
+        assertTrue(BrikkInspectionView.isInspectionOnly(host))
+        val cyclic = host("typealias A = B\ntypealias B = A\n@BrikkSql fun query() = A.snowflake(\"SELECT 1\")")
+        assertEquals(ContextResult.NotBrikk, BrikkKotlinContext.inspect(cyclic))
+        assertFalse(BrikkInspectionView.isInspectionOnly(cyclic))
+    }
+
     fun testNoEvidenceAtAllIsNeverInspectionOnly() {
         val host = host("annotation class Other\n@Other fun query() = println(\"SELECT 1\")")
         assertFalse(dumb { BrikkInspectionView.isInspectionOnly(host) })

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtTypeAlias
 
 /**
  * Brikk evidence from syntax and imports alone, for when Kotlin cannot resolve (indexing, an
@@ -43,9 +44,9 @@ internal object BrikkSyntax {
 
     /**
      * Weak: [syntax] could be a Brikk host, ignoring shadowing. Its callee is named `Sql.x`, or
-     * reached through an import or alias of an `Sql`, `Sql.x` or any explicitly imported name,
-     * and its function has an annotation named `BrikkSql`, an import or alias of one, or any
-     * explicitly imported annotation. Star imports count.
+     * reached through an import, alias or in-file typealias chain of an `Sql`, `Sql.x` or any
+     * explicitly imported name (which may be a typealias elsewhere), and its function has an
+     * annotation named `BrikkSql` or reached the same way. Star imports count.
      */
     fun weak(syntax: BrikkKotlinContext.SyntaxContext): Boolean = weakEntry(syntax.call) && weakAnnotation(syntax.function)
 
@@ -53,8 +54,8 @@ internal object BrikkSyntax {
         val callee = calleeName(call) ?: return false
         val file = call.containingKtFile
         val receiver = receiver(call)
-        if (receiver != null) {
-            return lastSegment(receiver) == "Sql" || file.importDirectives.any { !it.isAllUnder && effectiveName(it) == receiver }
+        if (receiver != null) return names(file, receiver).any { name ->
+            lastSegment(name) == "Sql" || file.importDirectives.any { !it.isAllUnder && effectiveName(it) == name }
         }
         return file.importDirectives.any { directive ->
             val imported = directive.importedFqName?.asString() ?: return@any false
@@ -65,7 +66,20 @@ internal object BrikkSyntax {
 
     private fun weakAnnotation(function: KtNamedFunction): Boolean = function.annotationEntries.any { entry ->
         val written = entry.typeReference?.text ?: return@any false
-        lastSegment(written) == "BrikkSql" || function.containingKtFile.importDirectives.any { !it.isAllUnder && effectiveName(it) == written }
+        val file = function.containingKtFile
+        names(file, written).any { name -> lastSegment(name) == "BrikkSql" || file.importDirectives.any { !it.isAllUnder && effectiveName(it) == name } }
+    }
+
+    /** [written] and what it names through the file's typealias chain; a cycle ends the chain with nothing. */
+    private fun names(file: KtFile, written: String): List<String> {
+        val aliases = file.declarations.filterIsInstance<KtTypeAlias>().associateBy { it.name }
+        val chain = mutableListOf(written)
+        while (true) {
+            val alias = aliases[chain.last()] ?: return chain
+            val target = alias.getTypeReference()?.text?.substringBefore('<')?.trim() ?: return chain
+            if (target in chain) return listOf(written)
+            chain += target
+        }
     }
 
     /**

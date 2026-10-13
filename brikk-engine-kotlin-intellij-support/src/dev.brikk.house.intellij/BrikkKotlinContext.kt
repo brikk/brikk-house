@@ -7,7 +7,9 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -37,8 +39,9 @@ public object BrikkKotlinContext {
                 return@analysis ContextResult.NotBrikk
             }
             val target = callContext.call.resolveSymbol() as? KaCallableSymbol
-                ?: return@analysis if (BrikkSyntax.entryName(callContext.call) != null) ContextResult.Unavailable("SQL entry point is not resolved")
-                else ContextResult.NotBrikk
+                ?: return@analysis if (BrikkSyntax.entryName(callContext.call) != null || runtimeReceiver(callContext.call)) {
+                    ContextResult.Unavailable("SQL entry point is not resolved")
+                } else ContextResult.NotBrikk
             val dialect = dialect(target) ?: return@analysis ContextResult.NotBrikk
             for (trimCall in callContext.trimCalls) {
                 val trim = trimCall.resolveSymbol() as? KaCallableSymbol
@@ -70,6 +73,23 @@ public object BrikkKotlinContext {
             ?.firstOrNull { it.classId?.asSingleFqName()?.asString() == "org.intellij.lang.annotations.Language" }
             ?.let { stringArgument(it, "value") }
         return BrikkDialect.of(name, language)
+    }
+
+    /**
+     * Whether Kotlin proves [call]'s receiver is the runtime's `Sql` even though the member is
+     * unresolved (an older runtime): directly, or through a typealias chain Kotlin expands (a
+     * cyclic one does not expand).
+     */
+    private fun KaSession.runtimeReceiver(call: KtCallExpression): Boolean {
+        val receiver = ((call.parent as? KtDotQualifiedExpression)?.takeIf { it.selectorExpression === call }?.receiverExpression as? KtNameReferenceExpression)
+            ?: return false
+        val symbol = receiver.references.filterIsInstance<org.jetbrains.kotlin.idea.references.KtReference>().firstOrNull()?.resolveToSymbol()
+        val classId = when (symbol) {
+            is KaTypeAliasSymbol -> (symbol.expandedType.fullyExpandedType as? KaClassType)?.classId
+            is KaClassSymbol -> symbol.classId
+            else -> null
+        }
+        return classId?.asSingleFqName()?.asString() == "$RUNTIME.Sql"
     }
 
     private fun stringArgument(annotation: KaAnnotation, name: String): String? =
