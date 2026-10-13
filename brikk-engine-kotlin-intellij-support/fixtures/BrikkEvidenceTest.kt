@@ -36,6 +36,7 @@ class BrikkEvidenceTest : BrikkFixtureCase() {
         assertTrue("The guard errs toward Brikk while indexing", dumb { BrikkInspectionView.isInspectionOnly(host) })
     }
 
+    // Probe 1
     fun testBrikkNestedWithinAnUnrelatedOuterStringIsProtected() {
         val host = host("""
             fun wrap() = "wrapped ${'$'}{run {
@@ -55,6 +56,7 @@ class BrikkEvidenceTest : BrikkFixtureCase() {
         assertTrue(BrikkInspectionView.isInspectionOnly(inner))
     }
 
+    // Probes 2-8: shadowing is weak evidence for the guard, never strong evidence for a claim.
     fun testForeignImportAliasedToSqlShadowsRuntimeStar() {
         myFixture.addFileToProject("Foreign.kt", "package foreign\nobject Fake { fun duckdb(sql: String) = sql }")
         shadowed(host("import foreign.Fake as Sql\n@BrikkSql fun query() = Sql.duckdb(\"SELECT 1\")"))
@@ -102,6 +104,7 @@ class BrikkEvidenceTest : BrikkFixtureCase() {
         assertTrue(dumb { BrikkInspectionView.isInspectionOnly(host) })
     }
 
+    // Probes 9-10: typealiases to the runtime are weak evidence while indexing, proven by Kotlin when smart.
     fun testRuntimeAnnotationTypealiasIsProtectedOnColdIndexing() {
         val host = host("typealias Query = dev.brikk.house.sql.runtime.BrikkSql\n@Query fun query() = Sql.duckdb(\"SELECT 1\")")
         // Cold first: nothing is remembered yet.
@@ -142,6 +145,64 @@ class BrikkEvidenceTest : BrikkFixtureCase() {
         val cyclic = host("typealias A = B\ntypealias B = A\n@BrikkSql fun query() = A.snowflake(\"SELECT 1\")")
         assertEquals(ContextResult.NotBrikk, BrikkKotlinContext.inspect(cyclic))
         assertFalse(BrikkInspectionView.isInspectionOnly(cyclic))
+    }
+
+    // Probes 11-13: remembered decisions are reused only under the same bindings and typealias targets.
+    fun testNegativeFingerprintMustNoticeRemovedParameterShadow() {
+        // Explicit imports keep the probe's expectation: once the shadow is gone the claim is strong again.
+        val host = explicitHost("class Fake { fun duckdb(sql: String) = sql }\n@BrikkSql fun query(Sql: Fake) = Sql.duckdb(\"SELECT 1\")")
+        assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(host))
+        val state = dumb {
+            edit("Sql: Fake", "other: Fake")
+            assertSame("Probe requires PSI host to survive", host, currentHost())
+            BrikkHosts.state(currentHost())
+        }
+        assertTrue(state.toString(), state is BrikkHostState.Pending)
+        assertTrue(BrikkHosts.state(currentHost()) is BrikkHostState.Recognized)
+    }
+
+    fun testNegativeWithOnlyAStarImportIsNoDecisionButBlocksExecute() {
+        // Policy split: the same edit with a star import gives no claim, while the guard still blocks.
+        val host = host("class Fake { fun duckdb(sql: String) = sql }\n@BrikkSql fun query(Sql: Fake) = Sql.duckdb(\"SELECT 1\")")
+        assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(host))
+        dumb {
+            edit("Sql: Fake", "other: Fake")
+            assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(currentHost()))
+            assertTrue(BrikkInspectionView.isInspectionOnly(currentHost()))
+        }
+    }
+
+    fun testPositiveFingerprintMustNoticeIntroducedParameterShadow() {
+        val host = host("class Fake { fun duckdb(sql: String) = sql }\n@BrikkSql fun query(other: Fake) = Sql.duckdb(\"SELECT 1\")")
+        assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
+        val state = dumb {
+            edit("other: Fake", "Sql: Fake")
+            assertSame("Probe requires PSI host to survive", host, currentHost())
+            BrikkHosts.state(currentHost())
+        }
+        assertEquals(BrikkHostState.NotBrikk, state)
+        assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(currentHost()))
+    }
+
+    fun testNegativeFingerprintMustNoticeSameNamedTypealiasTargetEdit() {
+        // Policy split: the probe expected a claim; a typealias is weak evidence, so no claim but Execute is blocked.
+        val host = host("annotation class Fake\ntypealias Query = Fake\n@Query fun query() = Sql.duckdb(\"SELECT 1\")")
+        assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(host))
+        dumb {
+            edit("typealias Query = Fake", "typealias Query = dev.brikk.house.sql.runtime.BrikkSql")
+            assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(currentHost()))
+            assertTrue(BrikkInspectionView.isInspectionOnly(currentHost()))
+        }
+        assertTrue(BrikkHosts.state(currentHost()) is BrikkHostState.Recognized)
+    }
+
+    fun testRememberedProjectionIsDroppedWhenATypealiasTargetChanges() {
+        val host = explicitHost("typealias Query = BrikkSql\nannotation class Fake\n@Query fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
+        assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
+        dumb {
+            edit("typealias Query = BrikkSql", "typealias Query = Fake")
+            assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(currentHost()))
+        }
     }
 
     fun testNoEvidenceAtAllIsNeverInspectionOnly() {

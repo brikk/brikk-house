@@ -83,17 +83,33 @@ internal object BrikkSyntax {
     }
 
     /**
-     * The syntax that decides ownership while Kotlin cannot resolve. A decision made under one
-     * fingerprint does not carry over to another.
+     * The syntax that decides ownership while Kotlin cannot resolve: annotations, the callee and
+     * its receiver, trims, package and imports, top-level names, every typealias with its target,
+     * and the lexical bindings in scope (parameters, locals, members, declarations) named like the
+     * receiver, callee, annotations or the runtime's `Sql`/`BrikkSql`. A remembered projection or
+     * negative made under one fingerprint does not carry over to another.
      */
     fun fingerprint(syntax: BrikkKotlinContext.SyntaxContext): String = buildString {
         syntax.function.annotationEntries.forEach { append(it.text).append('\n') }
-        append(receiver(syntax.call)).append('.').append(syntax.call.calleeExpression?.text).append('\n')
-        syntax.trimCalls.forEach { append(it.calleeExpression?.text).append('\n') }
+        val receiver = receiver(syntax.call)
+        append(receiver).append('.').append(syntax.call.calleeExpression?.text).append('\n')
+        syntax.trimCalls.forEach { append(it.text).append('\n') }
         val file = syntax.function.containingKtFile
         append(file.packageFqName.asString()).append('\n')
         file.importDirectives.forEach { append(it.text).append('\n') }
         file.declarations.mapNotNull { it.name }.sorted().forEach { append(it).append(',') }
+        append('\n')
+        file.declarations.filterIsInstance<KtTypeAlias>().forEach { append(it.text).append('\n') }
+        val relevant = buildSet {
+            add("Sql"); add("BrikkSql")
+            receiver?.let { add(it.substringBefore('.')) }
+            calleeName(syntax.call)?.let(::add)
+            syntax.function.annotationEntries.mapNotNullTo(this) { it.typeReference?.text?.substringBefore('.') }
+        }
+        for (scope in listOf<PsiElement>(syntax.call, syntax.function)) {
+            bindings(scope).filter { it.name in relevant }.forEach { append(it.javaClass.simpleName).append(':').append(it.name).append(',') }
+            append('\n')
+        }
     }
 
     /** Whether [written] at [context] names [fqName] by one explicit import (or alias), unshadowed, or by its own package. */
