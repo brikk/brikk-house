@@ -43,6 +43,11 @@ dependencies {
 }
 ```
 
+From `0.3.0` the helper depends on `dev.brikk.house:brikk-sql-intellij-support`
+(`0.2.0-SNAPSHOT`, core `0.20.0-SNAPSHOT`, Maven Local only until released) for its
+relation facts API. Plugins already depend on support: keep their direct dependency at
+the same version, so one copy is bundled.
+
 Same-version local rebuilds can require `--refresh-dependencies`. Remove
 `mavenLocal()` or restrict its content when switching to a released Central artifact.
 
@@ -61,6 +66,9 @@ The helper owns:
   authored host ranges. Scalar properties/getters are never evaluated.
 - Effective `Rel<T>` contracts, inherited properties, type bounds, Kotlin types,
   nullability, full/partial knowledge and supported navigation targets.
+- Their mapping to support's relation facts and Brikk labels (`BrikkRelationFacts`),
+  the recognized/pending/not-Brikk decision (`BrikkHosts`) and the inspection-only rule
+  (`BrikkInspectionView`).
 
 The dialect plugins retain their extension registrations, injection shreds and
 trimming mechanics, SQL parsing, bind token PSI, physical datasources, slot aliases,
@@ -116,6 +124,35 @@ dialect, and for a never-recognized pending host a hint from its callee (`Sql.tr
 an import alias of it), null when the callee names no registered dialect. Prefer the
 native injection's language when the hint is null. `BrikkHosts.forget(host)` drops the
 remembered context for a host the plugin withdraws.
+
+### Relation facts for support's relation features
+
+`BrikkRelationFacts` is support's `ExternalRelationFacts` for Brikk host strings. Add one
+instance (per profile, stable) to the plugin's `RelationScopeProfile.providers`:
+
+```kotlin
+override val providers = listOf(BrikkRelationFacts(BrikkDialect.DUCKDB))
+```
+
+- Each `Rel` parameter of the host's function is a slot fact keyed by its name (`src()`).
+  `Shape` contracts are `FULL`, `Partial` ones and bounds `PARTIAL`, unsupported ones
+  `UNKNOWN` with no columns.
+- `sqlType` is set only when the contract knows it (never today: Kotlin types prove no
+  SQL type); `displayType` is the Kotlin simple type name; nullability is copied.
+- A column with a Kotlin property is `DECLARED`, its provenance navigating to the
+  property; a column known only through its relation (generated) is `RELATION_CONTRACT`,
+  navigating like the relation to the `Rel` parameter. `navigationTarget` is a map lookup
+  plus a smart pointer, with no Kotlin analysis, so find usages may ask per candidate.
+- Facts are `Pending` while the host is pending (`BrikkHosts.state`) or any contract is
+  unavailable; pending results are never cached. Available facts are cached per host
+  until PSI or roots change. The revision is a hash of the facts, so it survives
+  reparsed hosts and unrelated edits and changes when a contract does.
+- `labels` is `BrikkRelationFacts.LABELS`: `brikk column (<rel>)` and `relation contract
+  (<rel>)` with the bricks icon (`SqlLookupKind.BRIKK_COLUMN`). Support keeps a column's
+  origin and provenance through lineage-known renames, so renamed Kotlin columns keep the
+  label. Computed and physical columns use support's defaults.
+- The constructor's dialect restricts facts to that dialect's hosts; null serves any.
+  `BrikkRelationFacts.factsOf(relations)` maps a context's relations without a file.
 
 ### Inspection-only SQL
 
@@ -197,7 +234,11 @@ preparation and invalidates it when that API changes. No SDK source stubs are us
 The prepared SDK is a compiler classpath input, not a Maven dependency. Toolchain
 0.13 emits compile-only Maven dependencies as `provided` POM entries; no local SDK
 coordinate should be published here. The distributed JAR contains only helper
-classes and notices. Its POM/Gradle metadata has no IntelliJ or compiler dependency.
+classes and notices. Its POM/Gradle metadata has no IntelliJ or compiler dependency;
+its only library dependency is brikk-sql support. Because the module's `-classpath`
+replaces the toolchain's, the preparation task also merges the module's resolved Maven
+dependencies into `build/intellij-api/helper-dependencies.jar` for compilation, and the
+IDE fixtures run with them on the classpath.
 The local verification command also builds/runs an independent Maven Local consumer.
 
 The binary JAR contains the module's Apache LICENSE and NOTICE under `META-INF`.

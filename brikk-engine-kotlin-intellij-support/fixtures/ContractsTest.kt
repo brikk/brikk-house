@@ -75,6 +75,29 @@ class ContractsTest {
         assertNull(column.quotedSqlIdentity)
     }
 
+    @Test fun generatedColumnsAreRelationContractsNavigatingToTheirRelation() {
+        val fallback = object : NavigationTarget {
+            override val kind = NavigationKind.RELATION_FALLBACK
+            override fun navigate(requestFocus: Boolean) = Unit
+        }
+        val shape = RelationShape(ShapeKnowledge.FULL, listOf(ColumnContract("code", "kotlin.String", ColumnNullability.UNKNOWN, SqlFamily.TEXT, fallback)),
+            ShapeOrigin.GENERATED, fallback)
+        val src = BrikkRelationFacts.factsOf(mapOf("src" to ShapeResult.Available(shape)))!!.slots.getValue("src")
+        assertEquals(dev.brikk.house.sql.scope.Knowledge.FULL, src.knowledge)
+        val code = src.columns.single()
+        assertEquals(dev.brikk.house.sql.scope.ColumnOrigin.RELATION_CONTRACT, code.origin)
+        assertEquals(dev.brikk.house.sql.scope.Nullability.UNKNOWN, code.nullability)
+        assertEquals(src.provenance, code.provenance)
+        assertEquals("String", code.displayType)
+    }
+
+    @Test fun anUnavailableContractMakesTheWholeHostPending() {
+        val partial = ShapeResult.Available(RelationShape(ShapeKnowledge.PARTIAL, emptyList(), ShapeOrigin.UNKNOWN))
+        assertNotNull(BrikkRelationFacts.factsOf(mapOf("a" to partial)))
+        assertNull(BrikkRelationFacts.factsOf(mapOf("a" to partial, "b" to ShapeResult.Unavailable("Generated row members are not available yet"))))
+        assertTrue(BrikkRelationFacts.factsOf(mapOf("c" to ShapeResult.NotRelation))!!.slots.isEmpty())
+    }
+
     @Test fun partialEmptyIsNotUnavailableOrClosedEmpty() {
         val partial = ShapeResult.Available(RelationShape(ShapeKnowledge.PARTIAL, emptyList(), ShapeOrigin.TYPE_BOUND))
         assertFalse(partial == ShapeResult.Unavailable("pending"))

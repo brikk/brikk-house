@@ -92,7 +92,9 @@ public object BrikkRelationShapes {
     private fun navigation(element: PsiElement, kind: NavigationKind): NavigationTarget =
         PsiNavigation(SmartPointerManager.getInstance(element.project).createSmartPsiElementPointer(element), kind)
 
-    private class PsiNavigation(private val pointer: SmartPsiElementPointer<PsiElement>, override val kind: NavigationKind) : NavigationTarget {
+    internal class PsiNavigation(private val pointer: SmartPsiElementPointer<PsiElement>, override val kind: NavigationKind) : NavigationTarget {
+        /** The current Kotlin element; null once it is gone. */
+        val element: PsiElement? get() = pointer.element
         override val location: SourceLocation? get() {
             val element = pointer.element ?: return null
             val url = element.containingFile?.virtualFile?.url ?: return null

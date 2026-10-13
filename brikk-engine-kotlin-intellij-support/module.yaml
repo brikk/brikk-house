@@ -5,6 +5,17 @@ description: Brikk Kotlin host, interpolation, and relation-shape contracts for 
 apply:
   - //publish.module-template.yaml
 
+repositories:
+  # brikk-sql snapshots exist only in Maven Local until support's relation API is released.
+  - url: mavenLocal
+    resolve: true
+    publish: true
+
+dependencies:
+  # exported: BrikkRelationFacts implements support's ExternalRelationFacts over core RelationFacts.
+  # brikk-house -> brikk-sql is the allowed direction; support itself never depends on Kotlin.
+  - dev.brikk.house:brikk-sql-intellij-support:0.2.0-SNAPSHOT: exported
+
 plugins:
   brikk-engine-kotlin-intellij-tooling: enabled
 
@@ -17,6 +28,8 @@ settings:
       # Prepared as a build prerequisite, not a Maven dependency. Toolchain 0.13
       # publishes compile-only Maven dependencies as 'provided' in the POM;
       # an SDK coordinate must not become part of this library's contract.
-      - -classpath=build/intellij-api/intellij-kotlin-api-261.25134.95.jar
+      # The toolchain's classpath is replaced, so the Maven dependencies come merged from the
+      # same preparation task (build/intellij-api/helper-dependencies.jar).
+      - -classpath=build/intellij-api/intellij-kotlin-api-261.25134.95.jar:build/intellij-api/helper-dependencies.jar
     optIns:
       - org.jetbrains.kotlin.analysis.api.KaExperimentalApi

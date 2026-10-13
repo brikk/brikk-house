@@ -10,12 +10,14 @@ tasks:
 
   prepareIntellijApi:
     action: !dev.brikk.house.intellij.tooling.prepareIntellijApi
+      dependencies: ${module.compileClasspath}
       outputDir: ${project.rootDir}/build/intellij-api
       revisionDir: ${project.rootDir}/build/intellij-api-revision
 
   verifyIntellijSupport:
     action: !dev.brikk.house.intellij.tooling.verifyIntellijSupport
       library: ${module.jar}
+      libraryClasspath: ${module.runtimeClasspath}
       compilerClasspath:
         dependencies:
           - org.jetbrains.kotlin:kotlin-compiler-embeddable:2.4.10

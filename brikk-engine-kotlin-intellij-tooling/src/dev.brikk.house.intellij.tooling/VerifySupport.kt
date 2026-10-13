@@ -16,6 +16,7 @@ import org.jetbrains.amper.plugins.ExecutionAvoidance
 @TaskAction(executionAvoidance = ExecutionAvoidance.Disabled)
 fun verifyIntellijSupport(
     @Input library: CompilationArtifact,
+    @Input libraryClasspath: Classpath,
     @Input compilerClasspath: Classpath,
     @Input fixturesDir: Path,
     @Input compilerPluginJar: Path,
@@ -32,13 +33,18 @@ fun verifyIntellijSupport(
     val runtime = compilerClasspath.resolvedFiles.filter { path ->
         listOf("junit-", "hamcrest-", "opentest4j-", "assertj-", "byte-buddy-").any { path.fileName.toString().startsWith(it) }
     }
-    val cp = sdkJars + testFramework + runtime + listOf(library.artifact)
+    // The helper's own dependencies (brikk-sql support and core), as a plugin would bundle them;
+    // the IDE supplies Kotlin.
+    val libraries = libraryClasspath.resolvedFiles.filter { path ->
+        listOf("kotlin-stdlib", "annotations-").none { path.fileName.toString().startsWith(it) }
+    }
+    val cp = sdkJars + testFramework + runtime + listOf(library.artifact) + libraries
     // Always compile fixtures against the 261 baseline, then run the same ABI on
     // newer SDKs. Compiling against a new SDK would hide compatibility regressions.
     val compileSdk = System.getenv("BRIKK_INTELLIJ_COMPILE_SDK")?.let(Path::of)
         ?: if (build == SDK_BUILD) sdk else provisionSdk(outputRoot)
     check(sdkBuild(compileSdk) == SDK_BUILD) { "Fixture compile SDK must be IDEA $SDK_BUILD" }
-    val compileCp = sdkClasspath(compileSdk) + frameworkJars(outputDir, SDK_BUILD) + runtime + listOf(library.artifact)
+    val compileCp = sdkClasspath(compileSdk) + frameworkJars(outputDir, SDK_BUILD) + runtime + listOf(library.artifact) + libraries
     val classes = outputDir.resolve("classes")
     Files.createDirectories(classes)
     val sources = Files.walk(fixturesDir).use { paths -> paths.filter { it.toString().endsWith(".kt") }.sorted().toList() }
