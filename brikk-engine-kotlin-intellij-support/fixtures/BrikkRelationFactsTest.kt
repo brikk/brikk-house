@@ -134,6 +134,24 @@ class BrikkRelationFactsTest : BrikkFixtureCase() {
         assertEquals(BrikkColumnLabels("brikk column", "relation contract", brikkColumnStyle = true), BrikkRelationFacts.LABELS)
     }
 
+    fun testNonKotlinInjectionHostsAreNeverBrikk() {
+        val java = myFixture.addFileToProject("J.java", "class J { String sql = \"SELECT 1\"; }")
+        val literal = PsiTreeUtil.findChildOfType(java, com.intellij.psi.PsiLiteralExpression::class.java) as com.intellij.psi.PsiLanguageInjectionHost
+        val fragment = injectedFile(literal)
+        assertNull(provider.facts(fragment))
+        assertNull(provider.navigationTarget(fragment, "brikk:relation:src"))
+        assertFalse(BrikkInspectionView.isInspectionOnly(fragment, 0))
+        assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(literal))
+    }
+
+    fun testDialectProviderAnswersPendingHostsWithoutAKnownDialectOnly() {
+        val postgres = fragment("@BrikkSql fun query(n: Int) = Sql.postgres(\"SELECT \$n\")")
+        assertTrue(dumb { BrikkRelationFacts(BrikkDialect.DUCKDB).facts(postgres) } is BrikkRelationFactsResult.Pending)
+        val trino = injectedFile(host("@BrikkSql fun query(n: Int) = Sql.trino(\"SELECT \$n\")"))
+        assertNull(dumb { BrikkRelationFacts(BrikkDialect.DUCKDB).facts(trino) })
+        assertTrue(dumb { BrikkRelationFacts(BrikkDialect.TRINO).facts(trino) } is BrikkRelationFactsResult.Pending)
+    }
+
     private fun replace(from: String, to: String) {
         WriteCommandAction.runWriteCommandAction(project) {
             val document = myFixture.editor.document

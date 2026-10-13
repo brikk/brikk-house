@@ -42,21 +42,21 @@ abstract class BrikkFixtureCase : BasePlatformTestCase() {
         return PsiTreeUtil.findChildrenOfType(myFixture.file, KtStringTemplateExpression::class.java).last { it.text.contains("SELECT") || it.text.contains("FROM") }
     }
 
-    /** Injects plain text into every string of [hosts] until the test ends, as a dialect plugin would inject SQL. */
-    protected fun inject(hosts: Set<KtStringTemplateExpression>) {
+    /** Injects plain text into every host of [hosts] until the test ends, as a dialect plugin would inject SQL. */
+    protected fun inject(hosts: Set<com.intellij.psi.PsiLanguageInjectionHost>) {
         val injector = object : com.intellij.lang.injection.MultiHostInjector {
             override fun getLanguagesToInject(registrar: com.intellij.lang.injection.MultiHostRegistrar, context: com.intellij.psi.PsiElement) {
-                val host = context as? KtStringTemplateExpression ?: return
-                if (hosts.none { it.textRange == host.textRange }) return
+                val host = context as? com.intellij.psi.PsiLanguageInjectionHost ?: return
+                if (hosts.none { it.javaClass == host.javaClass && it.textRange == host.textRange }) return
                 registrar.startInjecting(com.intellij.openapi.fileTypes.PlainTextLanguage.INSTANCE)
                     .addPlace(null, null, host, com.intellij.openapi.util.TextRange(1, host.textLength - 1)).doneInjecting()
             }
-            override fun elementsToInjectIn() = listOf(KtStringTemplateExpression::class.java)
+            override fun elementsToInjectIn() = hosts.map { it.javaClass }.distinct()
         }
         com.intellij.lang.injection.InjectedLanguageManager.getInstance(project).registerMultiHostInjector(injector, testRootDisposable)
     }
 
-    protected fun injectedFile(host: KtStringTemplateExpression): com.intellij.psi.PsiFile {
+    protected fun injectedFile(host: com.intellij.psi.PsiLanguageInjectionHost): com.intellij.psi.PsiFile {
         inject(setOf(host))
         val files = com.intellij.lang.injection.InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host)
         return checkNotNull(files?.singleOrNull()?.first?.containingFile) { "No injected fragment in ${host.text}" }
