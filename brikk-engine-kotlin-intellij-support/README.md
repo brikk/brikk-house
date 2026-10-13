@@ -117,6 +117,16 @@ an import alias of it), null when the callee names no registered dialect. Prefer
 native injection's language when the hint is null. `BrikkHosts.forget(host)` drops the
 remembered context for a host the plugin withdraws.
 
+### Inspection-only SQL
+
+Execution guards share one rule, `BrikkInspectionView.isInspectionOnly(file, offset)`:
+`file` is an injected fragment (judged by its host) or a Kotlin file (judged by the
+string at `offset`, the selection start or else the caret). It is true for a recognized
+Brikk host of any dialect, including ones this plugin does not own (`Sql.postgres`,
+another plugin's dialect), and for a pending host; false for anything else.
+`isInspectionOnly(host)` judges a host directly. It replaces each plugin's own-profile
+check and the Transpiler's `KotlinInspectionHostGuard` body.
+
 Use `includeShapes = false` on hot injection-recognition paths that do not need
 columns. The default includes `context.relations`, keyed by the enclosing
 function's parameter names. Dedicated calls are:
