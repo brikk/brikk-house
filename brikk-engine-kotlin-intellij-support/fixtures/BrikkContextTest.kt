@@ -75,6 +75,16 @@ class BrikkContextTest : BrikkFixtureCase() {
         assertEquals(setOf("id", "code", "added"), (result as ShapeResult.Available).shape.columns.map { it.name }.toSet())
     }
 
+    fun testActualCompilerActivePluginIsNotReportedMissing() {
+        enableCompiler()
+        val context = context(host("""
+            @BrikkSql fun query(rows: Rel<NoSuchOut>) = Sql.duckdb("FROM ${'$'}rows()")
+        """.trimIndent()))
+        val result = context.relations.getValue("rows")
+        assertTrue(result.toString(), result is ShapeResult.Unavailable)
+        assertEquals(BrikkPendingCause.UNRESOLVED, (result as ShapeResult.Unavailable).cause)
+    }
+
     private fun shape(context: BrikkContext, name: String): RelationShape {
         val result = context.relations.getValue(name)
         assertTrue(result.toString(), result is ShapeResult.Available)

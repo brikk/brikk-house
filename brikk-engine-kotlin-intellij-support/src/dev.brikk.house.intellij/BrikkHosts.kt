@@ -26,6 +26,8 @@ public sealed interface BrikkHostState {
         public val reason: String,
         public val projection: BrikkContext?,
         private val dialectHint: BrikkDialect?,
+        /** Why it is pending; never needs the user unless `BrikkHosts.actionNeeded` says so. */
+        public val cause: BrikkPendingCause = BrikkPendingCause.UNRESOLVED,
     ) : BrikkHostState {
         override val dialect: BrikkDialect? get() = projection?.dialect ?: dialectHint
     }
@@ -92,9 +94,9 @@ public object BrikkHosts {
                 val previous = host.getUserData(lastRecognized)?.takeIf { it.fingerprint == fingerprint }?.context
                 val entry = BrikkSyntax.entryName(syntax.call)
                 return when {
-                    previous != null -> BrikkHostState.Pending(result.reason, project(host, previous, syntax, result.reason), null)
+                    previous != null -> BrikkHostState.Pending(result.reason, project(host, previous, syntax, result.reason), null, result.cause)
                     entry != null && BrikkSyntax.annotated(syntax.function) ->
-                        BrikkHostState.Pending(result.reason, null, BrikkDialect.entries.firstOrNull { it.sqlName == entry })
+                        BrikkHostState.Pending(result.reason, null, BrikkDialect.entries.firstOrNull { it.sqlName == entry }, result.cause)
                     else -> BrikkHostState.NotBrikk
                 }
     }

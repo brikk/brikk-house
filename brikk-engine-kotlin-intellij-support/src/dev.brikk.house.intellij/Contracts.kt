@@ -36,6 +36,24 @@ public class BrikkDialect private constructor(public val sqlName: String, public
     }
 }
 
+/**
+ * Why Kotlin facts are not available yet, for tooltips without parsing text. Only
+ * [RUNTIME_ENTRY_MISSING] and [COMPILER_PLUGIN_MISSING] need the user (see `BrikkHosts.actionNeeded`);
+ * the others resolve by themselves.
+ */
+public enum class BrikkPendingCause {
+    /** Kotlin indexing is in progress. */
+    INDEXING,
+    /** A Kotlin symbol or type does not resolve (yet). */
+    UNRESOLVED,
+    /** The call's receiver is the runtime's `Sql`, which has no such entry point: the runtime is older than the code. */
+    RUNTIME_ENTRY_MISSING,
+    /** A generated row type exists but its members are not generated yet. */
+    GENERATED_SHAPES,
+    /** A row type does not resolve and the Brikk compiler plugin, which generates row types, is not active for the module. */
+    COMPILER_PLUGIN_MISSING,
+}
+
 public enum class EntryRole { BIND, RELATION_SLOT, SQL_CONSTANT, LITERAL, PENDING, UNSUPPORTED }
 public enum class ShapeKnowledge { FULL, PARTIAL }
 public enum class ColumnNullability { NON_NULL, NULLABLE, UNKNOWN }
@@ -92,13 +110,13 @@ public data class BrikkContext(
 
 public sealed interface ContextResult {
     public data class Available(public val context: BrikkContext) : ContextResult
-    public data class Unavailable(public val reason: String) : ContextResult
+    public data class Unavailable(public val reason: String, public val cause: BrikkPendingCause = BrikkPendingCause.UNRESOLVED) : ContextResult
     public data object NotBrikk : ContextResult
 }
 
 public sealed interface ShapeResult {
     public data class Available(public val shape: RelationShape) : ShapeResult
-    public data class Unavailable(public val reason: String) : ShapeResult
+    public data class Unavailable(public val reason: String, public val cause: BrikkPendingCause = BrikkPendingCause.UNRESOLVED) : ShapeResult
     public data class Unsupported(public val reason: String) : ShapeResult
     public data object NotRelation : ShapeResult
 }

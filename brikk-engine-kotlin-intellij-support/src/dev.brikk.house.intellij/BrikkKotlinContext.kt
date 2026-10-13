@@ -31,7 +31,7 @@ public object BrikkKotlinContext {
     public fun inspect(element: PsiElement, includeShapes: Boolean = true): ContextResult {
         val host = element as? KtStringTemplateExpression ?: return ContextResult.NotBrikk
         val callContext = syntaxContext(host) ?: return ContextResult.NotBrikk
-        if (DumbService.isDumb(host.project)) return ContextResult.Unavailable("Kotlin indexing is in progress")
+        if (DumbService.isDumb(host.project)) return ContextResult.Unavailable("Kotlin indexing is in progress", BrikkPendingCause.INDEXING)
         return analysis(host) {
             // Smart mode: the annotation must resolve to the runtime's, and an unresolved callee is
             // pending only when its syntax can name the runtime's entry, never for any call.
@@ -39,9 +39,12 @@ public object BrikkKotlinContext {
                 return@analysis ContextResult.NotBrikk
             }
             val target = callContext.call.resolveSymbol() as? KaCallableSymbol
-                ?: return@analysis if (BrikkSyntax.entryName(callContext.call) != null || runtimeReceiver(callContext.call)) {
-                    ContextResult.Unavailable("SQL entry point is not resolved")
-                } else ContextResult.NotBrikk
+                ?: return@analysis when {
+                    runtimeReceiver(callContext.call) -> ContextResult.Unavailable(
+                        "The Brikk runtime has no Sql.${callContext.call.calleeExpression?.text}", BrikkPendingCause.RUNTIME_ENTRY_MISSING)
+                    BrikkSyntax.entryName(callContext.call) != null -> ContextResult.Unavailable("SQL entry point is not resolved")
+                    else -> ContextResult.NotBrikk
+                }
             val dialect = dialect(target) ?: return@analysis ContextResult.NotBrikk
             for (trimCall in callContext.trimCalls) {
                 val trim = trimCall.resolveSymbol() as? KaCallableSymbol

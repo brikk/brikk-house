@@ -6,6 +6,8 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.pom.Navigatable
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
+import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -15,12 +17,12 @@ import org.jetbrains.kotlin.psi.KtParameter
 /** Reads effective type scopes, not generated class names, runtime relations or compiler-private FIR. */
 public object BrikkRelationShapes {
     public fun ofParameter(parameter: KtParameter): ShapeResult {
-        if (DumbService.isDumb(parameter.project)) return ShapeResult.Unavailable("Kotlin indexing is in progress")
+        if (DumbService.isDumb(parameter.project)) return ShapeResult.Unavailable("Kotlin indexing is in progress", BrikkPendingCause.INDEXING)
         return BrikkKotlinContext.analysis(parameter) { parameterInSession(this, parameter) }
     }
 
     public fun ofExpression(expression: KtExpression): ShapeResult {
-        if (DumbService.isDumb(expression.project)) return ShapeResult.Unavailable("Kotlin indexing is in progress")
+        if (DumbService.isDumb(expression.project)) return ShapeResult.Unavailable("Kotlin indexing is in progress", BrikkPendingCause.INDEXING)
         return BrikkKotlinContext.analysis(expression) {
             val type = expression.expressionType ?: return@analysis ShapeResult.Unavailable("Expression type is not resolved")
             read(this, type, expression)
@@ -39,7 +41,10 @@ public object BrikkRelationShapes {
         val fallback = navigation(anchor, NavigationKind.RELATION_FALLBACK)
         val row = (classType.typeArguments.singleOrNull() as? KaTypeArgumentWithVariance)?.type?.fullyExpandedType
             ?: return ShapeResult.Available(RelationShape(ShapeKnowledge.PARTIAL, emptyList(), ShapeOrigin.UNKNOWN, fallback))
-        if (row is KaErrorType) return ShapeResult.Unavailable("Row type is unresolved")
+        if (row is KaErrorType) {
+            return if (brikkPluginActive(session, anchor)) ShapeResult.Unavailable("Row type is unresolved")
+            else ShapeResult.Unavailable("Row type is unresolved and the Brikk compiler plugin is not active", BrikkPendingCause.COMPILER_PLUGIN_MISSING)
+        }
         val markerNames = setOf("${BrikkKotlinContext.RUNTIME}.Partial", "${BrikkKotlinContext.RUNTIME}.Shape")
         val rowClass = row as? KaClassType
         if (rowClass?.classId?.asSingleFqName()?.asString() in markerNames) {
@@ -79,7 +84,7 @@ public object BrikkRelationShapes {
         }
         if (!hasPartial) return ShapeResult.Unsupported("Row type does not expose an Engine Partial contract")
         val generated = rowClass?.symbol?.origin in setOf(KaSymbolOrigin.PLUGIN, KaSymbolOrigin.SOURCE_MEMBER_GENERATED)
-        if (generated && properties.isEmpty()) return ShapeResult.Unavailable("Generated row members are not available yet")
+        if (generated && properties.isEmpty()) return ShapeResult.Unavailable("Generated row members are not available yet", BrikkPendingCause.GENERATED_SHAPES)
         val origin = when {
             bound -> ShapeOrigin.TYPE_BOUND
             generated -> ShapeOrigin.GENERATED
@@ -87,6 +92,18 @@ public object BrikkRelationShapes {
             else -> ShapeOrigin.UNKNOWN
         }
         ShapeResult.Available(RelationShape(if (full) ShapeKnowledge.FULL else ShapeKnowledge.PARTIAL, properties.values.toList(), origin, fallback))
+    }
+
+    /**
+     * Whether the Brikk FIR extension is registered for the analyzed module: its generated row types
+     * can exist. The registered-extensions query is platform API (opted in): the IDE's own answer to
+     * "which compiler plugins does this module run", with no stable alternative.
+     */
+    @OptIn(org.jetbrains.kotlin.analysis.api.KaPlatformInterface::class)
+    private fun brikkPluginActive(session: KaSession, anchor: PsiElement): Boolean {
+        val provider = KotlinCompilerPluginsProvider.getInstance(anchor.project) ?: return false
+        return provider.getRegisteredExtensions(session.useSiteModule, FirExtensionRegistrarAdapter.Companion)
+            .any { it.javaClass.name == "dev.brikk.house.sql.compiler.fir.BrikkSqlFirExtensionRegistrar" }
     }
 
     private fun navigation(element: PsiElement, kind: NavigationKind): NavigationTarget =

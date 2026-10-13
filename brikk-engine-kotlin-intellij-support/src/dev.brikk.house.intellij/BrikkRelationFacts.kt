@@ -25,7 +25,7 @@ public sealed interface BrikkRelationFactsResult {
     public data class Available(public val facts: RelationFacts, public val revision: Long) : BrikkRelationFactsResult
 
     /** Not known yet: the host's Kotlin analysis or one of its contracts is unavailable. Retry; cache nothing. */
-    public data class Pending(public val reason: String) : BrikkRelationFactsResult
+    public data class Pending(public val reason: String, public val cause: BrikkPendingCause = BrikkPendingCause.UNRESOLVED) : BrikkRelationFactsResult
 }
 
 /**
@@ -60,7 +60,7 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
         val host = host(file) ?: return null
         return when (val computed = CachedValuesManager.getManager(host.project).getCachedValue(host, CACHE, { compute(host) }, false)) {
             is Computed.Facts -> if (dialect == null || computed.dialect == dialect) BrikkRelationFactsResult.Available(computed.facts, computed.revision) else null
-            is Computed.Pending -> if (dialect == null || computed.dialect == null || computed.dialect == dialect) BrikkRelationFactsResult.Pending(computed.reason) else null
+            is Computed.Pending -> if (dialect == null || computed.dialect == null || computed.dialect == dialect) BrikkRelationFactsResult.Pending(computed.reason, computed.cause) else null
             Computed.None -> null
         }
     }
@@ -86,7 +86,7 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
 
     private sealed interface Computed {
         class Facts(val dialect: BrikkDialect, val facts: RelationFacts, val revision: Long) : Computed
-        class Pending(val reason: String, val dialect: BrikkDialect?) : Computed
+        class Pending(val reason: String, val dialect: BrikkDialect?, val cause: BrikkPendingCause) : Computed
         data object None : Computed
     }
 
@@ -138,7 +138,7 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
                     val mapped = mapped(state.context.relations)
                     if (mapped == null) {
                         val (name, result) = state.context.relations.entries.first { it.value is ShapeResult.Unavailable }
-                        pending(Computed.Pending("Relation '$name': ${(result as ShapeResult.Unavailable).reason}", state.dialect))
+                        pending(Computed.Pending("Relation '$name': ${(result as ShapeResult.Unavailable).reason}", state.dialect, result.cause))
                     } else {
                         val revision = revision(mapped.first)
                         host.putUserData(TARGETS, Targets(revision, mapped.second))
@@ -146,7 +146,7 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
                             PsiModificationTracker.getInstance(host.project), ProjectRootModificationTracker.getInstance(host.project))
                     }
                 }
-                is BrikkHostState.Pending -> pending(Computed.Pending(state.reason, state.dialect))
+                is BrikkHostState.Pending -> pending(Computed.Pending(state.reason, state.dialect, state.cause))
                 BrikkHostState.NotBrikk -> {
                     host.putUserData(TARGETS, null)
                     CachedValueProvider.Result.create(Computed.None, PsiModificationTracker.getInstance(host.project),

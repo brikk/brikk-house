@@ -29,6 +29,7 @@ abstract class BrikkFixtureCase : BasePlatformTestCase() {
                 fun trino(sql: String): Rel<Nothing> = error("compiler")
                 fun clickhouse(sql: String): Rel<Nothing> = error("compiler")
                 @BrikkSqlDialect("postgres") fun postgres(@org.intellij.lang.annotations.Language("BrikkSQL") sql: String): Rel<Nothing> = error("compiler")
+                @BrikkSqlDialect("plain") fun plain(@org.intellij.lang.annotations.Language("TEXT") sql: String): Rel<Nothing> = error("compiler")
                 fun raw(sql: String): Rel<Nothing> = error("not an entry point") }
         """.trimIndent())
         myFixture.addFileToProject("Language.kt", """
