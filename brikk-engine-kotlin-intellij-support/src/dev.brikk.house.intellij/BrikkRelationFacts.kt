@@ -147,19 +147,31 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
                             val declared = !column.relationLevel
                             val provenance = if (declared) columnId(name, column.name) else relation
                             if (declared) column.navigation?.let { targets[provenance] = it }
-                            ColumnFact(column.name, column.exactSqlType, column.kotlinTypeName, when (column.nullability) {
-                                ColumnNullability.NON_NULL -> Nullability.NON_NULL
-                                ColumnNullability.NULLABLE -> Nullability.NULLABLE
-                                ColumnNullability.UNKNOWN -> Nullability.UNKNOWN
-                            }, if (declared) ColumnOrigin.DECLARED else ColumnOrigin.RELATION_CONTRACT, provenance)
+                            ColumnFact(
+                                name = column.name,
+                                sqlType = column.exactSqlType,
+                                displayType = column.kotlinTypeName,
+                                nullability = when (column.nullability) {
+                                    ColumnNullability.NON_NULL -> Nullability.NON_NULL
+                                    ColumnNullability.NULLABLE -> Nullability.NULLABLE
+                                    ColumnNullability.UNKNOWN -> Nullability.UNKNOWN
+                                },
+                                origin = if (declared) ColumnOrigin.DECLARED else ColumnOrigin.RELATION_CONTRACT,
+                                provenance = provenance,
+                            )
                         }
-                        RelationFact(columns, if (result.shape.knowledge == ShapeKnowledge.FULL) Knowledge.FULL else Knowledge.PARTIAL, relation)
+                        RelationFact(
+                            columns = columns,
+                            knowledge = if (result.shape.knowledge == ShapeKnowledge.FULL) Knowledge.FULL else Knowledge.PARTIAL,
+                            provenance = relation,
+                        )
                     }
-                    is ShapeResult.Unsupported -> RelationFact(emptyList(), Knowledge.UNKNOWN, relation)
+                    is ShapeResult.Unsupported -> RelationFact(columns = emptyList(), knowledge = Knowledge.UNKNOWN, provenance = relation)
                     is ShapeResult.Unavailable -> return null
                     ShapeResult.NotRelation -> continue
                 }
             }
+            // Named arguments: core may add defaulted fields (as it did searchPath); recompiling is enough.
             return RelationFacts(slots = slots) to targets
         }
 
