@@ -6,12 +6,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.DumbModeTestUtils
 import dev.brikk.house.intellij.*
-import dev.brikk.house.sql.intellij.completion.SqlLookupKind
-import dev.brikk.house.sql.intellij.relation.RelationFactsResult
 import dev.brikk.house.sql.scope.ColumnOrigin
 import dev.brikk.house.sql.scope.Knowledge
 import dev.brikk.house.sql.scope.Nullability
-import dev.brikk.house.sql.scope.ScopeColumn
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -24,10 +21,10 @@ class BrikkRelationFactsTest : BrikkFixtureCase() {
 
     private fun fragment(body: String): PsiFile = injectedFile(host(body))
 
-    private fun available(file: PsiFile): RelationFactsResult.Available {
+    private fun available(file: PsiFile): BrikkRelationFactsResult.Available {
         val result = provider.facts(file)
-        assertTrue(result.toString(), result is RelationFactsResult.Available)
-        return result as RelationFactsResult.Available
+        assertTrue(result.toString(), result is BrikkRelationFactsResult.Available)
+        return result as BrikkRelationFactsResult.Available
     }
 
     private val events = """
@@ -98,17 +95,17 @@ class BrikkRelationFactsTest : BrikkFixtureCase() {
 
     fun testPendingWhileKotlinAnalysisIsUnavailable() {
         val file = fragment("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
-        assertTrue(dumb { provider.facts(file) } is RelationFactsResult.Pending)
-        assertTrue(provider.facts(file) is RelationFactsResult.Available)
+        assertTrue(dumb { provider.facts(file) } is BrikkRelationFactsResult.Pending)
+        assertTrue(provider.facts(file) is BrikkRelationFactsResult.Available)
         // Previously recognized and pending again: still pending, never stale facts.
-        assertTrue(dumb { provider.facts(file) } is RelationFactsResult.Pending)
+        assertTrue(dumb { provider.facts(file) } is BrikkRelationFactsResult.Pending)
     }
 
     fun testOtherFragmentsAndOtherDialectsHaveNoFacts() {
         assertNull(provider.facts(fragment("fun plain() = println(\"SELECT 1\")")))
         val trino = fragment("@BrikkSql fun query(n: Int) = Sql.trino(\"SELECT \$n\")")
         assertNull(BrikkRelationFacts(BrikkDialect.DUCKDB).facts(trino))
-        assertTrue(BrikkRelationFacts(BrikkDialect.TRINO).facts(trino) is RelationFactsResult.Available)
+        assertTrue(BrikkRelationFacts(BrikkDialect.TRINO).facts(trino) is BrikkRelationFactsResult.Available)
         assertNull(provider.facts(myFixture.file))
     }
 
@@ -129,21 +126,8 @@ class BrikkRelationFactsTest : BrikkFixtureCase() {
         assertEquals(Nullability.NULLABLE, changed.facts.slots.getValue("rows").columns.single().nullability)
     }
 
-    fun testBrikkLabelsKotlinOriginColumnsAndRelationContracts() {
-        val labels = checkNotNull(provider.labels)
-        assertSame(BrikkRelationFacts.LABELS, labels)
-        val declared = labels.label(ScopeColumn("event_at", "events", ColumnOrigin.DECLARED, Nullability.NULLABLE, displayType = "Instant"))
-        assertEquals("brikk column", declared.origin)
-        assertEquals("events", declared.relation)
-        assertEquals("Instant", declared.type)
-        assertEquals(true, declared.nullable)
-        assertEquals(SqlLookupKind.BRIKK_COLUMN, declared.kind)
-        val contract = labels.label(ScopeColumn("code", "src", ColumnOrigin.RELATION_CONTRACT, Nullability.UNKNOWN, displayType = "String"))
-        assertEquals("relation contract", contract.origin)
-        assertEquals(SqlLookupKind.BRIKK_COLUMN, contract.kind)
-        // Computed and physical columns keep support's defaults.
-        assertEquals("computed column", labels.label(ScopeColumn("n", "", ColumnOrigin.COMPUTED, Nullability.UNKNOWN)).origin)
-        assertFalse(provider.platformResolves)
+    fun testBrikkLabelsArePlainData() {
+        assertEquals(BrikkColumnLabels("brikk column", "relation contract", brikkColumnStyle = true), BrikkRelationFacts.LABELS)
     }
 
     private fun lastHost(): KtStringTemplateExpression =

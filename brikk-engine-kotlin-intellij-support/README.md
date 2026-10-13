@@ -43,10 +43,10 @@ dependencies {
 }
 ```
 
-From `0.3.0` the helper depends on `dev.brikk.house:brikk-sql-intellij-support`
-(`0.2.0-SNAPSHOT`, core `0.20.0-SNAPSHOT`, Maven Local only until released) for its
-relation facts API. Plugins already depend on support: keep their direct dependency at
-the same version, so one copy is bundled.
+From `0.3.0` the helper depends on brikk-sql core, `dev.brikk.house:brikk-sql-jvm`
+(`0.20.0-SNAPSHOT`, Maven Local only until released), for its plain relation-facts
+data. It does not depend on brikk-sql support (owner decision 24), so helper, support
+and core release independently; each plugin adapts the helper's facts to support.
 
 Same-version local rebuilds can require `--refresh-dependencies`. Remove
 `mavenLocal()` or restrict its content when switching to a released Central artifact.
@@ -66,7 +66,7 @@ The helper owns:
   authored host ranges. Scalar properties/getters are never evaluated.
 - Effective `Rel<T>` contracts, inherited properties, type bounds, Kotlin types,
   nullability, full/partial knowledge and supported navigation targets.
-- Their mapping to support's relation facts and Brikk labels (`BrikkRelationFacts`),
+- Their mapping to core's relation facts and Brikk labels (`BrikkRelationFacts`),
   the recognized/pending/not-Brikk decision (`BrikkHosts`) and the inspection-only rule
   (`BrikkInspectionView`).
 
@@ -125,13 +125,28 @@ an import alias of it), null when the callee names no registered dialect. Prefer
 native injection's language when the hint is null. `BrikkHosts.forget(host)` drops the
 remembered context for a host the plugin withdraws.
 
-### Relation facts for support's relation features
+### Relation facts
 
-`BrikkRelationFacts` is support's `ExternalRelationFacts` for Brikk host strings. Add one
-instance (per profile, stable) to the plugin's `RelationScopeProfile.providers`:
+`BrikkRelationFacts` answers with core data (`dev.brikk.house.sql.scope.RelationFacts`)
+in its own `BrikkRelationFactsResult` (`Available(facts, revision)` or `Pending`), and
+navigates by provenance to platform PSI. Support has no function-backed provider, so each
+plugin keeps this adapter in its optional Kotlin descriptor path and adds one stable
+instance to its `RelationScopeProfile.providers`:
 
 ```kotlin
-override val providers = listOf(BrikkRelationFacts(BrikkDialect.DUCKDB))
+class KotlinBrikkRelationFacts : ExternalRelationFacts {
+    private val brikk = BrikkRelationFacts(BrikkDialect.DUCKDB)
+    override fun facts(file: PsiFile): RelationFactsResult? = when (val result = brikk.facts(file)) {
+        is BrikkRelationFactsResult.Available -> RelationFactsResult.Available(result.facts, result.revision)
+        is BrikkRelationFactsResult.Pending -> RelationFactsResult.Pending(result.reason)
+        null -> null
+    }
+    override fun navigationTarget(file: PsiFile, provenance: String) = brikk.navigationTarget(file, provenance)
+    override val labels = BrikkRelationFacts.LABELS.let {
+        RelationColumnLabels(declared = it.declared, declaredKind = SqlLookupKind.BRIKK_COLUMN,
+            contract = it.contract, contractKind = SqlLookupKind.BRIKK_COLUMN)
+    }
+}
 ```
 
 - Each `Rel` parameter of the host's function is a slot fact keyed by its name (`src()`).
@@ -147,8 +162,8 @@ override val providers = listOf(BrikkRelationFacts(BrikkDialect.DUCKDB))
   unavailable; pending results are never cached. Available facts are cached per host
   until PSI or roots change. The revision is a hash of the facts, so it survives
   reparsed hosts and unrelated edits and changes when a contract does.
-- `labels` is `BrikkRelationFacts.LABELS`: `brikk column (<rel>)` and `relation contract
-  (<rel>)` with the bricks icon (`SqlLookupKind.BRIKK_COLUMN`). Support keeps a column's
+- `BrikkRelationFacts.LABELS` is plain data: `brikk column (<rel>)` and `relation contract
+  (<rel>)`, and `brikkColumnStyle` (the bricks icon, support's `SqlLookupKind.BRIKK_COLUMN`). Support keeps a column's
   origin and provenance through lineage-known renames, so renamed Kotlin columns keep the
   label. Computed and physical columns use support's defaults.
 - The constructor's dialect restricts facts to that dialect's hosts; null serves any.
@@ -235,7 +250,7 @@ The prepared SDK is a compiler classpath input, not a Maven dependency. Toolchai
 0.13 emits compile-only Maven dependencies as `provided` POM entries; no local SDK
 coordinate should be published here. The distributed JAR contains only helper
 classes and notices. Its POM/Gradle metadata has no IntelliJ or compiler dependency;
-its only library dependency is brikk-sql support. Because the module's `-classpath`
+its only library dependency is brikk-sql core (a release must not depend on a snapshot). Because the module's `-classpath`
 replaces the toolchain's, the preparation task also merges the module's resolved Maven
 dependencies into `build/intellij-api/helper-dependencies.jar` for compilation, and the
 IDE fixtures run with them on the classpath.

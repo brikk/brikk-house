@@ -11,10 +11,6 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import dev.brikk.house.sql.intellij.completion.SqlLookupKind
-import dev.brikk.house.sql.intellij.relation.ExternalRelationFacts
-import dev.brikk.house.sql.intellij.relation.RelationColumnLabels
-import dev.brikk.house.sql.intellij.relation.RelationFactsResult
 import dev.brikk.house.sql.scope.ColumnFact
 import dev.brikk.house.sql.scope.ColumnOrigin
 import dev.brikk.house.sql.scope.Knowledge
@@ -23,37 +19,58 @@ import dev.brikk.house.sql.scope.RelationFact
 import dev.brikk.house.sql.scope.RelationFacts
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
+/** What [BrikkRelationFacts] knows about one SQL file's relations. */
+public sealed interface BrikkRelationFactsResult {
+    /** Copied [facts]; [revision] is equal exactly when the facts are. */
+    public data class Available(public val facts: RelationFacts, public val revision: Long) : BrikkRelationFactsResult
+
+    /** Not known yet: the host's Kotlin analysis or one of its contracts is unavailable. Retry; cache nothing. */
+    public data class Pending(public val reason: String) : BrikkRelationFactsResult
+}
+
 /**
- * Relation facts of Brikk host strings for support's relation features: each `Rel` parameter of
- * the host's function is a slot (`src()`), its contract the slot's columns. Facts are pending while
+ * How Brikk columns are labeled, as plain data: "[declared] (<rel>)" for a column with a Kotlin
+ * property, "[contract] (<rel>)" for one known only through its relation. [brikkColumnStyle]
+ * asks for the consumer's Brikk column style (the bricks icon), not its generic column style.
+ * Computed and physical columns keep the consumer's own labels.
+ */
+public data class BrikkColumnLabels(
+    public val declared: String = ColumnContract.COLUMN_LABEL,
+    public val contract: String = ColumnContract.RELATION_CONTRACT_LABEL,
+    public val brikkColumnStyle: Boolean = true,
+)
+
+/**
+ * Relation facts of Brikk host strings, as brikk-sql core data: each `Rel` parameter of the
+ * host's function is a slot (`src()`), its contract the slot's columns. Facts are pending while
  * the host's Kotlin analysis, or any of its contracts, is unavailable; a non-Brikk host has none.
  *
  * A column's SQL type is set only when its contract knows it (Kotlin types never prove one); its
  * Kotlin type is the display type. Provenance names the Kotlin property, or for a column known
  * only through its relation (a generated one) and for the relation itself, the `Rel` parameter.
  *
- * [dialect] restricts the facts to hosts of one dialect; null answers for any Brikk host. Keep one
- * instance per profile: support caches its analysis per provider instance. Call only from an
- * optional Kotlin integration.
+ * Depends on core only, not on brikk-sql support: a plugin adapts [facts], [navigationTarget]
+ * and [LABELS] to its support provider in a few lines (see the README). [dialect] restricts the
+ * facts to hosts of one dialect; null answers for any Brikk host. Call only from an optional
+ * Kotlin integration.
  */
-public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) : ExternalRelationFacts {
-    override fun facts(file: PsiFile): RelationFactsResult? {
+public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) {
+    /** The facts for [file], an injected fragment of a Kotlin host string; null when it is none of this provider's. */
+    public fun facts(file: PsiFile): BrikkRelationFactsResult? {
         val host = host(file) ?: return null
         return when (val computed = CachedValuesManager.getManager(host.project).getCachedValue(host, CACHE, { compute(host) }, false)) {
-            is Computed.Facts -> if (dialect == null || computed.dialect == dialect) RelationFactsResult.Available(computed.facts, computed.revision) else null
-            is Computed.Pending -> if (dialect == null || computed.dialect == null || computed.dialect == dialect) RelationFactsResult.Pending(computed.reason) else null
+            is Computed.Facts -> if (dialect == null || computed.dialect == dialect) BrikkRelationFactsResult.Available(computed.facts, computed.revision) else null
+            is Computed.Pending -> if (dialect == null || computed.dialect == null || computed.dialect == dialect) BrikkRelationFactsResult.Pending(computed.reason) else null
             Computed.None -> null
         }
     }
 
-    /** A map lookup and a smart pointer: no Kotlin analysis, so find usages can ask per candidate. */
-    override fun navigationTarget(file: PsiFile, provenance: String): PsiElement? {
+    /** The Kotlin element a fact's [provenance] names in [file]'s current facts; null when there is none. */
+    public fun navigationTarget(file: PsiFile, provenance: String): PsiElement? {
         val host = host(file) ?: return null
         val targets = host.getUserData(TARGETS) ?: run { facts(file); host.getUserData(TARGETS) } ?: return null
         return (targets[provenance] as? BrikkRelationShapes.PsiNavigation)?.element
     }
-
-    override val labels: RelationColumnLabels get() = LABELS
 
     private fun host(file: PsiFile): KtStringTemplateExpression? =
         InjectedLanguageManager.getInstance(file.project).getInjectionHost(file) as? KtStringTemplateExpression
@@ -66,12 +83,7 @@ public class BrikkRelationFacts(private val dialect: BrikkDialect? = null) : Ext
 
     public companion object {
         /** Kotlin-origin columns are `brikk column (<rel>)` with their Kotlin type; relation-level ones `relation contract (<rel>)`. */
-        @JvmField public val LABELS: RelationColumnLabels = RelationColumnLabels(
-            declared = ColumnContract.COLUMN_LABEL,
-            declaredKind = SqlLookupKind.BRIKK_COLUMN,
-            contract = ColumnContract.RELATION_CONTRACT_LABEL,
-            contractKind = SqlLookupKind.BRIKK_COLUMN,
-        )
+        @JvmField public val LABELS: BrikkColumnLabels = BrikkColumnLabels()
 
         private val CACHE: Key<CachedValue<Computed>> = Key.create("dev.brikk.house.intellij.relationFacts")
         private val TARGETS: Key<Map<String, NavigationTarget>> = Key.create("dev.brikk.house.intellij.relationTargets")

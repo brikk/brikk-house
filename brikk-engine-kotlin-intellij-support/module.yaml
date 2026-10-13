@@ -6,15 +6,15 @@ apply:
   - //publish.module-template.yaml
 
 repositories:
-  # brikk-sql snapshots exist only in Maven Local until support's relation API is released.
+  # brikk-sql 0.20.0 (core relation facts) exists only in Maven Local until it is released.
   - url: mavenLocal
     resolve: true
     publish: true
 
 dependencies:
-  # exported: BrikkRelationFacts implements support's ExternalRelationFacts over core RelationFacts.
-  # brikk-house -> brikk-sql is the allowed direction; support itself never depends on Kotlin.
-  - dev.brikk.house:brikk-sql-intellij-support:0.2.0-SNAPSHOT: exported
+  # exported: BrikkRelationFacts answers with core's plain relation-facts data. The helper
+  # depends on core only (owner decision 24): plugins adapt it to brikk-sql support.
+  - dev.brikk.house:brikk-sql-jvm:0.20.0-SNAPSHOT: exported
 
 plugins:
   brikk-engine-kotlin-intellij-tooling: enabled
