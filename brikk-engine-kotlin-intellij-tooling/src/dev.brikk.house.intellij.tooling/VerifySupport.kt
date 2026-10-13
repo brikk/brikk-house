@@ -53,7 +53,11 @@ fun verifyIntellijSupport(
     } }
     val generatedArgs = if (ideCompiler == "2.4.20-ij262-34") listOf("-Dbrikk.fixture.compiler.plugin=${compilerPluginJar.toAbsolutePath()}") else emptyList()
     println("IDE compiler=$ideCompiler; generated-shape fixture lane=${generatedArgs.isNotEmpty()}")
-    run(cp + listOf(classes), "org.junit.runner.JUnitCore", listOf("dev.brikk.house.intellij.ContractsTest", "dev.brikk.house.intellij.fixtures.BrikkContextTest"), outputDir.resolve("test.log"), opens + generatedArgs + listOf(
+    val testClasses = sources.filter { it.fileName.toString().endsWith("Test.kt") }.map { source ->
+        val pkg = Files.readAllLines(source).first { it.startsWith("package ") }.removePrefix("package ").trim()
+        "$pkg.${source.fileName.toString().removeSuffix(".kt")}"
+    }
+    run(cp + listOf(classes), "org.junit.runner.JUnitCore", testClasses, outputDir.resolve("test.log"), opens + generatedArgs + listOf(
         "--enable-native-access=ALL-UNNAMED", "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
         "-Didea.force.use.core.classloader=true",
         "-Djna.boot.library.path=${sdk.resolve("lib/jna/amd64")}", "-Djna.nosys=true", "-Djna.noclasspath=true",

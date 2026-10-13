@@ -73,9 +73,9 @@ public object BrikkKotlinContext {
         ((annotation.arguments.firstOrNull { it.name.asString() == name }?.expression as? KaAnnotationValue.ConstantValue)
             ?.value as? KaConstantValue.StringValue)?.value
 
-    private data class SyntaxContext(val call: KtCallExpression, val function: KtNamedFunction, val trimCalls: List<KtCallExpression>)
+    internal data class SyntaxContext(val call: KtCallExpression, val function: KtNamedFunction, val trimCalls: List<KtCallExpression>)
 
-    private fun syntaxContext(host: KtStringTemplateExpression): SyntaxContext? {
+    internal fun syntaxContext(host: KtStringTemplateExpression): SyntaxContext? {
         var expression: KtExpression = host
         val trims = mutableListOf<KtCallExpression>()
         while (true) {

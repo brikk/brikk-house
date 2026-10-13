@@ -91,6 +91,32 @@ when (result) {
 }
 ```
 
+### Recognized, pending or not Brikk
+
+Injection contributors should decide through `BrikkHosts.state(host)`, which applies the
+pending policy over `inspect` and remembers each host's last recognized context:
+
+```kotlin
+when (val state = BrikkHosts.state(host)) {
+    is BrikkHostState.Recognized -> // inject state.context.entries
+    is BrikkHostState.Pending -> {
+        // Brikk and inspection-only. Claim the host and retry when analysis is ready.
+        // state.projection != null: recognized before; inject its entries, every
+        //   interpolation PENDING with a placeholder (no remembered role is reused).
+        // state.projection == null: never recognized; claim without injecting.
+    }
+    BrikkHostState.NotBrikk -> // withdraw; leave native injection alone
+}
+```
+
+Only a host whose function carries `@BrikkSql` (by name or import alias) becomes pending
+without a projection; any other unresolved string is `NotBrikk`, so native injections
+of unrelated strings survive indexing. `state.dialect` is the recognized or remembered
+dialect, and for a never-recognized pending host a hint from its callee (`Sql.trino`,
+an import alias of it), null when the callee names no registered dialect. Prefer the
+native injection's language when the hint is null. `BrikkHosts.forget(host)` drops the
+remembered context for a host the plugin withdraws.
+
 Use `includeShapes = false` on hot injection-recognition paths that do not need
 columns. The default includes `context.relations`, keyed by the enclosing
 function's parameter names. Dedicated calls are:
