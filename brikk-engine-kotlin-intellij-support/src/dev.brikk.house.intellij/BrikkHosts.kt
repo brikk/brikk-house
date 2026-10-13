@@ -48,20 +48,28 @@ public object BrikkHosts {
     private val validatedNegative: Key<String> = Key.create("dev.brikk.house.intellij.validatedNotBrikk")
 
     /**
-     * Decides what [element] is now. When its Kotlin analysis is unavailable: a host recognized
-     * before, with the same annotations, callee, trims and imports, is pending with a projection; one whose syntax can only be a runtime `Sql` entry
-     * (or an import alias of one) in a function annotated with the runtime's `@BrikkSql` is
-     * pending without one; anything else is not Brikk. So is a host Kotlin ruled out before,
-     * while the syntax deciding it is unchanged.
+     * Decides what [element] is now, erring toward not claiming. When its Kotlin analysis is
+     * unavailable: a host recognized before, under the same deciding syntax, is pending with a
+     * projection; one with strong evidence (a callee that can only be a runtime `Sql` entry by
+     * explicit import or alias, unshadowed, in a function whose annotation can only be the
+     * runtime's `@BrikkSql`) is pending without one; anything else is not Brikk, meaning no
+     * decision: native injection stays as the platform makes it. So is a host Kotlin ruled out
+     * before, while its deciding syntax is unchanged. Execution guards use [BrikkInspectionView],
+     * which errs toward Brikk instead.
      */
-    public fun state(element: PsiElement, includeShapes: Boolean = false): BrikkHostState {
-        val host = element as? KtStringTemplateExpression ?: return BrikkHostState.NotBrikk
+    public fun state(element: PsiElement, includeShapes: Boolean = false): BrikkHostState = decide(element, includeShapes).state
+
+    /** A decision and whether Kotlin itself made it (rather than syntax while Kotlin could not resolve). */
+    internal class Decision(val state: BrikkHostState, val byKotlin: Boolean)
+
+    internal fun decide(element: PsiElement, includeShapes: Boolean = false): Decision {
+        val host = element as? KtStringTemplateExpression ?: return Decision(BrikkHostState.NotBrikk, true)
         return when (val result = BrikkKotlinContext.inspect(host, includeShapes)) {
             is ContextResult.Available -> {
                 val fingerprint = BrikkKotlinContext.syntaxContext(host)?.let(BrikkSyntax::fingerprint)
                 host.putUserData(lastRecognized, Remembered(result.context.copy(relations = emptyMap()), fingerprint))
                 host.putUserData(validatedNegative, null)
-                BrikkHostState.Recognized(result.context)
+                Decision(BrikkHostState.Recognized(result.context), true)
             }
             ContextResult.NotBrikk -> {
                 forget(host)
@@ -69,9 +77,13 @@ public object BrikkHosts {
                 if (!DumbService.isDumb(host.project)) {
                     host.putUserData(validatedNegative, BrikkKotlinContext.syntaxContext(host)?.let(BrikkSyntax::fingerprint))
                 }
-                BrikkHostState.NotBrikk
+                Decision(BrikkHostState.NotBrikk, true)
             }
-            is ContextResult.Unavailable -> {
+            is ContextResult.Unavailable -> Decision(unavailable(host, result), false)
+        }
+    }
+
+    private fun unavailable(host: KtStringTemplateExpression, result: ContextResult.Unavailable): BrikkHostState {
                 val syntax = BrikkKotlinContext.syntaxContext(host) ?: return BrikkHostState.NotBrikk
                 val fingerprint = BrikkSyntax.fingerprint(syntax)
                 if (host.getUserData(validatedNegative) == fingerprint) return BrikkHostState.NotBrikk
@@ -79,14 +91,12 @@ public object BrikkHosts {
                 // the remembered ownership; an edit to the SQL text keeps it.
                 val previous = host.getUserData(lastRecognized)?.takeIf { it.fingerprint == fingerprint }?.context
                 val entry = BrikkSyntax.entryName(syntax.call)
-                when {
+                return when {
                     previous != null -> BrikkHostState.Pending(result.reason, project(host, previous, syntax.trimCalls.map { it.calleeExpression!!.text }, result.reason), null)
                     entry != null && BrikkSyntax.annotated(syntax.function) ->
                         BrikkHostState.Pending(result.reason, null, BrikkDialect.entries.firstOrNull { it.sqlName == entry })
                     else -> BrikkHostState.NotBrikk
                 }
-            }
-        }
     }
 
     /** Drops [element]'s remembered context, for a host this plugin withdraws. */

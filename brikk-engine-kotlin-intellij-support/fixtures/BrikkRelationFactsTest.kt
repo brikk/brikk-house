@@ -98,7 +98,7 @@ class BrikkRelationFactsTest : BrikkFixtureCase() {
     }
 
     fun testPendingWhileKotlinAnalysisIsUnavailable() {
-        val file = fragment("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
+        val file = injectedFile(explicitHost("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")"))
         assertTrue(dumb { provider.facts(file) } is BrikkRelationFactsResult.Pending)
         assertTrue(provider.facts(file) is BrikkRelationFactsResult.Available)
         // Previously recognized and pending again: still pending, never stale facts.
@@ -145,9 +145,9 @@ class BrikkRelationFactsTest : BrikkFixtureCase() {
     }
 
     fun testDialectProviderAnswersPendingHostsWithoutAKnownDialectOnly() {
-        val postgres = fragment("@BrikkSql fun query(n: Int) = Sql.postgres(\"SELECT \$n\")")
+        val postgres = injectedFile(explicitHost("@BrikkSql fun query(n: Int) = Sql.postgres(\"SELECT \$n\")"))
         assertTrue(dumb { BrikkRelationFacts(BrikkDialect.DUCKDB).facts(postgres) } is BrikkRelationFactsResult.Pending)
-        val trino = injectedFile(host("@BrikkSql fun query(n: Int) = Sql.trino(\"SELECT \$n\")"))
+        val trino = injectedFile(explicitHost("@BrikkSql fun query(n: Int) = Sql.trino(\"SELECT \$n\")"))
         assertNull(dumb { BrikkRelationFacts(BrikkDialect.DUCKDB).facts(trino) })
         assertTrue(dumb { BrikkRelationFacts(BrikkDialect.TRINO).facts(trino) } is BrikkRelationFactsResult.Pending)
     }

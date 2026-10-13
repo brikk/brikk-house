@@ -37,9 +37,16 @@ abstract class BrikkFixtureCase : BasePlatformTestCase() {
         """.trimIndent())
     }
 
-    protected fun host(body: String): KtStringTemplateExpression {
-        myFixture.configureByText("Views.kt", "import dev.brikk.house.sql.runtime.*\n$body")
+    protected fun host(body: String, imports: String = "import dev.brikk.house.sql.runtime.*"): KtStringTemplateExpression {
+        myFixture.configureByText("Views.kt", "$imports\n$body")
         return PsiTreeUtil.findChildrenOfType(myFixture.file, KtStringTemplateExpression::class.java).last { it.text.contains("SELECT") || it.text.contains("FROM") }
+    }
+
+    /** A host whose runtime names are explicitly imported: strong evidence for an injection claim while indexing. */
+    protected fun explicitHost(body: String): KtStringTemplateExpression = host(body, EXPLICIT_IMPORTS)
+
+    protected companion object {
+        const val EXPLICIT_IMPORTS: String = "import dev.brikk.house.sql.runtime.Sql\nimport dev.brikk.house.sql.runtime.BrikkSql\nimport dev.brikk.house.sql.runtime.Rel\nimport dev.brikk.house.sql.runtime.Partial"
     }
 
     /** Injects plain text into every host of [hosts] until the test ends, as a dialect plugin would inject SQL. */

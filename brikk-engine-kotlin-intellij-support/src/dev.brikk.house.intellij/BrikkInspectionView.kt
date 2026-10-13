@@ -28,17 +28,24 @@ public object BrikkInspectionView {
     }
 
     /**
-     * Whether [host] is (or is nested in) a Brikk host whose SQL is inspection-only now. A literal
-     * interpolated into a template (`${"1"}`) is judged by the outermost template holding it.
+     * Whether [host], judged by its outermost string template, is Brikk SQL that must not execute now,
+     * erring toward Brikk: recognized (any dialect) or pending; and while Kotlin cannot resolve,
+     * any template with weak evidence (a callee named `Sql.x` or imported, aliased or typealiased
+     * from one, in a function with an annotation named, imported or typealiased as `BrikkSql`),
+     * shadowing ignored. A false positive only blocks Execute until indexing ends. A NotBrikk that
+     * syntax decided while Kotlin could not resolve is never trusted here.
      */
-    public fun isInspectionOnly(host: PsiElement): Boolean = when (val state = BrikkHosts.state(outermost(host))) {
-        is BrikkHostState.Recognized -> !state.context.executable
-        is BrikkHostState.Pending -> true
-        BrikkHostState.NotBrikk -> false
+    public fun isInspectionOnly(host: PsiElement): Boolean {
+        val first = host as? KtStringTemplateExpression ?: PsiTreeUtil.getParentOfType(host, KtStringTemplateExpression::class.java) ?: return false
+        return templateInspectionOnly(generateSequence(first) { PsiTreeUtil.getParentOfType(it, KtStringTemplateExpression::class.java, true) }.last())
     }
 
-    private fun outermost(element: PsiElement): PsiElement {
-        var outer = element
-        while (true) outer = PsiTreeUtil.getParentOfType(outer, KtStringTemplateExpression::class.java, true) ?: return outer
+    private fun templateInspectionOnly(template: KtStringTemplateExpression): Boolean {
+        val decision = BrikkHosts.decide(template)
+        return when (val state = decision.state) {
+            is BrikkHostState.Recognized -> !state.context.executable
+            is BrikkHostState.Pending -> true
+            BrikkHostState.NotBrikk -> !decision.byKotlin && BrikkKotlinContext.syntaxContext(template)?.let(BrikkSyntax::weak) == true
+        }
     }
 }

@@ -1,57 +1,80 @@
 package dev.brikk.house.intellij
 
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 /**
  * Brikk evidence from syntax and imports alone, for when Kotlin cannot resolve (indexing, an
- * unresolved callee). Never proof of Brikk; only the absence of a reason to rule it out.
+ * unresolved callee). Strong evidence decides injection claims and errs toward not claiming;
+ * weak evidence decides the execution guard and errs toward Brikk.
  */
 internal object BrikkSyntax {
     private const val RUNTIME = BrikkKotlinContext.RUNTIME
 
     /**
-     * The `Sql` member [call] names when its callee can only be the runtime's entry: `Sql.x(...)`
-     * with the runtime's `Sql` imported (or the runtime package star-imported and no other `Sql`
-     * in sight), fully qualified, or an import (alias) of `Sql.x`. Null otherwise.
+     * Strong: the `Sql` member [call] names when its callee can only be the runtime's entry:
+     * `Sql.x(...)` with the runtime's `Sql` explicitly imported (or aliased), fully qualified, or
+     * an explicit import (alias) of `Sql.x`; and no lexical binding of that name in scope. Star
+     * imports never count: a same-package or other star-imported `Sql` could win. Null otherwise.
      */
     fun entryName(call: KtCallExpression): String? {
-        val callee = (call.calleeExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return null
-        val file = call.containingKtFile
-        val qualified = (call.parent as? KtDotQualifiedExpression)?.takeIf { it.selectorExpression === call }
-        if (qualified != null) {
-            val receiver = qualified.receiverExpression.text
-            return callee.takeIf { receiver == "$RUNTIME.Sql" || runtimeName(file, receiver, "Sql") }
-        }
-        if (declares(file, callee)) return null
-        for (directive in file.importDirectives) {
-            val imported = directive.importedFqName?.asString() ?: continue
-            if (directive.isAllUnder) { if (imported == "$RUNTIME.Sql") return callee else continue }
-            if (!imported.startsWith("$RUNTIME.Sql.")) continue
-            val member = imported.removePrefix("$RUNTIME.Sql.")
-            if ((directive.aliasName ?: member) == callee) return member
-        }
-        return null
+        val callee = calleeName(call) ?: return null
+        val receiver = receiver(call)
+        if (receiver != null) return callee.takeIf { receiver == "$RUNTIME.Sql" || explicitRuntime(call, receiver, "$RUNTIME.Sql") }
+        if (bound(call, callee)) return null
+        val imports = call.containingKtFile.importDirectives.filter { !it.isAllUnder && effectiveName(it) == callee }
+        val member = imports.singleOrNull()?.importedFqName?.asString()?.takeIf { it.startsWith("$RUNTIME.Sql.") } ?: return null
+        return member.removePrefix("$RUNTIME.Sql.")
     }
 
-    /** Whether [function] carries an annotation that can only be the runtime's `@BrikkSql`. */
+    /** Strong: [function] carries an annotation that can only be the runtime's `@BrikkSql`. */
     fun annotated(function: KtNamedFunction): Boolean = function.annotationEntries.any { entry ->
         val written = entry.typeReference?.text ?: return@any false
-        written == "$RUNTIME.BrikkSql" || runtimeName(function.containingKtFile, written, "BrikkSql")
+        written == "$RUNTIME.BrikkSql" || explicitRuntime(function, written, "$RUNTIME.BrikkSql")
     }
 
     /**
-     * The syntax that decides ownership while Kotlin cannot resolve: annotations, the callee and
-     * its receiver, trims, imports and top-level names. A decision made under one fingerprint does
-     * not carry over to another.
+     * Weak: [syntax] could be a Brikk host, ignoring shadowing. Its callee is named `Sql.x`, or
+     * reached through an import or alias of an `Sql`, `Sql.x` or any explicitly imported name,
+     * and its function has an annotation named `BrikkSql`, an import or alias of one, or any
+     * explicitly imported annotation. Star imports count.
+     */
+    fun weak(syntax: BrikkKotlinContext.SyntaxContext): Boolean = weakEntry(syntax.call) && weakAnnotation(syntax.function)
+
+    private fun weakEntry(call: KtCallExpression): Boolean {
+        val callee = calleeName(call) ?: return false
+        val file = call.containingKtFile
+        val receiver = receiver(call)
+        if (receiver != null) {
+            return lastSegment(receiver) == "Sql" || file.importDirectives.any { !it.isAllUnder && effectiveName(it) == receiver }
+        }
+        return file.importDirectives.any { directive ->
+            val imported = directive.importedFqName?.asString() ?: return@any false
+            if (directive.isAllUnder) lastSegment(imported) == "Sql"
+            else effectiveName(directive) == callee && imported.substringBeforeLast('.', "").let { lastSegment(it) == "Sql" }
+        }
+    }
+
+    private fun weakAnnotation(function: KtNamedFunction): Boolean = function.annotationEntries.any { entry ->
+        val written = entry.typeReference?.text ?: return@any false
+        lastSegment(written) == "BrikkSql" || function.containingKtFile.importDirectives.any { !it.isAllUnder && effectiveName(it) == written }
+    }
+
+    /**
+     * The syntax that decides ownership while Kotlin cannot resolve. A decision made under one
+     * fingerprint does not carry over to another.
      */
     fun fingerprint(syntax: BrikkKotlinContext.SyntaxContext): String = buildString {
         syntax.function.annotationEntries.forEach { append(it.text).append('\n') }
-        append((syntax.call.parent as? KtDotQualifiedExpression)?.takeIf { it.selectorExpression === syntax.call }?.receiverExpression?.text)
-        append('.').append(syntax.call.calleeExpression?.text).append('\n')
+        append(receiver(syntax.call)).append('.').append(syntax.call.calleeExpression?.text).append('\n')
         syntax.trimCalls.forEach { append(it.calleeExpression?.text).append('\n') }
         val file = syntax.function.containingKtFile
         append(file.packageFqName.asString()).append('\n')
@@ -59,16 +82,35 @@ internal object BrikkSyntax {
         file.declarations.mapNotNull { it.name }.sorted().forEach { append(it).append(',') }
     }
 
-    /** Whether [written] in [file] names the runtime's top-level [name], by explicit import, alias, star import or package. */
-    private fun runtimeName(file: KtFile, written: String, name: String): Boolean {
-        if (declares(file, written)) return false
-        val directives = file.importDirectives
-        if (directives.any { !it.isAllUnder && it.importedFqName?.asString() == "$RUNTIME.$name" && (it.aliasName ?: name) == written }) return true
-        if (written != name) return false
-        // Another explicit import of the name shadows the star import.
-        if (directives.any { !it.isAllUnder && it.aliasName == null && it.importedFqName?.shortName()?.asString() == name }) return false
-        return file.packageFqName.asString() == RUNTIME || directives.any { it.isAllUnder && it.importedFqName?.asString() == RUNTIME }
+    /** Whether [written] at [context] names [fqName] by one explicit import (or alias), unshadowed, or by its own package. */
+    private fun explicitRuntime(context: PsiElement, written: String, fqName: String): Boolean {
+        if ('.' in written || bound(context, written)) return false
+        val file = context.containingFile as? KtFile ?: return false
+        val imports = file.importDirectives.filter { !it.isAllUnder && effectiveName(it) == written }
+        if (imports.isNotEmpty()) return imports.all { it.importedFqName?.asString() == fqName }
+        return file.packageFqName.asString() == RUNTIME && lastSegment(fqName) == written
     }
 
-    private fun declares(file: KtFile, name: String): Boolean = file.declarations.any { it.name == name }
+    /** Whether [name] is declared in a lexical scope enclosing [element]: parameters, locals, members, file declarations. */
+    private fun bound(element: PsiElement, name: String): Boolean = bindings(element).any { it.name == name }
+
+    private fun bindings(element: PsiElement): Sequence<KtNamedDeclaration> = generateSequence(element.parent) { it.parent }.flatMap { scope ->
+        when (scope) {
+            is KtBlockExpression -> scope.statements.asSequence().filterIsInstance<KtNamedDeclaration>()
+            is KtFunction -> scope.valueParameters.asSequence()
+            is KtClassOrObject -> scope.declarations.asSequence().filterIsInstance<KtNamedDeclaration>() + scope.primaryConstructorParameters.asSequence()
+            is KtFile -> scope.declarations.asSequence().filterIsInstance<KtNamedDeclaration>()
+            else -> emptySequence()
+        }
+    }
+
+    private fun calleeName(call: KtCallExpression): String? = (call.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
+
+    private fun receiver(call: KtCallExpression): String? =
+        (call.parent as? KtDotQualifiedExpression)?.takeIf { it.selectorExpression === call }?.receiverExpression?.text
+
+    private fun effectiveName(directive: org.jetbrains.kotlin.psi.KtImportDirective): String? =
+        directive.aliasName ?: directive.importedFqName?.shortName()?.asString()
+
+    private fun lastSegment(name: String): String = name.substringAfterLast('.')
 }

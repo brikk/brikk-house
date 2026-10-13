@@ -47,9 +47,16 @@ class BrikkHostsTest : BrikkFixtureCase() {
     }
 
     fun testNeverRecognizedBrikkHostIsPendingWithoutProjection() {
-        val state = pending(host("@BrikkSql fun query(n: Int) = Sql.doris(\"SELECT \$n\")"))
+        val state = pending(explicitHost("@BrikkSql fun query(n: Int) = Sql.doris(\"SELECT \$n\")"))
         assertNull(state.projection)
         assertEquals(BrikkDialect.DORIS, state.dialect)
+    }
+
+    fun testStarImportedRuntimeIsNoClaimWhileIndexingButStaysInspectionOnly() {
+        // Policy split: a same-package or other star-imported Sql could win, so no claim; Execute is still blocked.
+        val host = host("@BrikkSql fun query(n: Int) = Sql.doris(\"SELECT \$n\")")
+        assertEquals(BrikkHostState.NotBrikk, dumb { BrikkHosts.state(host) })
+        assertTrue(dumb { BrikkInspectionView.isInspectionOnly(host) })
     }
 
     fun testPendingDialectHintFollowsAnImportAlias() {
@@ -63,7 +70,7 @@ class BrikkHostsTest : BrikkFixtureCase() {
     }
 
     fun testPendingWithAnUnknownCalleeHasNoDialectHint() {
-        val state = pending(host("@BrikkSql fun query(n: Int) = Sql.postgres(\"SELECT \$n\")"))
+        val state = pending(explicitHost("@BrikkSql fun query(n: Int) = Sql.postgres(\"SELECT \$n\")"))
         assertNull(state.dialect)
     }
 
@@ -74,7 +81,7 @@ class BrikkHostsTest : BrikkFixtureCase() {
     }
 
     fun testForgottenHostIsNoLongerProjected() {
-        val host = host("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
+        val host = explicitHost("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
         assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
         BrikkHosts.forget(host)
         assertNull(pending(host).projection)
@@ -129,7 +136,7 @@ class BrikkHostsTest : BrikkFixtureCase() {
     }
 
     fun testValidatedNegativeHoldsWhileIndexingUntilItsSyntaxChanges() {
-        val host = host("fun String.trimIndent() = this\n@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\".trimIndent())")
+        val host = explicitHost("fun String.trimIndent() = this\n@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\".trimIndent())")
         assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(host))
         assertEquals(BrikkHostState.NotBrikk, dumb { BrikkHosts.state(host) })
         dumb {
@@ -139,7 +146,7 @@ class BrikkHostsTest : BrikkFixtureCase() {
     }
 
     fun testDialectEditWhilePendingDropsTheOldProjection() {
-        val host = host("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
+        val host = explicitHost("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
         assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
         dumb {
             edit("Sql.duckdb", "Sql.trino")
