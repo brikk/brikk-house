@@ -137,4 +137,35 @@ class BrikkHostsTest : BrikkFixtureCase() {
             assertTrue(BrikkHosts.state(sqlHost()) is BrikkHostState.Pending)
         }
     }
+
+    fun testDialectEditWhilePendingDropsTheOldProjection() {
+        val host = host("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
+        assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
+        dumb {
+            edit("Sql.duckdb", "Sql.trino")
+            val state = BrikkHosts.state(sqlHost()) as BrikkHostState.Pending
+            assertNull(state.projection)
+            assertEquals(BrikkDialect.TRINO, state.dialect)
+        }
+    }
+
+    fun testRemovingTheAnnotationWhilePendingWithdrawsOwnership() {
+        val host = host("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
+        assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
+        dumb {
+            edit("@BrikkSql ", "")
+            assertEquals(BrikkHostState.NotBrikk, BrikkHosts.state(sqlHost()))
+        }
+    }
+
+    fun testSqlTextEditWhilePendingKeepsTheProjectionWithCurrentRanges() {
+        val host = host("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\")")
+        assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
+        dumb {
+            edit("SELECT", "SELECT 123,")
+            val updated = sqlHost()
+            val projection = checkNotNull((BrikkHosts.state(updated) as BrikkHostState.Pending).projection)
+            assertEquals(updated.entries.map { HostRange(it.startOffsetInParent, it.startOffsetInParent + it.textLength) }, projection.entries.map { it.range })
+        }
+    }
 }

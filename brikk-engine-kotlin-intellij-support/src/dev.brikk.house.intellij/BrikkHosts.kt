@@ -41,12 +41,15 @@ public sealed interface BrikkHostState {
  * recognized context. Call only from an optional Kotlin integration.
  */
 public object BrikkHosts {
-    private val lastRecognized: Key<BrikkContext> = Key.create("dev.brikk.house.intellij.lastRecognizedContext")
+    /** A recognized context and the ownership syntax it was recognized under. */
+    private class Remembered(val context: BrikkContext, val fingerprint: String?)
+
+    private val lastRecognized: Key<Remembered> = Key.create("dev.brikk.house.intellij.lastRecognizedContext")
     private val validatedNegative: Key<String> = Key.create("dev.brikk.house.intellij.validatedNotBrikk")
 
     /**
      * Decides what [element] is now. When its Kotlin analysis is unavailable: a host recognized
-     * before is pending with a projection; one whose syntax can only be a runtime `Sql` entry
+     * before, with the same annotations, callee, trims and imports, is pending with a projection; one whose syntax can only be a runtime `Sql` entry
      * (or an import alias of one) in a function annotated with the runtime's `@BrikkSql` is
      * pending without one; anything else is not Brikk. So is a host Kotlin ruled out before,
      * while the syntax deciding it is unchanged.
@@ -55,7 +58,8 @@ public object BrikkHosts {
         val host = element as? KtStringTemplateExpression ?: return BrikkHostState.NotBrikk
         return when (val result = BrikkKotlinContext.inspect(host, includeShapes)) {
             is ContextResult.Available -> {
-                host.putUserData(lastRecognized, result.context.copy(relations = emptyMap()))
+                val fingerprint = BrikkKotlinContext.syntaxContext(host)?.let(BrikkSyntax::fingerprint)
+                host.putUserData(lastRecognized, Remembered(result.context.copy(relations = emptyMap()), fingerprint))
                 host.putUserData(validatedNegative, null)
                 BrikkHostState.Recognized(result.context)
             }
@@ -71,7 +75,9 @@ public object BrikkHosts {
                 val syntax = BrikkKotlinContext.syntaxContext(host) ?: return BrikkHostState.NotBrikk
                 val fingerprint = BrikkSyntax.fingerprint(syntax)
                 if (host.getUserData(validatedNegative) == fingerprint) return BrikkHostState.NotBrikk
-                val previous = host.getUserData(lastRecognized)
+                // An edit to the deciding syntax (annotation removed, Sql.trino -> Sql.duckdb) withdraws
+                // the remembered ownership; an edit to the SQL text keeps it.
+                val previous = host.getUserData(lastRecognized)?.takeIf { it.fingerprint == fingerprint }?.context
                 val entry = BrikkSyntax.entryName(syntax.call)
                 when {
                     previous != null -> BrikkHostState.Pending(result.reason, project(host, previous, syntax.trimCalls.map { it.calleeExpression!!.text }, result.reason), null)
