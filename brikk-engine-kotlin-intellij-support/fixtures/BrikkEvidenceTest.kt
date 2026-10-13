@@ -36,6 +36,25 @@ class BrikkEvidenceTest : BrikkFixtureCase() {
         assertTrue("The guard errs toward Brikk while indexing", dumb { BrikkInspectionView.isInspectionOnly(host) })
     }
 
+    fun testBrikkNestedWithinAnUnrelatedOuterStringIsProtected() {
+        val host = host("""
+            fun wrap() = "wrapped ${'$'}{run {
+                @BrikkSql fun query() = Sql.duckdb("SELECT 1")
+                query()
+            }}"
+        """.trimIndent())
+        assertTrue(dumb { BrikkInspectionView.isInspectionOnly(host) })
+        assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
+        assertTrue(BrikkInspectionView.isInspectionOnly(host))
+    }
+
+    fun testUnrelatedStringInsideABrikkTemplateIsProtected() {
+        val host = host("@BrikkSql fun query() = Sql.duckdb(\"SELECT ${'$'}{listOf(\"x\").joinToString()}\")")
+        val inner = PsiTreeUtil.findChildrenOfType(myFixture.file, KtStringTemplateExpression::class.java).single { it.text == "\"x\"" }
+        assertTrue(BrikkHosts.state(host) is BrikkHostState.Recognized)
+        assertTrue(BrikkInspectionView.isInspectionOnly(inner))
+    }
+
     fun testForeignImportAliasedToSqlShadowsRuntimeStar() {
         myFixture.addFileToProject("Foreign.kt", "package foreign\nobject Fake { fun duckdb(sql: String) = sql }")
         shadowed(host("import foreign.Fake as Sql\n@BrikkSql fun query() = Sql.duckdb(\"SELECT 1\")"))

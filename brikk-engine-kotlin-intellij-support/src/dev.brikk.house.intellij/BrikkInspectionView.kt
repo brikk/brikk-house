@@ -28,7 +28,7 @@ public object BrikkInspectionView {
     }
 
     /**
-     * Whether [host], judged by its outermost string template, is Brikk SQL that must not execute now,
+     * Whether [host], or any string template enclosing it, is Brikk SQL that must not execute now,
      * erring toward Brikk: recognized (any dialect) or pending; and while Kotlin cannot resolve,
      * any template with weak evidence (a callee named `Sql.x` or imported, aliased or typealiased
      * from one, in a function with an annotation named, imported or typealiased as `BrikkSql`),
@@ -37,7 +37,7 @@ public object BrikkInspectionView {
      */
     public fun isInspectionOnly(host: PsiElement): Boolean {
         val first = host as? KtStringTemplateExpression ?: PsiTreeUtil.getParentOfType(host, KtStringTemplateExpression::class.java) ?: return false
-        return templateInspectionOnly(generateSequence(first) { PsiTreeUtil.getParentOfType(it, KtStringTemplateExpression::class.java, true) }.last())
+        return generateSequence(first) { PsiTreeUtil.getParentOfType(it, KtStringTemplateExpression::class.java, true) }.any(::templateInspectionOnly)
     }
 
     private fun templateInspectionOnly(template: KtStringTemplateExpression): Boolean {
