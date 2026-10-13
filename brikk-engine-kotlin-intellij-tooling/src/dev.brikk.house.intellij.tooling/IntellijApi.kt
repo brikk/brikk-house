@@ -82,26 +82,36 @@ fun prepareIntellijApi(@Input dependencies: Classpath, @Output outputDir: Path, 
     }
     // The module's -classpath replaces the toolchain's, so its Maven dependencies (brikk-sql
     // support and core) are merged into one stable compile jar; the SDK jar supplies the stdlib.
-    val libraries = dependencies.resolvedFiles.filter { !it.fileName.toString().startsWith("kotlin-stdlib") }.sortedBy { it.fileName.toString() }
+    val libraries = dependencies.resolvedFiles.filter { path ->
+        listOf("kotlin-stdlib", "annotations-").none { path.fileName.toString().startsWith(it) }
+    }.sortedBy { it.fileName.toString() }
     val dependencyJar = outputDir.resolve("helper-dependencies.jar")
     val dependencyFingerprint = libraries.joinToString("\n") { "${it.fileName}=${sha(it)}" }
     val dependencyStamp = outputDir.resolve("dependencies.sha256")
     if (!Files.isRegularFile(dependencyJar) || !Files.isRegularFile(dependencyStamp) || Files.readString(dependencyStamp) != dependencyFingerprint) {
-        val seen = hashSetOf<String>()
+        val entries = linkedMapOf<String, ByteArray>()
+        for (library in libraries) ZipFile(library.toFile()).use { zip ->
+            zip.entries().asSequence().filter { !it.isDirectory && it.name != "META-INF/MANIFEST.MF" && !it.name.startsWith("META-INF/versions/") &&
+                !it.name.endsWith("module-info.class") && !it.name.endsWith(".SF") && !it.name.endsWith(".RSA") }.forEach { entry ->
+                val bytes = zip.getInputStream(entry).use { it.readAllBytes() }
+                val previous = entries[entry.name]
+                when {
+                    previous == null -> entries[entry.name] = bytes
+                    // Service registrations of several libraries concatenate.
+                    entry.name.startsWith("META-INF/services/") -> entries[entry.name] = previous + "\n".toByteArray() + bytes
+                    // A dropped .kotlin_module would hide one library's top-level declarations.
+                    entry.name.endsWith(".class") || entry.name.endsWith(".kotlin_module") ->
+                        check(previous.contentEquals(bytes)) { "Conflicting dependency entry ${entry.name} in ${library.fileName}" }
+                }
+            }
+        }
         val temporaryJar = Files.createTempFile(outputDir, ".dependencies-", ".jar")
         try {
             ZipOutputStream(Files.newOutputStream(temporaryJar)).use { out ->
-                for (library in libraries) ZipFile(library.toFile()).use { zip ->
-                    zip.entries().asSequence().filter { !it.isDirectory && it.name != "META-INF/MANIFEST.MF" && !it.name.startsWith("META-INF/versions/") &&
-                        !it.name.endsWith("module-info.class") && !it.name.endsWith(".SF") && !it.name.endsWith(".RSA") }.forEach { entry ->
-                        if (!seen.add(entry.name)) {
-                            check(!entry.name.endsWith(".class")) { "Duplicate dependency class ${entry.name} in ${library.fileName}" }
-                            return@forEach
-                        }
-                        out.putNextEntry(ZipEntry(entry.name).also { it.time = 0 })
-                        zip.getInputStream(entry).use { it.copyTo(out) }
-                        out.closeEntry()
-                    }
+                for ((name, bytes) in entries) {
+                    out.putNextEntry(ZipEntry(name).also { it.time = 0 })
+                    out.write(bytes)
+                    out.closeEntry()
                 }
             }
             Files.move(temporaryJar, dependencyJar, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
