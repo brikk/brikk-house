@@ -5,16 +5,11 @@ description: Brikk Kotlin host, interpolation, and relation-shape contracts for 
 apply:
   - //publish.module-template.yaml
 
-repositories:
-  # brikk-sql 0.20.0 (core relation facts) exists only in Maven Local until it is released.
-  - url: mavenLocal
-    resolve: true
-    publish: true
-
 dependencies:
   # exported: BrikkRelationFacts answers with core's plain relation-facts data. The helper
   # depends on core only (owner decision 24): plugins adapt it to brikk-sql support.
-  - dev.brikk.house:brikk-sql-jvm:0.20.0-SNAPSHOT: exported
+  # Released core only (from Maven Central): a helper release must not export a snapshot.
+  - dev.brikk.house:brikk-sql-jvm:0.20.0: exported
 
 plugins:
   brikk-engine-kotlin-intellij-tooling: enabled

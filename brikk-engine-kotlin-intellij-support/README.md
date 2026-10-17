@@ -43,8 +43,8 @@ dependencies {
 }
 ```
 
-From `0.3.0` the helper depends on brikk-sql core, `dev.brikk.house:brikk-sql-jvm`
-(`0.20.0-SNAPSHOT`, Maven Local only until released), for its plain relation-facts
+From `0.3.0` the helper depends on released brikk-sql core, `dev.brikk.house:brikk-sql-jvm:0.20.0`
+from Maven Central, for its plain relation-facts
 data. It does not depend on brikk-sql support (owner decision 24), so helper, support
 and core release independently; each plugin adapts the helper's facts to support.
 
@@ -383,9 +383,9 @@ hosts, the strong/weak evidence split and typealias chains) and the relation fac
 (mapping, revision, current-only navigation). Earlier,
 on 2026-10-10, helper `0.2.0` passed 15/17/15 fixtures on IDEA 261/262/263.
 
-The repository's Test workflow cannot resolve the Maven Local brikk-sql snapshot, so
-it fails on this branch until brikk-sql core `0.20.0` is released and the helper
-moves to it.
+The helper now depends on released core `0.20.0` from Maven Central. Until the owner
+publishes brikk-sql core `0.20.0`, the helper (and the Test workflow) cannot resolve it
+and does not build; the results above were against the same core source as a snapshot.
 
 Trino `0.2.0-SNAPSHOT` validation passed 17 fixtures on IDEA `261.25134.95` and
 20 on `262.9437.185`, including a genuine compiler-generated Trino output shape.
@@ -402,10 +402,13 @@ has run remotely or that the peer plugins have already migrated to the helper.
 Only this module applies the publication template. Runtime, compiler artifacts,
 build plugins and private consumers remain unpublished.
 
+Prerequisite for `0.3.0`: brikk-sql core `dev.brikk.house:brikk-sql-jvm:0.20.0` must be on
+Maven Central first; the helper resolves it from there and its release POM exports it.
+
 ```sh
-./publish-release.sh 0.1.0
+./publish-release.sh 0.3.0
 # Explicitly publish automatically after Central validation:
-./publish-release.sh 0.1.0 --auto
+./publish-release.sh 0.3.0 --auto
 ```
 
 The script follows the peer SQL repo's native Toolchain publishing process. It
