@@ -139,7 +139,8 @@ fun reports(tenant: String, start: Instant, end: Instant): List<SampleReport> {
     return listOf(
         SampleReport("daily-revenue", dailyRevenue(events)),
         SampleReport("daily-refunds", dailyRefunds(events)),
-        SampleReport("customer-revenue", customerRevenue(events = events, customers = customers)),
+        SampleReport("customer-revenue",
+            customerRevenue(events = events, customers = customers)),
         SampleReport("data-quality", dataQuality(events)),
     )
 }
