@@ -406,26 +406,37 @@ Prerequisite for `0.3.0`: brikk-sql core `dev.brikk.house:brikk-sql-jvm:0.20.0` 
 Maven Central first; the helper resolves it from there and its release POM exports it.
 
 ```sh
-./publish-release.sh 0.3.0
-# Explicitly publish automatically after Central validation:
+# Unsigned local candidate: release version 0.3.0 into Maven Local, resolving the
+# core 0.20.0 candidate from Maven Local. No credentials, nothing uploaded.
+./publish-release.sh 0.3.0 --local
+# Signed Central upload, automatic publication after validation:
 ./publish-release.sh 0.3.0 --auto
+# Signed Central upload, manual Portal approval:
+./publish-release.sh 0.3.0
 ```
 
 The script follows the peer SQL repo's native Toolchain publishing process. It
-validates a non-SNAPSHOT SemVer, runs build/test/IDE gates, temporarily applies
-release settings, verifies Maven Local output, signs and uploads only this
-artifact. It restores the development template on exit. Central Portal approval
-is manual by default; `--auto` explicitly enables automatic publication after
-validation. Alternatively, pushing `release/<version>` runs the reusable CI gates
-first, then publishes only the helper with Central auto-publication. Signing and
-Central credentials come from the Brikk organization secrets. No push to main
-triggers publication.
+validates a non-SNAPSHOT SemVer and runs the release-configuration tests, then
+temporarily replaces the publication template with release settings (restored on
+exit): for `--local`, the release version and a Maven Local resolver for released
+dependencies; otherwise the release version, Central and signing. It builds the helper
+only, publishes it to Maven Local and runs `verifyLocalIntellijPublication` (POM limited
+to core and the stdlib, no snapshot dependency in a release, notices, an independent
+consumer), then for Central signs and uploads only this artifact. Private engine and
+compiler suites are not part of the release path; the Test workflow covers them on
+ordinary pushes. The Maven Local resolver exists only in the temporary local
+override; the helper source resolves core from Central.
+
+The `Release IntelliJ support` workflow runs only that scoped release with `--auto`:
+push `release/<version>` or dispatch it with input `version`. Signing and Central
+credentials come from the Brikk organization secrets. No push to main triggers
+publication.
 
 Required credentials are `KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_USERNAME`,
 `KOTLIN_TOOLCHAIN_MAVEN_CENTRAL_PASSWORD` and `KOTLIN_TOOLCHAIN_SIGNING_KEY`.
 An encrypted key also needs `KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE`. The script
 accepts the older credential spellings used by the peer repo. Never commit keys
-or credentials. The manual release workflow requires those organization secrets
+or credentials. The release workflow requires those organization secrets
 to be available to this repository.
 
 ## Migration guide
