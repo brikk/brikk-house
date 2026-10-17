@@ -5,6 +5,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -25,17 +30,27 @@ public object BrikkKotlinContext {
     /** Full host recognition and template classification in one bounded analysis session. */
     public fun inspect(element: PsiElement, includeShapes: Boolean = true): ContextResult {
         val host = element as? KtStringTemplateExpression ?: return ContextResult.NotBrikk
+        return inspectHost(host, includeShapes).also { BrikkActions.record(host, it, includeShapes) }
+    }
+
+    private fun inspectHost(host: KtStringTemplateExpression, includeShapes: Boolean): ContextResult {
         val callContext = syntaxContext(host) ?: return ContextResult.NotBrikk
-        if (DumbService.isDumb(host.project)) return ContextResult.Unavailable("Kotlin indexing is in progress")
+        if (DumbService.isDumb(host.project)) return ContextResult.Unavailable("Kotlin indexing is in progress", BrikkPendingCause.INDEXING)
+        if (!analysisAllowed(host)) return ContextResult.Unavailable("Kotlin analysis is not allowed here (a write action)", BrikkPendingCause.ANALYSIS_PROHIBITED)
         return analysis(host) {
-            val target = callContext.call.resolveSymbol() as? KaCallableSymbol
-                ?: return@analysis ContextResult.Unavailable("SQL entry point is not resolved")
-            val dialect = BrikkDialect.entries.firstOrNull {
-                target.callableId?.asSingleFqName()?.asString() == "$RUNTIME.Sql.${it.sqlName}"
-            } ?: return@analysis ContextResult.NotBrikk
+            // Smart mode: the annotation must resolve to the runtime's, and an unresolved callee is
+            // pending only when its syntax can name the runtime's entry, never for any call.
             if (callContext.function.symbol.annotations.none { it.classId?.asSingleFqName()?.asString() == "$RUNTIME.BrikkSql" }) {
                 return@analysis ContextResult.NotBrikk
             }
+            val target = callContext.call.resolveSymbol() as? KaCallableSymbol
+                ?: return@analysis when {
+                    runtimeReceiver(callContext.call) -> ContextResult.Unavailable(
+                        "The Brikk runtime has no Sql.${callContext.call.calleeExpression?.text}", BrikkPendingCause.RUNTIME_ENTRY_MISSING)
+                    BrikkSyntax.entryName(callContext.call) != null -> ContextResult.Unavailable("SQL entry point is not resolved")
+                    else -> ContextResult.NotBrikk
+                }
+            val dialect = dialect(target) ?: return@analysis ContextResult.NotBrikk
             for (trimCall in callContext.trimCalls) {
                 val trim = trimCall.resolveSymbol() as? KaCallableSymbol
                     ?: return@analysis ContextResult.Unavailable("Trim call is not resolved")
@@ -48,20 +63,74 @@ public object BrikkKotlinContext {
                 val result = BrikkRelationShapes.parameterInSession(this, parameter)
                 if (result == ShapeResult.NotRelation) null else parameter.name?.let { it to result }
             }.toMap() else emptyMap()
-            ContextResult.Available(BrikkContext(dialect, callContext.trimCalls.map { it.calleeExpression!!.text }, entries, shapes))
+            ContextResult.Available(BrikkContext(dialect, callContext.trimCalls.map { it.calleeExpression!!.text }, entries, shapes, callContext.trimSteps))
         }
     }
 
-    private data class SyntaxContext(val call: KtCallExpression, val function: KtNamedFunction, val trimCalls: List<KtCallExpression>)
+    /**
+     * A runtime `Sql` member is an entry point when it declares `@BrikkSqlDialect`, or, for runtimes
+     * before that annotation, when its name is a registered dialect.
+     */
+    private fun dialect(target: KaCallableSymbol): BrikkDialect? {
+        val id = target.callableId ?: return null
+        if (id.packageName.asString() != RUNTIME || id.className?.asString() != "Sql") return null
+        val declared = target.annotations.firstOrNull { it.classId?.asSingleFqName()?.asString() == "$RUNTIME.BrikkSqlDialect" }
+            ?.let { stringArgument(it, "dialect") }
+        val name = declared ?: id.callableName.asString().takeIf { name -> BrikkDialect.entries.any { it.sqlName == name } } ?: return null
+        val language = (target as? KaFunctionSymbol)?.valueParameters?.singleOrNull()?.annotations
+            ?.firstOrNull { it.classId?.asSingleFqName()?.asString() == "org.intellij.lang.annotations.Language" }
+            ?.let { stringArgument(it, "value") }
+        return BrikkDialect.of(name, language)
+    }
 
-    private fun syntaxContext(host: KtStringTemplateExpression): SyntaxContext? {
+    /**
+     * Whether Kotlin proves [call]'s receiver is the runtime's `Sql` even though the member is
+     * unresolved (an older runtime): directly, or through a typealias chain Kotlin expands (a
+     * cyclic one does not expand).
+     */
+    private fun KaSession.runtimeReceiver(call: KtCallExpression): Boolean {
+        val receiver = ((call.parent as? KtDotQualifiedExpression)?.takeIf { it.selectorExpression === call }?.receiverExpression as? KtNameReferenceExpression)
+            ?: return false
+        val symbol = receiver.references.filterIsInstance<org.jetbrains.kotlin.idea.references.KtReference>().firstOrNull()?.resolveToSymbol()
+        val classId = when (symbol) {
+            is KaTypeAliasSymbol -> (symbol.expandedType.fullyExpandedType as? KaClassType)?.classId
+            is KaClassSymbol -> symbol.classId
+            else -> null
+        }
+        return classId?.asSingleFqName()?.asString() == "$RUNTIME.Sql"
+    }
+
+    private fun stringArgument(annotation: KaAnnotation, name: String): String? =
+        ((annotation.arguments.firstOrNull { it.name.asString() == name }?.expression as? KaAnnotationValue.ConstantValue)
+            ?.value as? KaConstantValue.StringValue)?.value
+
+    internal data class SyntaxContext(val call: KtCallExpression, val function: KtNamedFunction, val trimCalls: List<KtCallExpression>) {
+        val trimSteps: List<BrikkTrim> get() = trimCalls.map { BrikkTrim.of(it.calleeExpression!!.text, marginPrefix(it)) }
+    }
+
+    /** The literal prefix argument of a `trimMargin` call, without interpolation; null when there is none. */
+    internal fun marginPrefix(trim: KtCallExpression): String? {
+        val argument = trim.valueArguments.singleOrNull()?.getArgumentExpression() as? KtStringTemplateExpression ?: return null
+        if (argument.hasInterpolation()) return null
+        return buildString { argument.entries.forEach { append((it as? KtEscapeStringTemplateEntry)?.unescapedValue ?: it.text) } }
+    }
+
+    internal fun syntaxContext(host: KtStringTemplateExpression): SyntaxContext? {
         var expression: KtExpression = host
         val trims = mutableListOf<KtCallExpression>()
+        // Parentheses change nothing Brikk-relevant: `Sql.duckdb(("..."))` is still the Brikk host,
+        // and so inspection-only, even where the compiler rejects it.
+        fun unwrap() { while (expression.parent is KtParenthesizedExpression) expression = expression.parent as KtExpression }
         while (true) {
+            unwrap()
             val qualified = expression.parent as? KtDotQualifiedExpression ?: break
             if (qualified.receiverExpression !== expression) return null
             val trim = qualified.selectorExpression as? KtCallExpression ?: return null
-            if (trim.calleeExpression?.text !in setOf("trimIndent", "trimMargin") || trim.valueArguments.isNotEmpty()) return null
+            val name = trim.calleeExpression?.text
+            val arguments = trim.valueArguments
+            // trimMargin may name its prefix with a literal string; anything else is not a supported trim.
+            if (name == "trimIndent" && arguments.isNotEmpty() || name !in setOf("trimIndent", "trimMargin")) return null
+            if (arguments.size > 1 || arguments.singleOrNull()?.let { marginPrefix(trim) == null } == true) return null
             trims += trim
             expression = qualified
         }
@@ -123,6 +192,9 @@ public object BrikkKotlinContext {
         } else null
         else -> null
     }
+
+    /** Whether Kotlin analysis may run now: not in a write action (a rename) or an explicitly analysis-free region. */
+    internal fun analysisAllowed(element: PsiElement): Boolean = BrikkPlatformApi.analysisAllowed(element)
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     internal fun <T> analysis(element: KtElement, action: KaSession.() -> T): T =

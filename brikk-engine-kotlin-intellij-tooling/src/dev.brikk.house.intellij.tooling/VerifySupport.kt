@@ -16,6 +16,7 @@ import org.jetbrains.amper.plugins.ExecutionAvoidance
 @TaskAction(executionAvoidance = ExecutionAvoidance.Disabled)
 fun verifyIntellijSupport(
     @Input library: CompilationArtifact,
+    @Input libraryClasspath: Classpath,
     @Input compilerClasspath: Classpath,
     @Input fixturesDir: Path,
     @Input compilerPluginJar: Path,
@@ -32,18 +33,25 @@ fun verifyIntellijSupport(
     val runtime = compilerClasspath.resolvedFiles.filter { path ->
         listOf("junit-", "hamcrest-", "opentest4j-", "assertj-", "byte-buddy-").any { path.fileName.toString().startsWith(it) }
     }
-    val cp = sdkJars + testFramework + runtime + listOf(library.artifact)
+    // The helper's own dependencies (brikk-sql support and core), as a plugin would bundle them;
+    // the IDE supplies Kotlin.
+    val libraries = libraryClasspath.resolvedFiles.filter { path ->
+        listOf("kotlin-stdlib", "annotations-").none { path.fileName.toString().startsWith(it) }
+    }
+    val cp = sdkJars + testFramework + runtime + listOf(library.artifact) + libraries
     // Always compile fixtures against the 261 baseline, then run the same ABI on
     // newer SDKs. Compiling against a new SDK would hide compatibility regressions.
     val compileSdk = System.getenv("BRIKK_INTELLIJ_COMPILE_SDK")?.let(Path::of)
         ?: if (build == SDK_BUILD) sdk else provisionSdk(outputRoot)
     check(sdkBuild(compileSdk) == SDK_BUILD) { "Fixture compile SDK must be IDEA $SDK_BUILD" }
-    val compileCp = sdkClasspath(compileSdk) + frameworkJars(outputDir, SDK_BUILD) + runtime + listOf(library.artifact)
+    val compileCp = sdkClasspath(compileSdk) + frameworkJars(outputDir, SDK_BUILD) + runtime + listOf(library.artifact) + libraries
     val classes = outputDir.resolve("classes")
     Files.createDirectories(classes)
     val sources = Files.walk(fixturesDir).use { paths -> paths.filter { it.toString().endsWith(".kt") }.sorted().toList() }
     val compiler = compilerClasspath.resolvedFiles
     run(compiler, "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler", listOf("-no-stdlib", "-no-reflect", "-jvm-target", "21",
+        // Fixtures may use the helper's internal test seams.
+        "-Xfriend-paths=${library.artifact}",
         "-classpath", compileCp.joinToString(File.pathSeparator), "-d", classes.toString()) + sources.map(Path::toString), outputDir.resolve("compile.log"))
     Files.createDirectories(classes.resolve("META-INF"))
     Files.copy(fixturesDir.resolve("plugin.xml"), classes.resolve("META-INF/plugin.xml"), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
@@ -53,7 +61,11 @@ fun verifyIntellijSupport(
     } }
     val generatedArgs = if (ideCompiler == "2.4.20-ij262-34") listOf("-Dbrikk.fixture.compiler.plugin=${compilerPluginJar.toAbsolutePath()}") else emptyList()
     println("IDE compiler=$ideCompiler; generated-shape fixture lane=${generatedArgs.isNotEmpty()}")
-    run(cp + listOf(classes), "org.junit.runner.JUnitCore", listOf("dev.brikk.house.intellij.ContractsTest", "dev.brikk.house.intellij.fixtures.BrikkContextTest"), outputDir.resolve("test.log"), opens + generatedArgs + listOf(
+    val testClasses = sources.filter { it.fileName.toString().endsWith("Test.kt") }.map { source ->
+        val pkg = Files.readAllLines(source).first { it.startsWith("package ") }.removePrefix("package ").trim()
+        "$pkg.${source.fileName.toString().removeSuffix(".kt")}"
+    }
+    run(cp + listOf(classes), "org.junit.runner.JUnitCore", testClasses, outputDir.resolve("test.log"), opens + generatedArgs + listOf(
         "--enable-native-access=ALL-UNNAMED", "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
         "-Didea.force.use.core.classloader=true",
         "-Djna.boot.library.path=${sdk.resolve("lib/jna/amd64")}", "-Djna.nosys=true", "-Djna.noclasspath=true",

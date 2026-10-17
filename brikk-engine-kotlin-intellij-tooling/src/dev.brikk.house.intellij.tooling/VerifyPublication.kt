@@ -37,7 +37,15 @@ fun verifyLocalIntellijPublication(
         val dependency = dependencies.item(index) as org.w3c.dom.Element
         val group = dependency.getElementsByTagName("groupId").item(0).textContent
         val name = dependency.getElementsByTagName("artifactId").item(0).textContent
-        check(group == "org.jetbrains.kotlin" && name == "kotlin-stdlib") { "Build-only dependency leaked into POM: $group:$name" }
+        // brikk-sql core is the helper's one library dependency (plain relation-facts data, decision 24);
+        // never brikk-sql support, which would force helper, support and core to release in lockstep.
+        check(group == "org.jetbrains.kotlin" && name == "kotlin-stdlib" || group == "dev.brikk.house" && name == "brikk-sql-jvm") {
+            "Build-only dependency leaked into POM: $group:$name"
+        }
+        val dependencyVersion = dependency.getElementsByTagName("version").item(0)?.textContent.orEmpty()
+        check(revision.endsWith("-SNAPSHOT") || !dependencyVersion.endsWith("-SNAPSHOT")) {
+            "Release $revision depends on snapshot $group:$name:$dependencyVersion"
+        }
     }
     val metadata = Files.readString(repository.resolve("$artifact-$revision.module"))
     check("dev.brikk.build" !in metadata && "kotlin-compiler" !in metadata && "analysis-api" !in metadata) { "SDK dependency leaked into Gradle metadata" }

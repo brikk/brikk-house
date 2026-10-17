@@ -15,12 +15,14 @@ import org.jetbrains.kotlin.psi.KtParameter
 /** Reads effective type scopes, not generated class names, runtime relations or compiler-private FIR. */
 public object BrikkRelationShapes {
     public fun ofParameter(parameter: KtParameter): ShapeResult {
-        if (DumbService.isDumb(parameter.project)) return ShapeResult.Unavailable("Kotlin indexing is in progress")
+        if (DumbService.isDumb(parameter.project)) return ShapeResult.Unavailable("Kotlin indexing is in progress", BrikkPendingCause.INDEXING)
+        if (!BrikkKotlinContext.analysisAllowed(parameter)) return ShapeResult.Unavailable("Kotlin analysis is not allowed here (a write action)", BrikkPendingCause.ANALYSIS_PROHIBITED)
         return BrikkKotlinContext.analysis(parameter) { parameterInSession(this, parameter) }
     }
 
     public fun ofExpression(expression: KtExpression): ShapeResult {
-        if (DumbService.isDumb(expression.project)) return ShapeResult.Unavailable("Kotlin indexing is in progress")
+        if (DumbService.isDumb(expression.project)) return ShapeResult.Unavailable("Kotlin indexing is in progress", BrikkPendingCause.INDEXING)
+        if (!BrikkKotlinContext.analysisAllowed(expression)) return ShapeResult.Unavailable("Kotlin analysis is not allowed here (a write action)", BrikkPendingCause.ANALYSIS_PROHIBITED)
         return BrikkKotlinContext.analysis(expression) {
             val type = expression.expressionType ?: return@analysis ShapeResult.Unavailable("Expression type is not resolved")
             read(this, type, expression)
@@ -39,7 +41,12 @@ public object BrikkRelationShapes {
         val fallback = navigation(anchor, NavigationKind.RELATION_FALLBACK)
         val row = (classType.typeArguments.singleOrNull() as? KaTypeArgumentWithVariance)?.type?.fullyExpandedType
             ?: return ShapeResult.Available(RelationShape(ShapeKnowledge.PARTIAL, emptyList(), ShapeOrigin.UNKNOWN, fallback))
-        if (row is KaErrorType) return ShapeResult.Unavailable("Row type is unresolved")
+        if (row is KaErrorType) {
+            // Only a known-absent plugin is reported; unknown (the IDE cannot say) is a plain unresolved type.
+            return if (BrikkPlatformApi.compilerPluginActive(session, anchor) == false) {
+                ShapeResult.Unavailable("Row type is unresolved and the Brikk compiler plugin is not active", BrikkPendingCause.COMPILER_PLUGIN_MISSING)
+            } else ShapeResult.Unavailable("Row type is unresolved")
+        }
         val markerNames = setOf("${BrikkKotlinContext.RUNTIME}.Partial", "${BrikkKotlinContext.RUNTIME}.Shape")
         val rowClass = row as? KaClassType
         if (rowClass?.classId?.asSingleFqName()?.asString() in markerNames) {
@@ -79,7 +86,7 @@ public object BrikkRelationShapes {
         }
         if (!hasPartial) return ShapeResult.Unsupported("Row type does not expose an Engine Partial contract")
         val generated = rowClass?.symbol?.origin in setOf(KaSymbolOrigin.PLUGIN, KaSymbolOrigin.SOURCE_MEMBER_GENERATED)
-        if (generated && properties.isEmpty()) return ShapeResult.Unavailable("Generated row members are not available yet")
+        if (generated && properties.isEmpty()) return ShapeResult.Unavailable("Generated row members are not available yet", BrikkPendingCause.GENERATED_SHAPES)
         val origin = when {
             bound -> ShapeOrigin.TYPE_BOUND
             generated -> ShapeOrigin.GENERATED
@@ -92,7 +99,9 @@ public object BrikkRelationShapes {
     private fun navigation(element: PsiElement, kind: NavigationKind): NavigationTarget =
         PsiNavigation(SmartPointerManager.getInstance(element.project).createSmartPsiElementPointer(element), kind)
 
-    private class PsiNavigation(private val pointer: SmartPsiElementPointer<PsiElement>, override val kind: NavigationKind) : NavigationTarget {
+    internal class PsiNavigation(private val pointer: SmartPsiElementPointer<PsiElement>, override val kind: NavigationKind) : NavigationTarget {
+        /** The current Kotlin element; null once it is gone. */
+        val element: PsiElement? get() = pointer.element
         override val location: SourceLocation? get() {
             val element = pointer.element ?: return null
             val url = element.containingFile?.virtualFile?.url ?: return null

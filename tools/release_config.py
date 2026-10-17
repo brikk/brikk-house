@@ -34,6 +34,19 @@ def release_template(version, base_template, publishing_mode="manual"):
     )
 
 
+def local_candidate_template(version, base_template):
+    """An unsigned local release candidate: the release version, resolving released
+    dependencies (such as a local brikk-sql core candidate) from Maven Local. Never Central."""
+    validate_version(version)
+    return (
+        "# Temporary local release-candidate settings. Restored by publish-release.sh.\n"
+        f"apply:\n  - {json.dumps(base_template)}\n"
+        "repositories:\n  - url: mavenLocal\n    resolve: true\n    publish: true\n"
+        "settings:\n  publishing:\n"
+        f"    version: {json.dumps(version)}\n"
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -43,11 +56,16 @@ def main():
     template.add_argument("version")
     template.add_argument("base_template")
     template.add_argument("--publishing-mode", choices=["manual", "auto"], default="manual")
+    local = commands.add_parser("local-template")
+    local.add_argument("version")
+    local.add_argument("base_template")
     args = parser.parse_args()
     try:
         validate_version(args.version)
         if args.command == "template":
             print(release_template(args.version, args.base_template, args.publishing_mode), end="")
+        elif args.command == "local-template":
+            print(local_candidate_template(args.version, args.base_template), end="")
     except ValueError as error:
         parser.error(str(error))
 

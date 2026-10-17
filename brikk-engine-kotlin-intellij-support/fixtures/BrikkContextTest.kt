@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
-class BrikkContextTest : BasePlatformTestCase() {
+class BrikkContextTest : BrikkFixtureCase() {
     companion object {
         @JvmStatic fun suite(): junit.framework.Test {
             val generated = System.getProperty("brikk.fixture.compiler.plugin") != null
@@ -21,37 +21,6 @@ class BrikkContextTest : BasePlatformTestCase() {
             }
             return suite
         }
-    }
-
-    override fun setUp() {
-        super.setUp()
-        val jdk = com.intellij.openapi.projectRoots.JavaSdk.getInstance().createJdk("Brikk fixture JDK", System.getProperty("java.home"), false)
-        WriteCommandAction.runWriteCommandAction(project) { com.intellij.openapi.projectRoots.ProjectJdkTable.getInstance().addJdk(jdk, testRootDisposable) }
-        com.intellij.openapi.roots.ModuleRootModificationUtil.setModuleSdk(module, jdk)
-        val stdlib = java.io.File(com.intellij.util.PathUtil.getJarPathForClass(Unit::class.java))
-        PsiTestUtil.addLibrary(module, "kotlin-stdlib", stdlib.parent, stdlib.name)
-        myFixture.addFileToProject("Runtime.kt", """
-            package dev.brikk.house.sql.runtime
-            @Target(AnnotationTarget.FUNCTION) annotation class BrikkSql
-            interface Partial
-            interface Shape : Partial
-            annotation class BrikkTrait
-            class Rel<out T : Partial>
-            object Sql { fun duckdb(sql: String): Rel<Nothing> = error("compiler")
-                fun doris(sql: String): Rel<Nothing> = error("compiler")
-                fun trino(sql: String): Rel<Nothing> = error("compiler") }
-        """.trimIndent())
-    }
-
-    private fun host(body: String): KtStringTemplateExpression {
-        myFixture.configureByText("Views.kt", "import dev.brikk.house.sql.runtime.*\n$body")
-        return PsiTreeUtil.findChildrenOfType(myFixture.file, KtStringTemplateExpression::class.java).last { it.text.contains("SELECT") || it.text.contains("FROM") }
-    }
-
-    private fun context(host: KtStringTemplateExpression): BrikkContext {
-        val result = BrikkKotlinContext.inspect(host)
-        assertTrue(result.toString(), result is ContextResult.Available)
-        return (result as ContextResult.Available).context
     }
 
     private fun enableCompiler() {
@@ -70,10 +39,6 @@ class BrikkContextTest : BasePlatformTestCase() {
                 model.commit()
             }
         }
-        myFixture.addFileToProject("Dialect.kt", """
-            package dev.brikk.house.sql.runtime
-            @Target(AnnotationTarget.FUNCTION) annotation class BrikkSqlDialect(val dialect: String)
-        """.trimIndent())
         val runtime = myFixture.findFileInTempDir("Runtime.kt")
         val document = PsiDocumentManager.getInstance(project).getDocument(com.intellij.psi.PsiManager.getInstance(project).findFile(runtime)!!)!!
         WriteCommandAction.runWriteCommandAction(project) {
@@ -110,6 +75,16 @@ class BrikkContextTest : BasePlatformTestCase() {
         assertEquals(setOf("id", "code", "added"), (result as ShapeResult.Available).shape.columns.map { it.name }.toSet())
     }
 
+    fun testActualCompilerActivePluginIsNotReportedMissing() {
+        enableCompiler()
+        val context = context(host("""
+            @BrikkSql fun query(rows: Rel<NoSuchOut>) = Sql.duckdb("FROM ${'$'}rows()")
+        """.trimIndent()))
+        val result = context.relations.getValue("rows")
+        assertTrue(result.toString(), result is ShapeResult.Unavailable)
+        assertEquals(BrikkPendingCause.UNRESOLVED, (result as ShapeResult.Unavailable).cause)
+    }
+
     private fun shape(context: BrikkContext, name: String): RelationShape {
         val result = context.relations.getValue(name)
         assertTrue(result.toString(), result is ShapeResult.Available)
@@ -144,6 +119,39 @@ class BrikkContextTest : BasePlatformTestCase() {
         assertEquals(setOf("id", "code"), shape(context, "src").columns.map { it.name }.toSet())
         assertFalse(context.uncertain)
         assertFalse(context.executable)
+    }
+
+    fun testClickHouseIsARegisteredDialect() {
+        val context = context(host("@BrikkSql fun query(n: Int) = Sql.clickhouse(\"SELECT \$n\")"))
+        assertEquals(BrikkDialect.CLICKHOUSE, context.dialect)
+        assertEquals("ClickHouseSQL", context.dialect.languageId)
+    }
+
+    fun testRuntimeDeclaredDialectIsBrikkEvenWithoutAPluginEntry() {
+        val context = context(host("@BrikkSql fun query(n: Int) = Sql.postgres(\"SELECT \$n\")"))
+        assertEquals("postgres", context.dialect.sqlName)
+        assertEquals("BrikkSQL", context.dialect.languageId)
+        assertFalse(context.dialect.registered)
+        assertEquals(listOf("n"), context.binds)
+    }
+
+    fun testUndeclaredRuntimeMemberIsNotAnEntryPoint() {
+        assertEquals(ContextResult.NotBrikk, BrikkKotlinContext.inspect(host("@BrikkSql fun query() = Sql.raw(\"SELECT 1\")")))
+    }
+
+    fun testParenthesizedArgumentAndTrimReceiverAreStillTheBrikkHost() {
+        val context = context(host("@BrikkSql fun query(n: Int) = Sql.duckdb(((\"SELECT \$n\").trimIndent()))"))
+        assertEquals(BrikkDialect.DUCKDB, context.dialect)
+        assertEquals(listOf("trimIndent"), context.trims)
+        assertEquals(listOf("n"), context.binds)
+    }
+
+    fun testTrimStepsCarryTheMarginPrefix() {
+        val custom = context(host("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\".trimMargin(\"#\"))"))
+        assertEquals(listOf("trimMargin"), custom.trims)
+        assertEquals(listOf(BrikkTrim("trimMargin", "#")), custom.trimSteps)
+        val default = context(host("@BrikkSql fun query(n: Int) = Sql.duckdb(\"SELECT \$n\".trimMargin().trimIndent())"))
+        assertEquals(listOf(BrikkTrim("trimMargin", "|"), BrikkTrim("trimIndent", null)), default.trimSteps)
     }
 
     fun testTrinoLookalikeIsNotBrikk() {
